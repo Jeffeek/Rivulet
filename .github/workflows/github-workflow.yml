@@ -1,28 +1,242 @@
-name: github-workflow
+name: CI/CD Pipeline
+
 on:
   push:
     branches: [ "master" ]
   pull_request:
     branches: [ "master" ]
+
 jobs:
-  restore-build-test:
-    runs-on: windows-latest
-    env:
-      Solution_Name: Rivulet.sln
+  quick-test:
+    name: Quick Test (${{ matrix.os }}, .NET ${{ matrix.dotnet }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        dotnet: ['8.0.x', '9.0.x']
+      fail-fast: false
+
     steps:
     - name: Checkout
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-    - name: Install .NET Core
+
+    - name: Setup .NET ${{ matrix.dotnet }}
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 8.0.x
-    - name: Setup MSBuild.exe
-      uses: microsoft/setup-msbuild@v2
-    - name: Restore
+        dotnet-version: ${{ matrix.dotnet }}
+
+    - name: Restore dependencies
       run: dotnet restore
-    - name: Build
+
+    - name: Build (Release)
       run: dotnet build -c Release --no-restore
-    - name: Execute unit tests
-      run: dotnet test
+
+    - name: Run tests (single iteration)
+      run: dotnet test -c Release --no-build --verbosity normal
+      timeout-minutes: 5
+
+  test-with-coverage:
+    name: Test with Coverage (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    needs: quick-test
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+      fail-fast: false
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup .NET 9.0.x
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 9.0.x
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build (Release)
+      run: dotnet build -c Release --no-restore
+
+    - name: Run tests with coverage
+      run: dotnet test -c Release --no-build --collect:"XPlat Code Coverage" --results-directory ./coverage
+      timeout-minutes: 5
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      if: matrix.os == 'ubuntu-latest'
+      with:
+        directory: ./coverage
+        fail_ci_if_error: false
+        verbose: true
+
+  flaky-test-detection:
+    name: Flaky Test Detection (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    needs: quick-test
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+      fail-fast: false
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup .NET 9.0.x
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 9.0.x
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build (Release)
+      run: dotnet build -c Release --no-restore
+
+    - name: Run flaky test detection (200 iterations) - Windows
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        $iterations = 200
+        $results = @{}
+        $failedIterations = @()
+
+        Write-Host "Running tests $iterations times to detect flaky tests..." -ForegroundColor Cyan
+        Write-Host ""
+
+        for ($i = 1; $i -le $iterations; $i++) {
+            Write-Host "Iteration $i of $iterations..." -ForegroundColor Gray
+
+            $output = dotnet test -c Release --no-build --verbosity quiet 2>&1 | Out-String
+
+            if ($output -match "Failed!\s+-\s+Failed:\s+(\d+)" -or $output -match "Test Run Failed") {
+                $failedIterations += $i
+
+                $failedTests = $output | Select-String -Pattern "\s+Failed\s+([^\[]+)\[" -AllMatches
+
+                foreach ($match in $failedTests.Matches) {
+                    $testName = $match.Groups[1].Value.Trim()
+
+                    if (-not $results.ContainsKey($testName)) {
+                        $results[$testName] = 0
+                    }
+
+                    $results[$testName]++
+                }
+            }
+
+            Start-Sleep -Milliseconds 50
+        }
+
+        Write-Host ""
+        Write-Host "========================================" -ForegroundColor Green
+        Write-Host "FLAKY TEST DETECTION RESULTS" -ForegroundColor Green
+        Write-Host "========================================" -ForegroundColor Green
+        Write-Host ""
+
+        if ($results.Count -eq 0) {
+            Write-Host "[OK] No flaky tests detected! All tests passed in all $iterations iterations." -ForegroundColor Green
+            exit 0
+        } else {
+            Write-Host "[FAILURE] FLAKY TESTS DETECTED:" -ForegroundColor Red
+            Write-Host ""
+
+            $sortedResults = $results.GetEnumerator() | Sort-Object -Property Value -Descending
+
+            foreach ($test in $sortedResults) {
+                $testName = $test.Key
+                $failCount = $test.Value
+                $passCount = $iterations - $failCount
+                $failureRate = [math]::Round(($failCount / $iterations) * 100, 2)
+
+                Write-Host "Test: $testName" -ForegroundColor Cyan
+                Write-Host "  Failures: $failCount / $iterations ($failureRate%)" -ForegroundColor Red
+                Write-Host "  Passes:   $passCount / $iterations" -ForegroundColor Green
+                Write-Host ""
+            }
+
+            Write-Host "========================================" -ForegroundColor Red
+            Write-Host "SUMMARY:" -ForegroundColor Red
+            Write-Host "  Total flaky tests: $($results.Count)" -ForegroundColor Red
+            Write-Host "  Total iterations: $iterations" -ForegroundColor Red
+            Write-Host "  Failed iterations: $($failedIterations.Count)" -ForegroundColor Red
+            Write-Host "========================================" -ForegroundColor Red
+
+            exit 1
+        }
+      timeout-minutes: 30
+
+    - name: Run flaky test detection (200 iterations) - Linux
+      if: runner.os == 'Linux'
+      shell: bash
+      run: |
+        iterations=200
+        declare -A results
+        failed_count=0
+
+        echo "Running tests $iterations times to detect flaky tests..."
+        echo ""
+
+        for i in $(seq 1 $iterations); do
+            echo "Iteration $i of $iterations..."
+
+            output=$(dotnet test -c Release --no-build --verbosity quiet 2>&1)
+            exit_code=$?
+
+            if [ $exit_code -ne 0 ]; then
+                ((failed_count++))
+
+                while IFS= read -r line; do
+                    if [[ $line =~ Failed[[:space:]]+([^[]+) ]]; then
+                        test_name="${BASH_REMATCH[1]}"
+                        test_name=$(echo "$test_name" | xargs)
+                        results["$test_name"]=$((${results["$test_name"]:-0} + 1))
+                    fi
+                done <<< "$output"
+            fi
+
+            sleep 0.05
+        done
+
+        echo ""
+        echo "========================================"
+        echo "FLAKY TEST DETECTION RESULTS"
+        echo "========================================"
+        echo ""
+
+        if [ ${#results[@]} -eq 0 ]; then
+            echo "[OK] No flaky tests detected! All tests passed in all $iterations iterations."
+            exit 0
+        else
+            echo "[FAILURE] FLAKY TESTS DETECTED:"
+            echo ""
+
+            for test_name in "${!results[@]}"; do
+                fail_count=${results[$test_name]}
+                pass_count=$((iterations - fail_count))
+                failure_rate=$(awk "BEGIN {printf \"%.2f\", ($fail_count / $iterations) * 100}")
+
+                echo "Test: $test_name"
+                echo "  Failures: $fail_count / $iterations ($failure_rate%)"
+                echo "  Passes:   $pass_count / $iterations"
+                echo ""
+            done
+
+            echo "========================================"
+            echo "SUMMARY:"
+            echo "  Total flaky tests: ${#results[@]}"
+            echo "  Total iterations: $iterations"
+            echo "  Failed iterations: $failed_count"
+            echo "========================================"
+
+            exit 1
+        fi
+      timeout-minutes: 30
