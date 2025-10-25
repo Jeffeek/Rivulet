@@ -65,6 +65,5 @@ jobs:
         path: ./artifacts/*.nupkg
         retention-days: 90
 
-    # Uncomment and configure when ready to publish to NuGet.org
-    # - name: Publish to NuGet.org
-    #   run: dotnet nuget push ./artifacts/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+    - name: Publish to NuGet.org
+      run: dotnet nuget push ./artifacts/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate

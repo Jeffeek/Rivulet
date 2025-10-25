@@ -163,7 +163,7 @@ master (main development)
 **Iterations**: **200 per platform** (400 total)
 **Duration**: ~20-25 minutes per platform
 
-**Why 200 iterations?**
+**Why 100 iterations?**
 - Catches timing-dependent bugs
 - Validates thread safety
 - Ensures cross-platform consistency
