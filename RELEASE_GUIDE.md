@@ -12,7 +12,8 @@ Before starting the release process, ensure:
 - [ ] Code coverage is at expected (95%>=) level (currently ![Codecov (with branch)](https://img.shields.io/codecov/c/github/Jeffeek/Rivulet/master?style=flat&label=%20)
 )
 - [ ] No flaky tests detected (100 iterations on both Windows & Linux)
-- [ ] README.md is up to date
+- [ ] README.md (GitHub repository) is up to date
+- [ ] PACKAGE_README.md (NuGet package, packed as README.md) is up to date
 - [ ] CHANGELOG.md is updated with v1.0.0 changes (create if doesn't exist)
 - [ ] All planned features for v1.0.0 are complete
 - [ ] You have a NuGet.org account (create at https://www.nuget.org/users/account/LogOn)
@@ -82,16 +83,23 @@ Check `src/Rivulet.Core/Rivulet.Core.csproj` contains correct information:
     <RepositoryUrl>https://github.com/Jeffeek/Rivulet</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/Jeffeek/Rivulet</PackageProjectUrl>
+    <PackageIcon>nuget_logo.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
 </PropertyGroup>
+
+<ItemGroup>
+    <None Include="..\..\assets\nuget_logo.png" Pack="true" PackagePath="\" />
+    <!-- Pack PACKAGE_README.md from repo as README.md in package -->
+    <None Include="..\..\PACKAGE_README.md" Pack="true" PackagePath="\README.md" />
+</ItemGroup>
 ```
 
 **If you made changes, commit them:**
 ```bash
-git add src/Rivulet.Core/Rivulet.Core.csproj
-git commit -m "Update package metadata for v1.0.0"
+git add src/Rivulet.Core/Rivulet.Core.csproj PACKAGE_README.md
+git commit -m "Update package metadata and README for v1.0.0"
 git push origin master
 ```
 
@@ -165,7 +173,8 @@ unzip -l ./test-packages/Rivulet.Core.1.0.0.zip
 Verify the package contains:
 - ✅ `lib/net8.0/Rivulet.Core.dll`
 - ✅ `lib/net9.0/Rivulet.Core.dll`
-- ✅ `README.md` (in package root)
+- ✅ `README.md` (in package root - packed from PACKAGE_README.md)
+- ✅ `nuget_logo.png` (in package root - package icon)
 - ✅ XML documentation files (`.xml`)
 - ✅ Dependencies listed correctly in `.nuspec`
 
@@ -586,12 +595,13 @@ git push origin :refs/tags/v1.0.0
 ## Checklist: Ready to Release?
 
 - [ ] All tests pass on master
-- [ ] Flaky test detection passes (200 iterations, Windows + Linux)
+- [ ] Flaky test detection passes (100 iterations, Windows + Linux)
 - [ ] Code coverage ≥ 99%
 - [ ] CHANGELOG.md updated
 - [ ] Package metadata correct in .csproj
-- [ ] README.md up to date
-- [ ] Local package test successful
+- [ ] README.md (GitHub repository) up to date
+- [ ] PACKAGE_README.md (repo, packed as README.md in package) up to date
+- [ ] Local package test successful (verify README.md in extracted package)
 - [ ] Release branch created
 - [ ] Git tag created and pushed
 - [ ] GitHub release verified

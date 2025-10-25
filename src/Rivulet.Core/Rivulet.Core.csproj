@@ -15,10 +15,11 @@
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageProjectUrl>https://github.com/Jeffeek/Rivulet</PackageProjectUrl>
 		<PackageIcon>nuget_logo.png</PackageIcon>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
 	</PropertyGroup>
 	<ItemGroup>
 		<None Include="..\..\assets\nuget_logo.png" Pack="true" PackagePath="\" />
-		<None Include="..\..\README.md" Pack="true" PackagePath="\" />
+		<None Include="..\..\PACKAGE_README.md" Pack="true" PackagePath="\README.md" />
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="System.Linq.Async" Version="6.0.3" />
