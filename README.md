@@ -2,8 +2,8 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 ---
-[![NuGet](https://img.shields.io/nuget/v/Rivulet)](https://www.nuget.org/packages/Rivulet/)
-![NuGet Downloads](https://img.shields.io/nuget/dt/Revulet)
+[![NuGet](https://img.shields.io/nuget/v/Rivulet.Core)](https://www.nuget.org/packages/Rivulet.Core/)
+![NuGet Downloads](https://img.shields.io/nuget/dt/Rivulet.Core)
 ---
 ![CI/CD Pipeline (build+test)](https://img.shields.io/github/actions/workflow/status/Jeffeek/Rivulet/github-workflow.yml?label=build)
 ![CI/CD Pipeline (release)](https://img.shields.io/github/actions/workflow/status/Jeffeek/Rivulet/release.yml?label=release)
