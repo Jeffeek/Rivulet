@@ -365,3 +365,7 @@ FodyWeavers.xsd
 #NuGet
 test-extract/
 test-packages/
+
+#AI configs
+.claude/
+.gemini/
