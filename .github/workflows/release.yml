@@ -43,7 +43,7 @@ jobs:
       timeout-minutes: 5
 
     - name: Pack NuGet package
-      run: dotnet pack src/Rivulet.Core/Rivulet.Core.csproj -c Release --no-build --output ./artifacts -p:PackageVersion=${{ steps.get_version.outputs.version }}
+      run: dotnet pack src/Rivulet.Core/Rivulet.Core.csproj -c Release --output ./artifacts -p:PackageVersion=${{ steps.get_version.outputs.version }}
 
     - name: List artifacts
       run: ls -la ./artifacts

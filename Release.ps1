@@ -11,18 +11,25 @@ Write-Host "======================================" -ForegroundColor Cyan
 Write-Host ""
 
 # Validate version format (basic check for semver)
-if ($Version -notmatch '^\d+\.\d+\.\d+(-[a-zA-Z0-9]+)?$') {
+if ($Version -notmatch '^(\d+)\.(\d+)\.(\d+)(-[a-zA-Z0-9.]+)?$') {
     Write-Host "Error: Invalid version format. Expected format: X.Y.Z or X.Y.Z-prerelease" -ForegroundColor Red
     Write-Host "Examples: 1.0.0, 1.2.3-alpha, 2.0.0-beta.1" -ForegroundColor Yellow
     exit 1
 }
 
-$BranchName = "release/$Version"
+# Extract major.minor from version
+$Major = $Matches[1]
+$Minor = $Matches[2]
+$Patch = $Matches[3]
+$Prerelease = $Matches[4]
+
+# Branch name uses major.minor.x pattern (e.g., release/1.0.x)
+$BranchName = "release/$Major.$Minor.x"
 $TagName = "v$Version"
 
-Write-Host "Version: $Version" -ForegroundColor Green
-Write-Host "Branch:  $BranchName" -ForegroundColor Green
-Write-Host "Tag:     $TagName" -ForegroundColor Green
+Write-Host "Version:        $Version" -ForegroundColor Green
+Write-Host "Branch Pattern: $BranchName (all $Major.$Minor.* patches)" -ForegroundColor Green
+Write-Host "Tag:            $TagName" -ForegroundColor Green
 Write-Host ""
 
 # Check for uncommitted changes
