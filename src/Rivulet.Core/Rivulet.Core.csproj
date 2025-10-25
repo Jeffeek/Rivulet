@@ -13,7 +13,12 @@
 		<PackageTags>async;parallel;linq;throttling;io;dotnet;channels</PackageTags>
 		<RepositoryUrl>https://github.com/Jeffeek/Rivulet</RepositoryUrl>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageProjectUrl>https://github.com/Jeffeek/Rivulet</PackageProjectUrl>
+		<PackageIcon>nuget_logo.png</PackageIcon>
 	</PropertyGroup>
+	<ItemGroup>
+		<None Include="..\..\assets\nuget_logo.png" Pack="true" PackagePath="\" />
+	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="System.Linq.Async" Version="6.0.3" />
 		<PackageReference Include="System.Threading.Channels" Version="8.0.0" />

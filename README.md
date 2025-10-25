@@ -1,4 +1,8 @@
-# Rivulet.Core
+<div align="center">
+  <img src="assets/logo.png" alt="Rivulet.Core Logo" width="600">
+</div>
+
+<div align="center">
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 ---
@@ -10,9 +14,12 @@
 ---
 [![Codecov](https://codecov.io/gh/Jeffeek/Rivulet/branch/master/graph/badge.svg)](https://codecov.io/gh/Jeffeek/Rivulet)
 [![.NET](https://img.shields.io/badge/.NET-8.0%20%7C%209.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
+
+</div>
+
 ---
 
-Safe, async-first parallel operators with bounded concurrency, retries, cancellation, and streaming backpressure for I/O-heavy workloads.
+**Safe, async-first parallel operators with bounded concurrency, retries, cancellation, and streaming backpressure for I/O-heavy workloads.**
 
 - Async-first (`ValueTask`), works with `IEnumerable<T>` and `IAsyncEnumerable<T>`
 - Bounded concurrency with backpressure (Channels)
