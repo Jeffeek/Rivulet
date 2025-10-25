@@ -18,6 +18,7 @@
 	</PropertyGroup>
 	<ItemGroup>
 		<None Include="..\..\assets\nuget_logo.png" Pack="true" PackagePath="\" />
+		<None Include="..\..\README.md" Pack="true" PackagePath="\" />
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="System.Linq.Async" Version="6.0.3" />
