@@ -26,6 +26,7 @@
 - Retry policy with transient detection and exponential backoff
 - Per-item timeouts, cancellation, lifecycle hooks
 - Flexible error modes: FailFast, CollectAndContinue, BestEffort
+- Ordered output mode for sequence-sensitive operations
 
 ### Install
 ```dotnet add package Rivulet.Core```
@@ -55,6 +56,29 @@ await foreach (var r in source.SelectParallelStreamAsync(
     new ParallelOptionsRivulet { MaxDegreeOfParallelism = 16 }))
 {
     // consume incrementally
+}
+```
+
+### Ordered Output
+
+Maintain input order when sequence matters:
+
+```csharp
+// Results returned in same order as input, despite parallel processing
+var results = await items.SelectParallelAsync(
+    async (item, ct) => await ProcessAsync(item, ct),
+    new ParallelOptionsRivulet
+    {
+        MaxDegreeOfParallelism = 32,
+        OrderedOutput = true  // Ensures results match input order
+    });
+
+// Streaming with ordered output
+await foreach (var result in source.SelectParallelStreamAsync(
+    async (x, ct) => await TransformAsync(x, ct),
+    new ParallelOptionsRivulet { OrderedOutput = true }))
+{
+    // Results arrive in input order
 }
 ```
 
@@ -164,5 +188,6 @@ The confirmation step shows:
 
 - Metrics via EventCounters
 - Built-in retry policies (Jitter)
-- Ordered output mode (optional)
 - Batching operator
+- Progress reporting
+- Rate limiting

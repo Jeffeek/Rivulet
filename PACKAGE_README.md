@@ -63,12 +63,36 @@ await items.ForEachParallelAsync(
     });
 ```
 
+### Ordered Output
+
+Maintain input order for sequence-sensitive operations:
+
+```csharp
+// ETL pipeline where order matters for downstream processing
+var orderedResults = await records.SelectParallelAsync(
+    async (record, ct) => await TransformAsync(record, ct),
+    new ParallelOptionsRivulet
+    {
+        MaxDegreeOfParallelism = 32,
+        OrderedOutput = true  // Results match input order despite parallel processing
+    });
+
+// Streaming with ordered output
+await foreach (var result in source.SelectParallelStreamAsync(
+    async (x, ct) => await ProcessAsync(x, ct),
+    new ParallelOptionsRivulet { OrderedOutput = true }))
+{
+    // Results arrive in input sequence order
+}
+```
+
 ## Key Features
 
 - ✅ **Bounded Concurrency** - Control max parallel operations with backpressure
 - ✅ **Retry Policies** - Automatic retries with exponential backoff for transient errors
 - ✅ **Error Handling Modes** - FailFast, CollectAndContinue, or BestEffort
 - ✅ **Streaming Support** - Process results incrementally via `IAsyncEnumerable<T>`
+- ✅ **Ordered Output** - Maintain input sequence order when needed
 - ✅ **Cancellation** - Full `CancellationToken` support throughout
 - ✅ **Lifecycle Hooks** - OnStart, OnComplete, OnError, OnThrottle callbacks
 - ✅ **Per-Item Timeouts** - Enforce timeouts for individual operations
@@ -82,6 +106,7 @@ new ParallelOptionsRivulet
     // Concurrency control
     MaxDegreeOfParallelism = 32,        // Max concurrent operations (default: CPU cores)
     ChannelCapacity = 1024,              // Backpressure buffer size (streaming only)
+    OrderedOutput = false,               // Return results in input order (default: false)
 
     // Error handling
     ErrorMode = ErrorMode.CollectAndContinue,  // How to handle failures

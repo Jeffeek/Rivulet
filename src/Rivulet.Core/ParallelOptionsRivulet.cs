@@ -75,4 +75,12 @@ public sealed class ParallelOptionsRivulet
     /// Defaults to 1024.
     /// </summary>
     public int ChannelCapacity { get; init; } = 1024;
+
+    /// <summary>
+    /// Gets a value indicating whether results should be returned in the same order as the input sequence.
+    /// When true, results are buffered and emitted in input order, which may increase memory usage.
+    /// When false (default), results are returned as they complete for maximum throughput.
+    /// Defaults to false.
+    /// </summary>
+    public bool OrderedOutput { get; init; } = false;
 }
