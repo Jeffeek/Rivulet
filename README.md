@@ -1,4 +1,12 @@
-### Rivulet.Core
+# Rivulet.Core
+
+[![Version](https://www.nuget.org/packages/Rivulet)](https://img.shields.io/nuget/v/Rivulet?style=for-the-badge&logo=nuget)
+[![Downloads](https://www.nuget.org/packages/Rivulet)](https://img.shields.io/nuget/dt/Rivulet?style=for-the-badge&logo=nuget)
+[![CI/CD Pipeline](https://github.com/Jeffeek/Rivulet/actions/workflows/github-workflow.yml)](https://github.com/Jeffeek/Rivulet/actions/workflows/github-workflow.yml)
+[![codecov](https://codecov.io/gh/Jeffeek/Rivulet/branch/master/graph/badge.svg?token=CODECOV_TOKEN)](https://codecov.io/gh/Jeffeek/Rivulet)
+[![.NET](https://img.shields.io/badge/.NET-8.0%20%7C%209.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![NuGet](https://img.shields.io/nuget/v/Rivulet.Core.svg)](https://www.nuget.org/packages/Rivulet.Core/)
 
 Safe, async-first parallel operators with bounded concurrency, retries, cancellation, and streaming backpressure for I/O-heavy workloads.
 
@@ -20,7 +28,7 @@ var results = await urls.SelectParallelAsync(
         resp.EnsureSuccessStatusCode();
         return (url, (int)resp.StatusCode);
     },
-    new ParallelOptionsEx {
+    new ParallelOptionsRivulet {
         MaxDegreeOfParallelism = 32,
         MaxRetries = 3,
         IsTransient = ex => ex is HttpRequestException or TaskCanceledException,
@@ -33,7 +41,7 @@ var results = await urls.SelectParallelAsync(
 ```csharp
 await foreach (var r in source.SelectParallelStreamAsync(
     async (x, ct) => await ComputeAsync(x, ct),
-    new ParallelOptionsEx { MaxDegreeOfParallelism = 16 }))
+    new ParallelOptionsRivulet { MaxDegreeOfParallelism = 16 }))
 {
     // consume incrementally
 }
