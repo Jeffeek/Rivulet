@@ -90,7 +90,7 @@ public class LifecycleHooksTests
         await source.SelectParallelAsync(
             (x, _) =>
             {
-                if (x == 3 || x == 7)
+                if (x is 3 or 7)
                     throw new InvalidOperationException($"Error at {x}");
                 return new ValueTask<int>(x * 2);
             },
@@ -211,13 +211,7 @@ public class LifecycleHooksTests
             }
         };
 
-        var results = new List<int>();
-        await foreach (var item in source.SelectParallelStreamAsync(
-            (x, _) => new ValueTask<int>(x * 2),
-            options))
-        {
-            results.Add(item);
-        }
+        var results = await source.SelectParallelStreamAsync((x, _) => new ValueTask<int>(x * 2), options).ToListAsync();
 
         startedItems.Should().HaveCount(10);
         completedItems.Should().HaveCount(10);

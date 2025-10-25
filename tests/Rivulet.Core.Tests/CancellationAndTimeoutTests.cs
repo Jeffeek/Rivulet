@@ -71,8 +71,8 @@ public class CancellationAndTimeoutTests
             cancellationToken: cts.Token);
 
         var task = act();
-        await Task.Delay(50);
-        cts.Cancel();
+        await Task.Delay(50, cts.Token);
+        await cts.CancelAsync();
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => task);
         processedCount.Should().BeLessThan(100);
@@ -180,20 +180,15 @@ public class CancellationAndTimeoutTests
             ErrorMode = ErrorMode.BestEffort
         };
 
-        var results = new List<int>();
-        await foreach (var item in source.SelectParallelStreamAsync(
-            async (x, ct) =>
+        var results = await source.SelectParallelStreamAsync(async (x, ct) =>
             {
                 if (x == 3)
                     await Task.Delay(500, ct);
                 else
                     await Task.Delay(10, ct);
                 return x * 2;
-            },
-            options))
-        {
-            results.Add(item);
-        }
+            }, options)
+            .ToListAsync();
 
         results.Should().HaveCount(4);
     }
@@ -204,16 +199,15 @@ public class CancellationAndTimeoutTests
         var source = Enumerable.Range(1, 50);
         var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
 
-        var act = async () => await source.SelectParallelAsync(
-            async (x, ct) =>
+        async Task<List<int>> Act() =>
+            await source.SelectParallelAsync(async (x, ct) =>
             {
                 await Task.Delay(50, ct);
                 ct.ThrowIfCancellationRequested();
                 return x * 2;
-            },
-            cancellationToken: cts.Token);
+            }, cancellationToken: cts.Token);
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(act);
+        await Assert.ThrowsAnyAsync<OperationCanceledException>((Func<Task<List<int>>>)Act);
     }
 
     [Fact]
@@ -221,13 +215,11 @@ public class CancellationAndTimeoutTests
     {
         var source = Enumerable.Range(1, 100);
         var cts = new CancellationTokenSource();
-        cts.Cancel();
+        await cts.CancelAsync();
 
-        var act = async () => await source.SelectParallelAsync(
-            (x, _) => new ValueTask<int>(x * 2),
-            cancellationToken: cts.Token);
+        async Task<List<int>> Act() => await source.SelectParallelAsync((x, _) => new ValueTask<int>(x * 2), cancellationToken: cts.Token);
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(act);
+        await Assert.ThrowsAnyAsync<OperationCanceledException>((Func<Task<List<int>>>)Act);
     }
 
     [Fact]
@@ -258,18 +250,17 @@ public class CancellationAndTimeoutTests
             MaxDegreeOfParallelism = 1
         };
 
-        var act = async () => await source.SelectParallelAsync(
-            async (x, ct) =>
+        async Task<List<int>> Act() =>
+            await source.SelectParallelAsync(async (x, ct) =>
             {
                 if (x == 5)
                     await Task.Delay(500, ct);
                 else
                     await Task.Delay(10, ct);
                 return x * 2;
-            },
-            options);
+            }, options);
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(act);
+        await Assert.ThrowsAnyAsync<OperationCanceledException>((Func<Task<List<int>>>)Act);
     }
 
     [Fact]
@@ -283,18 +274,17 @@ public class CancellationAndTimeoutTests
             MaxDegreeOfParallelism = 1
         };
 
-        var act = async () => await source.SelectParallelAsync(
-            async (x, ct) =>
+        async Task<List<int>> Act() =>
+            await source.SelectParallelAsync(async (x, ct) =>
             {
-                if (x == 3 || x == 7)
+                if (x is 3 or 7)
                     await Task.Delay(300, ct);
                 else
                     await Task.Delay(5, ct);
                 return x * 2;
-            },
-            options);
+            }, options);
 
-        var exception = await Assert.ThrowsAsync<AggregateException>(act);
+        var exception = await Assert.ThrowsAsync<AggregateException>(((Func<Task<List<int>>>?)Act)!);
         exception.InnerExceptions.Count.Should().BeGreaterThanOrEqualTo(1);
         exception.InnerExceptions.Should().AllBeAssignableTo<OperationCanceledException>();
     }
@@ -319,8 +309,8 @@ public class CancellationAndTimeoutTests
             options,
             cts.Token);
 
-        await Task.Delay(100);
-        cts.Cancel();
+        await Task.Delay(100, cts.Token);
+        await cts.CancelAsync();
 
         var results = await task;
 
@@ -334,16 +324,15 @@ public class CancellationAndTimeoutTests
         var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
         var processedCount = 0;
 
-        var act = async () => await source.SelectParallelAsync(
-            async (x, ct) =>
+        async Task<List<int>> Act() =>
+            await source.SelectParallelAsync(async (x, ct) =>
             {
                 Interlocked.Increment(ref processedCount);
                 await Task.Delay(10, ct);
                 return x * 2;
-            },
-            cancellationToken: cts.Token);
+            }, cancellationToken: cts.Token);
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(act);
+        await Assert.ThrowsAnyAsync<OperationCanceledException>((Func<Task<List<int>>>)Act);
         processedCount.Should().BeLessThan(1000);
     }
 
@@ -354,19 +343,17 @@ public class CancellationAndTimeoutTests
         var cts = new CancellationTokenSource();
         var consumedCount = 0;
 
-        var act = async () =>
+        async Task Act()
         {
-            await foreach (var _ in source.SelectParallelStreamAsync(
-                (x, _) => new ValueTask<int>(x * 2),
-                cancellationToken: cts.Token))
+            // ReSharper disable once PossibleMultipleEnumeration
+            await foreach (var _ in source.SelectParallelStreamAsync((x, _) => new ValueTask<int>(x * 2), cancellationToken: cts.Token))
             {
                 consumedCount++;
-                if (consumedCount == 10)
-                    await cts.CancelAsync();
+                if (consumedCount == 10) await cts.CancelAsync();
             }
-        };
+        }
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(act);
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(Act);
         consumedCount.Should().BeGreaterThanOrEqualTo(10);
         consumedCount.Should().BeLessThan(1000);
     }

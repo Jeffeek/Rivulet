@@ -132,18 +132,17 @@ public class RetryPolicyTests
             IsTransient = _ => true
         };
 
-        var act = async () => await source.SelectParallelAsync(
-            (x, _) =>
+        async Task<List<int>> Act() =>
+            await source.SelectParallelAsync((x, _) =>
             {
                 attemptCount++;
                 throw new InvalidOperationException("Always fails");
-#pragma warning disable CS0162
+#pragma warning disable CS0162 // Unreachable code detected
                 return new ValueTask<int>(x);
-#pragma warning restore CS0162
-            },
-            options);
+#pragma warning restore CS0162 // Unreachable code detected
+            }, options);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(act);
+        await Assert.ThrowsAsync<InvalidOperationException>(((Func<Task<List<int>>>?)Act)!);
         attemptCount.Should().Be(3);
     }
 
@@ -160,19 +159,13 @@ public class RetryPolicyTests
             IsTransient = ex => ex is InvalidOperationException
         };
 
-        var results = new List<int>();
-        await foreach (var item in source.SelectParallelStreamAsync(
-            (x, _) =>
+        var results = await source.SelectParallelStreamAsync((x, _) =>
             {
                 var attempts = attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
-                if (x == 3 && attempts == 1)
-                    throw new InvalidOperationException("Transient error");
+                if (x == 3 && attempts == 1) throw new InvalidOperationException("Transient error");
                 return new ValueTask<int>(x * 2);
-            },
-            options))
-        {
-            results.Add(item);
-        }
+            }, options)
+            .ToListAsync();
 
         results.Should().HaveCount(5);
         attemptCounts[3].Should().Be(2);
@@ -247,20 +240,18 @@ public class RetryPolicyTests
             IsTransient = _ => true
         };
 
-        var act = async () => await source.SelectParallelAsync(
-            (x, _) =>
+        async Task<List<int>> Act() =>
+            await source.SelectParallelAsync((x, _) =>
             {
                 throw new InvalidOperationException("Transient error");
 #pragma warning disable CS0162
                 return new ValueTask<int>(x);
 #pragma warning restore CS0162
-            },
-            options,
-            cts.Token);
+            }, options, cts.Token);
 
-        var task = act();
-        await Task.Delay(100);
-        cts.Cancel();
+        var task = Act();
+        await Task.Delay(100, cts.Token);
+        await cts.CancelAsync();
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => task);
     }
@@ -283,12 +274,12 @@ public class RetryPolicyTests
             {
                 attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
 
-                if (x == 1)
-                    throw new TimeoutException("Transient");
-                if (x == 2)
-                    throw new InvalidOperationException("Non-transient");
-
-                return new ValueTask<int>(x * 2);
+                return x switch
+                {
+                    1 => throw new TimeoutException("Transient"),
+                    2 => throw new InvalidOperationException("Non-transient"),
+                    _ => new ValueTask<int>(x * 2)
+                };
             },
             options);
 

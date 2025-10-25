@@ -82,7 +82,6 @@ public static class AsyncParallelLinq
                     {
                         errors.Add(ex);
 
-                        // Call OnErrorAsync callback first, regardless of error mode
                         if (options.OnErrorAsync is not null)
                         {
                             var cont = await options.OnErrorAsync(index, ex);
@@ -184,20 +183,19 @@ public static class AsyncParallelLinq
                 }
                 catch (Exception ex)
                 {
-                    // Call OnErrorAsync callback first, regardless of error mode
                     if (options.OnErrorAsync is not null)
                     {
                         var cont = await options.OnErrorAsync(idx, ex);
                         if (!cont) await cts.CancelAsync();
                     }
 
-                    if (options.ErrorMode == ErrorMode.FailFast)
+                    switch (options.ErrorMode)
                     {
-                        await cts.CancelAsync();
-                        throw;
-                    }
-                    if (options.ErrorMode is ErrorMode.CollectAndContinue or ErrorMode.BestEffort)
-                    {
+                        case ErrorMode.FailFast:
+                            await cts.CancelAsync();
+                            throw;
+                        case ErrorMode.CollectAndContinue or ErrorMode.BestEffort:
+                            break;
                     }
                 }
             }
@@ -226,7 +224,7 @@ public static class AsyncParallelLinq
 
     /// <summary>
     /// Executes an async action on each element in a stream in parallel with bounded concurrency.
-    /// No results are returned; this is suitable for side-effect operations like logging, updates, or fire-and-forget processing.
+    /// No results are returned; this is suitable for side effect operations like logging, updates, or fire-and-forget processing.
     /// </summary>
     /// <typeparam name="TSource">The type of elements in the source collection.</typeparam>
     /// <param name="source">The async source enumerable to process.</param>

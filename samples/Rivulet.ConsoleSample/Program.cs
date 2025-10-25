@@ -3,7 +3,6 @@
 var http = new HttpClient();
 var urls = Enumerable.Range(0, 1000).Select(i => $"https://example.org/?q={i}").ToArray();
 
-// Materialize results
 var list = await urls.SelectParallelAsync(
     async (url, ct) =>
     {
@@ -21,7 +20,6 @@ var list = await urls.SelectParallelAsync(
 
 Console.WriteLine($"Got {list.Count} results");
 
-// Streaming pipeline
 await foreach (var res in urls.ToAsyncEnumerable().SelectParallelStreamAsync(
                    async (url, ct) =>
                    {
@@ -30,6 +28,5 @@ await foreach (var res in urls.ToAsyncEnumerable().SelectParallelStreamAsync(
                    },
                    new ParallelOptionsRivulet { MaxDegreeOfParallelism = 16 }))
 {
-    // consume incrementally
     Console.WriteLine(res);
 }

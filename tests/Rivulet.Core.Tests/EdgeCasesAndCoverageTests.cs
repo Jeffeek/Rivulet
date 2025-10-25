@@ -341,8 +341,6 @@ public class EdgeCasesAndCoverageTests
     [Fact]
     public async Task WaitToWriteAsync_ReturnsFalse_HandledGracefully()
     {
-        // This test aims to trigger the scenario where WaitToWriteAsync returns false
-        // by having a small channel capacity and causing early cancellation via FailFast
         var source = Enumerable.Range(1, 1000);
         var options = new ParallelOptionsRivulet
         {
@@ -351,18 +349,15 @@ public class EdgeCasesAndCoverageTests
             ErrorMode = ErrorMode.FailFast
         };
 
-        var act = async () => await source.SelectParallelAsync(
-            async (x, ct) =>
+        async Task<List<int>> Act() =>
+            await source.SelectParallelAsync(async (x, ct) =>
             {
-                // Slow processing to fill the channel
                 await Task.Delay(100, ct);
-                if (x == 5)
-                    throw new InvalidOperationException("Error at 5");
+                if (x == 5) throw new InvalidOperationException("Error at 5");
                 return x * 2;
-            },
-            options);
+            }, options);
 
-        await Assert.ThrowsAnyAsync<Exception>(act);
+        await Assert.ThrowsAnyAsync<Exception>(((Func<Task<List<int>>>?)Act)!);
     }
 
     [Fact]
@@ -377,11 +372,12 @@ public class EdgeCasesAndCoverageTests
         var act = async () => await source.SelectParallelAsync(
             (x, _) =>
             {
-                if (x == 3)
-                    throw new InvalidOperationException("Error 3");
-                if (x == 7)
-                    throw new ArgumentException("Error 7");
-                return new ValueTask<int>(x * 2);
+                return x switch
+                {
+                    3 => throw new InvalidOperationException("Error 3"),
+                    7 => throw new ArgumentException("Error 7"),
+                    _ => new ValueTask<int>(x * 2)
+                };
             },
             options);
 
@@ -393,8 +389,6 @@ public class EdgeCasesAndCoverageTests
     [Fact]
     public async Task SelectParallelStreamAsync_WriterException_PropagatesAfterConsumption()
     {
-        // This test covers the exception path in Task.WhenAll after foreach completes
-        // We create a scenario where the source enumerable throws an exception late
         var source = GetSourceWithDelayedError();
         var options = new ParallelOptionsRivulet
         {
@@ -402,10 +396,9 @@ public class EdgeCasesAndCoverageTests
             ErrorMode = ErrorMode.BestEffort
         };
 
-        var results = new List<int>();
         var act = async () =>
         {
-            await foreach (var item in source.SelectParallelStreamAsync(
+            await foreach (var _ in source.SelectParallelStreamAsync(
                 async (x, ct) =>
                 {
                     await Task.Delay(1, ct);
@@ -413,11 +406,9 @@ public class EdgeCasesAndCoverageTests
                 },
                 options))
             {
-                results.Add(item);
             }
         };
 
-        // The exception from the writer should propagate
         await act.Should().ThrowAsync<InvalidOperationException>();
     }
 
