@@ -400,6 +400,89 @@ This is expected if you re-run a workflow. The `--skip-duplicate` flag prevents 
 
 ---
 
+### Issue: NuGet publish fails with 403 Forbidden
+
+**Error message**:
+```
+error: Response status code does not indicate success: 403 (The specified API key is invalid,
+has expired, or does not have permission to access the specified package.).
+```
+
+**Causes**:
+1. **API key expired** - NuGet API keys expire after the set duration
+2. **API key scope** - The key doesn't have permission for the package being pushed
+3. **Wrong package being pushed** - Trying to push test/sample projects instead of library
+
+**Solutions**:
+
+**Option 1: Check API Key Scope**
+1. Go to https://www.nuget.org/account/apikeys
+2. Find your API key
+3. Check the "Glob Pattern" - it should be `Rivulet.Core` or `Rivulet.*`
+4. If it's wrong, create a new API key with correct scope
+5. Update the `NUGET_API_KEY` secret in GitHub
+
+**Option 2: Verify Only Library Package is Being Pushed**
+
+The workflow should ONLY push `Rivulet.Core.*.nupkg`, not test or sample projects.
+
+Check the workflow file (`.github/workflows/release.yml`):
+```yaml
+# Line 46 - Should pack ONLY the library project
+- name: Pack NuGet package
+  run: dotnet pack src/Rivulet.Core/Rivulet.Core.csproj -c Release --no-build --output ./artifacts
+
+# Line 69 - Should push ONLY Rivulet.Core packages
+- name: Publish to NuGet.org
+  run: dotnet nuget push ./artifacts/Rivulet.Core.*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} ...
+```
+
+**Option 3: Regenerate API Key**
+1. Go to https://www.nuget.org/account/apikeys
+2. Click "Regenerate" on your existing key (or create new one)
+3. Set **Glob Pattern** to `Rivulet.Core`
+4. Copy the new key
+5. Update GitHub secret: Settings → Secrets and variables → Actions → `NUGET_API_KEY`
+
+---
+
+### Issue: Multiple .nupkg files in GitHub Release (ConsoleSample + Core)
+
+**Problem**: Both `Rivulet.ConsoleSample.*.nupkg` and `Rivulet.Core.*.nupkg` appear in the release assets.
+
+**Cause**: The `dotnet pack` command was packing ALL projects in the solution.
+
+**Solution** (Already fixed in latest workflow):
+
+1. **Workflow now packs only library project** (`.github/workflows/release.yml` line 46):
+   ```yaml
+   run: dotnet pack src/Rivulet.Core/Rivulet.Core.csproj -c Release ...
+   ```
+
+2. **ConsoleSample project marked as non-packable** (`samples/Rivulet.ConsoleSample/Rivulet.ConsoleSample.csproj`):
+   ```xml
+   <PropertyGroup>
+     <IsPackable>false</IsPackable>
+   </PropertyGroup>
+   ```
+
+3. **Test project already marked as non-packable** (`tests/Rivulet.Core.Tests/Rivulet.Core.Tests.csproj`):
+   ```xml
+   <PropertyGroup>
+     <IsPackable>false</IsPackable>
+   </PropertyGroup>
+   ```
+
+**To Clean Up Existing Release**:
+1. Go to your GitHub release
+2. Click "Edit"
+3. Delete unwanted `.nupkg` files (like `Rivulet.ConsoleSample.*.nupkg`)
+4. Save the release
+
+**For Next Release**: The workflow will now automatically only include `Rivulet.Core.*.nupkg`.
+
+---
+
 ## Future Releases
 
 For subsequent releases (v1.1.0, v1.2.0, v2.0.0):
