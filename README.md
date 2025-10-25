@@ -89,6 +89,44 @@ Build and inspect NuGet packages locally before releasing.
 
 Creates package in `./test-packages` and extracts contents to `./test-extract` for verification.
 
+### SmartCommit.ps1
+Generate high-quality commit messages using AI (Claude, Gemini, or OpenAI).
+
+```powershell
+# Quick setup - set API key for your preferred provider
+$env:ANTHROPIC_API_KEY = "your-key"  # For Claude
+$env:GOOGLE_API_KEY = "your-key"      # For Gemini
+$env:OPENAI_API_KEY = "your-key"      # For OpenAI
+
+# Auto-detect provider from environment
+.\SmartCommit.ps1
+
+# Or specify provider explicitly
+.\SmartCommit.ps1 -Provider Claude
+.\SmartCommit.ps1 -Provider Gemini
+.\SmartCommit.ps1 -Provider OpenAI
+```
+
+**Advanced**: Create `.smartcommit.config.json` (see `.smartcommit.config.example.json`) to configure:
+- Default provider
+- API keys (alternative to environment variables)
+- Model versions (claude-3-5-sonnet, gemini-2.0-flash, gpt-4o, etc.)
+
+This script:
+- Analyzes your staged changes using git diff
+- Calls your chosen AI provider to generate a meaningful commit message
+- Shows the suggested message and allows you to:
+  - **[y]** Accept and commit
+  - **[r]** Request revision with feedback (e.g., "make it shorter", "add more detail")
+  - **[n]** Cancel
+- Iteratively refines the message based on your feedback
+- Commits changes when you accept
+
+**Get API keys**:
+- Claude: [console.anthropic.com](https://console.anthropic.com/)
+- Gemini: [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
+- OpenAI: [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+
 ### Release.ps1
 Create release branch, tag, and trigger automated publishing.
 

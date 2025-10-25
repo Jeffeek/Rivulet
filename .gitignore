@@ -369,3 +369,4 @@ test-packages/
 #AI configs
 .claude/
 .gemini/
+.smartcommit.config.json

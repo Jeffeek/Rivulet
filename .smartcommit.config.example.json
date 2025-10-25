@@ -1,0 +1,13 @@
+{
+  "provider": "Claude",
+  "apiKeys": {
+    "claude": "sk-ant-api03-...",
+    "gemini": "AIza...",
+    "openai": "sk-proj-..."
+  },
+  "models": {
+    "claude": "claude-3-5-sonnet-20241022",
+    "gemini": "gemini-2.0-flash-exp",
+    "openai": "gpt-4o"
+  }
+}
