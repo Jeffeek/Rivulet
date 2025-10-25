@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFrameworks>net9.0;net8.0;</TargetFrameworks>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<IncludeSymbols>true</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+		<PackageId>Rivulet.Core</PackageId>
+		<Title>Rivulet.Core</Title>
+		<Authors>Jeffeek</Authors>
+		<Description>Safe, async-first parallel operators with bounded concurrency, retries, and backpressure for I/O-heavy workloads.</Description>
+		<PackageTags>async;parallel;linq;throttling;io;dotnet;channels</PackageTags>
+		<RepositoryUrl>https://github.com/Jeffeek/Rivulet</RepositoryUrl>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+	</PropertyGroup>
+	<ItemGroup>
+		<PackageReference Include="System.Linq.Async" Version="6.0.3" />
+		<PackageReference Include="System.Threading.Channels" Version="8.0.0" />
+	</ItemGroup>
+</Project>
