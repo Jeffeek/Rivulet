@@ -125,21 +125,29 @@ dotnet test -c Release
 # Test package locally
 dotnet pack -c Release -p:PackageVersion=1.0.0 --output ./test-packages
 
-# Inspect package
-# Windows PowerShell:
-Expand-Archive ./test-packages/Rivulet.Core.1.0.0.nupkg -DestinationPath ./test-extract
-dir ./test-extract
+# Inspect package contents
+# Windows PowerShell (copy to .zip first, as .nupkg files are zip archives):
+Copy-Item ./test-packages/Rivulet.Core.1.0.0.nupkg ./test-packages/Rivulet.Core.1.0.0.zip
+Expand-Archive ./test-packages/Rivulet.Core.1.0.0.zip -DestinationPath ./test-extract
+dir ./test-extract -Recurse
 
-# Linux/Mac:
-unzip -l ./test-packages/Rivulet.Core.1.0.0.nupkg
+# OR use 7-Zip (if installed):
+# 7z l ./test-packages/Rivulet.Core.1.0.0.nupkg
+
+# Linux/Mac (rename to .zip first):
+cp ./test-packages/Rivulet.Core.1.0.0.nupkg ./test-packages/Rivulet.Core.1.0.0.zip
+unzip -l ./test-packages/Rivulet.Core.1.0.0.zip
+
+# OR directly with unzip (works on most Linux systems):
+# unzip -l ./test-packages/Rivulet.Core.1.0.0.nupkg
 ```
 
 Verify the package contains:
 - ✅ `lib/net8.0/Rivulet.Core.dll`
 - ✅ `lib/net9.0/Rivulet.Core.dll`
-- ✅ `README.md`
-- ✅ XML documentation files
-- ✅ Dependencies listed correctly
+- ✅ `README.md` (in package root)
+- ✅ XML documentation files (`.xml`)
+- ✅ Dependencies listed correctly in `.nuspec`
 
 ---
 
@@ -209,15 +217,22 @@ Once the workflow completes:
 4. **Download the package** and verify it locally:
 
 ```bash
-# Download from GitHub release
-# Extract and inspect
-unzip -l Rivulet.Core.1.0.0.nupkg
+# Download from GitHub release, then inspect
 
-# Or test install in a sample project
+# Windows PowerShell:
+Copy-Item Rivulet.Core.1.0.0.nupkg Rivulet.Core.1.0.0.zip
+Expand-Archive Rivulet.Core.1.0.0.zip -DestinationPath ./extracted
+dir ./extracted -Recurse
+
+# Linux/Mac:
+cp Rivulet.Core.1.0.0.nupkg Rivulet.Core.1.0.0.zip
+unzip -l Rivulet.Core.1.0.0.zip
+
+# Test install in a sample project (all platforms):
 mkdir test-project
 cd test-project
 dotnet new console
-dotnet add package Rivulet.Core --source path/to/downloads --version 1.0.0
+dotnet add package Rivulet.Core --source ../path/to/downloads --version 1.0.0
 ```
 
 ---
