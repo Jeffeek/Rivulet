@@ -58,6 +58,61 @@ await foreach (var r in source.SelectParallelStreamAsync(
 }
 ```
 
+## Development Scripts
+
+The repository includes PowerShell scripts to streamline development and release workflows:
+
+### Build.ps1
+Build, restore, and test the solution locally.
+
+```powershell
+# Debug build with tests (default)
+.\Build.ps1
+
+# Release build with tests
+.\Build.ps1 -Configuration Release
+
+# Skip tests
+.\Build.ps1 -SkipTests
+```
+
+### NugetPackage.ps1
+Build and inspect NuGet packages locally before releasing.
+
+```powershell
+# Build with test version
+.\NugetPackage.ps1
+
+# Build with specific version
+.\NugetPackage.ps1 -Version "1.2.3"
+```
+
+Creates package in `./test-packages` and extracts contents to `./test-extract` for verification.
+
+### Release.ps1
+Create release branch, tag, and trigger automated publishing.
+
+```powershell
+# Create release for version 1.0.0
+.\Release.ps1 -Version "1.0.0"
+
+# Create pre-release
+.\Release.ps1 -Version "2.0.0-beta"
+```
+
+This script:
+- Creates/switches to `release/{version}` branch
+- Displays release information (commit details, author, version, repository)
+- **Asks for confirmation (y/Y) before proceeding**
+- Creates git tag `v{version}` and pushes to GitHub
+- Triggers the release workflow that builds, tests, and publishes to NuGet.org
+
+The confirmation step shows:
+- Version and tag information
+- Current commit hash, author, date, and message
+- List of actions that will be performed
+- Allows you to cancel before any changes are pushed
+
 ### Roadmap
 
 - Metrics via EventCounters
