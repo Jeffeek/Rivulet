@@ -3,7 +3,6 @@
     "allow": [
       "Bash(dir:*)",
       "Bash(dotnet:*)",
-      "Bash(del \"F:\\projectsVS\\GitHub\\Rivulet\\tests\\Rivulet.Core.Tests\\UnitTest1.cs\")",
       "Bash(powershell -ExecutionPolicy Bypass -File run-flaky-test-detection.ps1)",
       "Bash(powershell.exe -ExecutionPolicy Bypass -File run-flaky-test-detection.ps1)"
     ],
