@@ -1,12 +1,16 @@
 # Rivulet.Core
 
-[![Version](https://www.nuget.org/packages/Rivulet)](https://img.shields.io/nuget/v/Rivulet?style=for-the-badge&logo=nuget)
-[![Downloads](https://www.nuget.org/packages/Rivulet)](https://img.shields.io/nuget/dt/Rivulet?style=for-the-badge&logo=nuget)
-[![CI/CD Pipeline](https://github.com/Jeffeek/Rivulet/actions/workflows/github-workflow.yml)](https://github.com/Jeffeek/Rivulet/actions/workflows/github-workflow.yml)
-[![codecov](https://codecov.io/gh/Jeffeek/Rivulet/branch/master/graph/badge.svg?token=CODECOV_TOKEN)](https://codecov.io/gh/Jeffeek/Rivulet)
-[![.NET](https://img.shields.io/badge/.NET-8.0%20%7C%209.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![NuGet](https://img.shields.io/nuget/v/Rivulet.Core.svg)](https://www.nuget.org/packages/Rivulet.Core/)
+---
+[![NuGet](https://img.shields.io/nuget/v/Rivulet)](https://www.nuget.org/packages/Rivulet/)
+![NuGet Downloads](https://img.shields.io/nuget/dt/Revulet)
+---
+![CI/CD Pipeline (build+test)](https://img.shields.io/github/actions/workflow/status/Jeffeek/Rivulet/github-workflow.yml?label=build)
+![CI/CD Pipeline (release)](https://img.shields.io/github/actions/workflow/status/Jeffeek/Rivulet/release.yml?label=release)
+---
+[![Codecov](https://codecov.io/gh/Jeffeek/Rivulet/branch/master/graph/badge.svg)](https://codecov.io/gh/Jeffeek/Rivulet)
+[![.NET](https://img.shields.io/badge/.NET-8.0%20%7C%209.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
+---
 
 Safe, async-first parallel operators with bounded concurrency, retries, cancellation, and streaming backpressure for I/O-heavy workloads.
 
