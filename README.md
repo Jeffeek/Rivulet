@@ -131,15 +131,24 @@ This script:
 Create release branch, tag, and trigger automated publishing.
 
 ```powershell
-# Create release for version 1.0.0
+# Create release for version 1.0.0 (creates branch release/1.0.x, tag v1.0.0)
 .\Release.ps1 -Version "1.0.0"
 
-# Create pre-release
+# Create patch release 1.0.1 (uses existing branch release/1.0.x, tag v1.0.1)
+.\Release.ps1 -Version "1.0.1"
+
+# Create pre-release (creates branch release/2.0.x, tag v2.0.0-beta)
 .\Release.ps1 -Version "2.0.0-beta"
 ```
 
+**Branching Strategy**:
+- Branches: `release/{major}.{minor}.x` (e.g., `release/1.0.x` for all 1.0.* versions)
+- Tags: `v{full.version}` (e.g., `v1.0.0`, `v1.0.1`, `v1.0.2`)
+- Master branch for active development
+- Patch releases reuse the same release branch
+
 This script:
-- Creates/switches to `release/{version}` branch
+- Creates/switches to `release/{major}.{minor}.x` branch
 - Displays release information (commit details, author, version, repository)
 - **Asks for confirmation (y/Y) before proceeding**
 - Creates git tag `v{version}` and pushes to GitHub

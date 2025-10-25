@@ -97,14 +97,34 @@ git push origin master
 
 ---
 
-### Step 3: Create Release Branch
+### Step 3: Create Release
+
+**Recommended: Use the automated Release.ps1 script:**
+
+```powershell
+# This creates release/1.0.x branch and v1.0.0 tag
+.\Release.ps1 -Version "1.0.0"
+```
+
+The script will:
+- Extract major.minor from version (1.0)
+- Create/switch to `release/1.0.x` branch
+- Show commit details and ask for confirmation
+- Create tag `v1.0.0` and push everything
+- Trigger the GitHub Actions release workflow
+
+**Manual Alternative (if not using Release.ps1):**
 
 ```bash
-# Create release branch
-git checkout -b release/1.0.0
+# Create release branch (note: uses .x pattern for all 1.0.* patches)
+git checkout -b release/1.0.x
 
 # Push to GitHub
-git push origin release/1.0.0
+git push origin release/1.0.x
+
+# Create and push tag
+git tag -a v1.0.0 -m "Release 1.0.0"
+git push origin v1.0.0
 ```
 
 ---
@@ -155,11 +175,13 @@ Verify the package contains:
 
 ### Step 5: Create and Push Git Tag
 
-This is the critical step that triggers the release workflow:
+**If you used Release.ps1 in Step 3, skip this step - it's already done!**
+
+**Manual Alternative:** This is the critical step that triggers the release workflow:
 
 ```bash
-# Make sure you're on the release branch
-git checkout release/1.0.0
+# Make sure you're on the release branch (note: .x pattern)
+git checkout release/1.0.x
 
 # Create annotated tag
 git tag -a v1.0.0 -m "Release version 1.0.0
@@ -312,22 +334,29 @@ dotnet add package Rivulet.Core --version 1.0.0
 
 ## Part 4: Post-Release
 
-### Step 13: Merge Release Branch
+### Step 13: Merge Release Branch (Optional)
+
+With the new branching strategy (`release/{major}.{minor}.x`), release branches are kept alive for future patches.
 
 ```bash
 # Switch to master
 git checkout master
 
-# Merge release branch
-git merge release/1.0.0
+# Merge release branch (if changes need to be back-ported)
+git merge release/1.0.x
 
 # Push to GitHub
 git push origin master
 
-# Optional: Delete release branch
-git branch -d release/1.0.0
-git push origin --delete release/1.0.0
+# NOTE: Do NOT delete the release branch!
+# The release/1.0.x branch stays alive for future patches (1.0.1, 1.0.2, etc.)
+# Only delete release branches when the major.minor version is completely EOL
 ```
+
+**For future patch releases (e.g., 1.0.1):**
+- Use the existing `release/1.0.x` branch
+- Create new tag `v1.0.1` on that branch
+- The branch persists for all 1.0.* versions
 
 ---
 
@@ -485,31 +514,66 @@ Check the workflow file (`.github/workflows/release.yml`):
 
 ## Future Releases
 
-For subsequent releases (v1.1.0, v1.2.0, v2.0.0):
+### For Minor/Major Releases (v1.1.0, v2.0.0):
 
+**Recommended - Use Release.ps1:**
+```powershell
+.\Release.ps1 -Version "1.1.0"  # Creates release/1.1.x branch and v1.1.0 tag
+```
+
+**Manual Alternative:**
 1. Update CHANGELOG.md
-2. Create release branch: `release/x.y.z`
-3. Create tag: `git tag -a vx.y.z -m "Release x.y.z"`
-4. Push tag: `git push origin vx.y.z`
+2. Create release branch: `release/{major}.{minor}.x` (e.g., `release/1.1.x`)
+3. Create tag: `git tag -a v{version} -m "Release {version}"`
+4. Push: `git push origin release/{major}.{minor}.x && git push origin v{version}`
 5. Workflow automatically publishes to NuGet
-6. Merge release branch to master
+
+### For Patch Releases (v1.0.1, v1.0.2):
+
+**Recommended - Use Release.ps1:**
+```powershell
+.\Release.ps1 -Version "1.0.1"  # Reuses existing release/1.0.x branch, creates v1.0.1 tag
+```
+
+**Manual Alternative:**
+1. Update CHANGELOG.md
+2. Switch to existing branch: `git checkout release/1.0.x`
+3. Create tag: `git tag -a v1.0.1 -m "Release 1.0.1"`
+4. Push tag: `git push origin v1.0.1`
+5. Workflow automatically publishes to NuGet
 
 ---
 
 ## Quick Command Reference
 
+**Automated (Recommended):**
+```powershell
+# New minor/major release (creates new release/x.y.x branch)
+.\Release.ps1 -Version "1.1.0"
+
+# Patch release (reuses existing release/1.0.x branch)
+.\Release.ps1 -Version "1.0.1"
+
+# Pre-release
+.\Release.ps1 -Version "2.0.0-beta"
+```
+
+**Manual Alternative:**
 ```bash
-# Create release branch
-git checkout -b release/1.0.0
-git push origin release/1.0.0
+# Create new release branch (for new minor/major version)
+git checkout -b release/1.1.x
+git push origin release/1.1.x
+
+# OR switch to existing release branch (for patches)
+git checkout release/1.0.x
 
 # Create and push tag
-git tag -a v1.0.0 -m "Release 1.0.0"
-git push origin v1.0.0
+git tag -a v1.0.1 -m "Release 1.0.1"
+git push origin v1.0.1
 
-# Merge to master
+# Merge to master (optional)
 git checkout master
-git merge release/1.0.0
+git merge release/1.0.x
 git push origin master
 
 # Delete old tag (if needed)
