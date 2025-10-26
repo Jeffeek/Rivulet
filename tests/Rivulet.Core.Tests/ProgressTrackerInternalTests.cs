@@ -120,7 +120,6 @@ public class ProgressTrackerInternalTests
 
         await Task.Delay(20, CancellationToken.None);
 
-        // Cancel and dispose
         await cts.CancelAsync();
         var act = () => tracker.Dispose();
         act.Should().NotThrow();

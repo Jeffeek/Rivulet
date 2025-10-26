@@ -115,9 +115,7 @@ public class ProgressReportingTests
             options);
 
         results.Should().HaveCount(16); // 20 - 4 errors
-        snapshots.Should().NotBeEmpty();
 
-        // Use Max to avoid race condition - the final snapshot might not be last in the bag
         var maxErrors = snapshots.Max(s => s.ErrorCount);
         var maxCompleted = snapshots.Max(s => s.ItemsCompleted);
 

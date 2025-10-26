@@ -185,6 +185,80 @@ Progress metrics:
 - **EstimatedTimeRemaining**: ETA (when total is known)
 - **PercentComplete**: 0-100% (when total is known)
 
+### Batching Operations
+
+Process items in batches for bulk operations like database inserts, batch API calls, or file operations:
+
+```csharp
+// Bulk database inserts - batch 100 records at a time
+var results = await records.BatchParallelAsync(
+    batchSize: 100,
+    async (batch, ct) =>
+    {
+        // Insert entire batch in a single database call
+        await db.BulkInsertAsync(batch, ct);
+        return batch.Count;
+    },
+    new ParallelOptionsRivulet
+    {
+        MaxDegreeOfParallelism = 4, // Process 4 batches in parallel
+        MaxRetries = 3,
+        IsTransient = ex => ex is SqlException
+    });
+
+// Batch API calls with timeout - flush partial batches after delay
+var apiResults = await items.BatchParallelAsync(
+    batchSize: 50,
+    async (batch, ct) =>
+    {
+        // Call API with batch of items
+        return await apiClient.ProcessBatchAsync(batch, ct);
+    },
+    batchTimeout: TimeSpan.FromSeconds(2) // Flush batch after 2 seconds even if not full
+);
+
+// Streaming batches from async source
+await foreach (var result in dataStream.BatchParallelStreamAsync(
+    batchSize: 100,
+    async (batch, ct) =>
+    {
+        await ProcessBatchAsync(batch, ct);
+        return batch.Count;
+    },
+    new ParallelOptionsRivulet
+    {
+        MaxDegreeOfParallelism = 8,
+        OrderedOutput = true, // Maintain batch order
+        Progress = new ProgressOptions
+        {
+            ReportInterval = TimeSpan.FromSeconds(5),
+            OnProgress = progress =>
+            {
+                Console.WriteLine($"Batches processed: {progress.ItemsCompleted}");
+                return ValueTask.CompletedTask;
+            }
+        }
+    }))
+{
+    // Process batch results as they complete
+    Console.WriteLine($"Batch completed with {result} items");
+}
+```
+
+**Key Features:**
+- **Size-based batching**: Groups items into batches of specified size
+- **Timeout-based flushing**: Optional timeout to flush incomplete batches (async streams only)
+- **Parallel batch processing**: Process multiple batches concurrently with bounded parallelism
+- **All existing features**: Works with retries, error handling, progress tracking, ordered output
+- **Efficient for bulk operations**: Reduces API calls, database round-trips, and I/O overhead
+
+**Use Cases:**
+- Bulk database inserts/updates/deletes
+- Batch API calls to external services
+- File processing in chunks
+- Message queue batch processing
+- ETL pipelines with staged operations
+
 ## Development Scripts
 
 The repository includes PowerShell scripts to streamline development and release workflows:
@@ -290,5 +364,4 @@ The confirmation step shows:
 ### Roadmap
 
 - Metrics via EventCounters
-- Batching operator
 - Rate limiting

@@ -306,4 +306,167 @@ public static class AsyncParallelLinq
     {
         await foreach (var _ in source.WithCancellation(ct)) { }
     }
+
+    /// <summary>
+    /// Groups items into batches and processes each batch in parallel with bounded concurrency.
+    /// Returns a materialized list of all batch results.
+    /// </summary>
+    /// <typeparam name="TSource">The type of elements in the source collection.</typeparam>
+    /// <typeparam name="TResult">The type of result returned by processing each batch.</typeparam>
+    /// <param name="source">The source enumerable to process.</param>
+    /// <param name="batchSize">The maximum number of items in each batch.</param>
+    /// <param name="batchSelector">The async function to apply to each batch.</param>
+    /// <param name="options">Configuration options for parallel execution. If null, defaults are used.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    /// <returns>A task representing the asynchronous operation, containing a list of all batch results.</returns>
+    /// <exception cref="ArgumentException">Thrown when batchSize is less than 1.</exception>
+    /// <exception cref="AggregateException">Thrown when <see cref="ErrorMode.CollectAndContinue"/> is enabled and one or more errors occurred during processing.</exception>
+    /// <exception cref="OperationCanceledException">Thrown when the operation is cancelled via the cancellation token.</exception>
+    public static async Task<List<TResult>> BatchParallelAsync<TSource, TResult>(
+        this IEnumerable<TSource> source,
+        int batchSize,
+        Func<IReadOnlyList<TSource>, CancellationToken, ValueTask<TResult>> batchSelector,
+        ParallelOptionsRivulet? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (batchSize < 1)
+            throw new ArgumentException("Batch size must be at least 1.", nameof(batchSize));
+
+        var batches = CreateBatches(source, batchSize);
+        return await batches.SelectParallelAsync(batchSelector, options, cancellationToken);
+    }
+
+    /// <summary>
+    /// Groups items from an async stream into batches and processes each batch in parallel with bounded concurrency.
+    /// Returns results as a streaming async enumerable with built-in backpressure control.
+    /// </summary>
+    /// <typeparam name="TSource">The type of elements in the source collection.</typeparam>
+    /// <typeparam name="TResult">The type of result returned by processing each batch.</typeparam>
+    /// <param name="source">The async source enumerable to process.</param>
+    /// <param name="batchSize">The maximum number of items in each batch.</param>
+    /// <param name="batchSelector">The async function to apply to each batch.</param>
+    /// <param name="options">Configuration options for parallel execution. If null, defaults are used.</param>
+    /// <param name="batchTimeout">Optional timeout to flush incomplete batches. If null, only size triggers batching.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    /// <returns>An async enumerable that yields batch results as they complete.</returns>
+    /// <exception cref="ArgumentException">Thrown when batchSize is less than 1.</exception>
+    /// <exception cref="OperationCanceledException">Thrown when the operation is cancelled via the cancellation token.</exception>
+    public static async IAsyncEnumerable<TResult> BatchParallelStreamAsync<TSource, TResult>(
+        this IAsyncEnumerable<TSource> source,
+        int batchSize,
+        Func<IReadOnlyList<TSource>, CancellationToken, ValueTask<TResult>> batchSelector,
+        ParallelOptionsRivulet? options = null,
+        TimeSpan? batchTimeout = null,
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        if (batchSize < 1)
+            throw new ArgumentException("Batch size must be at least 1.", nameof(batchSize));
+
+        var batches = CreateBatchesAsync(source, batchSize, batchTimeout, cancellationToken);
+        await foreach (var result in batches.SelectParallelStreamAsync(batchSelector, options, cancellationToken))
+        {
+            yield return result;
+        }
+    }
+
+    private static IEnumerable<IReadOnlyList<TSource>> CreateBatches<TSource>(IEnumerable<TSource> source, int batchSize)
+    {
+        var batch = new List<TSource>(batchSize);
+        foreach (var item in source)
+        {
+            batch.Add(item);
+            if (batch.Count < batchSize) continue;
+
+            yield return batch;
+            batch = new List<TSource>(batchSize);
+        }
+
+        if (batch.Count > 0)
+        {
+            yield return batch;
+        }
+    }
+
+    private static async IAsyncEnumerable<IReadOnlyList<TSource>> CreateBatchesAsync<TSource>(
+        IAsyncEnumerable<TSource> source,
+        int batchSize,
+        TimeSpan? batchTimeout,
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        var batch = new List<TSource>(batchSize);
+
+        if (batchTimeout.HasValue)
+        {
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            var token = cts.Token;
+
+            var channel = Channel.CreateBounded<IReadOnlyList<TSource>>(new BoundedChannelOptions(16)
+            {
+                SingleReader = true,
+                SingleWriter = false,
+                FullMode = BoundedChannelFullMode.Wait
+            });
+
+            var producer = Task.Run(async () =>
+            {
+                try
+                {
+                    var flushTimer = Task.Delay(batchTimeout.Value, token);
+
+                    await foreach (var item in source.WithCancellation(token))
+                    {
+                        batch.Add(item);
+                        _ = DateTime.UtcNow;
+
+                        if (batch.Count >= batchSize)
+                        {
+                            await channel.Writer.WriteAsync(batch, token);
+                            batch = new List<TSource>(batchSize);
+                            _ = DateTime.UtcNow;
+                            flushTimer = Task.Delay(batchTimeout.Value, token);
+                        }
+                        else if (flushTimer.IsCompleted && batch.Count > 0)
+                        {
+                            await channel.Writer.WriteAsync(batch, token);
+                            batch = new List<TSource>(batchSize);
+                            _ = DateTime.UtcNow;
+                            flushTimer = Task.Delay(batchTimeout.Value, token);
+                        }
+                    }
+
+                    if (batch.Count > 0)
+                    {
+                        await channel.Writer.WriteAsync(batch, token);
+                    }
+                }
+                finally
+                {
+                    channel.Writer.TryComplete();
+                }
+            }, token);
+
+            await foreach (var batchResult in channel.Reader.ReadAllAsync(token))
+            {
+                yield return batchResult;
+            }
+
+            await producer;
+        }
+        else
+        {
+            await foreach (var item in source.WithCancellation(cancellationToken))
+            {
+                batch.Add(item);
+                if (batch.Count < batchSize) continue;
+
+                yield return batch;
+                batch = new List<TSource>(batchSize);
+            }
+
+            if (batch.Count > 0)
+            {
+                yield return batch;
+            }
+        }
+    }
 }
