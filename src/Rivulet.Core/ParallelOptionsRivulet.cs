@@ -142,4 +142,26 @@ public sealed class ParallelOptionsRivulet
     /// </code>
     /// </example>
     public RateLimitOptions? RateLimit { get; init; }
+
+    /// <summary>
+    /// Gets the circuit breaker options for preventing cascading failures.
+    /// When null, no circuit breaker is used. Defaults to null.
+    /// </summary>
+    /// <remarks>
+    /// Circuit breaker prevents cascading failures by failing fast when a service is experiencing issues.
+    /// It has three states: Closed (normal operation), Open (failing fast), and HalfOpen (testing recovery).
+    /// Useful for protecting downstream services, preventing resource exhaustion, and improving system resilience.
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// // Open circuit after 5 consecutive failures, test recovery after 30 seconds
+    /// CircuitBreaker = new CircuitBreakerOptions
+    /// {
+    ///     FailureThreshold = 5,
+    ///     SuccessThreshold = 2,
+    ///     OpenTimeout = TimeSpan.FromSeconds(30)
+    /// }
+    /// </code>
+    /// </example>
+    public CircuitBreakerOptions? CircuitBreaker { get; init; }
 }
