@@ -7,7 +7,6 @@ public class OrderedOutputTests
     [Fact]
     public async Task SelectParallelAsync_WithOrderedOutput_ReturnsResultsInOrder()
     {
-        // Arrange
         var source = Enumerable.Range(1, 100).ToArray();
         var options = new ParallelOptionsRivulet
         {
@@ -17,13 +16,11 @@ public class OrderedOutputTests
         var results = await source.SelectParallelAsync(
             async (x, ct) =>
             {
-                // Simulate varying processing times to ensure out-of-order completion
                 await Task.Delay(Random.Shared.Next(1, 10), ct);
                 return x * 2;
             },
             options);
 
-        // Assert
         results.Should().HaveCount(100);
         results.Should().Equal(Enumerable.Range(1, 100).Select(x => x * 2));
     }
@@ -31,12 +28,11 @@ public class OrderedOutputTests
     [Fact]
     public async Task SelectParallelAsync_WithoutOrderedOutput_MayReturnOutOfOrder()
     {
-        // Arrange
         var source = Enumerable.Range(1, 50).ToArray();
         var options = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 16,
-            OrderedOutput = false // Default
+            OrderedOutput = false
         };
 
         var orderedCount = 0;
@@ -64,7 +60,6 @@ public class OrderedOutputTests
     [Fact]
     public async Task SelectParallelStreamAsync_WithOrderedOutput_StreamsResultsInOrder()
     {
-        // Arrange
         var source = Enumerable.Range(1, 100).ToAsyncEnumerable();
         var options = new ParallelOptionsRivulet
         {
@@ -86,7 +81,6 @@ public class OrderedOutputTests
     [Fact]
     public async Task SelectParallelStreamAsync_WithOrderedOutput_BuffersAndYieldsInSequence()
     {
-        // Arrange - Create a scenario where items complete out of order
         var source = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }.ToAsyncEnumerable();
         var options = new ParallelOptionsRivulet
         {
@@ -98,14 +92,12 @@ public class OrderedOutputTests
 
         var results = await source.SelectParallelStreamAsync(async (x, ct) =>
             {
-                // Items with higher numbers complete faster (reverse order)
                 await Task.Delay((11 - x) * 10, ct);
                 lock (completionOrder) completionOrder.Add(x);
                 return x;
             }, options)
             .ToListAsync();
 
-        // Assert
         results.Should().Equal([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "results should be in order");
         completionOrder.Should().NotEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "completion should be out of order");
     }
@@ -113,7 +105,6 @@ public class OrderedOutputTests
     [Fact]
     public async Task SelectParallelAsync_OrderedOutput_WithErrors_MaintainsOrderForSuccessful()
     {
-        // Arrange
         var source = Enumerable.Range(1, 20).ToArray();
         var options = new ParallelOptionsRivulet
         {
@@ -130,7 +121,6 @@ public class OrderedOutputTests
             },
             options);
 
-        // Assert - Should contain results for items that didn't fail, in order
         var expected = Enumerable.Range(1, 20)
             .Where(x => x % 5 != 0)
             .Select(x => x * 2)
@@ -142,7 +132,6 @@ public class OrderedOutputTests
     [Fact]
     public async Task SelectParallelStreamAsync_OrderedOutput_WithCancellation_YieldsInOrder()
     {
-        // Arrange
         var source = Enumerable.Range(1, 100).ToAsyncEnumerable();
         var cts = new CancellationTokenSource();
         var options = new ParallelOptionsRivulet
@@ -175,7 +164,6 @@ public class OrderedOutputTests
             // Expected
         }
 
-        // Assert - The results we got should be in order
         results.Take(20).Should().Equal(Enumerable.Range(1, 20).Select(x => x * 2));
     }
 
@@ -192,7 +180,6 @@ public class OrderedOutputTests
             },
             options);
 
-        // Assert
         results.Should().BeEmpty();
     }
 
@@ -209,14 +196,12 @@ public class OrderedOutputTests
             },
             options);
 
-        // Assert
         results.Should().Equal(new[] { 84 });
     }
 
     [Fact]
     public async Task SelectParallelStreamAsync_OrderedOutput_WithRetries_MaintainsOrder()
     {
-        // Arrange
         var source = Enumerable.Range(1, 20).ToAsyncEnumerable();
         var attemptCounts = new System.Collections.Concurrent.ConcurrentDictionary<int, int>();
         var options = new ParallelOptionsRivulet
@@ -238,7 +223,6 @@ public class OrderedOutputTests
             }, options)
             .ToListAsync();
 
-        // Assert
         results.Should().Equal(Enumerable.Range(1, 20).Select(x => x * 2));
         attemptCounts.Values.Should().Contain(v => v > 1, "some items should have retried");
     }
@@ -246,7 +230,6 @@ public class OrderedOutputTests
     [Fact]
     public async Task SelectParallelAsync_OrderedOutput_LargeDataset_MaintainsOrder()
     {
-        // Arrange
         var source = Enumerable.Range(1, 1000).ToArray();
         var options = new ParallelOptionsRivulet
         {
@@ -261,7 +244,6 @@ public class OrderedOutputTests
             },
             options);
 
-        // Assert
         results.Should().HaveCount(1000);
         results.Should().Equal(source, "large dataset should maintain order");
     }
@@ -269,7 +251,6 @@ public class OrderedOutputTests
     [Fact]
     public async Task SelectParallelStreamAsync_OrderedOutput_WithLifecycleHooks_MaintainsOrder()
     {
-        // Arrange
         var source = Enumerable.Range(1, 50).ToAsyncEnumerable();
         var startedItems = new System.Collections.Concurrent.ConcurrentBag<int>();
         var completedItems = new System.Collections.Concurrent.ConcurrentBag<int>();
@@ -297,7 +278,6 @@ public class OrderedOutputTests
             }, options)
             .ToListAsync();
 
-        // Assert
         results.Should().Equal(Enumerable.Range(1, 50).Select(x => x * 2));
         startedItems.Should().HaveCount(50);
         completedItems.Should().HaveCount(50);
