@@ -128,6 +128,63 @@ Available strategies:
 - **Linear**: `BaseDelay * attempt` - Gentler, linear growth
 - **LinearJitter**: `Random(0, BaseDelay * attempt)` - Linear with randomization
 
+### Progress Reporting
+
+Track progress with real-time metrics for long-running operations:
+
+```csharp
+// Monitor ETL job progress with ETA
+var records = await database.GetRecordsAsync().SelectParallelAsync(
+    async (record, ct) => await TransformAndLoadAsync(record, ct),
+    new ParallelOptionsRivulet
+    {
+        MaxDegreeOfParallelism = 20,
+        Progress = new ProgressOptions
+        {
+            ReportInterval = TimeSpan.FromSeconds(5),
+            OnProgress = progress =>
+            {
+                Console.WriteLine($"Progress: {progress.ItemsCompleted}/{progress.TotalItems}");
+                Console.WriteLine($"Rate: {progress.ItemsPerSecond:F1} items/sec");
+                Console.WriteLine($"ETA: {progress.EstimatedTimeRemaining}");
+                Console.WriteLine($"Errors: {progress.ErrorCount}");
+                return ValueTask.CompletedTask;
+            }
+        }
+    });
+
+// Streaming progress (total unknown)
+await foreach (var result in stream.SelectParallelStreamAsync(
+    async (item, ct) => await ProcessAsync(item, ct),
+    new ParallelOptionsRivulet
+    {
+        Progress = new ProgressOptions
+        {
+            ReportInterval = TimeSpan.FromSeconds(10),
+            OnProgress = progress =>
+            {
+                // No ETA or percent for streams - total is unknown
+                Console.WriteLine($"Processed: {progress.ItemsCompleted}");
+                Console.WriteLine($"Rate: {progress.ItemsPerSecond:F1} items/sec");
+                return ValueTask.CompletedTask;
+            }
+        }
+    }))
+{
+    // Process results as they arrive
+}
+```
+
+Progress metrics:
+- **ItemsStarted**: Total items that began processing
+- **ItemsCompleted**: Successfully completed items
+- **TotalItems**: Total count (known for arrays/lists, null for streams)
+- **ErrorCount**: Failed items across all retries
+- **Elapsed**: Time since operation started
+- **ItemsPerSecond**: Processing rate
+- **EstimatedTimeRemaining**: ETA (when total is known)
+- **PercentComplete**: 0-100% (when total is known)
+
 ## Development Scripts
 
 The repository includes PowerShell scripts to streamline development and release workflows:
@@ -234,5 +291,4 @@ The confirmation step shows:
 
 - Metrics via EventCounters
 - Batching operator
-- Progress reporting
 - Rate limiting

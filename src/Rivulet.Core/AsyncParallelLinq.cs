@@ -41,6 +41,13 @@ public static class AsyncParallelLinq
             : null;
         var errors = new ConcurrentBag<Exception>();
 
+        var sourceList = source as ICollection<TSource> ?? source.ToList();
+        var totalItems = sourceList.Count;
+
+        var progressTracker = options.Progress is not null
+            ? new ProgressTracker(totalItems, options.Progress, token)
+            : null;
+
         var channel = Channel.CreateBounded<(int idx, TSource item)>(new BoundedChannelOptions(options.ChannelCapacity)
         {
             SingleReader = false,
@@ -53,7 +60,7 @@ public static class AsyncParallelLinq
             var i = 0;
             try
             {
-                foreach (var item in source)
+                foreach (var item in sourceList)
                 {
                     token.ThrowIfCancellationRequested();
                     if (!await channel.Writer.WaitToWriteAsync(token))
@@ -77,6 +84,7 @@ public static class AsyncParallelLinq
                 {
                     try
                     {
+                        progressTracker?.IncrementStarted();
                         if (options.OnStartItemAsync is not null) await options.OnStartItemAsync(idx);
                         var result = await RetryPolicy.ExecuteWithRetry(item, idx, taskSelector, options, token);
 
@@ -85,11 +93,13 @@ public static class AsyncParallelLinq
                         else
                             results!.Add(result);
 
+                        progressTracker?.IncrementCompleted();
                         if (options.OnCompleteItemAsync is not null) await options.OnCompleteItemAsync(idx);
                     }
                     catch (Exception ex)
                     {
                         errors.Add(ex);
+                        progressTracker?.IncrementErrors();
 
                         if (options.OnErrorAsync is not null)
                         {
@@ -114,6 +124,10 @@ public static class AsyncParallelLinq
         catch when (options.ErrorMode != ErrorMode.FailFast)
         {
             // Swallow here; handled by mode below
+        }
+        finally
+        {
+            progressTracker?.Dispose();
         }
 
         if (options.ErrorMode == ErrorMode.CollectAndContinue && errors.Count > 0)
@@ -146,6 +160,10 @@ public static class AsyncParallelLinq
         options ??= new ParallelOptionsRivulet();
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         var token = cts.Token;
+
+        var progressTracker = options.Progress is not null
+            ? new ProgressTracker(null, options.Progress, token)
+            : null;
 
         var input = Channel.CreateBounded<(int idx, TSource item)>(new BoundedChannelOptions(options.ChannelCapacity)
         {
@@ -183,13 +201,17 @@ public static class AsyncParallelLinq
             {
                 try
                 {
+                    progressTracker?.IncrementStarted();
                     if (options.OnStartItemAsync is not null) await options.OnStartItemAsync(idx);
                     var res = await RetryPolicy.ExecuteWithRetry(item, idx, taskSelector, options, token);
                     await output.Writer.WriteAsync((idx, res), token);
+                    progressTracker?.IncrementCompleted();
                     if (options.OnCompleteItemAsync is not null) await options.OnCompleteItemAsync(idx);
                 }
                 catch (Exception ex)
                 {
+                    progressTracker?.IncrementErrors();
+
                     if (options.OnErrorAsync is not null)
                     {
                         var cont = await options.OnErrorAsync(idx, ex);
@@ -217,6 +239,7 @@ public static class AsyncParallelLinq
             finally
             {
                 output.Writer.TryComplete();
+                progressTracker?.Dispose();
             }
         }, token);
 
