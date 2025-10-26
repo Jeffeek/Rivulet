@@ -114,12 +114,15 @@ public class ProgressReportingTests
             },
             options);
 
-        results.Should().HaveCount(16);
+        results.Should().HaveCount(16); // 20 - 4 errors
         snapshots.Should().NotBeEmpty();
 
-        var lastSnapshot = snapshots.Last();
-        lastSnapshot.ErrorCount.Should().Be(4);
-        lastSnapshot.ItemsCompleted.Should().Be(16);
+        // Use Max to avoid race condition - the final snapshot might not be last in the bag
+        var maxErrors = snapshots.Max(s => s.ErrorCount);
+        var maxCompleted = snapshots.Max(s => s.ItemsCompleted);
+
+        maxErrors.Should().Be(4); // Should eventually report all 4 errors
+        maxCompleted.Should().Be(16); // Should eventually report all 16 completed
     }
 
     [Fact]
