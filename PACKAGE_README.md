@@ -93,6 +93,7 @@ await foreach (var result in source.SelectParallelStreamAsync(
 - ✅ **Error Handling Modes** - FailFast, CollectAndContinue, or BestEffort
 - ✅ **Streaming Support** - Process results incrementally via `IAsyncEnumerable<T>`
 - ✅ **Ordered Output** - Maintain input sequence order when needed
+- ✅ **Runtime Metrics** - Built-in monitoring via EventCounters and custom callbacks
 - ✅ **Cancellation** - Full `CancellationToken` support throughout
 - ✅ **Lifecycle Hooks** - OnStart, OnComplete, OnError, OnThrottle callbacks
 - ✅ **Per-Item Timeouts** - Enforce timeouts for individual operations

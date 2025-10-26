@@ -4,9 +4,9 @@ internal static class RetryPolicy
 {
     public static async ValueTask<TResult> ExecuteWithRetry<T, TResult>(
         T item,
-        int index,
         Func<T, CancellationToken, ValueTask<TResult>> func,
         ParallelOptionsRivulet options,
+        MetricsTracker? metricsTracker,
         CancellationToken ct)
     {
         var attempt = 0;
@@ -26,6 +26,7 @@ internal static class RetryPolicy
             catch (Exception ex) when (attempt < options.MaxRetries && (options.IsTransient?.Invoke(ex) ?? false))
             {
                 attempt++;
+                metricsTracker?.IncrementRetries();
                 var delay = CalculateDelay(options.BackoffStrategy, options.BaseDelay, attempt, ref previousDelay);
                 await Task.Delay(delay, ct).ConfigureAwait(false);
             }

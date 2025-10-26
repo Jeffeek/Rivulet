@@ -259,6 +259,81 @@ await foreach (var result in dataStream.BatchParallelStreamAsync(
 - Message queue batch processing
 - ETL pipelines with staged operations
 
+### Runtime Metrics & EventCounters
+
+Monitor parallel operations with built-in metrics via .NET EventCounters and optional callbacks for custom monitoring systems:
+
+```csharp
+// Zero-cost monitoring with EventCounters (always enabled)
+// Monitor with: dotnet-counters monitor --process-id <PID> --counters Rivulet.Core
+var results = await items.SelectParallelAsync(ProcessAsync, options);
+
+// Custom metrics callback for Prometheus, DataDog, Application Insights
+var options = new ParallelOptionsRivulet
+{
+    MaxDegreeOfParallelism = 32,
+    Metrics = new MetricsOptions
+    {
+        SampleInterval = TimeSpan.FromSeconds(10),
+        OnMetricsSample = async snapshot =>
+        {
+            // Export to your monitoring system
+            await prometheus.RecordMetrics(new
+            {
+                active_workers = snapshot.ActiveWorkers,
+                items_completed = snapshot.ItemsCompleted,
+                throughput = snapshot.ItemsPerSecond,
+                error_rate = snapshot.ErrorRate,
+                total_retries = snapshot.TotalRetries
+            });
+        }
+    }
+};
+
+var results = await urls.SelectParallelAsync(
+    async (url, ct) => await httpClient.GetAsync(url, ct),
+    options);
+```
+
+**Available Metrics:**
+- **ActiveWorkers**: Current number of active worker tasks
+- **QueueDepth**: Items waiting in the input channel queue
+- **ItemsStarted**: Total items that began processing
+- **ItemsCompleted**: Total items completed successfully
+- **TotalRetries**: Cumulative retry attempts across all items
+- **TotalFailures**: Total failed items (after all retries)
+- **ThrottleEvents**: Backpressure events when queue is full
+- **ItemsPerSecond**: Current throughput rate
+- **ErrorRate**: Failure rate (TotalFailures / ItemsStarted)
+- **Elapsed**: Time since operation started
+
+**EventCounters (zero-cost monitoring):**
+```bash
+# Monitor in real-time with dotnet-counters
+dotnet-counters monitor --process-id <PID> --counters Rivulet.Core
+
+# Available counters:
+# - items-started
+# - items-completed
+# - total-retries
+# - total-failures
+# - throttle-events
+# - drain-events
+```
+
+**Key Features:**
+- **Zero-cost when not monitored**: EventCounters have minimal overhead
+- **Thread-safe**: Uses lock-free Interlocked operations
+- **Callback isolation**: Exceptions in callbacks don't break operations
+- **Integrates with all operators**: SelectParallelAsync, SelectParallelStreamAsync, ForEachParallelAsync, BatchParallel*
+
+**Use Cases:**
+- Production monitoring and alerting
+- Performance tuning and capacity planning
+- Debugging throughput issues
+- SLA compliance verification
+- Auto-scaling triggers
+
 ## Development Scripts
 
 The repository includes PowerShell scripts to streamline development and release workflows:
@@ -363,5 +438,6 @@ The confirmation step shows:
 
 ### Roadmap
 
-- Metrics via EventCounters
-- Rate limiting
+- Rate limiting with token bucket
+- Circuit breaker pattern
+- Adaptive concurrency
