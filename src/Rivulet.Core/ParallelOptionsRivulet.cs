@@ -108,4 +108,17 @@ public sealed class ParallelOptionsRivulet
     /// Useful for ETL jobs, bulk imports, data migrations, and other long-running batch operations.
     /// </remarks>
     public ProgressOptions? Progress { get; init; }
+
+    /// <summary>
+    /// Gets the runtime metrics collection options for monitoring parallel operations.
+    /// When null, metrics are still exposed via EventCounters but no callback is invoked. Defaults to null.
+    /// </summary>
+    /// <remarks>
+    /// Runtime metrics provide visibility into operational characteristics including:
+    /// active workers, queue depth, throughput, error rates, retries, and backpressure events.
+    /// Metrics are always available via .NET EventCounters for zero-cost monitoring.
+    /// The optional callback enables custom metric export to monitoring systems like Prometheus, Application Insights, or DataDog.
+    /// Useful for production monitoring, performance tuning, alerting, and capacity planning.
+    /// </remarks>
+    public MetricsOptions? Metrics { get; init; }
 }

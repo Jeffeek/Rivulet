@@ -48,6 +48,9 @@ public static class AsyncParallelLinq
             ? new ProgressTracker(totalItems, options.Progress, token)
             : null;
 
+        var metricsTracker = new MetricsTracker(options.Metrics, token);
+        metricsTracker.SetActiveWorkers(options.MaxDegreeOfParallelism);
+
         var channel = Channel.CreateBounded<(int idx, TSource item)>(new BoundedChannelOptions(options.ChannelCapacity)
         {
             SingleReader = false,
@@ -68,7 +71,10 @@ public static class AsyncParallelLinq
 
                     await channel.Writer.WriteAsync((i, item), token);
                     if (i++ % options.MaxDegreeOfParallelism == 0 && options.OnThrottleAsync is not null)
+                    {
+                        metricsTracker.IncrementThrottleEvents();
                         await options.OnThrottleAsync(i);
+                    }
                 }
             }
             finally
@@ -85,8 +91,9 @@ public static class AsyncParallelLinq
                     try
                     {
                         progressTracker?.IncrementStarted();
+                        metricsTracker.IncrementItemsStarted();
                         if (options.OnStartItemAsync is not null) await options.OnStartItemAsync(idx);
-                        var result = await RetryPolicy.ExecuteWithRetry(item, idx, taskSelector, options, token);
+                        var result = await RetryPolicy.ExecuteWithRetry(item, taskSelector, options, metricsTracker, token);
 
                         if (options.OrderedOutput)
                             orderedResults![idx] = result;
@@ -94,12 +101,14 @@ public static class AsyncParallelLinq
                             results!.Add(result);
 
                         progressTracker?.IncrementCompleted();
+                        metricsTracker.IncrementItemsCompleted();
                         if (options.OnCompleteItemAsync is not null) await options.OnCompleteItemAsync(idx);
                     }
                     catch (Exception ex)
                     {
                         errors.Add(ex);
                         progressTracker?.IncrementErrors();
+                        metricsTracker.IncrementFailures();
 
                         if (options.OnErrorAsync is not null)
                         {
@@ -128,6 +137,7 @@ public static class AsyncParallelLinq
         finally
         {
             progressTracker?.Dispose();
+            metricsTracker.Dispose();
         }
 
         if (options.ErrorMode == ErrorMode.CollectAndContinue && errors.Count > 0)
@@ -164,6 +174,9 @@ public static class AsyncParallelLinq
         var progressTracker = options.Progress is not null
             ? new ProgressTracker(null, options.Progress, token)
             : null;
+
+        var metricsTracker = new MetricsTracker(options.Metrics, token);
+        metricsTracker.SetActiveWorkers(options.MaxDegreeOfParallelism);
 
         var input = Channel.CreateBounded<(int idx, TSource item)>(new BoundedChannelOptions(options.ChannelCapacity)
         {
@@ -202,15 +215,18 @@ public static class AsyncParallelLinq
                 try
                 {
                     progressTracker?.IncrementStarted();
+                    metricsTracker.IncrementItemsStarted();
                     if (options.OnStartItemAsync is not null) await options.OnStartItemAsync(idx);
-                    var res = await RetryPolicy.ExecuteWithRetry(item, idx, taskSelector, options, token);
+                    var res = await RetryPolicy.ExecuteWithRetry(item, taskSelector, options, metricsTracker, token);
                     await output.Writer.WriteAsync((idx, res), token);
                     progressTracker?.IncrementCompleted();
+                    metricsTracker.IncrementItemsCompleted();
                     if (options.OnCompleteItemAsync is not null) await options.OnCompleteItemAsync(idx);
                 }
                 catch (Exception ex)
                 {
                     progressTracker?.IncrementErrors();
+                    metricsTracker.IncrementFailures();
 
                     if (options.OnErrorAsync is not null)
                     {
@@ -240,6 +256,7 @@ public static class AsyncParallelLinq
             {
                 output.Writer.TryComplete();
                 progressTracker?.Dispose();
+                metricsTracker.Dispose();
             }
         }, token);
 
