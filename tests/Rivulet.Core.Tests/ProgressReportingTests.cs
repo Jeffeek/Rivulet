@@ -337,7 +337,7 @@ public class ProgressReportingTests
         };
 
         await source.ForEachParallelAsync(
-            async (x, ct) =>
+            async (_, ct) =>
             {
                 await Task.Delay(10, ct);
                 Interlocked.Increment(ref processedCount);
@@ -556,5 +556,267 @@ public class ProgressReportingTests
 
         await act.Should().ThrowAsync<OperationCanceledException>();
         snapshots.Should().NotBeEmpty();
+    }
+
+    [Fact]
+    public async Task ProgressReporting_WithNullOnProgressCallback_DoesNotThrow()
+    {
+        var source = Enumerable.Range(1, 20);
+
+        var options = new ParallelOptionsRivulet
+        {
+            Progress = new ProgressOptions
+            {
+                ReportInterval = TimeSpan.FromMilliseconds(50),
+                OnProgress = null
+            }
+        };
+
+        var results = await source.SelectParallelAsync(
+            async (x, ct) =>
+            {
+                await Task.Delay(5, ct);
+                return x * 2;
+            },
+            options);
+
+        results.Should().HaveCount(20);
+    }
+
+    [Fact]
+    public async Task ProgressReporting_VeryFastCompletion_HandlesZeroElapsedTime()
+    {
+        var source = Enumerable.Range(1, 5);
+        var firstReport = true;
+
+        var options = new ParallelOptionsRivulet
+        {
+            MaxDegreeOfParallelism = 10,
+            Progress = new ProgressOptions
+            {
+                ReportInterval = TimeSpan.FromMilliseconds(1),
+                OnProgress = snapshot =>
+                {
+                    if (!firstReport || snapshot.Elapsed.TotalSeconds != 0) return ValueTask.CompletedTask;
+                    firstReport = false;
+                    return ValueTask.CompletedTask;
+                }
+            }
+        };
+
+        await source.SelectParallelAsync(
+            async (x, _) =>
+            {
+                await Task.CompletedTask;
+                return x;
+            },
+            options);
+    }
+
+    [Fact]
+    public async Task ProgressReporting_DoubleDispose_DoesNotThrow()
+    {
+        var source = Enumerable.Range(1, 10);
+        var progressCallbackCount = 0;
+
+        var options = new ParallelOptionsRivulet
+        {
+            Progress = new ProgressOptions
+            {
+                ReportInterval = TimeSpan.FromMilliseconds(50),
+                OnProgress = _ =>
+                {
+                    Interlocked.Increment(ref progressCallbackCount);
+                    return ValueTask.CompletedTask;
+                }
+            }
+        };
+
+        var results = await source.SelectParallelAsync(
+            async (x, ct) =>
+            {
+                await Task.Delay(5, ct);
+                return x * 2;
+            },
+            options);
+
+        results.Should().HaveCount(10);
+    }
+
+    [Fact]
+    public async Task ProgressReporting_SlowCallback_DisposesGracefully()
+    {
+        var source = Enumerable.Range(1, 10);
+        var callbackExecuted = false;
+
+        var options = new ParallelOptionsRivulet
+        {
+            Progress = new ProgressOptions
+            {
+                ReportInterval = TimeSpan.FromMilliseconds(50),
+                OnProgress = async _ =>
+                {
+                    callbackExecuted = true;
+                    await Task.Delay(100);
+                }
+            }
+        };
+
+        var results = await source.SelectParallelAsync(
+            async (x, ct) =>
+            {
+                await Task.Delay(5, ct);
+                return x;
+            },
+            options);
+
+        results.Should().HaveCount(10);
+        callbackExecuted.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ProgressReporting_StreamingWithNullOnProgress_DoesNotThrow()
+    {
+        var source = Enumerable.Range(1, 10).ToAsyncEnumerable();
+
+        var options = new ParallelOptionsRivulet
+        {
+            Progress = new ProgressOptions
+            {
+                OnProgress = null
+            }
+        };
+
+        var results = await source.SelectParallelStreamAsync(
+            async (x, ct) =>
+            {
+                await Task.Delay(5, ct);
+                return x * 2;
+            },
+            options).ToListAsync();
+
+        results.Should().HaveCount(10);
+    }
+
+    [Fact]
+    public async Task ProgressReporting_ImmediateCancellation_DisposesCleanly()
+    {
+        var source = Enumerable.Range(1, 1000);
+        var cts = new CancellationTokenSource();
+
+        var options = new ParallelOptionsRivulet
+        {
+            Progress = new ProgressOptions
+            {
+                ReportInterval = TimeSpan.FromMilliseconds(10),
+                OnProgress = _ => ValueTask.CompletedTask
+            }
+        };
+
+        await cts.CancelAsync();
+
+        var act = async () => await source.SelectParallelAsync(
+            async (x, ct) =>
+            {
+                await Task.Delay(100, ct);
+                return x;
+            },
+            options,
+            cts.Token);
+
+        await act.Should().ThrowAsync<OperationCanceledException>();
+    }
+
+    [Fact]
+    public async Task ProgressReporting_ReporterTaskException_DisposesGracefully()
+    {
+        var source = Enumerable.Range(1, 10);
+        var reportCount = 0;
+
+        var options = new ParallelOptionsRivulet
+        {
+            Progress = new ProgressOptions
+            {
+                ReportInterval = TimeSpan.FromMilliseconds(1),
+                OnProgress = _ =>
+                {
+                    Interlocked.Increment(ref reportCount);
+                    return ValueTask.CompletedTask;
+                }
+            }
+        };
+
+        var results = await source.SelectParallelAsync(
+            async (x, ct) =>
+            {
+                await Task.Delay(5, ct);
+                return x;
+            },
+            options);
+
+        results.Should().HaveCount(10);
+        reportCount.Should().BeGreaterThan(0);
+    }
+
+    [Fact]
+    public async Task ProgressReporting_ZeroElapsedTime_CalculatesZeroRate()
+    {
+        var source = Enumerable.Range(1, 3);
+
+        var options = new ParallelOptionsRivulet
+        {
+            MaxDegreeOfParallelism = 10,
+            Progress = new ProgressOptions
+            {
+                ReportInterval = TimeSpan.FromMilliseconds(1),
+                OnProgress = snapshot =>
+                {
+                    if (snapshot.Elapsed.TotalMilliseconds < 10)
+                    {
+                        snapshot.ItemsPerSecond.Should().BeGreaterThanOrEqualTo(0);
+                    }
+                    return ValueTask.CompletedTask;
+                }
+            }
+        };
+
+        await source.SelectParallelAsync(
+            (x, _) => ValueTask.FromResult(x),
+            options);
+    }
+
+    [Fact]
+    public async Task ProgressReporting_MultipleRapidDisposals_HandledSafely()
+    {
+        var source = Enumerable.Range(1, 5).ToArray();
+        var disposalCount = 0;
+
+        var options = new ParallelOptionsRivulet
+        {
+            Progress = new ProgressOptions
+            {
+                ReportInterval = TimeSpan.FromMilliseconds(10),
+                OnProgress = _ =>
+                {
+                    Interlocked.Increment(ref disposalCount);
+                    return ValueTask.CompletedTask;
+                }
+            }
+        };
+
+        for (var i = 0; i < 3; i++)
+        {
+            var results = await source.SelectParallelAsync(
+                async (x, ct) =>
+                {
+                    await Task.Delay(2, ct);
+                    return x;
+                },
+                options);
+
+            results.Should().HaveCount(5);
+        }
+
+        disposalCount.Should().BeGreaterThan(0);
     }
 }

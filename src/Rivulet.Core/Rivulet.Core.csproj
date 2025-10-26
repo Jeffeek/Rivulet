@@ -22,6 +22,9 @@
 		<None Include="..\..\PACKAGE_README.md" Pack="true" PackagePath="\README.md" />
 	</ItemGroup>
 	<ItemGroup>
+		<InternalsVisibleTo Include="Rivulet.Core.Tests" />
+	</ItemGroup>
+	<ItemGroup>
 		<PackageReference Include="System.Linq.Async" Version="6.0.3" />
 		<PackageReference Include="System.Threading.Channels" Version="8.0.0" />
 	</ItemGroup>
