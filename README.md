@@ -482,7 +482,39 @@ var results = await heavyTasks.SelectParallelAsync(
 - Control database connection usage
 - Implement fair resource sharing
 
+### Circuit Breaker
+
+Protect your application from cascading failures when a downstream service is unhealthy. The circuit breaker monitors for failures and, once a threshold is reached, opens the circuit to fail operations fast without waiting for timeouts. This gives the unhealthy service time to recover.
+
+```csharp
+// Protect against a flaky API
+var results = await urls.SelectParallelAsync(
+    async (url, ct) => await httpClient.GetAsync(url, ct),
+    new ParallelOptionsRivulet
+    {
+        MaxDegreeOfParallelism = 32,
+        CircuitBreaker = new CircuitBreakerOptions
+        {
+            FailureThreshold = 0.5, // Open if 50% of operations fail
+            OpenTimeout = TimeSpan.FromSeconds(30), // Wait 30s before trying again
+            SamplingDuration = TimeSpan.FromSeconds(20), // In a 20s window
+            MinimumThroughput = 10, // With at least 10 operations
+            OnStateChange = (from, to) => Console.WriteLine($"Circuit changed from {from} to {to}")
+        }
+    });
+```
+
+**States:**
+- **Closed**: Normal operation. Operations are executed.
+- **Open**: Failures have exceeded the threshold. All operations fail immediately with `CircuitBreakerOpenException`. Retries are paused.
+- **Half-Open**: After the `OpenTimeout` expires, the circuit allows a limited number of trial operations. If they succeed, the circuit closes. If they fail, it re-opens.
+
+**Key Features:**
+- **Automatic failure detection**: Monitors operations and opens the circuit based on failure rates.
+- **Configurable thresholds**: Customize failure/success rates, timeouts, and sampling windows.
+- **State change notifications**: Get callbacks when the circuit state changes.
+- **Resiliency**: Prevents an unhealthy service from overwhelming your application.
+
 ### Roadmap
 
-- Circuit breaker pattern
 - Adaptive concurrency

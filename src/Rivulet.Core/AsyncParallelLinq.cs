@@ -55,6 +55,10 @@ public static class AsyncParallelLinq
             ? new TokenBucket(options.RateLimit)
             : null;
 
+        var circuitBreaker = options.CircuitBreaker is not null
+            ? new CircuitBreaker(options.CircuitBreaker)
+            : null;
+
         var channel = Channel.CreateBounded<(int idx, TSource item)>(new BoundedChannelOptions(options.ChannelCapacity)
         {
             SingleReader = false,
@@ -100,7 +104,17 @@ public static class AsyncParallelLinq
                         progressTracker?.IncrementStarted();
                         metricsTracker.IncrementItemsStarted();
                         if (options.OnStartItemAsync is not null) await options.OnStartItemAsync(idx);
-                        var result = await RetryPolicy.ExecuteWithRetry(item, taskSelector, options, metricsTracker, token);
+
+                        TResult result;
+                        if (circuitBreaker is not null)
+                        {
+                            result = await circuitBreaker.ExecuteAsync(async () =>
+                                await RetryPolicy.ExecuteWithRetry(item, taskSelector, options, metricsTracker, token), token);
+                        }
+                        else
+                        {
+                            result = await RetryPolicy.ExecuteWithRetry(item, taskSelector, options, metricsTracker, token);
+                        }
 
                         if (options.OrderedOutput)
                             orderedResults![idx] = result;
@@ -189,6 +203,10 @@ public static class AsyncParallelLinq
             ? new TokenBucket(options.RateLimit)
             : null;
 
+        var circuitBreaker = options.CircuitBreaker is not null
+            ? new CircuitBreaker(options.CircuitBreaker)
+            : null;
+
         var input = Channel.CreateBounded<(int idx, TSource item)>(new BoundedChannelOptions(options.ChannelCapacity)
         {
             SingleReader = false,
@@ -231,7 +249,18 @@ public static class AsyncParallelLinq
                     progressTracker?.IncrementStarted();
                     metricsTracker.IncrementItemsStarted();
                     if (options.OnStartItemAsync is not null) await options.OnStartItemAsync(idx);
-                    var res = await RetryPolicy.ExecuteWithRetry(item, taskSelector, options, metricsTracker, token);
+
+                    TResult res;
+                    if (circuitBreaker is not null)
+                    {
+                        res = await circuitBreaker.ExecuteAsync(async () =>
+                            await RetryPolicy.ExecuteWithRetry(item, taskSelector, options, metricsTracker, token), token);
+                    }
+                    else
+                    {
+                        res = await RetryPolicy.ExecuteWithRetry(item, taskSelector, options, metricsTracker, token);
+                    }
+
                     await output.Writer.WriteAsync((idx, res), token);
                     progressTracker?.IncrementCompleted();
                     metricsTracker.IncrementItemsCompleted();
