@@ -436,8 +436,53 @@ The confirmation step shows:
 - List of actions that will be performed
 - Allows you to cancel before any changes are pushed
 
+### Rate Limiting with Token Bucket
+
+Control the maximum rate of operations using the token bucket algorithm, perfect for respecting API rate limits or smoothing traffic bursts:
+
+```csharp
+// Limit to 100 requests/sec with burst capacity of 200
+var results = await apiUrls.SelectParallelAsync(
+    async (url, ct) => await httpClient.GetAsync(url, ct),
+    new ParallelOptionsRivulet
+    {
+        MaxDegreeOfParallelism = 32,
+        RateLimit = new RateLimitOptions
+        {
+            TokensPerSecond = 100,  // Sustained rate
+            BurstCapacity = 200     // Allow brief bursts
+        }
+    });
+
+// Heavy operations consume more tokens
+var results = await heavyTasks.SelectParallelAsync(
+    async (task, ct) => await ProcessHeavyAsync(task, ct),
+    new ParallelOptionsRivulet
+    {
+        RateLimit = new RateLimitOptions
+        {
+            TokensPerSecond = 50,
+            BurstCapacity = 50,
+            TokensPerOperation = 5  // Each operation costs 5 tokens
+        }
+    });
+```
+
+**Key Features:**
+- **Token bucket algorithm**: Allows controlled bursts while maintaining average rate
+- **Configurable rates**: Set tokens per second and burst capacity
+- **Weighted operations**: Different operations can consume different token amounts
+- **Works with all operators**: SelectParallel*, ForEachParallel*, BatchParallel*
+- **Combines with retries**: Rate limiting applies to retry attempts too
+
+**Use Cases:**
+- Respect API rate limits (e.g., 1000 requests/hour)
+- Smooth traffic bursts to downstream services
+- Prevent resource exhaustion
+- Control database connection usage
+- Implement fair resource sharing
+
 ### Roadmap
 
-- Rate limiting with token bucket
 - Circuit breaker pattern
 - Adaptive concurrency
