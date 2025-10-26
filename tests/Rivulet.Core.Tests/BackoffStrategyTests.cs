@@ -404,4 +404,71 @@ public class BackoffStrategyTests
         results.Should().Equal(new[] { 2, 4, 6, 8, 10 });
         attemptCounts[3].Should().Be(3);
     }
+
+    [Fact]
+    public async Task BackoffStrategy_InvalidEnumValue_FallsBackToExponential()
+    {
+        var attemptCounts = new ConcurrentDictionary<int, int>();
+
+        var options = new ParallelOptionsRivulet
+        {
+            MaxRetries = 2,
+            BaseDelay = TimeSpan.FromMilliseconds(10),
+            BackoffStrategy = (BackoffStrategy)999,
+            IsTransient = _ => true
+        };
+
+        var results = await new[] { 1 }.SelectParallelAsync(
+            (x, _) =>
+            {
+                var attempts = attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
+                if (attempts <= 2)
+                    throw new InvalidOperationException("Transient error");
+                return new ValueTask<int>(x);
+            },
+            options);
+
+        results.Should().HaveCount(1);
+        results[0].Should().Be(1);
+        attemptCounts[1].Should().Be(3);
+    }
+
+    [Fact]
+    public async Task BackoffStrategy_AllStrategiesInSwitchCovered()
+    {
+        var strategies = new[]
+        {
+            BackoffStrategy.Exponential,
+            BackoffStrategy.ExponentialJitter,
+            BackoffStrategy.DecorrelatedJitter,
+            BackoffStrategy.Linear,
+            BackoffStrategy.LinearJitter,
+            (BackoffStrategy)999
+        };
+
+        foreach (var strategy in strategies)
+        {
+            var attemptCounts = new ConcurrentDictionary<int, int>();
+
+            var options = new ParallelOptionsRivulet
+            {
+                MaxRetries = 1,
+                BaseDelay = TimeSpan.FromMilliseconds(5),
+                BackoffStrategy = strategy,
+                IsTransient = _ => true
+            };
+
+            var results = await new[] { 1 }.SelectParallelAsync(
+                (x, _) =>
+                {
+                    var attempts = attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
+                    if (attempts <= 1)
+                        throw new InvalidOperationException($"Test {strategy}");
+                    return new ValueTask<int>(x);
+                },
+                options);
+
+            results.Should().HaveCount(1, $"strategy {strategy} should complete successfully");
+        }
+    }
 }
