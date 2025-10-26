@@ -23,7 +23,7 @@
 
 - Async-first (`ValueTask`), works with `IEnumerable<T>` and `IAsyncEnumerable<T>`
 - Bounded concurrency with backpressure (Channels)
-- Retry policy with transient detection and exponential backoff
+- Retry policy with transient detection and configurable backoff strategies (Exponential, ExponentialJitter, DecorrelatedJitter, Linear, LinearJitter)
 - Per-item timeouts, cancellation, lifecycle hooks
 - Flexible error modes: FailFast, CollectAndContinue, BestEffort
 - Ordered output mode for sequence-sensitive operations
@@ -81,6 +81,52 @@ await foreach (var result in source.SelectParallelStreamAsync(
     // Results arrive in input order
 }
 ```
+
+### Backoff Strategies
+
+Choose from multiple backoff strategies to optimize retry behavior:
+
+```csharp
+// Exponential backoff with jitter - recommended for rate-limited APIs
+// Reduces thundering herd by randomizing retry delays
+var results = await requests.SelectParallelAsync(
+    async (req, ct) => await apiClient.SendAsync(req, ct),
+    new ParallelOptionsRivulet
+    {
+        MaxRetries = 4,
+        BaseDelay = TimeSpan.FromMilliseconds(100),
+        BackoffStrategy = BackoffStrategy.ExponentialJitter,  // Random(0, BaseDelay * 2^attempt)
+        IsTransient = ex => ex is HttpRequestException
+    });
+
+// Decorrelated jitter - best for preventing synchronization across multiple clients
+var results = await tasks.SelectParallelAsync(
+    async (task, ct) => await ProcessAsync(task, ct),
+    new ParallelOptionsRivulet
+    {
+        MaxRetries = 3,
+        BackoffStrategy = BackoffStrategy.DecorrelatedJitter,  // Random based on previous delay
+        IsTransient = ex => ex is TimeoutException
+    });
+
+// Linear backoff - gentler, predictable increase
+var results = await items.SelectParallelAsync(
+    async (item, ct) => await SaveAsync(item, ct),
+    new ParallelOptionsRivulet
+    {
+        MaxRetries = 5,
+        BaseDelay = TimeSpan.FromSeconds(1),
+        BackoffStrategy = BackoffStrategy.Linear,  // BaseDelay * attempt
+        IsTransient = ex => ex is InvalidOperationException
+    });
+```
+
+Available strategies:
+- **Exponential** *(default)*: `BaseDelay * 2^(attempt-1)` - Predictable exponential growth
+- **ExponentialJitter**: `Random(0, BaseDelay * 2^(attempt-1))` - Reduces thundering herd
+- **DecorrelatedJitter**: `Random(BaseDelay, PreviousDelay * 3)` - Prevents client synchronization
+- **Linear**: `BaseDelay * attempt` - Gentler, linear growth
+- **LinearJitter**: `Random(0, BaseDelay * attempt)` - Linear with randomization
 
 ## Development Scripts
 
@@ -187,7 +233,6 @@ The confirmation step shows:
 ### Roadmap
 
 - Metrics via EventCounters
-- Built-in retry policies (Jitter)
 - Batching operator
 - Progress reporting
 - Rate limiting

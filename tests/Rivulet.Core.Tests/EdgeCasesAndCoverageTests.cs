@@ -21,6 +21,7 @@ public class EdgeCasesAndCoverageTests
         options.IsTransient.Should().BeNull();
         options.MaxRetries.Should().Be(0);
         options.BaseDelay.Should().Be(TimeSpan.FromMilliseconds(100));
+        options.BackoffStrategy.Should().Be(BackoffStrategy.Exponential);
         options.ChannelCapacity.Should().Be(1024);
     }
 
@@ -40,6 +41,7 @@ public class EdgeCasesAndCoverageTests
             IsTransient = _ => true,
             MaxRetries = 5,
             BaseDelay = TimeSpan.FromMilliseconds(200),
+            BackoffStrategy = BackoffStrategy.ExponentialJitter,
             ChannelCapacity = 500
         };
 
@@ -54,6 +56,7 @@ public class EdgeCasesAndCoverageTests
         options.IsTransient.Should().NotBeNull();
         options.MaxRetries.Should().Be(5);
         options.BaseDelay.Should().Be(TimeSpan.FromMilliseconds(200));
+        options.BackoffStrategy.Should().Be(BackoffStrategy.ExponentialJitter);
         options.ChannelCapacity.Should().Be(500);
     }
 

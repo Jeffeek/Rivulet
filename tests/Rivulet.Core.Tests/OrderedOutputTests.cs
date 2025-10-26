@@ -13,9 +13,7 @@ public class OrderedOutputTests
         {
             MaxDegreeOfParallelism = 16,
             OrderedOutput = true
-        };
-
-        // Act
+        };
         var results = await source.SelectParallelAsync(
             async (x, ct) =>
             {
@@ -44,8 +42,6 @@ public class OrderedOutputTests
         var orderedCount = 0;
         var totalRuns = 10;
         List<int> results = null!;
-
-        // Act - run multiple times to check if ordering varies
         for (var run = 0; run < totalRuns; run++)
         {
             results = await source.SelectParallelAsync(
@@ -81,11 +77,8 @@ public class OrderedOutputTests
                 await Task.Delay(Random.Shared.Next(1, 10), ct);
                 return x * 2;
             }, options)
-            .ToListAsync();
+            .ToListAsync();
 
-        // Act
-
-        // Assert
         results.Should().HaveCount(100);
         results.Should().Equal(Enumerable.Range(1, 100).Select(x => x * 2));
     }
@@ -101,26 +94,20 @@ public class OrderedOutputTests
             OrderedOutput = true
         };
 
-        var results = new List<int>();
         var completionOrder = new List<int>();
 
-        // Act
-        await foreach (var result in source.SelectParallelStreamAsync(
-            async (x, ct) =>
+        var results = await source.SelectParallelStreamAsync(async (x, ct) =>
             {
                 // Items with higher numbers complete faster (reverse order)
                 await Task.Delay((11 - x) * 10, ct);
                 lock (completionOrder) completionOrder.Add(x);
                 return x;
-            },
-            options))
-        {
-            results.Add(result);
-        }
+            }, options)
+            .ToListAsync();
 
         // Assert
-        results.Should().Equal(new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }, "results should be in order");
-        completionOrder.Should().NotEqual(new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }, "completion should be out of order");
+        results.Should().Equal([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "results should be in order");
+        completionOrder.Should().NotEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "completion should be out of order");
     }
 
     [Fact]
@@ -133,9 +120,7 @@ public class OrderedOutputTests
             MaxDegreeOfParallelism = 8,
             OrderedOutput = true,
             ErrorMode = ErrorMode.BestEffort
-        };
-
-        // Act
+        };
         var results = await source.SelectParallelAsync(
             async (x, ct) =>
             {
@@ -166,9 +151,7 @@ public class OrderedOutputTests
             OrderedOutput = true
         };
 
-        var results = new List<int>();
-
-        // Act
+        var results = new List<int>();
         try
         {
             await foreach (var result in source.SelectParallelStreamAsync(
@@ -199,11 +182,8 @@ public class OrderedOutputTests
     [Fact]
     public async Task SelectParallelAsync_OrderedOutput_EmptySource_ReturnsEmpty()
     {
-        // Arrange
         var source = Enumerable.Empty<int>();
-        var options = new ParallelOptionsRivulet { OrderedOutput = true };
-
-        // Act
+        var options = new ParallelOptionsRivulet { OrderedOutput = true };
         var results = await source.SelectParallelAsync(
             async (x, ct) =>
             {
@@ -219,11 +199,8 @@ public class OrderedOutputTests
     [Fact]
     public async Task SelectParallelAsync_OrderedOutput_SingleItem_ReturnsSingleItem()
     {
-        // Arrange
         var source = new[] { 42 };
-        var options = new ParallelOptionsRivulet { OrderedOutput = true };
-
-        // Act
+        var options = new ParallelOptionsRivulet { OrderedOutput = true };
         var results = await source.SelectParallelAsync(
             async (x, ct) =>
             {
@@ -250,25 +227,16 @@ public class OrderedOutputTests
             IsTransient = ex => ex is InvalidOperationException
         };
 
-        var results = new List<int>();
-
-        // Act
-        await foreach (var result in source.SelectParallelStreamAsync(
-            async (x, ct) =>
+        var results = await source.SelectParallelStreamAsync(async (x, ct) =>
             {
                 await Task.Delay(Random.Shared.Next(1, 5), ct);
                 var attempts = attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
 
-                // Fail on first attempt for every third item
-                if (attempts == 1 && x % 3 == 0)
-                    throw new InvalidOperationException($"Transient error at {x}");
+                if (attempts == 1 && x % 3 == 0) throw new InvalidOperationException($"Transient error at {x}");
 
                 return x * 2;
-            },
-            options))
-        {
-            results.Add(result);
-        }
+            }, options)
+            .ToListAsync();
 
         // Assert
         results.Should().Equal(Enumerable.Range(1, 20).Select(x => x * 2));
@@ -284,9 +252,7 @@ public class OrderedOutputTests
         {
             MaxDegreeOfParallelism = 32,
             OrderedOutput = true
-        };
-
-        // Act
+        };
         var results = await source.SelectParallelAsync(
             async (x, ct) =>
             {
@@ -324,19 +290,12 @@ public class OrderedOutputTests
             }
         };
 
-        var results = new List<int>();
-
-        // Act
-        await foreach (var result in source.SelectParallelStreamAsync(
-            async (x, ct) =>
+        var results = await source.SelectParallelStreamAsync(async (x, ct) =>
             {
                 await Task.Delay(Random.Shared.Next(1, 5), ct);
                 return x * 2;
-            },
-            options))
-        {
-            results.Add(result);
-        }
+            }, options)
+            .ToListAsync();
 
         // Assert
         results.Should().Equal(Enumerable.Range(1, 50).Select(x => x * 2));
