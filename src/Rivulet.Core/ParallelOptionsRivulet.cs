@@ -97,4 +97,15 @@ public sealed class ParallelOptionsRivulet
     /// Defaults to false.
     /// </summary>
     public bool OrderedOutput { get; init; } = false;
+
+    /// <summary>
+    /// Gets the progress reporting options for tracking operation progress.
+    /// When null, no progress reporting is performed. Defaults to null.
+    /// </summary>
+    /// <remarks>
+    /// Progress reporting provides real-time visibility into long-running operations with metrics including:
+    /// items processed, processing rate, estimated time remaining, and error counts.
+    /// Useful for ETL jobs, bulk imports, data migrations, and other long-running batch operations.
+    /// </remarks>
+    public ProgressOptions? Progress { get; init; }
 }
