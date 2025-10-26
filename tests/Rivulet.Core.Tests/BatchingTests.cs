@@ -728,4 +728,66 @@ public class BatchingTests
         emptyBatchCount.Should().Be(0);
         results.Should().AllSatisfy(count => count.Should().BeGreaterThan(0));
     }
+
+    [Fact]
+    public async Task BatchParallelStreamAsync_NoTimeout_RemainderBatch_IsYielded()
+    {
+        var source = AsyncEnumerable.Range(1, 23);
+        var batchContents = new ConcurrentBag<IReadOnlyList<int>>();
+
+        var results = await source.BatchParallelStreamAsync(batchSize: 10, async (batch, _) =>
+            {
+                batchContents.Add(batch.ToList());
+                await Task.CompletedTask;
+                return batch.Count;
+            }, batchTimeout: null)
+            .ToListAsync();
+
+        results.Should().HaveCount(3);
+        results.Should().Contain(10);
+        results.Should().Contain(3);
+        results.Sum().Should().Be(23);
+        batchContents.Should().HaveCount(3);
+    }
+
+    [Fact]
+    public async Task BatchParallelStreamAsync_ManualIteration_YieldsAllResults()
+    {
+        var source = AsyncEnumerable.Range(1, 17);
+        var yieldedResults = await source.BatchParallelStreamAsync(batchSize: 5, async (batch, ct) =>
+            {
+                await Task.Delay(1, ct);
+                return batch.Sum();
+            })
+            .ToListAsync();
+
+        yieldedResults.Should().HaveCount(4);
+        yieldedResults.Sum().Should().Be(153);
+    }
+
+    [Fact]
+    public async Task BatchParallelStreamAsync_NoTimeout_WithOptions_ProcessesCorrectly()
+    {
+        var source = AsyncEnumerable.Range(1, 30);
+        var processedIndices = new ConcurrentBag<int>();
+
+        var results = await source.BatchParallelStreamAsync(batchSize: 7, async (batch, ct) =>
+            {
+                await Task.Delay(5, ct);
+                return batch.Count;
+            }, new ParallelOptionsRivulet
+            {
+                MaxDegreeOfParallelism = 2,
+                OnStartItemAsync = idx =>
+                {
+                    processedIndices.Add(idx);
+                    return ValueTask.CompletedTask;
+                }
+            }, batchTimeout: null)
+            .ToListAsync();
+
+        results.Should().HaveCount(5);
+        results.Sum().Should().Be(30);
+        processedIndices.Should().HaveCount(5);
+    }
 }
