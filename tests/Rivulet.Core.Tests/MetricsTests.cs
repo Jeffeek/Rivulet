@@ -832,4 +832,304 @@ public class MetricsTests
             capturedSnapshot!.ItemsStarted.Should().BeGreaterThan(0, $"Error mode: {errorMode}");
         }
     }
+
+    [Fact]
+    public void EventSource_WithEventListener_CreatesCountersAndDisposes()
+    {
+        using var listener = new TestEventListener();
+        listener.EnableEvents(RivuletEventSource.Log, System.Diagnostics.Tracing.EventLevel.Verbose,
+            System.Diagnostics.Tracing.EventKeywords.All);
+
+        RivuletEventSource.Log.IncrementItemsStarted();
+        RivuletEventSource.Log.IncrementItemsCompleted();
+        RivuletEventSource.Log.IncrementRetries();
+        RivuletEventSource.Log.IncrementFailures();
+        RivuletEventSource.Log.IncrementThrottleEvents();
+        RivuletEventSource.Log.IncrementDrainEvents();
+
+        RivuletEventSource.Log.GetItemsStarted().Should().BeGreaterThan(0);
+        RivuletEventSource.Log.GetItemsCompleted().Should().BeGreaterThan(0);
+        RivuletEventSource.Log.GetTotalRetries().Should().BeGreaterThan(0);
+        RivuletEventSource.Log.GetTotalFailures().Should().BeGreaterThan(0);
+        RivuletEventSource.Log.GetThrottleEvents().Should().BeGreaterThan(0);
+        RivuletEventSource.Log.GetDrainEvents().Should().BeGreaterThan(0);
+
+        listener.DisableEvents(RivuletEventSource.Log);
+    }
+
+    [Fact]
+    public async Task MetricsTracker_TracksDrainEvents()
+    {
+        MetricsSnapshot? capturedSnapshot = null;
+
+        var options = new MetricsOptions
+        {
+            SampleInterval = TimeSpan.FromMilliseconds(50),
+            OnMetricsSample = snapshot =>
+            {
+                capturedSnapshot = snapshot;
+                return ValueTask.CompletedTask;
+            }
+        };
+
+        using var tracker = new MetricsTracker(options, CancellationToken.None);
+
+        tracker.IncrementDrainEvents();
+        tracker.IncrementDrainEvents();
+        tracker.IncrementDrainEvents();
+
+        await Task.Delay(100);
+
+        capturedSnapshot.Should().NotBeNull();
+        capturedSnapshot!.DrainEvents.Should().Be(3);
+    }
+
+    [Fact]
+    public async Task MetricsTracker_TracksQueueDepth()
+    {
+        MetricsSnapshot? capturedSnapshot = null;
+
+        var options = new MetricsOptions
+        {
+            SampleInterval = TimeSpan.FromMilliseconds(50),
+            OnMetricsSample = snapshot =>
+            {
+                capturedSnapshot = snapshot;
+                return ValueTask.CompletedTask;
+            }
+        };
+
+        using var tracker = new MetricsTracker(options, CancellationToken.None);
+
+        tracker.SetQueueDepth(42);
+        tracker.IncrementItemsStarted();
+
+        await Task.Delay(100);
+
+        capturedSnapshot.Should().NotBeNull();
+        capturedSnapshot!.QueueDepth.Should().Be(42);
+    }
+
+    [Fact]
+    public async Task MetricsTracker_DoubleDispose_DoesNotThrow()
+    {
+        var options = new MetricsOptions
+        {
+            SampleInterval = TimeSpan.FromMilliseconds(50),
+            OnMetricsSample = _ => ValueTask.CompletedTask
+        };
+
+        var tracker = new MetricsTracker(options, CancellationToken.None);
+
+        tracker.IncrementItemsStarted();
+        await Task.Delay(100);
+
+        tracker.Dispose();
+
+        var act = () => tracker.Dispose();
+        act.Should().NotThrow();
+    }
+
+    [Fact]
+    public void MetricsTracker_WithoutCallback_DoesNotStartSampler()
+    {
+        using var tracker = new MetricsTracker(null, CancellationToken.None);
+
+        tracker.IncrementItemsStarted();
+        tracker.IncrementItemsCompleted();
+        tracker.SetActiveWorkers(8);
+        tracker.SetQueueDepth(100);
+
+        // ReSharper disable once DisposeOnUsingVariable
+        tracker.Dispose();
+    }
+
+    [Fact]
+    public async Task MetricsTracker_VeryFastOperations_HandlesZeroElapsed()
+    {
+        MetricsSnapshot? capturedSnapshot = null;
+
+        var options = new MetricsOptions
+        {
+            SampleInterval = TimeSpan.FromMilliseconds(1),
+            OnMetricsSample = snapshot =>
+            {
+                capturedSnapshot = snapshot;
+                return ValueTask.CompletedTask;
+            }
+        };
+
+        using var tracker = new MetricsTracker(options, CancellationToken.None);
+
+        await Task.Delay(2);
+
+        capturedSnapshot.Should().NotBeNull();
+        capturedSnapshot!.ItemsPerSecond.Should().BeGreaterThanOrEqualTo(0);
+    }
+
+    [Fact]
+    public async Task MetricsTracker_CancellationDuringDispose_HandlesGracefully()
+    {
+        var cts = new CancellationTokenSource();
+        var tcs = new TaskCompletionSource();
+
+        var options = new MetricsOptions
+        {
+            SampleInterval = TimeSpan.FromMilliseconds(10),
+            OnMetricsSample = async _ =>
+            {
+                await tcs.Task;
+            }
+        };
+
+        var tracker = new MetricsTracker(options, cts.Token);
+        tracker.IncrementItemsStarted();
+
+        await Task.Delay(50, CancellationToken.None);
+
+        await cts.CancelAsync();
+
+        tcs.SetResult();
+
+        var act = () => tracker.Dispose();
+        act.Should().NotThrow();
+    }
+
+    [Fact]
+    public async Task SelectParallelAsync_WithMetrics_TracksAllMetricTypes()
+    {
+        var source = Enumerable.Range(1, 30);
+        MetricsSnapshot? capturedSnapshot = null;
+
+        var options = new ParallelOptionsRivulet
+        {
+            MaxDegreeOfParallelism = 4,
+            MaxRetries = 2,
+            IsTransient = ex => ex is InvalidOperationException,
+            ErrorMode = ErrorMode.BestEffort,
+            Metrics = new MetricsOptions
+            {
+                SampleInterval = TimeSpan.FromMilliseconds(50),
+                OnMetricsSample = snapshot =>
+                {
+                    capturedSnapshot = snapshot;
+                    return ValueTask.CompletedTask;
+                }
+            }
+        };
+
+        var attempts = new ConcurrentDictionary<int, int>();
+
+        await source.SelectParallelAsync(
+            async (x, ct) =>
+            {
+                await Task.Delay(10, ct);
+                var attempt = attempts.AddOrUpdate(x, 1, (_, count) => count + 1);
+
+                if (x % 5 == 0 && attempt <= 1)
+                    throw new InvalidOperationException("Transient error");
+
+                return x * 2;
+            },
+            options);
+
+        await Task.Delay(100);
+
+        capturedSnapshot.Should().NotBeNull();
+        capturedSnapshot!.ItemsStarted.Should().Be(30);
+        capturedSnapshot.ItemsCompleted.Should().Be(30);
+        capturedSnapshot.TotalRetries.Should().BeGreaterThan(0);
+        capturedSnapshot.ActiveWorkers.Should().Be(4);
+        capturedSnapshot.Elapsed.Should().BeGreaterThan(TimeSpan.Zero);
+        capturedSnapshot.ItemsPerSecond.Should().BeGreaterThan(0);
+    }
+
+    [Fact]
+    public async Task SelectParallelAsync_WithRetriesButNoMetrics_WorksCorrectly()
+    {
+        var source = Enumerable.Range(1, 20);
+        var attempts = new ConcurrentDictionary<int, int>();
+
+        var options = new ParallelOptionsRivulet
+        {
+            MaxDegreeOfParallelism = 4,
+            MaxRetries = 2,
+            IsTransient = ex => ex is InvalidOperationException,
+            ErrorMode = ErrorMode.BestEffort
+        };
+
+        var results = await source.SelectParallelAsync(
+            async (x, ct) =>
+            {
+                await Task.Delay(5, ct);
+                var attempt = attempts.AddOrUpdate(x, 1, (_, count) => count + 1);
+
+                if (x % 5 == 0 && attempt <= 1)
+                    throw new InvalidOperationException("Transient error");
+
+                return x * 2;
+            },
+            options);
+
+        results.Should().HaveCount(20);
+        attempts.Values.Should().Contain(v => v > 1);
+    }
+
+    [Fact]
+    public async Task MetricsTracker_DisposeDuringWait_HandlesCatchBlock()
+    {
+        var longRunningTcs = new TaskCompletionSource<bool>();
+
+        var options = new MetricsOptions
+        {
+            SampleInterval = TimeSpan.FromMilliseconds(10),
+            OnMetricsSample = async _ =>
+            {
+                await longRunningTcs.Task;
+            }
+        };
+
+        var tracker = new MetricsTracker(options, CancellationToken.None);
+        tracker.IncrementItemsStarted();
+
+        await Task.Delay(50);
+
+        var disposeTask = Task.Run(() =>
+        {
+            tracker.Dispose();
+        });
+
+        await Task.Delay(100);
+
+        longRunningTcs.SetResult(true);
+
+        await disposeTask;
+
+        disposeTask.IsCompleted.Should().BeTrue();
+    }
+
+    [Fact]
+    public void MetricsTracker_WithNullCallback_SampleMetricsReturnsEarly()
+    {
+        var tracker = new MetricsTracker(new MetricsOptions { OnMetricsSample = null }, CancellationToken.None);
+
+        tracker.IncrementItemsStarted();
+        tracker.IncrementItemsCompleted();
+
+        tracker.Dispose();
+    }
+
+    private class TestEventListener : System.Diagnostics.Tracing.EventListener
+    {
+        // ReSharper disable once RedundantOverriddenMember
+        protected override void OnEventSourceCreated(System.Diagnostics.Tracing.EventSource eventSource)
+        {
+            base.OnEventSourceCreated(eventSource);
+        }
+
+        protected override void OnEventWritten(System.Diagnostics.Tracing.EventWrittenEventArgs eventData)
+        {
+            // No-op, just need to listen
+        }
+    }
 }
