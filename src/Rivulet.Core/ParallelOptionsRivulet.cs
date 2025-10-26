@@ -63,11 +63,25 @@ public sealed class ParallelOptionsRivulet
     /// </summary>
     public int MaxRetries { get; init; } = 0;
     /// <summary>
-    /// Gets the base delay for exponential backoff between retry attempts.
-    /// The actual delay is calculated as BaseDelay * 2^(attempt - 1).
+    /// Gets the base delay for backoff between retry attempts.
+    /// The actual delay calculation depends on the <see cref="BackoffStrategy"/>.
     /// Defaults to 100 milliseconds.
     /// </summary>
     public TimeSpan BaseDelay { get; init; } = TimeSpan.FromMilliseconds(100);
+
+    /// <summary>
+    /// Gets the backoff strategy to use when calculating retry delays.
+    /// Defaults to <see cref="Core.BackoffStrategy.Exponential"/> for backward compatibility.
+    /// </summary>
+    /// <remarks>
+    /// Different strategies provide different trade-offs:
+    /// - <see cref="Core.BackoffStrategy.Exponential"/>: Predictable exponential growth without jitter (default).
+    /// - <see cref="Core.BackoffStrategy.ExponentialJitter"/>: Recommended for rate-limited APIs to reduce thundering herd.
+    /// - <see cref="Core.BackoffStrategy.DecorrelatedJitter"/>: Best for preventing synchronization across multiple clients.
+    /// - <see cref="Core.BackoffStrategy.Linear"/>: Gentler, predictable linear growth.
+    /// - <see cref="Core.BackoffStrategy.LinearJitter"/>: Linear growth with randomization.
+    /// </remarks>
+    public BackoffStrategy BackoffStrategy { get; init; } = BackoffStrategy.Exponential;
 
     /// <summary>
     /// Gets the channel capacity for buffering items in streaming operations.
