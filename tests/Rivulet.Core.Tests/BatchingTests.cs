@@ -790,4 +790,124 @@ public class BatchingTests
         results.Sum().Should().Be(30);
         processedIndices.Should().HaveCount(5);
     }
+
+    [Fact]
+    public async Task BatchParallelStreamAsync_EarlyExit_StopsIteration()
+    {
+        var source = AsyncEnumerable.Range(1, 100);
+        var yieldedCount = 0;
+
+        await foreach (var _ in source.BatchParallelStreamAsync(
+            batchSize: 10,
+            async (batch, ct) =>
+            {
+                await Task.Delay(10, ct);
+                return batch.Count;
+            },
+            batchTimeout: null))
+        {
+            yieldedCount++;
+            if (yieldedCount >= 3)
+                break;
+        }
+
+        yieldedCount.Should().Be(3);
+    }
+
+    [Fact]
+    public async Task BatchParallelStreamAsync_CancellationDuringIteration_Cancels()
+    {
+        var source = AsyncEnumerable.Range(1, 1000);
+        var cts = new CancellationTokenSource();
+        var yieldedCount = 0;
+
+        var act = async () =>
+        {
+            await foreach (var _ in source.BatchParallelStreamAsync(
+                batchSize: 10,
+                async (batch, ct) =>
+                {
+                    await Task.Delay(10, ct);
+                    return batch.Sum();
+                },
+                batchTimeout: null,
+                cancellationToken: cts.Token))
+            {
+                yieldedCount++;
+                if (yieldedCount == 2)
+                    await cts.CancelAsync();
+            }
+        };
+
+        await act.Should().ThrowAsync<OperationCanceledException>();
+        yieldedCount.Should().BeGreaterThanOrEqualTo(2);
+    }
+
+    [Fact]
+    public async Task BatchParallelStreamAsync_ExceptionInSelector_PropagatesCorrectly()
+    {
+        var source = AsyncEnumerable.Range(1, 50);
+        var yieldedCount = 0;
+
+        var act = async () =>
+        {
+            yieldedCount += await source.BatchParallelStreamAsync(batchSize: 10, async (batch, ct) =>
+                {
+                    await Task.Delay(5, ct);
+                    if (batch.First() == 21) throw new InvalidOperationException("Test exception");
+                    return batch.Sum();
+                }, new ParallelOptionsRivulet { ErrorMode = ErrorMode.FailFast }, batchTimeout: null)
+                .CountAsync();
+        };
+
+        await act.Should().ThrowAsync<Exception>();
+        yieldedCount.Should().BeLessThan(5);
+    }
+
+    [Fact]
+    public async Task BatchParallelStreamAsync_NoTimeout_PartialBatchOnly_YieldsCorrectly()
+    {
+        var source = AsyncEnumerable.Range(1, 7);
+
+        var results = await source.BatchParallelStreamAsync(batchSize: 10, async (batch, ct) =>
+            {
+                await Task.Delay(5, ct);
+                return batch.Count;
+            }, batchTimeout: null)
+            .ToListAsync();
+
+        results.Should().HaveCount(1);
+        results[0].Should().Be(7);
+    }
+
+    [Fact]
+    public async Task BatchParallelStreamAsync_NoTimeout_ManualConsumption_CompletesCorrectly()
+    {
+        var source = AsyncEnumerable.Range(1, 23);
+        var consumedResults = new List<int>();
+
+        var enumerator = source.BatchParallelStreamAsync(
+            batchSize: 10,
+            async (batch, ct) =>
+            {
+                await Task.Delay(5, ct);
+                return batch.Count;
+            },
+            batchTimeout: null).GetAsyncEnumerator();
+
+        try
+        {
+            while (await enumerator.MoveNextAsync())
+            {
+                consumedResults.Add(enumerator.Current);
+            }
+        }
+        finally
+        {
+            await enumerator.DisposeAsync();
+        }
+
+        consumedResults.Should().HaveCount(3);
+        consumedResults.Sum().Should().Be(23);
+    }
 }
