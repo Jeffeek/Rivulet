@@ -484,10 +484,10 @@ var results = await heavyTasks.SelectParallelAsync(
 
 ### Circuit Breaker
 
-Protect your application from cascading failures when a downstream service is unhealthy. The circuit breaker monitors for failures and, once a threshold is reached, opens the circuit to fail operations fast without waiting for timeouts. This gives the unhealthy service time to recover.
+Protect your application from cascading failures when a downstream service is unhealthy. The circuit breaker monitors for failures and automatically fails fast when a threshold is reached, giving the failing service time to recover.
 
 ```csharp
-// Protect against a flaky API
+// Protect against a flaky API - open after 5 consecutive failures
 var results = await urls.SelectParallelAsync(
     async (url, ct) => await httpClient.GetAsync(url, ct),
     new ParallelOptionsRivulet
@@ -495,26 +495,117 @@ var results = await urls.SelectParallelAsync(
         MaxDegreeOfParallelism = 32,
         CircuitBreaker = new CircuitBreakerOptions
         {
-            FailureThreshold = 0.5, // Open if 50% of operations fail
-            OpenTimeout = TimeSpan.FromSeconds(30), // Wait 30s before trying again
-            SamplingDuration = TimeSpan.FromSeconds(20), // In a 20s window
-            MinimumThroughput = 10, // With at least 10 operations
-            OnStateChange = (from, to) => Console.WriteLine($"Circuit changed from {from} to {to}")
+            FailureThreshold = 5,                      // Open after 5 consecutive failures
+            SuccessThreshold = 2,                       // Close after 2 consecutive successes in HalfOpen
+            OpenTimeout = TimeSpan.FromSeconds(30),     // Test recovery after 30 seconds
+            OnStateChange = async (from, to) =>
+            {
+                Console.WriteLine($"Circuit {from} → {to}");
+                await LogCircuitStateChangeAsync(from, to);
+            }
+        }
+    });
+
+// Time-based failure tracking (percentage within window)
+var results = await requests.SelectParallelAsync(
+    async (req, ct) => await apiClient.SendAsync(req, ct),
+    new ParallelOptionsRivulet
+    {
+        CircuitBreaker = new CircuitBreakerOptions
+        {
+            FailureThreshold = 10,                          // Open if 10 failures occur...
+            SamplingDuration = TimeSpan.FromSeconds(60),     // ...within 60 seconds
+            OpenTimeout = TimeSpan.FromMinutes(5)
         }
     });
 ```
 
-**States:**
-- **Closed**: Normal operation. Operations are executed.
-- **Open**: Failures have exceeded the threshold. All operations fail immediately with `CircuitBreakerOpenException`. Retries are paused.
-- **Half-Open**: After the `OpenTimeout` expires, the circuit allows a limited number of trial operations. If they succeed, the circuit closes. If they fail, it re-opens.
+**Circuit States:**
+- **Closed**: Normal operation. Operations execute normally. Failures are tracked.
+- **Open**: Failure threshold exceeded. Operations fail immediately with `CircuitBreakerOpenException` without executing. Prevents cascading failures.
+- **HalfOpen**: After `OpenTimeout` expires, circuit allows limited operations to test recovery. Success transitions to Closed. Failure transitions back to Open.
 
 **Key Features:**
-- **Automatic failure detection**: Monitors operations and opens the circuit based on failure rates.
-- **Configurable thresholds**: Customize failure/success rates, timeouts, and sampling windows.
-- **State change notifications**: Get callbacks when the circuit state changes.
-- **Resiliency**: Prevents an unhealthy service from overwhelming your application.
+- **Fail-fast protection**: Prevents overwhelming failing services
+- **Automatic recovery testing**: Transitions to HalfOpen after timeout to probe health
+- **Flexible failure tracking**: Consecutive failures or time-window based (with `SamplingDuration`)
+- **State change callbacks**: Monitor circuit transitions for alerting/logging
+- **Works with all operators**: SelectParallel*, ForEachParallel*, BatchParallel*
+
+**Use Cases:**
+- Protecting downstream microservices from overload
+- Preventing cascading failures in distributed systems
+- Graceful degradation when dependencies are unhealthy
+- Reducing latency by failing fast instead of waiting for timeouts
+
+### Adaptive Concurrency
+
+Automatically adjust parallelism based on real-time performance metrics. Instead of using a fixed `MaxDegreeOfParallelism`, adaptive concurrency dynamically scales workers up when performance is good and scales down when latency increases or errors occur.
+
+```csharp
+// Auto-scale between 1-32 workers based on latency and success rate
+var results = await urls.SelectParallelAsync(
+    async (url, ct) => await httpClient.GetAsync(url, ct),
+    new ParallelOptionsRivulet
+    {
+        AdaptiveConcurrency = new AdaptiveConcurrencyOptions
+        {
+            MinConcurrency = 1,                             // Lower bound
+            MaxConcurrency = 32,                            // Upper bound
+            InitialConcurrency = 8,                         // Starting point (optional)
+            TargetLatency = TimeSpan.FromMilliseconds(100), // Target p50 latency
+            MinSuccessRate = 0.95,                          // 95% success rate threshold
+            SampleInterval = TimeSpan.FromSeconds(1),       // How often to adjust
+            OnConcurrencyChange = async (old, @new) =>
+            {
+                Console.WriteLine($"Concurrency: {old} → {@new}");
+                await metricsClient.RecordGaugeAsync("concurrency", @new);
+            }
+        }
+    });
+
+// Different adjustment strategies
+var results = await tasks.SelectParallelAsync(
+    async (task, ct) => await ProcessAsync(task, ct),
+    new ParallelOptionsRivulet
+    {
+        AdaptiveConcurrency = new AdaptiveConcurrencyOptions
+        {
+            MinConcurrency = 2,
+            MaxConcurrency = 64,
+            IncreaseStrategy = AdaptiveConcurrencyStrategy.Aggressive, // Faster increase
+            DecreaseStrategy = AdaptiveConcurrencyStrategy.Gradual,    // Slower decrease
+            MinSuccessRate = 0.90
+        }
+    });
+```
+
+**How It Works:**
+Uses AIMD (Additive Increase Multiplicative Decrease) algorithm similar to TCP congestion control:
+- **Increase**: When success rate is high and latency is acceptable, add workers gradually (AIMD: +1, Aggressive: +10%)
+- **Decrease**: When latency exceeds target or success rate drops, reduce workers sharply (AIMD/Aggressive: -50%, Gradual: -25%)
+- Samples performance every `SampleInterval` and adjusts within `[MinConcurrency, MaxConcurrency]` bounds
+
+**Adjustment Strategies:**
+- **AIMD** (default): Additive Increase (+1), Multiplicative Decrease (-50%) - Like TCP
+- **Aggressive**: Faster increase (+10%), same decrease (-50%) - For rapidly changing workloads
+- **Gradual**: Same increase (+1), gentler decrease (-25%) - For stable workloads
+
+**Key Features:**
+- **Self-tuning**: Automatically finds optimal concurrency for current load
+- **Latency-aware**: Reduces workers when operations are too slow
+- **Error-aware**: Scales down when success rate drops below threshold
+- **Bounded**: Always stays within configured min/max limits
+- **Observable**: Callbacks for monitoring concurrency changes
+- **Works with all operators**: SelectParallel*, ForEachParallel*, BatchParallel*
+
+**Use Cases:**
+- Variable load scenarios where optimal concurrency changes over time
+- Auto-scaling to match downstream service capacity
+- Preventing overload when downstream services slow down
+- Maximizing throughput without manual tuning
+- Handling unpredictable workload patterns
 
 ### Roadmap
 
-- Adaptive concurrency
+- Additional integrations (OpenTelemetry, Microsoft.Extensions.Hosting, etc.)

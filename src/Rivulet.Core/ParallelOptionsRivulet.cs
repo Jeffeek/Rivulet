@@ -164,4 +164,28 @@ public sealed class ParallelOptionsRivulet
     /// </code>
     /// </example>
     public CircuitBreakerOptions? CircuitBreaker { get; init; }
+
+    /// <summary>
+    /// Gets the adaptive concurrency options for dynamically adjusting parallelism based on performance.
+    /// When null, static concurrency (MaxDegreeOfParallelism) is used. Defaults to null.
+    /// </summary>
+    /// <remarks>
+    /// Adaptive concurrency automatically adjusts the degree of parallelism based on system performance metrics
+    /// such as latency and success rate. Uses AIMD (Additive Increase Multiplicative Decrease) algorithm similar to TCP congestion control.
+    /// When enabled, takes precedence over MaxDegreeOfParallelism for controlling active workers.
+    /// Useful for auto-scaling to optimal throughput, handling variable load, and preventing overload.
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// // Auto-adjust between 1-32 workers based on latency and success rate
+    /// AdaptiveConcurrency = new AdaptiveConcurrencyOptions
+    /// {
+    ///     MinConcurrency = 1,
+    ///     MaxConcurrency = 32,
+    ///     TargetLatency = TimeSpan.FromMilliseconds(100),
+    ///     MinSuccessRate = 0.95
+    /// }
+    /// </code>
+    /// </example>
+    public AdaptiveConcurrencyOptions? AdaptiveConcurrency { get; init; }
 }

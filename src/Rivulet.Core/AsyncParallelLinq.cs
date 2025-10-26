@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Channels;
 
@@ -59,6 +60,13 @@ public static class AsyncParallelLinq
             ? new CircuitBreaker(options.CircuitBreaker)
             : null;
 
+        var adaptiveController = options.AdaptiveConcurrency is not null
+            ? new AdaptiveConcurrencyController(options.AdaptiveConcurrency)
+            : null;
+
+        var effectiveMaxWorkers = options.AdaptiveConcurrency?.MaxConcurrency ?? options.MaxDegreeOfParallelism;
+        metricsTracker.SetActiveWorkers(effectiveMaxWorkers);
+
         var channel = Channel.CreateBounded<(int idx, TSource item)>(new BoundedChannelOptions(options.ChannelCapacity)
         {
             SingleReader = false,
@@ -78,11 +86,10 @@ public static class AsyncParallelLinq
                         break;
 
                     await channel.Writer.WriteAsync((i, item), token);
-                    if (i++ % options.MaxDegreeOfParallelism == 0 && options.OnThrottleAsync is not null)
-                    {
-                        metricsTracker.IncrementThrottleEvents();
-                        await options.OnThrottleAsync(i);
-                    }
+                    if (i++ % effectiveMaxWorkers != 0 || options.OnThrottleAsync is null) continue;
+
+                    metricsTracker.IncrementThrottleEvents();
+                    await options.OnThrottleAsync(i);
                 }
             }
             finally
@@ -91,13 +98,19 @@ public static class AsyncParallelLinq
             }
         }, token);
 
-        var workers = Enumerable.Range(0, options.MaxDegreeOfParallelism)
+        var workers = Enumerable.Range(0, effectiveMaxWorkers)
             .Select(_ => Task.Run(async () =>
             {
                 await foreach (var (idx, item) in channel.Reader.ReadAllAsync(token))
                 {
+                    var startTime = Stopwatch.GetTimestamp();
+                    var success = false;
+
                     try
                     {
+                        if (adaptiveController is not null)
+                            await adaptiveController.AcquireAsync(token);
+
                         if (tokenBucket is not null)
                             await tokenBucket.AcquireAsync(token);
 
@@ -124,6 +137,8 @@ public static class AsyncParallelLinq
                         progressTracker?.IncrementCompleted();
                         metricsTracker.IncrementItemsCompleted();
                         if (options.OnCompleteItemAsync is not null) await options.OnCompleteItemAsync(idx);
+
+                        success = true;
                     }
                     catch (Exception ex)
                     {
@@ -144,6 +159,14 @@ public static class AsyncParallelLinq
                             throw;
                         }
                     }
+                    finally
+                    {
+                        if (adaptiveController is not null)
+                        {
+                            var elapsed = Stopwatch.GetElapsedTime(startTime);
+                            adaptiveController.Release(elapsed, success);
+                        }
+                    }
                 }
             }, token)).ToArray();
 
@@ -159,6 +182,7 @@ public static class AsyncParallelLinq
         {
             progressTracker?.Dispose();
             metricsTracker.Dispose();
+            adaptiveController?.Dispose();
         }
 
         if (options.ErrorMode == ErrorMode.CollectAndContinue && errors.Count > 0)
@@ -197,7 +221,6 @@ public static class AsyncParallelLinq
             : null;
 
         var metricsTracker = new MetricsTracker(options.Metrics, token);
-        metricsTracker.SetActiveWorkers(options.MaxDegreeOfParallelism);
 
         var tokenBucket = options.RateLimit is not null
             ? new TokenBucket(options.RateLimit)
@@ -206,6 +229,13 @@ public static class AsyncParallelLinq
         var circuitBreaker = options.CircuitBreaker is not null
             ? new CircuitBreaker(options.CircuitBreaker)
             : null;
+
+        var adaptiveController = options.AdaptiveConcurrency is not null
+            ? new AdaptiveConcurrencyController(options.AdaptiveConcurrency)
+            : null;
+
+        var effectiveMaxWorkers = options.AdaptiveConcurrency?.MaxConcurrency ?? options.MaxDegreeOfParallelism;
+        metricsTracker.SetActiveWorkers(effectiveMaxWorkers);
 
         var input = Channel.CreateBounded<(int idx, TSource item)>(new BoundedChannelOptions(options.ChannelCapacity)
         {
@@ -237,12 +267,18 @@ public static class AsyncParallelLinq
             }
         }, token);
 
-        var workers = Enumerable.Range(0, options.MaxDegreeOfParallelism).Select(_ => Task.Run(async () =>
+        var workers = Enumerable.Range(0, effectiveMaxWorkers).Select(_ => Task.Run(async () =>
         {
             await foreach (var (idx, item) in input.Reader.ReadAllAsync(token))
             {
+                var startTime = Stopwatch.GetTimestamp();
+                var success = false;
+
                 try
                 {
+                    if (adaptiveController is not null)
+                        await adaptiveController.AcquireAsync(token);
+
                     if (tokenBucket is not null)
                         await tokenBucket.AcquireAsync(token);
 
@@ -265,6 +301,8 @@ public static class AsyncParallelLinq
                     progressTracker?.IncrementCompleted();
                     metricsTracker.IncrementItemsCompleted();
                     if (options.OnCompleteItemAsync is not null) await options.OnCompleteItemAsync(idx);
+
+                    success = true;
                 }
                 catch (Exception ex)
                 {
@@ -286,6 +324,14 @@ public static class AsyncParallelLinq
                             break;
                     }
                 }
+                finally
+                {
+                    if (adaptiveController is not null)
+                    {
+                        var elapsed = Stopwatch.GetElapsedTime(startTime);
+                        adaptiveController.Release(elapsed, success);
+                    }
+                }
             }
         }, token)).ToArray();
 
@@ -300,6 +346,7 @@ public static class AsyncParallelLinq
                 output.Writer.TryComplete();
                 progressTracker?.Dispose();
                 metricsTracker.Dispose();
+                adaptiveController?.Dispose();
             }
         }, token);
 
