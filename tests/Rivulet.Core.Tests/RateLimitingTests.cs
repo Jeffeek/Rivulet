@@ -168,6 +168,22 @@ public class RateLimitingTests
     }
 
     [Fact]
+    public void TokenBucket_Constructor_ThrowsOnNullOptions()
+    {
+        var act = () => new TokenBucket(null!);
+        act.Should().Throw<ArgumentNullException>()
+            .WithMessage("*options*");
+    }
+
+    [Fact]
+    public void TokenBucket_Constructor_ValidatesOptions()
+    {
+        var act = () => new TokenBucket(new RateLimitOptions { TokensPerSecond = 0 });
+        act.Should().Throw<ArgumentException>()
+            .WithMessage("*TokensPerSecond*");
+    }
+
+    [Fact]
     public void RateLimitOptions_Validation_ThrowsOnInvalidTokensPerSecond()
     {
         var act = () => new RateLimitOptions { TokensPerSecond = 0 }.Validate();
@@ -408,5 +424,116 @@ public class RateLimitingTests
 
         // Should get 16 results (20 - 4 failures)
         results.Should().HaveCount(16);
+    }
+
+    [Fact]
+    public void TokenBucket_TryAcquire_ReturnsTrue_WhenTokensAvailable()
+    {
+        var bucket = new TokenBucket(new RateLimitOptions
+        {
+            TokensPerSecond = 100,
+            BurstCapacity = 10,
+            TokensPerOperation = 1
+        });
+
+        var result = bucket.TryAcquire();
+        result.Should().BeTrue();
+    }
+
+    [Fact]
+    public void TokenBucket_TryAcquire_ReturnsFalse_WhenTokensExhausted()
+    {
+        var bucket = new TokenBucket(new RateLimitOptions
+        {
+            TokensPerSecond = 10,
+            BurstCapacity = 2,
+            TokensPerOperation = 1
+        });
+
+        bucket.TryAcquire().Should().BeTrue();
+        bucket.TryAcquire().Should().BeTrue();
+
+        var result = bucket.TryAcquire();
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public void TokenBucket_GetAvailableTokens_ReturnsCorrectValue()
+    {
+        var bucket = new TokenBucket(new RateLimitOptions
+        {
+            TokensPerSecond = 100,
+            BurstCapacity = 50,
+            TokensPerOperation = 5
+        });
+
+        var tokens = bucket.GetAvailableTokens();
+        tokens.Should().Be(50);
+    }
+
+    [Fact]
+    public async Task TokenBucket_GetAvailableTokens_RefillsOverTime()
+    {
+        var bucket = new TokenBucket(new RateLimitOptions
+        {
+            TokensPerSecond = 100,
+            BurstCapacity = 10,
+            TokensPerOperation = 1
+        });
+
+        // Exhaust bucket
+        for (var i = 0; i < 10; i++)
+            bucket.TryAcquire().Should().BeTrue();
+
+        bucket.GetAvailableTokens().Should().BeLessThan(1);
+
+        // Wait for refill
+        await Task.Delay(200); // 200ms should add ~20 tokens (100 tokens/sec = 0.1 tokens/ms)
+
+        var tokens = bucket.GetAvailableTokens();
+        tokens.Should().BeGreaterThan(5);
+        tokens.Should().BeLessThanOrEqualTo(10);
+    }
+
+    [Fact]
+    public void TokenBucket_TryAcquire_WithMultipleTokensPerOperation()
+    {
+        var bucket = new TokenBucket(new RateLimitOptions
+        {
+            TokensPerSecond = 100,
+            BurstCapacity = 10,
+            TokensPerOperation = 5
+        });
+
+        // Should succeed with 10 tokens available and 5 needed
+        bucket.TryAcquire().Should().BeTrue();
+
+        // Should succeed again (10 - 5 = 5 remaining)
+        bucket.TryAcquire().Should().BeTrue();
+
+        // Should fail now (0 tokens remaining)
+        bucket.TryAcquire().Should().BeFalse();
+    }
+
+    [Fact]
+    public void TokenBucket_RapidCalls_HandlesZeroElapsedTime()
+    {
+        var bucket = new TokenBucket(new RateLimitOptions
+        {
+            TokensPerSecond = 1000,
+            BurstCapacity = 100,
+            TokensPerOperation = 1
+        });
+
+        // Make rapid successive calls to try to hit elapsedTicks <= 0 case
+        // GetAvailableTokens() calls RefillTokens() internally
+        for (var i = 0; i < 1000; i++)
+        {
+            _ = bucket.GetAvailableTokens();
+        }
+
+        // Should not crash and should maintain valid state
+        bucket.GetAvailableTokens().Should().BeLessThanOrEqualTo(100);
+        bucket.GetAvailableTokens().Should().BeGreaterThanOrEqualTo(0);
     }
 }
