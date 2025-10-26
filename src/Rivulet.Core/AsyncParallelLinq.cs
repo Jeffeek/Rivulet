@@ -33,10 +33,15 @@ public static class AsyncParallelLinq
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         var token = cts.Token;
 
-        var results = new ConcurrentBag<TResult>();
+        var results = options.OrderedOutput
+            ? null
+            : new ConcurrentBag<TResult>();
+        var orderedResults = options.OrderedOutput
+            ? new ConcurrentDictionary<int, TResult>()
+            : null;
         var errors = new ConcurrentBag<Exception>();
 
-        var channel = Channel.CreateBounded<TSource>(new BoundedChannelOptions(options.ChannelCapacity)
+        var channel = Channel.CreateBounded<(int idx, TSource item)>(new BoundedChannelOptions(options.ChannelCapacity)
         {
             SingleReader = false,
             SingleWriter = true,
@@ -54,7 +59,7 @@ public static class AsyncParallelLinq
                     if (!await channel.Writer.WaitToWriteAsync(token))
                         break;
 
-                    await channel.Writer.WriteAsync(item, token);
+                    await channel.Writer.WriteAsync((i, item), token);
                     if (i++ % options.MaxDegreeOfParallelism == 0 && options.OnThrottleAsync is not null)
                         await options.OnThrottleAsync(i);
                 }
@@ -66,17 +71,21 @@ public static class AsyncParallelLinq
         }, token);
 
         var workers = Enumerable.Range(0, options.MaxDegreeOfParallelism)
-            .Select(workerId => Task.Run(async () =>
+            .Select(_ => Task.Run(async () =>
             {
-                var index = workerId;
-                await foreach (var item in channel.Reader.ReadAllAsync(token))
+                await foreach (var (idx, item) in channel.Reader.ReadAllAsync(token))
                 {
                     try
                     {
-                        if (options.OnStartItemAsync is not null) await options.OnStartItemAsync(index);
-                        var result = await RetryPolicy.ExecuteWithRetry(item, index, taskSelector, options, token);
-                        results.Add(result);
-                        if (options.OnCompleteItemAsync is not null) await options.OnCompleteItemAsync(index);
+                        if (options.OnStartItemAsync is not null) await options.OnStartItemAsync(idx);
+                        var result = await RetryPolicy.ExecuteWithRetry(item, idx, taskSelector, options, token);
+
+                        if (options.OrderedOutput)
+                            orderedResults![idx] = result;
+                        else
+                            results!.Add(result);
+
+                        if (options.OnCompleteItemAsync is not null) await options.OnCompleteItemAsync(idx);
                     }
                     catch (Exception ex)
                     {
@@ -84,7 +93,7 @@ public static class AsyncParallelLinq
 
                         if (options.OnErrorAsync is not null)
                         {
-                            var cont = await options.OnErrorAsync(index, ex);
+                            var cont = await options.OnErrorAsync(idx, ex);
                             if (!cont)
                                 await cts.CancelAsync();
                         }
@@ -94,10 +103,6 @@ public static class AsyncParallelLinq
                             await cts.CancelAsync();
                             throw;
                         }
-                    }
-                    finally
-                    {
-                        index += options.MaxDegreeOfParallelism;
                     }
                 }
             }, token)).ToArray();
@@ -114,13 +119,15 @@ public static class AsyncParallelLinq
         if (options.ErrorMode == ErrorMode.CollectAndContinue && errors.Count > 0)
             throw new AggregateException(errors);
 
-        return results.ToList();
+        return options.OrderedOutput
+            ? orderedResults!.OrderBy(kvp => kvp.Key).Select(kvp => kvp.Value).ToList()
+            : results!.ToList();
     }
 
     /// <summary>
     /// Applies a transformation function to each element in an async stream in parallel with bounded concurrency,
     /// returning results as a streaming async enumerable with built-in backpressure control.
-    /// Results may be yielded out-of-order relative to the input sequence.
+    /// Results may be yielded out-of-order relative to the input sequence unless <see cref="ParallelOptionsRivulet.OrderedOutput"/> is true.
     /// </summary>
     /// <typeparam name="TSource">The type of elements in the source collection.</typeparam>
     /// <typeparam name="TResult">The type of elements in the result stream.</typeparam>
@@ -213,10 +220,37 @@ public static class AsyncParallelLinq
             }
         }, token);
 
-        await foreach (var (_, result) in output.Reader.ReadAllAsync(token))
+        if (options.OrderedOutput)
         {
-            token.ThrowIfCancellationRequested();
-            yield return result;
+            var buffer = new Dictionary<int, TResult>();
+            var nextIndex = 0;
+
+            await foreach (var (idx, result) in output.Reader.ReadAllAsync(token))
+            {
+                token.ThrowIfCancellationRequested();
+
+                buffer[idx] = result;
+
+                while (buffer.Remove(nextIndex, out var orderedResult))
+                {
+                    yield return orderedResult;
+                    nextIndex++;
+                }
+            }
+
+            // Yield any remaining buffered results in order
+            foreach (var idx in buffer.Keys.OrderBy(k => k))
+            {
+                yield return buffer[idx];
+            }
+        }
+        else
+        {
+            await foreach (var (_, result) in output.Reader.ReadAllAsync(token))
+            {
+                token.ThrowIfCancellationRequested();
+                yield return result;
+            }
         }
 
         await Task.WhenAll(writer, reader);

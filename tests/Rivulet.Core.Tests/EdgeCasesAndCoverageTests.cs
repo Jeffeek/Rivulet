@@ -421,4 +421,160 @@ public class EdgeCasesAndCoverageTests
         }
         throw new InvalidOperationException("Writer error after items");
     }
+
+    [Fact]
+    public async Task SelectParallelStreamAsync_CancellationDuringUnorderedOutput_ThrowsOperationCanceledException()
+    {
+        var source = Enumerable.Range(1, 100).ToAsyncEnumerable();
+        var cts = new CancellationTokenSource();
+        var options = new ParallelOptionsRivulet
+        {
+            MaxDegreeOfParallelism = 4,
+            OrderedOutput = false
+        };
+
+        var results = new List<int>();
+
+        var act = async () =>
+        {
+            await foreach (var result in source.SelectParallelStreamAsync(
+                async (x, ct) =>
+                {
+                    await Task.Delay(10, ct);
+                    return x * 2;
+                },
+                options,
+                cts.Token))
+            {
+                results.Add(result);
+                if (results.Count == 10)
+                {
+                    await cts.CancelAsync();
+                }
+            }
+        };
+
+        await act.Should().ThrowAsync<OperationCanceledException>();
+        results.Count.Should().BeGreaterThan(0).And.BeLessThan(100);
+    }
+
+    [Fact]
+    public async Task SelectParallelStreamAsync_CancellationDuringOrderedOutput_ThrowsOperationCanceledException()
+    {
+        var source = Enumerable.Range(1, 100).ToAsyncEnumerable();
+        var cts = new CancellationTokenSource();
+        var options = new ParallelOptionsRivulet
+        {
+            MaxDegreeOfParallelism = 4,
+            OrderedOutput = true
+        };
+
+        var results = new List<int>();
+
+        var act = async () =>
+        {
+            await foreach (var result in source.SelectParallelStreamAsync(
+                async (x, ct) =>
+                {
+                    await Task.Delay(10, ct);
+                    return x * 2;
+                },
+                options,
+                cts.Token))
+            {
+                results.Add(result);
+                if (results.Count == 15)
+                {
+                    await cts.CancelAsync();
+                }
+            }
+        };
+
+        await act.Should().ThrowAsync<OperationCanceledException>();
+        results.Count.Should().BeGreaterThan(0).And.BeLessThan(100);
+    }
+
+    [Fact]
+    public async Task SelectParallelStreamAsync_CompleteSuccessfully_UnorderedOutput_ReachesTaskWhenAll()
+    {
+        var source = Enumerable.Range(1, 50).ToAsyncEnumerable();
+        var options = new ParallelOptionsRivulet
+        {
+            MaxDegreeOfParallelism = 8,
+            OrderedOutput = false
+        };
+
+        var results = await source.SelectParallelStreamAsync(
+            async (x, ct) =>
+            {
+                await Task.Delay(5, ct);
+                return x * 2;
+            },
+            options).ToListAsync();
+
+        results.Should().HaveCount(50);
+        results.Should().BeEquivalentTo(Enumerable.Range(1, 50).Select(x => x * 2));
+    }
+
+    [Fact]
+    public async Task SelectParallelStreamAsync_CompleteSuccessfully_OrderedOutput_ReachesTaskWhenAll()
+    {
+        var source = Enumerable.Range(1, 50).ToAsyncEnumerable();
+        var options = new ParallelOptionsRivulet
+        {
+            MaxDegreeOfParallelism = 8,
+            OrderedOutput = true
+        };
+
+        var results = await source.SelectParallelStreamAsync(
+            async (x, ct) =>
+            {
+                await Task.Delay(5, ct);
+                return x * 2;
+            },
+            options).ToListAsync();
+
+        results.Should().HaveCount(50);
+        results.Should().Equal(Enumerable.Range(1, 50).Select(x => x * 2));
+    }
+
+    [Fact]
+    public async Task SelectParallelStreamAsync_UnorderedOutput_FullConsumption_CoversAwaitForeach()
+    {
+        var source = Enumerable.Range(1, 25).ToAsyncEnumerable();
+        var options = new ParallelOptionsRivulet
+        {
+            MaxDegreeOfParallelism = 5,
+            OrderedOutput = false
+        };
+
+        var count = await source.SelectParallelStreamAsync(async (x, ct) =>
+            {
+                await Task.Delay(2, ct);
+                return x * 3;
+            }, options)
+            .CountAsync();
+
+        count.Should().Be(25);
+    }
+
+    [Fact]
+    public async Task SelectParallelStreamAsync_OrderedOutput_FullConsumption_CoversAwaitForeach()
+    {
+        var source = Enumerable.Range(1, 25).ToAsyncEnumerable();
+        var options = new ParallelOptionsRivulet
+        {
+            MaxDegreeOfParallelism = 5,
+            OrderedOutput = true
+        };
+
+        var count = await source.SelectParallelStreamAsync(async (x, ct) =>
+            {
+                await Task.Delay(2, ct);
+                return x * 3;
+            }, options)
+            .CountAsync();
+
+        count.Should().Be(25);
+    }
 }
