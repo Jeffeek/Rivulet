@@ -51,6 +51,10 @@ public static class AsyncParallelLinq
         var metricsTracker = new MetricsTracker(options.Metrics, token);
         metricsTracker.SetActiveWorkers(options.MaxDegreeOfParallelism);
 
+        var tokenBucket = options.RateLimit is not null
+            ? new TokenBucket(options.RateLimit)
+            : null;
+
         var channel = Channel.CreateBounded<(int idx, TSource item)>(new BoundedChannelOptions(options.ChannelCapacity)
         {
             SingleReader = false,
@@ -90,6 +94,9 @@ public static class AsyncParallelLinq
                 {
                     try
                     {
+                        if (tokenBucket is not null)
+                            await tokenBucket.AcquireAsync(token);
+
                         progressTracker?.IncrementStarted();
                         metricsTracker.IncrementItemsStarted();
                         if (options.OnStartItemAsync is not null) await options.OnStartItemAsync(idx);
@@ -178,6 +185,10 @@ public static class AsyncParallelLinq
         var metricsTracker = new MetricsTracker(options.Metrics, token);
         metricsTracker.SetActiveWorkers(options.MaxDegreeOfParallelism);
 
+        var tokenBucket = options.RateLimit is not null
+            ? new TokenBucket(options.RateLimit)
+            : null;
+
         var input = Channel.CreateBounded<(int idx, TSource item)>(new BoundedChannelOptions(options.ChannelCapacity)
         {
             SingleReader = false,
@@ -214,6 +225,9 @@ public static class AsyncParallelLinq
             {
                 try
                 {
+                    if (tokenBucket is not null)
+                        await tokenBucket.AcquireAsync(token);
+
                     progressTracker?.IncrementStarted();
                     metricsTracker.IncrementItemsStarted();
                     if (options.OnStartItemAsync is not null) await options.OnStartItemAsync(idx);

@@ -121,4 +121,25 @@ public sealed class ParallelOptionsRivulet
     /// Useful for production monitoring, performance tuning, alerting, and capacity planning.
     /// </remarks>
     public MetricsOptions? Metrics { get; init; }
+
+    /// <summary>
+    /// Gets the rate limiting options using the token bucket algorithm.
+    /// When null, no rate limiting is applied. Defaults to null.
+    /// </summary>
+    /// <remarks>
+    /// Rate limiting controls the maximum rate at which operations can be executed,
+    /// useful for respecting API rate limits, preventing resource exhaustion, and smoothing traffic bursts.
+    /// The token bucket algorithm allows for controlled bursts while maintaining an average rate limit.
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// // Limit to 100 requests per second with burst capacity of 200
+    /// RateLimit = new RateLimitOptions
+    /// {
+    ///     TokensPerSecond = 100,
+    ///     BurstCapacity = 200
+    /// }
+    /// </code>
+    /// </example>
+    public RateLimitOptions? RateLimit { get; init; }
 }

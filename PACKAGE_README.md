@@ -90,6 +90,7 @@ await foreach (var result in source.SelectParallelStreamAsync(
 
 - ✅ **Bounded Concurrency** - Control max parallel operations with backpressure
 - ✅ **Retry Policies** - Automatic retries with exponential backoff for transient errors
+- ✅ **Rate Limiting** - Token bucket algorithm for controlling operation rates
 - ✅ **Error Handling Modes** - FailFast, CollectAndContinue, or BestEffort
 - ✅ **Streaming Support** - Process results incrementally via `IAsyncEnumerable<T>`
 - ✅ **Ordered Output** - Maintain input sequence order when needed
