@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace Rivulet.Core;
+namespace Rivulet.Core.Observability;
 
 internal sealed class ProgressTracker : IDisposable
 {

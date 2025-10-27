@@ -1,4 +1,7 @@
-﻿namespace Rivulet.Core;
+﻿using Rivulet.Core.Observability;
+using Rivulet.Core.Resilience;
+
+namespace Rivulet.Core;
 
 /// <summary>
 /// Configuration options for controlling parallel async operations, including concurrency limits,
@@ -71,15 +74,15 @@ public sealed class ParallelOptionsRivulet
 
     /// <summary>
     /// Gets the backoff strategy to use when calculating retry delays.
-    /// Defaults to <see cref="Core.BackoffStrategy.Exponential"/> for backward compatibility.
+    /// Defaults to <see cref="Resilience.BackoffStrategy.Exponential"/> for backward compatibility.
     /// </summary>
     /// <remarks>
     /// Different strategies provide different trade-offs:
-    /// - <see cref="Core.BackoffStrategy.Exponential"/>: Predictable exponential growth without jitter (default).
-    /// - <see cref="Core.BackoffStrategy.ExponentialJitter"/>: Recommended for rate-limited APIs to reduce thundering herd.
-    /// - <see cref="Core.BackoffStrategy.DecorrelatedJitter"/>: Best for preventing synchronization across multiple clients.
-    /// - <see cref="Core.BackoffStrategy.Linear"/>: Gentler, predictable linear growth.
-    /// - <see cref="Core.BackoffStrategy.LinearJitter"/>: Linear growth with randomization.
+    /// - <see cref="Resilience.BackoffStrategy.Exponential"/>: Predictable exponential growth without jitter (default).
+    /// - <see cref="Resilience.BackoffStrategy.ExponentialJitter"/>: Recommended for rate-limited APIs to reduce thundering herd.
+    /// - <see cref="Resilience.BackoffStrategy.DecorrelatedJitter"/>: Best for preventing synchronization across multiple clients.
+    /// - <see cref="Resilience.BackoffStrategy.Linear"/>: Gentler, predictable linear growth.
+    /// - <see cref="Resilience.BackoffStrategy.LinearJitter"/>: Linear growth with randomization.
     /// </remarks>
     public BackoffStrategy BackoffStrategy { get; init; } = BackoffStrategy.Exponential;
 

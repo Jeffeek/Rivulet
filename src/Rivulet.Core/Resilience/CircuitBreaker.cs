@@ -1,7 +1,8 @@
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
+using Rivulet.Core.Internal;
 
-namespace Rivulet.Core;
+namespace Rivulet.Core.Resilience;
 
 /// <summary>
 /// Thread-safe implementation of the circuit breaker pattern.
@@ -26,28 +27,7 @@ internal sealed class CircuitBreaker
     /// <summary>
     /// Gets the current state of the circuit breaker.
     /// </summary>
-    public CircuitBreakerState State
-    {
-        get
-        {
-#if NET9_0_OR_GREATER
-            _lock.Enter();
-            try
-            {
-                return _state;
-            }
-            finally
-            {
-                _lock.Exit();
-            }
-#else
-            lock (_lock)
-            {
-                return _state;
-            }
-#endif
-        }
-    }
+    public CircuitBreakerState State => LockHelper.Execute(_lock, () => _state);
 
     /// <summary>
     /// Initializes a new instance of the CircuitBreaker class.
@@ -97,26 +77,7 @@ internal sealed class CircuitBreaker
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-#if NET9_0_OR_GREATER
-        _lock.Enter();
-        try
-        {
-            BeforeExecuteAsyncCore();
-        }
-        finally
-        {
-            _lock.Exit();
-        }
-#else
-        lock (_lock)
-        {
-            BeforeExecuteAsyncCore();
-        }
-#endif
-
-        return ValueTask.CompletedTask;
-
-        void BeforeExecuteAsyncCore()
+        LockHelper.Execute(_lock, () =>
         {
             if (_state == CircuitBreakerState.Open && DateTime.UtcNow >= _openedAt.Add(_options.OpenTimeout))
             {
@@ -127,7 +88,9 @@ internal sealed class CircuitBreaker
             {
                 throw new CircuitBreakerOpenException(_state);
             }
-        }
+        });
+
+        return ValueTask.CompletedTask;
     }
 
     /// <summary>
@@ -135,24 +98,7 @@ internal sealed class CircuitBreaker
     /// </summary>
     private void OnSuccess()
     {
-#if NET9_0_OR_GREATER
-        _lock.Enter();
-        try
-        {
-            OnSuccessCore();
-        }
-        finally
-        {
-            _lock.Exit();
-        }
-#else
-        lock (_lock)
-        {
-            OnSuccessCore();
-        }
-#endif
-
-        void OnSuccessCore()
+        LockHelper.Execute(_lock, () =>
         {
             _consecutiveFailures = 0;
 
@@ -164,7 +110,7 @@ internal sealed class CircuitBreaker
             {
                 TransitionToClosed();
             }
-        }
+        });
     }
 
     /// <summary>
@@ -172,24 +118,7 @@ internal sealed class CircuitBreaker
     /// </summary>
     private void OnFailure()
     {
-#if NET9_0_OR_GREATER
-        _lock.Enter();
-        try
-        {
-            OnFailureCore();
-        }
-        finally
-        {
-            _lock.Exit();
-        }
-#else
-        lock (_lock)
-        {
-            OnFailureCore();
-        }
-#endif
-
-        void OnFailureCore()
+        LockHelper.Execute(_lock, () =>
         {
             _consecutiveSuccesses = 0;
 
@@ -229,7 +158,7 @@ internal sealed class CircuitBreaker
                     break;
                 }
             }
-        }
+        });
     }
 
     /// <summary>
@@ -317,21 +246,6 @@ internal sealed class CircuitBreaker
     /// </summary>
     internal void Reset()
     {
-#if NET9_0_OR_GREATER
-        _lock.Enter();
-        try
-        {
-            TransitionToClosed();
-        }
-        finally
-        {
-            _lock.Exit();
-        }
-#else
-        lock (_lock)
-        {
-            TransitionToClosed();
-        }
-#endif
+        LockHelper.Execute(_lock, TransitionToClosed);
     }
 }

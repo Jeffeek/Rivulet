@@ -1,4 +1,6 @@
-﻿namespace Rivulet.Core;
+﻿using Rivulet.Core.Observability;
+
+namespace Rivulet.Core.Resilience;
 
 internal static class RetryPolicy
 {

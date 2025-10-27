@@ -1,6 +1,6 @@
 using System.Diagnostics.Tracing;
 
-namespace Rivulet.Core;
+namespace Rivulet.Core.Observability;
 
 /// <summary>
 /// EventSource for exposing Rivulet.Core runtime metrics via EventCounters.

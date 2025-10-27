@@ -2,6 +2,8 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Channels;
+using Rivulet.Core.Observability;
+using Rivulet.Core.Resilience;
 
 namespace Rivulet.Core;
 

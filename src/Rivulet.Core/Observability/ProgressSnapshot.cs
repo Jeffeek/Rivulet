@@ -1,4 +1,4 @@
-namespace Rivulet.Core;
+namespace Rivulet.Core.Observability;
 
 /// <summary>
 /// Represents a snapshot of progress information for a parallel operation at a specific point in time.

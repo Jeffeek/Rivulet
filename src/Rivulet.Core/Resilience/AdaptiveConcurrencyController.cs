@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
+using Rivulet.Core.Internal;
 
-namespace Rivulet.Core;
+namespace Rivulet.Core.Resilience;
 
 /// <summary>
 /// Thread-safe controller for adaptive concurrency management.
@@ -27,28 +28,7 @@ internal sealed class AdaptiveConcurrencyController : IDisposable
     /// <summary>
     /// Gets the current concurrency level.
     /// </summary>
-    public int CurrentConcurrency
-    {
-        get
-        {
-#if NET9_0_OR_GREATER
-            _lock.Enter();
-            try
-            {
-                return _currentConcurrency;
-            }
-            finally
-            {
-                _lock.Exit();
-            }
-#else
-            lock (_lock)
-            {
-                return _currentConcurrency;
-            }
-#endif
-        }
-    }
+    public int CurrentConcurrency => LockHelper.Execute(_lock, () => _currentConcurrency);
 
     /// <summary>
     /// Initializes a new instance of the AdaptiveConcurrencyController class.
@@ -85,27 +65,7 @@ internal sealed class AdaptiveConcurrencyController : IDisposable
     /// <param name="success">Whether the operation succeeded.</param>
     public void Release(TimeSpan latency, bool success)
     {
-#if NET9_0_OR_GREATER
-        _lock.Enter();
-        try
-        {
-            ReleaseCore();
-        }
-        finally
-        {
-            _lock.Exit();
-        }
-#else
-        lock (_lock)
-        {
-            ReleaseCore();
-        }
-#endif
-
-        _semaphore.Release();
-        return;
-
-        void ReleaseCore()
+        LockHelper.Execute(_lock, () =>
         {
             if (_options.TargetLatency.HasValue)
             {
@@ -116,7 +76,9 @@ internal sealed class AdaptiveConcurrencyController : IDisposable
                 _successCount++;
             else
                 _failureCount++;
-        }
+        });
+
+        _semaphore.Release();
     }
 
     /// <summary>
@@ -127,24 +89,7 @@ internal sealed class AdaptiveConcurrencyController : IDisposable
         if (_disposed)
             return;
 
-#if NET9_0_OR_GREATER
-        _lock.Enter();
-        try
-        {
-            SampleAndAdjustCore();
-        }
-        finally
-        {
-            _lock.Exit();
-        }
-#else
-        lock (_lock)
-        {
-            SampleAndAdjustCore();
-        }
-#endif
-
-        void SampleAndAdjustCore()
+        LockHelper.Execute(_lock, () =>
         {
             var totalOps = _successCount + _failureCount;
             if (totalOps == 0)
@@ -196,7 +141,7 @@ internal sealed class AdaptiveConcurrencyController : IDisposable
             _successCount = 0;
             _failureCount = 0;
             _latencySamples.Clear();
-        }
+        });
     }
 
     /// <summary>
