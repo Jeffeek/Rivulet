@@ -14,7 +14,6 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
-      - "nuget"
     commit-message:
       prefix: "deps"
       include: "scope"
@@ -48,7 +47,6 @@ updates:
     open-pull-requests-limit: 3
     labels:
       - "dependencies"
-      - "github-actions"
     commit-message:
       prefix: "ci"
       include: "scope"

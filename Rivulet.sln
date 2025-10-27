@@ -19,17 +19,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		.gitattributes = .gitattributes
 		.gitignore = .gitignore
-		.github\workflows\github-workflow.yml = .github\workflows\github-workflow.yml
 		LICENSE.txt = LICENSE.txt
-		.github\workflows\release.yml = .github\workflows\release.yml
 		Rivulet.sln.DotSettings.user = Rivulet.sln.DotSettings.user
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflow", "workflow", "{9F6D9440-DA61-4BE9-805B-D27C105BDAEE}"
-	ProjectSection(SolutionItems) = preProject
-		.github\dependabot.yml = .github\dependabot.yml
-		.github\workflows\github-workflow.yml = .github\workflows\github-workflow.yml
-		.github\workflows\release.yml = .github\workflows\release.yml
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rivulet.Benchmarks", "tests\Rivulet.Benchmarks\Rivulet.Benchmarks.csproj", "{1CD2B7CB-9564-A086-4DA6-460FE2419599}"
@@ -40,7 +31,18 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{98CB2608-1
 		PACKAGE_README.md = PACKAGE_README.md
 		README.md = README.md
 		RELEASE_GUIDE.md = RELEASE_GUIDE.md
+		SECURITY.md = SECURITY.md
 		.github\workflows\WORKFLOW_README.md = .github\workflows\WORKFLOW_README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflow", "workflow", "{628A0A1D-23F8-452C-B924-BCF0EA5D9D6E}"
+	ProjectSection(SolutionItems) = preProject
+		.github\workflows\ci.yml = .github\workflows\ci.yml
+		.github\workflows\codeql.yml = .github\workflows\codeql.yml
+		.github\dependabot.yml = .github\dependabot.yml
+		.github\workflows\flaky-test-detection.yml = .github\workflows\flaky-test-detection.yml
+		.github\workflows\nuget-activity-monitor.yml = .github\workflows\nuget-activity-monitor.yml
+		.github\workflows\release.yml = .github\workflows\release.yml
 	EndProjectSection
 EndProject
 Global
@@ -73,7 +75,6 @@ Global
 		{A4F277BC-A403-49D6-8F68-86A9801C84AE} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{711480CE-B236-4E2B-A79E-1CFA6ECB0F1F} = {B9651AC5-56FD-4860-ADDA-27E67FCD75D4}
 		{8BF330D4-DC30-A21E-F758-FD3E97D1D926} = {0D2BF9AB-6598-46B6-9D64-59E4B546DA61}
-		{9F6D9440-DA61-4BE9-805B-D27C105BDAEE} = {8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}
 		{1CD2B7CB-9564-A086-4DA6-460FE2419599} = {0D2BF9AB-6598-46B6-9D64-59E4B546DA61}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
