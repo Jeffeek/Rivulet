@@ -1,9 +1,15 @@
 name: CI/CD Pipeline
 permissions:
   contents: read
+  security-events: write
+  actions: read
 
 on:
   pull_request:
+    branches:
+      - "master"
+      - "release/**"
+  push:
     branches:
       - "master"
       - "release/**"
@@ -77,6 +83,43 @@ jobs:
         directory: ./coverage
         fail_ci_if_error: false
         verbose: true
+
+  codeql-analysis:
+    name: CodeQL Security Analysis
+    runs-on: ubuntu-latest
+    needs: quick-test
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: csharp
+        queries: security-and-quality
+
+    - name: Setup .NET 9.0.x
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 9.0.x
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build (Release)
+      run: dotnet build -c Release --no-restore
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: "/language:csharp"
 
   flaky-test-detection:
     name: Flaky Test Detection (${{ matrix.os }})

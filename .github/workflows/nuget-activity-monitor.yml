@@ -1,0 +1,168 @@
+name: NuGet Package Activity Monitor
+
+# This workflow monitors the last NuGet package publish date
+# and creates an issue if the package is approaching 365 days of inactivity
+# to prevent automatic unlisting by NuGet.org
+
+on:
+  schedule:
+    # Run every 3 months on the 1st day at 00:00 UTC
+    - cron: '0 0 1 */3 *'
+  workflow_dispatch: # Allow manual trigger
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  check-package-activity:
+    name: Check NuGet Package Activity
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Get latest NuGet package version and publish date
+      id: nuget_info
+      run: |
+        PACKAGE_ID="Rivulet.Core"
+
+        # Query NuGet API for package metadata
+        API_URL="https://api.nuget.org/v3-flatcontainer/${PACKAGE_ID,,}/index.json"
+        echo "Querying: $API_URL"
+
+        # Get all versions
+        VERSIONS=$(curl -s "$API_URL" | jq -r '.versions[-1]')
+        echo "Latest version: $VERSIONS"
+        echo "latest_version=$VERSIONS" >> $GITHUB_OUTPUT
+
+        # Get package metadata including publish date
+        METADATA_URL="https://api.nuget.org/v3/registration5-semver1/${PACKAGE_ID,,}/index.json"
+        echo "Querying metadata: $METADATA_URL"
+
+        # Extract publish date of the latest version
+        PUBLISH_DATE=$(curl -s "$METADATA_URL" | jq -r '.items[-1].items[-1].catalogEntry.published')
+        echo "Latest publish date: $PUBLISH_DATE"
+        echo "publish_date=$PUBLISH_DATE" >> $GITHUB_OUTPUT
+
+        # Calculate days since publish
+        PUBLISH_TIMESTAMP=$(date -d "$PUBLISH_DATE" +%s)
+        CURRENT_TIMESTAMP=$(date +%s)
+        DAYS_SINCE_PUBLISH=$(( ($CURRENT_TIMESTAMP - $PUBLISH_TIMESTAMP) / 86400 ))
+        echo "Days since last publish: $DAYS_SINCE_PUBLISH"
+        echo "days_since_publish=$DAYS_SINCE_PUBLISH" >> $GITHUB_OUTPUT
+
+        # Determine if action is needed (300 days threshold to give time for planning)
+        if [ $DAYS_SINCE_PUBLISH -gt 300 ]; then
+          echo "needs_update=true" >> $GITHUB_OUTPUT
+          DAYS_UNTIL_UNLISTED=$((365 - DAYS_SINCE_PUBLISH))
+          echo "days_until_unlisted=$DAYS_UNTIL_UNLISTED" >> $GITHUB_OUTPUT
+        else
+          echo "needs_update=false" >> $GITHUB_OUTPUT
+          echo "days_until_unlisted=N/A" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Check if issue already exists
+      id: check_issue
+      if: steps.nuget_info.outputs.needs_update == 'true'
+      run: |
+        # Check if there's already an open issue about package activity
+        ISSUE_COUNT=$(gh issue list --label "nuget-activity" --state open --json number --jq 'length')
+        echo "Open issues with nuget-activity label: $ISSUE_COUNT"
+        echo "issue_exists=$([[ $ISSUE_COUNT -gt 0 ]] && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
+      env:
+        GH_TOKEN: ${{ github.token }}
+
+    - name: Create issue if needed
+      if: steps.nuget_info.outputs.needs_update == 'true' && steps.check_issue.outputs.issue_exists == 'false'
+      run: |
+        DAYS_SINCE=${{ steps.nuget_info.outputs.days_since_publish }}
+        DAYS_UNTIL=${{ steps.nuget_info.outputs.days_until_unlisted }}
+        VERSION=${{ steps.nuget_info.outputs.latest_version }}
+        PUBLISH_DATE=${{ steps.nuget_info.outputs.publish_date }}
+        NEXT_PATCH_VERSION=$(echo $VERSION | awk -F. '{print $1"."$2"."$3+1}')
+
+        # Create issue body using heredoc
+        ISSUE_BODY=$(cat <<EOF
+        ## NuGet Package Activity Warning
+
+        The Rivulet.Core NuGet package is approaching 365 days of inactivity and may be automatically unlisted by NuGet.org.
+
+        ### Current Status
+        - **Latest Version**: $VERSION
+        - **Last Published**: $PUBLISH_DATE
+        - **Days Since Publish**: $DAYS_SINCE days
+        - **Days Until Potential Unlisting**: $DAYS_UNTIL days (approximately)
+
+        ### What This Means
+        NuGet.org automatically unlists packages that have:
+        - No updates for 365 days
+        - Low download counts
+
+        Unlisted packages remain available for existing users but are hidden from search results and package listings.
+
+        ### Recommended Actions
+        Choose one of the following options:
+
+        1. **Publish a Patch Release** (Recommended)
+           - Update dependencies to their latest versions
+           - Update documentation or examples
+           - Fix any minor issues or typos
+           - Increment patch version (e.g., $VERSION → $NEXT_PATCH_VERSION)
+
+        2. **Publish a Minor Release**
+           - Add new features or enhancements
+           - Improve performance
+           - Add new operators or options
+
+        3. **Update Package Metadata**
+           - Update README, changelog, or package description
+           - Add new tags or improve existing documentation
+
+        ### How to Publish
+        \`\`\`bash
+        # Update version in Release.ps1 or manually
+        ./Release.ps1 -Version "$NEXT_PATCH_VERSION"
+
+        # Or use git tags
+        git tag v$NEXT_PATCH_VERSION
+        git push --tags
+        \`\`\`
+
+        ### Automation
+        This check runs automatically every 3 months. The workflow will create an issue when the package reaches 300 days without an update.
+
+        ### References
+        - [NuGet Package Unlisting Policy](https://learn.microsoft.com/en-us/nuget/nuget-org/policies/deleting-packages)
+        - [Repository Release Guide](./RELEASE_GUIDE.md)
+
+        ---
+        *This issue was automatically created by the NuGet Activity Monitor workflow.*
+        EOF
+        )
+
+        gh issue create \
+          --title "NuGet Package Activity Warning: Update needed within $DAYS_UNTIL days" \
+          --label "nuget-activity,priority:high" \
+          --body "$ISSUE_BODY"
+      env:
+        GH_TOKEN: ${{ github.token }}
+
+    - name: Summary
+      run: |
+        echo "### NuGet Package Activity Check Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "- **Latest Version**: ${{ steps.nuget_info.outputs.latest_version }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Last Published**: ${{ steps.nuget_info.outputs.publish_date }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Days Since Publish**: ${{ steps.nuget_info.outputs.days_since_publish }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Needs Update**: ${{ steps.nuget_info.outputs.needs_update }}" >> $GITHUB_STEP_SUMMARY
+
+        if [ "${{ steps.nuget_info.outputs.needs_update }}" == "true" ]; then
+          echo "- **Days Until Potential Unlisting**: ${{ steps.nuget_info.outputs.days_until_unlisted }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "> ⚠️ **Action Required**: Package activity is low. Please consider publishing an update." >> $GITHUB_STEP_SUMMARY
+        else
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "> ✅ **Status**: Package activity is healthy. No action needed." >> $GITHUB_STEP_SUMMARY
+        fi
