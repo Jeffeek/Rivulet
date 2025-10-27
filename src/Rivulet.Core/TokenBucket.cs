@@ -30,7 +30,7 @@ internal sealed class TokenBucket
         _options = options ?? throw new ArgumentNullException(nameof(options));
         _options.Validate();
 
-        _availableTokens = options.BurstCapacity; // Start with full bucket
+        _availableTokens = options.BurstCapacity;
         _stopwatch = Stopwatch.StartNew();
         _lastRefillTicks = _stopwatch.ElapsedTicks;
     }
@@ -48,24 +48,22 @@ internal sealed class TokenBucket
 
 #if NET9_0_OR_GREATER
             _lock.Enter();
-            RefillTokens();
-
-            if (_availableTokens >= _options.TokensPerOperation)
+            try 
             {
-                _availableTokens -= _options.TokensPerOperation;
-                _lock.Exit();
-                return;
+                if (AcquireAsyncCore())
+                {
+                    return;
+                }
             }
-
-            _lock.Exit();
+            finally
+            {
+                _lock.Exit();
+            }
 #else
             lock (_lock)
             {
-                RefillTokens();
-
-                if (_availableTokens >= _options.TokensPerOperation)
+                if (AcquireAsyncCore())
                 {
-                    _availableTokens -= _options.TokensPerOperation;
                     return;
                 }
             }
@@ -74,6 +72,16 @@ internal sealed class TokenBucket
             var delayMs = CalculateDelayUntilNextToken();
 
             await Task.Delay(delayMs, cancellationToken).ConfigureAwait(false);
+        }
+
+        bool AcquireAsyncCore()
+        {
+            RefillTokens();
+
+            if (!(_availableTokens >= _options.TokensPerOperation)) return false;
+            _availableTokens -= _options.TokensPerOperation;
+            return true;
+
         }
     }
 
@@ -85,29 +93,34 @@ internal sealed class TokenBucket
     {
 #if NET9_0_OR_GREATER
         _lock.Enter();
-        RefillTokens();
-
-        if (!(_availableTokens >= _options.TokensPerOperation))
+        try 
+        {
+            return TryAcquireCore();
+        }
+        finally
         {
             _lock.Exit();
-            return false;
         }
-
-        _availableTokens -= _options.TokensPerOperation;
-        _lock.Exit();
-
-        return true;
 #else
         lock (_lock)
         {
+            return TryAcquireCore();
+        }
+#endif
+
+        bool TryAcquireCore()
+        {
             RefillTokens();
 
-            if (!(_availableTokens >= _options.TokensPerOperation)) return false;
+            if (!(_availableTokens >= _options.TokensPerOperation))
+            {
+                return false;
+            }
+
             _availableTokens -= _options.TokensPerOperation;
 
             return true;
         }
-#endif
     }
 
     /// <summary>
@@ -137,24 +150,22 @@ internal sealed class TokenBucket
     {
 #if NET9_0_OR_GREATER
         _lock.Enter();
-        RefillTokens();
-
-        var tokensNeeded = _options.TokensPerOperation - _availableTokens;
-
-        if (tokensNeeded <= 0)
+        try 
+        {
+            return CalculateDelayUntilNextTokenCore();
+        }
+        finally
         {
             _lock.Exit();
-            return 0;
         }
-
-        var secondsNeeded = tokensNeeded / _options.TokensPerSecond;
-        var millisecondsNeeded = (int)Math.Ceiling(secondsNeeded * 1000);
-        _lock.Exit();
-
-        return Math.Max(millisecondsNeeded, 1);
-
 #else
         lock (_lock)
+        {
+            return CalculateDelayUntilNextTokenCore();
+        }
+#endif
+
+        int CalculateDelayUntilNextTokenCore()
         {
             RefillTokens();
 
@@ -168,7 +179,6 @@ internal sealed class TokenBucket
 
             return Math.Max(millisecondsNeeded, 1);
         }
-#endif
     }
 
     /// <summary>
@@ -178,18 +188,25 @@ internal sealed class TokenBucket
     {
 #if NET9_0_OR_GREATER
         _lock.Enter();
-        RefillTokens();
-        var tokens = _availableTokens;
-        _lock.Exit();
-
-        return tokens;
-
+        try 
+        {
+            return GetAvailableTokensCore();
+        }
+        finally
+        {
+            _lock.Exit();
+        }
 #else
         lock (_lock)
+        {
+            return GetAvailableTokensCore();
+        }
+#endif
+
+        double GetAvailableTokensCore()
         {
             RefillTokens();
             return _availableTokens;
         }
-#endif
     }
 }

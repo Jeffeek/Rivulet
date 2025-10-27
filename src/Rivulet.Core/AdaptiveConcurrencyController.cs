@@ -1,14 +1,21 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Rivulet.Core;
 
 /// <summary>
 /// Thread-safe controller for adaptive concurrency management.
 /// Monitors performance and dynamically adjusts parallelism.
 /// </summary>
+[SuppressMessage("ReSharper", "InconsistentlySynchronizedField")]
 internal sealed class AdaptiveConcurrencyController : IDisposable
 {
     private readonly AdaptiveConcurrencyOptions _options;
     private readonly SemaphoreSlim _semaphore;
+#if NET9_0_OR_GREATER
+    private readonly Lock _lock = new();
+#else
     private readonly object _lock = new();
+#endif
     private readonly Timer _samplingTimer;
     private readonly List<double> _latencySamples = new();
 
@@ -24,10 +31,22 @@ internal sealed class AdaptiveConcurrencyController : IDisposable
     {
         get
         {
+#if NET9_0_OR_GREATER
+            _lock.Enter();
+            try
+            {
+                return _currentConcurrency;
+            }
+            finally
+            {
+                _lock.Exit();
+            }
+#else
             lock (_lock)
             {
                 return _currentConcurrency;
             }
+#endif
         }
     }
 
@@ -66,7 +85,27 @@ internal sealed class AdaptiveConcurrencyController : IDisposable
     /// <param name="success">Whether the operation succeeded.</param>
     public void Release(TimeSpan latency, bool success)
     {
+#if NET9_0_OR_GREATER
+        _lock.Enter();
+        try
+        {
+            ReleaseCore();
+        }
+        finally
+        {
+            _lock.Exit();
+        }
+#else
         lock (_lock)
+        {
+            ReleaseCore();
+        }
+#endif
+
+        _semaphore.Release();
+        return;
+
+        void ReleaseCore()
         {
             if (_options.TargetLatency.HasValue)
             {
@@ -78,8 +117,6 @@ internal sealed class AdaptiveConcurrencyController : IDisposable
             else
                 _failureCount++;
         }
-
-        _semaphore.Release();
     }
 
     /// <summary>
@@ -90,7 +127,24 @@ internal sealed class AdaptiveConcurrencyController : IDisposable
         if (_disposed)
             return;
 
+#if NET9_0_OR_GREATER
+        _lock.Enter();
+        try
+        {
+            SampleAndAdjustCore();
+        }
+        finally
+        {
+            _lock.Exit();
+        }
+#else
         lock (_lock)
+        {
+            SampleAndAdjustCore();
+        }
+#endif
+
+        void SampleAndAdjustCore()
         {
             var totalOps = _successCount + _failureCount;
             if (totalOps == 0)
