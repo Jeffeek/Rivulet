@@ -858,7 +858,12 @@ public class MetricsTests
 
         using var tracker = new MetricsTracker(options, CancellationToken.None);
 
-        await Task.Delay(2);
+        // Poll for the snapshot with a timeout to avoid flakiness
+        var deadline = DateTime.UtcNow.AddMilliseconds(200);
+        while (capturedSnapshot is null && DateTime.UtcNow < deadline)
+        {
+            await Task.Delay(5);
+        }
 
         capturedSnapshot.Should().NotBeNull();
         capturedSnapshot!.ItemsPerSecond.Should().BeGreaterThanOrEqualTo(0);

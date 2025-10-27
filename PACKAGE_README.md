@@ -89,6 +89,7 @@ await foreach (var result in source.SelectParallelStreamAsync(
 ## Key Features
 
 - ✅ **Bounded Concurrency** - Control max parallel operations with backpressure
+- ✅ **Adaptive Concurrency** - Auto-scale workers based on latency and success rate (AIMD algorithm)
 - ✅ **Retry Policies** - Automatic retries with exponential backoff for transient errors
 - ✅ **Circuit Breaker** - Prevent cascading failures with automatic service protection
 - ✅ **Rate Limiting** - Token bucket algorithm for controlling operation rates
@@ -111,6 +112,15 @@ new ParallelOptionsRivulet
     ChannelCapacity = 1024,              // Backpressure buffer size (streaming only)
     OrderedOutput = false,               // Return results in input order (default: false)
 
+    // Adaptive concurrency (auto-scale workers based on performance)
+    AdaptiveConcurrency = new AdaptiveConcurrencyOptions
+    {
+        MinConcurrency = 1,
+        MaxConcurrency = 32,
+        TargetLatency = TimeSpan.FromMilliseconds(100),
+        MinSuccessRate = 0.95
+    },
+
     // Error handling
     ErrorMode = ErrorMode.CollectAndContinue,  // How to handle failures
     OnErrorAsync = async (index, ex) => { /* ... */ return true; },
@@ -119,6 +129,22 @@ new ParallelOptionsRivulet
     MaxRetries = 3,                      // Number of retry attempts
     IsTransient = ex => ex is HttpRequestException,  // Which errors to retry
     BaseDelay = TimeSpan.FromMilliseconds(100),     // Exponential backoff base
+    BackoffStrategy = BackoffStrategy.ExponentialJitter,
+
+    // Circuit breaker (fail-fast when service is unhealthy)
+    CircuitBreaker = new CircuitBreakerOptions
+    {
+        FailureThreshold = 5,
+        SuccessThreshold = 2,
+        OpenTimeout = TimeSpan.FromSeconds(30)
+    },
+
+    // Rate limiting (token bucket algorithm)
+    RateLimit = new RateLimitOptions
+    {
+        TokensPerSecond = 100,
+        BurstCapacity = 200
+    },
 
     // Timeouts
     PerItemTimeout = TimeSpan.FromSeconds(30),  // Timeout per item
