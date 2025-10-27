@@ -1,5 +1,6 @@
 using FluentAssertions;
 using System.Collections.Concurrent;
+using Rivulet.Core.Observability;
 
 namespace Rivulet.Core.Tests;
 

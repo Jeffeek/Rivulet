@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Rivulet.Core.Resilience;
 
 namespace Rivulet.Core.Tests;
 

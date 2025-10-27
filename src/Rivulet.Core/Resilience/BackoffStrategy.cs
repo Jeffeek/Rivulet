@@ -1,4 +1,4 @@
-namespace Rivulet.Core;
+namespace Rivulet.Core.Resilience;
 
 /// <summary>
 /// Defines the strategy for calculating retry delays between failed attempts.

@@ -1,4 +1,4 @@
-namespace Rivulet.Core;
+namespace Rivulet.Core.Resilience;
 
 /// <summary>
 /// Configuration options for rate limiting using the token bucket algorithm.

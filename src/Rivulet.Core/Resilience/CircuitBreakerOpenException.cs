@@ -1,4 +1,4 @@
-namespace Rivulet.Core;
+namespace Rivulet.Core.Resilience;
 
 /// <summary>
 /// Exception thrown when a circuit breaker is in the Open state and rejects operations.

@@ -1,7 +1,8 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using Rivulet.Core.Internal;
 
-namespace Rivulet.Core;
+namespace Rivulet.Core.Resilience;
 
 /// <summary>
 /// Thread-safe implementation of the token bucket algorithm for rate limiting.
@@ -46,42 +47,23 @@ internal sealed class TokenBucket
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-#if NET9_0_OR_GREATER
-            _lock.Enter();
-            try 
+            var acquired = LockHelper.Execute(_lock, () =>
             {
-                if (AcquireAsyncCore())
-                {
-                    return;
-                }
-            }
-            finally
+                RefillTokens();
+
+                if (!(_availableTokens >= _options.TokensPerOperation)) return false;
+                _availableTokens -= _options.TokensPerOperation;
+                return true;
+            });
+
+            if (acquired)
             {
-                _lock.Exit();
+                return;
             }
-#else
-            lock (_lock)
-            {
-                if (AcquireAsyncCore())
-                {
-                    return;
-                }
-            }
-#endif
 
             var delayMs = CalculateDelayUntilNextToken();
 
             await Task.Delay(delayMs, cancellationToken).ConfigureAwait(false);
-        }
-
-        bool AcquireAsyncCore()
-        {
-            RefillTokens();
-
-            if (!(_availableTokens >= _options.TokensPerOperation)) return false;
-            _availableTokens -= _options.TokensPerOperation;
-            return true;
-
         }
     }
 
@@ -91,24 +73,7 @@ internal sealed class TokenBucket
     /// <returns>True if tokens were acquired; otherwise, false.</returns>
     public bool TryAcquire()
     {
-#if NET9_0_OR_GREATER
-        _lock.Enter();
-        try 
-        {
-            return TryAcquireCore();
-        }
-        finally
-        {
-            _lock.Exit();
-        }
-#else
-        lock (_lock)
-        {
-            return TryAcquireCore();
-        }
-#endif
-
-        bool TryAcquireCore()
+        return LockHelper.Execute(_lock, () =>
         {
             RefillTokens();
 
@@ -120,7 +85,7 @@ internal sealed class TokenBucket
             _availableTokens -= _options.TokensPerOperation;
 
             return true;
-        }
+        });
     }
 
     /// <summary>
@@ -148,24 +113,7 @@ internal sealed class TokenBucket
     /// <returns>Delay in milliseconds.</returns>
     private int CalculateDelayUntilNextToken()
     {
-#if NET9_0_OR_GREATER
-        _lock.Enter();
-        try 
-        {
-            return CalculateDelayUntilNextTokenCore();
-        }
-        finally
-        {
-            _lock.Exit();
-        }
-#else
-        lock (_lock)
-        {
-            return CalculateDelayUntilNextTokenCore();
-        }
-#endif
-
-        int CalculateDelayUntilNextTokenCore()
+        return LockHelper.Execute(_lock, () =>
         {
             RefillTokens();
 
@@ -178,7 +126,7 @@ internal sealed class TokenBucket
             var millisecondsNeeded = (int)Math.Ceiling(secondsNeeded * 1000);
 
             return Math.Max(millisecondsNeeded, 1);
-        }
+        });
     }
 
     /// <summary>
@@ -186,27 +134,10 @@ internal sealed class TokenBucket
     /// </summary>
     internal double GetAvailableTokens()
     {
-#if NET9_0_OR_GREATER
-        _lock.Enter();
-        try 
-        {
-            return GetAvailableTokensCore();
-        }
-        finally
-        {
-            _lock.Exit();
-        }
-#else
-        lock (_lock)
-        {
-            return GetAvailableTokensCore();
-        }
-#endif
-
-        double GetAvailableTokensCore()
+        return LockHelper.Execute(_lock, () =>
         {
             RefillTokens();
             return _availableTokens;
-        }
+        });
     }
 }

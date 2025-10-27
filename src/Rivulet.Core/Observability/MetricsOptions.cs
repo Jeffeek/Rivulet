@@ -1,4 +1,4 @@
-namespace Rivulet.Core;
+namespace Rivulet.Core.Observability;
 
 /// <summary>
 /// Configuration options for runtime metrics collection during parallel operations.

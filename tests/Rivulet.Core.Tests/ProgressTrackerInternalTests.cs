@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Rivulet.Core.Observability;
 
 namespace Rivulet.Core.Tests;
 
