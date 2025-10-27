@@ -3,10 +3,6 @@ permissions:
   contents: read
 
 on:
-  push:
-    branches:
-      - "master"
-      - "release/**"
   pull_request:
     branches:
       - "master"
@@ -179,7 +175,7 @@ jobs:
 
             exit 1
         }
-      timeout-minutes: 30
+      timeout-minutes: 40
 
     - name: Run flaky test detection (100 iterations) - Linux
       if: runner.os == 'Linux'
@@ -275,4 +271,4 @@ jobs:
 
             exit 1
         fi
-      timeout-minutes: 30
+      timeout-minutes: 40
