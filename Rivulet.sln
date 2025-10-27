@@ -28,9 +28,11 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{98CB2608-1D14-4A71-90D0-F4880D77E453}"
 	ProjectSection(SolutionItems) = preProject
 		tests\Rivulet.Benchmarks\BENCHMARKS_README.md = tests\Rivulet.Benchmarks\BENCHMARKS_README.md
+		PACKAGES_PRIORITY.md = PACKAGES_PRIORITY.md
 		PACKAGE_README.md = PACKAGE_README.md
 		README.md = README.md
 		RELEASE_GUIDE.md = RELEASE_GUIDE.md
+		ROADMAP.md = ROADMAP.md
 		SECURITY.md = SECURITY.md
 		.github\workflows\WORKFLOW_README.md = .github\workflows\WORKFLOW_README.md
 	EndProjectSection
