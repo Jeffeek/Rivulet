@@ -279,7 +279,7 @@ internal sealed class CircuitBreaker
                 }
                 catch
                 {
-                    // Swallow exceptions from user callbacks
+                    // Swallow
                 }
             });
         }
@@ -305,7 +305,7 @@ internal sealed class CircuitBreaker
                 }
                 catch
                 {
-                    // Swallow exceptions from user callbacks
+                    // Swallow
                 }
             });
         }

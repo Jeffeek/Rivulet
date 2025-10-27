@@ -523,20 +523,17 @@ public static class AsyncParallelLinq
                     await foreach (var item in source.WithCancellation(token))
                     {
                         batch.Add(item);
-                        _ = DateTime.UtcNow;
 
                         if (batch.Count >= batchSize)
                         {
                             await channel.Writer.WriteAsync(batch, token);
                             batch = new List<TSource>(batchSize);
-                            _ = DateTime.UtcNow;
                             flushTimer = Task.Delay(batchTimeout.Value, token);
                         }
                         else if (flushTimer.IsCompleted && batch.Count > 0)
                         {
                             await channel.Writer.WriteAsync(batch, token);
                             batch = new List<TSource>(batchSize);
-                            _ = DateTime.UtcNow;
                             flushTimer = Task.Delay(batchTimeout.Value, token);
                         }
                     }

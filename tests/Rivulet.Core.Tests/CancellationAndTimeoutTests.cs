@@ -196,13 +196,13 @@ public class CancellationAndTimeoutTests
     [Fact]
     public async Task Cancellation_DuringItemProcessing_PropagatesCancellation()
     {
-        var source = Enumerable.Range(1, 50);
-        var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
+        var source = Enumerable.Range(1, 200);
+        var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(50));
 
         async Task<List<int>> Act() =>
             await source.SelectParallelAsync(async (x, ct) =>
             {
-                await Task.Delay(50, ct);
+                await Task.Delay(20, ct);
                 ct.ThrowIfCancellationRequested();
                 return x * 2;
             }, cancellationToken: cts.Token);
