@@ -1,54 +1,33 @@
-name: CI/CD Pipeline
-permissions:
-  contents: read
-  security-events: write
-  actions: read
+name: Flaky Test Detection
 
 on:
   pull_request:
     branches:
       - "master"
       - "release/**"
-  push:
-    branches:
-      - "master"
-      - "release/**"
+    paths:
+      - '**.cs'
+      - '**.csproj'
+      - 'tests/**'
+      - 'src/**'
+  workflow_dispatch:
+    inputs:
+      iterations:
+        description: 'Number of test iterations'
+        required: false
+        default: '100'
+        type: string
+  schedule:
+    # Run monthly on the 1st at 00:00 UTC
+    - cron: '0 0 1 * *'
+
+permissions:
+  contents: read
 
 jobs:
-  quick-test:
-    name: Quick Test (${{ matrix.os }}, .NET ${{ matrix.dotnet }})
+  detect-flaky-tests:
+    name: Detect Flaky Tests (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-        dotnet: ['8.0.x', '9.0.x']
-      fail-fast: false
-
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v5
-      with:
-        fetch-depth: 0
-
-    - name: Setup .NET ${{ matrix.dotnet }}
-      uses: actions/setup-dotnet@v5
-      with:
-        dotnet-version: ${{ matrix.dotnet }}
-
-    - name: Restore dependencies
-      run: dotnet restore
-
-    - name: Build (Release)
-      run: dotnet build -c Release --no-restore
-
-    - name: Run tests (single iteration)
-      run: dotnet test -c Release --no-build --verbosity normal
-      timeout-minutes: 5
-
-  test-with-coverage:
-    name: Test with Coverage (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    needs: quick-test
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
@@ -71,87 +50,27 @@ jobs:
     - name: Build (Release)
       run: dotnet build -c Release --no-restore
 
-    - name: Run tests with coverage
-      run: dotnet test -c Release --no-build --collect:"XPlat Code Coverage" --results-directory ./coverage
-      timeout-minutes: 5
+    - name: Set iteration count
+      id: set_iterations
+      shell: bash
+      run: |
+        # Use 30 iterations for PRs (faster feedback), 100 for scheduled/manual
+        if [ "${{ github.event_name }}" == "pull_request" ]; then
+          echo "iterations=30" >> $GITHUB_OUTPUT
+          echo "Running 30 iterations (PR mode - faster feedback)"
+        elif [ -n "${{ inputs.iterations }}" ]; then
+          echo "iterations=${{ inputs.iterations }}" >> $GITHUB_OUTPUT
+          echo "Running ${{ inputs.iterations }} iterations (manual trigger)"
+        else
+          echo "iterations=100" >> $GITHUB_OUTPUT
+          echo "Running 100 iterations (scheduled run - thorough check)"
+        fi
 
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v5
-      if: matrix.os == 'ubuntu-latest'
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        directory: ./coverage
-        fail_ci_if_error: false
-        verbose: true
-
-  codeql-analysis:
-    name: CodeQL Security Analysis
-    runs-on: ubuntu-latest
-    needs: quick-test
-    permissions:
-      security-events: write
-      actions: read
-      contents: read
-
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v5
-      with:
-        fetch-depth: 0
-
-    - name: Initialize CodeQL
-      uses: github/codeql-action/init@v4
-      with:
-        languages: csharp
-        queries: security-and-quality
-
-    - name: Setup .NET 9.0.x
-      uses: actions/setup-dotnet@v5
-      with:
-        dotnet-version: 9.0.x
-
-    - name: Restore dependencies
-      run: dotnet restore
-
-    - name: Build (Release)
-      run: dotnet build -c Release --no-restore
-
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v4
-      with:
-        category: "/language:csharp"
-
-  flaky-test-detection:
-    name: Flaky Test Detection (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    needs: quick-test
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-      fail-fast: false
-
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v5
-      with:
-        fetch-depth: 0
-
-    - name: Setup .NET 9.0.x
-      uses: actions/setup-dotnet@v5
-      with:
-        dotnet-version: 9.0.x
-
-    - name: Restore dependencies
-      run: dotnet restore
-
-    - name: Build (Release)
-      run: dotnet build -c Release --no-restore
-
-    - name: Run flaky test detection (100 iterations) - Windows
+    - name: Run flaky test detection - Windows
       if: runner.os == 'Windows'
       shell: pwsh
       run: |
-        $iterations = 100
+        $iterations = [int]"${{ steps.set_iterations.outputs.iterations }}"
         $results = @{}
         $failedIterations = @()
 
@@ -220,13 +139,13 @@ jobs:
         }
       timeout-minutes: 40
 
-    - name: Run flaky test detection (100 iterations) - Linux
+    - name: Run flaky test detection - Linux
       if: runner.os == 'Linux'
       shell: bash
       run: |
         set +e  # Don't exit on error, we handle errors manually
 
-        iterations=100
+        iterations=${{ steps.set_iterations.outputs.iterations }}
         declare -A results
         failed_count=0
         script_errors=0
@@ -314,4 +233,4 @@ jobs:
 
             exit 1
         fi
-      timeout-minutes: 40
+      timeout-minutes: 60
