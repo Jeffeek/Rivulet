@@ -34,8 +34,6 @@ updates:
           - "minor"
           - "patch"
     # Allow both direct and indirect dependency updates
-    versioning-strategy: auto
-    # Increase max PRs for security updates
     allow:
       - dependency-type: "all"
 
