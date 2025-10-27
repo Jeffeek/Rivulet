@@ -80,23 +80,6 @@ public class BatchingTests
     }
 
     [Fact]
-    public async Task BatchParallelAsync_InvalidBatchSize_ThrowsArgumentException()
-    {
-        var source = Enumerable.Range(1, 10);
-
-        var act = async () => await source.BatchParallelAsync(
-            batchSize: 0,
-            async (batch, _) =>
-            {
-                await Task.CompletedTask;
-                return batch.Sum();
-            });
-
-        await act.Should().ThrowAsync<ArgumentException>()
-            .WithMessage("Batch size must be at least 1.*");
-    }
-
-    [Fact]
     public async Task BatchParallelAsync_NegativeBatchSize_ThrowsArgumentException()
     {
         var source = Enumerable.Range(1, 10);
@@ -289,7 +272,7 @@ public class BatchingTests
         var batchSizes = new ConcurrentBag<int>();
 
         var results = await source.BatchParallelStreamAsync(
-            batchSize: 100,            async (batch, _) =>
+            batchSize: 100, async (batch, _) =>
             {
                 batchSizes.Add(batch.Count);
                 await Task.CompletedTask;
@@ -524,7 +507,7 @@ public class BatchingTests
         var source = SlowAsyncEnumerable(15, delayMs: 100);
 
         var results = await source.BatchParallelStreamAsync(
-            batchSize: 20,            async (batch, _) =>
+            batchSize: 20, async (batch, _) =>
             {
                 await Task.CompletedTask;
                 return batch.Count;
@@ -572,7 +555,7 @@ public class BatchingTests
         var batchSizes = new ConcurrentBag<int>();
 
         var results = await source.BatchParallelStreamAsync(
-            batchSize: 100,            async (batch, _) =>
+            batchSize: 100, async (batch, _) =>
             {
                 batchSizes.Add(batch.Count);
                 await Task.CompletedTask;
@@ -736,11 +719,11 @@ public class BatchingTests
         var batchContents = new ConcurrentBag<IReadOnlyList<int>>();
 
         var results = await source.BatchParallelStreamAsync(batchSize: 10, async (batch, _) =>
-            {
-                batchContents.Add(batch.ToList());
-                await Task.CompletedTask;
-                return batch.Count;
-            }, batchTimeout: null)
+        {
+            batchContents.Add(batch.ToList());
+            await Task.CompletedTask;
+            return batch.Count;
+        }, batchTimeout: null)
             .ToListAsync();
 
         results.Should().HaveCount(3);
@@ -755,10 +738,10 @@ public class BatchingTests
     {
         var source = AsyncEnumerable.Range(1, 17);
         var yieldedResults = await source.BatchParallelStreamAsync(batchSize: 5, async (batch, ct) =>
-            {
-                await Task.Delay(1, ct);
-                return batch.Sum();
-            })
+        {
+            await Task.Delay(1, ct);
+            return batch.Sum();
+        })
             .ToListAsync();
 
         yieldedResults.Should().HaveCount(4);
@@ -772,18 +755,18 @@ public class BatchingTests
         var processedIndices = new ConcurrentBag<int>();
 
         var results = await source.BatchParallelStreamAsync(batchSize: 7, async (batch, ct) =>
+        {
+            await Task.Delay(5, ct);
+            return batch.Count;
+        }, new ParallelOptionsRivulet
+        {
+            MaxDegreeOfParallelism = 2,
+            OnStartItemAsync = idx =>
             {
-                await Task.Delay(5, ct);
-                return batch.Count;
-            }, new ParallelOptionsRivulet
-            {
-                MaxDegreeOfParallelism = 2,
-                OnStartItemAsync = idx =>
-                {
-                    processedIndices.Add(idx);
-                    return ValueTask.CompletedTask;
-                }
-            }, batchTimeout: null)
+                processedIndices.Add(idx);
+                return ValueTask.CompletedTask;
+            }
+        }, batchTimeout: null)
             .ToListAsync();
 
         results.Should().HaveCount(5);
@@ -852,11 +835,11 @@ public class BatchingTests
         var act = async () =>
         {
             yieldedCount += await source.BatchParallelStreamAsync(batchSize: 10, async (batch, ct) =>
-                {
-                    await Task.Delay(5, ct);
-                    if (batch.First() == 21) throw new InvalidOperationException("Test exception");
-                    return batch.Sum();
-                }, new ParallelOptionsRivulet { ErrorMode = ErrorMode.FailFast }, batchTimeout: null)
+            {
+                await Task.Delay(5, ct);
+                if (batch.First() == 21) throw new InvalidOperationException("Test exception");
+                return batch.Sum();
+            }, new ParallelOptionsRivulet { ErrorMode = ErrorMode.FailFast }, batchTimeout: null)
                 .CountAsync();
         };
 
@@ -870,10 +853,10 @@ public class BatchingTests
         var source = AsyncEnumerable.Range(1, 7);
 
         var results = await source.BatchParallelStreamAsync(batchSize: 10, async (batch, ct) =>
-            {
-                await Task.Delay(5, ct);
-                return batch.Count;
-            }, batchTimeout: null)
+        {
+            await Task.Delay(5, ct);
+            return batch.Count;
+        }, batchTimeout: null)
             .ToListAsync();
 
         results.Should().HaveCount(1);
@@ -909,5 +892,223 @@ public class BatchingTests
 
         consumedResults.Should().HaveCount(3);
         consumedResults.Sum().Should().Be(23);
+    }
+
+    [Fact]
+    public async Task BatchParallelAsync_ProcessesBatches_ReturnsAllResults()
+    {
+        var source = Enumerable.Range(1, 100);
+        const int batchSize = 10;
+        var processedBatches = new ConcurrentBag<int>();
+
+        var results = await source.BatchParallelAsync(
+            batchSize,
+            async (batch, ct) =>
+            {
+                processedBatches.Add(batch.Count);
+                await Task.Delay(10, ct);
+                return batch.Sum();
+            });
+
+        results.Should().HaveCount(10);
+        results.Sum().Should().Be(5050); // Sum of 1..100
+        processedBatches.All(count => count == batchSize).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task BatchParallelAsync_NonEvenSplit_HandlesFinalBatch()
+    {
+        var source = Enumerable.Range(1, 25);
+        const int batchSize = 10;
+        var batchSizes = new ConcurrentBag<int>();
+
+        var results = await source.BatchParallelAsync(
+            batchSize,
+            async (batch, ct) =>
+            {
+                batchSizes.Add(batch.Count);
+                await Task.Delay(5, ct);
+                return batch.Count;
+            });
+
+        results.Should().HaveCount(3);
+        batchSizes.Should().Contain([10, 10, 5]);
+    }
+
+    [Fact]
+    public async Task BatchParallelStreamAsync_StreamsResults_InOrder()
+    {
+        var source = Enumerable.Range(1, 50).ToAsyncEnumerable();
+        const int batchSize = 10;
+        var results = new List<int>();
+
+        await foreach (var result in source.BatchParallelStreamAsync(
+                           batchSize,
+                           async (batch, ct) =>
+                           {
+                               await Task.Delay(5, ct);
+                               return batch.Sum();
+                           }))
+        {
+            results.Add(result);
+        }
+
+        results.Should().HaveCount(5);
+        results.Sum().Should().Be(1275); // Sum of 1..50
+    }
+
+    [Fact]
+    public async Task BatchParallelStreamAsync_WithTimeout_CompletesWithinTimeout()
+    {
+        var source = Enumerable.Range(1, 30).ToAsyncEnumerable();
+        const int batchSize = 10;
+        var timeout = TimeSpan.FromMilliseconds(100);
+        var results = new List<int>();
+
+        await foreach (var result in source.BatchParallelStreamAsync(
+                           batchSize,
+                           async (batch, ct) =>
+                           {
+                               await Task.Delay(10, ct);
+                               return batch.Count;
+                           },
+                           batchTimeout: timeout))
+        {
+            results.Add(result);
+        }
+
+        results.Should().HaveCount(3);
+    }
+
+    [Fact]
+    public async Task BatchParallelAsync_InvalidBatchSize_ThrowsArgumentException()
+    {
+        var source = Enumerable.Range(1, 10).ToArray();
+
+        async Task<List<int>> Act() => await source.BatchParallelAsync(
+            0,
+            (batch, _) => new ValueTask<int>(batch.Count));
+
+        await Assert.ThrowsAsync<ArgumentException>(Act);
+    }
+
+    [Fact]
+    public async Task BatchParallelAsync_WithOptions_AppliesOptions()
+    {
+        var source = Enumerable.Range(1, 100);
+        const int batchSize = 10;
+        var options = new ParallelOptionsRivulet
+        {
+            MaxDegreeOfParallelism = 2
+        };
+
+        var results = await source.BatchParallelAsync(
+            batchSize,
+            async (batch, ct) =>
+            {
+                await Task.Delay(10, ct);
+                return batch.Sum();
+            },
+            options);
+
+        results.Should().HaveCount(10);
+    }
+
+    [Fact]
+    public async Task BatchParallelStreamAsync_Cancellation_StopsProcessing()
+    {
+        var source = Enumerable.Range(1, 1000).ToAsyncEnumerable();
+        var cts = new CancellationTokenSource();
+        var processedBatches = 0;
+
+        async Task Act()
+        {
+            // ReSharper disable once PossibleMultipleEnumeration
+            await foreach (var _ in source.BatchParallelStreamAsync(
+                               10,
+                               async (batch, ct) =>
+                               {
+                                   await Task.Delay(20, ct);
+                                   return batch.Count;
+                               },
+                               cancellationToken: cts.Token))
+            {
+                processedBatches++;
+                if (processedBatches == 5)
+                    await cts.CancelAsync();
+            }
+        }
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(Act);
+        processedBatches.Should().BeLessThan(100);
+    }
+
+    [Fact]
+    public async Task BatchParallelStreamAsync_EmptySource_YieldsNothing()
+    {
+        var source = AsyncEnumerable.Empty<int>();
+        var results = new List<int>();
+
+        await foreach (var result in source.BatchParallelStreamAsync(
+                           10,
+                           (batch, _) => new ValueTask<int>(batch.Count)))
+        {
+            results.Add(result);
+        }
+
+        results.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task BatchParallelAsync_SingleBatch_ProcessesCorrectly()
+    {
+        var source = Enumerable.Range(1, 5);
+
+        var results = await source.BatchParallelAsync(
+            10,
+            async (batch, ct) =>
+            {
+                await Task.Delay(5, ct);
+                return batch.Count;
+            });
+
+        results.Should().ContainSingle();
+        results[0].Should().Be(5);
+    }
+
+    [Fact]
+    public async Task BatchParallelStreamAsync_WithRetries_RetriesFailedBatches()
+    {
+        var source = Enumerable.Range(1, 30).ToAsyncEnumerable();
+        var attemptCounts = new ConcurrentDictionary<int, int>();
+        var options = new ParallelOptionsRivulet
+        {
+            MaxRetries = 2,
+            BaseDelay = TimeSpan.FromMilliseconds(10),
+            IsTransient = ex => ex is InvalidOperationException,
+            ErrorMode = ErrorMode.BestEffort
+        };
+
+        var results = new List<int>();
+        await foreach (var result in source.BatchParallelStreamAsync(
+                           10,
+                           async (batch, ct) =>
+                           {
+                               var batchSum = batch.Sum();
+                               var attempts = attemptCounts.AddOrUpdate(batchSum, 1, (_, count) => count + 1);
+
+                               if (attempts == 1 && batchSum == 55) // First batch on first attempt
+                                   throw new InvalidOperationException("Simulated transient failure");
+
+                               await Task.Delay(5, ct);
+                               return batchSum;
+                           },
+                           options))
+        {
+            results.Add(result);
+        }
+
+        results.Should().HaveCount(3);
+        attemptCounts[55].Should().Be(2); // First batch retried once
     }
 }

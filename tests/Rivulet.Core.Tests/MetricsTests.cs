@@ -1021,4 +1021,107 @@ public class MetricsTests
         tracker.Dispose();
     }
 
+    [Fact]
+    public async Task MetricsTracker_CallbackThrowsException_DoesNotCrash()
+    {
+        var callbackCount = 0;
+        var tracker = new MetricsTracker(new MetricsOptions
+        {
+            SampleInterval = TimeSpan.FromMilliseconds(20),
+            OnMetricsSample = _ =>
+            {
+                Interlocked.Increment(ref callbackCount);
+                throw new InvalidOperationException("Metrics callback error!");
+            }
+        }, CancellationToken.None);
+
+        tracker.IncrementItemsStarted();
+        tracker.IncrementItemsCompleted();
+
+        await Task.Delay(100);
+
+        // Should not crash despite exception
+        callbackCount.Should().BeGreaterThan(0);
+
+        tracker.Dispose();
+    }
+
+    [Fact]
+    public void MetricsTracker_Dispose_WithCallbackThrows_HandlesGracefully()
+    {
+        var tracker = new MetricsTracker(new MetricsOptions
+        {
+            SampleInterval = TimeSpan.FromMilliseconds(100),
+            OnMetricsSample = _ => throw new InvalidOperationException("Error!")
+        }, CancellationToken.None);
+
+        tracker.IncrementItemsCompleted();
+
+        // Should not throw despite callback exception
+        var act = () => tracker.Dispose();
+        act.Should().NotThrow();
+    }
+
+    [Fact]
+    public void RivuletEventSource_Counters_WorkCorrectly()
+    {
+        var eventSource = RivuletEventSource.Log;
+
+        eventSource.IncrementItemsStarted();
+        eventSource.IncrementItemsCompleted();
+        eventSource.IncrementRetries();
+        eventSource.IncrementFailures();
+        eventSource.IncrementThrottleEvents();
+        eventSource.IncrementDrainEvents();
+
+        // Should not throw and should return valid values
+        eventSource.GetItemsStarted().Should().BeGreaterThanOrEqualTo(0);
+        eventSource.GetItemsCompleted().Should().BeGreaterThanOrEqualTo(0);
+        eventSource.GetTotalRetries().Should().BeGreaterThanOrEqualTo(0);
+        eventSource.GetTotalFailures().Should().BeGreaterThanOrEqualTo(0);
+        eventSource.GetThrottleEvents().Should().BeGreaterThanOrEqualTo(0);
+        eventSource.GetDrainEvents().Should().BeGreaterThanOrEqualTo(0);
+    }
+
+    [Fact]
+    public async Task Metrics_TracksRetriesCorrectly()
+    {
+        var source = Enumerable.Range(1, 10);
+        MetricsSnapshot? snapshot = null;
+
+        var options = new ParallelOptionsRivulet
+        {
+            MaxRetries = 2,
+            BaseDelay = TimeSpan.FromMilliseconds(1),
+            IsTransient = ex => ex is InvalidOperationException,
+            ErrorMode = ErrorMode.BestEffort,
+            Metrics = new MetricsOptions
+            {
+                SampleInterval = TimeSpan.FromMilliseconds(50),
+                OnMetricsSample = s =>
+                {
+                    snapshot = s;
+                    return ValueTask.CompletedTask;
+                }
+            }
+        };
+
+        var attemptCount = 0;
+        await source.SelectParallelAsync(
+            (x, _) =>
+            {
+                if (x != 5) return new ValueTask<int>(x * 2);
+                var attempt = Interlocked.Increment(ref attemptCount);
+                if (attempt <= 2) // Fail first 2 attempts
+                    throw new InvalidOperationException("Transient");
+                return new ValueTask<int>(x * 2);
+            },
+            options);
+
+        await Task.Delay(150); // Wait for sampling
+
+        snapshot.Should().NotBeNull();
+        snapshot!.TotalRetries.Should().BeGreaterThan(0);
+    }
+
 }

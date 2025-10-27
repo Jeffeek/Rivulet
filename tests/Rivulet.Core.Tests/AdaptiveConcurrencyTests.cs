@@ -428,4 +428,170 @@ public class AdaptiveConcurrencyTests
         var act = () => controller.Dispose();
         act.Should().NotThrow();
     }
+
+    [Fact]
+    public async Task AdaptiveConcurrency_AggressiveStrategy_IncreasesQuickly()
+    {
+        var source = Enumerable.Range(1, 300);
+        var concurrencyLevels = new List<int>();
+
+        var options = new ParallelOptionsRivulet
+        {
+            AdaptiveConcurrency = new AdaptiveConcurrencyOptions
+            {
+                MinConcurrency = 1,
+                MaxConcurrency = 20,
+                InitialConcurrency = 1,
+                SampleInterval = TimeSpan.FromMilliseconds(30),
+                MinSuccessRate = 0.5,
+                IncreaseStrategy = AdaptiveConcurrencyStrategy.Aggressive,
+                DecreaseStrategy = AdaptiveConcurrencyStrategy.Aggressive,
+                OnConcurrencyChange = (_, @new) =>
+                {
+                    lock (concurrencyLevels)
+                    {
+                        concurrencyLevels.Add(@new);
+                    }
+                    return ValueTask.CompletedTask;
+                }
+            }
+        };
+
+        var results = await source.SelectParallelAsync(
+            async (x, ct) =>
+            {
+                await Task.Delay(10, ct);
+                return x * 2;
+            },
+            options);
+
+        results.Should().HaveCount(300);
+
+        var deadline = DateTime.UtcNow.AddSeconds(3);
+        while (concurrencyLevels.Count == 0 && DateTime.UtcNow < deadline)
+        {
+            await Task.Delay(50);
+        }
+
+        lock (concurrencyLevels)
+        {
+            concurrencyLevels.Should().NotBeEmpty();
+            // Aggressive should increase faster than AIMD
+            concurrencyLevels.Max().Should().BeGreaterThan(5);
+        }
+    }
+
+    [Fact]
+    public async Task AdaptiveConcurrency_GradualStrategy_DecreasesSlowly()
+    {
+        var source = Enumerable.Range(1, 150);
+        var concurrencyLevels = new List<int>();
+
+        var options = new ParallelOptionsRivulet
+        {
+            AdaptiveConcurrency = new AdaptiveConcurrencyOptions
+            {
+                MinConcurrency = 1,
+                MaxConcurrency = 15,
+                InitialConcurrency = 12,
+                SampleInterval = TimeSpan.FromMilliseconds(40),
+                TargetLatency = TimeSpan.FromMilliseconds(5),
+                MinSuccessRate = 0.5,
+                IncreaseStrategy = AdaptiveConcurrencyStrategy.Gradual,
+                DecreaseStrategy = AdaptiveConcurrencyStrategy.Gradual,
+                OnConcurrencyChange = (_, @new) =>
+                {
+                    lock (concurrencyLevels)
+                    {
+                        concurrencyLevels.Add(@new);
+                    }
+                    return ValueTask.CompletedTask;
+                }
+            }
+        };
+
+        var results = await source.SelectParallelAsync(
+            async (x, ct) =>
+            {
+                await Task.Delay(50, ct); // High latency
+                return x * 2;
+            },
+            options);
+
+        results.Should().HaveCount(150);
+
+        var deadline = DateTime.UtcNow.AddSeconds(3);
+        while (concurrencyLevels.Count == 0 && DateTime.UtcNow < deadline)
+        {
+            await Task.Delay(50);
+        }
+
+        lock (concurrencyLevels)
+        {
+            concurrencyLevels.Should().NotBeEmpty();
+            // Gradual decreases to 75% each time, slower than AIMD's 50%
+            concurrencyLevels.Min().Should().BeLessThan(12);
+        }
+    }
+
+    [Fact]
+    public async Task AdaptiveConcurrency_CallbackThrowsException_DoesNotCrash()
+    {
+        var source = Enumerable.Range(1, 100);
+        var callbackCount = 0;
+
+        var options = new ParallelOptionsRivulet
+        {
+            AdaptiveConcurrency = new AdaptiveConcurrencyOptions
+            {
+                MinConcurrency = 1,
+                MaxConcurrency = 10,
+                InitialConcurrency = 1,
+                SampleInterval = TimeSpan.FromMilliseconds(30),
+                MinSuccessRate = 0.5,
+                OnConcurrencyChange = (_, _) =>
+                {
+                    Interlocked.Increment(ref callbackCount);
+                    throw new InvalidOperationException("Callback explosion!");
+                }
+            }
+        };
+
+        var results = await source.SelectParallelAsync(
+            async (x, ct) =>
+            {
+                await Task.Delay(10, ct);
+                return x * 2;
+            },
+            options);
+
+        results.Should().HaveCount(100);
+        // Operation should complete despite callback exceptions
+        await Task.Delay(500);
+        callbackCount.Should().BeGreaterThan(0);
+    }
+
+    [Fact]
+    public async Task AdaptiveConcurrency_DisposeDuringSampling_HandlesGracefully()
+    {
+        var controller = new AdaptiveConcurrencyController(new AdaptiveConcurrencyOptions
+        {
+            MinConcurrency = 1,
+            MaxConcurrency = 10,
+            InitialConcurrency = 5,
+            SampleInterval = TimeSpan.FromMilliseconds(5)
+        });
+
+        // Trigger some activity
+        await controller.AcquireAsync();
+        controller.Release(TimeSpan.FromMilliseconds(10), true);
+
+        await Task.Delay(20); // Let sampling happen
+
+        // Dispose during potential sampling
+        controller.Dispose();
+
+        // Should not throw
+        await Task.Delay(50);
+    }
 }

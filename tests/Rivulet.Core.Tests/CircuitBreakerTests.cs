@@ -542,4 +542,88 @@ public class CircuitBreakerTests
         ex.Message.Should().Be("Custom message");
         ex.State.Should().Be(CircuitBreakerState.Open);
     }
+
+    [Fact]
+    public async Task CircuitBreaker_OnStateChangeCallback_ThrowsException_DoesNotCrash()
+    {
+        var callbackInvoked = 0;
+        var cb = new CircuitBreaker(new CircuitBreakerOptions
+        {
+            FailureThreshold = 2,
+            SuccessThreshold = 1,
+            OpenTimeout = TimeSpan.FromMilliseconds(100),
+            OnStateChange = (_, _) =>
+            {
+                Interlocked.Increment(ref callbackInvoked);
+                throw new InvalidOperationException("Callback error!");
+            }
+        });
+
+        for (var i = 0; i < 2; i++)
+        {
+            try
+            {
+                await cb.ExecuteAsync<int>(() => throw new InvalidOperationException("Test"), CancellationToken.None);
+            }
+            catch (InvalidOperationException) { }
+        }
+
+        cb.State.Should().Be(CircuitBreakerState.Open);
+
+        await Task.Delay(200); // Wait for callback task
+
+        callbackInvoked.Should().BeGreaterThan(0);
+    }
+
+    [Fact]
+    public async Task CircuitBreaker_OnStateChange_AllTransitions_InvokeCallback()
+    {
+        var transitions = new List<(CircuitBreakerState, CircuitBreakerState)>();
+        var cb = new CircuitBreaker(new CircuitBreakerOptions
+        {
+            FailureThreshold = 2,
+            SuccessThreshold = 1,
+            OpenTimeout = TimeSpan.FromMilliseconds(50),
+            OnStateChange = (oldState, newState) =>
+            {
+                lock (transitions)
+                {
+                    transitions.Add((oldState, newState));
+                }
+                return ValueTask.CompletedTask;
+            }
+        });
+
+        // Closed -> Open
+        for (var i = 0; i < 2; i++)
+        {
+            try
+            {
+                await cb.ExecuteAsync<int>(() => throw new InvalidOperationException(), CancellationToken.None);
+            }
+            catch
+            {
+                // ignored
+            }
+        }
+
+        await Task.Delay(100);
+        cb.State.Should().Be(CircuitBreakerState.Open);
+
+        // Open -> HalfOpen (after timeout)
+        await Task.Delay(100);
+        cb.State.Should().Be(CircuitBreakerState.Open);
+
+        // Trigger HalfOpen by successful execution after timeout
+        await Task.Delay(50);
+        await cb.ExecuteAsync(() => ValueTask.FromResult(1), CancellationToken.None);
+
+        await Task.Delay(100);
+
+        lock (transitions)
+        {
+            transitions.Should().Contain(t => t.Item2 == CircuitBreakerState.Open);
+            transitions.Should().Contain(t => t.Item2 == CircuitBreakerState.HalfOpen || t.Item2 == CircuitBreakerState.Closed);
+        }
+    }
 }
