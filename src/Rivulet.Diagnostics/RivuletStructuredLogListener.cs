@@ -9,7 +9,7 @@ namespace Rivulet.Diagnostics;
 /// </summary>
 /// <example>
 /// <code>
-/// using var listener = new RivuletStructuredLogListener("metrics.jsonl");
+/// using var listener = new RivuletStructuredLogListener("metrics.json");
 /// 
 /// await Enumerable.Range(1, 100)
 ///     .ToAsyncEnumerable()

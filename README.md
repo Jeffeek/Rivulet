@@ -376,7 +376,7 @@ using var listener = new RivuletFileListener(
 
 **Structured JSON Logging** - Log aggregation (ELK, Splunk, Azure Monitor)
 ```csharp
-using var listener = new RivuletStructuredLogListener("metrics.jsonl");
+using var listener = new RivuletStructuredLogListener("metrics.json");
 // Or custom action for your logging system
 using var listener = new RivuletStructuredLogListener(json =>
 {
@@ -431,7 +431,7 @@ app.MapHealthChecks("/health");
 using var diagnostics = new DiagnosticsBuilder()
     .AddConsoleListener()
     .AddFileListener("metrics.log")
-    .AddStructuredLogListener("metrics.jsonl")
+    .AddStructuredLogListener("metrics.json")
     .AddMetricsAggregator(TimeSpan.FromSeconds(10), metrics =>
     {
         // Handle aggregated metrics

@@ -51,7 +51,7 @@ using var listener = new RivuletFileListener(
 ### Structured JSON Logging
 
 ```csharp
-using var listener = new RivuletStructuredLogListener("metrics.jsonl");
+using var listener = new RivuletStructuredLogListener("metrics.json");
 
 // Or with custom action
 using var listener = new RivuletStructuredLogListener(json =>
@@ -119,7 +119,7 @@ app.MapHealthChecks("/health");
 using var diagnostics = new DiagnosticsBuilder()
     .AddConsoleListener()
     .AddFileListener("metrics.log")
-    .AddStructuredLogListener("metrics.jsonl")
+    .AddStructuredLogListener("metrics.json")
     .AddMetricsAggregator(TimeSpan.FromSeconds(10), metrics =>
     {
         // Handle aggregated metrics
@@ -161,7 +161,7 @@ var healthCheck = new RivuletHealthCheck(new RivuletHealthCheckOptions
 ```csharp
 using var console = new RivuletConsoleListener();
 using var file = new RivuletFileListener("metrics.log");
-using var structured = new RivuletStructuredLogListener("metrics.jsonl");
+using var structured = new RivuletStructuredLogListener("metrics.json");
 using var aggregator = new MetricsAggregator(TimeSpan.FromSeconds(5));
 
 // All listeners will receive metrics simultaneously
@@ -184,8 +184,8 @@ using var listener = new RivuletStructuredLogListener(json =>
 ### ELK Stack
 
 ```csharp
-using var listener = new RivuletStructuredLogListener("metrics.jsonl");
-// Configure Filebeat to ship metrics.jsonl to Elasticsearch
+using var listener = new RivuletStructuredLogListener("metrics.json");
+// Configure Filebeat to ship metrics.json to Elasticsearch
 ```
 
 ### Prometheus

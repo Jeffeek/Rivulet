@@ -84,11 +84,11 @@ public class DiagnosticsBuilderTests : IDisposable
     [Fact]
     public async Task DiagnosticsBuilder_ShouldSupportStructuredLogWithFilePath()
     {
-        var logFile = Path.Join(Path.GetTempPath(), $"rivulet-test-{Guid.NewGuid()}.jsonl");
+        var logFile = Path.Join(Path.GetTempPath(), $"rivulet-test-{Guid.NewGuid()}.json");
 
-        using (var diagnostics = new DiagnosticsBuilder()
-            .AddStructuredLogListener(logFile)
-            .Build())
+        using (new DiagnosticsBuilder()
+                   .AddStructuredLogListener(logFile)
+                   .Build())
         {
             await Enumerable.Range(1, 5)
                 .ToAsyncEnumerable()

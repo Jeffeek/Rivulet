@@ -18,7 +18,7 @@ public class RivuletConsoleListenerTests : IDisposable
     [Fact]
     public async Task ConsoleListener_ShouldWriteMetrics_WhenOperationsRun()
     {
-        using (var listener = new RivuletConsoleListener(useColors: false))
+        using (new RivuletConsoleListener(useColors: false))
         {
             await Enumerable.Range(1, 10)
                 .ToAsyncEnumerable()
@@ -36,8 +36,10 @@ public class RivuletConsoleListenerTests : IDisposable
             await Task.Delay(2500);
         } // Dispose listener to ensure all events are flushed
 
+        await Task.Delay(3000);
+
         // Flush the StringWriter
-        _stringWriter.Flush();
+        await _stringWriter.FlushAsync();
 
         // Wait for console output to be fully flushed
         await Task.Delay(200);

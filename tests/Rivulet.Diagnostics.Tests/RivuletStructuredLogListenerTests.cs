@@ -26,7 +26,7 @@ public class RivuletStructuredLogListenerTests : IDisposable
     public async Task StructuredLogListener_ShouldCreateDirectory_WhenNotExists()
     {
         var directory = Path.Join(Path.GetTempPath(), $"rivulet-test-dir-{Guid.NewGuid()}");
-        var filePath = Path.Join(directory, "test.jsonl");
+        var filePath = Path.Join(directory, "test.json");
 
         using (new RivuletStructuredLogListener(filePath))
         {
