@@ -7,6 +7,21 @@ namespace Rivulet.Diagnostics.Tests;
 public class RivuletHealthCheckTests
 {
     [Fact]
+    public void HealthCheck_ShouldThrow_WhenExporterIsNull()
+    {
+        var act = () => new RivuletHealthCheck(null!);
+        act.Should().Throw<ArgumentNullException>().WithParameterName("exporter");
+    }
+
+    [Fact]
+    public void HealthCheck_ShouldUseDefaultOptions_WhenOptionsIsNull()
+    {
+        using var exporter = new PrometheusExporter();
+        var act = () => new RivuletHealthCheck(exporter, null);
+        act.Should().NotThrow();
+    }
+
+    [Fact]
     public async Task HealthCheck_ShouldReturnHealthy_WhenNoOperationsRunning()
     {
         using var exporter = new PrometheusExporter();
@@ -126,5 +141,14 @@ public class RivuletHealthCheckTests
 
         result.Status.Should().Be(HealthStatus.Unhealthy);
         result.Description.Should().Contain("Failure count");
+    }
+
+    [Fact]
+    public void HealthCheck_ShouldNotThrow_WhenDisposed()
+    {
+        using var exporter = new PrometheusExporter();
+        var healthCheck = new RivuletHealthCheck(exporter);
+        var act = () => healthCheck.Dispose();
+        act.Should().NotThrow();
     }
 }

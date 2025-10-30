@@ -11,7 +11,7 @@ public class DiagnosticsBuilderTests : IDisposable
 
     public DiagnosticsBuilderTests()
     {
-        _testFilePath = Path.Combine(Path.GetTempPath(), $"rivulet-test-{Guid.NewGuid()}.log");
+        _testFilePath = Path.Join(Path.GetTempPath(), $"rivulet-test-{Guid.NewGuid()}.log");
         _stringWriter = new StringWriter();
         _originalOutput = Console.Out;
         Console.SetOut(_stringWriter);
@@ -22,7 +22,7 @@ public class DiagnosticsBuilderTests : IDisposable
     {
         var aggregatedMetrics = new List<IReadOnlyList<AggregatedMetrics>>();
 
-        using (var _ = new DiagnosticsBuilder()
+        using (new DiagnosticsBuilder()
                    .AddConsoleListener(useColors: false)
                    .AddFileListener(_testFilePath)
                    .AddMetricsAggregator(TimeSpan.FromSeconds(2), metrics => aggregatedMetrics.Add(metrics))
@@ -69,6 +69,66 @@ public class DiagnosticsBuilderTests : IDisposable
             {
                 await Task.Delay(10, ct);
                 return x * 2;
+            }, new ParallelOptionsRivulet
+            {
+                MaxDegreeOfParallelism = 2
+            })
+            .ToListAsync();
+
+        await Task.Delay(1500);
+
+        var prometheusText = exporter.Export();
+        prometheusText.Should().Contain("rivulet_items_started");
+    }
+
+    [Fact]
+    public async Task DiagnosticsBuilder_ShouldSupportStructuredLogWithFilePath()
+    {
+        var logFile = Path.Join(Path.GetTempPath(), $"rivulet-test-{Guid.NewGuid()}.jsonl");
+
+        using (var diagnostics = new DiagnosticsBuilder()
+            .AddStructuredLogListener(logFile)
+            .Build())
+        {
+            await Enumerable.Range(1, 5)
+                .ToAsyncEnumerable()
+                .SelectParallelStreamAsync(async (x, ct) =>
+                {
+                    await Task.Delay(10, ct);
+                    return x;
+                }, new ParallelOptionsRivulet
+                {
+                    MaxDegreeOfParallelism = 2
+                })
+                .ToListAsync();
+
+            await Task.Delay(1500);
+        }
+
+        await Task.Delay(100);
+
+        File.Exists(logFile).Should().BeTrue();
+        TestCleanupHelper.RetryDeleteFile(logFile);
+    }
+
+    [Fact]
+    public async Task DiagnosticsBuilder_ShouldSupportHealthCheck()
+    {
+        using var diagnostics = new DiagnosticsBuilder()
+            .AddPrometheusExporter(out var exporter)
+            .AddHealthCheck(exporter, new RivuletHealthCheckOptions
+            {
+                ErrorRateThreshold = 0.5,
+                FailureCountThreshold = 100
+            })
+            .Build();
+
+        await Enumerable.Range(1, 5)
+            .ToAsyncEnumerable()
+            .SelectParallelStreamAsync(async (x, ct) =>
+            {
+                await Task.Delay(10, ct);
+                return x;
             }, new ParallelOptionsRivulet
             {
                 MaxDegreeOfParallelism = 2

@@ -5,7 +5,7 @@ namespace Rivulet.Diagnostics.Tests;
 
 public class RivuletFileListenerTests : IDisposable
 {
-    private readonly string _testFilePath = Path.Combine(Path.GetTempPath(), $"rivulet-test-{Guid.NewGuid()}.log");
+    private readonly string _testFilePath = Path.Join(Path.GetTempPath(), $"rivulet-test-{Guid.NewGuid()}.log");
 
     [Fact]
     public async Task FileListener_ShouldWriteMetricsToFile_WhenOperationsRun()
@@ -64,6 +64,13 @@ public class RivuletFileListenerTests : IDisposable
         var rotatedFiles = Directory.GetFiles(directory, $"{fileNameWithoutExtension}-*");
         
         rotatedFiles.Should().NotBeEmpty();
+    }
+
+    [Fact]
+    public void FileListener_ShouldThrow_WhenFilePathIsNull()
+    {
+        var act = () => new RivuletFileListener(null!);
+        act.Should().Throw<ArgumentNullException>().WithParameterName("filePath");
     }
 
     [Fact]

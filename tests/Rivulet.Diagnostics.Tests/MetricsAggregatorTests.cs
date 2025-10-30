@@ -71,6 +71,41 @@ namespace Rivulet.Diagnostics.Tests
         }
 
         [Fact]
+        public async Task MetricsAggregator_ShouldHandleExpiredSamples()
+        {
+            var aggregatedMetrics = new List<IReadOnlyList<AggregatedMetrics>>();
+            using var aggregator = new MetricsAggregator(TimeSpan.FromSeconds(1));
+            aggregator.OnAggregation += metrics =>
+            {
+                if (metrics.Count > 0)
+                    aggregatedMetrics.Add(metrics);
+            };
+
+            await Enumerable.Range(1, 5)
+                .ToAsyncEnumerable()
+                .SelectParallelStreamAsync(async (x, ct) =>
+                {
+                    await Task.Delay(10, ct);
+                    return x;
+                }, new ParallelOptionsRivulet
+                {
+                    MaxDegreeOfParallelism = 2
+                })
+                .ToListAsync();
+
+            await Task.Delay(2500);
+
+            aggregatedMetrics.Should().NotBeEmpty();
+            var firstAggregation = aggregatedMetrics.First();
+            firstAggregation.Should().NotBeEmpty();
+
+            await Task.Delay(2000);
+
+            var totalAggregations = aggregatedMetrics.Count;
+            totalAggregations.Should().BeGreaterThanOrEqualTo(1);
+        }
+
+        [Fact]
         public void MetricsAggregator_ShouldNotThrow_WhenDisposed()
         {
             var aggregator = new MetricsAggregator();

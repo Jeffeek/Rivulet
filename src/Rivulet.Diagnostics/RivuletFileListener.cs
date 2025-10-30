@@ -96,7 +96,7 @@ public sealed class RivuletFileListener : RivuletEventListenerBase
         var directory = Path.GetDirectoryName(_filePath) ?? string.Empty;
         var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(_filePath);
         var extension = Path.GetExtension(_filePath);
-        var rotatedFileName = Path.Combine(directory, $"{fileNameWithoutExtension}-{timestamp}{extension}");
+        var rotatedFileName = Path.Join(directory, $"{fileNameWithoutExtension}-{timestamp}{extension}");
 
         // Retry file move with brief delays if needed (OS may still have handle open)
         var retries = 3;

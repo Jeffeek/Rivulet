@@ -18,21 +18,25 @@ public class RivuletConsoleListenerTests : IDisposable
     [Fact]
     public async Task ConsoleListener_ShouldWriteMetrics_WhenOperationsRun()
     {
-        using var listener = new RivuletConsoleListener(useColors: false);
+        using (var listener = new RivuletConsoleListener(useColors: false))
+        {
+            await Enumerable.Range(1, 10)
+                .ToAsyncEnumerable()
+                .SelectParallelStreamAsync(async (x, ct) =>
+                {
+                    await Task.Delay(10, ct);
+                    return x * 2;
+                }, new ParallelOptionsRivulet
+                {
+                    MaxDegreeOfParallelism = 2
+                })
+                .ToListAsync();
 
-        await Enumerable.Range(1, 10)
-            .ToAsyncEnumerable()
-            .SelectParallelStreamAsync(async (x, ct) =>
-            {
-                await Task.Delay(10, ct);
-                return x * 2;
-            }, new ParallelOptionsRivulet
-            {
-                MaxDegreeOfParallelism = 2
-            })
-            .ToListAsync();
+            await Task.Delay(1500);
+        } // Dispose listener to ensure all events are flushed
 
-        await Task.Delay(1500);
+        // Wait a moment for console output to be flushed
+        await Task.Delay(100);
 
         var output = _stringWriter.ToString();
         output.Should().Contain("Items Started");
