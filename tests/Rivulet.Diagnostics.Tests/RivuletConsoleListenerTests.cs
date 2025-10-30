@@ -32,11 +32,15 @@ public class RivuletConsoleListenerTests : IDisposable
                 })
                 .ToListAsync();
 
-            await Task.Delay(1500);
+            // Wait longer for EventCounters to fire (they fire every 1 second)
+            await Task.Delay(2500);
         } // Dispose listener to ensure all events are flushed
 
-        // Wait a moment for console output to be flushed
-        await Task.Delay(100);
+        // Flush the StringWriter
+        _stringWriter.Flush();
+
+        // Wait for console output to be fully flushed
+        await Task.Delay(200);
 
         var output = _stringWriter.ToString();
         output.Should().Contain("Items Started");
