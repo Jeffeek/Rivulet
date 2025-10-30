@@ -42,8 +42,10 @@ jobs:
       run: dotnet test -c Release --no-build --verbosity normal
       timeout-minutes: 5
 
-    - name: Pack NuGet package
-      run: dotnet pack src/Rivulet.Core/Rivulet.Core.csproj -c Release --output ./artifacts -p:PackageVersion=${{ steps.get_version.outputs.version }}
+    - name: Pack NuGet packages
+      run: |
+        dotnet pack src/Rivulet.Core/Rivulet.Core.csproj -c Release --output ./artifacts -p:PackageVersion=${{ steps.get_version.outputs.version }}
+        dotnet pack src/Rivulet.Diagnostics/Rivulet.Diagnostics.csproj -c Release --output ./artifacts -p:PackageVersion=${{ steps.get_version.outputs.version }}
 
     - name: List artifacts
       run: ls -la ./artifacts
@@ -51,7 +53,7 @@ jobs:
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
       with:
-        files: ./artifacts/Rivulet.Core.*.nupkg
+        files: ./artifacts/*.nupkg
         generate_release_notes: true
         draft: false
         prerelease: ${{ contains(steps.get_version.outputs.version, '-') }}  # Mark as prerelease if version contains '-' (e.g., 1.0.0-beta)
@@ -61,9 +63,9 @@ jobs:
     - name: Upload artifacts to workflow
       uses: actions/upload-artifact@v5
       with:
-        name: nuget-package-${{ steps.get_version.outputs.version }}
-        path: ./artifacts/Rivulet.Core.*.nupkg
+        name: nuget-packages-${{ steps.get_version.outputs.version }}
+        path: ./artifacts/*.nupkg
         retention-days: 90
 
     - name: Publish to NuGet.org
-      run: dotnet nuget push ./artifacts/Rivulet.Core.*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+      run: dotnet nuget push ./artifacts/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate

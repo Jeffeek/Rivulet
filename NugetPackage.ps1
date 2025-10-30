@@ -1,6 +1,10 @@
 param(
     [Parameter(Mandatory=$false)]
-    [string]$Version = "1.0.0-local-test"
+    [string]$Version = "1.0.0-local-test",
+
+    [Parameter(Mandatory=$false)]
+    [ValidateSet("Core", "Diagnostics", "All")]
+    [string]$Project = "All"
 )
 
 $ErrorActionPreference = "Stop"
@@ -10,15 +14,26 @@ Write-Host "  NuGet Package Builder & Inspector" -ForegroundColor Cyan
 Write-Host "======================================" -ForegroundColor Cyan
 Write-Host ""
 
-$ProjectPath = "src\Rivulet.Core\Rivulet.Core.csproj"
+# Define project paths
+$Projects = @{
+    "Core" = "src\Rivulet.Core\Rivulet.Core.csproj"
+    "Diagnostics" = "src\Rivulet.Diagnostics\Rivulet.Diagnostics.csproj"
+}
+
+# Determine which projects to pack
+$ProjectsToPack = if ($Project -eq "All") {
+    $Projects.Values
+} else {
+    @($Projects[$Project])
+}
+
 $OutputDir = ".\test-packages"
 $ExtractDir = ".\test-extract"
-$PackageName = "Rivulet.Core.$Version"
 
-Write-Host "Version:      $Version" -ForegroundColor Green
-Write-Host "Project:      $ProjectPath" -ForegroundColor Green
-Write-Host "Output Dir:   $OutputDir" -ForegroundColor Green
-Write-Host "Extract Dir:  $ExtractDir" -ForegroundColor Green
+Write-Host "Version:       $Version" -ForegroundColor Green
+Write-Host "Projects:      $Project ($($ProjectsToPack.Count) package(s))" -ForegroundColor Green
+Write-Host "Output Dir:    $OutputDir" -ForegroundColor Green
+Write-Host "Extract Dir:   $ExtractDir" -ForegroundColor Green
 Write-Host ""
 
 # Clean up previous builds
@@ -35,22 +50,36 @@ if (Test-Path $ExtractDir) {
 # Create output directory
 New-Item -ItemType Directory -Path $OutputDir | Out-Null
 
-# Build the package
-Write-Host ""
-Write-Host "Building NuGet package..." -ForegroundColor Yellow
-Write-Host "Command: dotnet pack $ProjectPath -c Release --output $OutputDir -p:PackageVersion=$Version" -ForegroundColor Gray
-Write-Host ""
+# Build all packages
+$packageCount = 0
+foreach ($projectPath in $ProjectsToPack) {
+    $packageCount++
+    $projectName = [System.IO.Path]::GetFileNameWithoutExtension($projectPath)
 
-dotnet pack $ProjectPath -c Release --output $OutputDir -p:PackageVersion=$Version
-
-if ($LASTEXITCODE -ne 0) {
     Write-Host ""
-    Write-Host "Error: Package build failed!" -ForegroundColor Red
-    exit 1
+    Write-Host "======================================" -ForegroundColor Yellow
+    Write-Host "  Building $projectName ($packageCount/$($ProjectsToPack.Count))" -ForegroundColor Yellow
+    Write-Host "======================================" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "Command: dotnet pack $projectPath -c Release --output $OutputDir -p:PackageVersion=$Version" -ForegroundColor Gray
+    Write-Host ""
+
+    dotnet pack $projectPath -c Release --output $OutputDir -p:PackageVersion=$Version
+
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host ""
+        Write-Host "Error: Package build failed for $projectName!" -ForegroundColor Red
+        exit 1
+    }
+
+    Write-Host ""
+    Write-Host "$projectName package built successfully!" -ForegroundColor Green
 }
 
 Write-Host ""
-Write-Host "Package built successfully!" -ForegroundColor Green
+Write-Host "======================================" -ForegroundColor Green
+Write-Host "  All packages built successfully!" -ForegroundColor Green
+Write-Host "======================================" -ForegroundColor Green
 Write-Host ""
 
 # List the created packages
@@ -61,35 +90,33 @@ Get-ChildItem $OutputDir -Filter *.nupkg | ForEach-Object {
 }
 
 Write-Host ""
-Write-Host "Extracting package for inspection..." -ForegroundColor Yellow
+Write-Host "Inspecting packages..." -ForegroundColor Yellow
 
-# Copy .nupkg to .zip (required by Expand-Archive)
-$nupkgPath = "$OutputDir\$PackageName.nupkg"
-$zipPath = "$OutputDir\$PackageName.zip"
+# Inspect each package
+foreach ($nupkgFile in Get-ChildItem $OutputDir -Filter *.nupkg) {
+    $packageName = [System.IO.Path]::GetFileNameWithoutExtension($nupkgFile.Name)
+    $extractPath = Join-Path $ExtractDir $packageName
 
-if (-not (Test-Path $nupkgPath)) {
-    Write-Host "Error: Package file not found: $nupkgPath" -ForegroundColor Red
-    exit 1
-}
+    Write-Host ""
+    Write-Host "Extracting $($nupkgFile.Name)..." -ForegroundColor Yellow
 
-Copy-Item $nupkgPath $zipPath
+    # Copy .nupkg to .zip (required by Expand-Archive)
+    $zipPath = "$($nupkgFile.FullName).zip"
+    Copy-Item $nupkgFile.FullName $zipPath
 
-# Extract the package
-New-Item -ItemType Directory -Path $ExtractDir | Out-Null
-Expand-Archive $zipPath -DestinationPath $ExtractDir
+    # Extract the package
+    New-Item -ItemType Directory -Path $extractPath | Out-Null
+    Expand-Archive $zipPath -DestinationPath $extractPath
+    Remove-Item $zipPath
 
-Write-Host ""
-Write-Host "Package contents:" -ForegroundColor Yellow
-Write-Host ""
+    Write-Host "Package contents for $packageName`:" -ForegroundColor Cyan
+    Write-Host ""
 
-# Show directory tree
-Get-ChildItem $ExtractDir -Recurse | ForEach-Object {
-    $indent = "  " * ($_.FullName.Split([IO.Path]::DirectorySeparatorChar).Count - $ExtractDir.Split([IO.Path]::DirectorySeparatorChar).Count - 1)
-    if ($_.PSIsContainer) {
-        Write-Host "$indent$($_.Name)\" -ForegroundColor Yellow
-    } else {
+    # Show key files only
+    Get-ChildItem $extractPath -Recurse -Include *.dll,*.xml,README.md,*.png | ForEach-Object {
+        $relativePath = $_.FullName.Substring($extractPath.Length + 1)
         $size = "{0:N2}" -f ($_.Length / 1KB)
-        Write-Host "$indent$($_.Name) ($size KB)" -ForegroundColor Gray
+        Write-Host "  $relativePath ($size KB)" -ForegroundColor Gray
     }
 }
 
@@ -98,40 +125,51 @@ Write-Host "======================================" -ForegroundColor Green
 Write-Host "  Package inspection completed!" -ForegroundColor Green
 Write-Host "======================================" -ForegroundColor Green
 Write-Host ""
-Write-Host "Package file:    $OutputDir\$PackageName.nupkg" -ForegroundColor Cyan
-Write-Host "Extracted to:    $ExtractDir" -ForegroundColor Cyan
-Write-Host ""
 
-# Check for expected files
+# Verification summary
 Write-Host "Verification:" -ForegroundColor Yellow
-$expectedFiles = @("nuget_logo.png", "README.md")
-$allFound = $true
+$allPackagesValid = $true
 
-foreach ($file in $expectedFiles) {
-    $found = Get-ChildItem $ExtractDir -Recurse -Filter $file -ErrorAction SilentlyContinue
-    if ($found) {
-        Write-Host "  [OK] $file found" -ForegroundColor Green
+foreach ($nupkgFile in Get-ChildItem $OutputDir -Filter *.nupkg) {
+    $packageName = [System.IO.Path]::GetFileNameWithoutExtension($nupkgFile.Name)
+    $extractPath = Join-Path $ExtractDir $packageName
+
+    Write-Host "  $packageName`:" -ForegroundColor Cyan
+
+    # Check for expected files
+    $expectedFiles = @("README.md", "nuget_logo.png")
+    foreach ($file in $expectedFiles) {
+        $found = Get-ChildItem $extractPath -Recurse -Filter $file -ErrorAction SilentlyContinue
+        if ($found) {
+            Write-Host "    [OK] $file found" -ForegroundColor Green
+        } else {
+            Write-Host "    [MISSING] $file not found!" -ForegroundColor Red
+            $allPackagesValid = $false
+        }
+    }
+
+    # Check for DLL files
+    $dllName = "$packageName.dll"
+    $dllFiles = Get-ChildItem $extractPath -Recurse -Filter $dllName
+    if ($dllFiles) {
+        Write-Host "    [OK] $dllName found in $($dllFiles.Count) target(s)" -ForegroundColor Green
     } else {
-        Write-Host "  [MISSING] $file not found!" -ForegroundColor Red
-        $allFound = $false
+        Write-Host "    [MISSING] $dllName not found!" -ForegroundColor Red
+        $allPackagesValid = $false
     }
 }
 
-# Check for DLL files
-$dllFiles = Get-ChildItem $ExtractDir -Recurse -Filter "Rivulet.Core.dll"
-if ($dllFiles) {
-    Write-Host "  [OK] Library DLL found in $($dllFiles.Count) target(s)" -ForegroundColor Green
+Write-Host ""
+
+if ($allPackagesValid) {
+    Write-Host "All packages valid!" -ForegroundColor Green
 } else {
-    Write-Host "  [MISSING] Rivulet.Core.dll not found!" -ForegroundColor Red
-    $allFound = $false
+    Write-Host "Warning: Some packages have missing files." -ForegroundColor Yellow
 }
 
 Write-Host ""
-
-if ($allFound) {
-    Write-Host "All expected files present!" -ForegroundColor Green
-} else {
-    Write-Host "Warning: Some expected files are missing from the package." -ForegroundColor Yellow
-}
-
+Write-Host "Next steps:" -ForegroundColor Yellow
+Write-Host "  - Build specific package:  .\NugetPackage.ps1 -Project Core" -ForegroundColor Gray
+Write-Host "  - Build all packages:      .\NugetPackage.ps1 -Project All" -ForegroundColor Gray
+Write-Host "  - Test locally:            dotnet add package Rivulet.Core --source ./test-packages" -ForegroundColor Gray
 Write-Host ""

@@ -6,8 +6,9 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 ---
-[![NuGet](https://img.shields.io/nuget/v/Rivulet.Core)](https://www.nuget.org/packages/Rivulet.Core/)
-![NuGet Downloads](https://img.shields.io/nuget/dt/Rivulet.Core)
+[![NuGet Core](https://img.shields.io/nuget/v/Rivulet.Core?label=Rivulet.Core)](https://www.nuget.org/packages/Rivulet.Core/)
+[![NuGet Diagnostics](https://img.shields.io/nuget/v/Rivulet.Diagnostics?label=Rivulet.Diagnostics)](https://www.nuget.org/packages/Rivulet.Diagnostics/)
+![NuGet Downloads](https://img.shields.io/nuget/dt/Rivulet.Core?label=downloads)
 ---
 ![CI/CD Pipeline](https://img.shields.io/github/actions/workflow/status/Jeffeek/Rivulet/release.yml?label=RELEASE)
 ![CI/CD Pipeline](https://img.shields.io/github/actions/workflow/status/Jeffeek/Rivulet/ci.yml?label=CI)
@@ -337,6 +338,116 @@ dotnet-counters monitor --process-id <PID> --counters Rivulet.Core
 - SLA compliance verification
 - Auto-scaling triggers
 
+## Rivulet.Diagnostics - Enterprise Observability
+
+`Rivulet.Diagnostics` extends the core library with production-ready observability features for comprehensive monitoring and health checks.
+
+### Install
+```bash
+dotnet add package Rivulet.Diagnostics
+```
+
+### Features
+- **EventListener Wrappers**: Console, File, and Structured JSON logging
+- **Metrics Aggregation**: Time-window statistics with min/max/avg/current values
+- **Prometheus Export**: Export metrics in Prometheus text format
+- **Health Check Integration**: Microsoft.Extensions.Diagnostics.HealthChecks support
+- **Fluent Builder API**: Easy configuration with DiagnosticsBuilder
+
+### Quick Examples
+
+**Console Listener** - Development and debugging
+```csharp
+using var listener = new RivuletConsoleListener();
+
+await urls.SelectParallelAsync(ProcessAsync, options);
+// Console output:
+// [2025-01-15 10:30:45] Items Started: 100.00
+// [2025-01-15 10:30:46] Items Completed: 100.00
+```
+
+**File Listener with Rotation** - Production logging
+```csharp
+using var listener = new RivuletFileListener(
+    "metrics.log",
+    maxFileSizeBytes: 10 * 1024 * 1024 // 10MB
+);
+```
+
+**Structured JSON Logging** - Log aggregation (ELK, Splunk, Azure Monitor)
+```csharp
+using var listener = new RivuletStructuredLogListener("metrics.jsonl");
+// Or custom action for your logging system
+using var listener = new RivuletStructuredLogListener(json =>
+{
+    logger.LogInformation(json);
+});
+```
+
+**Metrics Aggregation** - Time-window statistics
+```csharp
+using var aggregator = new MetricsAggregator(TimeSpan.FromSeconds(10));
+aggregator.OnAggregation += metrics =>
+{
+    foreach (var metric in metrics)
+    {
+        Console.WriteLine($"{metric.DisplayName}:");
+        Console.WriteLine($"  Min: {metric.Min:F2}, Max: {metric.Max:F2}");
+        Console.WriteLine($"  Avg: {metric.Average:F2}, Current: {metric.Current:F2}");
+    }
+};
+```
+
+**Prometheus Export** - Scraping endpoint
+```csharp
+using var exporter = new PrometheusExporter();
+
+// In your ASP.NET Core app
+app.MapGet("/metrics", () => exporter.Export());
+
+// Output:
+// # HELP rivulet_items_started Total number of items started
+// # TYPE rivulet_items_started gauge
+// rivulet_items_started 1000.00
+```
+
+**Health Check Integration** - ASP.NET Core health checks
+```csharp
+// Startup/Program.cs
+builder.Services.AddHealthChecks()
+    .AddCheck<RivuletHealthCheck>("rivulet", tags: new[] { "ready" });
+
+builder.Services.Configure<RivuletHealthCheckOptions>(options =>
+{
+    options.ErrorRateThreshold = 0.1;  // 10% error rate
+    options.FailureCountThreshold = 100;
+});
+
+app.MapHealthChecks("/health");
+```
+
+**Fluent Builder** - Configure multiple listeners
+```csharp
+using var diagnostics = new DiagnosticsBuilder()
+    .AddConsoleListener()
+    .AddFileListener("metrics.log")
+    .AddStructuredLogListener("metrics.jsonl")
+    .AddMetricsAggregator(TimeSpan.FromSeconds(10), metrics =>
+    {
+        // Handle aggregated metrics
+    })
+    .AddPrometheusExporter(out var exporter)
+    .Build();
+
+// All listeners capture metrics simultaneously
+await urls.SelectParallelAsync(ProcessAsync, options);
+
+// Export Prometheus metrics
+var prometheusText = exporter.Export();
+```
+
+See the [Rivulet.Diagnostics README](src/Rivulet.Diagnostics/README.md) for complete documentation.
+
 ## Development Scripts
 
 The repository includes PowerShell scripts to streamline development and release workflows:
@@ -359,14 +470,18 @@ Build, restore, and test the solution locally.
 Build and inspect NuGet packages locally before releasing.
 
 ```powershell
-# Build with test version
+# Build all packages with test version
 .\NugetPackage.ps1
 
+# Build specific package
+.\NugetPackage.ps1 -Project Core
+.\NugetPackage.ps1 -Project Diagnostics
+
 # Build with specific version
-.\NugetPackage.ps1 -Version "1.2.3"
+.\NugetPackage.ps1 -Version "1.2.3" -Project All
 ```
 
-Creates package in `./test-packages` and extracts contents to `./test-extract` for verification.
+Creates packages in `./test-packages` and extracts contents to `./test-extract` for verification.
 
 ### SmartCommit.ps1
 Generate high-quality commit messages using AI (Claude, Gemini, or OpenAI).

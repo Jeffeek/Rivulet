@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>net9.0;net8.0</TargetFrameworks>
@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Rivulet.Core\Rivulet.Core.csproj" />
+    <ProjectReference Include="..\..\src\Rivulet.Diagnostics\Rivulet.Diagnostics.csproj" />
   </ItemGroup>
 
 </Project>
