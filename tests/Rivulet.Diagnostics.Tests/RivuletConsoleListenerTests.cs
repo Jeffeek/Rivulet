@@ -18,7 +18,8 @@ public class RivuletConsoleListenerTests : IDisposable
     [Fact]
     public async Task ConsoleListener_ShouldWriteMetrics_WhenOperationsRun()
     {
-        using (new RivuletConsoleListener(useColors: false))
+        var listener = new RivuletConsoleListener(useColors: false);
+        try
         {
             await Enumerable.Range(1, 10)
                 .ToAsyncEnumerable()
@@ -32,17 +33,17 @@ public class RivuletConsoleListenerTests : IDisposable
                 })
                 .ToListAsync();
 
-            // Wait longer for EventCounters to fire (they fire every 1 second)
+            // EventCounters fire every 1 second. Wait for at least 2 intervals
+            // to ensure metrics are published.
             await Task.Delay(2500);
-        } // Dispose listener to ensure all events are flushed
+        }
+        finally
+        {
+            listener.Dispose();
+        }
 
-        await Task.Delay(3000);
-
-        // Flush the StringWriter
-        await _stringWriter.FlushAsync();
-
-        // Wait for console output to be fully flushed
-        await Task.Delay(200);
+        // Give a brief moment for console output to be written
+        await Task.Delay(100);
 
         var output = _stringWriter.ToString();
         output.Should().Contain("Items Started");

@@ -84,7 +84,7 @@ public class RivuletEventListenerBaseTests : IDisposable
 
     public void Dispose()
     {
-        _listener?.Dispose();
+        _listener.Dispose();
     }
 
     private sealed class TestEventListener : RivuletEventListenerBase
@@ -93,9 +93,9 @@ public class RivuletEventListenerBaseTests : IDisposable
 
         protected override void OnCounterReceived(string name, string displayName, double value, string displayUnits)
         {
-            ReceivedCounters[name] = new CounterData(name, displayName, value, displayUnits);
+            ReceivedCounters[name] = new CounterData(displayName, displayUnits);
         }
     }
 
-    private sealed record CounterData(string Name, string DisplayName, double Value, string DisplayUnits);
+    private sealed record CounterData(string DisplayName, string DisplayUnits);
 }

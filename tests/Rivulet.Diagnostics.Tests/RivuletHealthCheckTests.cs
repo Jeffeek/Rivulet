@@ -17,6 +17,8 @@ public class RivuletHealthCheckTests
     public void HealthCheck_ShouldUseDefaultOptions_WhenOptionsIsNull()
     {
         using var exporter = new PrometheusExporter();
+        // ReSharper disable once AccessToDisposedClosure
+        // ReSharper disable once RedundantArgumentDefaultValue
         var act = () => new RivuletHealthCheck(exporter, null);
         act.Should().NotThrow();
     }
