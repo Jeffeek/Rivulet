@@ -16,6 +16,115 @@ public class RivuletConsoleListenerTests : IDisposable
     }
 
     [Fact]
+    public async Task ConsoleListener_ShouldHandleLargeValues()
+    {
+        var consoleOutput = new StringWriter();
+        var originalOutput = Console.Out;
+        Console.SetOut(consoleOutput);
+
+        try
+        {
+            using var listener = new RivuletConsoleListener(useColors: false);
+
+            // Run many operations to generate large metric values
+            await Enumerable.Range(1, 2000)
+                .ToAsyncEnumerable()
+                .SelectParallelStreamAsync(async (x, ct) =>
+                {
+                    await Task.Delay(1, ct);
+                    return x;
+                }, new ParallelOptionsRivulet
+                {
+                    MaxDegreeOfParallelism = 10
+                })
+                .ToListAsync();
+
+            await Task.Delay(2500);
+        }
+        finally
+        {
+            Console.SetOut(originalOutput);
+            await consoleOutput.DisposeAsync();
+        }
+    }
+
+    [Fact]
+    public async Task ConsoleListener_ShouldHandleFailuresWithColors()
+    {
+        var consoleOutput = new StringWriter();
+        var originalOutput = Console.Out;
+        Console.SetOut(consoleOutput);
+
+        try
+        {
+            using var listener = new RivuletConsoleListener(useColors: true);
+
+            try
+            {
+                await Enumerable.Range(1, 10)
+                    .ToAsyncEnumerable()
+                    .SelectParallelStreamAsync<int, int>(async (_, ct) =>
+                    {
+                        await Task.Delay(1, ct);
+                        throw new InvalidOperationException("Test");
+                    }, new ParallelOptionsRivulet
+                    {
+                        MaxDegreeOfParallelism = 2,
+                        ErrorMode = ErrorMode.CollectAndContinue
+                    })
+                    .ToListAsync();
+            }
+            catch
+            {
+                // Expected
+            }
+
+            await Task.Delay(2500);
+
+            var output = consoleOutput.ToString();
+            output.Should().NotBeNullOrEmpty();
+        }
+        finally
+        {
+            Console.SetOut(originalOutput);
+            await consoleOutput.DisposeAsync();
+        }
+    }
+
+    [Fact]
+    public async Task AllListeners_ShouldHandleEmptyDisplayUnits()
+    {
+        var consoleOutput = new StringWriter();
+        var originalOutput = Console.Out;
+        Console.SetOut(consoleOutput);
+
+        try
+        {
+            using var consoleListener = new RivuletConsoleListener(useColors: false);
+
+            // Run operations to trigger metrics
+            await Enumerable.Range(1, 5)
+                .ToAsyncEnumerable()
+                .SelectParallelStreamAsync(async (x, ct) =>
+                {
+                    await Task.Delay(1, ct);
+                    return x;
+                }, new ParallelOptionsRivulet
+                {
+                    MaxDegreeOfParallelism = 2
+                })
+                .ToListAsync();
+
+            await Task.Delay(2500);
+        }
+        finally
+        {
+            Console.SetOut(originalOutput);
+            await consoleOutput.DisposeAsync();
+        }
+    }
+
+    [Fact]
     public async Task ConsoleListener_ShouldWriteMetrics_WhenOperationsRun()
     {
         var listener = new RivuletConsoleListener(useColors: false);
