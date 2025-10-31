@@ -16,8 +16,12 @@ permissions:
 
 jobs:
   check-package-activity:
-    name: Check NuGet Package Activity
+    name: Check ${{ matrix.package }} Activity
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package: ['Rivulet.Core', 'Rivulet.Diagnostics']
+      fail-fast: false
 
     steps:
     - name: Checkout
@@ -26,7 +30,7 @@ jobs:
     - name: Get latest NuGet package version and publish date
       id: nuget_info
       run: |
-        PACKAGE_ID="Rivulet.Core"
+        PACKAGE_ID="${{ matrix.package }}"
 
         # Query NuGet API for package metadata
         API_URL="https://api.nuget.org/v3-flatcontainer/${PACKAGE_ID,,}/index.json"
@@ -67,9 +71,10 @@ jobs:
       id: check_issue
       if: steps.nuget_info.outputs.needs_update == 'true'
       run: |
-        # Check if there's already an open issue about package activity
-        ISSUE_COUNT=$(gh issue list --label "nuget-activity" --state open --json number --jq 'length')
-        echo "Open issues with nuget-activity label: $ISSUE_COUNT"
+        # Check if there's already an open issue for this specific package
+        PACKAGE_ID="${{ matrix.package }}"
+        ISSUE_COUNT=$(gh issue list --label "nuget-activity" --search "$PACKAGE_ID" --state open --json number --jq 'length')
+        echo "Open issues for $PACKAGE_ID with nuget-activity label: $ISSUE_COUNT"
         echo "issue_exists=$([[ $ISSUE_COUNT -gt 0 ]] && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
       env:
         GH_TOKEN: ${{ github.token }}
@@ -77,6 +82,7 @@ jobs:
     - name: Create issue if needed
       if: steps.nuget_info.outputs.needs_update == 'true' && steps.check_issue.outputs.issue_exists == 'false'
       run: |
+        PACKAGE_ID="${{ matrix.package }}"
         DAYS_SINCE=${{ steps.nuget_info.outputs.days_since_publish }}
         DAYS_UNTIL=${{ steps.nuget_info.outputs.days_until_unlisted }}
         VERSION=${{ steps.nuget_info.outputs.latest_version }}
@@ -87,7 +93,7 @@ jobs:
         ISSUE_BODY=$(cat <<EOF
         ## NuGet Package Activity Warning
 
-        The Rivulet.Core NuGet package is approaching 365 days of inactivity and may be automatically unlisted by NuGet.org.
+        The **$PACKAGE_ID** NuGet package is approaching 365 days of inactivity and may be automatically unlisted by NuGet.org.
 
         ### Current Status
         - **Latest Version**: $VERSION
@@ -143,7 +149,7 @@ jobs:
         )
 
         gh issue create \
-          --title "NuGet Package Activity Warning: Update needed within $DAYS_UNTIL days" \
+          --title "[$PACKAGE_ID] NuGet Package Activity Warning: Update needed within $DAYS_UNTIL days" \
           --label "nuget-activity,priority:high" \
           --body "$ISSUE_BODY"
       env:
@@ -152,6 +158,8 @@ jobs:
     - name: Summary
       run: |
         echo "### NuGet Package Activity Check Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Package**: ${{ matrix.package }}" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "- **Latest Version**: ${{ steps.nuget_info.outputs.latest_version }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Last Published**: ${{ steps.nuget_info.outputs.publish_date }}" >> $GITHUB_STEP_SUMMARY

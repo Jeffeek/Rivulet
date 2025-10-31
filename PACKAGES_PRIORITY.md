@@ -30,13 +30,13 @@
 ## Tier 1: Must-Have (v1.2.0 - Next 6 months)
 **Critical for production adoption**
 
-| Rank | Package | Why Critical | Timeline |
-|------|---------|-------------|----------|
-| 🥇 **1** | **Rivulet.Diagnostics** | Production observability, SRE adoption, monitoring/alerting | Q1 2026 |
-| 🥈 **2** | **Rivulet.Diagnostics.OpenTelemetry** | Industry standard, distributed tracing | Q1 2026 |
-| 🥉 **3** | **Rivulet.Testing** | Encourages best practices, reduces flaky tests | Q1 2026 |
-| **4** | **Rivulet.Hosting** | .NET Generic Host integration, table stakes | Q1 2026 |
-| **5** | **Rivulet.Samples** | Accelerates onboarding, best practices | Q1 2026 |
+| Rank | Package | Why Critical | Status | Timeline |
+|------|---------|-------------|--------|----------|
+| 🥇 **1** | **Rivulet.Diagnostics** | Production observability, SRE adoption, monitoring/alerting | ✅ **Complete** | Q1 2026 |
+| 🥈 **2** | **Rivulet.Diagnostics.OpenTelemetry** | Industry standard, distributed tracing | 🔲 Planned | Q1 2026 |
+| 🥉 **3** | **Rivulet.Testing** | Encourages best practices, reduces flaky tests | 🔲 Planned | Q1 2026 |
+| **4** | **Rivulet.Hosting** | .NET Generic Host integration, table stakes | 🔲 Planned | Q1 2026 |
+| **5** | **Rivulet.Samples** | Accelerates onboarding, best practices | 🔲 Planned | Q1 2026 |
 
 **Success Criteria**: Companies can confidently deploy Rivulet in production with full observability
 
