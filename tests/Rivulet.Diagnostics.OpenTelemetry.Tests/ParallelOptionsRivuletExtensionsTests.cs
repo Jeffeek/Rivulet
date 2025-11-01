@@ -193,7 +193,7 @@ public class ParallelOptionsRivuletExtensionsTests
 
         // Should have 2 retry events (attempt 1 and 2, then success on attempt 3)
         var retryEvents = activity.Events.Where(e => e.Name == "retry").ToList();
-        retryEvents.Should().HaveCountGreaterOrEqualTo(1);
+        retryEvents.Should().HaveCountGreaterThanOrEqualTo(1);
     }
 
     [Fact]
