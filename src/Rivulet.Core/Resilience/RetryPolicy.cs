@@ -9,6 +9,7 @@ internal static class RetryPolicy
         Func<T, CancellationToken, ValueTask<TResult>> func,
         ParallelOptionsRivulet options,
         MetricsTracker? metricsTracker,
+        int itemIndex,
         CancellationToken ct)
     {
         var attempt = 0;
@@ -29,6 +30,12 @@ internal static class RetryPolicy
             {
                 attempt++;
                 metricsTracker?.IncrementRetries();
+
+                if (options.OnRetryAsync is not null)
+                {
+                    await options.OnRetryAsync(itemIndex, attempt, ex).ConfigureAwait(false);
+                }
+
                 var delay = CalculateDelay(options.BackoffStrategy, options.BaseDelay, attempt, ref previousDelay);
                 await Task.Delay(delay, ct).ConfigureAwait(false);
             }
@@ -50,7 +57,7 @@ internal static class RetryPolicy
             BackoffStrategy.DecorrelatedJitter => CalculateDecorrelatedJitterDelay(baseDelayMs, attempt, ref previousDelay),
             BackoffStrategy.Linear => CalculateLinearDelay(baseDelayMs, attempt),
             BackoffStrategy.LinearJitter => CalculateLinearJitterDelay(baseDelayMs, attempt),
-            _ => CalculateExponentialDelay(baseDelayMs, attempt) // Default to exponential
+            _ => CalculateExponentialDelay(baseDelayMs, attempt)
         };
     }
 

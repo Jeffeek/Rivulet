@@ -124,11 +124,11 @@ public static class AsyncParallelLinq
                         if (circuitBreaker is not null)
                         {
                             result = await circuitBreaker.ExecuteAsync(async () =>
-                                await RetryPolicy.ExecuteWithRetry(item, taskSelector, options, metricsTracker, token), token);
+                                await RetryPolicy.ExecuteWithRetry(item, taskSelector, options, metricsTracker, idx, token), token);
                         }
                         else
                         {
-                            result = await RetryPolicy.ExecuteWithRetry(item, taskSelector, options, metricsTracker, token);
+                            result = await RetryPolicy.ExecuteWithRetry(item, taskSelector, options, metricsTracker, idx, token);
                         }
 
                         if (options.OrderedOutput)
@@ -178,7 +178,6 @@ public static class AsyncParallelLinq
         }
         catch when (options.ErrorMode != ErrorMode.FailFast)
         {
-            // Swallow here; handled by mode below
         }
         finally
         {
@@ -292,11 +291,11 @@ public static class AsyncParallelLinq
                     if (circuitBreaker is not null)
                     {
                         res = await circuitBreaker.ExecuteAsync(async () =>
-                            await RetryPolicy.ExecuteWithRetry(item, taskSelector, options, metricsTracker, token), token);
+                            await RetryPolicy.ExecuteWithRetry(item, taskSelector, options, metricsTracker, idx, token), token);
                     }
                     else
                     {
-                        res = await RetryPolicy.ExecuteWithRetry(item, taskSelector, options, metricsTracker, token);
+                        res = await RetryPolicy.ExecuteWithRetry(item, taskSelector, options, metricsTracker, idx, token);
                     }
 
                     await output.Writer.WriteAsync((idx, res), token);
@@ -370,7 +369,6 @@ public static class AsyncParallelLinq
                 }
             }
 
-            // Yield any remaining buffered results in order
             foreach (var idx in buffer.Keys.OrderBy(k => k))
             {
                 yield return buffer[idx];

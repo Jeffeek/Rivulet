@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Rivulet.Core.Observability;
 
 namespace Rivulet.Diagnostics;
 
@@ -50,10 +51,10 @@ public sealed class RivuletHealthCheck : IHealthCheck, IDisposable
                 return Task.FromResult(HealthCheckResult.Healthy("No Rivulet operations currently running"));
             }
 
-            var itemsStarted = metrics.GetValueOrDefault("items-started", 0);
-            var itemsCompleted = metrics.GetValueOrDefault("items-completed", 0);
-            var totalFailures = metrics.GetValueOrDefault("total-failures", 0);
-            var totalRetries = metrics.GetValueOrDefault("total-retries", 0);
+            var itemsStarted = metrics.GetValueOrDefault(RivuletMetricsConstants.CounterNames.ItemsStarted, 0);
+            var itemsCompleted = metrics.GetValueOrDefault(RivuletMetricsConstants.CounterNames.ItemsCompleted, 0);
+            var totalFailures = metrics.GetValueOrDefault(RivuletMetricsConstants.CounterNames.TotalFailures, 0);
+            var totalRetries = metrics.GetValueOrDefault(RivuletMetricsConstants.CounterNames.TotalRetries, 0);
 
             var errorRate = itemsStarted > 0 ? totalFailures / itemsStarted : 0;
 
@@ -101,7 +102,6 @@ public sealed class RivuletHealthCheck : IHealthCheck, IDisposable
     /// </summary>
     public void Dispose()
     {
-        // No unmanaged resources to dispose directly
     }
 }
 

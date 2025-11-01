@@ -112,7 +112,7 @@ internal sealed class ProgressTracker : IDisposable
         }
         catch
         {
-            // Best effort cleanup
+            // ignored
         }
 
         _reporterCts.Dispose();

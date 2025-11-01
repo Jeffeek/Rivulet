@@ -44,6 +44,12 @@ public sealed class ParallelOptionsRivulet
     /// </summary>
     public Func<int, ValueTask>? OnCompleteItemAsync { get; init; }
     /// <summary>
+    /// Gets a callback invoked when a retry attempt is made for a transient error.
+    /// Receives the item index, the attempt number (1-based), and the exception that triggered the retry.
+    /// This is called before the backoff delay.
+    /// </summary>
+    public Func<int, int, Exception, ValueTask>? OnRetryAsync { get; init; }
+    /// <summary>
     /// Gets a callback invoked periodically when the processing pipeline is throttling due to backpressure.
     /// Receives the current item count.
     /// </summary>

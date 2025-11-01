@@ -1,0 +1,212 @@
+name: Reusable Flaky Test Detection
+
+on:
+  workflow_call:
+    inputs:
+      iterations:
+        description: 'Number of test iterations to run'
+        required: true
+        type: number
+      timeout-minutes:
+        description: 'Timeout in minutes for the test execution'
+        required: false
+        type: number
+        default: 45
+
+permissions:
+  contents: read
+
+jobs:
+  detect-flaky-tests:
+    name: Detect Flaky Tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+      fail-fast: false
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+
+    - name: Setup .NET 9.0.x
+      uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: 9.0.x
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build (Release)
+      run: dotnet build -c Release --no-restore
+
+    - name: Run flaky test detection - Windows
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        $iterations = ${{ inputs.iterations }}
+        $results = @{}
+        $failedIterations = @()
+
+        Write-Host "Running tests $iterations times to detect flaky tests..." -ForegroundColor Cyan
+        Write-Host ""
+
+        for ($i = 1; $i -le $iterations; $i++) {
+            Write-Host "Iteration $i of $iterations..." -ForegroundColor Gray
+
+            $output = dotnet test -c Release --no-build --verbosity quiet 2>&1 | Out-String
+
+            if ($output -match "Failed!\s+-\s+Failed:\s+(\d+)" -or $output -match "Test Run Failed") {
+                $failedIterations += $i
+
+                $failedTests = $output | Select-String -Pattern "\s+Failed\s+([^\[]+)\[" -AllMatches
+
+                foreach ($match in $failedTests.Matches) {
+                    $testName = $match.Groups[1].Value.Trim()
+
+                    if (-not $results.ContainsKey($testName)) {
+                        $results[$testName] = 0
+                    }
+
+                    $results[$testName]++
+                }
+            }
+
+            Start-Sleep -Milliseconds 50
+        }
+
+        Write-Host ""
+        Write-Host "========================================" -ForegroundColor Green
+        Write-Host "FLAKY TEST DETECTION RESULTS" -ForegroundColor Green
+        Write-Host "========================================" -ForegroundColor Green
+        Write-Host ""
+
+        if ($results.Count -eq 0) {
+            Write-Host "[OK] No flaky tests detected! All tests passed in all $iterations iterations." -ForegroundColor Green
+            exit 0
+        } else {
+            Write-Host "[FAILURE] FLAKY TESTS DETECTED:" -ForegroundColor Red
+            Write-Host ""
+
+            $sortedResults = $results.GetEnumerator() | Sort-Object -Property Value -Descending
+
+            foreach ($test in $sortedResults) {
+                $testName = $test.Key
+                $failCount = $test.Value
+                $passCount = $iterations - $failCount
+                $failureRate = [math]::Round(($failCount / $iterations) * 100, 2)
+
+                Write-Host "Test: $testName" -ForegroundColor Cyan
+                Write-Host "  Failures: $failCount / $iterations ($failureRate%)" -ForegroundColor Red
+                Write-Host "  Passes:   $passCount / $iterations" -ForegroundColor Green
+                Write-Host ""
+            }
+
+            Write-Host "========================================" -ForegroundColor Red
+            Write-Host "SUMMARY:" -ForegroundColor Red
+            Write-Host "  Total flaky tests: $($results.Count)" -ForegroundColor Red
+            Write-Host "  Total iterations: $iterations" -ForegroundColor Red
+            Write-Host "  Failed iterations: $($failedIterations.Count)" -ForegroundColor Red
+            Write-Host "========================================" -ForegroundColor Red
+
+            exit 1
+        }
+      timeout-minutes: ${{ inputs.timeout-minutes }}
+
+    - name: Run flaky test detection - Linux
+      if: runner.os == 'Linux'
+      shell: bash
+      run: |
+        set +e  # Don't exit on error, we handle errors manually
+
+        iterations=${{ inputs.iterations }}
+        declare -A results
+        failed_count=0
+        script_errors=0
+
+        echo "Running tests $iterations times to detect flaky tests..."
+        echo "System: $(uname -a)"
+        echo "Memory: $(free -h 2>/dev/null | grep Mem | awk '{print $3 "/" $2}' || echo 'N/A')"
+        echo ""
+
+        for i in $(seq 1 $iterations); do
+            echo "Iteration $i of $iterations..."
+
+            # Run test and capture output
+            output=$(dotnet test -c Release --no-build --verbosity quiet 2>&1)
+            exit_code=$?
+
+            # Check if test run completed
+            if [ $exit_code -ne 0 ]; then
+                # Check if this is a test failure or a crash
+                if echo "$output" | grep -q "Test Run Failed\|Failed!"; then
+                    # Tests ran but some failed
+                    ((failed_count++))
+
+                    # Extract failed test names
+                    while IFS= read -r line; do
+                        if [[ $line =~ Failed[[:space:]]+([^[]+) ]]; then
+                            test_name="${BASH_REMATCH[1]}"
+                            test_name=$(echo "$test_name" | xargs)
+                            results["$test_name"]=$((${results["$test_name"]:-0} + 1))
+                        fi
+                    done <<< "$output"
+                else
+                    # Test process crashed - log it
+                    echo "WARNING: Test process exited with code $exit_code"
+                    ((script_errors++))
+
+                    # If too many errors, abort
+                    if [ $script_errors -gt 10 ]; then
+                        echo "ERROR: Too many test process errors, aborting"
+                        exit 1
+                    fi
+                fi
+            fi
+
+            sleep 0.1
+
+            # Progress every 50 iterations
+            if [ $((i % 50)) -eq 0 ]; then
+                echo "Progress: $i/$iterations, failures: $failed_count, errors: $script_errors"
+            fi
+        done
+
+        echo ""
+        echo "========================================"
+        echo "FLAKY TEST DETECTION RESULTS"
+        echo "========================================"
+        echo ""
+
+        if [ ${#results[@]} -eq 0 ]; then
+            echo "[OK] No flaky tests detected! All tests passed in all $iterations iterations."
+            [ $script_errors -gt 0 ] && echo "WARNING: $script_errors test process errors occurred"
+            exit 0
+        else
+            echo "[FAILURE] FLAKY TESTS DETECTED:"
+            echo ""
+
+            for test_name in "${!results[@]}"; do
+                fail_count=${results[$test_name]}
+                pass_count=$((iterations - fail_count))
+                failure_rate=$(awk "BEGIN {printf \"%.2f\", ($fail_count / $iterations) * 100}")
+
+                echo "Test: $test_name"
+                echo "  Failures: $fail_count / $iterations ($failure_rate%)"
+                echo "  Passes:   $pass_count / $iterations"
+                echo ""
+            done
+
+            echo "========================================"
+            echo "SUMMARY:"
+            echo "  Total flaky tests: ${#results[@]}"
+            echo "  Total iterations: $iterations"
+            echo "  Failed iterations: $failed_count"
+            [ $script_errors -gt 0 ] && echo "  Script errors: $script_errors"
+            echo "========================================"
+
+            exit 1
+        fi
+      timeout-minutes: ${{ inputs.timeout-minutes }}

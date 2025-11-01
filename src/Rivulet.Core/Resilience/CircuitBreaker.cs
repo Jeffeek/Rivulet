@@ -182,7 +182,7 @@ internal sealed class CircuitBreaker
                 }
                 catch
                 {
-                    // Swallow
+                    // ignored
                 }
             });
         }
@@ -208,7 +208,7 @@ internal sealed class CircuitBreaker
                 }
                 catch
                 {
-                    // Swallow
+                    // ignored
                 }
             });
         }
@@ -234,7 +234,7 @@ internal sealed class CircuitBreaker
                 }
                 catch
                 {
-                    // Swallow
+                    // ignored
                 }
             });
         }

@@ -1,4 +1,5 @@
 using Rivulet.Core.Internal;
+using Rivulet.Core.Observability;
 
 namespace Rivulet.Diagnostics;
 
@@ -82,9 +83,9 @@ public sealed class RivuletConsoleListener : RivuletEventListenerBase
     {
         return name switch
         {
-            "total-failures" when value > 0 => ConsoleColor.Red,
-            "total-retries" when value > 0 => ConsoleColor.Yellow,
-            "throttle-events" when value > 0 => ConsoleColor.Yellow,
+            _ when name == RivuletMetricsConstants.CounterNames.TotalFailures && value > 0 => ConsoleColor.Red,
+            _ when name == RivuletMetricsConstants.CounterNames.TotalRetries && value > 0 => ConsoleColor.Yellow,
+            _ when name == RivuletMetricsConstants.CounterNames.ThrottleEvents && value > 0 => ConsoleColor.Yellow,
             _ => ConsoleColor.Green
         };
     }

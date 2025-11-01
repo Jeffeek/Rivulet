@@ -206,7 +206,7 @@ app.MapGet("/metrics", () => exporter.Export());
 ## Requirements
 
 - .NET 8.0 or .NET 9.0
-- Rivulet.Core 1.1.0+
+- Rivulet.Core 1.2.0+
 - Microsoft.Extensions.Diagnostics.HealthChecks 9.0.0+ (for health checks)
 
 ## License
@@ -215,7 +215,5 @@ MIT License - see LICENSE file for details
 
 ## Related Packages
 
-- **Rivulet.Core**: Core parallel operators
-- **Rivulet.Diagnostics.OpenTelemetry**: OpenTelemetry integration (coming soon)
-- **Rivulet.Testing**: Testing utilities (coming soon)
-- **Rivulet.Hosting**: .NET Generic Host integration (coming soon)
+- **Rivulet.Core**: Core parallel operators - [NuGet](https://www.nuget.org/packages/Rivulet.Core/)
+- **Rivulet.Diagnostics.OpenTelemetry**: OpenTelemetry integration for distributed tracing - [NuGet](https://www.nuget.org/packages/Rivulet.Diagnostics.OpenTelemetry/) | [Documentation](../Rivulet.Diagnostics.OpenTelemetry/README.md)
