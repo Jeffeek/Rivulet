@@ -145,7 +145,7 @@ public class SelectParallelStreamAsyncTests
     public async Task SelectParallelStreamAsync_WithCancellationToken_Completes()
     {
         var source = Enumerable.Range(1, 10).ToAsyncEnumerable();
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
 
         var results = await source.SelectParallelStreamAsync((x, _) => new ValueTask<int>(x * 2), cancellationToken: cts.Token).ToListAsync(cancellationToken: cts.Token);
 

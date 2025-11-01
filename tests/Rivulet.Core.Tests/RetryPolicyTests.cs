@@ -1,8 +1,10 @@
 using FluentAssertions;
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Rivulet.Core.Tests;
 
+[SuppressMessage("ReSharper", "AccessToDisposedClosure")]
 public class RetryPolicyTests
 {
     [Fact]
@@ -231,7 +233,7 @@ public class RetryPolicyTests
     public async Task WithRetryPolicy_CancellationDuringRetry_ThrowsOperationCanceledException()
     {
         var source = new[] { 1 };
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         var options = new ParallelOptionsRivulet
         {
             ErrorMode = ErrorMode.FailFast,

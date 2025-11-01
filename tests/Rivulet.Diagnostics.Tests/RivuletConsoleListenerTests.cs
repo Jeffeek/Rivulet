@@ -143,29 +143,23 @@ public class RivuletConsoleListenerTests : IDisposable
     [Fact]
     public async Task ConsoleListener_ShouldWriteMetrics_WhenOperationsRun()
     {
-        var listener = new RivuletConsoleListener(useColors: false);
-        try
-        {
-            await Enumerable.Range(1, 10)
-                .ToAsyncEnumerable()
-                .SelectParallelStreamAsync(async (x, ct) =>
-                {
-                    await Task.Delay(10, ct);
-                    return x * 2;
-                }, new ParallelOptionsRivulet
-                {
-                    MaxDegreeOfParallelism = 2
-                })
-                .ToListAsync();
+        using var listener = new RivuletConsoleListener(useColors: false);
 
-            // EventCounters fire every 1 second. Wait for at least 2 intervals
-            // to ensure metrics are published.
-            await Task.Delay(2500);
-        }
-        finally
-        {
-            listener.Dispose();
-        }
+        await Enumerable.Range(1, 10)
+            .ToAsyncEnumerable()
+            .SelectParallelStreamAsync(async (x, ct) =>
+            {
+                await Task.Delay(10, ct);
+                return x * 2;
+            }, new ParallelOptionsRivulet
+            {
+                MaxDegreeOfParallelism = 2
+            })
+            .ToListAsync();
+
+        // EventCounters fire every 1 second. Wait for at least 2 intervals
+        // to ensure metrics are published.
+        await Task.Delay(2500);
 
         // Give a brief moment for console output to be written
         await Task.Delay(100);

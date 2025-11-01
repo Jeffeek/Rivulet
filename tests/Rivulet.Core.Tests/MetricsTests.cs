@@ -1,5 +1,6 @@
 using FluentAssertions;
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using Rivulet.Core.Observability;
 
 namespace Rivulet.Core.Tests;
@@ -11,6 +12,7 @@ namespace Rivulet.Core.Tests;
 [CollectionDefinition("EventSource Sequential Tests", DisableParallelization = true)]
 public class EventSourceTestCollection;
 
+[SuppressMessage("ReSharper", "AccessToDisposedClosure")]
 public class MetricsTests
 {
     [Fact]
@@ -334,7 +336,7 @@ public class MetricsTests
     public async Task Metrics_WithCancellation_StopsTracking()
     {
         var source = Enumerable.Range(1, 1000);
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         var sampleCount = 0;
 
         var options = new ParallelOptionsRivulet
@@ -817,13 +819,18 @@ public class MetricsTests
 
         var tracker = new MetricsTracker(options, CancellationToken.None);
 
-        tracker.IncrementItemsStarted();
-        await Task.Delay(100);
+        try
+        {
+            tracker.IncrementItemsStarted();
+            await Task.Delay(100);
 
-        tracker.Dispose();
-
-        var act = () => tracker.Dispose();
-        act.Should().NotThrow();
+            var act = () => tracker.Dispose();
+            act.Should().NotThrow();
+        }
+        finally
+        {
+            tracker.Dispose();
+        }
     }
 
     [Fact]
@@ -871,7 +878,7 @@ public class MetricsTests
     [Fact]
     public async Task MetricsTracker_CancellationDuringDispose_HandlesGracefully()
     {
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         var tcs = new TaskCompletionSource();
 
         var options = new MetricsOptions
@@ -1014,10 +1021,15 @@ public class MetricsTests
     {
         var tracker = new MetricsTracker(new MetricsOptions { OnMetricsSample = null }, CancellationToken.None);
 
-        tracker.IncrementItemsStarted();
-        tracker.IncrementItemsCompleted();
-
-        tracker.Dispose();
+        try
+        {
+            tracker.IncrementItemsStarted();
+            tracker.IncrementItemsCompleted();
+        }
+        finally
+        {
+            tracker.Dispose();
+        }
     }
 
     [Fact]
@@ -1034,15 +1046,20 @@ public class MetricsTests
             }
         }, CancellationToken.None);
 
-        tracker.IncrementItemsStarted();
-        tracker.IncrementItemsCompleted();
+        try
+        {
+            tracker.IncrementItemsStarted();
+            tracker.IncrementItemsCompleted();
 
-        await Task.Delay(100);
+            await Task.Delay(100);
 
-        // Should not crash despite exception
-        callbackCount.Should().BeGreaterThan(0);
-
-        tracker.Dispose();
+            // Should not crash despite exception
+            callbackCount.Should().BeGreaterThan(0);
+        }
+        finally
+        {
+            tracker.Dispose();
+        }
     }
 
     [Fact]

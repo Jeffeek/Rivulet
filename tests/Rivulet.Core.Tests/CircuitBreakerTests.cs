@@ -1,8 +1,10 @@
+using System.Diagnostics.CodeAnalysis;
 using FluentAssertions;
 using Rivulet.Core.Resilience;
 
 namespace Rivulet.Core.Tests;
 
+[SuppressMessage("ReSharper", "AccessToDisposedClosure")]
 public class CircuitBreakerTests
 {
     [Fact]
@@ -130,7 +132,7 @@ public class CircuitBreakerTests
 #pragma warning restore CS0162 // Unreachable code detected
                 });
             }
-            catch (InvalidOperationException) { }
+            catch (InvalidOperationException) { /* Expected - test intentionally throws */ }
         }
 
         cb.State.Should().Be(CircuitBreakerState.Open);
@@ -165,7 +167,7 @@ public class CircuitBreakerTests
             {
                 await cb.ExecuteAsync(() => ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")));
             }
-            catch (InvalidOperationException) { }
+            catch (InvalidOperationException) { /* Expected - test intentionally throws */ }
         }
 
         cb.State.Should().Be(CircuitBreakerState.Open);
@@ -204,7 +206,7 @@ public class CircuitBreakerTests
             {
                 await cb.ExecuteAsync(() => ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")));
             }
-            catch (InvalidOperationException) { }
+            catch (InvalidOperationException) { /* Expected - test intentionally throws */ }
         }
 
         // Wait and transition to HalfOpen
@@ -246,7 +248,7 @@ public class CircuitBreakerTests
             {
                 await cb.ExecuteAsync(() => ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")));
             }
-            catch (InvalidOperationException) { }
+            catch (InvalidOperationException) { /* Expected - test intentionally throws */ }
         }
 
         cb.State.Should().Be(CircuitBreakerState.Closed);
@@ -262,7 +264,7 @@ public class CircuitBreakerTests
             {
                 await cb.ExecuteAsync(() => ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")));
             }
-            catch (InvalidOperationException) { }
+            catch (InvalidOperationException) { /* Expected - test intentionally throws */ }
         }
 
         cb.State.Should().Be(CircuitBreakerState.Closed);
@@ -301,7 +303,7 @@ public class CircuitBreakerTests
             {
                 await cb.ExecuteAsync(() => ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")));
             }
-            catch (InvalidOperationException) { }
+            catch (InvalidOperationException) { /* Expected - test intentionally throws */ }
         }
 
         // Wait for HalfOpen transition
@@ -339,7 +341,7 @@ public class CircuitBreakerTests
             {
                 await cb.ExecuteAsync(() => ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")));
             }
-            catch (InvalidOperationException) { }
+            catch (InvalidOperationException) { /* Expected - test intentionally throws */ }
         }
 
         cb.State.Should().Be(CircuitBreakerState.Open);
@@ -487,7 +489,6 @@ public class CircuitBreakerTests
             {
                 Interlocked.Increment(ref processedCount);
                 if (processedCount >= 5)
-                    // ReSharper disable once AccessToDisposedClosure
                     await cts.CancelAsync();
 
                 await Task.Delay(1, ct);
@@ -567,7 +568,7 @@ public class CircuitBreakerTests
             {
                 await cb.ExecuteAsync<int>(() => throw new InvalidOperationException("Test"), CancellationToken.None);
             }
-            catch (InvalidOperationException) { }
+            catch (InvalidOperationException) { /* Expected - test intentionally throws */ }
         }
 
         cb.State.Should().Be(CircuitBreakerState.Open);

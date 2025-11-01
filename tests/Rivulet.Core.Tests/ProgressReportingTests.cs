@@ -1,9 +1,11 @@
 using FluentAssertions;
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using Rivulet.Core.Observability;
 
 namespace Rivulet.Core.Tests;
 
+[SuppressMessage("ReSharper", "AccessToDisposedClosure")]
 public class ProgressReportingTests
 {
     [Fact]
@@ -527,7 +529,7 @@ public class ProgressReportingTests
     {
         var snapshots = new ConcurrentBag<ProgressSnapshot>();
         var source = Enumerable.Range(1, 1000);
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
 
         var options = new ParallelOptionsRivulet
         {
@@ -701,7 +703,7 @@ public class ProgressReportingTests
     public async Task ProgressReporting_ImmediateCancellation_DisposesCleanly()
     {
         var source = Enumerable.Range(1, 1000);
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
 
         var options = new ParallelOptionsRivulet
         {

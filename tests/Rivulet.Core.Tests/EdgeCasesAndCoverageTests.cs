@@ -1,9 +1,11 @@
 using FluentAssertions;
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using Rivulet.Core.Resilience;
 
 namespace Rivulet.Core.Tests;
 
+[SuppressMessage("ReSharper", "AccessToDisposedClosure")]
 public class EdgeCasesAndCoverageTests
 {
     [Fact]
@@ -410,6 +412,7 @@ public class EdgeCasesAndCoverageTests
                 },
                 options))
             {
+                // Consuming items
             }
         };
 
@@ -430,7 +433,7 @@ public class EdgeCasesAndCoverageTests
     public async Task SelectParallelStreamAsync_CancellationDuringUnorderedOutput_ThrowsOperationCanceledException()
     {
         var source = Enumerable.Range(1, 100).ToAsyncEnumerable();
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         var options = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 4,
@@ -466,7 +469,7 @@ public class EdgeCasesAndCoverageTests
     public async Task SelectParallelStreamAsync_CancellationDuringOrderedOutput_ThrowsOperationCanceledException()
     {
         var source = Enumerable.Range(1, 100).ToAsyncEnumerable();
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         var options = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 4,

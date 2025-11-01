@@ -198,7 +198,7 @@ public class ForEachParallelAsyncTests
     public async Task ForEachParallelAsync_WithCancellationToken_Completes()
     {
         var source = Enumerable.Range(1, 10).ToAsyncEnumerable();
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         var processedCount = 0;
 
         await source.ForEachParallelAsync(

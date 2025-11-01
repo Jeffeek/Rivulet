@@ -51,7 +51,7 @@ internal sealed class TokenBucket
             {
                 RefillTokens();
 
-                if (!(_availableTokens >= _options.TokensPerOperation)) return false;
+                if (_availableTokens < _options.TokensPerOperation) return false;
                 _availableTokens -= _options.TokensPerOperation;
                 return true;
             });
@@ -77,7 +77,7 @@ internal sealed class TokenBucket
         {
             RefillTokens();
 
-            if (!(_availableTokens >= _options.TokensPerOperation))
+            if (_availableTokens < _options.TokensPerOperation)
             {
                 return false;
             }

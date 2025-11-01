@@ -1,9 +1,11 @@
 using FluentAssertions;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using Rivulet.Core.Resilience;
 
 namespace Rivulet.Core.Tests;
 
+[SuppressMessage("ReSharper", "AccessToDisposedClosure")]
 public class RateLimitingTests
 {
     [Fact]
@@ -244,7 +246,6 @@ public class RateLimitingTests
             {
                 Interlocked.Increment(ref processedCount);
                 if (processedCount >= 15)
-                    // ReSharper disable once AccessToDisposedClosure
                     await cts.CancelAsync();
 
                 await Task.Delay(1, ct);

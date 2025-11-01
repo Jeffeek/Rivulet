@@ -1,8 +1,10 @@
+using System.Diagnostics.CodeAnalysis;
 using FluentAssertions;
 using Rivulet.Core.Resilience;
 
 namespace Rivulet.Core.Tests;
 
+[SuppressMessage("ReSharper", "AccessToDisposedClosure")]
 public class AdaptiveConcurrencyTests
 {
     [Fact]
@@ -70,7 +72,7 @@ public class AdaptiveConcurrencyTests
     [Fact]
     public void AdaptiveConcurrencyController_InitialConcurrency_UsesConfiguredValue()
     {
-        var controller = new AdaptiveConcurrencyController(new AdaptiveConcurrencyOptions
+        using var controller = new AdaptiveConcurrencyController(new AdaptiveConcurrencyOptions
         {
             MinConcurrency = 5,
             MaxConcurrency = 20,
@@ -78,20 +80,18 @@ public class AdaptiveConcurrencyTests
         });
 
         controller.CurrentConcurrency.Should().Be(10);
-        controller.Dispose();
     }
 
     [Fact]
     public void AdaptiveConcurrencyController_InitialConcurrency_DefaultsToMin()
     {
-        var controller = new AdaptiveConcurrencyController(new AdaptiveConcurrencyOptions
+        using var controller = new AdaptiveConcurrencyController(new AdaptiveConcurrencyOptions
         {
             MinConcurrency = 5,
             MaxConcurrency = 20
         });
 
         controller.CurrentConcurrency.Should().Be(5);
-        controller.Dispose();
     }
 
     [Fact]
@@ -404,13 +404,9 @@ public class AdaptiveConcurrencyTests
                 var count = Interlocked.Increment(ref processedCount);
 
                 // Cancel only once, deterministically
-                if (count == 10 && cancelRequested == 0)
+                if (count == 10 && cancelRequested == 0 && Interlocked.CompareExchange(ref cancelRequested, 1, 0) == 0)
                 {
-                    if (Interlocked.CompareExchange(ref cancelRequested, 1, 0) == 0)
-                    {
-                        // ReSharper disable once AccessToDisposedClosure
-                        await cts.CancelAsync();
-                    }
+                    await cts.CancelAsync();
                 }
 
                 // Longer delay to ensure cancellation propagates
@@ -588,7 +584,7 @@ public class AdaptiveConcurrencyTests
     [Fact]
     public async Task AdaptiveConcurrency_DisposeDuringSampling_HandlesGracefully()
     {
-        var controller = new AdaptiveConcurrencyController(new AdaptiveConcurrencyOptions
+        using var controller = new AdaptiveConcurrencyController(new AdaptiveConcurrencyOptions
         {
             MinConcurrency = 1,
             MaxConcurrency = 10,
@@ -601,9 +597,6 @@ public class AdaptiveConcurrencyTests
         controller.Release(TimeSpan.FromMilliseconds(10), true);
 
         await Task.Delay(20); // Let sampling happen
-
-        // Dispose during potential sampling
-        controller.Dispose();
 
         // Should not throw
         await Task.Delay(50);
