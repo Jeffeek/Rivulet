@@ -151,7 +151,7 @@ public class RivuletActivitySourceTests
         ActivitySource.AddActivityListener(listener);
 
         var activity = RivuletActivitySource.StartOperation("TestOperation");
-
+        activity.Should().NotBeNull("Activity creation must succeed for this test");
         try
         {
             RivuletActivitySource.RecordCircuitBreakerStateChange(activity, "Open");
