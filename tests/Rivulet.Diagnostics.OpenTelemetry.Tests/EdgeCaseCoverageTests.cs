@@ -103,6 +103,8 @@ public class EdgeCaseCoverageTests
 
         var options = new ParallelOptionsRivulet
         {
+            MaxDegreeOfParallelism = 1,
+            ErrorMode = ErrorMode.CollectAndContinue,
             OnStartItemAsync = async _ =>
             {
                 onStartCalled++;
@@ -117,7 +119,7 @@ public class EdgeCaseCoverageTests
             {
                 onErrorCalled++;
                 await Task.CompletedTask;
-                return false; // Don't handle
+                return false;
             }
         }.WithOpenTelemetryTracing("PreserveHooks");
 
@@ -126,16 +128,17 @@ public class EdgeCaseCoverageTests
             await Enumerable.Range(1, 5)
                 .SelectParallelAsync(async (x, ct) =>
                 {
-                    await Task.Delay(1, ct);
+                    await Task.Delay(10, ct);
                     if (x == 3)
                         throw new InvalidOperationException("Test");
                     return x;
                 }, options);
         }
-        catch
+        catch (AggregateException)
         {
-            // Expected
         }
+
+        await Task.Delay(100);
 
         onStartCalled.Should().BeGreaterThan(0);
         onCompleteCalled.Should().BeGreaterThan(0);
