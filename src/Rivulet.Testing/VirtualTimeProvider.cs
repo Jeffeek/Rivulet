@@ -1,3 +1,5 @@
+using Rivulet.Core.Internal;
+
 namespace Rivulet.Testing;
 
 /// <summary>
@@ -5,7 +7,11 @@ namespace Rivulet.Testing;
 /// </summary>
 public sealed class VirtualTimeProvider : IDisposable
 {
-    private readonly SemaphoreSlim _timeLock = new(1, 1);
+#if NET9_0_OR_GREATER
+    private readonly Lock _lock = new();
+#else
+    private readonly object _lock = new();
+#endif
     private readonly List<ScheduledTask> _scheduledTasks = new();
     private TimeSpan _currentTime = TimeSpan.Zero;
     private bool _disposed;
@@ -13,31 +19,16 @@ public sealed class VirtualTimeProvider : IDisposable
     /// <summary>
     /// Gets the current virtual time.
     /// </summary>
-    public TimeSpan CurrentTime
-    {
-        get
-        {
-            _timeLock.Wait();
-            try
-            {
-                return _currentTime;
-            }
-            finally
-            {
-                _timeLock.Release();
-            }
-        }
-    }
+    public TimeSpan CurrentTime => LockHelper.Execute(_lock, () => _currentTime);
 
     /// <summary>
     /// Advances virtual time by the specified duration and executes all scheduled tasks.
     /// </summary>
-    public async Task AdvanceTimeAsync(TimeSpan duration)
+    public void AdvanceTime(TimeSpan duration)
     {
         ObjectDisposedException.ThrowIf(_disposed, nameof(VirtualTimeProvider));
 
-        await _timeLock.WaitAsync();
-        try
+        LockHelper.Execute(_lock, () =>
         {
             var targetTime = _currentTime + duration;
             var tasksToExecute = new List<ScheduledTask>();
@@ -55,38 +46,28 @@ public sealed class VirtualTimeProvider : IDisposable
 
             _currentTime = targetTime;
 
-            // Execute tasks outside the lock
-            _timeLock.Release();
             foreach (var task in tasksToExecute)
             {
                 task.TaskCompletionSource.SetResult();
             }
-            await _timeLock.WaitAsync();
-        }
-        finally
-        {
-            _timeLock.Release();
-        }
+        });
     }
 
     /// <summary>
     /// Schedules a virtual delay that completes when time is advanced.
     /// </summary>
-    public Task DelayAsync(TimeSpan delay)
+    /// <returns>A task that completes when the virtual time reaches the scheduled time.</returns>
+    public Task CreateDelay(TimeSpan delay)
     {
         ObjectDisposedException.ThrowIf(_disposed, nameof(VirtualTimeProvider));
 
         var tcs = new TaskCompletionSource();
-        _timeLock.Wait();
-        try
+
+        LockHelper.Execute(_lock, () =>
         {
             var executionTime = _currentTime + delay;
             _scheduledTasks.Add(new ScheduledTask(executionTime, tcs));
-        }
-        finally
-        {
-            _timeLock.Release();
-        }
+        });
 
         return tcs.Task;
     }
@@ -96,16 +77,11 @@ public sealed class VirtualTimeProvider : IDisposable
     /// </summary>
     public void Reset()
     {
-        _timeLock.Wait();
-        try
+        LockHelper.Execute(_lock, () =>
         {
             _currentTime = TimeSpan.Zero;
             _scheduledTasks.Clear();
-        }
-        finally
-        {
-            _timeLock.Release();
-        }
+        });
     }
 
     /// <summary>
@@ -115,7 +91,6 @@ public sealed class VirtualTimeProvider : IDisposable
     {
         if (_disposed) return;
         _disposed = true;
-        _timeLock.Dispose();
     }
 
     private sealed record ScheduledTask(TimeSpan ExecutionTime, TaskCompletionSource TaskCompletionSource);

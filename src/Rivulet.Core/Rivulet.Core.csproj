@@ -25,8 +25,13 @@
   <ItemGroup>
   	<InternalsVisibleTo Include="Rivulet.Core.Tests" />
   	<InternalsVisibleTo Include="Rivulet.Diagnostics" />
+  	<InternalsVisibleTo Include="Rivulet.Diagnostics.Tests" />
   	<InternalsVisibleTo Include="Rivulet.Diagnostics.OpenTelemetry" />
   	<InternalsVisibleTo Include="Rivulet.Diagnostics.OpenTelemetry.Tests" />
+  	<InternalsVisibleTo Include="Rivulet.Testing" />
+  	<InternalsVisibleTo Include="Rivulet.Testing.Tests" />
+  	<InternalsVisibleTo Include="Rivulet.Hosting" />
+  	<InternalsVisibleTo Include="Rivulet.Hosting.Tests" />
   </ItemGroup>
   <ItemGroup>
   	<PackageReference Include="System.Linq.Async" Version="6.0.3" />

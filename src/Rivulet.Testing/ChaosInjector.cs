@@ -7,7 +7,6 @@ public sealed class ChaosInjector
 {
     private readonly double _failureRate;
     private readonly TimeSpan? _artificialDelay;
-    private readonly Random _random = new();
 
     /// <summary>
     /// Initializes a new chaos injector.
@@ -16,7 +15,7 @@ public sealed class ChaosInjector
     /// <param name="artificialDelay">Optional delay to inject before each operation.</param>
     public ChaosInjector(double failureRate = 0.1, TimeSpan? artificialDelay = null)
     {
-        if (failureRate < 0 || failureRate > 1)
+        if (failureRate is < 0 or > 1)
             throw new ArgumentOutOfRangeException(nameof(failureRate), "Failure rate must be between 0 and 1");
 
         _failureRate = failureRate;
@@ -44,13 +43,7 @@ public sealed class ChaosInjector
     /// <summary>
     /// Determines if the current operation should fail based on the failure rate.
     /// </summary>
-    public bool ShouldFail()
-    {
-        lock (_random)
-        {
-            return _random.NextDouble() < _failureRate;
-        }
-    }
+    public bool ShouldFail() => Random.Shared.NextDouble() < _failureRate;
 }
 
 /// <summary>

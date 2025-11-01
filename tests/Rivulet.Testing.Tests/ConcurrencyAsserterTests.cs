@@ -14,22 +14,22 @@ public class ConcurrencyAsserterTests
     }
 
     [Fact]
-    public async Task EnterAsync_ShouldIncrementCurrentConcurrency()
+    public void EnterAsync_ShouldIncrementCurrentConcurrency()
     {
         var asserter = new ConcurrencyAsserter();
 
-        using var scope = await asserter.EnterAsync();
+        using var scope = asserter.Enter();
 
         asserter.CurrentConcurrency.Should().Be(1);
         asserter.MaxConcurrency.Should().Be(1);
     }
 
     [Fact]
-    public async Task DisposingScope_ShouldDecrementCurrentConcurrency()
+    public void DisposingScope_ShouldDecrementCurrentConcurrency()
     {
         var asserter = new ConcurrencyAsserter();
 
-        var scope = await asserter.EnterAsync();
+        var scope = asserter.Enter();
         scope.Dispose();
 
         asserter.CurrentConcurrency.Should().Be(0);
@@ -37,13 +37,13 @@ public class ConcurrencyAsserterTests
     }
 
     [Fact]
-    public async Task MultipleEnters_ShouldTrackMaxConcurrency()
+    public void MultipleEnters_ShouldTrackMaxConcurrency()
     {
         var asserter = new ConcurrencyAsserter();
 
-        var scope1 = await asserter.EnterAsync();
-        var scope2 = await asserter.EnterAsync();
-        var scope3 = await asserter.EnterAsync();
+        var scope1 = asserter.Enter();
+        var scope2 = asserter.Enter();
+        var scope3 = asserter.Enter();
 
         asserter.CurrentConcurrency.Should().Be(3);
         asserter.MaxConcurrency.Should().Be(3);
@@ -64,7 +64,7 @@ public class ConcurrencyAsserterTests
 
         var tasks = Enumerable.Range(0, 10).Select(async _ =>
         {
-            using var scope = await asserter.EnterAsync();
+            using var scope = asserter.Enter();
             await Task.Delay(50);
         }).ToArray();
 
@@ -75,12 +75,12 @@ public class ConcurrencyAsserterTests
     }
 
     [Fact]
-    public async Task Reset_ShouldResetCounters()
+    public void Reset_ShouldResetCounters()
     {
         var asserter = new ConcurrencyAsserter();
 
-        var scope1 = await asserter.EnterAsync();
-        await asserter.EnterAsync();
+        var scope1 = asserter.Enter();
+        asserter.Enter();
         scope1.Dispose();
 
         asserter.Reset();
@@ -96,7 +96,7 @@ public class ConcurrencyAsserterTests
 
         var tasks = Enumerable.Range(0, 1000).Select(async _ =>
         {
-            using var scope = await asserter.EnterAsync();
+            using var scope = asserter.Enter();
             await Task.Delay(1);
         }).ToArray();
 
@@ -107,13 +107,13 @@ public class ConcurrencyAsserterTests
     }
 
     [Fact]
-    public async Task MaxConcurrency_ShouldOnlyIncrease()
+    public void MaxConcurrency_ShouldOnlyIncrease()
     {
         var asserter = new ConcurrencyAsserter();
 
-        var scope1 = await asserter.EnterAsync();
-        var scope2 = await asserter.EnterAsync();
-        var scope3 = await asserter.EnterAsync();
+        var scope1 = asserter.Enter();
+        var scope2 = asserter.Enter();
+        var scope3 = asserter.Enter();
 
         asserter.MaxConcurrency.Should().Be(3);
 
@@ -122,7 +122,7 @@ public class ConcurrencyAsserterTests
 
         asserter.MaxConcurrency.Should().Be(3);
 
-        var scope4 = await asserter.EnterAsync();
+        var scope4 = asserter.Enter();
 
         asserter.MaxConcurrency.Should().Be(3);
 
@@ -131,11 +131,11 @@ public class ConcurrencyAsserterTests
     }
 
     [Fact]
-    public async Task DisposingScope_MultipleTimes_ShouldBeIdempotent()
+    public void DisposingScope_MultipleTimes_ShouldBeIdempotent()
     {
         var asserter = new ConcurrencyAsserter();
 
-        var scope = await asserter.EnterAsync();
+        var scope = asserter.Enter();
         scope.Dispose();
         scope.Dispose();
         scope.Dispose();
@@ -153,7 +153,7 @@ public class ConcurrencyAsserterTests
 
         var tasks = Enumerable.Range(0, 50).Select(async _ =>
         {
-            using var scope = await asserter.EnterAsync();
+            using var scope = asserter.Enter();
 
             lock (lockObj)
             {
@@ -178,11 +178,11 @@ public class ConcurrencyAsserterTests
     }
 
     [Fact]
-    public async Task UsingStatement_ShouldAutomaticallyDisposeScope()
+    public void UsingStatement_ShouldAutomaticallyDisposeScope()
     {
         var asserter = new ConcurrencyAsserter();
 
-        using (await asserter.EnterAsync())
+        using (asserter.Enter())
         {
             asserter.CurrentConcurrency.Should().Be(1);
         }
@@ -191,19 +191,19 @@ public class ConcurrencyAsserterTests
     }
 
     [Fact]
-    public async Task NestedScopes_ShouldTrackCorrectly()
+    public void NestedScopes_ShouldTrackCorrectly()
     {
         var asserter = new ConcurrencyAsserter();
 
-        using (await asserter.EnterAsync())
+        using (asserter.Enter())
         {
             asserter.CurrentConcurrency.Should().Be(1);
 
-            using (await asserter.EnterAsync())
+            using (asserter.Enter())
             {
                 asserter.CurrentConcurrency.Should().Be(2);
 
-                using (await asserter.EnterAsync())
+                using (asserter.Enter())
                 {
                     asserter.CurrentConcurrency.Should().Be(3);
                 }

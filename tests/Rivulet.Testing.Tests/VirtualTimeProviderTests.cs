@@ -15,98 +15,24 @@ public class VirtualTimeProviderTests
     }
 
     [Fact]
-    public async Task AdvanceTimeAsync_ShouldUpdateCurrentTime()
+    public void AdvanceTime_ShouldUpdateCurrentTime()
     {
         using var timeProvider = new VirtualTimeProvider();
 
-        await timeProvider.AdvanceTimeAsync(TimeSpan.FromSeconds(5));
+        timeProvider.AdvanceTime(TimeSpan.FromSeconds(5));
 
         timeProvider.CurrentTime.Should().Be(TimeSpan.FromSeconds(5));
     }
 
     [Fact]
-    public async Task AdvanceTimeAsync_ShouldBeAdditive()
+    public void AdvanceTime_ShouldBeAdditive()
     {
         using var timeProvider = new VirtualTimeProvider();
 
-        await timeProvider.AdvanceTimeAsync(TimeSpan.FromSeconds(3));
-        await timeProvider.AdvanceTimeAsync(TimeSpan.FromSeconds(2));
+        timeProvider.AdvanceTime(TimeSpan.FromSeconds(3));
+        timeProvider.AdvanceTime(TimeSpan.FromSeconds(2));
 
         timeProvider.CurrentTime.Should().Be(TimeSpan.FromSeconds(5));
-    }
-
-    [Fact]
-    public void DelayAsync_ShouldCompleteImmediatelyWithoutAdvanceTime()
-    {
-        using var timeProvider = new VirtualTimeProvider();
-
-        var delayTask = timeProvider.DelayAsync(TimeSpan.FromSeconds(10));
-
-        delayTask.IsCompleted.Should().BeFalse();
-    }
-
-    [Fact]
-    public async Task DelayAsync_ShouldCompleteWhenTimeAdvances()
-    {
-        using var timeProvider = new VirtualTimeProvider();
-
-        var delayTask = timeProvider.DelayAsync(TimeSpan.FromSeconds(10));
-
-        await timeProvider.AdvanceTimeAsync(TimeSpan.FromSeconds(10));
-
-        delayTask.IsCompleted.Should().BeTrue();
-        await delayTask;
-    }
-
-    [Fact]
-    public async Task DelayAsync_ShouldCompleteInOrder()
-    {
-        using var timeProvider = new VirtualTimeProvider();
-
-        var delay5 = timeProvider.DelayAsync(TimeSpan.FromSeconds(5));
-        var delay10 = timeProvider.DelayAsync(TimeSpan.FromSeconds(10));
-        var delay3 = timeProvider.DelayAsync(TimeSpan.FromSeconds(3));
-
-        await timeProvider.AdvanceTimeAsync(TimeSpan.FromSeconds(3));
-        delay3.IsCompleted.Should().BeTrue();
-        delay5.IsCompleted.Should().BeFalse();
-        delay10.IsCompleted.Should().BeFalse();
-
-        await timeProvider.AdvanceTimeAsync(TimeSpan.FromSeconds(2));
-        delay5.IsCompleted.Should().BeTrue();
-        delay10.IsCompleted.Should().BeFalse();
-
-        await timeProvider.AdvanceTimeAsync(TimeSpan.FromSeconds(5));
-        delay10.IsCompleted.Should().BeTrue();
-    }
-
-    [Fact]
-    public async Task MultipleDelays_ShouldAllCompleteAfterSufficientAdvancement()
-    {
-        using var timeProvider = new VirtualTimeProvider();
-
-        var delays = Enumerable.Range(1, 10)
-            .Select(i => timeProvider.DelayAsync(TimeSpan.FromSeconds(i)))
-            .ToList();
-
-        await timeProvider.AdvanceTimeAsync(TimeSpan.FromSeconds(10));
-
-        foreach (var delay in delays)
-        {
-            delay.IsCompleted.Should().BeTrue();
-            await delay;
-        }
-    }
-
-    [Fact]
-    public async Task Dispose_ShouldPreventNewDelays()
-    {
-        var timeProvider = new VirtualTimeProvider();
-        timeProvider.Dispose();
-
-        var act = async () => await timeProvider.DelayAsync(TimeSpan.FromSeconds(10));
-
-        await act.Should().ThrowAsync<ObjectDisposedException>();
     }
 
     [Fact]
@@ -114,9 +40,9 @@ public class VirtualTimeProviderTests
     {
         using var timeProvider = new VirtualTimeProvider();
 
-        var delayTask = timeProvider.DelayAsync(TimeSpan.Zero);
+        var delayTask = timeProvider.CreateDelay(TimeSpan.Zero);
 
-        await timeProvider.AdvanceTimeAsync(TimeSpan.Zero);
+        timeProvider.AdvanceTime(TimeSpan.Zero);
 
         delayTask.IsCompleted.Should().BeTrue();
         await delayTask;
@@ -127,9 +53,9 @@ public class VirtualTimeProviderTests
     {
         using var timeProvider = new VirtualTimeProvider();
 
-        var delayTask = timeProvider.DelayAsync(TimeSpan.FromSeconds(-5));
+        var delayTask = timeProvider.CreateDelay(TimeSpan.FromSeconds(-5));
 
-        await timeProvider.AdvanceTimeAsync(TimeSpan.Zero);
+        timeProvider.AdvanceTime(TimeSpan.Zero);
 
         delayTask.IsCompleted.Should().BeTrue();
         await delayTask;
@@ -143,25 +69,25 @@ public class VirtualTimeProviderTests
 
         var task1 = Task.Run(async () =>
         {
-            await timeProvider.DelayAsync(TimeSpan.FromSeconds(5));
+            await timeProvider.CreateDelay(TimeSpan.FromSeconds(5));
             executionOrder.Add(1);
         });
 
         var task2 = Task.Run(async () =>
         {
-            await timeProvider.DelayAsync(TimeSpan.FromSeconds(3));
+            await timeProvider.CreateDelay(TimeSpan.FromSeconds(3));
             executionOrder.Add(2);
         });
 
         var task3 = Task.Run(async () =>
         {
-            await timeProvider.DelayAsync(TimeSpan.FromSeconds(7));
+            await timeProvider.CreateDelay(TimeSpan.FromSeconds(7));
             executionOrder.Add(3);
         });
 
         await Task.Delay(50);
 
-        await timeProvider.AdvanceTimeAsync(TimeSpan.FromSeconds(10));
+        timeProvider.AdvanceTime(TimeSpan.FromSeconds(10));
 
         await Task.WhenAll(task1, task2, task3);
 
@@ -169,17 +95,14 @@ public class VirtualTimeProviderTests
     }
 
     [Fact]
-    public async Task Dispose_ShouldCancelAllPendingDelays()
+    public void Dispose_ShouldCancelAllPendingDelays()
     {
         var timeProvider = new VirtualTimeProvider();
 
-        var delay1 = timeProvider.DelayAsync(TimeSpan.FromSeconds(10));
-        var delay2 = timeProvider.DelayAsync(TimeSpan.FromSeconds(20));
-
         timeProvider.Dispose();
 
-        await Assert.ThrowsAsync<ObjectDisposedException>(() => delay1);
-        await Assert.ThrowsAsync<ObjectDisposedException>(() => delay2);
+        Assert.Throws<ObjectDisposedException>(() => { var _ = timeProvider.CreateDelay(TimeSpan.FromSeconds(10)); });
+        Assert.Throws<ObjectDisposedException>(() => { var _ = timeProvider.CreateDelay(TimeSpan.FromSeconds(20)); });
     }
 
     [Fact]
@@ -194,25 +117,23 @@ public class VirtualTimeProviderTests
     }
 
     [Fact]
-    public async Task DelayAsync_AfterDispose_ShouldThrowObjectDisposedException()
+    public void DelayAsync_AfterDispose_ShouldThrowObjectDisposedException()
     {
         var timeProvider = new VirtualTimeProvider();
         timeProvider.Dispose();
 
-        var act = async () => await timeProvider.DelayAsync(TimeSpan.FromSeconds(1));
-
-        await act.Should().ThrowAsync<ObjectDisposedException>();
+        Assert.Throws<ObjectDisposedException>(() => { var _ = timeProvider.CreateDelay(TimeSpan.FromSeconds(1)); });
     }
 
     [Fact]
-    public async Task AdvanceTimeAsync_AfterDispose_ShouldThrowObjectDisposedException()
+    public void AdvanceTimeAsync_AfterDispose_ShouldThrowObjectDisposedException()
     {
         var timeProvider = new VirtualTimeProvider();
         timeProvider.Dispose();
 
-        var act = async () => await timeProvider.AdvanceTimeAsync(TimeSpan.FromSeconds(1));
+        var act = () => timeProvider.AdvanceTime(TimeSpan.FromSeconds(1));
 
-        await act.Should().ThrowAsync<ObjectDisposedException>();
+        act.Should().Throw<ObjectDisposedException>();
     }
 
     [Fact]
@@ -220,9 +141,9 @@ public class VirtualTimeProviderTests
     {
         using var timeProvider = new VirtualTimeProvider();
 
-        var delay = timeProvider.DelayAsync(TimeSpan.FromDays(365));
+        var delay = timeProvider.CreateDelay(TimeSpan.FromDays(365));
 
-        await timeProvider.AdvanceTimeAsync(TimeSpan.FromDays(365));
+        timeProvider.AdvanceTime(TimeSpan.FromDays(365));
 
         delay.IsCompleted.Should().BeTrue();
         await delay;
@@ -236,14 +157,14 @@ public class VirtualTimeProviderTests
         var tasks = Enumerable.Range(1, 100)
             .Select(i => Task.Run(async () =>
             {
-                await timeProvider.DelayAsync(TimeSpan.FromMilliseconds(i * 10));
+                await timeProvider.CreateDelay(TimeSpan.FromMilliseconds(i * 10));
                 return i;
             }))
             .ToList();
 
         await Task.Delay(100);
 
-        await timeProvider.AdvanceTimeAsync(TimeSpan.FromSeconds(10));
+        timeProvider.AdvanceTime(TimeSpan.FromSeconds(10));
 
         var results = await Task.WhenAll(tasks);
 

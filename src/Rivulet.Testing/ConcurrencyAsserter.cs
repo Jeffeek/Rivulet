@@ -1,3 +1,5 @@
+using Rivulet.Core.Internal;
+
 namespace Rivulet.Testing;
 
 /// <summary>
@@ -7,7 +9,11 @@ public sealed class ConcurrencyAsserter
 {
     private int _currentConcurrency;
     private int _maxConcurrency;
-    private readonly SemaphoreSlim _lock = new(1, 1);
+#if NET9_0_OR_GREATER
+    private readonly Lock _lock = new();
+#else
+    private readonly object _lock = new();
+#endif
 
     /// <summary>
     /// Gets the maximum concurrency observed.
@@ -22,10 +28,9 @@ public sealed class ConcurrencyAsserter
     /// <summary>
     /// Tracks entry into a concurrent operation.
     /// </summary>
-    public async Task<IDisposable> EnterAsync()
+    public IDisposable Enter()
     {
-        await _lock.WaitAsync();
-        try
+        LockHelper.Execute(_lock, () =>
         {
             var current = Interlocked.Increment(ref _currentConcurrency);
             var max = _maxConcurrency;
@@ -35,11 +40,7 @@ public sealed class ConcurrencyAsserter
                 if (original == max) break;
                 max = _maxConcurrency;
             }
-        }
-        finally
-        {
-            _lock.Release();
-        }
+        });
 
         return new ConcurrencyScope(this);
     }
@@ -53,21 +54,15 @@ public sealed class ConcurrencyAsserter
         _maxConcurrency = 0;
     }
 
-    private sealed class ConcurrencyScope : IDisposable
+    private sealed class ConcurrencyScope(ConcurrencyAsserter asserter) : IDisposable
     {
-        private readonly ConcurrencyAsserter _asserter;
         private bool _disposed;
-
-        public ConcurrencyScope(ConcurrencyAsserter asserter)
-        {
-            _asserter = asserter;
-        }
 
         public void Dispose()
         {
             if (_disposed) return;
             _disposed = true;
-            Interlocked.Decrement(ref _asserter._currentConcurrency);
+            Interlocked.Decrement(ref asserter._currentConcurrency);
         }
     }
 }
