@@ -40,8 +40,6 @@ public class SelectParallelStreamAsyncTests
     {
         var source = Enumerable.Range(1, 5).ToAsyncEnumerable();
         var results = new List<int>();
-        // ReSharper disable once CollectionNeverQueried.Local
-        var timestamps = new List<DateTime>();
 
         await foreach (var item in source.SelectParallelStreamAsync(
             async (x, ct) =>
@@ -51,7 +49,6 @@ public class SelectParallelStreamAsyncTests
             }))
         {
             results.Add(item);
-            timestamps.Add(DateTime.UtcNow);
         }
 
         results.Should().HaveCount(5);
