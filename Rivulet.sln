@@ -54,6 +54,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflow", "workflow", "{62
 		.github\workflows\release.yml = .github\workflows\release.yml
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rivulet.Diagnostics.OpenTelemetry", "src\Rivulet.Diagnostics.OpenTelemetry\Rivulet.Diagnostics.OpenTelemetry.csproj", "{0CE8141A-7032-0687-125B-CD1E77EDF441}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rivulet.Diagnostics.OpenTelemetry.Tests", "tests\Rivulet.Diagnostics.OpenTelemetry.Tests\Rivulet.Diagnostics.OpenTelemetry.Tests.csproj", "{0A3795E9-CA78-DA2E-0F89-929A5C7E1305}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -84,6 +88,14 @@ Global
 		{1CD2B7CB-9564-A086-4DA6-460FE2419599}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1CD2B7CB-9564-A086-4DA6-460FE2419599}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1CD2B7CB-9564-A086-4DA6-460FE2419599}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0CE8141A-7032-0687-125B-CD1E77EDF441}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0CE8141A-7032-0687-125B-CD1E77EDF441}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0CE8141A-7032-0687-125B-CD1E77EDF441}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0CE8141A-7032-0687-125B-CD1E77EDF441}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0A3795E9-CA78-DA2E-0F89-929A5C7E1305}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0A3795E9-CA78-DA2E-0F89-929A5C7E1305}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0A3795E9-CA78-DA2E-0F89-929A5C7E1305}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0A3795E9-CA78-DA2E-0F89-929A5C7E1305}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -95,6 +107,8 @@ Global
 		{8BF330D4-DC30-A21E-F758-FD3E97D1D926} = {0D2BF9AB-6598-46B6-9D64-59E4B546DA61}
 		{6FD1EA2E-C2EC-4113-B8C9-643DBE4D9881} = {0D2BF9AB-6598-46B6-9D64-59E4B546DA61}
 		{1CD2B7CB-9564-A086-4DA6-460FE2419599} = {0D2BF9AB-6598-46B6-9D64-59E4B546DA61}
+		{0CE8141A-7032-0687-125B-CD1E77EDF441} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{0A3795E9-CA78-DA2E-0F89-929A5C7E1305} = {0D2BF9AB-6598-46B6-9D64-59E4B546DA61}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F2330629-3D38-4DEB-969C-24196B99DAB2}

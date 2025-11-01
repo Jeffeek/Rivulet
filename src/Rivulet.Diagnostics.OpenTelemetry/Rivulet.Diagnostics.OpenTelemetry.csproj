@@ -6,11 +6,11 @@
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<IncludeSymbols>true</IncludeSymbols>
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
-		<PackageId>Rivulet.Core</PackageId>
-		<Title>Rivulet.Core</Title>
+		<PackageId>Rivulet.Diagnostics.OpenTelemetry</PackageId>
+		<Title>Rivulet.Diagnostics.OpenTelemetry</Title>
 		<Authors>Jeffeek</Authors>
-		<Description>Safe, async-first parallel operators with bounded concurrency, retries, and backpressure for I/O-heavy workloads.</Description>
-		<PackageTags>async;parallel;linq;throttling;io;dotnet;channels</PackageTags>
+		<Description>OpenTelemetry integration for Rivulet.Core with distributed tracing, metrics, and logging support.</Description>
+		<PackageTags>rivulet;diagnostics;opentelemetry;otel;tracing;metrics;logging;observability;dotnet</PackageTags>
 		<RepositoryUrl>https://github.com/Jeffeek/Rivulet</RepositoryUrl>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageProjectUrl>https://github.com/Jeffeek/Rivulet</PackageProjectUrl>
@@ -19,16 +19,16 @@
 	</PropertyGroup>
 	<ItemGroup>
 		<None Include="..\..\assets\nuget_logo.png" Pack="true" PackagePath="\" />
-		<None Include="..\..\PACKAGE_README.md" Pack="true" PackagePath="\README.md" />
+		<None Include="README.md" Pack="true" PackagePath="\README.md" />
 	</ItemGroup>
 	<ItemGroup>
-		<InternalsVisibleTo Include="Rivulet.Core.Tests" />
-		<InternalsVisibleTo Include="Rivulet.Diagnostics" />
-		<InternalsVisibleTo Include="Rivulet.Diagnostics.OpenTelemetry" />
 		<InternalsVisibleTo Include="Rivulet.Diagnostics.OpenTelemetry.Tests" />
 	</ItemGroup>
 	<ItemGroup>
-		<PackageReference Include="System.Linq.Async" Version="6.0.3" />
-		<PackageReference Include="System.Threading.Channels" Version="9.0.10" />
+		<ProjectReference Include="..\Rivulet.Core\Rivulet.Core.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="OpenTelemetry.Api" Version="1.13.1" />
+		<PackageReference Include="System.Diagnostics.DiagnosticSource" Version="9.0.10" />
 	</ItemGroup>
 </Project>

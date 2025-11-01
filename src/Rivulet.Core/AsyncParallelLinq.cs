@@ -124,11 +124,11 @@ public static class AsyncParallelLinq
                         if (circuitBreaker is not null)
                         {
                             result = await circuitBreaker.ExecuteAsync(async () =>
-                                await RetryPolicy.ExecuteWithRetry(item, taskSelector, options, metricsTracker, token), token);
+                                await RetryPolicy.ExecuteWithRetry(item, taskSelector, options, metricsTracker, idx, token), token);
                         }
                         else
                         {
-                            result = await RetryPolicy.ExecuteWithRetry(item, taskSelector, options, metricsTracker, token);
+                            result = await RetryPolicy.ExecuteWithRetry(item, taskSelector, options, metricsTracker, idx, token);
                         }
 
                         if (options.OrderedOutput)
@@ -292,11 +292,11 @@ public static class AsyncParallelLinq
                     if (circuitBreaker is not null)
                     {
                         res = await circuitBreaker.ExecuteAsync(async () =>
-                            await RetryPolicy.ExecuteWithRetry(item, taskSelector, options, metricsTracker, token), token);
+                            await RetryPolicy.ExecuteWithRetry(item, taskSelector, options, metricsTracker, idx, token), token);
                     }
                     else
                     {
-                        res = await RetryPolicy.ExecuteWithRetry(item, taskSelector, options, metricsTracker, token);
+                        res = await RetryPolicy.ExecuteWithRetry(item, taskSelector, options, metricsTracker, idx, token);
                     }
 
                     await output.Writer.WriteAsync((idx, res), token);

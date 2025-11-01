@@ -8,6 +8,7 @@
 ---
 [![NuGet Core](https://img.shields.io/nuget/v/Rivulet.Core?label=Rivulet.Core)](https://www.nuget.org/packages/Rivulet.Core/)
 [![NuGet Diagnostics](https://img.shields.io/nuget/v/Rivulet.Diagnostics?label=Rivulet.Diagnostics)](https://www.nuget.org/packages/Rivulet.Diagnostics/)
+[![NuGet OpenTelemetry](https://img.shields.io/nuget/v/Rivulet.Diagnostics.OpenTelemetry?label=Rivulet.Diagnostics.OpenTelemetry)](https://www.nuget.org/packages/Rivulet.Diagnostics.OpenTelemetry/)
 ![NuGet Downloads](https://img.shields.io/nuget/dt/Rivulet.Core?label=downloads)
 ---
 ![CI/CD Pipeline](https://img.shields.io/github/actions/workflow/status/Jeffeek/Rivulet/release.yml?label=RELEASE)
@@ -447,6 +448,87 @@ var prometheusText = exporter.Export();
 ```
 
 See the [Rivulet.Diagnostics README](src/Rivulet.Diagnostics/README.md) for complete documentation.
+
+## Rivulet.Diagnostics.OpenTelemetry - Distributed Tracing & Metrics
+
+`Rivulet.Diagnostics.OpenTelemetry` provides industry-standard observability through OpenTelemetry integration with distributed tracing, metrics export, and comprehensive telemetry.
+
+### Install
+```bash
+dotnet add package Rivulet.Diagnostics.OpenTelemetry
+```
+
+### Features
+- **Distributed Tracing**: Automatic activity creation with parent-child relationships
+- **Metrics Export**: Bridge EventCounters to OpenTelemetry Meters
+- **Retry Tracking**: Record retry attempts as activity events
+- **Circuit Breaker Events**: Track circuit state changes in traces
+- **Adaptive Concurrency**: Monitor concurrency adjustments
+- **Multi-Platform Support**: Export to Jaeger, Zipkin, Azure Monitor, DataDog, and more
+
+### Quick Start
+
+**1. Configure OpenTelemetry**
+```csharp
+using OpenTelemetry;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Metrics;
+using Rivulet.Diagnostics.OpenTelemetry;
+
+// At application startup
+using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("MyService"))
+    .AddSource(RivuletActivitySource.SourceName)
+    .AddJaegerExporter()
+    .Build();
+
+using var meterProvider = Sdk.CreateMeterProviderBuilder()
+    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("MyService"))
+    .AddMeter(RivuletMetricsExporter.MeterName)
+    .AddPrometheusExporter()
+    .Build();
+
+// Create metrics exporter
+using var metricsExporter = new RivuletMetricsExporter();
+```
+
+**2. Use with Rivulet Operations**
+```csharp
+var options = new ParallelOptionsRivulet
+{
+    MaxDegreeOfParallelism = 32,
+    MaxRetries = 3,
+    IsTransient = ex => ex is HttpRequestException
+}.WithOpenTelemetryTracing("FetchUrls");
+
+var results = await urls.SelectParallelAsync(
+    async (url, ct) => await httpClient.GetAsync(url, ct),
+    options);
+```
+
+**Activity Hierarchy**
+```
+Rivulet.FetchUrls                    [Root Activity]
+├── Rivulet.FetchUrls.Item          [Item 0] - Status: Ok
+├── Rivulet.FetchUrls.Item          [Item 1] - Retry attempt 1 - Status: Ok
+└── Rivulet.FetchUrls.Item          [Item 2] - Error - Status: Error
+```
+
+**Export to Azure Monitor**
+```csharp
+using Azure.Monitor.OpenTelemetry.Exporter;
+
+var tracerProvider = Sdk.CreateTracerProviderBuilder()
+    .AddSource(RivuletActivitySource.SourceName)
+    .AddAzureMonitorTraceExporter(options =>
+    {
+        options.ConnectionString = "InstrumentationKey=...";
+    })
+    .Build();
+```
+
+See the [Rivulet.Diagnostics.OpenTelemetry README](src/Rivulet.Diagnostics.OpenTelemetry/README.md) for complete documentation.
 
 ## Development Scripts
 

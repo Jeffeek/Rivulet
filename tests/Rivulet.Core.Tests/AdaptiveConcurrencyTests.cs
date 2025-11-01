@@ -386,24 +386,34 @@ public class AdaptiveConcurrencyTests
 
         var options = new ParallelOptionsRivulet
         {
+            MaxDegreeOfParallelism = 4, // Limit concurrency for more predictable cancellation
             AdaptiveConcurrency = new AdaptiveConcurrencyOptions
             {
                 MinConcurrency = 1,
-                MaxConcurrency = 8,
+                MaxConcurrency = 4, // Match MaxDegreeOfParallelism
                 SampleInterval = TimeSpan.FromMilliseconds(100)
             }
         };
 
         var processedCount = 0;
+        var cancelRequested = 0; // 0 = false, 1 = true
 
         var task = source.SelectParallelAsync(
             async (x, ct) =>
             {
-                Interlocked.Increment(ref processedCount);
-                if (processedCount >= 10)
-                    await cts.CancelAsync();
+                var count = Interlocked.Increment(ref processedCount);
 
-                await Task.Delay(5, ct);
+                // Cancel only once, deterministically
+                if (count == 10 && cancelRequested == 0)
+                {
+                    if (Interlocked.CompareExchange(ref cancelRequested, 1, 0) == 0)
+                    {
+                        await cts.CancelAsync();
+                    }
+                }
+
+                // Longer delay to ensure cancellation propagates
+                await Task.Delay(20, ct);
                 return x * 2;
             },
             options,
@@ -411,7 +421,9 @@ public class AdaptiveConcurrencyTests
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => await task);
 
-        processedCount.Should().BeLessThan(100);
+        // With MaxDegreeOfParallelism=4, at most ~14-15 items should be processed
+        // (10 to trigger cancel + up to 4 in flight + a few more before cancellation takes effect)
+        processedCount.Should().BeLessThan(25).And.BeGreaterThanOrEqualTo(10);
     }
 
     [Fact]

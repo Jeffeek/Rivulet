@@ -9,6 +9,7 @@ internal static class RetryPolicy
         Func<T, CancellationToken, ValueTask<TResult>> func,
         ParallelOptionsRivulet options,
         MetricsTracker? metricsTracker,
+        int itemIndex,
         CancellationToken ct)
     {
         var attempt = 0;
@@ -29,6 +30,13 @@ internal static class RetryPolicy
             {
                 attempt++;
                 metricsTracker?.IncrementRetries();
+
+                // Call retry hook before backoff delay
+                if (options.OnRetryAsync is not null)
+                {
+                    await options.OnRetryAsync(itemIndex, attempt, ex).ConfigureAwait(false);
+                }
+
                 var delay = CalculateDelay(options.BackoffStrategy, options.BaseDelay, attempt, ref previousDelay);
                 await Task.Delay(delay, ct).ConfigureAwait(false);
             }

@@ -1,13 +1,16 @@
-$iterations = 10
+$iterations = 20
 $results = @{}
 
 Write-Host "Running tests $iterations times to detect flaky tests..." -ForegroundColor Cyan
 Write-Host ""
 
+dotnet restore
+dotnet build -c Release --no-restore
+
 for ($i = 1; $i -le $iterations; $i++) {
     Write-Progress -Activity "Running Test Iteration" -Status "$i of $iterations" -PercentComplete (($i / $iterations) * 100)
 
-    $output = dotnet test | Out-String
+    $output = dotnet test -c Release | Out-String
 
     # Check if any tests failed
     if ($output -match "Failed!\s+-\s+Failed:\s+(\d+)") {
