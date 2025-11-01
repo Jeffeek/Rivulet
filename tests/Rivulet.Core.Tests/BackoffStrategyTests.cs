@@ -257,7 +257,7 @@ public class BackoffStrategyTests
         var act = async () => await source.SelectParallelAsync(
             (x, _) =>
             {
-                var __ = attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
+                attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
                 if (x == 2)
                     throw new InvalidOperationException("Always fails");
                 return new ValueTask<int>(x * 2);

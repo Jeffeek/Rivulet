@@ -468,7 +468,7 @@ public class CircuitBreakerTests
     public async Task CircuitBreaker_WithCancellation_CancelsCorrectly()
     {
         var source = Enumerable.Range(1, 100);
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
 
         var options = new ParallelOptionsRivulet
         {
@@ -487,6 +487,7 @@ public class CircuitBreakerTests
             {
                 Interlocked.Increment(ref processedCount);
                 if (processedCount >= 5)
+                    // ReSharper disable once AccessToDisposedClosure
                     await cts.CancelAsync();
 
                 await Task.Delay(1, ct);

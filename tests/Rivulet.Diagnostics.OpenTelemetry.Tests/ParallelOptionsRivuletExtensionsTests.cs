@@ -15,7 +15,7 @@ public class ParallelOptionsRivuletExtensionsTests
         var activities = new System.Collections.Concurrent.ConcurrentBag<Activity>();
         var activityCount = 0;
         var expectedCount = 5;
-        var allActivitiesStarted = new ManualResetEventSlim(false);
+        using var allActivitiesStarted = new ManualResetEventSlim(false);
 
         using var listener = new ActivityListener();
         listener.ShouldListenTo = source => source.Name == RivuletActivitySource.SourceName;
@@ -25,6 +25,7 @@ public class ParallelOptionsRivuletExtensionsTests
             activities.Add(activity);
             if (Interlocked.Increment(ref activityCount) >= expectedCount)
             {
+                // ReSharper disable once AccessToDisposedClosure
                 allActivitiesStarted.Set();
             }
         };
@@ -59,7 +60,7 @@ public class ParallelOptionsRivuletExtensionsTests
         var activities = new System.Collections.Concurrent.ConcurrentBag<Activity>();
         var activityCount = 0;
         var expectedCount = 3;
-        var allActivitiesStopped = new ManualResetEventSlim(false);
+        using var allActivitiesStopped = new ManualResetEventSlim(false);
 
         using var listener = new ActivityListener();
         listener.ShouldListenTo = source => source.Name == RivuletActivitySource.SourceName;
@@ -69,6 +70,7 @@ public class ParallelOptionsRivuletExtensionsTests
             activities.Add(activity);
             if (Interlocked.Increment(ref activityCount) >= expectedCount)
             {
+                // ReSharper disable once AccessToDisposedClosure
                 allActivitiesStopped.Set();
             }
         };
@@ -104,7 +106,7 @@ public class ParallelOptionsRivuletExtensionsTests
         var activities = new System.Collections.Concurrent.ConcurrentBag<Activity>();
         var activityCount = 0;
         var expectedCount = 3;
-        var allActivitiesStopped = new ManualResetEventSlim(false);
+        using var allActivitiesStopped = new ManualResetEventSlim(false);
 
         using var listener = new ActivityListener();
         listener.ShouldListenTo = source => source.Name == RivuletActivitySource.SourceName;
@@ -114,6 +116,7 @@ public class ParallelOptionsRivuletExtensionsTests
             activities.Add(activity);
             if (Interlocked.Increment(ref activityCount) >= expectedCount)
             {
+                // ReSharper disable once AccessToDisposedClosure
                 allActivitiesStopped.Set();
             }
         };
@@ -245,7 +248,7 @@ public class ParallelOptionsRivuletExtensionsTests
     public async Task WithOpenTelemetryTracing_ShouldRecordCircuitBreakerStateChanges()
     {
         var activities = new System.Collections.Concurrent.ConcurrentBag<Activity>();
-        var stateChanged = new ManualResetEventSlim(false);
+        using var stateChanged = new ManualResetEventSlim(false);
         var processedCount = 0;
 
         using var listener = new ActivityListener();
@@ -265,6 +268,7 @@ public class ParallelOptionsRivuletExtensionsTests
                 OpenTimeout = TimeSpan.FromMilliseconds(100),
                 OnStateChange = async (_, _) =>
                 {
+                    // ReSharper disable once AccessToDisposedClosure
                     stateChanged.Set();
                     await Task.CompletedTask;
                 }
@@ -277,7 +281,7 @@ public class ParallelOptionsRivuletExtensionsTests
                 // Slow down processing to keep activities alive longer
                 var count = Interlocked.Increment(ref processedCount);
                 // First several items fail slowly, ensuring activities are still running when circuit opens
-                // Circuit opens after 3 failures, so we need at least 3 slow items, but use 8 for safety
+                // after 3 failures, so we need at least 3 slow items, but use 8 for safety
                 if (count <= 8)
                 {
                     await Task.Delay(300, ct); // Increased delay to keep activities alive longer
@@ -364,7 +368,7 @@ public class ParallelOptionsRivuletExtensionsTests
         var activities = new System.Collections.Concurrent.ConcurrentBag<Activity>();
         var activityCount = 0;
         var expectedCount = 3;
-        var allActivitiesStopped = new ManualResetEventSlim(false);
+        using var allActivitiesStopped = new ManualResetEventSlim(false);
 
         using var listener = new ActivityListener();
         listener.ShouldListenTo = source => source.Name == RivuletActivitySource.SourceName;
@@ -374,6 +378,7 @@ public class ParallelOptionsRivuletExtensionsTests
             activities.Add(activity);
             if (Interlocked.Increment(ref activityCount) >= expectedCount)
             {
+                // ReSharper disable once AccessToDisposedClosure
                 allActivitiesStopped.Set();
             }
         };

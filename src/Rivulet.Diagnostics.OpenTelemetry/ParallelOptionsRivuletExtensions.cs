@@ -101,43 +101,52 @@ public static class ParallelOptionsRivuletExtensions
             OnErrorAsync = async (index, exception) =>
             {
                 var activity = asyncLocalActivity.Value ?? itemActivities.GetValueOrDefault(index);
-                
-                Activity? previousActivity = null;
+
                 if (activity is not null)
                 {
                     // Temporarily set as current so nested callbacks can access it
-                    previousActivity = Activity.Current;
-                    Activity.Current = activity;
-                    
-                    var isTransient = options.IsTransient?.Invoke(exception) ?? false;
-                    RivuletActivitySource.RecordError(activity, exception, isTransient);
-                    
-                    // Only dispose if this is a final error (not going to retry)
-                    var willRetry = isTransient && options.MaxRetries > 0;
-                    if (!willRetry && itemActivities.TryRemove(index, out _))
-                    {
-                        activity.Stop();
-                        activity.Dispose();
-                        asyncLocalActivity.Value = null;
-                    }
-                }
+                    var previousActivity = Activity.Current;
 
-                try
-                {
-                    if (options.OnErrorAsync is not null)
+                    try
                     {
-                        return await options.OnErrorAsync(index, exception).ConfigureAwait(false);
+                        Activity.Current = activity;
+
+                        var isTransient = options.IsTransient?.Invoke(exception) ?? false;
+                        RivuletActivitySource.RecordError(activity, exception, isTransient);
+
+                        // Only dispose if this is a final error (not going to retry)
+                        var willRetry = isTransient && options.MaxRetries > 0;
+                        if (!willRetry && itemActivities.TryRemove(index, out _))
+                        {
+                            try
+                            {
+                                activity.Stop();
+                            }
+                            finally
+                            {
+                                activity.Dispose();
+                                asyncLocalActivity.Value = null;
+                            }
+                        }
+
+                        if (options.OnErrorAsync is not null)
+                        {
+                            return await options.OnErrorAsync(index, exception).ConfigureAwait(false);
+                        }
+                        return true;
                     }
-                    return true;
-                }
-                finally
-                {
-                    // Restore previous activity
-                    if (activity is not null)
+                    finally
                     {
+                        // Restore previous activity
                         Activity.Current = previousActivity;
                     }
                 }
+
+                if (options.OnErrorAsync is not null)
+                {
+                    return await options.OnErrorAsync(index, exception).ConfigureAwait(false);
+                }
+                return true;
             },
 
             CircuitBreaker = options.CircuitBreaker != null
@@ -283,42 +292,45 @@ public static class ParallelOptionsRivuletExtensions
             {
                 var activity = asyncLocalActivity.Value ?? itemActivities.GetValueOrDefault(index);
 
-                Activity? previousActivity = null;
                 if (activity is not null)
                 {
                     // Temporarily set as current so nested callbacks can access it
-                    previousActivity = Activity.Current;
-                    Activity.Current = activity;
+                    var previousActivity = Activity.Current;
 
-                    var isTransient = options.IsTransient?.Invoke(exception) ?? false;
-                    RivuletActivitySource.RecordError(activity, exception, isTransient);
-
-                    // Only dispose if this is a final error (not going to retry)
-                    var willRetry = isTransient && options.MaxRetries > 0;
-                    if (!willRetry && itemActivities.TryRemove(index, out _))
+                    try
                     {
-                        activity.Stop();
-                        activity.Dispose();
-                        asyncLocalActivity.Value = null;
+                        Activity.Current = activity;
+
+                        var isTransient = options.IsTransient?.Invoke(exception) ?? false;
+                        RivuletActivitySource.RecordError(activity, exception, isTransient);
+
+                        // Only dispose if this is a final error (not going to retry)
+                        var willRetry = isTransient && options.MaxRetries > 0;
+                        if (!willRetry && itemActivities.TryRemove(index, out _))
+                        {
+                            activity.Stop();
+                            activity.Dispose();
+                            asyncLocalActivity.Value = null;
+                        }
+
+                        if (options.OnErrorAsync is not null)
+                        {
+                            return await options.OnErrorAsync(index, exception).ConfigureAwait(false);
+                        }
+                        return true;
                     }
-                }
-
-                try
-                {
-                    if (options.OnErrorAsync is not null)
+                    finally
                     {
-                        return await options.OnErrorAsync(index, exception).ConfigureAwait(false);
-                    }
-                    return true;
-                }
-                finally
-                {
-                    // Restore previous activity
-                    if (activity is not null)
-                    {
+                        // Restore previous activity
                         Activity.Current = previousActivity;
                     }
                 }
+
+                if (options.OnErrorAsync is not null)
+                {
+                    return await options.OnErrorAsync(index, exception).ConfigureAwait(false);
+                }
+                return true;
             },
 
             CircuitBreaker = options.CircuitBreaker != null

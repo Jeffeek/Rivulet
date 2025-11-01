@@ -596,7 +596,7 @@ public class ProgressReportingTests
                 ReportInterval = TimeSpan.FromMilliseconds(1),
                 OnProgress = snapshot =>
                 {
-                    if (!firstReport || snapshot.Elapsed.TotalSeconds != 0) return ValueTask.CompletedTask;
+                    if (!firstReport || snapshot.Elapsed.TotalSeconds > 0) return ValueTask.CompletedTask;
                     firstReport = false;
                     return ValueTask.CompletedTask;
                 }

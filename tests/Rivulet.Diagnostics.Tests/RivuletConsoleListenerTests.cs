@@ -24,7 +24,7 @@ public class RivuletConsoleListenerTests : IDisposable
     [Fact]
     public async Task ConsoleListener_ShouldHandleLargeValues()
     {
-        var consoleOutput = new StringWriter();
+        using var consoleOutput = new StringWriter();
         var originalOutput = Console.Out;
         Console.SetOut(consoleOutput);
 
@@ -50,14 +50,13 @@ public class RivuletConsoleListenerTests : IDisposable
         finally
         {
             Console.SetOut(originalOutput);
-            await consoleOutput.DisposeAsync();
         }
     }
 
     [Fact]
     public async Task ConsoleListener_ShouldHandleFailuresWithColors()
     {
-        var consoleOutput = new StringWriter();
+        using var consoleOutput = new StringWriter();
         var originalOutput = Console.Out;
         Console.SetOut(consoleOutput);
 
@@ -106,14 +105,13 @@ public class RivuletConsoleListenerTests : IDisposable
         finally
         {
             Console.SetOut(originalOutput);
-            await consoleOutput.DisposeAsync();
         }
     }
 
     [Fact]
     public async Task AllListeners_ShouldHandleEmptyDisplayUnits()
     {
-        var consoleOutput = new StringWriter();
+        using var consoleOutput = new StringWriter();
         var originalOutput = Console.Out;
         Console.SetOut(consoleOutput);
 
@@ -139,7 +137,6 @@ public class RivuletConsoleListenerTests : IDisposable
         finally
         {
             Console.SetOut(originalOutput);
-            await consoleOutput.DisposeAsync();
         }
     }
 
