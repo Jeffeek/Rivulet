@@ -136,6 +136,7 @@ public class EdgeCaseCoverageTests
         }
         catch (AggregateException)
         {
+            // Expected - test intentionally throws
         }
 
         await Task.Delay(100);
@@ -236,6 +237,7 @@ public class EdgeCaseCoverageTests
         }
         catch (AggregateException)
         {
+            // Expected - test intentionally throws
         }
 
         await Task.Delay(100);
@@ -280,6 +282,7 @@ public class EdgeCaseCoverageTests
         }
         catch (AggregateException)
         {
+            // Expected - test intentionally throws
         }
 
         await Task.Delay(100);

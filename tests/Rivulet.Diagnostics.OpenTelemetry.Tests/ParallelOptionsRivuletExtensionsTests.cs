@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using FluentAssertions;
 using Rivulet.Core;
 using Rivulet.Core.Resilience;
@@ -6,6 +7,7 @@ using Rivulet.Core.Resilience;
 namespace Rivulet.Diagnostics.OpenTelemetry.Tests;
 
 [Collection("ActivitySource Tests")]
+[SuppressMessage("ReSharper", "AccessToDisposedClosure")]
 public class ParallelOptionsRivuletExtensionsTests
 {
 
@@ -25,7 +27,6 @@ public class ParallelOptionsRivuletExtensionsTests
             activities.Add(activity);
             if (Interlocked.Increment(ref activityCount) >= expectedCount)
             {
-                // ReSharper disable once AccessToDisposedClosure
                 allActivitiesStarted.Set();
             }
         };
@@ -70,7 +71,6 @@ public class ParallelOptionsRivuletExtensionsTests
             activities.Add(activity);
             if (Interlocked.Increment(ref activityCount) >= expectedCount)
             {
-                // ReSharper disable once AccessToDisposedClosure
                 allActivitiesStopped.Set();
             }
         };
@@ -116,7 +116,6 @@ public class ParallelOptionsRivuletExtensionsTests
             activities.Add(activity);
             if (Interlocked.Increment(ref activityCount) >= expectedCount)
             {
-                // ReSharper disable once AccessToDisposedClosure
                 allActivitiesStopped.Set();
             }
         };
@@ -268,7 +267,6 @@ public class ParallelOptionsRivuletExtensionsTests
                 OpenTimeout = TimeSpan.FromMilliseconds(100),
                 OnStateChange = async (_, _) =>
                 {
-                    // ReSharper disable once AccessToDisposedClosure
                     stateChanged.Set();
                     await Task.CompletedTask;
                 }
@@ -378,7 +376,6 @@ public class ParallelOptionsRivuletExtensionsTests
             activities.Add(activity);
             if (Interlocked.Increment(ref activityCount) >= expectedCount)
             {
-                // ReSharper disable once AccessToDisposedClosure
                 allActivitiesStopped.Set();
             }
         };

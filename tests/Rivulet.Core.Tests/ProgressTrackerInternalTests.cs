@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using FluentAssertions;
 using Rivulet.Core.Observability;
 
@@ -7,6 +8,7 @@ namespace Rivulet.Core.Tests;
 /// Tests for internal ProgressTracker behavior that requires direct access.
 /// These tests access internal members via InternalsVisibleTo.
 /// </summary>
+[SuppressMessage("ReSharper", "AccessToDisposedClosure")]
 public class ProgressTrackerInternalTests
 {
     [Fact]
@@ -21,13 +23,18 @@ public class ProgressTrackerInternalTests
         using var cts = new CancellationTokenSource();
         var tracker = new ProgressTracker(100, options, cts.Token);
 
-        tracker.IncrementStarted();
-        tracker.IncrementCompleted();
+        try
+        {
+            tracker.IncrementStarted();
+            tracker.IncrementCompleted();
 
-        tracker.Dispose();
-
-        var act = () => tracker.Dispose();
-        act.Should().NotThrow();
+            var act = () => tracker.Dispose();
+            act.Should().NotThrow();
+        }
+        finally
+        {
+            tracker.Dispose();
+        }
     }
 
     [Fact]
@@ -145,20 +152,26 @@ public class ProgressTrackerInternalTests
         using var cts = new CancellationTokenSource();
         var tracker = new ProgressTracker(null, options, cts.Token);
 
-        for (var i = 0; i < 10; i++)
+        try
         {
-            tracker.IncrementStarted();
-            tracker.IncrementCompleted();
+            for (var i = 0; i < 10; i++)
+            {
+                tracker.IncrementStarted();
+                tracker.IncrementCompleted();
+            }
+
+            Thread.Sleep(50);
+
+            lastSnapshot.Should().NotBeNull();
+            lastSnapshot!.TotalItems.Should().BeNull();
+            lastSnapshot.PercentComplete.Should().BeNull();
+            lastSnapshot.EstimatedTimeRemaining.Should().BeNull();
+            lastSnapshot.ItemsCompleted.Should().Be(10);
         }
-
-        Thread.Sleep(50);
-        tracker.Dispose();
-
-        lastSnapshot.Should().NotBeNull();
-        lastSnapshot!.TotalItems.Should().BeNull();
-        lastSnapshot.PercentComplete.Should().BeNull();
-        lastSnapshot.EstimatedTimeRemaining.Should().BeNull();
-        lastSnapshot.ItemsCompleted.Should().Be(10);
+        finally
+        {
+            tracker.Dispose();
+        }
     }
 
     [Fact]
@@ -178,21 +191,27 @@ public class ProgressTrackerInternalTests
         using var cts = new CancellationTokenSource();
         var tracker = new ProgressTracker(20, options, cts.Token);
 
-        for (var i = 0; i < 15; i++)
+        try
         {
-            tracker.IncrementStarted();
-            if (i % 3 == 0)
-                tracker.IncrementErrors();
-            else
-                tracker.IncrementCompleted();
+            for (var i = 0; i < 15; i++)
+            {
+                tracker.IncrementStarted();
+                if (i % 3 == 0)
+                    tracker.IncrementErrors();
+                else
+                    tracker.IncrementCompleted();
+            }
+
+            Thread.Sleep(50);
+
+            lastSnapshot.Should().NotBeNull();
+            lastSnapshot!.ErrorCount.Should().Be(5);
+            lastSnapshot.ItemsCompleted.Should().Be(10);
+            lastSnapshot.ItemsStarted.Should().Be(15);
         }
-
-        Thread.Sleep(50);
-        tracker.Dispose();
-
-        lastSnapshot.Should().NotBeNull();
-        lastSnapshot!.ErrorCount.Should().Be(5);
-        lastSnapshot.ItemsCompleted.Should().Be(10);
-        lastSnapshot.ItemsStarted.Should().Be(15);
+        finally
+        {
+            tracker.Dispose();
+        }
     }
 }

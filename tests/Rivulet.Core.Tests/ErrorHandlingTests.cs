@@ -50,6 +50,7 @@ public class ErrorHandlingTests
                                return x * 2;
                            }, options))
             {
+                // Consuming items
             }
         }
 
@@ -318,6 +319,7 @@ public class ErrorHandlingTests
                                return x * 2;
                            }, options))
             {
+                // Consuming items
             }
         }
 
@@ -355,6 +357,7 @@ public class ErrorHandlingTests
                                return x * 2;
                            }, options))
             {
+                // Consuming items
             }
         }
 

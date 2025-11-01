@@ -80,11 +80,9 @@ public class RivuletStructuredLogListenerTests : IDisposable
         var lines = await File.ReadAllLinesAsync(_testFilePath);
         lines.Should().NotBeEmpty();
 
-        foreach (var line in lines)
-        {
-            var act = () => JsonDocument.Parse(line);
-            act.Should().NotThrow();
-        }
+        lines.Select(line => (Action)(() => JsonDocument.Parse(line)))
+             .Should()
+             .AllSatisfy(act => act.Should().NotThrow());
     }
 
     [Fact]

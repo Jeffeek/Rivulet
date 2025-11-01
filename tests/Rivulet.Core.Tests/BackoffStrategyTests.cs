@@ -1,5 +1,6 @@
 using FluentAssertions;
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using Rivulet.Core.Resilience;
 
 namespace Rivulet.Core.Tests;
@@ -178,9 +179,10 @@ public class BackoffStrategyTests
     }
 
     [Fact]
+    [SuppressMessage("ReSharper", "AccessToDisposedClosure")]
     public async Task BackoffStrategy_CancellationDuringDelay_ThrowsOperationCanceledException()
     {
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         var attemptCount = 0;
 
         var options = new ParallelOptionsRivulet

@@ -1,15 +1,17 @@
 using FluentAssertions;
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Rivulet.Core.Tests;
 
+[SuppressMessage("ReSharper", "AccessToDisposedClosure")]
 public class CancellationAndTimeoutTests
 {
     [Fact]
     public async Task SelectParallelAsync_Cancellation_ThrowsOperationCanceledException()
     {
         var source = Enumerable.Range(1, 100);
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         var processedCount = 0;
 
         async Task<List<int>> Act() =>
@@ -32,7 +34,7 @@ public class CancellationAndTimeoutTests
     public async Task SelectParallelStreamAsync_Cancellation_ThrowsOperationCanceledException()
     {
         var source = Enumerable.Range(1, 100).ToAsyncEnumerable();
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         var results = new List<int>();
 
         async Task Act()
@@ -59,18 +61,17 @@ public class CancellationAndTimeoutTests
     public async Task ForEachParallelAsync_Cancellation_ThrowsOperationCanceledException()
     {
         var source = Enumerable.Range(1, 100).ToAsyncEnumerable();
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         var processedCount = 0;
 
-        var act = async () => await source.ForEachParallelAsync(
-            async (_, ct) =>
+        async Task Act() =>
+            await source.ForEachParallelAsync(async (_, ct) =>
             {
                 Interlocked.Increment(ref processedCount);
                 await Task.Delay(100, ct);
-            },
-            cancellationToken: cts.Token);
+            }, cancellationToken: cts.Token);
 
-        var task = act();
+        var task = Act();
         await Task.Delay(50, cts.Token);
         await cts.CancelAsync();
 
@@ -197,7 +198,7 @@ public class CancellationAndTimeoutTests
     public async Task Cancellation_DuringItemProcessing_PropagatesCancellation()
     {
         var source = Enumerable.Range(1, 200);
-        var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(50));
+        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(50));
 
         async Task<List<int>> Act() =>
             await source.SelectParallelAsync(async (x, ct) =>
@@ -214,7 +215,7 @@ public class CancellationAndTimeoutTests
     public async Task Cancellation_BeforeStart_ThrowsImmediately()
     {
         var source = Enumerable.Range(1, 100);
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         await cts.CancelAsync();
 
         async Task<List<int>> Act() => await source.SelectParallelAsync((x, _) => new ValueTask<int>(x * 2), cancellationToken: cts.Token);
@@ -293,7 +294,7 @@ public class CancellationAndTimeoutTests
     public async Task CombinedCancellationAndTimeout_BothWork()
     {
         var source = Enumerable.Range(1, 100);
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         var options = new ParallelOptionsRivulet
         {
             PerItemTimeout = TimeSpan.FromMilliseconds(50),
@@ -321,7 +322,7 @@ public class CancellationAndTimeoutTests
     public async Task Cancellation_WriterTask_StopsProducingItems()
     {
         var source = Enumerable.Range(1, 1000);
-        var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
+        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
         var processedCount = 0;
 
         async Task<List<int>> Act() =>
@@ -340,7 +341,7 @@ public class CancellationAndTimeoutTests
     public async Task SelectParallelStreamAsync_ConsumerCancellation_Cancels()
     {
         var source = Enumerable.Range(1, 1000).ToAsyncEnumerable();
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         var consumedCount = 0;
 
         async Task Act()

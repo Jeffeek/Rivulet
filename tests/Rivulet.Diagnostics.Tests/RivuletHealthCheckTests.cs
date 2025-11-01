@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using FluentAssertions;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Rivulet.Core;
@@ -9,6 +10,7 @@ namespace Rivulet.Diagnostics.Tests;
 /// Some tests are added to a serial collection to prevent parallel execution issues with metrics.
 /// </summary>
 [Collection("Serial EventSource Tests")]
+[SuppressMessage("ReSharper", "AccessToDisposedClosure")]
 public class RivuletHealthCheckTests
 {
     [Fact]
@@ -22,7 +24,6 @@ public class RivuletHealthCheckTests
     public void HealthCheck_ShouldUseDefaultOptions_WhenOptionsIsNull()
     {
         using var exporter = new PrometheusExporter();
-        // ReSharper disable once AccessToDisposedClosure
         // ReSharper disable once RedundantArgumentDefaultValue
         var act = () => new RivuletHealthCheck(exporter, null);
         act.Should().NotThrow();

@@ -178,6 +178,7 @@ public static class AsyncParallelLinq
         }
         catch when (options.ErrorMode != ErrorMode.FailFast)
         {
+            // Errors are collected in the errors list and handled after cleanup
         }
         finally
         {

@@ -133,7 +133,7 @@ public class OrderedOutputTests
     public async Task SelectParallelStreamAsync_OrderedOutput_WithCancellation_YieldsInOrder()
     {
         var source = Enumerable.Range(1, 100).ToAsyncEnumerable();
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         var options = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 16,

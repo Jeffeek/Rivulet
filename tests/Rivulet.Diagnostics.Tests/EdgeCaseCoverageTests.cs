@@ -91,32 +91,37 @@ public class EdgeCaseCoverageTests
         var attemptCount = 0;
         try
         {
-            await Enumerable.Range(1, 5)
-                .ToAsyncEnumerable()
-                .SelectParallelStreamAsync(async (x, ct) =>
-                {
-                    if (++attemptCount <= 2)
+            try
+            {
+                await Enumerable.Range(1, 5)
+                    .ToAsyncEnumerable()
+                    .SelectParallelStreamAsync(async (x, ct) =>
                     {
-                        await Task.Delay(1, ct);
-                        throw new InvalidOperationException("Retry");
-                    }
-                    return x;
-                }, new ParallelOptionsRivulet
-                {
-                    MaxRetries = 2,
-                    IsTransient = _ => true,
-                    MaxDegreeOfParallelism = 1
-                })
-                .ToListAsync();
+                        if (++attemptCount <= 2)
+                        {
+                            await Task.Delay(1, ct);
+                            throw new InvalidOperationException("Retry");
+                        }
+                        return x;
+                    }, new ParallelOptionsRivulet
+                    {
+                        MaxRetries = 2,
+                        IsTransient = _ => true,
+                        MaxDegreeOfParallelism = 1
+                    })
+                    .ToListAsync();
+            }
+            catch
+            {
+                // Expected
+            }
+
+            await Task.Delay(2500);
         }
-        catch
+        finally
         {
-            // Expected
+            listener.Dispose();
         }
-
-        await Task.Delay(2500);
-
-        listener.Dispose();
     }
 
     [Fact]
@@ -218,23 +223,28 @@ public class EdgeCaseCoverageTests
     {
         var listener = new TestEventListener();
 
-        await Enumerable.Range(1, 5)
-            .ToAsyncEnumerable()
-            .SelectParallelStreamAsync(async (x, ct) =>
-            {
-                await Task.Delay(1, ct);
-                return x;
-            }, new ParallelOptionsRivulet
-            {
-                MaxDegreeOfParallelism = 2
-            })
-            .ToListAsync();
+        try
+        {
+            await Enumerable.Range(1, 5)
+                .ToAsyncEnumerable()
+                .SelectParallelStreamAsync(async (x, ct) =>
+                {
+                    await Task.Delay(1, ct);
+                    return x;
+                }, new ParallelOptionsRivulet
+                {
+                    MaxDegreeOfParallelism = 2
+                })
+                .ToListAsync();
 
-        await Task.Delay(2500);
+            await Task.Delay(2500);
 
-        listener.Dispose();
-
-        listener.ReceivedCounters.Should().NotBeEmpty();
+            listener.ReceivedCounters.Should().NotBeEmpty();
+        }
+        finally
+        {
+            listener.Dispose();
+        }
     }
 
     [Fact]
