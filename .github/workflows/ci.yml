@@ -83,3 +83,12 @@ jobs:
         directory: ./coverage
         fail_ci_if_error: false
         verbose: true
+
+  flaky-test-detection:
+    name: Flaky Test Detection (PR)
+    needs: quick-test  # Only run if quick-test passes
+    if: github.event_name == 'pull_request'  # Only run on PRs
+    uses: ./.github/workflows/reusable-flaky-test-detection.yml
+    with:
+      iterations: 30
+      timeout-minutes: 30
