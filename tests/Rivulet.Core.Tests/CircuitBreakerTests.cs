@@ -226,7 +226,10 @@ public class CircuitBreakerTests
         {
             await cb.ExecuteAsync(() => ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")));
         }
-        catch (InvalidOperationException) { }
+        catch (InvalidOperationException)
+        {
+            // Expected - test intentionally throws to trigger circuit breaker
+        }
 
         cb.State.Should().Be(CircuitBreakerState.Open);
     }
@@ -274,7 +277,10 @@ public class CircuitBreakerTests
         {
             await cb.ExecuteAsync(() => ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")));
         }
-        catch (InvalidOperationException) { }
+        catch (InvalidOperationException)
+        {
+            // Expected - test intentionally throws to trigger circuit breaker
+        }
 
         cb.State.Should().Be(CircuitBreakerState.Open);
     }

@@ -308,9 +308,15 @@ public static class ParallelOptionsRivuletExtensions
                         var willRetry = isTransient && options.MaxRetries > 0;
                         if (!willRetry && itemActivities.TryRemove(index, out _))
                         {
-                            activity.Stop();
-                            activity.Dispose();
-                            asyncLocalActivity.Value = null;
+                            try
+                            {
+                                activity.Stop();
+                            }
+                            finally
+                            {
+                                activity.Dispose();
+                                asyncLocalActivity.Value = null;
+                            }
                         }
 
                         if (options.OnErrorAsync is not null)
