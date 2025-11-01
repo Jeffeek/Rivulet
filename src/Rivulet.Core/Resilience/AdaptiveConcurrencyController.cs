@@ -168,7 +168,7 @@ internal sealed class AdaptiveConcurrencyController : IDisposable
                     }
                     catch
                     {
-                        // Swallow
+                        // ignored
                     }
                 });
                 break;
@@ -186,7 +186,7 @@ internal sealed class AdaptiveConcurrencyController : IDisposable
                 }
                 catch
                 {
-                    // Swallow
+                    // ignored
                 }
             });
         }

@@ -102,7 +102,6 @@ public sealed class RivuletHealthCheck : IHealthCheck, IDisposable
     /// </summary>
     public void Dispose()
     {
-        // No unmanaged resources to dispose directly
     }
 }
 

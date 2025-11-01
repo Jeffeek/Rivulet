@@ -129,7 +129,7 @@ internal sealed class MetricsTracker : IDisposable
         }
         catch
         {
-            // Swallow
+            // ignored
         }
     }
 
@@ -153,7 +153,7 @@ internal sealed class MetricsTracker : IDisposable
         }
         catch
         {
-            // Swallow
+            // ignored
         }
 
         _samplerCts.Dispose();

@@ -31,7 +31,6 @@ internal static class RetryPolicy
                 attempt++;
                 metricsTracker?.IncrementRetries();
 
-                // Call retry hook before backoff delay
                 if (options.OnRetryAsync is not null)
                 {
                     await options.OnRetryAsync(itemIndex, attempt, ex).ConfigureAwait(false);
@@ -58,7 +57,7 @@ internal static class RetryPolicy
             BackoffStrategy.DecorrelatedJitter => CalculateDecorrelatedJitterDelay(baseDelayMs, attempt, ref previousDelay),
             BackoffStrategy.Linear => CalculateLinearDelay(baseDelayMs, attempt),
             BackoffStrategy.LinearJitter => CalculateLinearJitterDelay(baseDelayMs, attempt),
-            _ => CalculateExponentialDelay(baseDelayMs, attempt) // Default to exponential
+            _ => CalculateExponentialDelay(baseDelayMs, attempt)
         };
     }
 

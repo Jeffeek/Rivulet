@@ -178,7 +178,6 @@ public static class AsyncParallelLinq
         }
         catch when (options.ErrorMode != ErrorMode.FailFast)
         {
-            // Swallow here; handled by mode below
         }
         finally
         {
@@ -370,7 +369,6 @@ public static class AsyncParallelLinq
                 }
             }
 
-            // Yield any remaining buffered results in order
             foreach (var idx in buffer.Keys.OrderBy(k => k))
             {
                 yield return buffer[idx];
