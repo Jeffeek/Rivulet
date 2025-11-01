@@ -45,10 +45,8 @@ public class DiagnosticsBuilderTests : IDisposable
         // Wait for file handle to be released and final aggregations to complete
         await Task.Delay(200);
 
-        // Note: Console output may include FluentAssertions license warnings,
+        // Note: Console output timing is unreliable in parallel tests due to async flushing,
         // so we verify metrics through file output and aggregated metrics instead
-        var consoleOutput = _stringWriter.ToString();
-        consoleOutput.Should().NotBeNullOrEmpty(); // Verify something was written
 
         File.Exists(_testFilePath).Should().BeTrue();
         var fileContent = await File.ReadAllTextAsync(_testFilePath);

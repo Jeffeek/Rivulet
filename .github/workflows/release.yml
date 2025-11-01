@@ -46,6 +46,7 @@ jobs:
       run: |
         dotnet pack src/Rivulet.Core/Rivulet.Core.csproj -c Release --output ./artifacts -p:PackageVersion=${{ steps.get_version.outputs.version }}
         dotnet pack src/Rivulet.Diagnostics/Rivulet.Diagnostics.csproj -c Release --output ./artifacts -p:PackageVersion=${{ steps.get_version.outputs.version }}
+        dotnet pack src/Rivulet.Diagnostics.OpenTelemetry/Rivulet.Diagnostics.OpenTelemetry.csproj -c Release --output ./artifacts -p:PackageVersion=${{ steps.get_version.outputs.version }}
 
     - name: List artifacts
       run: ls -la ./artifacts

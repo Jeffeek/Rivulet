@@ -302,14 +302,14 @@ var tracerProvider = Sdk.CreateTracerProviderBuilder()
 
 ## Dependencies
 
-- **Rivulet.Core** (≥ 1.1.0)
-- **OpenTelemetry.Api** (≥ 1.10.0)
+- **Rivulet.Core** (≥ 1.2.0)
+- **OpenTelemetry.Api** (≥ 1.13.1)
 - **System.Diagnostics.DiagnosticSource** (≥ 9.0.0)
 
 ## Related Packages
 
-- **Rivulet.Core** - Core parallel operators
-- **Rivulet.Diagnostics** - EventListener wrappers and Prometheus export
+- **Rivulet.Core**: Core parallel operators - [NuGet](https://www.nuget.org/packages/Rivulet.Core/)
+- **Rivulet.Diagnostics**: EventListener wrappers, metrics aggregation, and Prometheus export - [NuGet](https://www.nuget.org/packages/Rivulet.Diagnostics/) | [Documentation](../Rivulet.Diagnostics/README.md)
 
 ## License
 

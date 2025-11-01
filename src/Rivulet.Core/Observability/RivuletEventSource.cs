@@ -107,40 +107,58 @@ internal sealed class RivuletEventSource : EventSource
     {
         if (command.Command != EventCommand.Enable) return;
 
-        _itemsStartedCounter ??= new PollingCounter("items-started", this, () => GetItemsStarted())
+        _itemsStartedCounter ??= new PollingCounter(
+            RivuletMetricsConstants.CounterNames.ItemsStarted,
+            this,
+            () => GetItemsStarted())
         {
-            DisplayName = "Items Started",
-            DisplayUnits = "items"
+            DisplayName = RivuletMetricsConstants.DisplayNames.ItemsStarted,
+            DisplayUnits = RivuletMetricsConstants.DisplayUnits.Items
         };
 
-        _itemsCompletedCounter ??= new PollingCounter("items-completed", this, () => GetItemsCompleted())
+        _itemsCompletedCounter ??= new PollingCounter(
+            RivuletMetricsConstants.CounterNames.ItemsCompleted,
+            this,
+            () => GetItemsCompleted())
         {
-            DisplayName = "Items Completed",
-            DisplayUnits = "items"
+            DisplayName = RivuletMetricsConstants.DisplayNames.ItemsCompleted,
+            DisplayUnits = RivuletMetricsConstants.DisplayUnits.Items
         };
 
-        _totalRetriesCounter ??= new PollingCounter("total-retries", this, () => GetTotalRetries())
+        _totalRetriesCounter ??= new PollingCounter(
+            RivuletMetricsConstants.CounterNames.TotalRetries,
+            this,
+            () => GetTotalRetries())
         {
-            DisplayName = "Total Retries",
-            DisplayUnits = "retries"
+            DisplayName = RivuletMetricsConstants.DisplayNames.TotalRetries,
+            DisplayUnits = RivuletMetricsConstants.DisplayUnits.Retries
         };
 
-        _totalFailuresCounter ??= new PollingCounter("total-failures", this, () => GetTotalFailures())
+        _totalFailuresCounter ??= new PollingCounter(
+            RivuletMetricsConstants.CounterNames.TotalFailures,
+            this,
+            () => GetTotalFailures())
         {
-            DisplayName = "Total Failures",
-            DisplayUnits = "failures"
+            DisplayName = RivuletMetricsConstants.DisplayNames.TotalFailures,
+            DisplayUnits = RivuletMetricsConstants.DisplayUnits.Failures
         };
 
-        _throttleEventsCounter ??= new PollingCounter("throttle-events", this, () => GetThrottleEvents())
+        _throttleEventsCounter ??= new PollingCounter(
+            RivuletMetricsConstants.CounterNames.ThrottleEvents,
+            this,
+            () => GetThrottleEvents())
         {
-            DisplayName = "Throttle Events",
-            DisplayUnits = "events"
+            DisplayName = RivuletMetricsConstants.DisplayNames.ThrottleEvents,
+            DisplayUnits = RivuletMetricsConstants.DisplayUnits.Events
         };
 
-        _drainEventsCounter ??= new PollingCounter("drain-events", this, () => GetDrainEvents())
+        _drainEventsCounter ??= new PollingCounter(
+            RivuletMetricsConstants.CounterNames.DrainEvents,
+            this,
+            () => GetDrainEvents())
         {
-            DisplayName = "Drain Events",
-            DisplayUnits = "events"
+            DisplayName = RivuletMetricsConstants.DisplayNames.DrainEvents,
+            DisplayUnits = RivuletMetricsConstants.DisplayUnits.Events
         };
     }
 

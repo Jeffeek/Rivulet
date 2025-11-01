@@ -9,9 +9,7 @@ namespace Rivulet.Core.Tests;
 /// EventSource is a singleton, so tests that verify its counters cannot run in parallel.
 /// </summary>
 [CollectionDefinition("EventSource Sequential Tests", DisableParallelization = true)]
-public class EventSourceTestCollection
-{
-}
+public class EventSourceTestCollection;
 
 public class MetricsTests
 {

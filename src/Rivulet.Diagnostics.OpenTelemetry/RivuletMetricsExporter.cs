@@ -39,6 +39,10 @@ public sealed class RivuletMetricsExporter : IDisposable
 
     private static readonly Meter Meter = new(MeterName, Version);
 
+    /// <summary>
+    /// <see cref="Dispose"/>
+    /// </summary>
+    // ReSharper disable NotAccessedField.Local
     private readonly ObservableGauge<long> _itemsStartedGauge;
     private readonly ObservableGauge<long> _itemsCompletedGauge;
     private readonly ObservableGauge<long> _totalRetriesGauge;
@@ -46,6 +50,7 @@ public sealed class RivuletMetricsExporter : IDisposable
     private readonly ObservableGauge<long> _throttleEventsGauge;
     private readonly ObservableGauge<long> _drainEventsGauge;
     private readonly ObservableGauge<double> _errorRateGauge;
+    // ReSharper restore NotAccessedField.Local
 
     /// <summary>
     /// Initializes a new instance of the <see cref="RivuletMetricsExporter"/> class.
@@ -55,51 +60,51 @@ public sealed class RivuletMetricsExporter : IDisposable
         var eventSource = RivuletEventSource.Log;
 
         _itemsStartedGauge = Meter.CreateObservableGauge(
-            "rivulet.items.started",
+            RivuletOpenTelemetryConstants.MetricNames.ItemsStarted,
             () => eventSource.GetItemsStarted(),
-            unit: "{items}",
-            description: "Total number of items that have started processing");
+            unit: RivuletOpenTelemetryConstants.MetricUnits.Items,
+            description: RivuletOpenTelemetryConstants.MetricDescriptions.ItemsStarted);
 
         _itemsCompletedGauge = Meter.CreateObservableGauge(
-            "rivulet.items.completed",
+            RivuletOpenTelemetryConstants.MetricNames.ItemsCompleted,
             () => eventSource.GetItemsCompleted(),
-            unit: "{items}",
-            description: "Total number of items that have completed processing");
+            unit: RivuletOpenTelemetryConstants.MetricUnits.Items,
+            description: RivuletOpenTelemetryConstants.MetricDescriptions.ItemsCompleted);
 
         _totalRetriesGauge = Meter.CreateObservableGauge(
-            "rivulet.retries.total",
+            RivuletOpenTelemetryConstants.MetricNames.RetriesTotal,
             () => eventSource.GetTotalRetries(),
-            unit: "{retries}",
-            description: "Total number of retry attempts across all operations");
+            unit: RivuletOpenTelemetryConstants.MetricUnits.Retries,
+            description: RivuletOpenTelemetryConstants.MetricDescriptions.RetriesTotal);
 
         _totalFailuresGauge = Meter.CreateObservableGauge(
-            "rivulet.failures.total",
+            RivuletOpenTelemetryConstants.MetricNames.FailuresTotal,
             () => eventSource.GetTotalFailures(),
-            unit: "{failures}",
-            description: "Total number of failed items after all retries");
+            unit: RivuletOpenTelemetryConstants.MetricUnits.Failures,
+            description: RivuletOpenTelemetryConstants.MetricDescriptions.FailuresTotal);
 
         _throttleEventsGauge = Meter.CreateObservableGauge(
-            "rivulet.throttle.events",
+            RivuletOpenTelemetryConstants.MetricNames.ThrottleEvents,
             () => eventSource.GetThrottleEvents(),
-            unit: "{events}",
-            description: "Total number of backpressure throttle events");
+            unit: RivuletOpenTelemetryConstants.MetricUnits.Events,
+            description: RivuletOpenTelemetryConstants.MetricDescriptions.ThrottleEvents);
 
         _drainEventsGauge = Meter.CreateObservableGauge(
-            "rivulet.drain.events",
+            RivuletOpenTelemetryConstants.MetricNames.DrainEvents,
             () => eventSource.GetDrainEvents(),
-            unit: "{events}",
-            description: "Total number of channel drain events");
+            unit: RivuletOpenTelemetryConstants.MetricUnits.Events,
+            description: RivuletOpenTelemetryConstants.MetricDescriptions.DrainEvents);
 
         _errorRateGauge = Meter.CreateObservableGauge(
-            "rivulet.error.rate",
+            RivuletOpenTelemetryConstants.MetricNames.ErrorRate,
             () =>
             {
                 var started = eventSource.GetItemsStarted();
                 var failures = eventSource.GetTotalFailures();
                 return started > 0 ? (double)failures / started : 0.0;
             },
-            unit: "{ratio}",
-            description: "Error rate (failures / items started)");
+            unit: RivuletOpenTelemetryConstants.MetricUnits.Ratio,
+            description: RivuletOpenTelemetryConstants.MetricDescriptions.ErrorRate);
     }
 
     /// <summary>

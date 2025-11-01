@@ -57,7 +57,7 @@ public static class RivuletActivitySource
 
         if (activity is not null && totalItems.HasValue)
         {
-            activity.SetTag("rivulet.total_items", totalItems.Value);
+            activity.SetTag(RivuletOpenTelemetryConstants.TagNames.TotalItems, totalItems.Value);
         }
 
         return activity;
@@ -74,7 +74,7 @@ public static class RivuletActivitySource
         // ReSharper disable once RedundantArgumentDefaultValue
         var activity = Source.StartActivity($"Rivulet.{operationName}.Item", ActivityKind.Internal);
 
-        activity?.SetTag("rivulet.item_index", itemIndex);
+        activity?.SetTag(RivuletOpenTelemetryConstants.TagNames.ItemIndex, itemIndex);
 
         return activity;
     }
@@ -89,15 +89,15 @@ public static class RivuletActivitySource
     {
         if (activity is null) return;
 
-        activity.AddEvent(new ActivityEvent("retry",
+        activity.AddEvent(new ActivityEvent(RivuletOpenTelemetryConstants.EventNames.Retry,
             tags: new ActivityTagsCollection
             {
-                { "rivulet.retry_attempt", attemptNumber },
-                { "exception.type", exception?.GetType().FullName },
-                { "exception.message", exception?.Message }
+                { RivuletOpenTelemetryConstants.TagNames.RetryAttempt, attemptNumber },
+                { RivuletOpenTelemetryConstants.TagNames.ExceptionType, exception?.GetType().FullName },
+                { RivuletOpenTelemetryConstants.TagNames.ExceptionMessage, exception?.Message }
             }));
 
-        activity.SetTag("rivulet.retries", attemptNumber);
+        activity.SetTag(RivuletOpenTelemetryConstants.TagNames.Retries, attemptNumber);
     }
 
     /// <summary>
@@ -112,7 +112,7 @@ public static class RivuletActivitySource
 
         activity.SetStatus(ActivityStatusCode.Error, exception.Message);
         activity.AddException(exception);
-        activity.SetTag("rivulet.error.transient", isTransient);
+        activity.SetTag(RivuletOpenTelemetryConstants.TagNames.ErrorTransient, isTransient);
     }
 
     /// <summary>
@@ -125,7 +125,7 @@ public static class RivuletActivitySource
         if (activity is null) return;
 
         activity.SetStatus(ActivityStatusCode.Ok);
-        activity.SetTag("rivulet.items_processed", itemsProcessed);
+        activity.SetTag(RivuletOpenTelemetryConstants.TagNames.ItemsProcessed, itemsProcessed);
     }
 
     /// <summary>
@@ -135,10 +135,10 @@ public static class RivuletActivitySource
     /// <param name="state">The new circuit breaker state.</param>
     public static void RecordCircuitBreakerStateChange(Activity? activity, string state)
     {
-        activity?.AddEvent(new ActivityEvent("circuit_breaker_state_change",
+        activity?.AddEvent(new ActivityEvent(RivuletOpenTelemetryConstants.EventNames.CircuitBreakerStateChange,
             tags: new ActivityTagsCollection
             {
-                { "rivulet.circuit_breaker.state", state }
+                { RivuletOpenTelemetryConstants.TagNames.CircuitBreakerState, state }
             }));
     }
 
@@ -152,13 +152,13 @@ public static class RivuletActivitySource
     {
         if (activity is null) return;
 
-        activity.AddEvent(new ActivityEvent("adaptive_concurrency_change",
+        activity.AddEvent(new ActivityEvent(RivuletOpenTelemetryConstants.EventNames.AdaptiveConcurrencyChange,
             tags: new ActivityTagsCollection
             {
-                { "rivulet.concurrency.old", oldConcurrency },
-                { "rivulet.concurrency.new", newConcurrency }
+                { RivuletOpenTelemetryConstants.TagNames.ConcurrencyOld, oldConcurrency },
+                { RivuletOpenTelemetryConstants.TagNames.ConcurrencyNew, newConcurrency }
             }));
 
-        activity.SetTag("rivulet.concurrency.current", newConcurrency);
+        activity.SetTag(RivuletOpenTelemetryConstants.TagNames.ConcurrencyCurrent, newConcurrency);
     }
 }
