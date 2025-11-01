@@ -35,7 +35,8 @@ public class RivuletActivitySourceTests
         try
         {
             activity.Should().NotBeNull();
-            activity!.OperationName.Should().Be("Rivulet.TestOperation");
+            if (activity is null) return;
+            activity.OperationName.Should().Be("Rivulet.TestOperation");
             activity.GetTagItem("rivulet.total_items").Should().Be(100);
         }
         finally
@@ -57,7 +58,8 @@ public class RivuletActivitySourceTests
         try
         {
             activity.Should().NotBeNull();
-            activity!.OperationName.Should().Be("Rivulet.ProcessItem.Item");
+            if (activity is null) return;
+            activity.OperationName.Should().Be("Rivulet.ProcessItem.Item");
             activity.GetTagItem("rivulet.item_index").Should().Be(42);
         }
         finally
@@ -81,7 +83,8 @@ public class RivuletActivitySourceTests
             var exception = new InvalidOperationException("Test error");
             RivuletActivitySource.RecordRetry(activity, 1, exception);
 
-            activity!.Events.Should().HaveCount(1);
+            if (activity is null) return;
+            activity.Events.Should().HaveCount(1);
             var retryEvent = activity.Events.First();
             retryEvent.Name.Should().Be("retry");
             retryEvent.Tags.Should().Contain(tag => tag.Key == "rivulet.retry_attempt" && (int)tag.Value! == 1);
@@ -109,7 +112,8 @@ public class RivuletActivitySourceTests
             var exception = new InvalidOperationException("Test error");
             RivuletActivitySource.RecordError(activity, exception, isTransient: true);
 
-            activity!.Status.Should().Be(ActivityStatusCode.Error);
+            if (activity is null) return;
+            activity.Status.Should().Be(ActivityStatusCode.Error);
             activity.StatusDescription.Should().Be("Test error");
             activity.GetTagItem("rivulet.error.transient").Should().Be(true);
         }
@@ -133,7 +137,8 @@ public class RivuletActivitySourceTests
         {
             RivuletActivitySource.RecordSuccess(activity, 10);
 
-            activity!.Status.Should().Be(ActivityStatusCode.Ok);
+            if (activity is null) return;
+            activity.Status.Should().Be(ActivityStatusCode.Ok);
             activity.GetTagItem("rivulet.items_processed").Should().Be(10);
         }
         finally
@@ -156,7 +161,8 @@ public class RivuletActivitySourceTests
         {
             RivuletActivitySource.RecordCircuitBreakerStateChange(activity, "Open");
 
-            activity!.Events.Should().HaveCount(1);
+            if (activity is null) return;
+            activity.Events.Should().HaveCount(1);
             var cbEvent = activity.Events.First();
             cbEvent.Name.Should().Be("circuit_breaker_state_change");
             cbEvent.Tags.Should().Contain(tag => tag.Key == "rivulet.circuit_breaker.state" && (string)tag.Value! == "Open");
@@ -181,7 +187,8 @@ public class RivuletActivitySourceTests
         {
             RivuletActivitySource.RecordConcurrencyChange(activity, 16, 32);
 
-            activity!.Events.Should().HaveCount(1);
+            if (activity is null) return;
+            activity.Events.Should().HaveCount(1);
             var concurrencyEvent = activity.Events.First();
             concurrencyEvent.Name.Should().Be("adaptive_concurrency_change");
             concurrencyEvent.Tags.Should().Contain(tag => tag.Key == "rivulet.concurrency.old" && (int)tag.Value! == 16);

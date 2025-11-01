@@ -382,7 +382,7 @@ public class AdaptiveConcurrencyTests
     public async Task AdaptiveConcurrency_WithCancellation_CancelsCorrectly()
     {
         var source = Enumerable.Range(1, 100);
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
 
         var options = new ParallelOptionsRivulet
         {
@@ -408,6 +408,7 @@ public class AdaptiveConcurrencyTests
                 {
                     if (Interlocked.CompareExchange(ref cancelRequested, 1, 0) == 0)
                     {
+                        // ReSharper disable once AccessToDisposedClosure
                         await cts.CancelAsync();
                     }
                 }

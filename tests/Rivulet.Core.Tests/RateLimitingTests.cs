@@ -225,7 +225,7 @@ public class RateLimitingTests
     public async Task RateLimit_WithCancellation_CancelsCorrectly()
     {
         var source = Enumerable.Range(1, 100);
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
 
         var options = new ParallelOptionsRivulet
         {
@@ -244,6 +244,7 @@ public class RateLimitingTests
             {
                 Interlocked.Increment(ref processedCount);
                 if (processedCount >= 15)
+                    // ReSharper disable once AccessToDisposedClosure
                     await cts.CancelAsync();
 
                 await Task.Delay(1, ct);

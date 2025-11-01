@@ -1,6 +1,6 @@
 ﻿using Rivulet.Core;
 
-var http = new HttpClient();
+using var http = new HttpClient();
 var urls = Enumerable.Range(0, 1000).Select(i => $"https://example.org/?q={i}").ToArray();
 
 var list = await urls.SelectParallelAsync(

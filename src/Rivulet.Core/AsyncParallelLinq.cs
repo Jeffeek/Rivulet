@@ -506,6 +506,7 @@ public static class AsyncParallelLinq
         {
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             var token = cts.Token;
+            var timeout = batchTimeout.Value;
 
             var channel = Channel.CreateBounded<IReadOnlyList<TSource>>(new BoundedChannelOptions(16)
             {
@@ -518,7 +519,7 @@ public static class AsyncParallelLinq
             {
                 try
                 {
-                    var flushTimer = Task.Delay(batchTimeout.Value, token);
+                    var flushTimer = Task.Delay(timeout, token);
 
                     await foreach (var item in source.WithCancellation(token))
                     {
@@ -528,13 +529,13 @@ public static class AsyncParallelLinq
                         {
                             await channel.Writer.WriteAsync(batch, token);
                             batch = new List<TSource>(batchSize);
-                            flushTimer = Task.Delay(batchTimeout.Value, token);
+                            flushTimer = Task.Delay(timeout, token);
                         }
                         else if (flushTimer.IsCompleted && batch.Count > 0)
                         {
                             await channel.Writer.WriteAsync(batch, token);
                             batch = new List<TSource>(batchSize);
-                            flushTimer = Task.Delay(batchTimeout.Value, token);
+                            flushTimer = Task.Delay(timeout, token);
                         }
                     }
 

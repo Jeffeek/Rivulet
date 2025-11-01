@@ -52,6 +52,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflow", "workflow", "{62
 		.github\workflows\flaky-test-detection.yml = .github\workflows\flaky-test-detection.yml
 		.github\workflows\nuget-activity-monitor.yml = .github\workflows\nuget-activity-monitor.yml
 		.github\workflows\release.yml = .github\workflows\release.yml
+		.github\workflows\reusable-flaky-test-detection.yml = .github\workflows\reusable-flaky-test-detection.yml
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rivulet.Diagnostics.OpenTelemetry", "src\Rivulet.Diagnostics.OpenTelemetry\Rivulet.Diagnostics.OpenTelemetry.csproj", "{0CE8141A-7032-0687-125B-CD1E77EDF441}"
