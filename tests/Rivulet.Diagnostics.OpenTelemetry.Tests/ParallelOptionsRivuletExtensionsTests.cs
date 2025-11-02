@@ -259,7 +259,7 @@ public class ParallelOptionsRivuletExtensionsTests
         var items = Enumerable.Range(1, 20); // More items to ensure some are queued
         var options = new ParallelOptionsRivulet
         {
-            MaxDegreeOfParallelism = 2, // Low concurrency to keep items queued
+            MaxDegreeOfParallelism = 6, // Higher concurrency so tasks 4-6 are running when circuit opens after 3 failures
             ErrorMode = ErrorMode.BestEffort,
             CircuitBreaker = new CircuitBreakerOptions
             {
@@ -277,13 +277,10 @@ public class ParallelOptionsRivuletExtensionsTests
             async (_, ct) =>
             {
                 // Slow down processing to keep activities alive longer
-                var count = Interlocked.Increment(ref processedCount);
-                // First several items fail slowly, ensuring activities are still running when circuit opens
-                // after 3 failures, so we need at least 3 slow items, but use more for CI reliability
-                if (count <= 12)
-                {
-                    await Task.Delay(500, ct); // Longer delay to ensure activities overlap with state change in CI
-                }
+                Interlocked.Increment(ref processedCount);
+                // All items fail slowly to ensure activities overlap with state change
+                // Circuit opens after 3rd failure, so items 4-6 will still be in-flight
+                await Task.Delay(1000, ct); // Long delay to ensure activities are still running when circuit opens
                 throw new InvalidOperationException("Always fails");
             },
             options);
@@ -292,8 +289,9 @@ public class ParallelOptionsRivuletExtensionsTests
         var stateChangedSuccessfully = stateChanged.Wait(TimeSpan.FromSeconds(10));
         stateChangedSuccessfully.Should().BeTrue("circuit breaker should change state");
 
-        // Give more time for event to be recorded on activity, especially in slower CI environments
-        await Task.Delay(500);
+        // Give time for event to be recorded on activity and for activities to complete
+        // Need to wait for the in-flight activities to complete so they're captured
+        await Task.Delay(1500);
 
         // Some activities should have circuit breaker state change events
         var activitiesWithCbEvents = activities.Where(a =>
