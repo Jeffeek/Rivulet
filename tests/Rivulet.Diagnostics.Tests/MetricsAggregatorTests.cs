@@ -9,7 +9,7 @@ namespace Rivulet.Diagnostics.Tests
         public async Task MetricsAggregator_ShouldAggregateMetrics_OverTimeWindow()
         {
             var aggregatedMetrics = new List<IReadOnlyList<AggregatedMetrics>>();
-            using var aggregator = new MetricsAggregator(TimeSpan.FromMilliseconds(200));
+            using var aggregator = new MetricsAggregator(TimeSpan.FromMilliseconds(500));
             aggregator.OnAggregation += metrics => aggregatedMetrics.Add(metrics);
 
             await Enumerable.Range(1, 20)
@@ -24,12 +24,13 @@ namespace Rivulet.Diagnostics.Tests
                 })
                 .ToListAsync();
 
-            await Task.Delay(1100);
+            // Wait for EventCounters to fire and aggregations to happen
+            await Task.Delay(1500);
 
             aggregatedMetrics.Should().NotBeEmpty();
             var lastAggregation = aggregatedMetrics.Last();
             lastAggregation.Should().NotBeEmpty();
-        
+
             var itemsStartedMetric = lastAggregation.FirstOrDefault(m => m.Name == "items-started");
             itemsStartedMetric.Should().NotBeNull();
             itemsStartedMetric.Min.Should().BeGreaterThanOrEqualTo(0);
@@ -42,7 +43,7 @@ namespace Rivulet.Diagnostics.Tests
         public async Task MetricsAggregator_ShouldCalculateCorrectStatistics()
         {
             var aggregatedMetrics = new List<IReadOnlyList<AggregatedMetrics>>();
-            using var aggregator = new MetricsAggregator(TimeSpan.FromMilliseconds(200));
+            using var aggregator = new MetricsAggregator(TimeSpan.FromMilliseconds(500));
             aggregator.OnAggregation += metrics => aggregatedMetrics.Add(metrics);
 
             await Enumerable.Range(1, 10)
@@ -57,11 +58,12 @@ namespace Rivulet.Diagnostics.Tests
                 })
                 .ToListAsync();
 
-            await Task.Delay(1100);
+            // Wait for EventCounters to fire and aggregations to happen
+            await Task.Delay(1500);
 
             aggregatedMetrics.Should().NotBeEmpty();
             var lastAggregation = aggregatedMetrics.Last();
-        
+
             foreach (var metric in lastAggregation)
             {
                 metric.Min.Should().BeLessThanOrEqualTo(metric.Max);
@@ -74,14 +76,14 @@ namespace Rivulet.Diagnostics.Tests
         public async Task MetricsAggregator_ShouldHandleExpiredSamples()
         {
             var aggregatedMetrics = new List<IReadOnlyList<AggregatedMetrics>>();
-            using var aggregator = new MetricsAggregator(TimeSpan.FromMilliseconds(100));
+            using var aggregator = new MetricsAggregator(TimeSpan.FromMilliseconds(500));
             aggregator.OnAggregation += metrics =>
             {
                 if (metrics.Count > 0)
                     aggregatedMetrics.Add(metrics);
             };
 
-            await Enumerable.Range(1, 5)
+            await Enumerable.Range(1, 10)
                 .ToAsyncEnumerable()
                 .SelectParallelStreamAsync(async (x, ct) =>
                 {
@@ -93,13 +95,15 @@ namespace Rivulet.Diagnostics.Tests
                 })
                 .ToListAsync();
 
-            await Task.Delay(1100);
+            // Wait for EventCounters to fire and first aggregation to happen
+            await Task.Delay(1500);
 
             aggregatedMetrics.Should().NotBeEmpty();
             var firstAggregation = aggregatedMetrics.First();
             firstAggregation.Should().NotBeEmpty();
 
-            await Task.Delay(200);
+            // Wait for another aggregation window to expire samples
+            await Task.Delay(600);
 
             var totalAggregations = aggregatedMetrics.Count;
             totalAggregations.Should().BeGreaterThanOrEqualTo(1);

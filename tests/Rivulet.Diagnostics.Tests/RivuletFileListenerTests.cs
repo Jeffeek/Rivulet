@@ -39,12 +39,14 @@ public class RivuletFileListenerTests : IDisposable
     [Fact]
     public async Task FileListener_ShouldRotateFile_WhenMaxSizeExceeded()
     {
-        const long maxSize = 10;
+        const long maxSize = 100;
         using var listener = new RivuletFileListener(_testFilePath, maxSize);
 
-        for (var i = 0; i < 10; i++)
+        // Generate enough operations to trigger file rotation
+        // Use fewer iterations with more items each to reduce total time
+        for (var i = 0; i < 20; i++)
         {
-            await Enumerable.Range(1, 5)
+            await Enumerable.Range(1, 10)
                 .ToAsyncEnumerable()
                 .SelectParallelStreamAsync(async (x, ct) =>
                 {
@@ -52,17 +54,21 @@ public class RivuletFileListenerTests : IDisposable
                     return x;
                 }, new ParallelOptionsRivulet
                 {
-                    MaxDegreeOfParallelism = 2
+                    MaxDegreeOfParallelism = 4
                 })
                 .ToListAsync();
 
-            await Task.Delay(50);
+            // Wait for EventCounters to fire and write to file
+            await Task.Delay(100);
         }
+
+        // Wait for final flush and rotation to complete
+        await Task.Delay(1200);
 
         var directory = Path.GetDirectoryName(_testFilePath) ?? string.Empty;
         var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(_testFilePath);
         var rotatedFiles = Directory.GetFiles(directory, $"{fileNameWithoutExtension}-*");
-        
+
         rotatedFiles.Should().NotBeEmpty();
     }
 

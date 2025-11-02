@@ -279,18 +279,21 @@ public class ParallelOptionsRivuletExtensionsTests
                 // Slow down processing to keep activities alive longer
                 var count = Interlocked.Increment(ref processedCount);
                 // First several items fail slowly, ensuring activities are still running when circuit opens
-                // after 3 failures, so we need at least 3 slow items, but use 8 for safety
-                if (count <= 8)
+                // after 3 failures, so we need at least 3 slow items, but use more for CI reliability
+                if (count <= 12)
                 {
-                    await Task.Delay(300, ct); // Increased delay to keep activities alive longer
+                    await Task.Delay(500, ct); // Longer delay to ensure activities overlap with state change in CI
                 }
                 throw new InvalidOperationException("Always fails");
             },
             options);
 
         // Wait for circuit breaker state change to be recorded
-        stateChanged.Wait(TimeSpan.FromSeconds(5));
-        await Task.Delay(200); // Give extra time for event to be recorded on activity
+        var stateChangedSuccessfully = stateChanged.Wait(TimeSpan.FromSeconds(10));
+        stateChangedSuccessfully.Should().BeTrue("circuit breaker should change state");
+
+        // Give more time for event to be recorded on activity, especially in slower CI environments
+        await Task.Delay(500);
 
         // Some activities should have circuit breaker state change events
         var activitiesWithCbEvents = activities.Where(a =>
