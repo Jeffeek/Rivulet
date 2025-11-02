@@ -79,12 +79,12 @@ public sealed class FakeChannel<T> : IDisposable
     }
 
     /// <summary>
-    /// Resets the read and write counters.
+    /// Resets the read and write counters using thread-safe operations.
     /// </summary>
     public void ResetCounters()
     {
-        _writeCount = 0;
-        _readCount = 0;
+        Interlocked.Exchange(ref _writeCount, 0);
+        Interlocked.Exchange(ref _readCount, 0);
     }
 
     /// <summary>

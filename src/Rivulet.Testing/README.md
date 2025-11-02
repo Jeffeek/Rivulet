@@ -27,19 +27,19 @@ using Rivulet.Testing;
 [Test]
 public async Task TestTimeoutBehavior()
 {
-    var timeProvider = new VirtualTimeProvider();
+    using var timeProvider = new VirtualTimeProvider();
 
     // Schedule a delay
-    var delayTask = timeProvider.DelayAsync(TimeSpan.FromSeconds(10));
+    var delayTask = timeProvider.CreateDelay(TimeSpan.FromSeconds(10));
 
     // Fast-forward time
-    await timeProvider.AdvanceTimeAsync(TimeSpan.FromSeconds(5));
+    timeProvider.AdvanceTime(TimeSpan.FromSeconds(5));
     Assert.False(delayTask.IsCompleted); // Only 5 seconds passed
 
-    await timeProvider.AdvanceTimeAsync(TimeSpan.FromSeconds(5));
+    timeProvider.AdvanceTime(TimeSpan.FromSeconds(5));
     Assert.True(delayTask.IsCompleted); // Now 10 seconds total
 
-    timeProvider.Dispose();
+    await delayTask; // Await the completed task
 }
 ```
 
@@ -132,15 +132,15 @@ public async Task TestMaxDegreeOfParallelism()
 
     var items = Enumerable.Range(1, 100);
 
-    await items.ParallelForEachAsync(
-        async item =>
+    await items.ForEachParallelAsync(
+        async (item, ct) =>
         {
-            using var scope = await asserter.EnterAsync();
+            using var scope = asserter.Enter();
 
             // Simulate work
-            await Task.Delay(10);
+            await Task.Delay(10, ct);
         },
-        new ParallelOptions
+        new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = maxDegree
         }
@@ -159,7 +159,7 @@ public async Task TestMaxDegreeOfParallelism()
 [Test]
 public async Task TestRetryWithVirtualTime()
 {
-    var timeProvider = new VirtualTimeProvider();
+    using var timeProvider = new VirtualTimeProvider();
     var attempts = 0;
 
     var retryTask = Task.Run(async () =>
@@ -167,12 +167,15 @@ public async Task TestRetryWithVirtualTime()
         while (attempts < 3)
         {
             attempts++;
-            await timeProvider.DelayAsync(TimeSpan.FromSeconds(1));
+            await timeProvider.CreateDelay(TimeSpan.FromSeconds(1));
         }
     });
 
+    // Wait for all delays to be registered
+    await Task.Delay(100);
+
     // Fast-forward through all retries
-    await timeProvider.AdvanceTimeAsync(TimeSpan.FromSeconds(3));
+    timeProvider.AdvanceTime(TimeSpan.FromSeconds(3));
     await retryTask;
 
     Assert.Equal(3, attempts);
@@ -239,12 +242,12 @@ public async Task TestRetryLogicUnderChaos()
     }
 
     var items = Enumerable.Range(1, 10);
-    var results = await items.ParallelSelectAsync(
-        async item => await OperationWithRetry(item),
-        new ParallelOptions { MaxDegreeOfParallelism = 3 }
+    var results = await items.SelectParallelAsync(
+        async (item, ct) => await OperationWithRetry(item),
+        new ParallelOptionsRivulet { MaxDegreeOfParallelism = 3 }
     );
 
-    Assert.Equal(10, results.Count());
+    Assert.Equal(10, results.Count);
     Assert.True(failureCount > 0); // Some failures occurred
 }
 ```
@@ -263,7 +266,7 @@ public async Task TestThrottling()
         await throttle.WaitAsync();
         try
         {
-            using var scope = await asserter.EnterAsync();
+            using var scope = asserter.Enter();
             await Task.Delay(50);
         }
         finally
@@ -305,15 +308,15 @@ public async Task TestParallelOperationsWithTestingTools()
 
     // Consumer with chaos and concurrency tracking
     var results = new List<int>();
-    await channel.Reader.ToAsyncEnumerable()
-        .ParallelForEachAsync(
-            async item =>
+    await channel.Reader.ReadAllAsync()
+        .ForEachParallelAsync(
+            async (item, ct) =>
             {
-                using var scope = await asserter.EnterAsync();
+                using var scope = asserter.Enter();
 
                 var result = await chaos.ExecuteAsync(async () =>
                 {
-                    await Task.Delay(1);
+                    await Task.Delay(1, ct);
                     return item * 2;
                 });
 
@@ -322,7 +325,7 @@ public async Task TestParallelOperationsWithTestingTools()
                     results.Add(result);
                 }
             },
-            new ParallelOptions { MaxDegreeOfParallelism = 10 }
+            new ParallelOptionsRivulet { MaxDegreeOfParallelism = 10 }
         );
 
     await producerTask;

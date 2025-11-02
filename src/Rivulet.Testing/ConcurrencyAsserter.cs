@@ -39,12 +39,12 @@ public sealed class ConcurrencyAsserter
     }
 
     /// <summary>
-    /// Resets the concurrency tracking.
+    /// Resets the concurrency tracking using thread-safe operations.
     /// </summary>
     public void Reset()
     {
-        _currentConcurrency = 0;
-        _maxConcurrency = 0;
+        Interlocked.Exchange(ref _currentConcurrency, 0);
+        Interlocked.Exchange(ref _maxConcurrency, 0);
     }
 
     private sealed class ConcurrencyScope(ConcurrencyAsserter asserter) : IDisposable

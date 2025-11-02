@@ -24,8 +24,13 @@ public sealed class VirtualTimeProvider : IDisposable
     /// <summary>
     /// Advances virtual time by the specified duration and executes all scheduled tasks.
     /// </summary>
+    /// <param name="duration">The amount of time to advance. Must be non-negative.</param>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when duration is negative.</exception>
     public void AdvanceTime(TimeSpan duration)
     {
+        if (duration < TimeSpan.Zero)
+            throw new ArgumentOutOfRangeException(nameof(duration), duration, "Duration cannot be negative.");
+
         ObjectDisposedException.ThrowIf(_disposed, nameof(VirtualTimeProvider));
 
         var tasksToExecute = LockHelper.Execute(_lock, () =>
@@ -81,15 +86,24 @@ public sealed class VirtualTimeProvider : IDisposable
     }
 
     /// <summary>
-    /// Resets virtual time to zero and clears all scheduled tasks.
+    /// Resets virtual time to zero and cancels all scheduled tasks.
+    /// Any tasks awaiting delays will be canceled.
     /// </summary>
     public void Reset()
     {
-        LockHelper.Execute(_lock, () =>
+        var tasksToCancel = LockHelper.Execute(_lock, () =>
         {
-            _currentTime = TimeSpan.Zero;
+            var tasks = _scheduledTasks.ToList();
             _scheduledTasks.Clear();
+            _currentTime = TimeSpan.Zero;
+            return tasks;
         });
+
+        // Cancel all pending tasks outside the lock
+        foreach (var task in tasksToCancel)
+        {
+            task.TaskCompletionSource.TrySetCanceled();
+        }
     }
 
     /// <summary>

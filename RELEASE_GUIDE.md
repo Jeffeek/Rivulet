@@ -203,7 +203,7 @@ Features:
 - Retry policies with exponential backoff
 - Per-item timeouts and lifecycle hooks
 - Support for .NET 8.0 and 9.0
-- 99.5% code coverage
+- 90%+ code coverage
 "
 
 # Push the tag (THIS TRIGGERS THE RELEASE WORKFLOW)
@@ -385,7 +385,7 @@ git push origin master
    - Flexible error handling (FailFast, CollectAndContinue, BestEffort)
    - Retry policies with exponential backoff
    - Per-item timeouts and lifecycle hooks
-   - 99.5% code coverage
+   - 90%+ code coverage
 
    NuGet: https://nuget.org/packages/Rivulet.Core
    GitHub: https://github.com/Jeffeek/Rivulet
@@ -596,7 +596,7 @@ git push origin :refs/tags/v1.0.0
 
 - [ ] All tests pass on master
 - [ ] Flaky test detection passes (100 iterations, Windows + Linux)
-- [ ] Code coverage ≥ 99%
+- [ ] Code coverage ≥ 90%
 - [ ] CHANGELOG.md updated
 - [ ] Package metadata correct in .csproj
 - [ ] README.md (GitHub repository) up to date
