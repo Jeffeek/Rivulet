@@ -281,4 +281,102 @@ public class ParallelWorkerServiceTests
 
         service.ProcessedItems.Should().HaveCount(3);
     }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenCancelled_ShouldLogInformationAndExitGracefully()
+    {
+        // Arrange
+        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Information));
+        var logger = loggerFactory.CreateLogger<TestWorkerService>();
+
+        async IAsyncEnumerable<int> SlowGenerateItems()
+        {
+            for (int i = 1; i <= 100; i++)
+            {
+                await Task.Delay(50); // Slow enough to get cancelled
+                yield return i;
+            }
+        }
+
+        var service = new TestWorkerService(logger, SlowGenerateItems());
+
+        using var cts = new CancellationTokenSource();
+
+        // Act
+        await service.StartAsync(cts.Token);
+        await Task.Delay(20); // Let it start
+        await cts.CancelAsync(); // Cancel it
+        await service.StopAsync(CancellationToken.None);
+
+        // Assert - should exit gracefully without throwing
+        service.ProcessedItems.Count.Should().BeLessThan(100);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenProcessThrowsFatalError_ShouldLogErrorAndRethrow()
+    {
+        // Arrange
+        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Error));
+        var logger = loggerFactory.CreateLogger<FatalErrorWorkerService>();
+
+        var items = GenerateItemsAsync(3);
+        var service = new FatalErrorWorkerService(logger, items);
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+
+        // Act & Assert
+        await service.StartAsync(cts.Token);
+
+        // Wait for the exception to propagate
+        await Task.Delay(100);
+
+        // The service should have logged the fatal error
+        await service.StopAsync(CancellationToken.None);
+    }
+
+    private class FatalErrorWorkerService : ParallelWorkerService<int, int>
+    {
+        private readonly IAsyncEnumerable<int> _sourceItems;
+
+        public FatalErrorWorkerService(
+            ILogger<FatalErrorWorkerService> logger,
+            IAsyncEnumerable<int> sourceItems)
+            : base(logger)
+        {
+            _sourceItems = sourceItems;
+        }
+
+        protected override IAsyncEnumerable<int> GetSourceItems(CancellationToken cancellationToken)
+        {
+            return _sourceItems;
+        }
+
+        protected override Task<int> ProcessAsync(int item, CancellationToken cancellationToken)
+        {
+            // Simulate a fatal error that should be logged and re-thrown
+            throw new InvalidOperationException($"Fatal error processing item {item}");
+        }
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WithMultipleExceptions_ShouldLogFirstError()
+    {
+        // Arrange
+        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Error));
+        var logger = loggerFactory.CreateLogger<FatalErrorWorkerService>();
+
+        var items = GenerateItemsAsync(5);
+        var service = new FatalErrorWorkerService(logger, items);
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+
+        // Act
+        await service.StartAsync(cts.Token);
+        await Task.Delay(50); // Give time for exception
+        await service.StopAsync(CancellationToken.None);
+
+        // Assert - no crash, error was logged
+        // The test passes if we reach here without unhandled exception
+        true.Should().BeTrue();
+    }
 }

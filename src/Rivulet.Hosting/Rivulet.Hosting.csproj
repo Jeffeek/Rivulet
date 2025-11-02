@@ -19,6 +19,9 @@
 	<PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
   <ItemGroup>
+    <InternalsVisibleTo Include="Rivulet.Hosting.Tests" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\Rivulet.Core\Rivulet.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
