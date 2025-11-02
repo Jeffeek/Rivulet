@@ -211,9 +211,13 @@ public class VirtualTimeProviderTests
         timeProvider.AdvanceTime(TimeSpan.FromSeconds(5));
         timeProvider.CurrentTime.Should().Be(TimeSpan.FromSeconds(5));
 
-        // Schedule some tasks that won't complete
+        // Schedule some tasks that won't complete before reset
         var task1 = timeProvider.CreateDelay(TimeSpan.FromSeconds(10));
         var task2 = timeProvider.CreateDelay(TimeSpan.FromSeconds(20));
+
+        // Tasks should not be completed yet
+        task1.IsCompleted.Should().BeFalse();
+        task2.IsCompleted.Should().BeFalse();
 
         // Reset
         timeProvider.Reset();
@@ -221,15 +225,22 @@ public class VirtualTimeProviderTests
         // Time should be back to zero
         timeProvider.CurrentTime.Should().Be(TimeSpan.Zero);
 
-        // Old tasks should not complete after reset
+        // Old tasks should be canceled after reset
+        task1.IsCompleted.Should().BeTrue();
+        task2.IsCompleted.Should().BeTrue();
+        task1.IsCanceled.Should().BeTrue();
+        task2.IsCanceled.Should().BeTrue();
+
+        // Advancing time should not affect canceled tasks
         timeProvider.AdvanceTime(TimeSpan.FromSeconds(30));
-        task1.IsCompleted.Should().BeFalse();
-        task2.IsCompleted.Should().BeFalse();
 
         // New tasks after reset should work normally
         var task3 = timeProvider.CreateDelay(TimeSpan.FromSeconds(5));
+        task3.IsCompleted.Should().BeFalse();
+
         timeProvider.AdvanceTime(TimeSpan.FromSeconds(5));
         task3.IsCompleted.Should().BeTrue();
+        task3.IsCanceled.Should().BeFalse();
         await task3;
     }
 
