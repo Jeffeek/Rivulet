@@ -1,6 +1,18 @@
-# Release Guide: Publishing Rivulet v1.0.0 to NuGet
+# Release Guide: Publishing Rivulet to NuGet
 
-This guide walks you through creating and publishing your first release of Rivulet to NuGet.org.
+This guide walks you through creating and publishing Rivulet releases to NuGet.org.
+
+## Rivulet Package Ecosystem
+
+Rivulet v1.2.0 consists of **5 NuGet packages**:
+
+1. **Rivulet.Core** - Core parallel operators with bounded concurrency
+2. **Rivulet.Diagnostics** - EventListeners, metrics aggregation, Prometheus export, health checks
+3. **Rivulet.Diagnostics.OpenTelemetry** - OpenTelemetry integration for distributed tracing
+4. **Rivulet.Testing** - Testing utilities (VirtualTimeProvider, FakeChannel, ChaosInjector, ConcurrencyAsserter)
+5. **Rivulet.Hosting** - Microsoft.Extensions.Hosting integration, background services, configuration binding
+
+All 5 packages are built and published together with the same version number.
 
 ---
 
@@ -13,10 +25,11 @@ Before starting the release process, ensure:
 )
 - [ ] No flaky tests detected (100 iterations on both Windows & Linux)
 - [ ] README.md (GitHub repository) is up to date
-- [ ] README.md is up to date
-- [ ] CHANGELOG.md is updated with v1.0.0 changes (create if doesn't exist)
-- [ ] All planned features for v1.0.0 are complete
+- [ ] All 5 package README files are up to date (src/*/README.md)
+- [ ] CHANGELOG.md is updated with version changes (create if doesn't exist)
+- [ ] All planned features for the version are complete
 - [ ] You have a NuGet.org account (create at https://www.nuget.org/users/account/LogOn)
+- [ ] NuGet API key has glob pattern `Rivulet.*` to cover all packages
 
 ---
 
@@ -68,7 +81,7 @@ git push origin master
 
 ### Step 2: Verify Package Metadata
 
-Check `src/Rivulet.Core/Rivulet.Core.csproj` contains correct information:
+Check all 5 .csproj files contain correct information. Example from `src/Rivulet.Core/Rivulet.Core.csproj`:
 
 ```xml
 <PropertyGroup>
@@ -478,23 +491,28 @@ Check the workflow file (`.github/workflows/release.yml`):
 **Option 3: Regenerate API Key**
 1. Go to https://www.nuget.org/account/apikeys
 2. Click "Regenerate" on your existing key (or create new one)
-3. Set **Glob Pattern** to `Rivulet.Core`
+3. Set **Glob Pattern** to `Rivulet.*` (to cover all Rivulet packages)
 4. Copy the new key
 5. Update GitHub secret: Settings → Secrets and variables → Actions → `NUGET_API_KEY`
 
 ---
 
-### Issue: Multiple .nupkg files in GitHub Release (ConsoleSample + Core)
+### Issue: Multiple .nupkg files in GitHub Release (ConsoleSample + Library packages)
 
-**Problem**: Both `Rivulet.ConsoleSample.*.nupkg` and `Rivulet.Core.*.nupkg` appear in the release assets.
+**Problem**: Both sample/test projects and library packages appear in the release assets.
 
 **Cause**: The `dotnet pack` command was packing ALL projects in the solution.
 
 **Solution** (Already fixed in latest workflow):
 
-1. **Workflow now packs only library project** (`.github/workflows/release.yml` line 46):
+1. **Workflow now packs only library projects** (`.github/workflows/release.yml` lines 45-51):
    ```yaml
-   run: dotnet pack src/Rivulet.Core/Rivulet.Core.csproj -c Release ...
+   run: |
+     dotnet pack src/Rivulet.Core/Rivulet.Core.csproj -c Release --output ./artifacts -p:PackageVersion=$VERSION
+     dotnet pack src/Rivulet.Diagnostics/Rivulet.Diagnostics.csproj -c Release --output ./artifacts -p:PackageVersion=$VERSION
+     dotnet pack src/Rivulet.Diagnostics.OpenTelemetry/Rivulet.Diagnostics.OpenTelemetry.csproj -c Release --output ./artifacts -p:PackageVersion=$VERSION
+     dotnet pack src/Rivulet.Testing/Rivulet.Testing.csproj -c Release --output ./artifacts -p:PackageVersion=$VERSION
+     dotnet pack src/Rivulet.Hosting/Rivulet.Hosting.csproj -c Release --output ./artifacts -p:PackageVersion=$VERSION
    ```
 
 2. **ConsoleSample project marked as non-packable** (`samples/Rivulet.ConsoleSample/Rivulet.ConsoleSample.csproj`):
@@ -504,7 +522,7 @@ Check the workflow file (`.github/workflows/release.yml`):
    </PropertyGroup>
    ```
 
-3. **Test project already marked as non-packable** (`tests/Rivulet.Core.Tests/Rivulet.Core.Tests.csproj`):
+3. **Test projects already marked as non-packable**:
    ```xml
    <PropertyGroup>
      <IsPackable>false</IsPackable>
@@ -514,10 +532,10 @@ Check the workflow file (`.github/workflows/release.yml`):
 **To Clean Up Existing Release**:
 1. Go to your GitHub release
 2. Click "Edit"
-3. Delete unwanted `.nupkg` files (like `Rivulet.ConsoleSample.*.nupkg`)
+3. Delete unwanted `.nupkg` files (sample/test projects)
 4. Save the release
 
-**For Next Release**: The workflow will now automatically only include `Rivulet.Core.*.nupkg`.
+**For Next Release**: The workflow will now automatically only include the 5 library packages.
 
 ---
 

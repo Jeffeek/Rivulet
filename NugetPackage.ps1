@@ -152,7 +152,9 @@ foreach ($nupkgFile in Get-ChildItem $OutputDir -Filter *.nupkg) {
     }
 
     # Check for DLL files
-    $dllName = "$packageName.dll"
+    # Extract project name without version (e.g., "Rivulet.Core.1.0.0-local-test" -> "Rivulet.Core")
+    $projectName = $packageName -replace '\.\d+\.\d+\.\d+.*$', ''
+    $dllName = "$projectName.dll"
     $dllFiles = Get-ChildItem $extractPath -Recurse -Filter $dllName
     if ($dllFiles) {
         Write-Host "    [OK] $dllName found in $($dllFiles.Count) target(s)" -ForegroundColor Green

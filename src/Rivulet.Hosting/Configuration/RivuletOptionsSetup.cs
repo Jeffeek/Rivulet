@@ -15,7 +15,7 @@ internal sealed class RivuletOptionsSetup(IConfiguration configuration) : IConfi
 
     public void Configure(ParallelOptionsRivulet options)
     {
-        var section = _configuration.GetSection("Rivulet");
+        var section = _configuration.GetSection(RivuletHostingConstants.ConfigurationSectionName);
         if (!section.Exists()) return;
 
         // The standard Bind method handles all properties including nested init-only properties

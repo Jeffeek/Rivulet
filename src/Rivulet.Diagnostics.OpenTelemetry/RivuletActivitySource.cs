@@ -35,14 +35,9 @@ public static class RivuletActivitySource
     public const string SourceName = "Rivulet.Core";
 
     /// <summary>
-    /// The version of the Rivulet instrumentation.
-    /// </summary>
-    private const string Version = "1.2.0";
-
-    /// <summary>
     /// The ActivitySource instance for creating activities.
     /// </summary>
-    public static readonly ActivitySource Source = new(SourceName, Version);
+    public static readonly ActivitySource Source = new(SourceName, RivuletOpenTelemetryConstants.InstrumentationVersion);
 
     /// <summary>
     /// Creates an Activity for a parallel operation.

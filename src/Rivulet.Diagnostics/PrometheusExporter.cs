@@ -48,8 +48,9 @@ public sealed class PrometheusExporter : RivuletEventListenerBase
         return LockHelper.Execute(_lock, () =>
         {
             var sb = new StringBuilder();
-            sb.AppendLine("# Rivulet.Core Metrics");
-            sb.AppendLine($"# Generated at {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
+            sb.AppendLine(RivuletDiagnosticsConstants.PrometheusFormats.HeaderComment);
+            sb.AppendLine(string.Format(RivuletDiagnosticsConstants.PrometheusFormats.GeneratedAtCommentFormat,
+                DateTime.UtcNow.ToString(RivuletDiagnosticsConstants.DateTimeFormats.Prometheus)));
             sb.AppendLine();
 
             foreach (var kvp in _latestValues)
@@ -57,9 +58,9 @@ public sealed class PrometheusExporter : RivuletEventListenerBase
                 var metricName = SanitizeMetricName(kvp.Key);
                 var (displayName, value, _) = kvp.Value;
 
-                sb.AppendLine($"# HELP rivulet_{metricName} {displayName}");
-                sb.AppendLine($"# TYPE rivulet_{metricName} gauge");
-                sb.AppendLine($"rivulet_{metricName} {value:F2}");
+                sb.AppendLine(string.Format(RivuletDiagnosticsConstants.PrometheusFormats.HelpFormat, metricName, displayName));
+                sb.AppendLine(string.Format(RivuletDiagnosticsConstants.PrometheusFormats.TypeFormat, metricName));
+                sb.AppendLine(string.Format(RivuletDiagnosticsConstants.PrometheusFormats.MetricFormat, metricName, value));
                 sb.AppendLine();
             }
 

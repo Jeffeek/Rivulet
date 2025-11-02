@@ -524,7 +524,7 @@ All Rivulet.* packages will follow **synchronized versioning** with Core:
 
 ---
 
-**Last Updated**: 2025-01-02
+**Last Updated**: 2025-11-02
 **Version**: 1.2.0
 **Status**: v1.2.0 Implementation Complete - Ready for Release
-**Next Review**: Q2 2025
+**Next Review**: Q2 2026

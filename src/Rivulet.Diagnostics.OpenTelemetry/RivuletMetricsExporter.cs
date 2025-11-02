@@ -32,12 +32,7 @@ public sealed class RivuletMetricsExporter : IDisposable
     /// </summary>
     public const string MeterName = "Rivulet.Core";
 
-    /// <summary>
-    /// The version of the Rivulet instrumentation.
-    /// </summary>
-    private const string Version = "1.2.0";
-
-    private static readonly Meter Meter = new(MeterName, Version);
+    private static readonly Meter Meter = new(MeterName, RivuletOpenTelemetryConstants.InstrumentationVersion);
 
     /// <summary>
     /// <see cref="Dispose"/>

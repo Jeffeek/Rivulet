@@ -6,6 +6,12 @@ namespace Rivulet.Diagnostics.OpenTelemetry;
 public static class RivuletOpenTelemetryConstants
 {
     /// <summary>
+    /// Instrumentation version for OpenTelemetry ActivitySource and Meter.
+    /// Update this when releasing new versions.
+    /// </summary>
+    public const string InstrumentationVersion = "1.2.0";
+
+    /// <summary>
     /// OpenTelemetry metric names exposed by RivuletMetricsExporter.
     /// </summary>
     public static class MetricNames

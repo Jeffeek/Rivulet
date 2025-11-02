@@ -8,7 +8,7 @@ namespace Rivulet.Diagnostics;
 /// </summary>
 public abstract class RivuletEventListenerBase : EventListener
 {
-    private const string RivuletEventSourceName = "Rivulet.Core";
+    private const string RivuletEventSourceName = RivuletDiagnosticsConstants.EventSourceName;
     
     /// <summary>
     /// Gets or sets whether the listener is enabled.
@@ -23,7 +23,7 @@ public abstract class RivuletEventListenerBase : EventListener
         if (eventSource.Name != RivuletEventSourceName) return;
         EnableEvents(eventSource, EventLevel.LogAlways, EventKeywords.All, new Dictionary<string, string?>
         {
-            ["EventCounterIntervalSec"] = "1"
+            [RivuletDiagnosticsConstants.EventCounterKeys.IntervalSec] = "1"
         });
         IsEnabled = true;
     }
@@ -44,19 +44,19 @@ public abstract class RivuletEventListenerBase : EventListener
             if (eventData.Payload[i] is not IDictionary<string, object> eventPayload)
                 continue;
 
-            if (!eventPayload.TryGetValue("Name", out var nameObj) || nameObj is not string name)
+            if (!eventPayload.TryGetValue(RivuletDiagnosticsConstants.EventCounterKeys.Name, out var nameObj) || nameObj is not string name)
                 continue;
 
-            if (!eventPayload.TryGetValue("Mean", out var meanObj) && 
-                !eventPayload.TryGetValue("Increment", out meanObj))
+            if (!eventPayload.TryGetValue(RivuletDiagnosticsConstants.EventCounterKeys.Mean, out var meanObj) &&
+                !eventPayload.TryGetValue(RivuletDiagnosticsConstants.EventCounterKeys.Increment, out meanObj))
                 continue;
 
             var value = Convert.ToDouble(meanObj);
-            var displayName = eventPayload.TryGetValue("DisplayName", out var displayNameObj) 
-                ? displayNameObj.ToString() 
+            var displayName = eventPayload.TryGetValue(RivuletDiagnosticsConstants.EventCounterKeys.DisplayName, out var displayNameObj)
+                ? displayNameObj.ToString()
                 : name;
-            var displayUnits = eventPayload.TryGetValue("DisplayUnits", out var displayUnitsObj) 
-                ? displayUnitsObj.ToString() 
+            var displayUnits = eventPayload.TryGetValue(RivuletDiagnosticsConstants.EventCounterKeys.DisplayUnits, out var displayUnitsObj)
+                ? displayUnitsObj.ToString()
                 : string.Empty;
 
             OnCounterReceived(name, displayName ?? name, value, displayUnits ?? string.Empty);

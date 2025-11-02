@@ -62,7 +62,7 @@ public sealed class RivuletStructuredLogListener : RivuletEventListenerBase
         var logEntry = new
         {
             timestamp = DateTime.UtcNow,
-            source = "Rivulet.Core",
+            source = RivuletDiagnosticsConstants.EventSourceName,
             metric = new
             {
                 name,
