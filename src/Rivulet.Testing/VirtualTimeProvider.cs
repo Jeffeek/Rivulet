@@ -28,10 +28,10 @@ public sealed class VirtualTimeProvider : IDisposable
     {
         ObjectDisposedException.ThrowIf(_disposed, nameof(VirtualTimeProvider));
 
-        LockHelper.Execute(_lock, () =>
+        var tasksToExecute = LockHelper.Execute(_lock, () =>
         {
             var targetTime = _currentTime + duration;
-            var tasksToExecute = new List<ScheduledTask>();
+            var tasks = new List<ScheduledTask>();
 
             while (_scheduledTasks.Count > 0)
             {
@@ -41,16 +41,18 @@ public sealed class VirtualTimeProvider : IDisposable
 
                 _scheduledTasks.Remove(nextTask);
                 _currentTime = nextTask.ExecutionTime;
-                tasksToExecute.Add(nextTask);
+                tasks.Add(nextTask);
             }
 
             _currentTime = targetTime;
-
-            foreach (var task in tasksToExecute)
-            {
-                task.TaskCompletionSource.SetResult();
-            }
+            return tasks;
         });
+
+        // Complete tasks outside the lock to avoid blocking continuations
+        foreach (var task in tasksToExecute)
+        {
+            task.TaskCompletionSource.SetResult();
+        }
     }
 
     /// <summary>
