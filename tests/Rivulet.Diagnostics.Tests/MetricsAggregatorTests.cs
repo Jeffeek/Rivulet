@@ -43,8 +43,12 @@ namespace Rivulet.Diagnostics.Tests
         public async Task MetricsAggregator_ShouldCalculateCorrectStatistics()
         {
             var aggregatedMetrics = new List<IReadOnlyList<AggregatedMetrics>>();
-            using var aggregator = new MetricsAggregator(TimeSpan.FromMilliseconds(500));
-            aggregator.OnAggregation += metrics => aggregatedMetrics.Add(metrics);
+            using var aggregator = new MetricsAggregator(TimeSpan.FromSeconds(2));
+            aggregator.OnAggregation += metrics =>
+            {
+                if (metrics.Count > 0)
+                    aggregatedMetrics.Add(metrics);
+            };
 
             await Enumerable.Range(1, 10)
                 .ToAsyncEnumerable()
@@ -58,17 +62,24 @@ namespace Rivulet.Diagnostics.Tests
                 })
                 .ToListAsync();
 
-            // Wait for EventCounters to fire and aggregations to happen
-            await Task.Delay(1500);
+            // Wait for EventCounters to fire and at least one aggregation to happen
+            // Wait must be longer than the aggregation window to ensure timer fires
+            await Task.Delay(3000);
 
             aggregatedMetrics.Should().NotBeEmpty();
-            var lastAggregation = aggregatedMetrics.Last();
 
-            foreach (var metric in lastAggregation)
+            // Check all aggregations, not just the last one, to avoid timing issues
+            foreach (var aggregation in aggregatedMetrics)
             {
-                metric.Min.Should().BeLessThanOrEqualTo(metric.Max);
-                metric.Average.Should().BeInRange(metric.Min, metric.Max);
-                metric.Current.Should().BeInRange(metric.Min, metric.Max);
+                aggregation.Should().NotBeEmpty();
+
+                foreach (var metric in aggregation)
+                {
+                    metric.Min.Should().BeLessThanOrEqualTo(metric.Max);
+                    metric.Average.Should().BeInRange(metric.Min, metric.Max);
+                    metric.Current.Should().BeInRange(metric.Min, metric.Max);
+                    metric.SampleCount.Should().BeGreaterThan(0);
+                }
             }
         }
 
@@ -76,7 +87,7 @@ namespace Rivulet.Diagnostics.Tests
         public async Task MetricsAggregator_ShouldHandleExpiredSamples()
         {
             var aggregatedMetrics = new List<IReadOnlyList<AggregatedMetrics>>();
-            using var aggregator = new MetricsAggregator(TimeSpan.FromMilliseconds(500));
+            using var aggregator = new MetricsAggregator(TimeSpan.FromSeconds(2));
             aggregator.OnAggregation += metrics =>
             {
                 if (metrics.Count > 0)
@@ -96,17 +107,30 @@ namespace Rivulet.Diagnostics.Tests
                 .ToListAsync();
 
             // Wait for EventCounters to fire and first aggregation to happen
-            await Task.Delay(1500);
+            // Wait must be longer than the aggregation window to ensure timer fires
+            await Task.Delay(3000);
 
             aggregatedMetrics.Should().NotBeEmpty();
             var firstAggregation = aggregatedMetrics.First();
             firstAggregation.Should().NotBeEmpty();
 
-            // Wait for another aggregation window to expire samples
-            await Task.Delay(600);
+            // Wait for another aggregation window to potentially expire samples
+            // This verifies that the aggregator handles sample expiration gracefully
+            await Task.Delay(3000);
 
             var totalAggregations = aggregatedMetrics.Count;
             totalAggregations.Should().BeGreaterThanOrEqualTo(1);
+
+            // Verify all captured aggregations have valid data
+            foreach (var aggregation in aggregatedMetrics)
+            {
+                aggregation.Should().NotBeEmpty();
+                foreach (var metric in aggregation)
+                {
+                    metric.SampleCount.Should().BeGreaterThan(0);
+                    metric.Min.Should().BeLessThanOrEqualTo(metric.Max);
+                }
+            }
         }
 
         [Fact]
