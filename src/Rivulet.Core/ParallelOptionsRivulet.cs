@@ -21,7 +21,7 @@ public sealed class ParallelOptionsRivulet
     public TimeSpan? PerItemTimeout { get; init; }
     /// <summary>
     /// Gets the error handling mode that determines how failures are managed during parallel processing.
-    /// Defaults to <see cref="Core.ErrorMode.FailFast"/>.
+    /// Defaults to <see cref="ErrorMode.FailFast"/>.
     /// </summary>
     public ErrorMode ErrorMode { get; init; } = ErrorMode.FailFast;
 
@@ -29,7 +29,7 @@ public sealed class ParallelOptionsRivulet
     /// Gets a callback invoked when an error occurs during processing.
     /// The callback receives the item index and the exception.
     /// Return true to continue processing, false to cancel remaining work.
-    /// In <see cref="Core.ErrorMode.CollectAndContinue"/> and <see cref="Core.ErrorMode.BestEffort"/> modes,
+    /// In <see cref="ErrorMode.CollectAndContinue"/> and <see cref="ErrorMode.BestEffort"/> modes,
     /// this only affects flow control and does not prevent error collection.
     /// </summary>
     public Func<int, Exception, ValueTask<bool>>? OnErrorAsync { get; init; }
@@ -70,7 +70,7 @@ public sealed class ParallelOptionsRivulet
     /// Gets the maximum number of retry attempts for transient failures.
     /// Defaults to 0 (no retries).
     /// </summary>
-    public int MaxRetries { get; init; } = 0;
+    public int MaxRetries { get; init; }
     /// <summary>
     /// Gets the base delay for backoff between retry attempts.
     /// The actual delay calculation depends on the <see cref="BackoffStrategy"/>.
@@ -80,15 +80,15 @@ public sealed class ParallelOptionsRivulet
 
     /// <summary>
     /// Gets the backoff strategy to use when calculating retry delays.
-    /// Defaults to <see cref="Resilience.BackoffStrategy.Exponential"/> for backward compatibility.
+    /// Defaults to <see cref="BackoffStrategy.Exponential"/> for backward compatibility.
     /// </summary>
     /// <remarks>
     /// Different strategies provide different trade-offs:
-    /// - <see cref="Resilience.BackoffStrategy.Exponential"/>: Predictable exponential growth without jitter (default).
-    /// - <see cref="Resilience.BackoffStrategy.ExponentialJitter"/>: Recommended for rate-limited APIs to reduce thundering herd.
-    /// - <see cref="Resilience.BackoffStrategy.DecorrelatedJitter"/>: Best for preventing synchronization across multiple clients.
-    /// - <see cref="Resilience.BackoffStrategy.Linear"/>: Gentler, predictable linear growth.
-    /// - <see cref="Resilience.BackoffStrategy.LinearJitter"/>: Linear growth with randomization.
+    /// - <see cref="BackoffStrategy.Exponential"/>: Predictable exponential growth without jitter (default).
+    /// - <see cref="BackoffStrategy.ExponentialJitter"/>: Recommended for rate-limited APIs to reduce thundering herd.
+    /// - <see cref="BackoffStrategy.DecorrelatedJitter"/>: Best for preventing synchronization across multiple clients.
+    /// - <see cref="BackoffStrategy.Linear"/>: Gentler, predictable linear growth.
+    /// - <see cref="BackoffStrategy.LinearJitter"/>: Linear growth with randomization.
     /// </remarks>
     public BackoffStrategy BackoffStrategy { get; init; } = BackoffStrategy.Exponential;
 
@@ -105,7 +105,7 @@ public sealed class ParallelOptionsRivulet
     /// When false (default), results are returned as they complete for maximum throughput.
     /// Defaults to false.
     /// </summary>
-    public bool OrderedOutput { get; init; } = false;
+    public bool OrderedOutput { get; init; }
 
     /// <summary>
     /// Gets the progress reporting options for tracking operation progress.

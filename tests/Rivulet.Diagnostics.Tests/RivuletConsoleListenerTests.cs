@@ -45,7 +45,7 @@ public class RivuletConsoleListenerTests : IDisposable
                 })
                 .ToListAsync();
 
-            await Task.Delay(2500);
+            await Task.Delay(1100);
         }
         finally
         {
@@ -84,7 +84,7 @@ public class RivuletConsoleListenerTests : IDisposable
                 // Expected
             }
 
-            await Task.Delay(2500);
+            await Task.Delay(1100);
 
             var output = consoleOutput.ToString();
 
@@ -132,7 +132,7 @@ public class RivuletConsoleListenerTests : IDisposable
                 })
                 .ToListAsync();
 
-            await Task.Delay(2500);
+            await Task.Delay(1100);
         }
         finally
         {

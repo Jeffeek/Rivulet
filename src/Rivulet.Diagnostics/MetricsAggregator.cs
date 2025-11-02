@@ -130,7 +130,11 @@ public sealed class MetricsAggregator : RivuletEventListenerBase
     /// </summary>
     public override void Dispose()
     {
-        _aggregationTimer.Dispose();
+        // Wait for any pending timer callbacks to complete before final aggregation
+        using var waitHandle = new ManualResetEvent(false);
+        _aggregationTimer.Dispose(waitHandle);
+        waitHandle.WaitOne();
+
         AggregateMetrics(null);
         base.Dispose();
     }

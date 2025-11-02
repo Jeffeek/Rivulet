@@ -33,7 +33,6 @@ public class RivuletActivitySourceTests
         using var activity = RivuletActivitySource.StartOperation("TestOperation", 100);
 
         activity.Should().NotBeNull();
-        if (activity is null) return;
         activity.OperationName.Should().Be("Rivulet.TestOperation");
         activity.GetTagItem("rivulet.total_items").Should().Be(100);
     }
@@ -49,7 +48,6 @@ public class RivuletActivitySourceTests
         using var activity = RivuletActivitySource.StartItemActivity("ProcessItem", 42);
 
         activity.Should().NotBeNull();
-        if (activity is null) return;
         activity.OperationName.Should().Be("Rivulet.ProcessItem.Item");
         activity.GetTagItem("rivulet.item_index").Should().Be(42);
     }
@@ -89,7 +87,7 @@ public class RivuletActivitySourceTests
         var exception = new InvalidOperationException("Test error");
         RivuletActivitySource.RecordError(activity, exception, isTransient: true);
 
-        if (activity is null) return;
+        activity.Should().NotBeNull();
         activity.Status.Should().Be(ActivityStatusCode.Error);
         activity.StatusDescription.Should().Be("Test error");
         activity.GetTagItem("rivulet.error.transient").Should().Be(true);
@@ -107,7 +105,7 @@ public class RivuletActivitySourceTests
 
         RivuletActivitySource.RecordSuccess(activity, 10);
 
-        if (activity is null) return;
+        activity.Should().NotBeNull();
         activity.Status.Should().Be(ActivityStatusCode.Ok);
         activity.GetTagItem("rivulet.items_processed").Should().Be(10);
     }
@@ -124,7 +122,7 @@ public class RivuletActivitySourceTests
 
         RivuletActivitySource.RecordCircuitBreakerStateChange(activity, "Open");
 
-        if (activity is null) return;
+        activity.Should().NotBeNull();
         activity.Events.Should().HaveCount(1);
         var cbEvent = activity.Events.First();
         cbEvent.Name.Should().Be("circuit_breaker_state_change");
@@ -143,7 +141,7 @@ public class RivuletActivitySourceTests
 
         RivuletActivitySource.RecordConcurrencyChange(activity, 16, 32);
 
-        if (activity is null) return;
+        activity.Should().NotBeNull();
         activity.Events.Should().HaveCount(1);
         var concurrencyEvent = activity.Events.First();
         concurrencyEvent.Name.Should().Be("adaptive_concurrency_change");

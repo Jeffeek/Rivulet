@@ -56,7 +56,7 @@ public class EdgeCaseCoverageTests
             // Expected
         }
 
-        await Task.Delay(1500);
+        await Task.Delay(1100);
 
         var context = new HealthCheckContext();
         var result = await healthCheck.CheckHealthAsync(context);
@@ -116,7 +116,7 @@ public class EdgeCaseCoverageTests
                 // Expected
             }
 
-            await Task.Delay(2500);
+            await Task.Delay(1100);
         }
         finally
         {
@@ -167,7 +167,7 @@ public class EdgeCaseCoverageTests
                     // Expected
                 }
 
-                await Task.Delay(2500);
+                await Task.Delay(1100);
             }
 
             await Task.Delay(100);
@@ -203,7 +203,7 @@ public class EdgeCaseCoverageTests
                     })
                     .ToListAsync();
 
-                await Task.Delay(2500);
+                await Task.Delay(1100);
             }
 
             await Task.Delay(100);
@@ -237,7 +237,7 @@ public class EdgeCaseCoverageTests
                 })
                 .ToListAsync();
 
-            await Task.Delay(2500);
+            await Task.Delay(1100);
 
             listener.ReceivedCounters.Should().NotBeEmpty();
         }
@@ -264,7 +264,7 @@ public class EdgeCaseCoverageTests
             })
             .ToListAsync();
 
-        await Task.Delay(2500);
+        await Task.Delay(1100);
     }
 
     [Fact]
@@ -299,7 +299,7 @@ public class EdgeCaseCoverageTests
             }, new ParallelOptionsRivulet())
             .ToListAsync();
 
-        await Task.Delay(1500);
+        await Task.Delay(1100);
 
         var finalMetrics = exporter.ExportDictionary();
         finalMetrics.Should().NotBeEmpty();

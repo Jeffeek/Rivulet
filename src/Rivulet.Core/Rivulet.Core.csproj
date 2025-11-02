@@ -1,34 +1,40 @@
-<Project Sdk="Microsoft.NET.Sdk">
-	<PropertyGroup>
-		<TargetFrameworks>net9.0;net8.0;</TargetFrameworks>
-		<Nullable>enable</Nullable>
-		<ImplicitUsings>enable</ImplicitUsings>
-		<GenerateDocumentationFile>true</GenerateDocumentationFile>
-		<IncludeSymbols>true</IncludeSymbols>
-		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
-		<PackageId>Rivulet.Core</PackageId>
-		<Title>Rivulet.Core</Title>
-		<Authors>Jeffeek</Authors>
-		<Description>Safe, async-first parallel operators with bounded concurrency, retries, and backpressure for I/O-heavy workloads.</Description>
-		<PackageTags>async;parallel;linq;throttling;io;dotnet;channels</PackageTags>
-		<RepositoryUrl>https://github.com/Jeffeek/Rivulet</RepositoryUrl>
-		<PackageLicenseExpression>MIT</PackageLicenseExpression>
-		<PackageProjectUrl>https://github.com/Jeffeek/Rivulet</PackageProjectUrl>
-		<PackageIcon>nuget_logo.png</PackageIcon>
-		<PackageReadmeFile>README.md</PackageReadmeFile>
-	</PropertyGroup>
-	<ItemGroup>
-		<None Include="..\..\assets\nuget_logo.png" Pack="true" PackagePath="\" />
-		<None Include="..\..\PACKAGE_README.md" Pack="true" PackagePath="\README.md" />
-	</ItemGroup>
-	<ItemGroup>
-		<InternalsVisibleTo Include="Rivulet.Core.Tests" />
-		<InternalsVisibleTo Include="Rivulet.Diagnostics" />
-		<InternalsVisibleTo Include="Rivulet.Diagnostics.OpenTelemetry" />
-		<InternalsVisibleTo Include="Rivulet.Diagnostics.OpenTelemetry.Tests" />
-	</ItemGroup>
-	<ItemGroup>
-		<PackageReference Include="System.Linq.Async" Version="6.0.3" />
-		<PackageReference Include="System.Threading.Channels" Version="9.0.10" />
-	</ItemGroup>
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+  	<TargetFrameworks>net9.0;net8.0;</TargetFrameworks>
+	<LangVersion>12</LangVersion>
+  	<Nullable>enable</Nullable>
+  	<ImplicitUsings>enable</ImplicitUsings>
+  	<GenerateDocumentationFile>true</GenerateDocumentationFile>
+  	<IncludeSymbols>true</IncludeSymbols>
+  	<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  	<PackageId>Rivulet.Core</PackageId>
+  	<Title>Rivulet.Core</Title>
+  	<Authors>Jeffeek</Authors>
+  	<Description>Safe, async-first parallel operators with bounded concurrency, retries, and backpressure for I/O-heavy workloads.</Description>
+  	<PackageTags>async;parallel;linq;throttling;io;dotnet;channels</PackageTags>
+  	<RepositoryUrl>https://github.com/Jeffeek/Rivulet</RepositoryUrl>
+  	<PackageLicenseExpression>MIT</PackageLicenseExpression>
+  	<PackageProjectUrl>https://github.com/Jeffeek/Rivulet</PackageProjectUrl>
+  	<PackageIcon>nuget_logo.png</PackageIcon>
+  	<PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+  <ItemGroup>
+  	<None Include="..\..\assets\nuget_logo.png" Pack="true" PackagePath="\" />
+  	<None Include="README.md" Pack="true" PackagePath="\README.md" />
+  </ItemGroup>
+  <ItemGroup>
+  	<InternalsVisibleTo Include="Rivulet.Core.Tests" />
+  	<InternalsVisibleTo Include="Rivulet.Diagnostics" />
+  	<InternalsVisibleTo Include="Rivulet.Diagnostics.Tests" />
+  	<InternalsVisibleTo Include="Rivulet.Diagnostics.OpenTelemetry" />
+  	<InternalsVisibleTo Include="Rivulet.Diagnostics.OpenTelemetry.Tests" />
+  	<InternalsVisibleTo Include="Rivulet.Testing" />
+  	<InternalsVisibleTo Include="Rivulet.Testing.Tests" />
+  	<InternalsVisibleTo Include="Rivulet.Hosting" />
+  	<InternalsVisibleTo Include="Rivulet.Hosting.Tests" />
+  </ItemGroup>
+  <ItemGroup>
+  	<PackageReference Include="System.Linq.Async" Version="6.0.3" />
+  	<PackageReference Include="System.Threading.Channels" Version="9.0.10" />
+  </ItemGroup>
 </Project>

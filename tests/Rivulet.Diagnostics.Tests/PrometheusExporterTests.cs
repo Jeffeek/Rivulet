@@ -22,7 +22,7 @@ public class PrometheusExporterTests
             })
             .ToListAsync();
 
-        await Task.Delay(1500);
+        await Task.Delay(1100);
 
         var prometheusText = exporter.Export();
         prometheusText.Should().Contain("# Rivulet.Core Metrics");
@@ -47,7 +47,7 @@ public class PrometheusExporterTests
                 MaxDegreeOfParallelism = 2
             });
 
-        await Task.Delay(1500);
+        await Task.Delay(1100);
 
         var metrics = exporter.ExportDictionary();
         metrics.Should().NotBeEmpty();

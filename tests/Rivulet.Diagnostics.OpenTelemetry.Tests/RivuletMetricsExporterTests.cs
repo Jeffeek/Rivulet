@@ -204,12 +204,12 @@ public class RivuletMetricsExporterTests : IDisposable
 
         // Verify at least 50 items were processed (perhaps more due to parallel tests)
         // Since RivuletEventSource is a static singleton, other tests may increment counters
-        (finalStarted - initialStarted).Should().BeGreaterOrEqualTo(50);
-        (finalCompleted - initialCompleted).Should().BeGreaterOrEqualTo(50);
+        (finalStarted - initialStarted).Should().BeGreaterThanOrEqualTo(50);
+        (finalCompleted - initialCompleted).Should().BeGreaterThanOrEqualTo(50);
 
         // Verify metrics were exported and reflect the current state
-        GetMetricValue(itemsStarted).Should().BeGreaterOrEqualTo(finalStarted);
-        GetMetricValue(itemsCompleted).Should().BeGreaterOrEqualTo(finalCompleted);
+        GetMetricValue(itemsStarted).Should().BeGreaterThanOrEqualTo(finalStarted);
+        GetMetricValue(itemsCompleted).Should().BeGreaterThanOrEqualTo(finalCompleted);
     }
 
     private static double GetMetricValue(Metric metric)
