@@ -50,7 +50,7 @@ public class ParallelBackgroundServiceTests
         using var cts = new CancellationTokenSource();
         await service.StartAsync(cts.Token);
 
-        await Task.Delay(200, cts.Token);
+        await Task.Delay(50, cts.Token);
         await cts.CancelAsync();
 
         await service.StopAsync(CancellationToken.None);
@@ -70,7 +70,7 @@ public class ParallelBackgroundServiceTests
         using var cts = new CancellationTokenSource();
         await service.StartAsync(cts.Token);
 
-        await Task.Delay(200, cts.Token);
+        await Task.Delay(50, cts.Token);
         await cts.CancelAsync();
 
         await service.StopAsync(CancellationToken.None);
@@ -100,7 +100,7 @@ public class ParallelBackgroundServiceTests
         using var cts = new CancellationTokenSource();
         await service.StartAsync(cts.Token);
 
-        await Task.Delay(200, cts.Token);
+        await Task.Delay(50, cts.Token);
         await cts.CancelAsync();
 
         await service.StopAsync(CancellationToken.None);
@@ -118,7 +118,7 @@ public class ParallelBackgroundServiceTests
         using var cts = new CancellationTokenSource();
         await service.StartAsync(cts.Token);
 
-        await Task.Delay(100, cts.Token);
+        await Task.Delay(30, cts.Token);
         await cts.CancelAsync();
 
         await service.StopAsync(CancellationToken.None);
@@ -137,7 +137,7 @@ public class ParallelBackgroundServiceTests
         using var cts = new CancellationTokenSource();
         await service.StartAsync(cts.Token);
 
-        await Task.Delay(200, cts.Token);
+        await Task.Delay(50, cts.Token);
         await cts.CancelAsync();
 
         await service.StopAsync(CancellationToken.None);

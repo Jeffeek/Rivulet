@@ -171,4 +171,52 @@ public class VirtualTimeProviderTests
         results.Should().HaveCount(100);
         results.Should().OnlyContain(i => i >= 1 && i <= 100);
     }
+
+    [Fact]
+    public async Task Reset_ShouldClearTimeAndScheduledTasks()
+    {
+        using var timeProvider = new VirtualTimeProvider();
+
+        // Advance time
+        timeProvider.AdvanceTime(TimeSpan.FromSeconds(5));
+        timeProvider.CurrentTime.Should().Be(TimeSpan.FromSeconds(5));
+
+        // Schedule some tasks that won't complete
+        var task1 = timeProvider.CreateDelay(TimeSpan.FromSeconds(10));
+        var task2 = timeProvider.CreateDelay(TimeSpan.FromSeconds(20));
+
+        // Reset
+        timeProvider.Reset();
+
+        // Time should be back to zero
+        timeProvider.CurrentTime.Should().Be(TimeSpan.Zero);
+
+        // Old tasks should not complete after reset
+        timeProvider.AdvanceTime(TimeSpan.FromSeconds(30));
+        task1.IsCompleted.Should().BeFalse();
+        task2.IsCompleted.Should().BeFalse();
+
+        // New tasks after reset should work normally
+        var task3 = timeProvider.CreateDelay(TimeSpan.FromSeconds(5));
+        timeProvider.AdvanceTime(TimeSpan.FromSeconds(5));
+        task3.IsCompleted.Should().BeTrue();
+        await task3;
+    }
+
+    [Fact]
+    public void Reset_ShouldAllowMultipleCalls()
+    {
+        using var timeProvider = new VirtualTimeProvider();
+
+        timeProvider.AdvanceTime(TimeSpan.FromSeconds(10));
+        timeProvider.Reset();
+        timeProvider.CurrentTime.Should().Be(TimeSpan.Zero);
+
+        timeProvider.AdvanceTime(TimeSpan.FromSeconds(5));
+        timeProvider.Reset();
+        timeProvider.CurrentTime.Should().Be(TimeSpan.Zero);
+
+        var act = () => timeProvider.Reset();
+        act.Should().NotThrow();
+    }
 }

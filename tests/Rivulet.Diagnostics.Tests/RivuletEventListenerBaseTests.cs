@@ -28,7 +28,7 @@ public class RivuletEventListenerBaseTests : IDisposable
             })
             .ToListAsync();
 
-        await Task.Delay(1500);
+        await Task.Delay(1100);
 
         _listener.ReceivedCounters.Should().NotBeEmpty();
         _listener.ReceivedCounters.Keys.Should().Contain("items-started");
@@ -49,7 +49,7 @@ public class RivuletEventListenerBaseTests : IDisposable
             })
             .ToListAsync();
 
-        await Task.Delay(1500);
+        await Task.Delay(1100);
 
         _listener.ReceivedCounters.Should().NotBeEmpty();
         foreach (var counter in _listener.ReceivedCounters)
@@ -73,7 +73,7 @@ public class RivuletEventListenerBaseTests : IDisposable
             })
             .ToListAsync();
 
-        await Task.Delay(1500);
+        await Task.Delay(1100);
 
         _listener.ReceivedCounters.Should().NotBeEmpty();
         foreach (var counter in _listener.ReceivedCounters)

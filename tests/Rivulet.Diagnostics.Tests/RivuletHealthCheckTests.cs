@@ -64,7 +64,7 @@ public class RivuletHealthCheckTests
             })
             .ToListAsync();
 
-        await Task.Delay(1500);
+        await Task.Delay(1100);
 
         var context = new HealthCheckContext();
         var result = await healthCheck.CheckHealthAsync(context);
@@ -107,7 +107,7 @@ public class RivuletHealthCheckTests
             // ignored
         }
 
-        await Task.Delay(1500);
+        await Task.Delay(1100);
 
         var context = new HealthCheckContext();
         var result = await healthCheck.CheckHealthAsync(context);
@@ -151,7 +151,7 @@ public class RivuletHealthCheckTests
             // ignored
         }
 
-        await Task.Delay(1500);
+        await Task.Delay(1100);
 
         var context = new HealthCheckContext();
         var result = await healthCheck.CheckHealthAsync(context);

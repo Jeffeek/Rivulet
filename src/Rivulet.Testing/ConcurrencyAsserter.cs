@@ -1,5 +1,3 @@
-using Rivulet.Core.Internal;
-
 namespace Rivulet.Testing;
 
 /// <summary>
@@ -9,11 +7,6 @@ public sealed class ConcurrencyAsserter
 {
     private int _currentConcurrency;
     private int _maxConcurrency;
-#if NET9_0_OR_GREATER
-    private readonly Lock _lock = new();
-#else
-    private readonly object _lock = new();
-#endif
 
     /// <summary>
     /// Gets the maximum concurrency observed.
@@ -30,17 +23,17 @@ public sealed class ConcurrencyAsserter
     /// </summary>
     public IDisposable Enter()
     {
-        LockHelper.Execute(_lock, () =>
+        // Increment current concurrency using thread-safe Interlocked operation
+        var current = Interlocked.Increment(ref _currentConcurrency);
+
+        // Update max concurrency if current exceeds it (using lock-free compare-exchange loop)
+        var max = _maxConcurrency;
+        while (current > max)
         {
-            var current = Interlocked.Increment(ref _currentConcurrency);
-            var max = _maxConcurrency;
-            while (current > max)
-            {
-                var original = Interlocked.CompareExchange(ref _maxConcurrency, current, max);
-                if (original == max) break;
-                max = _maxConcurrency;
-            }
-        });
+            var original = Interlocked.CompareExchange(ref _maxConcurrency, current, max);
+            if (original == max) break; // Successfully updated
+            max = _maxConcurrency; // Retry with latest value
+        }
 
         return new ConcurrencyScope(this);
     }

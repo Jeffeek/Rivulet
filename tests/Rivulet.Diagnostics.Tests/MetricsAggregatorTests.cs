@@ -9,7 +9,7 @@ namespace Rivulet.Diagnostics.Tests
         public async Task MetricsAggregator_ShouldAggregateMetrics_OverTimeWindow()
         {
             var aggregatedMetrics = new List<IReadOnlyList<AggregatedMetrics>>();
-            using var aggregator = new MetricsAggregator(TimeSpan.FromSeconds(2));
+            using var aggregator = new MetricsAggregator(TimeSpan.FromMilliseconds(200));
             aggregator.OnAggregation += metrics => aggregatedMetrics.Add(metrics);
 
             await Enumerable.Range(1, 20)
@@ -24,7 +24,7 @@ namespace Rivulet.Diagnostics.Tests
                 })
                 .ToListAsync();
 
-            await Task.Delay(3000);
+            await Task.Delay(1100);
 
             aggregatedMetrics.Should().NotBeEmpty();
             var lastAggregation = aggregatedMetrics.Last();
@@ -42,7 +42,7 @@ namespace Rivulet.Diagnostics.Tests
         public async Task MetricsAggregator_ShouldCalculateCorrectStatistics()
         {
             var aggregatedMetrics = new List<IReadOnlyList<AggregatedMetrics>>();
-            using var aggregator = new MetricsAggregator(TimeSpan.FromSeconds(2));
+            using var aggregator = new MetricsAggregator(TimeSpan.FromMilliseconds(200));
             aggregator.OnAggregation += metrics => aggregatedMetrics.Add(metrics);
 
             await Enumerable.Range(1, 10)
@@ -57,7 +57,7 @@ namespace Rivulet.Diagnostics.Tests
                 })
                 .ToListAsync();
 
-            await Task.Delay(3000);
+            await Task.Delay(1100);
 
             aggregatedMetrics.Should().NotBeEmpty();
             var lastAggregation = aggregatedMetrics.Last();
@@ -74,7 +74,7 @@ namespace Rivulet.Diagnostics.Tests
         public async Task MetricsAggregator_ShouldHandleExpiredSamples()
         {
             var aggregatedMetrics = new List<IReadOnlyList<AggregatedMetrics>>();
-            using var aggregator = new MetricsAggregator(TimeSpan.FromSeconds(1));
+            using var aggregator = new MetricsAggregator(TimeSpan.FromMilliseconds(100));
             aggregator.OnAggregation += metrics =>
             {
                 if (metrics.Count > 0)
@@ -93,13 +93,13 @@ namespace Rivulet.Diagnostics.Tests
                 })
                 .ToListAsync();
 
-            await Task.Delay(2500);
+            await Task.Delay(1100);
 
             aggregatedMetrics.Should().NotBeEmpty();
             var firstAggregation = aggregatedMetrics.First();
             firstAggregation.Should().NotBeEmpty();
 
-            await Task.Delay(2000);
+            await Task.Delay(200);
 
             var totalAggregations = aggregatedMetrics.Count;
             totalAggregations.Should().BeGreaterThanOrEqualTo(1);

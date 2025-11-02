@@ -113,7 +113,7 @@ public class ParallelWorkerServiceTests
         using var cts = new CancellationTokenSource();
         await service.StartAsync(cts.Token);
 
-        await Task.Delay(300);
+        await Task.Delay(50);
         cts.Cancel();
 
         await service.StopAsync(CancellationToken.None);
@@ -133,7 +133,7 @@ public class ParallelWorkerServiceTests
         using var cts = new CancellationTokenSource();
         await service.StartAsync(cts.Token);
 
-        await Task.Delay(300);
+        await Task.Delay(50);
         cts.Cancel();
 
         await service.StopAsync(CancellationToken.None);
@@ -150,32 +150,32 @@ public class ParallelWorkerServiceTests
         var logger = NullLogger<DelayedWorkerService>.Instance;
         var items = GenerateItemsAsync(6);
         var options = new ParallelOptionsRivulet { MaxDegreeOfParallelism = 3 };
-        var service = new DelayedWorkerService(logger, items, delayMs: 100, options);
+        var service = new DelayedWorkerService(logger, items, delayMs: 20, options);
 
         using var cts = new CancellationTokenSource();
         var startTime = DateTime.UtcNow;
 
         await service.StartAsync(cts.Token);
-        await Task.Delay(500);
+        await Task.Delay(100);
         cts.Cancel();
 
         await service.StopAsync(CancellationToken.None);
 
         var elapsed = DateTime.UtcNow - startTime;
-        elapsed.Should().BeLessThan(TimeSpan.FromSeconds(1));
+        elapsed.Should().BeLessThan(TimeSpan.FromMilliseconds(500));
     }
 
     [Fact]
     public async Task StartAsync_WhenCancelled_ShouldStopGracefully()
     {
         var logger = NullLogger<TestWorkerService>.Instance;
-        var items = GenerateItemsAsync(100, delayMs: 50);
+        var items = GenerateItemsAsync(100, delayMs: 10);
         var service = new TestWorkerService(logger, items);
 
         using var cts = new CancellationTokenSource();
         await service.StartAsync(cts.Token);
 
-        await Task.Delay(150);
+        await Task.Delay(50);
         cts.Cancel();
 
         await service.StopAsync(CancellationToken.None);
@@ -190,10 +190,10 @@ public class ParallelWorkerServiceTests
         var items = GenerateItemsAsync(3);
         var service = new ThrowingWorkerService(logger, items);
 
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(500));
 
         await service.StartAsync(cts.Token);
-        await Task.Delay(500);
+        await Task.Delay(100);
 
         await service.StopAsync(CancellationToken.None);
     }
@@ -219,7 +219,7 @@ public class ParallelWorkerServiceTests
         using var cts = new CancellationTokenSource();
         await service.StartAsync(cts.Token);
 
-        await Task.Delay(300, cts.Token);
+        await Task.Delay(50, cts.Token);
         await cts.CancelAsync();
 
         await service.StopAsync(CancellationToken.None);
@@ -237,7 +237,7 @@ public class ParallelWorkerServiceTests
         using var cts = new CancellationTokenSource();
         await service.StartAsync(cts.Token);
 
-        await Task.Delay(200);
+        await Task.Delay(30);
         cts.Cancel();
 
         await service.StopAsync(CancellationToken.None);
@@ -257,7 +257,7 @@ public class ParallelWorkerServiceTests
         using var cts = new CancellationTokenSource();
         await service.StartAsync(cts.Token);
 
-        await Task.Delay(300);
+        await Task.Delay(50);
         cts.Cancel();
 
         await service.StopAsync(CancellationToken.None);
@@ -275,7 +275,7 @@ public class ParallelWorkerServiceTests
 
         using var cts = new CancellationTokenSource();
         await service.StartAsync(cts.Token);
-        await Task.Delay(300);
+        await Task.Delay(50);
         cts.Cancel();
         await service.StopAsync(CancellationToken.None);
 

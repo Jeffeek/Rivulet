@@ -42,7 +42,7 @@ public class RivuletStructuredLogListenerTests : IDisposable
                 })
                 .ToListAsync();
 
-            await Task.Delay(1500);
+            await Task.Delay(1100);
         }
 
         await Task.Delay(100);
@@ -70,7 +70,7 @@ public class RivuletStructuredLogListenerTests : IDisposable
                 })
                 .ToListAsync();
 
-            await Task.Delay(1500);
+            await Task.Delay(1100);
         } // Dispose listener to flush and close file
 
         // Wait a moment for file handle to be fully released
@@ -103,7 +103,7 @@ public class RivuletStructuredLogListenerTests : IDisposable
             })
             .ToListAsync();
 
-        await Task.Delay(5000);
+        await Task.Delay(1100);
 
         loggedLines.Should().NotBeEmpty();
         

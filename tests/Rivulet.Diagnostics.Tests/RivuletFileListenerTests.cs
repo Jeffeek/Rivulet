@@ -24,7 +24,7 @@ public class RivuletFileListenerTests : IDisposable
                 })
                 .ToListAsync();
 
-            await Task.Delay(1500);
+            await Task.Delay(1100);
         } // Dispose listener to flush and close file
 
         // Wait a moment for file handle to be fully released
@@ -39,10 +39,10 @@ public class RivuletFileListenerTests : IDisposable
     [Fact]
     public async Task FileListener_ShouldRotateFile_WhenMaxSizeExceeded()
     {
-        const long maxSize = 100;
+        const long maxSize = 10;
         using var listener = new RivuletFileListener(_testFilePath, maxSize);
 
-        for (var i = 0; i < 100; i++)
+        for (var i = 0; i < 10; i++)
         {
             await Enumerable.Range(1, 5)
                 .ToAsyncEnumerable()
@@ -56,7 +56,7 @@ public class RivuletFileListenerTests : IDisposable
                 })
                 .ToListAsync();
 
-            await Task.Delay(100);
+            await Task.Delay(50);
         }
 
         var directory = Path.GetDirectoryName(_testFilePath) ?? string.Empty;
