@@ -42,10 +42,11 @@ public class RivuletStructuredLogListenerTests : IDisposable
                 })
                 .ToListAsync();
 
-            await Task.Delay(1100);
+            // Wait for EventCounters to fire - increased for CI/CD reliability
+            await Task.Delay(2000);
         }
 
-        await Task.Delay(100);
+        await Task.Delay(200);
 
         Directory.Exists(directory).Should().BeTrue();
         File.Exists(filePath).Should().BeTrue();
@@ -70,11 +71,12 @@ public class RivuletStructuredLogListenerTests : IDisposable
                 })
                 .ToListAsync();
 
-            await Task.Delay(1100);
+            // Wait for EventCounters to fire - increased for CI/CD reliability
+            await Task.Delay(2000);
         } // Dispose listener to flush and close file
 
         // Wait a moment for file handle to be fully released
-        await Task.Delay(100);
+        await Task.Delay(200);
 
         File.Exists(_testFilePath).Should().BeTrue();
         var lines = await File.ReadAllLinesAsync(_testFilePath);
@@ -103,11 +105,14 @@ public class RivuletStructuredLogListenerTests : IDisposable
             })
             .ToListAsync();
 
-        await Task.Delay(1100);
+        // Wait for EventCounters to fire - increased for CI/CD reliability
+        await Task.Delay(2000);
 
         loggedLines.Should().NotBeEmpty();
-        
-        foreach (var act in loggedLines.Select(line => (Func<JsonDocument>?)(() => JsonDocument.Parse(line))))
+
+        // Create a copy to avoid collection modification during enumeration
+        var linesCopy = loggedLines.ToList();
+        foreach (var act in linesCopy.Select(line => (Func<JsonDocument>?)(() => JsonDocument.Parse(line))))
         {
             act.Should().NotThrow();
         }

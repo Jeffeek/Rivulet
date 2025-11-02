@@ -22,7 +22,8 @@ public class PrometheusExporterTests
             })
             .ToListAsync();
 
-        await Task.Delay(1100);
+        // Wait for EventCounters to fire - increased for CI/CD reliability
+        await Task.Delay(2000);
 
         var prometheusText = exporter.Export();
         prometheusText.Should().Contain("# Rivulet.Core Metrics");
@@ -47,7 +48,8 @@ public class PrometheusExporterTests
                 MaxDegreeOfParallelism = 2
             });
 
-        await Task.Delay(1100);
+        // Wait for EventCounters to fire - increased for CI/CD reliability
+        await Task.Delay(2000);
 
         var metrics = exporter.ExportDictionary();
         metrics.Should().NotBeEmpty();
