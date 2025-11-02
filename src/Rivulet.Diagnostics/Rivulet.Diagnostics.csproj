@@ -1,33 +1,33 @@
 <Project Sdk="Microsoft.NET.Sdk">
-	<PropertyGroup>
-		<TargetFrameworks>net9.0;net8.0;</TargetFrameworks>
-		<Nullable>enable</Nullable>
-		<ImplicitUsings>enable</ImplicitUsings>
-		<GenerateDocumentationFile>true</GenerateDocumentationFile>
-		<IncludeSymbols>true</IncludeSymbols>
-		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
-		<PackageId>Rivulet.Diagnostics</PackageId>
-		<Title>Rivulet.Diagnostics</Title>
-		<Authors>Jeffeek</Authors>
-		<Description>Enterprise observability for Rivulet.Core with EventListener wrappers, metric aggregators, and health check integration.</Description>
-		<PackageTags>rivulet;diagnostics;observability;metrics;eventcounters;healthchecks;dotnet</PackageTags>
-		<RepositoryUrl>https://github.com/Jeffeek/Rivulet</RepositoryUrl>
-		<PackageLicenseExpression>MIT</PackageLicenseExpression>
-		<PackageProjectUrl>https://github.com/Jeffeek/Rivulet</PackageProjectUrl>
-		<PackageIcon>nuget_logo.png</PackageIcon>
-		<PackageReadmeFile>README.md</PackageReadmeFile>
-	</PropertyGroup>
-	<ItemGroup>
-		<None Include="..\..\assets\nuget_logo.png" Pack="true" PackagePath="\" />
-		<None Include="README.md" Pack="true" PackagePath="\README.md" />
-	</ItemGroup>
-	<ItemGroup>
-		<InternalsVisibleTo Include="Rivulet.Diagnostics.Tests" />
-	</ItemGroup>
-	<ItemGroup>
-		<ProjectReference Include="..\Rivulet.Core\Rivulet.Core.csproj" />
-	</ItemGroup>
-	<ItemGroup>
-		<PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="9.0.0" />
-	</ItemGroup>
+  <PropertyGroup>
+  	<TargetFrameworks>net9.0;net8.0;</TargetFrameworks>
+  	<Nullable>enable</Nullable>
+  	<ImplicitUsings>enable</ImplicitUsings>
+  	<GenerateDocumentationFile>true</GenerateDocumentationFile>
+  	<IncludeSymbols>true</IncludeSymbols>
+  	<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  	<PackageId>Rivulet.Diagnostics</PackageId>
+  	<Title>Rivulet.Diagnostics</Title>
+  	<Authors>Jeffeek</Authors>
+  	<Description>Enterprise observability for Rivulet.Core with EventListener wrappers, metric aggregators, and health check integration.</Description>
+  	<PackageTags>rivulet;diagnostics;observability;metrics;eventcounters;healthchecks;dotnet</PackageTags>
+  	<RepositoryUrl>https://github.com/Jeffeek/Rivulet</RepositoryUrl>
+  	<PackageLicenseExpression>MIT</PackageLicenseExpression>
+  	<PackageProjectUrl>https://github.com/Jeffeek/Rivulet</PackageProjectUrl>
+  	<PackageIcon>nuget_logo.png</PackageIcon>
+  	<PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+  <ItemGroup>
+  	<None Include="..\..\assets\nuget_logo.png" Pack="true" PackagePath="\" />
+  	<None Include="README.md" Pack="true" PackagePath="\README.md" />
+  </ItemGroup>
+  <ItemGroup>
+  	<InternalsVisibleTo Include="Rivulet.Diagnostics.Tests" />
+  </ItemGroup>
+  <ItemGroup>
+  	<ProjectReference Include="..\Rivulet.Core\Rivulet.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+  	<PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="9.0.10" />
+  </ItemGroup>
 </Project>

@@ -50,7 +50,7 @@ public class ComprehensiveCoverageTests
             })
             .ToListAsync();
 
-        await Task.Delay(2500);
+        await Task.Delay(1100);
 
         callbackInvoked.Should().BeTrue();
     }
@@ -76,7 +76,7 @@ public class ComprehensiveCoverageTests
                     })
                     .ToListAsync();
 
-                await Task.Delay(2500);
+                await Task.Delay(1100);
             }
 
             await Task.Delay(100);

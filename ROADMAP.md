@@ -49,9 +49,9 @@ Rivulet will expand from a single core library into a **focused ecosystem** of o
 | Package | Impact | Difficulty | Priority | Status | Target Version |
 |---------|--------|------------|----------|--------|----------------|
 | **Rivulet.Diagnostics** | 🟢 Very High | 🟡 Medium | 🔴 Critical | ✅ **Complete** | v1.2.0 |
-| **Rivulet.Diagnostics.OpenTelemetry** | 🟢 High | 🟡 Medium | 🔴 Critical | 🔲 Planned | v1.2.0 |
-| **Rivulet.Testing** | 🟢 High | 🟢 Low | 🟠 High | 🔲 Planned | v1.2.0 |
-| **Rivulet.Hosting** | 🟢 High | 🟡 Medium | 🟠 High | 🔲 Planned | v1.2.0 |
+| **Rivulet.Diagnostics.OpenTelemetry** | 🟢 High | 🟡 Medium | 🔴 Critical | ✅ **Complete** | v1.2.0 |
+| **Rivulet.Testing** | 🟢 High | 🟢 Low | 🟠 High | ✅ **Complete** | v1.2.0 |
+| **Rivulet.Hosting** | 🟢 High | 🟡 Medium | 🟠 High | ✅ **Complete** | v1.2.0 |
 
 **Rationale**:
 - **Diagnostics**: Essential for production observability and SRE adoption
@@ -126,13 +126,13 @@ Rivulet will expand from a single core library into a **focused ecosystem** of o
 | **Rivulet.Generators** | 🟡 Medium | 🔴 High | 🟡 Medium | v2.1.0 |
 | **Rivulet.Dataflow** | 🟡 Medium | 🟡 Medium | 🟡 Medium | v2.1.0 |
 | **Rivulet.Tracing** | 🟡 Medium | 🟡 Medium | 🟢 Low | v2.2.0 |
-| **Rivulet.Samples** | 🟡 Medium | 🟢 Low | 🟢 Low | v1.2.0+ |
 
 **Rationale**:
 - **Generators**: Source generators for compile-time optimizations
 - **Dataflow**: Bridge to TPL Dataflow for migration scenarios
 - **Tracing**: Lightweight tracing without full OTel dependency
-- **Samples**: Runnable scenario templates for onboarding
+
+**Note**: Samples and examples are maintained in the main repository's `samples/` folder and within each package's README, rather than as a separate NuGet package.
 
 ---
 
@@ -149,30 +149,23 @@ Rivulet will expand from a single core library into a **focused ecosystem** of o
    - Health check integration
    - Fluent DiagnosticsBuilder API
 
-2. **Rivulet.Diagnostics.OpenTelemetry**
+2. **Rivulet.Diagnostics.OpenTelemetry** ✅ **COMPLETE**
    - Activities, Metrics, Logs integration
    - Semantic conventions for parallel processing
    - Distributed tracing support
    - Correlation across services
 
-3. **Rivulet.Testing**
-   - Deterministic schedulers
+3. **Rivulet.Testing** ✅ **COMPLETE**
    - Virtual time for testing
    - Fake channels for isolation
    - Chaos injection (faults, timeouts)
    - Concurrency assertions
 
-4. **Rivulet.Hosting**
+4. **Rivulet.Hosting** ✅ **COMPLETE**
    - `IHostedService` wrappers
    - Dependency injection extensions
    - Health checks (backlog size, stalled workers)
    - Configuration binding from `IConfiguration`
-
-5. **Rivulet.Samples**
-   - HTTP fan-out/fan-in scenarios
-   - Data ingestion pipelines
-   - Kafka → Transform → Database pipeline
-   - Best practices examples
 
 **Estimated Timeline**: 3-4 months
 **Dependencies**: None (all build on Core)
@@ -516,12 +509,11 @@ All Rivulet.* packages will follow **synchronized versioning** with Core:
 
 ### Q1 2026 (v1.2.0 Development)
 1. ✅ Implement Rivulet.Diagnostics
-2. 🔲 Implement Rivulet.Diagnostics.OpenTelemetry
-3. 🔲 Implement Rivulet.Testing
-4. 🔲 Implement Rivulet.Hosting
-5. 🔲 Create Rivulet.Samples repository
-6. 🔲 Write comprehensive documentation
-7. 🔲 Publish v1.2.0 to NuGet
+2. ✅ Implement Rivulet.Diagnostics.OpenTelemetry
+3. ✅ Implement Rivulet.Testing
+4. ✅ Implement Rivulet.Hosting
+5. 🔲 Write comprehensive documentation
+6. 🔲 Publish v1.2.0 to NuGet
 
 ### Q2-Q3 2026 (v1.3.0 Development)
 1. 🔲 Implement Rivulet.Http
@@ -532,7 +524,7 @@ All Rivulet.* packages will follow **synchronized versioning** with Core:
 
 ---
 
-**Last Updated**: 2025-10-27
-**Version**: 1.0
-**Status**: Planning Phase
-**Next Review**: Q1 2026
+**Last Updated**: 2025-01-02
+**Version**: 1.2.0
+**Status**: v1.2.0 Implementation Complete - Ready for Release
+**Next Review**: Q2 2025

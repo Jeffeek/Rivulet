@@ -3,7 +3,7 @@ param(
     [string]$Version = "1.0.0-local-test",
 
     [Parameter(Mandatory=$false)]
-    [ValidateSet("Core", "Diagnostics", "DiagnosticsOpenTelemetry", "All")]
+    [ValidateSet("Core", "Diagnostics", "DiagnosticsOpenTelemetry", "Testing", "Hosting", "All")]
     [string]$Project = "All"
 )
 
@@ -19,6 +19,8 @@ $Projects = @{
     "Core" = "src\Rivulet.Core\Rivulet.Core.csproj"
     "Diagnostics" = "src\Rivulet.Diagnostics\Rivulet.Diagnostics.csproj"
     "DiagnosticsOpenTelemetry" = "src\Rivulet.Diagnostics.OpenTelemetry\Rivulet.Diagnostics.OpenTelemetry.csproj"
+    "Testing" = "src\Rivulet.Testing\Rivulet.Testing.csproj"
+    "Hosting" = "src\Rivulet.Hosting\Rivulet.Hosting.csproj"
 }
 
 # Determine which projects to pack
@@ -115,7 +117,7 @@ foreach ($nupkgFile in Get-ChildItem $OutputDir -Filter *.nupkg) {
 
     # Show key files only
     Get-ChildItem $extractPath -Recurse -Include *.dll,*.xml,README.md,*.png | ForEach-Object {
-        $relativePath = $_.FullName.Substring($extractPath.Length + 1)
+        $relativePath = $_.Name
         $size = "{0:N2}" -f ($_.Length / 1KB)
         Write-Host "  $relativePath ($size KB)" -ForegroundColor Gray
     }
@@ -173,6 +175,8 @@ Write-Host "Next steps:" -ForegroundColor Yellow
 Write-Host "  - Build specific package:  .\NugetPackage.ps1 -Project Core" -ForegroundColor Gray
 Write-Host "                             .\NugetPackage.ps1 -Project Diagnostics" -ForegroundColor Gray
 Write-Host "                             .\NugetPackage.ps1 -Project DiagnosticsOpenTelemetry" -ForegroundColor Gray
+Write-Host "                             .\NugetPackage.ps1 -Project Testing" -ForegroundColor Gray
+Write-Host "                             .\NugetPackage.ps1 -Project Hosting" -ForegroundColor Gray
 Write-Host "  - Build all packages:      .\NugetPackage.ps1 -Project All" -ForegroundColor Gray
 Write-Host "  - Test locally:            dotnet add package Rivulet.Core --source ./test-packages" -ForegroundColor Gray
 Write-Host ""

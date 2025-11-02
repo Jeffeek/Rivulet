@@ -140,9 +140,21 @@ internal sealed class MetricsTracker : IDisposable
 
         _disposed = true;
 
+        // Fire-and-forget final metrics sample to avoid blocking disposal
+        // This prevents potential deadlocks in synchronization contexts (ASP.NET, UI apps)
         if (_options?.OnMetricsSample is not null)
         {
-            SampleMetrics().GetAwaiter().GetResult();
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await SampleMetrics().ConfigureAwait(false);
+                }
+                catch
+                {
+                    // Swallow exceptions to prevent unobserved task exceptions
+                }
+            });
         }
 
         _samplerCts.Cancel();

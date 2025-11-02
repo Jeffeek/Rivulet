@@ -102,7 +102,19 @@ internal sealed class ProgressTracker : IDisposable
 
         _disposed = true;
 
-        ReportProgress().GetAwaiter().GetResult();
+        // Fire-and-forget final progress report to avoid blocking disposal
+        // This prevents potential deadlocks in synchronization contexts (ASP.NET, UI apps)
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await ReportProgress().ConfigureAwait(false);
+            }
+            catch
+            {
+                // Swallow exceptions to prevent unobserved task exceptions
+            }
+        });
 
         _reporterCts.Cancel();
 

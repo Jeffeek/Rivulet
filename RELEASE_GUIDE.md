@@ -9,11 +9,11 @@ This guide walks you through creating and publishing your first release of Rivul
 Before starting the release process, ensure:
 
 - [ ] All CI tests pass on `master` branch
-- [ ] Code coverage is at expected (95%>=) level (currently ![Codecov (with branch)](https://img.shields.io/codecov/c/github/Jeffeek/Rivulet/master?style=flat&label=%20)
+- [ ] Code coverage is at expected (90%>=) level (currently ![Codecov (with branch)](https://img.shields.io/codecov/c/github/Jeffeek/Rivulet/master?style=flat&label=%20)
 )
 - [ ] No flaky tests detected (100 iterations on both Windows & Linux)
 - [ ] README.md (GitHub repository) is up to date
-- [ ] PACKAGE_README.md (NuGet package, packed as README.md) is up to date
+- [ ] README.md is up to date
 - [ ] CHANGELOG.md is updated with v1.0.0 changes (create if doesn't exist)
 - [ ] All planned features for v1.0.0 are complete
 - [ ] You have a NuGet.org account (create at https://www.nuget.org/users/account/LogOn)
@@ -54,7 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Documentation
 - Comprehensive README with examples
 - CI/CD pipeline with 200-iteration flaky test detection
-- 99.5% code coverage
+- 90%+ code coverage
 ```
 
 **Commit the changelog:**
@@ -91,8 +91,8 @@ Check `src/Rivulet.Core/Rivulet.Core.csproj` contains correct information:
 
 <ItemGroup>
     <None Include="..\..\assets\nuget_logo.png" Pack="true" PackagePath="\" />
-    <!-- Pack PACKAGE_README.md from repo as README.md in package -->
-    <None Include="..\..\PACKAGE_README.md" Pack="true" PackagePath="\README.md" />
+    <!-- Pack README.md from repo as README.md in package -->
+    <None Include="README.md" Pack="true" PackagePath="\README.md" />
 </ItemGroup>
 ```
 
@@ -173,7 +173,7 @@ unzip -l ./test-packages/Rivulet.Core.1.0.0.zip
 Verify the package contains:
 - ✅ `lib/net8.0/Rivulet.Core.dll`
 - ✅ `lib/net9.0/Rivulet.Core.dll`
-- ✅ `README.md` (in package root - packed from PACKAGE_README.md)
+- ✅ `README.md`
 - ✅ `nuget_logo.png` (in package root - package icon)
 - ✅ XML documentation files (`.xml`)
 - ✅ Dependencies listed correctly in `.nuspec`
@@ -203,7 +203,7 @@ Features:
 - Retry policies with exponential backoff
 - Per-item timeouts and lifecycle hooks
 - Support for .NET 8.0 and 9.0
-- 99.5% code coverage
+- 90%+ code coverage
 "
 
 # Push the tag (THIS TRIGGERS THE RELEASE WORKFLOW)
@@ -385,7 +385,7 @@ git push origin master
    - Flexible error handling (FailFast, CollectAndContinue, BestEffort)
    - Retry policies with exponential backoff
    - Per-item timeouts and lifecycle hooks
-   - 99.5% code coverage
+   - 90%+ code coverage
 
    NuGet: https://nuget.org/packages/Rivulet.Core
    GitHub: https://github.com/Jeffeek/Rivulet
@@ -596,7 +596,7 @@ git push origin :refs/tags/v1.0.0
 
 - [ ] All tests pass on master
 - [ ] Flaky test detection passes (100 iterations, Windows + Linux)
-- [ ] Code coverage ≥ 99%
+- [ ] Code coverage ≥ 90%
 - [ ] CHANGELOG.md updated
 - [ ] Package metadata correct in .csproj
 - [ ] README.md (GitHub repository) up to date

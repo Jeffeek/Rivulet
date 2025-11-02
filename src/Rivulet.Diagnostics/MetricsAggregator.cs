@@ -54,6 +54,7 @@ public sealed class MetricsAggregator : RivuletEventListenerBase
     private readonly ConcurrentDictionary<string, List<(double Value, DateTime Timestamp)>> _samples = new();
     private readonly ConcurrentDictionary<string, (string DisplayName, string DisplayUnits)> _metricMetadata = new();
     private readonly Timer _aggregationTimer;
+    private bool _disposed;
 
     /// <summary>
     /// Occurs when metrics are aggregated after each aggregation window.
@@ -90,6 +91,9 @@ public sealed class MetricsAggregator : RivuletEventListenerBase
 
     private void AggregateMetrics(object? state)
     {
+        if (_disposed)
+            return;
+
         var cutoffTime = DateTime.UtcNow - _aggregationWindow;
         var aggregatedMetrics = new List<AggregatedMetrics>();
 
@@ -130,7 +134,16 @@ public sealed class MetricsAggregator : RivuletEventListenerBase
     /// </summary>
     public override void Dispose()
     {
-        _aggregationTimer.Dispose();
+        if (_disposed)
+            return;
+
+        _disposed = true;
+
+        // Wait for any pending timer callbacks to complete before final aggregation
+        using var waitHandle = new ManualResetEvent(false);
+        _aggregationTimer.Dispose(waitHandle);
+        waitHandle.WaitOne();
+
         AggregateMetrics(null);
         base.Dispose();
     }
