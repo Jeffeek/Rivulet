@@ -1,9 +1,7 @@
 name: Test Diagnostics (Find Hanging Tests)
 
 on:
-  workflow_dispatch: # Manual trigger
-  pull_request:
-    branches: [ master ]
+  workflow_dispatch: # Manual trigger only
 
 jobs:
   test-with-diagnostics:
@@ -55,4 +53,14 @@ jobs:
       if: always()
       run: |
         echo "=== Last 100 lines of test execution ==="
-        tail -n 100 ./TestResults/**/*.log || echo "No logs found"
+        if [ -d ./TestResults ]; then
+          LOG_FILE=$(find ./TestResults -name "*.log" -type f | head -n 1)
+          if [ -n "$LOG_FILE" ]; then
+            echo "Found log file: $LOG_FILE"
+            tail -n 100 "$LOG_FILE"
+          else
+            echo "No log files found in ./TestResults"
+          fi
+        else
+          echo "TestResults directory not found"
+        fi

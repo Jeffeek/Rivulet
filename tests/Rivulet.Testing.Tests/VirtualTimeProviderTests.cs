@@ -154,18 +154,48 @@ public class VirtualTimeProviderTests
     {
         using var timeProvider = new VirtualTimeProvider();
 
+        // Register all delays synchronously first to avoid race condition
+        var delayTasks = Enumerable.Range(1, 100)
+            .Select(i => (Index: i, Task: timeProvider.CreateDelay(TimeSpan.FromMilliseconds(i * 10))))
+            .ToList();
+
+        // Now advance time to complete all delays
+        timeProvider.AdvanceTime(TimeSpan.FromSeconds(10));
+
+        // Wait for all delays to complete concurrently
+        await Task.WhenAll(delayTasks.Select(x => x.Task));
+
+        // Verify all delays completed
+        var results = delayTasks.Select(x => x.Index).ToList();
+
+        results.Should().HaveCount(100);
+        results.Should().OnlyContain(i => i >= 1 && i <= 100);
+    }
+
+    [Fact]
+    public async Task ConcurrentDelaysWithTaskRun_ShouldAllCompleteCorrectly()
+    {
+        using var timeProvider = new VirtualTimeProvider();
+        using var countdown = new CountdownEvent(100);
+
+        // Use Task.Run to test concurrent registration
         var tasks = Enumerable.Range(1, 100)
             .Select(i => Task.Run(async () =>
             {
-                await timeProvider.CreateDelay(TimeSpan.FromMilliseconds(i * 10));
+                var delayTask = timeProvider.CreateDelay(TimeSpan.FromMilliseconds(i * 10));
+                countdown.Signal(); // Signal that this task has registered
+                await delayTask;
                 return i;
             }))
             .ToList();
 
-        await Task.Delay(100);
+        // Wait for all tasks to register their delays
+        countdown.Wait(TimeSpan.FromSeconds(5)).Should().BeTrue("all tasks should register within 5 seconds");
 
+        // Now advance time to complete all delays
         timeProvider.AdvanceTime(TimeSpan.FromSeconds(10));
 
+        // Wait for all tasks to complete
         var results = await Task.WhenAll(tasks);
 
         results.Should().HaveCount(100);

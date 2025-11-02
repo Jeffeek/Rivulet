@@ -63,6 +63,12 @@ public sealed class VirtualTimeProvider : IDisposable
     {
         ObjectDisposedException.ThrowIf(_disposed, nameof(VirtualTimeProvider));
 
+        // Zero or negative delays complete immediately
+        if (delay <= TimeSpan.Zero)
+        {
+            return Task.CompletedTask;
+        }
+
         var tcs = new TaskCompletionSource();
 
         LockHelper.Execute(_lock, () =>
