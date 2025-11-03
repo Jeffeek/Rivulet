@@ -32,24 +32,20 @@ for ((i = 1; i <= ITERATIONS; i++)); do
     output=$(dotnet test -c Release 2>&1)
 
     # Check if any tests failed
-    if [[ $output =~ Failed!\s+-\s+Failed:[[:space:]]+([0-9]+) ]]; then
-        failedCount="${BASH_REMATCH[1]}"
+    if [[ $output =~ (Failed!|Test\ Run\ Failed) ]]; then
+        # Extract failed test names - xUnit format: "[xUnit.net 00:00:02.19]     TestName [FAIL]"
+        while IFS= read -r line; do
+            if [[ $line =~ \[xUnit\.net.*\][[:space:]]+(.+)[[:space:]]+\[FAIL\] ]]; then
+                testName="${BASH_REMATCH[1]}"
+                testName=$(echo "$testName" | xargs) # Trim whitespace
 
-        if (( failedCount > 0 )); then
-            # Extract failed test names - format: "  Failed TestName [duration]"
-            while IFS= read -r line; do
-                if [[ $line =~ Failed[[:space:]]+(.+)[[:space:]]+\[ ]]; then
-                    testName="${BASH_REMATCH[1]}"
-                    testName=$(echo "$testName" | xargs) # Trim whitespace
-
-                    if [[ -z "${results[$testName]}" ]]; then
-                        results[$testName]=0
-                    fi
-
-                    ((results[$testName]++))
+                if [[ -z "${results[$testName]}" ]]; then
+                    results[$testName]=0
                 fi
-            done <<< "$output"
-        fi
+
+                ((results[$testName]++))
+            fi
+        done <<< "$output"
     fi
 
     # Small delay to avoid resource contention

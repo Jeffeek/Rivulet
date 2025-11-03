@@ -45,5 +45,5 @@ jobs:
     - name: Run flaky test detection - Linux
       if: runner.os == 'Linux'
       shell: bash
-      run: ./scripts/run-flaky-test-detection/run-flaky-test-detection.sh ${{ inputs.iterations }}
+      run: bash ./scripts/run-flaky-test-detection/run-flaky-test-detection.sh ${{ inputs.iterations }}
       timeout-minutes: ${{ inputs.timeout-minutes }}

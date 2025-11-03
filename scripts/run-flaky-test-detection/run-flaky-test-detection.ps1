@@ -23,22 +23,18 @@ for ($i = 1; $i -le $Iterations; $i++) {
     $output = dotnet test -c Release | Out-String
 
     # Check if any tests failed
-    if ($output -match "Failed!\s+-\s+Failed:\s+(\d+)") {
-        $failedCount = [int]$matches[1]
+    if ($output -match "Failed!\s+-\s+Failed:\s+(\d+)" -or $output -match "Test Run Failed") {
+        # Extract failed test names - xUnit format: "[xUnit.net 00:00:02.19]     TestName [FAIL]"
+        $failedTests = $output | Select-String -Pattern "\[xUnit\.net.*?\]\s+(.+?)\s+\[FAIL\]" -AllMatches
 
-        if ($failedCount -gt 0) {
-            # Extract failed test names - format: "  Failed TestName [duration]"
-            $failedTests = $output | Select-String -Pattern "\s+Failed\s+(.*)\s+\[" -AllMatches
+        foreach ($match in $failedTests.Matches) {
+            $testName = $match.Groups[1].Value.Trim()
 
-            foreach ($match in $failedTests.Matches) {
-                $testName = $match.Groups[1].Value.Trim()
-
-                if (-not $results.ContainsKey($testName)) {
-                    $results[$testName] = 0
-                }
-
-                $results[$testName]++
+            if (-not $results.ContainsKey($testName)) {
+                $results[$testName] = 0
             }
+
+            $results[$testName]++
         }
     }
 

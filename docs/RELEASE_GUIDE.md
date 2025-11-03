@@ -79,13 +79,13 @@ git push origin master
 **Windows (PowerShell):**
 ```powershell
 # This creates release/1.0.x branch and v1.0.0 tag
-.\Release.ps1 -Version "1.0.0"
+./scripts/Release/Release.ps1 -Version "1.0.0"
 ```
 
 **Linux/macOS (Bash):**
 ```bash
 # This creates release/1.0.x branch and v1.0.0 tag
-./Release.sh "1.0.0"
+bash ./scripts/Release/Release.sh "1.0.0"
 ```
 
 The script will:
@@ -508,12 +508,12 @@ Check the workflow file (`.github/workflows/release.yml`):
 
 **Windows (PowerShell):**
 ```powershell
-.\Release.ps1 -Version "1.1.0"  # Creates release/1.1.x branch and v1.1.0 tag
+./scripts/Release/Release.ps1 -Version "1.1.0"  # Creates release/1.1.x branch and v1.1.0 tag
 ```
 
 **Linux/macOS (Bash):**
 ```bash
-./Release.sh "1.1.0"  # Creates release/1.1.x branch and v1.1.0 tag
+bash ./scripts/Release/Release.sh "1.1.0"  # Creates release/1.1.x branch and v1.1.0 tag
 ```
 
 **Manual Alternative:**
@@ -529,12 +529,12 @@ Check the workflow file (`.github/workflows/release.yml`):
 
 **Windows (PowerShell):**
 ```powershell
-.\Release.ps1 -Version "1.0.1"  # Reuses existing release/1.0.x branch, creates v1.0.1 tag
+./scripts/Release/Release.ps1 -Version "1.0.1"  # Reuses existing release/1.0.x branch, creates v1.0.1 tag
 ```
 
 **Linux/macOS (Bash):**
 ```bash
-./Release.sh "1.0.1"  # Reuses existing release/1.0.x branch, creates v1.0.1 tag
+bash ./scripts/Release/Release.sh "1.0.1"  # Reuses existing release/1.0.x branch, creates v1.0.1 tag
 ```
 
 **Manual Alternative:**
@@ -553,25 +553,25 @@ Check the workflow file (`.github/workflows/release.yml`):
 **Windows (PowerShell):**
 ```powershell
 # New minor/major release (creates new release/x.y.x branch)
-.\Release.ps1 -Version "1.1.0"
+./scripts/Release/Release.ps1 -Version "1.1.0"
 
 # Patch release (reuses existing release/1.0.x branch)
-.\Release.ps1 -Version "1.0.1"
+./scripts/Release/Release.ps1 -Version "1.0.1"
 
 # Pre-release
-.\Release.ps1 -Version "2.0.0-beta"
+./scripts/Release/Release.ps1 -Version "2.0.0-beta"
 ```
 
 **Linux/macOS (Bash):**
 ```bash
 # New minor/major release (creates new release/x.y.x branch)
-./Release.sh "1.1.0"
+bash ./scripts/Release/Release.sh "1.1.0"
 
 # Patch release (reuses existing release/1.0.x branch)
-./Release.sh "1.0.1"
+bash ./scripts/Release/Release.sh "1.0.1"
 
 # Pre-release
-./Release.sh "2.0.0-beta"
+bash ./scripts/Release/Release.sh "2.0.0-beta"
 ```
 
 **Manual Alternative:**
