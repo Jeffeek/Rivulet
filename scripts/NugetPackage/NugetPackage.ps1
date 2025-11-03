@@ -9,6 +9,10 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+# Navigate to repository root (2 levels up from scripts/NugetPackage/)
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+Set-Location (Join-Path $ScriptDir "../..")
+
 Write-Host "======================================" -ForegroundColor Cyan
 Write-Host "  NuGet Package Builder & Inspector" -ForegroundColor Cyan
 Write-Host "======================================" -ForegroundColor Cyan

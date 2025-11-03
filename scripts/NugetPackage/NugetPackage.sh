@@ -10,6 +10,10 @@ RED='\033[0;31m'
 GRAY='\033[0;90m'
 NC='\033[0m' # No Color
 
+# Navigate to repository root (2 levels up from scripts/NugetPackage/)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR/../.."
+
 # Default parameters
 VERSION="${1:-1.0.0-local-test}"
 PROJECT="${2:-All}"

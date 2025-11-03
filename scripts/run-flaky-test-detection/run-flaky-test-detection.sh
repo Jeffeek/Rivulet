@@ -9,6 +9,10 @@ YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
+# Navigate to repository root (2 levels up from scripts/run-flaky-test-detection/)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR/../.."
+
 # Default iterations
 ITERATIONS="${1:-20}"
 

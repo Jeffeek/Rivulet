@@ -5,6 +5,10 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+# Navigate to repository root (2 levels up from scripts/run-flaky-test-detection/)
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+Set-Location (Join-Path $ScriptDir "../..")
+
 $results = @{}
 
 Write-Host "Running tests $Iterations times to detect flaky tests..." -ForegroundColor Cyan
