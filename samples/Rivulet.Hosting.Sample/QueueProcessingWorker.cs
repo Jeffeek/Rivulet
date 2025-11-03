@@ -33,7 +33,7 @@ public class QueueProcessingWorker : ParallelBackgroundService<string>
 
                 // Produce a batch of items
                 var batchSize = Random.Shared.Next(5, 15);
-                for (int i = 0; i < batchSize; i++)
+                for (var i = 0; i < batchSize; i++)
                 {
                     var item = $"QueueItem-{Interlocked.Increment(ref itemCount)}";
                     await _queue.Writer.WriteAsync(item);
@@ -47,12 +47,9 @@ public class QueueProcessingWorker : ParallelBackgroundService<string>
         }
     }
 
-    protected override async IAsyncEnumerable<string> GetItemsAsync([System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    protected override IAsyncEnumerable<string> GetItemsAsync(CancellationToken cancellationToken)
     {
-        await foreach (var item in _queue.Reader.ReadAllAsync(cancellationToken))
-        {
-            yield return item;
-        }
+        return _queue.Reader.ReadAllAsync(cancellationToken);
     }
 
     protected override async ValueTask ProcessItemAsync(string item, CancellationToken cancellationToken)

@@ -154,7 +154,7 @@ public class ParallelBackgroundServiceTests
 
         async IAsyncEnumerable<int> SlowGenerateItems()
         {
-            for (int i = 1; i <= 100; i++)
+            for (var i = 1; i <= 100; i++)
             {
                 await Task.Delay(50); // Slow enough to get cancelled
                 yield return i;

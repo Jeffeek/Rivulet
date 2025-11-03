@@ -6,11 +6,6 @@ namespace Rivulet.Diagnostics;
 internal static class RivuletDiagnosticsConstants
 {
     /// <summary>
-    /// The EventSource name for Rivulet.Core metrics.
-    /// </summary>
-    public const string EventSourceName = "Rivulet.Core";
-
-    /// <summary>
     /// EventCounter configuration and metadata keys.
     /// </summary>
     public static class EventCounterKeys

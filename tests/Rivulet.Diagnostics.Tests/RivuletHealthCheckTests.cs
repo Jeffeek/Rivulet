@@ -70,8 +70,8 @@ public class RivuletHealthCheckTests
         var result = await healthCheck.CheckHealthAsync(context);
 
         result.Status.Should().Be(HealthStatus.Healthy);
-        result.Data.Should().ContainKey("items_started");
-        result.Data.Should().ContainKey("items_completed");
+        result.Data.Should().ContainKey(RivuletDiagnosticsConstants.HealthCheckKeys.ItemsStarted);
+        result.Data.Should().ContainKey(RivuletDiagnosticsConstants.HealthCheckKeys.ItemsCompleted);
     }
 
     [Fact]
@@ -167,5 +167,56 @@ public class RivuletHealthCheckTests
         var healthCheck = new RivuletHealthCheck(exporter);
         var act = () => healthCheck.Dispose();
         act.Should().NotThrow();
+    }
+
+    [Fact]
+    public async Task HealthCheck_ShouldReturnDegraded_WhenErrorRateExceedsThresholdButNotFailureCount()
+    {
+        using var exporter = new PrometheusExporter();
+        var healthCheck = new RivuletHealthCheck(exporter, new RivuletHealthCheckOptions
+        {
+            ErrorRateThreshold = 0.2,
+            FailureCountThreshold = 1000
+        });
+
+        try
+        {
+            await Enumerable.Range(1, 10)
+                .ToAsyncEnumerable()
+                .SelectParallelStreamAsync(async (x, ct) =>
+                {
+                    await Task.Delay(10, ct);
+                    if (x <= 3)
+                    {
+                        throw new InvalidOperationException("Test error");
+                    }
+                    return x * 2;
+                }, new ParallelOptionsRivulet
+                {
+                    MaxDegreeOfParallelism = 2,
+                    ErrorMode = ErrorMode.CollectAndContinue
+                })
+                .ToListAsync();
+        }
+        catch
+        {
+            // ignored
+        }
+
+        await Task.Delay(1100);
+
+        var context = new HealthCheckContext();
+        var result = await healthCheck.CheckHealthAsync(context);
+
+        result.Data.Should().ContainKey("error_rate");
+        var errorRate = (double)result.Data["error_rate"];
+        errorRate.Should().BeGreaterThan(0.2);
+
+        result.Data.Should().ContainKey("total_failures");
+        var failures = (double)result.Data["total_failures"];
+        failures.Should().BeLessThan(1000);
+
+        result.Status.Should().Be(HealthStatus.Degraded);
+        result.Description.Should().Contain("Error rate");
     }
 }

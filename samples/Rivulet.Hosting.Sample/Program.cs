@@ -19,7 +19,7 @@ builder.Services.AddSingleton<PrometheusExporter>();
 
 // Add health checks for Rivulet operations
 builder.Services.AddHealthChecks()
-    .AddCheck<RivuletHealthCheck>("rivulet", tags: new[] { "ready", "live" });
+    .AddCheck<RivuletHealthCheck>("rivulet", tags: ["ready", "live"]);
 
 var app = builder.Build();
 

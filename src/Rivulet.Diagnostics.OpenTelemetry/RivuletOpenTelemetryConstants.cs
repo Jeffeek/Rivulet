@@ -11,6 +11,8 @@ public static class RivuletOpenTelemetryConstants
     /// </summary>
     public const string InstrumentationVersion = "1.2.0";
 
+    private const string RivuletPrefix = "rivulet.";
+
     /// <summary>
     /// OpenTelemetry metric names exposed by RivuletMetricsExporter.
     /// </summary>
@@ -19,37 +21,37 @@ public static class RivuletOpenTelemetryConstants
         /// <summary>
         /// Metric name for items started: "rivulet.items.started"
         /// </summary>
-        public const string ItemsStarted = "rivulet.items.started";
+        public const string ItemsStarted = $"{RivuletPrefix}items.started";
 
         /// <summary>
         /// Metric name for items completed: "rivulet.items.completed"
         /// </summary>
-        public const string ItemsCompleted = "rivulet.items.completed";
+        public const string ItemsCompleted = $"{RivuletPrefix}items.completed";
 
         /// <summary>
         /// Metric name for total retries: "rivulet.retries.total"
         /// </summary>
-        public const string RetriesTotal = "rivulet.retries.total";
+        public const string RetriesTotal = $"{RivuletPrefix}retries.total";
 
         /// <summary>
         /// Metric name for total failures: "rivulet.failures.total"
         /// </summary>
-        public const string FailuresTotal = "rivulet.failures.total";
+        public const string FailuresTotal = $"{RivuletPrefix}failures.total";
 
         /// <summary>
         /// Metric name for throttle events: "rivulet.throttle.events"
         /// </summary>
-        public const string ThrottleEvents = "rivulet.throttle.events";
+        public const string ThrottleEvents = $"{RivuletPrefix}throttle.events";
 
         /// <summary>
         /// Metric name for drain events: "rivulet.drain.events"
         /// </summary>
-        public const string DrainEvents = "rivulet.drain.events";
+        public const string DrainEvents = $"{RivuletPrefix}drain.events";
 
         /// <summary>
         /// Metric name for error rate: "rivulet.error.rate"
         /// </summary>
-        public const string ErrorRate = "rivulet.error.rate";
+        public const string ErrorRate = $"{RivuletPrefix}error.rate";
     }
 
     /// <summary>
@@ -132,52 +134,52 @@ public static class RivuletOpenTelemetryConstants
         /// <summary>
         /// Tag for total items count: "rivulet.total_items"
         /// </summary>
-        public const string TotalItems = "rivulet.total_items";
+        public const string TotalItems = $"{RivuletPrefix}total_items";
 
         /// <summary>
         /// Tag for item index: "rivulet.item_index"
         /// </summary>
-        public const string ItemIndex = "rivulet.item_index";
+        public const string ItemIndex = $"{RivuletPrefix}item_index";
 
         /// <summary>
         /// Tag for retry attempt number: "rivulet.retry_attempt"
         /// </summary>
-        public const string RetryAttempt = "rivulet.retry_attempt";
+        public const string RetryAttempt = $"{RivuletPrefix}retry_attempt";
 
         /// <summary>
         /// Tag for total retries on an item: "rivulet.retries"
         /// </summary>
-        public const string Retries = "rivulet.retries";
+        public const string Retries = $"{RivuletPrefix}retries";
 
         /// <summary>
         /// Tag for error transient status: "rivulet.error.transient"
         /// </summary>
-        public const string ErrorTransient = "rivulet.error.transient";
+        public const string ErrorTransient = $"{RivuletPrefix}error.transient";
 
         /// <summary>
         /// Tag for items processed count: "rivulet.items_processed"
         /// </summary>
-        public const string ItemsProcessed = "rivulet.items_processed";
+        public const string ItemsProcessed = $"{RivuletPrefix}items_processed";
 
         /// <summary>
         /// Tag for circuit breaker state: "rivulet.circuit_breaker.state"
         /// </summary>
-        public const string CircuitBreakerState = "rivulet.circuit_breaker.state";
+        public const string CircuitBreakerState = $"{RivuletPrefix}circuit_breaker.state";
 
         /// <summary>
         /// Tag for old concurrency level: "rivulet.concurrency.old"
         /// </summary>
-        public const string ConcurrencyOld = "rivulet.concurrency.old";
+        public const string ConcurrencyOld = $"{RivuletPrefix}concurrency.old";
 
         /// <summary>
         /// Tag for new concurrency level: "rivulet.concurrency.new"
         /// </summary>
-        public const string ConcurrencyNew = "rivulet.concurrency.new";
+        public const string ConcurrencyNew = $"{RivuletPrefix}concurrency.new";
 
         /// <summary>
         /// Tag for current concurrency level: "rivulet.concurrency.current"
         /// </summary>
-        public const string ConcurrencyCurrent = "rivulet.concurrency.current";
+        public const string ConcurrencyCurrent = $"{RivuletPrefix}concurrency.current";
 
         /// <summary>
         /// Tag for exception type: "exception.type"

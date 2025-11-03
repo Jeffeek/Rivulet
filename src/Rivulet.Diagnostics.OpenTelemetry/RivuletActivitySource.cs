@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Rivulet.Core;
 
 namespace Rivulet.Diagnostics.OpenTelemetry;
 
@@ -30,14 +31,9 @@ namespace Rivulet.Diagnostics.OpenTelemetry;
 public static class RivuletActivitySource
 {
     /// <summary>
-    /// The name of the ActivitySource for Rivulet operations.
-    /// </summary>
-    public const string SourceName = "Rivulet.Core";
-
-    /// <summary>
     /// The ActivitySource instance for creating activities.
     /// </summary>
-    public static readonly ActivitySource Source = new(SourceName, RivuletOpenTelemetryConstants.InstrumentationVersion);
+    public static readonly ActivitySource Source = new(RivuletSharedConstants.RivuletCore, RivuletOpenTelemetryConstants.InstrumentationVersion);
 
     /// <summary>
     /// Creates an Activity for a parallel operation.

@@ -20,7 +20,7 @@ public class ParallelOptionsRivuletExtensionsTests
         using var allActivitiesStarted = new ManualResetEventSlim(false);
 
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletActivitySource.SourceName;
+        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         listener.ActivityStarted = activity =>
         {
@@ -64,7 +64,7 @@ public class ParallelOptionsRivuletExtensionsTests
         using var allActivitiesStopped = new ManualResetEventSlim(false);
 
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletActivitySource.SourceName;
+        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = activity =>
         {
@@ -109,7 +109,7 @@ public class ParallelOptionsRivuletExtensionsTests
         using var allActivitiesStopped = new ManualResetEventSlim(false);
 
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletActivitySource.SourceName;
+        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = activity =>
         {
@@ -157,7 +157,7 @@ public class ParallelOptionsRivuletExtensionsTests
     {
         var activities = new List<Activity>();
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletActivitySource.SourceName;
+        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = activity => activities.Add(activity);
         ActivitySource.AddActivityListener(listener);
@@ -204,7 +204,7 @@ public class ParallelOptionsRivuletExtensionsTests
         var onErrorCalled = 0;
 
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletActivitySource.SourceName;
+        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         ActivitySource.AddActivityListener(listener);
 
@@ -251,7 +251,7 @@ public class ParallelOptionsRivuletExtensionsTests
         var processedCount = 0;
 
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletActivitySource.SourceName;
+        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = activity => activities.Add(activity);
         ActivitySource.AddActivityListener(listener);
@@ -305,7 +305,7 @@ public class ParallelOptionsRivuletExtensionsTests
     {
         var activities = new List<Activity>();
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletActivitySource.SourceName;
+        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = activity => activities.Add(activity);
         ActivitySource.AddActivityListener(listener);
@@ -370,7 +370,7 @@ public class ParallelOptionsRivuletExtensionsTests
         using var allActivitiesStopped = new ManualResetEventSlim(false);
 
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletActivitySource.SourceName;
+        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = activity =>
         {

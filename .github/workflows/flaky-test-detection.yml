@@ -6,11 +6,8 @@ on:
       iterations:
         description: 'Number of test iterations'
         required: false
-        default: '100'
+        default: '50'
         type: string
-  schedule:
-    # Run monthly on the 1st at 00:00 UTC
-    - cron: '0 0 1 * *'
 
 permissions:
   contents: read

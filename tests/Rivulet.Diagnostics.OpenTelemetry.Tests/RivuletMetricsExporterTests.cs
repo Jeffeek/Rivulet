@@ -16,7 +16,7 @@ public class RivuletMetricsExporterTests : IDisposable
     public RivuletMetricsExporterTests()
     {
         _meterProvider = Sdk.CreateMeterProviderBuilder()
-            .AddMeter(RivuletMetricsExporter.MeterName)
+            .AddMeter(RivuletSharedConstants.RivuletCore)
             .AddInMemoryExporter(_exportedMetrics)
             .Build();
 

@@ -1,5 +1,6 @@
-using System.Diagnostics;
 using FluentAssertions;
+using Rivulet.Core;
+using System.Diagnostics;
 
 namespace Rivulet.Diagnostics.OpenTelemetry.Tests;
 
@@ -10,7 +11,7 @@ public class RivuletActivitySourceTests
     [Fact]
     public void ActivitySource_ShouldHaveCorrectNameAndVersion()
     {
-        RivuletActivitySource.Source.Name.Should().Be("Rivulet.Core");
+        RivuletActivitySource.Source.Name.Should().Be(RivuletSharedConstants.RivuletCore);
         RivuletActivitySource.Source.Version.Should().Be("1.2.0");
     }
 
@@ -26,7 +27,7 @@ public class RivuletActivitySourceTests
     public void StartOperation_WithListener_ShouldCreateActivity()
     {
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletActivitySource.SourceName;
+        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         ActivitySource.AddActivityListener(listener);
 
@@ -41,7 +42,7 @@ public class RivuletActivitySourceTests
     public void StartItemActivity_WithListener_ShouldCreateActivityWithIndex()
     {
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletActivitySource.SourceName;
+        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         ActivitySource.AddActivityListener(listener);
 
@@ -56,7 +57,7 @@ public class RivuletActivitySourceTests
     public void RecordRetry_ShouldAddEventWithRetryDetails()
     {
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletActivitySource.SourceName;
+        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         ActivitySource.AddActivityListener(listener);
 
@@ -78,7 +79,7 @@ public class RivuletActivitySourceTests
     public void RecordError_ShouldSetErrorStatusAndTags()
     {
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletActivitySource.SourceName;
+        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         ActivitySource.AddActivityListener(listener);
 
@@ -97,7 +98,7 @@ public class RivuletActivitySourceTests
     public void RecordSuccess_ShouldSetOkStatusAndItemsProcessed()
     {
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletActivitySource.SourceName;
+        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         ActivitySource.AddActivityListener(listener);
 
@@ -114,7 +115,7 @@ public class RivuletActivitySourceTests
     public void RecordCircuitBreakerStateChange_ShouldAddEvent()
     {
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletActivitySource.SourceName;
+        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         ActivitySource.AddActivityListener(listener);
 
@@ -133,7 +134,7 @@ public class RivuletActivitySourceTests
     public void RecordConcurrencyChange_ShouldAddEventAndUpdateTag()
     {
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletActivitySource.SourceName;
+        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         ActivitySource.AddActivityListener(listener);
 

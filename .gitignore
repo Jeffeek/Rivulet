@@ -370,3 +370,5 @@ test-packages/
 .claude/
 .gemini/
 .smartcommit.config.json
+
+.invisible/

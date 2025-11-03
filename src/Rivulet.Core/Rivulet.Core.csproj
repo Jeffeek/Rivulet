@@ -19,8 +19,8 @@
   	<PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
   <ItemGroup>
-  	<None Include="..\..\assets\nuget_logo.png" Pack="true" PackagePath="\" />
-  	<None Include="README.md" Pack="true" PackagePath="\README.md" />
+  	<None Include="nuget_logo.png" Pack="true" PackagePath="\" />
+  	<None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
   <ItemGroup>
   	<InternalsVisibleTo Include="Rivulet.Core.Tests" />

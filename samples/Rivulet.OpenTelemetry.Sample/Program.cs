@@ -11,13 +11,13 @@ Console.WriteLine("=== Rivulet.Diagnostics.OpenTelemetry Sample ===\n");
 // Configure OpenTelemetry with both tracing and metrics
 using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("RivuletSample"))
-    .AddSource(RivuletActivitySource.SourceName)
+    .AddSource(RivuletSharedConstants.RivuletCore)
     .AddConsoleExporter()
     .Build();
 
 using var meterProvider = Sdk.CreateMeterProviderBuilder()
     .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("RivuletSample"))
-    .AddMeter(RivuletMetricsExporter.MeterName)
+    .AddMeter(RivuletSharedConstants.RivuletCore)
     .AddConsoleExporter()
     .Build();
 
@@ -65,15 +65,13 @@ using (var activity = RivuletActivitySource.StartOperation("ProcessingWithRetrie
 
             await Task.Delay(20, ct);
 
-            // Simulate transient errors
-            if (item % 5 == 0 && attempt++ < 3)
-            {
-                var ex = new InvalidOperationException($"Transient error on item {item}");
-                RivuletActivitySource.RecordRetry(itemActivity, attempt, ex);
-                throw ex;
-            }
+            if (item % 5 != 0 || attempt++ >= 3) return item * 2;
 
-            return item * 2;
+            // Simulate transient errors
+            var ex = new InvalidOperationException($"Transient error on item {item}");
+            RivuletActivitySource.RecordRetry(itemActivity, attempt, ex);
+            throw ex;
+
         },
         new ParallelOptionsRivulet
         {
@@ -102,14 +100,11 @@ using (var activity = RivuletActivitySource.StartOperation("ProcessingWithErrors
 
                 await Task.Delay(15, ct);
 
-                if (item == 5)
-                {
-                    var ex = new InvalidOperationException("Permanent error");
-                    RivuletActivitySource.RecordError(itemActivity, ex, isTransient: false);
-                    throw ex;
-                }
+                if (item != 5) return item;
 
-                return item;
+                var ex = new InvalidOperationException("Permanent error");
+                RivuletActivitySource.RecordError(itemActivity, ex, isTransient: false);
+                throw ex;
             },
             new ParallelOptionsRivulet
             {
@@ -179,7 +174,7 @@ using (var activity = RivuletActivitySource.StartOperation("AdaptiveProcessing",
     RivuletActivitySource.RecordCircuitBreakerStateChange(activity, "Open");
 
     RivuletActivitySource.RecordSuccess(activity, results.Count);
-    Console.WriteLine($"✓ Recorded circuit breaker and concurrency events\n");
+    Console.WriteLine("✓ Recorded circuit breaker and concurrency events\n");
 }
 
 Console.WriteLine("=== All OpenTelemetry samples completed successfully ===");

@@ -7,6 +7,8 @@ param(
     [switch]$SkipTests
 )
 
+cd ..\..\
+
 $ErrorActionPreference = "Stop"
 
 Write-Host "======================================" -ForegroundColor Cyan

@@ -23,7 +23,7 @@ public class DataProcessingWorker(
             await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
 
             // Yield work items for this iteration
-            for (int i = 1; i <= 20; i++)
+            for (var i = 1; i <= 20; i++)
             {
                 yield return $"Item-{iteration}-{i}";
             }

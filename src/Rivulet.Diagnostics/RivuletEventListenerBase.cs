@@ -1,4 +1,5 @@
 using System.Diagnostics.Tracing;
+using Rivulet.Core;
 
 namespace Rivulet.Diagnostics;
 
@@ -8,8 +9,6 @@ namespace Rivulet.Diagnostics;
 /// </summary>
 public abstract class RivuletEventListenerBase : EventListener
 {
-    private const string RivuletEventSourceName = RivuletDiagnosticsConstants.EventSourceName;
-    
     /// <summary>
     /// Gets or sets whether the listener is enabled.
     /// </summary>
@@ -20,7 +19,7 @@ public abstract class RivuletEventListenerBase : EventListener
     /// </summary>
     protected override void OnEventSourceCreated(EventSource eventSource)
     {
-        if (eventSource.Name != RivuletEventSourceName) return;
+        if (eventSource.Name != RivuletSharedConstants.RivuletCore) return;
         EnableEvents(eventSource, EventLevel.LogAlways, EventKeywords.All, new Dictionary<string, string?>
         {
             [RivuletDiagnosticsConstants.EventCounterKeys.IntervalSec] = "1"
@@ -33,7 +32,7 @@ public abstract class RivuletEventListenerBase : EventListener
     /// </summary>
     protected override void OnEventWritten(EventWrittenEventArgs eventData)
     {
-        if (!IsEnabled || eventData.EventSource.Name != RivuletEventSourceName)
+        if (!IsEnabled || eventData.EventSource.Name != RivuletSharedConstants.RivuletCore)
             return;
 
         if (eventData.Payload == null || eventData.Payload.Count == 0)

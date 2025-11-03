@@ -128,10 +128,14 @@ jobs:
 
         ### How to Publish
         \`\`\`bash
-        # Update version in Release.ps1 or manually
+        # Windows (PowerShell)
         ./Release.ps1 -Version "$NEXT_PATCH_VERSION"
 
-        # Or use git tags
+        # Linux/macOS (Bash)
+        chmod +x Release.sh
+        ./Release.sh "$NEXT_PATCH_VERSION"
+
+        # Or use git tags directly
         git tag v$NEXT_PATCH_VERSION
         git push --tags
         \`\`\`

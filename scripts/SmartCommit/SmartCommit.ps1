@@ -113,6 +113,9 @@ Write-Host "Provider: $($config.provider)" -ForegroundColor Green
 Write-Host "Model:    $($config.models[$config.provider.ToLower()])" -ForegroundColor Green
 Write-Host ""
 
+# Set current directory
+cd ..\..\
+
 # Check for uncommitted changes
 Write-Host "Checking for changes..." -ForegroundColor Yellow
 $status = git status --porcelain

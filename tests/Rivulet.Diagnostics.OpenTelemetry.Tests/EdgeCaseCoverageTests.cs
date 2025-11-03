@@ -14,7 +14,7 @@ public class EdgeCaseCoverageTests
     public async Task WithOpenTelemetryTracing_ShouldHandleNullOperationName()
     {
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletActivitySource.SourceName;
+        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = _ => { };
         ActivitySource.AddActivityListener(listener);
@@ -38,7 +38,7 @@ public class EdgeCaseCoverageTests
     public async Task WithOpenTelemetryTracing_ShouldHandleEmptyOperationName()
     {
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletActivitySource.SourceName;
+        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = _ => { };
         ActivitySource.AddActivityListener(listener);
@@ -61,7 +61,7 @@ public class EdgeCaseCoverageTests
         var activities = new List<Activity>();
 
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletActivitySource.SourceName;
+        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = activity => activities.Add(activity);
         ActivitySource.AddActivityListener(listener);
@@ -97,7 +97,7 @@ public class EdgeCaseCoverageTests
         var onErrorCalled = 0;
 
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletActivitySource.SourceName;
+        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         ActivitySource.AddActivityListener(listener);
 
@@ -187,7 +187,7 @@ public class EdgeCaseCoverageTests
         var activities = new System.Collections.Concurrent.ConcurrentBag<Activity>();
 
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletActivitySource.SourceName;
+        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = activity => activities.Add(activity);
         ActivitySource.AddActivityListener(listener);
@@ -213,7 +213,7 @@ public class EdgeCaseCoverageTests
         var activities = new List<Activity>();
 
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletActivitySource.SourceName;
+        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = activity => activities.Add(activity);
         ActivitySource.AddActivityListener(listener);
@@ -255,7 +255,7 @@ public class EdgeCaseCoverageTests
         var activities = new List<Activity>();
 
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletActivitySource.SourceName;
+        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = activity => activities.Add(activity);
         ActivitySource.AddActivityListener(listener);
@@ -304,6 +304,6 @@ public class EdgeCaseCoverageTests
             }, options);
 
         result.Should().HaveCount(5);
-        result.Should().Contain(new[] { 2, 4, 6, 8, 10 });
+        result.Should().Contain([2, 4, 6, 8, 10]);
     }
 }

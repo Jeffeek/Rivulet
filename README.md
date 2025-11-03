@@ -67,6 +67,38 @@ dotnet add package Rivulet.Diagnostics.OpenTelemetry
 
 </td>
 </tr>
+<tr>
+<td width="50%" align="center" colspan="2">
+
+### Rivulet.Testing
+[![NuGet](https://img.shields.io/nuget/v/Rivulet.Testing?label=version)](https://www.nuget.org/packages/Rivulet.Testing/)
+[![Downloads](https://img.shields.io/nuget/dt/Rivulet.Testing)](https://www.nuget.org/packages/Rivulet.Testing/)
+
+Testing utilities: VirtualTimeProvider, ChaosInjector, ConcurrencyAsserter, FakeChannel for deterministic parallel operation tests
+
+📖 [Documentation](src/Rivulet.Testing/README.md)
+
+```bash
+dotnet add package Rivulet.Testing
+```
+
+</td>
+<td width="50%" align="center" colspan="1">
+
+### Rivulet.Hosting
+[![NuGet](https://img.shields.io/nuget/v/Rivulet.Hosting?label=version)](https://www.nuget.org/packages/Rivulet.Hosting/)
+[![Downloads](https://img.shields.io/nuget/dt/Rivulet.Hosting)](https://www.nuget.org/packages/Rivulet.Hosting/)
+
+Microsoft.Extensions.Hosting integration: background services, dependency injection, configuration binding, health checks
+
+📖 [Documentation](src/Rivulet.Hosting/README.md)
+
+```bash
+dotnet add package Rivulet.Hosting
+```
+
+</td>
+</tr>
 </table>
 
 ---

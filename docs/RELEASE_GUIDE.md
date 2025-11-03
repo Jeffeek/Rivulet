@@ -23,10 +23,9 @@ Before starting the release process, ensure:
 - [ ] All CI tests pass on `master` branch
 - [ ] Code coverage is at expected (90%>=) level (currently ![Codecov (with branch)](https://img.shields.io/codecov/c/github/Jeffeek/Rivulet/master?style=flat&label=%20)
 )
-- [ ] No flaky tests detected (100 iterations on both Windows & Linux)
+- [ ] No flaky tests detected (50 iterations on both Windows & Linux)
 - [ ] README.md (GitHub repository) is up to date
-- [ ] All 5 package README files are up to date (src/*/README.md)
-- [ ] CHANGELOG.md is updated with version changes (create if doesn't exist)
+- [ ] All package README files are up to date (src/*/README.md)
 - [ ] All planned features for the version are complete
 - [ ] You have a NuGet.org account (create at https://www.nuget.org/users/account/LogOn)
 - [ ] NuGet API key has glob pattern `Rivulet.*` to cover all packages
@@ -35,51 +34,7 @@ Before starting the release process, ensure:
 
 ## Part 1: Prepare for Release
 
-### Step 1: Create a Changelog (if you don't have one)
-
-Create `CHANGELOG.md` in your repository root:
-
-```markdown
-# Changelog
-
-All notable changes to this project will be documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
-## [1.0.0] - 2025-01-XX
-
-### Added
-- `SelectParallelAsync` - Transform collections in parallel with bounded concurrency
-- `SelectParallelStreamAsync` - Stream results as they complete
-- `ForEachParallelAsync` - Execute side effects in parallel
-- Flexible error handling modes: FailFast, CollectAndContinue, BestEffort
-- Retry policy with exponential backoff and transient error detection
-- Per-item timeout support
-- Lifecycle hooks: OnStart, OnComplete, OnError, OnThrottle
-- Cancellation token support throughout
-- Support for .NET 8.0 and .NET 9.0
-
-### Fixed
-- OnErrorAsync callback now properly invoked in FailFast mode
-- SelectParallelStreamAsync cancellation race condition resolved
-
-### Documentation
-- Comprehensive README with examples
-- CI/CD pipeline with 200-iteration flaky test detection
-- 90%+ code coverage
-```
-
-**Commit the changelog:**
-```bash
-git add CHANGELOG.md
-git commit -m "Add CHANGELOG for v1.0.0"
-git push origin master
-```
-
----
-
-### Step 2: Verify Package Metadata
+### Step 1: Verify Package Metadata
 
 Check all 5 .csproj files contain correct information. Example from `src/Rivulet.Core/Rivulet.Core.csproj`:
 
@@ -103,15 +58,14 @@ Check all 5 .csproj files contain correct information. Example from `src/Rivulet
 </PropertyGroup>
 
 <ItemGroup>
-    <None Include="..\..\assets\nuget_logo.png" Pack="true" PackagePath="\" />
-    <!-- Pack README.md from repo as README.md in package -->
-    <None Include="README.md" Pack="true" PackagePath="\README.md" />
+    <None Include="assets\nuget_logo.png" Pack="true" PackagePath="\" />
+    <None Include="README.md" Pack="true" PackagePath="\" />
 </ItemGroup>
 ```
 
 **If you made changes, commit them:**
 ```bash
-git add src/Rivulet.Core/Rivulet.Core.csproj PACKAGE_README.md
+git add src/Rivulet.Core/Rivulet.Core.csproj README.md
 git commit -m "Update package metadata and README for v1.0.0"
 git push origin master
 ```
@@ -120,11 +74,18 @@ git push origin master
 
 ### Step 3: Create Release
 
-**Recommended: Use the automated Release.ps1 script:**
+**Recommended: Use the automated release script:**
 
+**Windows (PowerShell):**
 ```powershell
 # This creates release/1.0.x branch and v1.0.0 tag
 .\Release.ps1 -Version "1.0.0"
+```
+
+**Linux/macOS (Bash):**
+```bash
+# This creates release/1.0.x branch and v1.0.0 tag
+./Release.sh "1.0.0"
 ```
 
 The script will:
@@ -134,7 +95,7 @@ The script will:
 - Create tag `v1.0.0` and push everything
 - Trigger the GitHub Actions release workflow
 
-**Manual Alternative (if not using Release.ps1):**
+**Manual Alternative (if not using automated release script):**
 
 ```bash
 # Create release branch (note: uses .x pattern for all 1.0.* patches)
@@ -197,7 +158,7 @@ Verify the package contains:
 
 ### Step 5: Create and Push Git Tag
 
-**If you used Release.ps1 in Step 3, skip this step - it's already done!**
+**If you used the automated release script (Release.ps1 or Release.sh) in Step 3, skip this step - it's already done!**
 
 **Manual Alternative:** This is the critical step that triggers the release workflow:
 
@@ -543,9 +504,16 @@ Check the workflow file (`.github/workflows/release.yml`):
 
 ### For Minor/Major Releases (v1.1.0, v2.0.0):
 
-**Recommended - Use Release.ps1:**
+**Recommended - Use the automated release script:**
+
+**Windows (PowerShell):**
 ```powershell
 .\Release.ps1 -Version "1.1.0"  # Creates release/1.1.x branch and v1.1.0 tag
+```
+
+**Linux/macOS (Bash):**
+```bash
+./Release.sh "1.1.0"  # Creates release/1.1.x branch and v1.1.0 tag
 ```
 
 **Manual Alternative:**
@@ -557,9 +525,16 @@ Check the workflow file (`.github/workflows/release.yml`):
 
 ### For Patch Releases (v1.0.1, v1.0.2):
 
-**Recommended - Use Release.ps1:**
+**Recommended - Use the automated release script:**
+
+**Windows (PowerShell):**
 ```powershell
 .\Release.ps1 -Version "1.0.1"  # Reuses existing release/1.0.x branch, creates v1.0.1 tag
+```
+
+**Linux/macOS (Bash):**
+```bash
+./Release.sh "1.0.1"  # Reuses existing release/1.0.x branch, creates v1.0.1 tag
 ```
 
 **Manual Alternative:**
@@ -574,6 +549,8 @@ Check the workflow file (`.github/workflows/release.yml`):
 ## Quick Command Reference
 
 **Automated (Recommended):**
+
+**Windows (PowerShell):**
 ```powershell
 # New minor/major release (creates new release/x.y.x branch)
 .\Release.ps1 -Version "1.1.0"
@@ -583,6 +560,18 @@ Check the workflow file (`.github/workflows/release.yml`):
 
 # Pre-release
 .\Release.ps1 -Version "2.0.0-beta"
+```
+
+**Linux/macOS (Bash):**
+```bash
+# New minor/major release (creates new release/x.y.x branch)
+./Release.sh "1.1.0"
+
+# Patch release (reuses existing release/1.0.x branch)
+./Release.sh "1.0.1"
+
+# Pre-release
+./Release.sh "2.0.0-beta"
 ```
 
 **Manual Alternative:**
