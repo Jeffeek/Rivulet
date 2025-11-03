@@ -42,7 +42,9 @@ if [ "$CONFIGURATION" != "Debug" ] && [ "$CONFIGURATION" != "Release" ]; then
     exit 1
 fi
 
-cd "..\..\"
+# Navigate to repository root (2 levels up from scripts/Build/)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR/../.."
 
 echo -e "${CYAN}======================================${NC}"
 echo -e "${CYAN}  Rivulet Build Script${NC}"

@@ -188,6 +188,10 @@ echo -e "${GREEN}Provider: $CONFIG_PROVIDER${NC}"
 echo -e "${GREEN}Model:    ${CONFIG_MODELS[$PROVIDER_LOWER]}${NC}"
 echo ""
 
+# Navigate to repository root (2 levels up from scripts/SmartCommit/)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR/../.."
+
 # Check for uncommitted changes
 echo -e "${YELLOW}Checking for changes...${NC}"
 STATUS=$(git status --porcelain)

@@ -113,8 +113,9 @@ Write-Host "Provider: $($config.provider)" -ForegroundColor Green
 Write-Host "Model:    $($config.models[$config.provider.ToLower()])" -ForegroundColor Green
 Write-Host ""
 
-# Set current directory
-cd ..\..\
+# Navigate to repository root (2 levels up from scripts/SmartCommit/)
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+Set-Location (Join-Path $ScriptDir "../..")
 
 # Check for uncommitted changes
 Write-Host "Checking for changes..." -ForegroundColor Yellow

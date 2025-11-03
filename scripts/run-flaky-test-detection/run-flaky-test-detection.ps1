@@ -1,14 +1,20 @@
-$iterations = 20
+param(
+    [Parameter(Mandatory=$false)]
+    [int]$Iterations = 20
+)
+
+$ErrorActionPreference = "Stop"
+
 $results = @{}
 
-Write-Host "Running tests $iterations times to detect flaky tests..." -ForegroundColor Cyan
+Write-Host "Running tests $Iterations times to detect flaky tests..." -ForegroundColor Cyan
 Write-Host ""
 
 dotnet restore
 dotnet build -c Release --no-restore
 
-for ($i = 1; $i -le $iterations; $i++) {
-    Write-Progress -Activity "Running Test Iteration" -Status "$i of $iterations" -PercentComplete (($i / $iterations) * 100)
+for ($i = 1; $i -le $Iterations; $i++) {
+    Write-Progress -Activity "Running Test Iteration" -Status "$i of $Iterations" -PercentComplete (($i / $Iterations) * 100)
 
     $output = dotnet test -c Release | Out-String
 
@@ -45,7 +51,7 @@ Write-Host "========================================" -ForegroundColor Green
 Write-Host ""
 
 if ($results.Count -eq 0) {
-    Write-Host "[OK] No flaky tests detected! All tests passed in all $iterations iterations." -ForegroundColor Green
+    Write-Host "[OK] No flaky tests detected! All tests passed in all $Iterations iterations." -ForegroundColor Green
 } else {
     Write-Host "[WARNING] FLAKY TESTS DETECTED:" -ForegroundColor Yellow
     Write-Host ""
@@ -55,12 +61,12 @@ if ($results.Count -eq 0) {
     foreach ($test in $sortedResults) {
         $testName = $test.Key
         $failCount = $test.Value
-        $passCount = $iterations - $failCount
-        $failureRate = [math]::Round(($failCount / $iterations) * 100, 2)
+        $passCount = $Iterations - $failCount
+        $failureRate = [math]::Round(($failCount / $Iterations) * 100, 2)
 
         Write-Host "Test: $testName" -ForegroundColor Cyan
-        Write-Host ('  Failures: {0} / {1} ({2}%)' -f $failCount, $iterations, $failureRate) -ForegroundColor Red
-        Write-Host ('  Passes:   {0} / {1}' -f $passCount, $iterations) -ForegroundColor Green
+        Write-Host ('  Failures: {0} / {1} ({2}%)' -f $failCount, $Iterations, $failureRate) -ForegroundColor Red
+        Write-Host ('  Passes:   {0} / {1}' -f $passCount, $Iterations) -ForegroundColor Green
 
         Write-Host ""
     }
@@ -68,8 +74,11 @@ if ($results.Count -eq 0) {
     Write-Host "========================================" -ForegroundColor Yellow
     Write-Host "SUMMARY:" -ForegroundColor Yellow
     Write-Host "  Total flaky tests: $($results.Count)" -ForegroundColor Yellow
-    Write-Host "  Total iterations: $iterations" -ForegroundColor Yellow
+    Write-Host "  Total iterations: $Iterations" -ForegroundColor Yellow
     Write-Host "========================================" -ForegroundColor Yellow
+
+    # Exit with error code if flaky tests detected (for CI)
+    exit 1
 }
 
 Write-Host ""

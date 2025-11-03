@@ -7,7 +7,9 @@ param(
     [switch]$SkipTests
 )
 
-cd ..\..\
+# Navigate to repository root (2 levels up from scripts/Build/)
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+Set-Location (Join-Path $ScriptDir "../..")
 
 $ErrorActionPreference = "Stop"
 
