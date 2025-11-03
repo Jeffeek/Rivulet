@@ -18,7 +18,7 @@ dotnet restore
 dotnet build -c Release --no-restore
 
 for ($i = 1; $i -le $Iterations; $i++) {
-    Write-Progress -Activity "Running Test Iteration" -Status "$i of $Iterations" -PercentComplete (($i / $Iterations) * 100)
+    Write-Host -Activity "Running Test Iteration" -Status "$i of $Iterations" -PercentComplete (($i / $Iterations) * 100)
 
     $output = dotnet test -c Release | Out-String
 
