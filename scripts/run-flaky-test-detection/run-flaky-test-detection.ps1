@@ -3,8 +3,6 @@ param(
     [int]$Iterations = 20
 )
 
-$ErrorActionPreference = "Stop"
-
 # Navigate to repository root (2 levels up from scripts/run-flaky-test-detection/)
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location (Join-Path $ScriptDir "../..")
@@ -14,35 +12,38 @@ $results = @{}
 Write-Host "Running tests $Iterations times to detect flaky tests..." -ForegroundColor Cyan
 Write-Host ""
 
+# Fail fast for restore/build errors
+$ErrorActionPreference = "Stop"
 dotnet restore
 dotnet build -c Release --no-restore
 
+# But continue on test failures - we want to track flaky tests
+$ErrorActionPreference = "Continue"
+
 for ($i = 1; $i -le $Iterations; $i++) {
-    Write-Host -Activity "Running Test Iteration" -Status "$i of $Iterations" -PercentComplete (($i / $Iterations) * 100)
+    $percent = [math]::Round(($i / $Iterations) * 100, 2)
+    Write-Host "Running Test Iteration: $i of $Iterations ($percent%)" -ForegroundColor Gray
 
-    $output = dotnet test -c Release | Out-String
+    # Run tests and capture output (ignore exit code - we check output instead)
+    $output = dotnet test -c Release 2>&1 | Out-String
 
-    # Check if any tests failed
-    if ($output -match "Failed!\s+-\s+Failed:\s+(\d+)" -or $output -match "Test Run Failed") {
-        # Extract failed test names - xUnit format: "[xUnit.net 00:00:02.19]     TestName [FAIL]"
-        $failedTests = $output | Select-String -Pattern "\[xUnit\.net.*?\]\s+(.+?)\s+\[FAIL\]" -AllMatches
+    # Extract failed test names - xUnit format: "[xUnit.net 00:00:02.19]     TestName [FAIL]"
+    # We parse every line looking for [FAIL] markers, no need to check summary first
+    $failedTests = $output | Select-String -Pattern "\[xUnit\.net.*?\]\s+(.+?)\s+\[FAIL\]" -AllMatches
 
-        foreach ($match in $failedTests.Matches) {
-            $testName = $match.Groups[1].Value.Trim()
+    foreach ($match in $failedTests.Matches) {
+        $testName = $match.Groups[1].Value.Trim()
 
-            if (-not $results.ContainsKey($testName)) {
-                $results[$testName] = 0
-            }
-
-            $results[$testName]++
+        if (-not $results.ContainsKey($testName)) {
+            $results[$testName] = 0
         }
+
+        $results[$testName]++
     }
 
     # Small delay to avoid resource contention
     Start-Sleep -Milliseconds 100
 }
-
-Write-Progress -Activity "Running Test Iteration" -Completed
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Green

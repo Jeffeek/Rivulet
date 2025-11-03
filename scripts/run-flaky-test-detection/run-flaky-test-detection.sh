@@ -1,6 +1,7 @@
 #!/bin/bash
 
-set -e
+# Note: We exit on errors for restore/build, but continue for test failures
+# We want to continue testing even when individual test runs fail
 
 # ANSI color codes
 RED='\033[0;31m'
@@ -21,32 +22,34 @@ declare -A results
 echo -e "${CYAN}Running tests $ITERATIONS times to detect flaky tests...${NC}"
 echo ""
 
+# Fail fast for restore/build errors
+set -e
 dotnet restore
 dotnet build -c Release --no-restore
+set +e  # But continue on test failures
 
 for ((i = 1; i <= ITERATIONS; i++)); do
     # Calculate percentage
     percent=$((($i * 100) / $ITERATIONS))
     echo -ne "\rRunning Test Iteration: $i of $ITERATIONS ($percent%)"
 
-    output=$(dotnet test -c Release 2>&1)
+    # Run tests and capture output (ignore exit code - we check output instead)
+    output=$(dotnet test -c Release 2>&1) || true
 
-    # Check if any tests failed
-    if [[ $output =~ (Failed!|Test\ Run\ Failed) ]]; then
-        # Extract failed test names - xUnit format: "[xUnit.net 00:00:02.19]     TestName [FAIL]"
-        while IFS= read -r line; do
-            if [[ $line =~ \[xUnit\.net.*\][[:space:]]+(.+)[[:space:]]+\[FAIL\] ]]; then
-                testName="${BASH_REMATCH[1]}"
-                testName=$(echo "$testName" | xargs) # Trim whitespace
+    # Extract failed test names - xUnit format: "[xUnit.net 00:00:02.19]     TestName [FAIL]"
+    # We parse every line looking for [FAIL] markers, no need to check summary first
+    while IFS= read -r line; do
+        if [[ $line =~ \[xUnit\.net.*\][[:space:]]+(.+)[[:space:]]+\[FAIL\] ]]; then
+            testName="${BASH_REMATCH[1]}"
+            testName=$(echo "$testName" | xargs) # Trim whitespace
 
-                if [[ -z "${results[$testName]}" ]]; then
-                    results[$testName]=0
-                fi
-
-                ((results[$testName]++))
+            if [[ -z "${results[$testName]}" ]]; then
+                results[$testName]=0
             fi
-        done <<< "$output"
-    fi
+
+            ((results[$testName]++))
+        fi
+    done <<< "$output"
 
     # Small delay to avoid resource contention
     sleep 0.1
