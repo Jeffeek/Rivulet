@@ -70,9 +70,11 @@ else
     echo ""
 
     # Sort results by failure count (descending)
+    # Use tab as delimiter to avoid issues with spaces in test names
     for testName in "${!results[@]}"; do
-        echo "$testName ${results[$testName]}"
-    done | sort -k2 -rn | while read testName failCount; do
+        printf "%s\t%s\n" "$testName" "${results[$testName]}"
+    done | sort -t$'\t' -k2 -rn | while IFS=$'\t' read -r testName failCount; do
+
         passCount=$((ITERATIONS - failCount))
         failureRate=$(awk "BEGIN {printf \"%.2f\", ($failCount / $ITERATIONS) * 100}")
 

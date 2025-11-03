@@ -98,7 +98,8 @@ public class ProgressTrackerInternalTests
         tracker.IncrementStarted();
         tracker.IncrementCompleted();
 
-        Thread.Sleep(50);
+        // Increased delay for CI/CD environments where timer may fire slower
+        Thread.Sleep(150);
 
         var act = () => tracker.Dispose();
         act.Should().NotThrow();

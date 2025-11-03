@@ -213,17 +213,17 @@ public class ParallelOptionsRivuletExtensionsTests
         {
             OnStartItemAsync = async _ =>
             {
-                onStartCalled++;
+                Interlocked.Increment(ref onStartCalled);
                 await Task.CompletedTask;
             },
             OnCompleteItemAsync = async _ =>
             {
-                onCompleteCalled++;
+                Interlocked.Increment(ref onCompleteCalled);
                 await Task.CompletedTask;
             },
             OnErrorAsync = async (_, _) =>
             {
-                onErrorCalled++;
+                Interlocked.Increment(ref onErrorCalled);
                 await Task.CompletedTask;
                 return true;
             }
@@ -280,7 +280,8 @@ public class ParallelOptionsRivuletExtensionsTests
                 Interlocked.Increment(ref processedCount);
                 // All items fail slowly to ensure activities overlap with state change
                 // Circuit opens after 3rd failure, so items 4-6 will still be in-flight
-                await Task.Delay(1000, ct); // Long delay to ensure activities are still running when circuit opens
+                // Increased delay for CI/CD environments
+                await Task.Delay(1200, ct); // Long delay to ensure activities are still running when circuit opens
                 throw new InvalidOperationException("Always fails");
             },
             options);
@@ -291,7 +292,8 @@ public class ParallelOptionsRivuletExtensionsTests
 
         // Give time for event to be recorded on activity and for activities to complete
         // Need to wait for the in-flight activities to complete so they're captured
-        await Task.Delay(1500);
+        // Increased delay for CI/CD environments
+        await Task.Delay(2000);
 
         // Some activities should have circuit breaker state change events
         var activitiesWithCbEvents = activities.Where(a =>

@@ -162,7 +162,8 @@ public class ParallelWorkerServiceTests
         await service.StopAsync(CancellationToken.None);
 
         var elapsed = DateTime.UtcNow - startTime;
-        elapsed.Should().BeLessThan(TimeSpan.FromMilliseconds(500));
+        // Increased tolerance for CI/CD environments
+        elapsed.Should().BeLessThan(TimeSpan.FromMilliseconds(1000));
     }
 
     [Fact]

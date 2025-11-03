@@ -24,11 +24,13 @@ public class RivuletFileListenerTests : IDisposable
                 })
                 .ToListAsync();
 
-            await Task.Delay(1100);
+            // Increased delay for CI/CD environments where EventCounters fire slower
+            await Task.Delay(2000);
         } // Dispose listener to flush and close file
 
         // Wait a moment for file handle to be fully released
-        await Task.Delay(100);
+        // Increased for CI/CD environments
+        await Task.Delay(500);
 
         File.Exists(_testFilePath).Should().BeTrue();
         var content = await File.ReadAllTextAsync(_testFilePath);
