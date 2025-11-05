@@ -11,7 +11,6 @@ internal sealed class MetricsTracker : MetricsTrackerBase
     private readonly MetricsOptions _options;
     private readonly Stopwatch _stopwatch;
     private readonly CancellationTokenSource _samplerCts;
-    private readonly Task _samplerTask;
 
     private long _itemsStarted;
     private long _itemsCompleted;
@@ -29,7 +28,7 @@ internal sealed class MetricsTracker : MetricsTrackerBase
         _stopwatch = Stopwatch.StartNew();
         _samplerCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
-        _samplerTask = Task.Run(SampleMetricsPeriodically, _samplerCts.Token);
+        Task.Run(SampleMetricsPeriodically, _samplerCts.Token);
     }
 
     public override void IncrementItemsStarted()
@@ -126,8 +125,8 @@ internal sealed class MetricsTracker : MetricsTrackerBase
 
         try
         {
-            // OnMetricsSample is guaranteed to be non-null when MetricsTracker is created
-            await _options.OnMetricsSample!(snapshot).ConfigureAwait(false);
+            if (_options.OnMetricsSample != null)
+                await _options.OnMetricsSample(snapshot).ConfigureAwait(false);
         }
         catch
         {
@@ -142,8 +141,12 @@ internal sealed class MetricsTracker : MetricsTrackerBase
 
         _disposed = true;
 
-        // Fire-and-forget final metrics sample to avoid blocking disposal
-        // This prevents potential deadlocks in synchronization contexts (ASP.NET, UI apps)
+        // Cancel the background sampler task
+        // The SampleMetricsPeriodically loop checks _samplerCts.Token.IsCancellationRequested
+        // and will exit naturally. The _disposed flag protects against any race conditions.
+        _samplerCts.Cancel();
+
+        // Fire-and-forget final metrics sample (don't wait to avoid blocking)
         _ = Task.Run(async () =>
         {
             try
@@ -156,14 +159,7 @@ internal sealed class MetricsTracker : MetricsTrackerBase
             }
         }, CancellationToken.None);
 
-        _samplerCts.Cancel();
-
-        // Use ManualResetEvent to avoid blocking Wait() on Task which can cause deadlocks
-        using var waitHandle = new ManualResetEventSlim(false);
-        // ReSharper disable once AccessToDisposedClosure
-        _ = _samplerTask.ContinueWith(_ => waitHandle.Set(), TaskScheduler.Default);
-        waitHandle.Wait(TimeSpan.FromSeconds(1));
-
+        // Dispose resources (don't wait for task completion to avoid thread pool exhaustion)
         _samplerCts.Dispose();
         _stopwatch.Stop();
     }

@@ -8,7 +8,6 @@ internal sealed class ProgressTracker : IDisposable
     private readonly ProgressOptions _options;
     private readonly Stopwatch _stopwatch;
     private readonly CancellationTokenSource _reporterCts;
-    private readonly Task _reporterTask;
 
     private int _itemsStarted;
     private int _itemsCompleted;
@@ -22,7 +21,7 @@ internal sealed class ProgressTracker : IDisposable
         _stopwatch = Stopwatch.StartNew();
         _reporterCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
-        _reporterTask = Task.Run(ReportProgressPeriodically, _reporterCts.Token);
+        Task.Run(ReportProgressPeriodically, _reporterCts.Token);
     }
 
     public void IncrementStarted() => Interlocked.Increment(ref _itemsStarted);
@@ -102,8 +101,12 @@ internal sealed class ProgressTracker : IDisposable
 
         _disposed = true;
 
-        // Fire-and-forget final progress report to avoid blocking disposal
-        // This prevents potential deadlocks in synchronization contexts (ASP.NET, UI apps)
+        // Cancel the background reporter task
+        // The ReportProgressPeriodically loop checks _reporterCts.Token.IsCancellationRequested
+        // and will exit naturally. The _disposed flag protects against any race conditions.
+        _reporterCts.Cancel();
+
+        // Fire-and-forget final progress report (don't wait to avoid blocking)
         _ = Task.Run(async () =>
         {
             try
@@ -116,14 +119,7 @@ internal sealed class ProgressTracker : IDisposable
             }
         }, CancellationToken.None);
 
-        _reporterCts.Cancel();
-
-        // Use ManualResetEvent to avoid blocking Wait() on Task which can cause deadlocks
-        using var waitHandle = new ManualResetEventSlim(false);
-        // ReSharper disable once AccessToDisposedClosure
-        _ = _reporterTask.ContinueWith(_ => waitHandle.Set(), TaskScheduler.Default);
-        waitHandle.Wait(TimeSpan.FromSeconds(1));
-
+        // Dispose resources (don't wait for task completion to avoid thread pool exhaustion)
         _reporterCts.Dispose();
         _stopwatch.Stop();
     }
