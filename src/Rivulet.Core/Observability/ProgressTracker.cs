@@ -8,6 +8,7 @@ internal sealed class ProgressTracker : IDisposable
     private readonly ProgressOptions _options;
     private readonly Stopwatch _stopwatch;
     private readonly CancellationTokenSource _reporterCts;
+    private readonly Task _reporterTask;
 
     private int _itemsStarted;
     private int _itemsCompleted;
@@ -21,7 +22,7 @@ internal sealed class ProgressTracker : IDisposable
         _stopwatch = Stopwatch.StartNew();
         _reporterCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
-        Task.Run(ReportProgressPeriodically, _reporterCts.Token);
+        _reporterTask = Task.Run(ReportProgressPeriodically, _reporterCts.Token);
     }
 
     public void IncrementStarted() => Interlocked.Increment(ref _itemsStarted);
@@ -102,24 +103,21 @@ internal sealed class ProgressTracker : IDisposable
         _disposed = true;
 
         // Cancel the background reporter task
-        // The ReportProgressPeriodically loop checks _reporterCts.Token.IsCancellationRequested
-        // and will exit naturally. The _disposed flag protects against any race conditions.
+        // The ReportProgressPeriodically loop will catch OperationCanceledException
+        // and execute one final progress report before exiting
         _reporterCts.Cancel();
 
-        // Fire-and-forget final progress report (don't wait to avoid blocking)
-        _ = Task.Run(async () =>
+        // Wait briefly for the reporter task to complete its final report
+        // Use a short timeout (100ms) to allow final callback execution without indefinite blocking
+        try
         {
-            try
-            {
-                await ReportProgress().ConfigureAwait(false);
-            }
-            catch
-            {
-                // Swallow exceptions to prevent unobserved task exceptions
-            }
-        }, CancellationToken.None);
+            _reporterTask.Wait(TimeSpan.FromMilliseconds(100));
+        }
+        catch (AggregateException)
+        {
+            // Task was cancelled or faulted, which is expected
+        }
 
-        // Dispose resources (don't wait for task completion to avoid thread pool exhaustion)
         _reporterCts.Dispose();
         _stopwatch.Stop();
     }

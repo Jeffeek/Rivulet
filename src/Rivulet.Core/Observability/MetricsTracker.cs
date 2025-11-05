@@ -11,6 +11,7 @@ internal sealed class MetricsTracker : MetricsTrackerBase
     private readonly MetricsOptions _options;
     private readonly Stopwatch _stopwatch;
     private readonly CancellationTokenSource _samplerCts;
+    private readonly Task _samplerTask;
 
     private long _itemsStarted;
     private long _itemsCompleted;
@@ -28,7 +29,7 @@ internal sealed class MetricsTracker : MetricsTrackerBase
         _stopwatch = Stopwatch.StartNew();
         _samplerCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
-        Task.Run(SampleMetricsPeriodically, _samplerCts.Token);
+        _samplerTask = Task.Run(SampleMetricsPeriodically, _samplerCts.Token);
     }
 
     public override void IncrementItemsStarted()
@@ -142,24 +143,21 @@ internal sealed class MetricsTracker : MetricsTrackerBase
         _disposed = true;
 
         // Cancel the background sampler task
-        // The SampleMetricsPeriodically loop checks _samplerCts.Token.IsCancellationRequested
-        // and will exit naturally. The _disposed flag protects against any race conditions.
+        // The SampleMetricsPeriodically loop will catch OperationCanceledException
+        // and execute one final metrics sample before exiting
         _samplerCts.Cancel();
 
-        // Fire-and-forget final metrics sample (don't wait to avoid blocking)
-        _ = Task.Run(async () =>
+        // Wait briefly for the sampler task to complete its final sample
+        // Use a short timeout (100ms) to allow final callback execution without indefinite blocking
+        try
         {
-            try
-            {
-                await SampleMetrics().ConfigureAwait(false);
-            }
-            catch
-            {
-                // Swallow exceptions to prevent unobserved task exceptions
-            }
-        }, CancellationToken.None);
+            _samplerTask.Wait(TimeSpan.FromMilliseconds(100));
+        }
+        catch (AggregateException)
+        {
+            // Task was cancelled or faulted, which is expected
+        }
 
-        // Dispose resources (don't wait for task completion to avoid thread pool exhaustion)
         _samplerCts.Dispose();
         _stopwatch.Stop();
     }
