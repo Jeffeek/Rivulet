@@ -310,7 +310,8 @@ public class CancellationAndTimeoutTests
             options,
             cts.Token);
 
-        await Task.Delay(100, cts.Token);
+        // Increased delay for CI/CD to allow timeouts to occur before cancellation
+        await Task.Delay(150, cts.Token);
         await cts.CancelAsync();
 
         var results = await task;

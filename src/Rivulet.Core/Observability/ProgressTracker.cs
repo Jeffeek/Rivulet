@@ -37,13 +37,13 @@ internal sealed class ProgressTracker : IDisposable
         {
             while (!_reporterCts.Token.IsCancellationRequested)
             {
-                await Task.Delay(_options.ReportInterval, _reporterCts.Token);
-                await ReportProgress();
+                await Task.Delay(_options.ReportInterval, _reporterCts.Token).ConfigureAwait(false);
+                await ReportProgress().ConfigureAwait(false);
             }
         }
         catch (OperationCanceledException)
         {
-            await ReportProgress();
+            await ReportProgress().ConfigureAwait(false);
         }
     }
 
@@ -87,7 +87,7 @@ internal sealed class ProgressTracker : IDisposable
 
         try
         {
-            await _options.OnProgress(snapshot);
+            await _options.OnProgress(snapshot).ConfigureAwait(false);
         }
         catch
         {
@@ -114,18 +114,15 @@ internal sealed class ProgressTracker : IDisposable
             {
                 // Swallow exceptions to prevent unobserved task exceptions
             }
-        });
+        }, CancellationToken.None);
 
         _reporterCts.Cancel();
 
-        try
-        {
-            _reporterTask.Wait(TimeSpan.FromSeconds(1));
-        }
-        catch
-        {
-            // ignored
-        }
+        // Use ManualResetEvent to avoid blocking Wait() on Task which can cause deadlocks
+        using var waitHandle = new ManualResetEventSlim(false);
+        // ReSharper disable once AccessToDisposedClosure
+        _ = _reporterTask.ContinueWith(_ => waitHandle.Set(), TaskScheduler.Default);
+        waitHandle.Wait(TimeSpan.FromSeconds(1));
 
         _reporterCts.Dispose();
         _stopwatch.Stop();

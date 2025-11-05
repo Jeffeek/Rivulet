@@ -203,7 +203,8 @@ public class ProgressTrackerInternalTests
                     tracker.IncrementCompleted();
             }
 
-            Thread.Sleep(50);
+            // Increased delay for CI/CD environments where timer may fire slower
+            Thread.Sleep(150);
 
             lastSnapshot.Should().NotBeNull();
             lastSnapshot!.ErrorCount.Should().Be(5);

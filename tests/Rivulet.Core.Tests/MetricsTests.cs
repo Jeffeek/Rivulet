@@ -834,10 +834,14 @@ public class MetricsTests
     }
 
     [Fact]
-    public void MetricsTracker_WithoutCallback_DoesNotStartSampler()
+    public void MetricsTrackerBase_WithoutMetrics_UsesNoOpTracker()
     {
-        using var tracker = new MetricsTracker(null, CancellationToken.None);
+        using var tracker = MetricsTrackerBase.Create(null, CancellationToken.None);
 
+        // Should be NoOpMetricsTracker (lightweight, no allocations)
+        tracker.Should().BeOfType<NoOpMetricsTracker>();
+
+        // Should not throw when called
         tracker.IncrementItemsStarted();
         tracker.IncrementItemsCompleted();
         tracker.SetActiveWorkers(8);

@@ -178,13 +178,13 @@ internal sealed class CircuitBreaker
             {
                 try
                 {
-                    await _options.OnStateChange(oldState, CircuitBreakerState.Closed);
+                    await _options.OnStateChange(oldState, CircuitBreakerState.Closed).ConfigureAwait(false);
                 }
                 catch
                 {
                     // ignored
                 }
-            });
+            }, CancellationToken.None);
         }
     }
 
@@ -204,13 +204,13 @@ internal sealed class CircuitBreaker
             {
                 try
                 {
-                    await _options.OnStateChange(oldState, CircuitBreakerState.Open);
+                    await _options.OnStateChange(oldState, CircuitBreakerState.Open).ConfigureAwait(false);
                 }
                 catch
                 {
                     // ignored
                 }
-            });
+            }, CancellationToken.None);
         }
     }
 
@@ -230,13 +230,13 @@ internal sealed class CircuitBreaker
             {
                 try
                 {
-                    await _options.OnStateChange(oldState, CircuitBreakerState.HalfOpen);
+                    await _options.OnStateChange(oldState, CircuitBreakerState.HalfOpen).ConfigureAwait(false);
                 }
                 catch
                 {
                     // ignored
                 }
-            });
+            }, CancellationToken.None);
         }
     }
 

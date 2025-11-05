@@ -25,7 +25,7 @@ public class RivuletFileListenerTests : IDisposable
                 .ToListAsync();
 
             // Increased delay for CI/CD environments where EventCounters fire slower
-            await Task.Delay(2000);
+            await Task.Delay(1800);
         } // Dispose listener to flush and close file
 
         // Wait a moment for file handle to be fully released

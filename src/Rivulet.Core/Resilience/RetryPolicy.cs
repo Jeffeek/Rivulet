@@ -8,7 +8,7 @@ internal static class RetryPolicy
         T item,
         Func<T, CancellationToken, ValueTask<TResult>> func,
         ParallelOptionsRivulet options,
-        MetricsTracker? metricsTracker,
+        MetricsTrackerBase metricsTracker,
         int itemIndex,
         CancellationToken ct)
     {
@@ -29,7 +29,7 @@ internal static class RetryPolicy
             catch (Exception ex) when (attempt < options.MaxRetries && (options.IsTransient?.Invoke(ex) ?? false))
             {
                 attempt++;
-                metricsTracker?.IncrementRetries();
+                metricsTracker.IncrementRetries();
 
                 if (options.OnRetryAsync is not null)
                 {

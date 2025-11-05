@@ -51,7 +51,7 @@ public static class AsyncParallelLinq
             ? new ProgressTracker(totalItems, options.Progress, token)
             : null;
 
-        var metricsTracker = new MetricsTracker(options.Metrics, token);
+        var metricsTracker = MetricsTrackerBase.Create(options.Metrics, token);
         metricsTracker.SetActiveWorkers(options.MaxDegreeOfParallelism);
 
         var tokenBucket = options.RateLimit is not null
@@ -222,7 +222,7 @@ public static class AsyncParallelLinq
             ? new ProgressTracker(null, options.Progress, token)
             : null;
 
-        var metricsTracker = new MetricsTracker(options.Metrics, token);
+        var metricsTracker = MetricsTrackerBase.Create(options.Metrics, token);
 
         var tokenBucket = options.RateLimit is not null
             ? new TokenBucket(options.RateLimit)
@@ -384,7 +384,7 @@ public static class AsyncParallelLinq
             }
         }
 
-        await Task.WhenAll(writer, reader);
+        await Task.WhenAll(writer, reader).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -556,7 +556,7 @@ public static class AsyncParallelLinq
                 yield return batchResult;
             }
 
-            await producer;
+            await producer.ConfigureAwait(false);
         }
         else
         {
