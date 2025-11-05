@@ -199,10 +199,9 @@ internal sealed class AdaptiveConcurrencyController : IDisposable
 
         _disposed = true;
 
-        // Use ManualResetEvent to ensure timer callback completes before disposal
-        using var waitHandle = new ManualResetEvent(false);
-        _samplingTimer.Dispose(waitHandle);
-        waitHandle.WaitOne(TimeSpan.FromSeconds(1));
+        // Dispose timer - callback checks _disposed flag so it's safe to dispose immediately
+        // No need to wait for callback completion as SampleAndAdjust() returns early if disposed
+        _samplingTimer.Dispose();
 
         _semaphore.Dispose();
     }

@@ -24,8 +24,34 @@ for ($i = 1; $i -le $Iterations; $i++) {
     $percent = [math]::Round(($i / $Iterations) * 100, 2)
     Write-Host "Running Test Iteration: $i of $Iterations ($percent%)" -ForegroundColor Gray
 
-    # Run tests and capture output (ignore exit code - we check output instead)
-    $output = dotnet test -c Release 2>&1 | Out-String
+    # Run tests with 5-minute timeout per iteration to catch hangs
+    # IMPORTANT: Pass working directory to job since Start-Job doesn't inherit it
+    $currentDir = Get-Location
+    $job = Start-Job -ScriptBlock {
+        param($dir)
+        Set-Location $dir
+        dotnet test -c Release 2>&1 | Out-String
+    } -ArgumentList $currentDir
+
+    $completed = Wait-Job -Job $job -Timeout 300 # 5 minutes
+
+    if ($null -eq $completed) {
+        Write-Host "[ERROR] Test iteration $i TIMED OUT after 5 minutes - possible deadlock!" -ForegroundColor Red
+        Stop-Job -Job $job
+        Remove-Job -Job $job
+
+        # Record timeout as a failure
+        $timeoutTest = "TIMEOUT_ITERATION_$i"
+        if (-not $results.ContainsKey($timeoutTest)) {
+            $results[$timeoutTest] = 0
+        }
+        $results[$timeoutTest]++
+        continue
+    }
+
+    # Get output from completed job
+    $output = Receive-Job -Job $job
+    Remove-Job -Job $job
 
     # Extract failed test names - xUnit format: "[xUnit.net 00:00:02.19]     TestName [FAIL]"
     # We parse every line looking for [FAIL] markers, no need to check summary first

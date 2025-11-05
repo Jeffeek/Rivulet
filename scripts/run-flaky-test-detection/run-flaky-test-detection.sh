@@ -33,8 +33,23 @@ for ((i = 1; i <= ITERATIONS; i++)); do
     percent=$((($i * 100) / $ITERATIONS))
     echo -ne "\rRunning Test Iteration: $i of $ITERATIONS ($percent%)"
 
-    # Run tests and capture output (ignore exit code - we check output instead)
-    output=$(dotnet test -c Release 2>&1) || true
+    # Run tests with 5-minute timeout per iteration to catch hangs
+    # timeout returns 124 if command times out
+    output=$(timeout 300 dotnet test -c Release 2>&1) || test_exit=$?
+
+    # Check if timeout occurred (exit code 124)
+    if [[ ${test_exit:-0} -eq 124 ]]; then
+        echo ""
+        echo -e "${RED}[ERROR] Test iteration $i TIMED OUT after 5 minutes - possible deadlock!${NC}"
+
+        # Record timeout as a failure
+        timeoutTest="TIMEOUT_ITERATION_$i"
+        if [[ -z "${results[$timeoutTest]}" ]]; then
+            results[$timeoutTest]=0
+        fi
+        ((results[$timeoutTest]++))
+        continue
+    fi
 
     # Extract failed test names - xUnit format: "[xUnit.net 00:00:02.19]     TestName [FAIL]"
     # We parse every line looking for [FAIL] markers, no need to check summary first
