@@ -90,7 +90,6 @@ public class ProgressReportingTests
     public async Task ProgressReporting_TracksErrorCount()
     {
         var snapshots = new ConcurrentBag<ProgressSnapshot>();
-        var allErrorsCaptured = new TaskCompletionSource<bool>();
         var source = Enumerable.Range(1, 20);
 
         var options = new ParallelOptionsRivulet
@@ -103,17 +102,12 @@ public class ProgressReportingTests
                 OnProgress = snapshot =>
                 {
                     snapshots.Add(snapshot);
-                    // Signal when we've captured all expected errors and completions
-                    if (snapshot is { ErrorCount: >= 4, ItemsCompleted: >= 16 })
-                    {
-                        allErrorsCaptured.TrySetResult(true);
-                    }
                     return ValueTask.CompletedTask;
                 }
             }
         };
 
-        var operationTask = source.SelectParallelAsync(
+        var results = await source.SelectParallelAsync(
             async (x, ct) =>
             {
                 await Task.Delay(5, ct);
@@ -123,10 +117,9 @@ public class ProgressReportingTests
             },
             options);
 
-        // Wait for either all errors to be captured or operation to complete (with timeout)
-        await Task.WhenAny(allErrorsCaptured.Task, operationTask, Task.Delay(5000));
-
-        var results = await operationTask;
+        // Wait for progress timer to fire at least once after operation completes
+        // Timer interval is 50ms, so wait 150ms (3x) to ensure final snapshot is captured
+        await Task.Delay(150);
 
         results.Should().HaveCount(16); // 20 - 4 errors
 

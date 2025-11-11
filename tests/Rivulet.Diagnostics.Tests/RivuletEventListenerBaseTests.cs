@@ -28,7 +28,13 @@ public class RivuletEventListenerBaseTests : IDisposable
             })
             .ToListAsync();
 
-        await Task.Delay(1100);
+        // EventSource publishes counters every 1 second
+        // Wait up to 2 seconds polling for counters to handle timing variations in CI/CD
+        var deadline = DateTime.UtcNow.AddMilliseconds(2000);
+        while (_listener.ReceivedCounters.IsEmpty && DateTime.UtcNow < deadline)
+        {
+            await Task.Delay(100);
+        }
 
         _listener.ReceivedCounters.Should().NotBeEmpty();
         _listener.ReceivedCounters.Keys.Should().Contain("items-started");
@@ -49,7 +55,12 @@ public class RivuletEventListenerBaseTests : IDisposable
             })
             .ToListAsync();
 
-        await Task.Delay(1100);
+        // EventSource publishes counters every 1 second - poll with timeout
+        var deadline = DateTime.UtcNow.AddMilliseconds(2000);
+        while (_listener.ReceivedCounters.IsEmpty && DateTime.UtcNow < deadline)
+        {
+            await Task.Delay(100);
+        }
 
         _listener.ReceivedCounters.Should().NotBeEmpty();
         foreach (var counter in _listener.ReceivedCounters)
@@ -73,7 +84,12 @@ public class RivuletEventListenerBaseTests : IDisposable
             })
             .ToListAsync();
 
-        await Task.Delay(1100);
+        // EventSource publishes counters every 1 second - poll with timeout
+        var deadline = DateTime.UtcNow.AddMilliseconds(2000);
+        while (_listener.ReceivedCounters.IsEmpty && DateTime.UtcNow < deadline)
+        {
+            await Task.Delay(100);
+        }
 
         _listener.ReceivedCounters.Should().NotBeEmpty();
         foreach (var counter in _listener.ReceivedCounters)

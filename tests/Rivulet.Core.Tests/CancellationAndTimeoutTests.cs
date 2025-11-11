@@ -304,13 +304,15 @@ public class CancellationAndTimeoutTests
         var task = source.SelectParallelAsync(
             async (x, ct) =>
             {
-                await Task.Delay(100, ct);
+                // Use 200ms delay to ensure items reliably timeout (4x the 50ms timeout)
+                // This prevents rare cases where fast scheduling completes items within timeout
+                await Task.Delay(200, ct);
                 return x * 2;
             },
             options,
             cts.Token);
 
-        // Increased delay for CI/CD to allow timeouts to occur before cancellation
+        // Wait for timeouts to occur before cancellation
         await Task.Delay(150, cts.Token);
         await cts.CancelAsync();
 
