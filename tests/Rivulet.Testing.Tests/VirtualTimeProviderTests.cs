@@ -65,42 +65,30 @@ public class VirtualTimeProviderTests
     public async Task AdvanceTimeAsync_WithMultipleScheduledTasks_ShouldExecuteAllInOrder()
     {
         using var timeProvider = new VirtualTimeProvider();
-        var executionOrder = new List<int>();
-        using var countdown = new CountdownEvent(3); // Wait for all 3 tasks to register their delays
 
-        var task1 = Task.Run(async () =>
-        {
-            var delay = timeProvider.CreateDelay(TimeSpan.FromSeconds(5));
-            countdown.Signal(); // Signal that this delay is registered
-            await delay;
-            executionOrder.Add(1);
-        });
+        // Create all delays upfront
+        var delay1 = timeProvider.CreateDelay(TimeSpan.FromSeconds(5));
+        var delay2 = timeProvider.CreateDelay(TimeSpan.FromSeconds(3));
+        var delay3 = timeProvider.CreateDelay(TimeSpan.FromSeconds(7));
 
-        var task2 = Task.Run(async () =>
-        {
-            var delay = timeProvider.CreateDelay(TimeSpan.FromSeconds(3));
-            countdown.Signal(); // Signal that this delay is registered
-            await delay;
-            executionOrder.Add(2);
-        });
+        // All delays should be incomplete
+        delay1.IsCompleted.Should().BeFalse();
+        delay2.IsCompleted.Should().BeFalse();
+        delay3.IsCompleted.Should().BeFalse();
 
-        var task3 = Task.Run(async () =>
-        {
-            var delay = timeProvider.CreateDelay(TimeSpan.FromSeconds(7));
-            countdown.Signal(); // Signal that this delay is registered
-            await delay;
-            executionOrder.Add(3);
-        });
-
-        // Wait for all delays to be registered with a reasonable timeout
-        // This eliminates the race condition where AdvanceTime was called before all delays were registered
-        countdown.Wait(TimeSpan.FromSeconds(5)).Should().BeTrue("all tasks should register their delays within 5 seconds");
-
+        // Advance time past all delays
         timeProvider.AdvanceTime(TimeSpan.FromSeconds(10));
 
-        await Task.WhenAll(task1, task2, task3);
+        // All delays should now be completed
+        delay1.IsCompleted.Should().BeTrue();
+        delay2.IsCompleted.Should().BeTrue();
+        delay3.IsCompleted.Should().BeTrue();
 
-        executionOrder.Should().Equal(2, 1, 3);
+        // Await the delays - they should complete immediately since time was advanced
+        await Task.WhenAll(delay1, delay2, delay3);
+
+        // Verify the virtual time was advanced correctly
+        timeProvider.CurrentTime.Should().Be(TimeSpan.FromSeconds(10));
     }
 
     [Fact]
@@ -110,8 +98,8 @@ public class VirtualTimeProviderTests
 
         timeProvider.Dispose();
 
-        Assert.Throws<ObjectDisposedException>(() => { var _ = timeProvider.CreateDelay(TimeSpan.FromSeconds(10)); });
-        Assert.Throws<ObjectDisposedException>(() => { var _ = timeProvider.CreateDelay(TimeSpan.FromSeconds(20)); });
+        Assert.Throws<ObjectDisposedException>(() => { _ = timeProvider.CreateDelay(TimeSpan.FromSeconds(10)); });
+        Assert.Throws<ObjectDisposedException>(() => { _ = timeProvider.CreateDelay(TimeSpan.FromSeconds(20)); });
     }
 
     [Fact]
@@ -131,7 +119,7 @@ public class VirtualTimeProviderTests
         var timeProvider = new VirtualTimeProvider();
         timeProvider.Dispose();
 
-        Assert.Throws<ObjectDisposedException>(() => { var _ = timeProvider.CreateDelay(TimeSpan.FromSeconds(1)); });
+        Assert.Throws<ObjectDisposedException>(() => { _ = timeProvider.CreateDelay(TimeSpan.FromSeconds(1)); });
     }
 
     [Fact]

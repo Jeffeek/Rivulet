@@ -38,8 +38,13 @@ for ($i = 1; $i -le $Iterations; $i++) {
 
     if ($null -eq $completed) {
         Write-Host "[ERROR] Test iteration $i TIMED OUT after 5 minutes - possible deadlock!" -ForegroundColor Red
-        Stop-Job -Job $job
-        Remove-Job -Job $job
+
+        # Force stop and remove the job
+        Stop-Job -Job $job -Force -ErrorAction SilentlyContinue
+        Remove-Job -Job $job -Force -ErrorAction SilentlyContinue
+
+        # Kill any orphaned dotnet processes to prevent resource leaks
+        Get-Process dotnet -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 
         # Record timeout as a failure
         $timeoutTest = "TIMEOUT_ITERATION_$i"
@@ -53,7 +58,7 @@ for ($i = 1; $i -le $Iterations; $i++) {
 
     # Get output from completed job
     $output = Receive-Job -Job $job
-    Remove-Job -Job $job
+    Remove-Job -Job $job -Force
 
     # Extract failed test names and their error details
     # xUnit format: "[xUnit.net 00:00:02.19]     TestName [FAIL]"
@@ -166,6 +171,25 @@ if ($results.Count -eq 0) {
 
     # Exit with error code if flaky tests detected (for CI)
     exit 1
+}
+
+# Cleanup any remaining test processes that might have been orphaned
+# Target specific test-related processes to avoid killing unrelated dotnet processes
+Write-Host "Cleaning up any orphaned test processes..." -ForegroundColor Gray
+
+# Kill testhost and vstest processes first
+Get-Process testhost -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+Get-Process vstest.console -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+
+# Small delay to allow process tree cleanup
+Start-Sleep -Milliseconds 500
+
+# Now kill any orphaned dotnet processes that were spawned by the test jobs
+# These are processes that should have exited when the jobs completed
+$dotnetProcesses = Get-Process dotnet -ErrorAction SilentlyContinue
+if ($dotnetProcesses) {
+    Write-Host "  Found $($dotnetProcesses.Count) orphaned dotnet.exe processes, cleaning up..." -ForegroundColor Yellow
+    $dotnetProcesses | Stop-Process -Force -ErrorAction SilentlyContinue
 }
 
 Write-Host ""

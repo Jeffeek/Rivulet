@@ -174,4 +174,21 @@ else
     exit 1
 fi
 
+# Cleanup any remaining test processes that might have been orphaned
+echo -e "${DARKYELLOW}Cleaning up any orphaned test processes...${NC}"
+
+# Kill testhost and vstest processes first
+pkill -9 testhost 2>/dev/null || true
+pkill -9 vstest.console 2>/dev/null || true
+
+# Small delay to allow process tree cleanup
+sleep 0.5
+
+# Count and kill any orphaned dotnet processes
+dotnet_count=$(pgrep -c dotnet 2>/dev/null || echo "0")
+if [[ $dotnet_count -gt 0 ]]; then
+    echo -e "  ${YELLOW}Found $dotnet_count orphaned dotnet processes, cleaning up...${NC}"
+    pkill -9 dotnet 2>/dev/null || true
+fi
+
 echo ""
