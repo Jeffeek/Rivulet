@@ -291,7 +291,8 @@ public class ParallelOptionsRivuletExtensionsTests
 
         // Give time for event to be recorded on activity and for activities to complete
         // Need to wait for the in-flight activities to complete so they're captured
-        await Task.Delay(1500);
+        // Activities stop asynchronously after the operation completes
+        await Task.Delay(2000);
 
         // Some activities should have circuit breaker state change events
         var activitiesWithCbEvents = activities.Where(a =>

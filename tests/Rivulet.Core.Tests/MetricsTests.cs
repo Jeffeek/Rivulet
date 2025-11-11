@@ -581,17 +581,18 @@ public class MetricsTests
             options);
 
         // Empty source completes instantly, but we need to give the metrics timer time to fire
-        // Poll for up to 500ms waiting for at least one snapshot
-        var deadline = DateTime.UtcNow.AddMilliseconds(500);
+        // Poll for up to 1000ms waiting for at least one snapshot (CI/CD can be slow)
+        // Sample interval is 5ms, so waiting 1000ms gives plenty of time (200 cycles)
+        var deadline = DateTime.UtcNow.AddMilliseconds(1000);
         while (capturedSnapshot == null && DateTime.UtcNow < deadline)
         {
-            await Task.Delay(10);
+            await Task.Delay(20);
         }
 
         var results = await operationTask;
 
         results.Should().BeEmpty();
-        capturedSnapshot.Should().NotBeNull("metrics timer should fire at least once within 500ms");
+        capturedSnapshot.Should().NotBeNull("metrics timer should fire at least once within 1000ms");
         capturedSnapshot!.ItemsStarted.Should().Be(0);
         capturedSnapshot.ItemsCompleted.Should().Be(0);
     }
@@ -816,7 +817,9 @@ public class MetricsTests
         tracker.SetQueueDepth(42);
         tracker.IncrementItemsStarted();
 
-        await Task.Delay(100);
+        // Wait for metrics timer to fire - sample interval is 50ms
+        // Using 200ms (4x interval) for reliability in CI/CD
+        await Task.Delay(200);
 
         capturedSnapshot.Should().NotBeNull();
         capturedSnapshot!.QueueDepth.Should().Be(42);
@@ -1069,7 +1072,9 @@ public class MetricsTests
             tracker.IncrementItemsStarted();
             tracker.IncrementItemsCompleted();
 
-            await Task.Delay(100);
+            // Wait for metrics timer to fire - sample interval is 20ms
+            // Using 150ms (7-8x interval) for reliability in CI/CD
+            await Task.Delay(150);
 
             // Should not crash despite exception
             callbackCount.Should().BeGreaterThan(0);
