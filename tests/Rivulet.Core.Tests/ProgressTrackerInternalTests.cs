@@ -38,7 +38,7 @@ public class ProgressTrackerInternalTests
     }
 
     [Fact]
-    public void ProgressTracker_WithNullCallback_DoesNotReport()
+    public async Task ProgressTracker_WithNullCallback_DoesNotReport()
     {
         var options = new ProgressOptions
         {
@@ -52,7 +52,7 @@ public class ProgressTrackerInternalTests
         tracker.IncrementStarted();
         tracker.IncrementCompleted();
 
-        Thread.Sleep(50);
+        await Task.Delay(50, CancellationToken.None);
 
         var act = () => tracker.Dispose();
         act.Should().NotThrow();
@@ -140,7 +140,7 @@ public class ProgressTrackerInternalTests
     }
 
     [Fact]
-    public void ProgressTracker_StreamingMode_NullTotalItems_CalculatesCorrectly()
+    public async Task ProgressTracker_StreamingMode_NullTotalItems_CalculatesCorrectly()
     {
         ProgressSnapshot? lastSnapshot = null;
         var options = new ProgressOptions
@@ -166,7 +166,7 @@ public class ProgressTrackerInternalTests
 
             // Increased delay for CI/CD environments where timer may fire slower
             // Consistent with other tests in this file (15x the report interval)
-            Thread.Sleep(150);
+            await Task.Delay(150, CancellationToken.None);
 
             lastSnapshot.Should().NotBeNull();
             lastSnapshot!.TotalItems.Should().BeNull();
@@ -181,7 +181,7 @@ public class ProgressTrackerInternalTests
     }
 
     [Fact]
-    public void ProgressTracker_ErrorCounting_TracksCorrectly()
+    public async Task ProgressTracker_ErrorCounting_TracksCorrectly()
     {
         ProgressSnapshot? lastSnapshot = null;
         var options = new ProgressOptions
@@ -199,6 +199,10 @@ public class ProgressTrackerInternalTests
 
         try
         {
+            // Small delay before starting to allow timer to initialize
+            // This ensures the background reporter task has started
+            await Task.Delay(5, CancellationToken.None);
+
             for (var i = 0; i < 15; i++)
             {
                 tracker.IncrementStarted();
@@ -206,10 +210,16 @@ public class ProgressTrackerInternalTests
                     tracker.IncrementErrors();
                 else
                     tracker.IncrementCompleted();
+
+                // Small delay every few iterations to allow timer to fire
+                // This simulates realistic async operation timing
+                if (i % 5 == 4)
+                    await Task.Delay(15, CancellationToken.None);
             }
 
-            // Increased delay for CI/CD environments where timer may fire slower
-            Thread.Sleep(150);
+            // Wait for final timer tick to capture all state
+            // On Windows, timer resolution can be ~15ms, so wait longer
+            await Task.Delay(50, CancellationToken.None);
 
             lastSnapshot.Should().NotBeNull();
             lastSnapshot!.ErrorCount.Should().Be(5);

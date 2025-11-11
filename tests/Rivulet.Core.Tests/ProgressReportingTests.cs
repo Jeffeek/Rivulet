@@ -96,9 +96,10 @@ public class ProgressReportingTests
         {
             MaxRetries = 0,
             ErrorMode = ErrorMode.BestEffort,
+            MaxDegreeOfParallelism = 4, // Limit parallelism to slow down execution
             Progress = new ProgressOptions
             {
-                ReportInterval = TimeSpan.FromMilliseconds(50),
+                ReportInterval = TimeSpan.FromMilliseconds(30), // Faster reporting for better capture
                 OnProgress = snapshot =>
                 {
                     snapshots.Add(snapshot);
@@ -110,21 +111,20 @@ public class ProgressReportingTests
         var results = await source.SelectParallelAsync(
             async (x, ct) =>
             {
-                await Task.Delay(5, ct);
+                // Increased delay to ensure operation spans multiple timer intervals
+                // This gives the timer adequate time to capture all error states
+                await Task.Delay(15, ct);
                 if (x % 5 == 0)
                     throw new InvalidOperationException($"Error on {x}");
                 return x * 2;
             },
             options);
 
-        // Wait for progress timer to fire to capture final state
-        // Timer interval is 50ms, wait 500ms (10x) to ensure all error snapshots are captured
-        // This accounts for CI/CD timing variations where last error might occur just after timer fires
-        // The extended wait ensures at least one more timer tick occurs after operation completion
-        await Task.Delay(500);
-
         results.Should().HaveCount(16); // 20 - 4 errors
 
+        // The operation should take ~75-100ms (20 items * 15ms / 4 parallelism)
+        // With 30ms report interval, we should get 2-3 reports during execution
+        // The final report on Dispose() should capture all 4 errors
         var maxErrors = snapshots.Max(s => s.ErrorCount);
         var maxCompleted = snapshots.Max(s => s.ItemsCompleted);
 
