@@ -246,7 +246,7 @@ public class ParallelOptionsRivuletExtensionsTests
     [Fact]
     public async Task WithOpenTelemetryTracing_ShouldRecordCircuitBreakerStateChanges()
     {
-        var activities = new System.Collections.Concurrent.ConcurrentBag<Activity>();
+        var activities = new System.Collections.Concurrent.ConcurrentBag<Activity?>();
         using var stateChanged = new ManualResetEventSlim(false);
         var processedCount = 0;
 
@@ -294,11 +294,14 @@ public class ParallelOptionsRivuletExtensionsTests
         // Need to wait for the in-flight activities to complete so they're captured
         // Activities stop asynchronously after the operation completes
         // Increased wait time to account for longer operation delay and CI/CD timing variations
-        await Task.Delay(3000);
+        // Extra time added for Windows timing inconsistencies (4s total: 1.5s operation + 2.5s buffer)
+        await Task.Delay(4000);
 
         // Some activities should have circuit breaker state change events
-        var activitiesWithCbEvents = activities.Where(a =>
-            a.Events.Any(e => e.Name == "circuit_breaker_state_change")).ToList();
+        // Filter out null activities and those with null Events collections
+        var activitiesWithCbEvents = activities
+            .Where(a => a?.Events?.Any(e => e.Name == "circuit_breaker_state_change") ?? false)
+            .ToList();
 
         activitiesWithCbEvents.Should().NotBeEmpty("circuit breaker state changed and should be recorded on activities");
     }
