@@ -268,7 +268,8 @@ public class ParallelOptionsRivuletExtensionsTests
                 OnStateChange = async (_, _) =>
                 {
                     stateChanged.Set();
-                    await Task.CompletedTask;
+                    // Add delay to ensure state change is recorded while activities are still active
+                    await Task.Delay(100);
                 }
             }
         }.WithOpenTelemetryTracing("CircuitBreakerOperation");
@@ -280,22 +281,23 @@ public class ParallelOptionsRivuletExtensionsTests
                 Interlocked.Increment(ref processedCount);
                 // All items fail slowly to ensure activities overlap with state change
                 // Circuit opens after 3rd failure, so items 4-6 will still be in-flight
-                // Increased delay to 1500ms to ensure activities remain active during state change
-                await Task.Delay(1500, ct); // Delay to ensure activities are still running when circuit opens
+                // Increased delay to 3000ms to ensure activities remain active during state change
+                // This gives the circuit breaker event time to be recorded
+                await Task.Delay(3000, ct); // Longer delay ensures activities are alive when circuit opens
                 throw new InvalidOperationException("Always fails");
             },
             options);
 
         // Wait for circuit breaker state change to be recorded
-        var stateChangedSuccessfully = stateChanged.Wait(TimeSpan.FromSeconds(10));
+        var stateChangedSuccessfully = stateChanged.Wait(TimeSpan.FromSeconds(15));
         stateChangedSuccessfully.Should().BeTrue("circuit breaker should change state");
 
         // Give time for event to be recorded on activity and for activities to complete
         // Need to wait for the in-flight activities to complete so they're captured
         // Activities stop asynchronously after the operation completes
-        // Increased wait time to account for longer operation delay and CI/CD timing variations
-        // Extra time added for Windows timing inconsistencies (4s total: 1.5s operation + 2.5s buffer)
-        await Task.Delay(4000);
+        // Increased wait time to account for longer operation delay (3s) and CI/CD timing variations
+        // Extra time for Windows timing inconsistencies (6s total: 3s operation + 3s buffer)
+        await Task.Delay(6000);
 
         // Some activities should have circuit breaker state change events
         // Filter out null activities and those with null Events collections

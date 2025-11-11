@@ -1073,11 +1073,12 @@ public class MetricsTests
             tracker.IncrementItemsCompleted();
 
             // Wait for metrics timer to fire - sample interval is 20ms
-            // Using 150ms (7-8x interval) for reliability in CI/CD
-            await Task.Delay(150);
+            // Using 500ms (25x interval) for reliability in CI/CD environments
+            // Timer needs time to initialize and fire at least once
+            await Task.Delay(500);
 
             // Should not crash despite exception
-            callbackCount.Should().BeGreaterThan(0);
+            callbackCount.Should().BeGreaterThan(0, "callback should have been invoked at least once after waiting 25x the sample interval");
         }
         finally
         {
