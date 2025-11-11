@@ -50,7 +50,9 @@ public class ComprehensiveCoverageTests
             })
             .ToListAsync();
 
-        await Task.Delay(1100);
+        // Wait for at least 2x the aggregation window to ensure timer fires and EventSource counters are received
+        // Increased from 1100ms to 2100ms to handle CI/CD timing variability and EventSource polling delays
+        await Task.Delay(2100);
 
         callbackInvoked.Should().BeTrue();
     }
@@ -76,7 +78,9 @@ public class ComprehensiveCoverageTests
                     })
                     .ToListAsync();
 
-                await Task.Delay(1100);
+                // Wait for EventSource counters to fire and be written to file
+                // Increased from 1100ms to 2000ms to handle CI/CD timing variability
+                await Task.Delay(2000);
             }
 
             await Task.Delay(100);

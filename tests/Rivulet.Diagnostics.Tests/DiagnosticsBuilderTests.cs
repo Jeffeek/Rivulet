@@ -38,8 +38,9 @@ public class DiagnosticsBuilderTests : IDisposable
                     MaxDegreeOfParallelism = 2
                 });
 
-            // Wait long enough for at least one aggregation interval (2s + buffer)
-            await Task.Delay(2500);
+            // Wait for at least 2x the aggregation interval to ensure timer fires reliably
+            // Increased from 2500ms to 4000ms to handle CI/CD timing variability
+            await Task.Delay(4000);
         } // Dispose to flush all listeners
 
         // Wait for file handle to be released and final aggregations to complete

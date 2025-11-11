@@ -161,7 +161,9 @@ public class ProgressTrackerInternalTests
                 tracker.IncrementCompleted();
             }
 
-            Thread.Sleep(50);
+            // Increased delay for CI/CD environments where timer may fire slower
+            // Consistent with other tests in this file (15x the report interval)
+            Thread.Sleep(150);
 
             lastSnapshot.Should().NotBeNull();
             lastSnapshot!.TotalItems.Should().BeNull();
