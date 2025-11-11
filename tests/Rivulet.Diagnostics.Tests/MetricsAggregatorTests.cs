@@ -24,9 +24,10 @@ namespace Rivulet.Diagnostics.Tests
                 })
                 .ToListAsync();
 
-            // Wait for EventCounters to fire and aggregations to happen
-            // Increased delay for CI/CD environments where EventCounters may fire slower
-            await Task.Delay(1800);
+            // Wait for EventCounters to fire (1s default interval) and aggregations to happen (500ms window)
+            // Increased from 1800ms to 2500ms to ensure reliable timing in CI/CD environments
+            // Total time needed: operation completion (~200ms) + EventSource polling (1s) + aggregation (500ms) + buffer
+            await Task.Delay(2500);
 
             aggregatedMetrics.Should().NotBeEmpty();
             var lastAggregation = aggregatedMetrics.Last();

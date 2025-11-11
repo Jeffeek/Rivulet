@@ -8,6 +8,7 @@ $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location (Join-Path $ScriptDir "../..")
 
 $results = @{}
+$errorDetails = @{} # Store first error occurrence for each test
 
 Write-Host "Running tests $Iterations times to detect flaky tests..." -ForegroundColor Cyan
 Write-Host ""
@@ -44,6 +45,7 @@ for ($i = 1; $i -le $Iterations; $i++) {
         $timeoutTest = "TIMEOUT_ITERATION_$i"
         if (-not $results.ContainsKey($timeoutTest)) {
             $results[$timeoutTest] = 0
+            $errorDetails[$timeoutTest] = "Test execution timed out after 5 minutes - possible deadlock or hang"
         }
         $results[$timeoutTest]++
         continue
@@ -53,18 +55,66 @@ for ($i = 1; $i -le $Iterations; $i++) {
     $output = Receive-Job -Job $job
     Remove-Job -Job $job
 
-    # Extract failed test names - xUnit format: "[xUnit.net 00:00:02.19]     TestName [FAIL]"
-    # We parse every line looking for [FAIL] markers, no need to check summary first
-    $failedTests = $output | Select-String -Pattern "\[xUnit\.net.*?\]\s+(.+?)\s+\[FAIL\]" -AllMatches
+    # Extract failed test names and their error details
+    # xUnit format: "[xUnit.net 00:00:02.19]     TestName [FAIL]"
+    # Followed by error message and stack trace on subsequent lines
+    $lines = $output -split "`n"
 
-    foreach ($match in $failedTests.Matches) {
-        $testName = $match.Groups[1].Value.Trim()
+    for ($lineIdx = 0; $lineIdx -lt $lines.Length; $lineIdx++) {
+        $line = $lines[$lineIdx]
 
-        if (-not $results.ContainsKey($testName)) {
-            $results[$testName] = 0
+        # Check if this line contains a test failure
+        if ($line -match "\[xUnit\.net.*?\]\s+(.+?)\s+\[FAIL\]") {
+            $testName = $matches[1].Trim()
+
+            # Track failure count
+            if (-not $results.ContainsKey($testName)) {
+                $results[$testName] = 0
+            }
+            $results[$testName]++
+
+            # Capture error details if this is the first occurrence
+            if (-not $errorDetails.ContainsKey($testName)) {
+                $errorLines = @()
+
+                # Capture subsequent lines until we hit another test result or end
+                $lineIdx++
+                while ($lineIdx -lt $lines.Length) {
+                    $nextLine = $lines[$lineIdx]
+
+                    # Stop if we hit another test result marker
+                    if ($nextLine -match "\[xUnit\.net.*?\]\s+.+?\s+\[(FAIL|PASS|SKIP)\]") {
+                        $lineIdx-- # Step back so outer loop processes this line
+                        break
+                    }
+
+                    # Stop if we hit the summary section
+                    if ($nextLine -match "^(Failed!|Passed!|\s*Total tests:)") {
+                        break
+                    }
+
+                    # Capture meaningful error lines (skip empty xUnit prefix lines)
+                    $trimmedLine = $nextLine -replace "^\[xUnit\.net.*?\]\s*", ""
+                    if ($trimmedLine.Trim()) {
+                        $errorLines += $trimmedLine
+                    }
+
+                    $lineIdx++
+
+                    # Limit error capture to 30 lines to avoid excessive output
+                    if ($errorLines.Count -ge 30) {
+                        $errorLines += "  ... (error output truncated)"
+                        break
+                    }
+                }
+
+                if ($errorLines.Count -gt 0) {
+                    $errorDetails[$testName] = $errorLines -join "`n"
+                } else {
+                    $errorDetails[$testName] = "(No error details captured)"
+                }
+            }
         }
-
-        $results[$testName]++
     }
 
     # Small delay to avoid resource contention
@@ -94,6 +144,16 @@ if ($results.Count -eq 0) {
         Write-Host "Test: $testName" -ForegroundColor Cyan
         Write-Host ('  Failures: {0} / {1} ({2}%)' -f $failCount, $Iterations, $failureRate) -ForegroundColor Red
         Write-Host ('  Passes:   {0} / {1}' -f $passCount, $Iterations) -ForegroundColor Green
+
+        # Display error details if available
+        if ($errorDetails.ContainsKey($testName)) {
+            Write-Host ""
+            Write-Host "  Error Details (from first failure):" -ForegroundColor Yellow
+            $errorText = $errorDetails[$testName]
+            foreach ($errorLine in ($errorText -split "`n")) {
+                Write-Host "    $errorLine" -ForegroundColor DarkYellow
+            }
+        }
 
         Write-Host ""
     }

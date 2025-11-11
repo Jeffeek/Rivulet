@@ -66,26 +66,35 @@ public class VirtualTimeProviderTests
     {
         using var timeProvider = new VirtualTimeProvider();
         var executionOrder = new List<int>();
+        using var countdown = new CountdownEvent(3); // Wait for all 3 tasks to register their delays
 
         var task1 = Task.Run(async () =>
         {
-            await timeProvider.CreateDelay(TimeSpan.FromSeconds(5));
+            var delay = timeProvider.CreateDelay(TimeSpan.FromSeconds(5));
+            countdown.Signal(); // Signal that this delay is registered
+            await delay;
             executionOrder.Add(1);
         });
 
         var task2 = Task.Run(async () =>
         {
-            await timeProvider.CreateDelay(TimeSpan.FromSeconds(3));
+            var delay = timeProvider.CreateDelay(TimeSpan.FromSeconds(3));
+            countdown.Signal(); // Signal that this delay is registered
+            await delay;
             executionOrder.Add(2);
         });
 
         var task3 = Task.Run(async () =>
         {
-            await timeProvider.CreateDelay(TimeSpan.FromSeconds(7));
+            var delay = timeProvider.CreateDelay(TimeSpan.FromSeconds(7));
+            countdown.Signal(); // Signal that this delay is registered
+            await delay;
             executionOrder.Add(3);
         });
 
-        await Task.Delay(50);
+        // Wait for all delays to be registered with a reasonable timeout
+        // This eliminates the race condition where AdvanceTime was called before all delays were registered
+        countdown.Wait(TimeSpan.FromSeconds(5)).Should().BeTrue("all tasks should register their delays within 5 seconds");
 
         timeProvider.AdvanceTime(TimeSpan.FromSeconds(10));
 

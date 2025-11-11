@@ -8,6 +8,7 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
+DARKYELLOW='\033[0;33m'
 NC='\033[0m' # No Color
 
 # Navigate to repository root (2 levels up from scripts/run-flaky-test-detection/)
@@ -18,6 +19,7 @@ cd "$SCRIPT_DIR/../.."
 ITERATIONS="${1:-20}"
 
 declare -A results
+declare -A errorDetails # Store first error occurrence for each test
 
 echo -e "${CYAN}Running tests $ITERATIONS times to detect flaky tests...${NC}"
 echo ""
@@ -46,25 +48,78 @@ for ((i = 1; i <= ITERATIONS; i++)); do
         timeoutTest="TIMEOUT_ITERATION_$i"
         if [[ -z "${results[$timeoutTest]}" ]]; then
             results[$timeoutTest]=0
+            errorDetails[$timeoutTest]="Test execution timed out after 5 minutes - possible deadlock or hang"
         fi
         ((results[$timeoutTest]++))
         continue
     fi
 
-    # Extract failed test names - xUnit format: "[xUnit.net 00:00:02.19]     TestName [FAIL]"
-    # We parse every line looking for [FAIL] markers, no need to check summary first
-    while IFS= read -r line; do
+    # Extract failed test names and their error details
+    # xUnit format: "[xUnit.net 00:00:02.19]     TestName [FAIL]"
+    # Followed by error message and stack trace on subsequent lines
+    IFS=$'\n' read -d '' -r -a lines <<< "$output" || true
+
+    lineIdx=0
+    while [[ $lineIdx -lt ${#lines[@]} ]]; do
+        line="${lines[$lineIdx]}"
+
+        # Check if this line contains a test failure
         if [[ $line =~ \[xUnit\.net.*\][[:space:]]+(.+)[[:space:]]+\[FAIL\] ]]; then
             testName="${BASH_REMATCH[1]}"
             testName=$(echo "$testName" | xargs) # Trim whitespace
 
+            # Track failure count
             if [[ -z "${results[$testName]}" ]]; then
                 results[$testName]=0
             fi
-
             ((results[$testName]++))
+
+            # Capture error details if this is the first occurrence
+            if [[ -z "${errorDetails[$testName]}" ]]; then
+                errorLines=()
+
+                # Capture subsequent lines until we hit another test result or end
+                ((lineIdx++))
+                errorLineCount=0
+                while [[ $lineIdx -lt ${#lines[@]} && $errorLineCount -lt 30 ]]; do
+                    nextLine="${lines[$lineIdx]}"
+
+                    # Stop if we hit another test result marker
+                    if [[ $nextLine =~ \[xUnit\.net.*\][[:space:]]+.+[[:space:]]+\[(FAIL|PASS|SKIP)\] ]]; then
+                        ((lineIdx--)) # Step back so outer loop processes this line
+                        break
+                    fi
+
+                    # Stop if we hit the summary section
+                    if [[ $nextLine =~ ^(Failed!|Passed!|[[:space:]]*Total\ tests:) ]]; then
+                        break
+                    fi
+
+                    # Capture meaningful error lines (remove xUnit prefix)
+                    trimmedLine=$(echo "$nextLine" | sed -E 's/^\[xUnit\.net[^]]*\][[:space:]]*//')
+                    if [[ -n "${trimmedLine// /}" ]]; then
+                        errorLines+=("$trimmedLine")
+                        ((errorLineCount++))
+                    fi
+
+                    ((lineIdx++))
+                done
+
+                if [[ $errorLineCount -ge 30 ]]; then
+                    errorLines+=("  ... (error output truncated)")
+                fi
+
+                if [[ ${#errorLines[@]} -gt 0 ]]; then
+                    # Join array with newlines
+                    errorDetails[$testName]=$(IFS=$'\n'; echo "${errorLines[*]}")
+                else
+                    errorDetails[$testName]="(No error details captured)"
+                fi
+            fi
         fi
-    done <<< "$output"
+
+        ((lineIdx++))
+    done
 
     # Small delay to avoid resource contention
     sleep 0.1
@@ -96,6 +151,16 @@ else
         echo -e "${CYAN}Test: $testName${NC}"
         echo -e "  Failures: ${RED}$failCount / $ITERATIONS ($failureRate%)${NC}"
         echo -e "  Passes:   ${GREEN}$passCount / $ITERATIONS${NC}"
+
+        # Display error details if available
+        if [[ -n "${errorDetails[$testName]}" ]]; then
+            echo ""
+            echo -e "  ${YELLOW}Error Details (from first failure):${NC}"
+            while IFS= read -r errorLine; do
+                echo -e "    ${DARKYELLOW}$errorLine${NC}"
+            done <<< "${errorDetails[$testName]}"
+        fi
+
         echo ""
     done
 

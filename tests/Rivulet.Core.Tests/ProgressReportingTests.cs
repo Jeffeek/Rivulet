@@ -117,6 +117,11 @@ public class ProgressReportingTests
             },
             options);
 
+        // Wait for progress timer to fire and capture the final state
+        // The timer fires at 50ms intervals, so wait 150ms (3x) to ensure the final report is captured
+        // Without this, the test might assert before the timer captures the completed state
+        await Task.Delay(150);
+
         results.Should().HaveCount(16); // 20 - 4 errors
 
         var maxErrors = snapshots.Max(s => s.ErrorCount);

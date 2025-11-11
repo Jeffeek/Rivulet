@@ -432,13 +432,17 @@ public class MetricsTests
             }
         };
 
-        var task1 = source1.SelectParallelAsync(async (x, ct) => { await Task.Delay(10, ct); return x * 2; }, options1);
-        var task2 = source2.SelectParallelAsync(async (x, ct) => { await Task.Delay(10, ct); return x * 3; }, options2);
+        // Increased delay from 10ms to 20ms to ensure operations run long enough for metrics to be sampled
+        // This prevents the race where operations complete before the metrics timer fires
+        var task1 = source1.SelectParallelAsync(async (x, ct) => { await Task.Delay(20, ct); return x * 2; }, options1);
+        var task2 = source2.SelectParallelAsync(async (x, ct) => { await Task.Delay(20, ct); return x * 3; }, options2);
 
         var results1 = await task1;
         var results2 = await task2;
 
-        await Task.Delay(100);
+        // Increased from 100ms to 250ms (5x the sample interval) to ensure final metrics are captured
+        // Operations complete in ~100-200ms, then wait additional time for metrics timer to fire and capture final state
+        await Task.Delay(250);
 
         results1.Should().HaveCount(20);
         results2.Should().HaveCount(30);
