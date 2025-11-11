@@ -440,9 +440,10 @@ public class MetricsTests
         var results1 = await task1;
         var results2 = await task2;
 
-        // Increased from 100ms to 250ms (5x the sample interval) to ensure final metrics are captured
-        // Operations complete in ~100-200ms, then wait additional time for metrics timer to fire and capture final state
-        await Task.Delay(250);
+        // Wait for metrics timers to fire and capture final state
+        // Sample interval is 50ms, need to ensure at least one full cycle after operations complete
+        // Using 300ms (6x sample interval) for reliability in CI/CD with varying timing
+        await Task.Delay(300);
 
         results1.Should().HaveCount(20);
         results2.Should().HaveCount(30);

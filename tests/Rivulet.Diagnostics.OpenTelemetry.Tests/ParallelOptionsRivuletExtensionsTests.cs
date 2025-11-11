@@ -341,6 +341,10 @@ public class ParallelOptionsRivuletExtensionsTests
 
         results.Should().HaveCount(50);
 
+        // Wait for all activities to be stopped and events to be recorded
+        // Activities are stopped asynchronously after the operation completes
+        await Task.Delay(100);
+
         // Adaptive concurrency integration is verified:
         // 1. Activities are created and tracked
         activities.Should().NotBeEmpty();
