@@ -118,9 +118,10 @@ public class ProgressReportingTests
             options);
 
         // Wait for progress timer to fire to capture final state
-        // Timer interval is 50ms, wait 250ms (5x) to ensure all error snapshots are captured
+        // Timer interval is 50ms, wait 500ms (10x) to ensure all error snapshots are captured
         // This accounts for CI/CD timing variations where last error might occur just after timer fires
-        await Task.Delay(250);
+        // The extended wait ensures at least one more timer tick occurs after operation completion
+        await Task.Delay(500);
 
         results.Should().HaveCount(16); // 20 - 4 errors
 
