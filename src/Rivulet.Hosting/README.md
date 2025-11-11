@@ -49,24 +49,26 @@ app.Run();
 {
   "Rivulet": {
     "MaxDegreeOfParallelism": 10,
-    "RetryPolicy": {
-      "MaxRetries": 3,
-      "InitialDelay": "00:00:01",
-      "BackoffType": "Exponential"
-    },
+    "MaxRetries": 3,
+    "BaseDelay": "00:00:00.100",
+    "BackoffStrategy": "ExponentialJitter",
+    "PerItemTimeout": "00:00:30",
+    "ErrorMode": "CollectAndContinue",
     "CircuitBreaker": {
       "FailureThreshold": 5,
-      "SamplingDuration": "00:01:00",
-      "BreakDuration": "00:00:30"
+      "SuccessThreshold": 2,
+      "OpenTimeout": "00:00:30",
+      "SamplingDuration": "00:01:00"
     },
     "RateLimit": {
-      "MaxCallsPerSecond": 100
+      "TokensPerSecond": 100,
+      "BurstCapacity": 200
     },
     "AdaptiveConcurrency": {
-      "Enabled": true,
       "MinConcurrency": 1,
       "MaxConcurrency": 100,
-      "TargetLatency": "00:00:00.500"
+      "TargetLatency": "00:00:00.100",
+      "MinSuccessRate": 0.95
     }
   }
 }
@@ -86,11 +88,18 @@ builder.Services.AddRivulet("LowLatency", builder.Configuration);
   "Rivulet": {
     "HighThroughput": {
       "MaxDegreeOfParallelism": 50,
-      "RateLimit": { "MaxCallsPerSecond": 500 }
+      "RateLimit": {
+        "TokensPerSecond": 500,
+        "BurstCapacity": 1000
+      }
     },
     "LowLatency": {
       "MaxDegreeOfParallelism": 5,
-      "AdaptiveConcurrency": { "Enabled": true, "TargetLatency": "00:00:00.100" }
+      "AdaptiveConcurrency": {
+        "MinConcurrency": 1,
+        "MaxConcurrency": 10,
+        "TargetLatency": "00:00:00.100"
+      }
     }
   }
 }
@@ -220,53 +229,32 @@ builder.Services.AddHostedService<ImageProcessingWorker>();
 Monitor your parallel operations with built-in health checks:
 
 ```csharp
-using Rivulet.Hosting.HealthChecks;
+using Rivulet.Diagnostics;
 
-// Register health checks
+// Register PrometheusExporter and health checks
+builder.Services.AddSingleton<PrometheusExporter>();
 builder.Services.AddHealthChecks()
-    .AddCheck<RivuletOperationHealthCheck>(
-        "rivulet_operations",
-        tags: new[] { "ready", "rivulet" });
+    .AddCheck<RivuletHealthCheck>(
+        "rivulet",
+        tags: new[] { "ready" });
 
 // Configure health check options
-builder.Services.AddSingleton(new RivuletOperationHealthCheckOptions
+builder.Services.Configure<RivuletHealthCheckOptions>(options =>
 {
-    StalledThreshold = TimeSpan.FromMinutes(5),
-    UnhealthyFailureThreshold = 10
+    options.ErrorRateThreshold = 0.1;      // 10% error rate triggers degraded status
+    options.FailureCountThreshold = 100;   // 100 failures triggers unhealthy status
 });
 
-// Use in your service
-public class MonitoredWorkerService : ParallelWorkerService<Job, Result>
-{
-    private readonly RivuletOperationHealthCheck _healthCheck;
-
-    public MonitoredWorkerService(
-        ILogger<MonitoredWorkerService> logger,
-        RivuletOperationHealthCheck healthCheck,
-        IOptions<ParallelOptionsRivulet> options)
-        : base(logger, options.Value)
-    {
-        _healthCheck = healthCheck;
-    }
-
-    protected override async Task<Result> ProcessAsync(Job job, CancellationToken cancellationToken)
-    {
-        try
-        {
-            var result = await ProcessJobAsync(job, cancellationToken);
-            _healthCheck.RecordSuccess();
-            return result;
-        }
-        catch
-        {
-            _healthCheck.RecordFailure();
-            throw;
-        }
-    }
-}
+// Health check automatically monitors metrics from Rivulet operations
+// No manual recording needed - metrics are captured via EventCounters
 
 // Expose health check endpoint
 app.MapHealthChecks("/health");
+
+// Example output:
+// Healthy: "Rivulet operations healthy: 950/1000 completed, 50 failures"
+// Degraded: "Error rate (15.00%) exceeds threshold (10.00%)"
+// Unhealthy: "Failure count (150) exceeds threshold (100)"
 ```
 
 ## ASP.NET Core Integration
@@ -462,9 +450,8 @@ Use different configurations for different environments:
 {
   "Rivulet": {
     "MaxDegreeOfParallelism": 10,
-    "RetryPolicy": {
-      "MaxRetries": 3
-    }
+    "MaxRetries": 3,
+    "BaseDelay": "00:00:00.100"
   }
 }
 
@@ -472,11 +459,11 @@ Use different configurations for different environments:
 {
   "Rivulet": {
     "MaxDegreeOfParallelism": 50,
-    "RetryPolicy": {
-      "MaxRetries": 5
-    },
+    "MaxRetries": 5,
+    "BaseDelay": "00:00:00.100",
     "RateLimit": {
-      "MaxCallsPerSecond": 1000
+      "TokensPerSecond": 1000,
+      "BurstCapacity": 2000
     }
   }
 }
@@ -509,11 +496,11 @@ Configure appropriate parallelism based on workload:
 - `ProcessAsync(TSource, CancellationToken)` - Override to process items
 - `OnResultAsync(TResult, CancellationToken)` - Override to handle results
 
-### RivuletOperationHealthCheck
+### RivuletHealthCheck (from Rivulet.Diagnostics)
 
-- `RecordSuccess()` - Record successful operation
-- `RecordFailure()` - Record failed operation
-- `CheckHealthAsync(HealthCheckContext, CancellationToken)` - Check health status
+- `CheckHealthAsync(HealthCheckContext, CancellationToken)` - Check health status based on metrics
+- Automatically monitors Rivulet operations via EventCounters
+- Requires PrometheusExporter dependency for metric collection
 
 ## License
 
