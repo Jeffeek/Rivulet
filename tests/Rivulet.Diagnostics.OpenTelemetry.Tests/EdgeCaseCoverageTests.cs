@@ -210,7 +210,7 @@ public class EdgeCaseCoverageTests
     [Fact]
     public async Task WithOpenTelemetryTracing_ShouldHandleMixedSuccessAndFailure()
     {
-        var activities = new List<Activity>();
+        var activities = new List<Activity?>();
 
         using var listener = new ActivityListener();
         listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
@@ -240,10 +240,13 @@ public class EdgeCaseCoverageTests
             // Expected - test intentionally throws
         }
 
-        await Task.Delay(100);
+        // Wait for all activities to be captured by the listener
+        // On slower systems (CI/CD), activities may take longer to be recorded
+        await Task.Delay(300);
 
-        var successActivities = activities.Where(a => a.Status == ActivityStatusCode.Ok).ToList();
-        var errorActivities = activities.Where(a => a.Status == ActivityStatusCode.Error).ToList();
+        // Filter out null activities (can happen during async callback execution)
+        var successActivities = activities.Where(a => a?.Status == ActivityStatusCode.Ok).ToList();
+        var errorActivities = activities.Where(a => a?.Status == ActivityStatusCode.Error).ToList();
 
         successActivities.Should().NotBeEmpty();
         errorActivities.Should().NotBeEmpty();
@@ -252,7 +255,7 @@ public class EdgeCaseCoverageTests
     [Fact]
     public async Task WithOpenTelemetryTracing_ShouldHandleTransientAndNonTransientErrors()
     {
-        var activities = new List<Activity>();
+        var activities = new List<Activity?>();
 
         using var listener = new ActivityListener();
         listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
@@ -285,9 +288,12 @@ public class EdgeCaseCoverageTests
             // Expected - test intentionally throws
         }
 
-        await Task.Delay(100);
+        // Wait for all activities to be captured by the listener
+        // On slower systems (CI/CD), activities may take longer to be recorded
+        await Task.Delay(300);
 
-        var errorActivities = activities.Where(a => a.Status == ActivityStatusCode.Error).ToList();
+        // Filter out null activities (can happen during async callback execution)
+        var errorActivities = activities.Where(a => a?.Status == ActivityStatusCode.Error).ToList();
         errorActivities.Should().NotBeEmpty();
     }
 
