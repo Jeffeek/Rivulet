@@ -84,14 +84,14 @@ public static class AsyncParallelLinq
                 foreach (var item in sourceList)
                 {
                     token.ThrowIfCancellationRequested();
-                    if (!await channel.Writer.WaitToWriteAsync(token))
+                    if (!await channel.Writer.WaitToWriteAsync(token).ConfigureAwait(false))
                         break;
 
-                    await channel.Writer.WriteAsync((i, item), token);
+                    await channel.Writer.WriteAsync((i, item), token).ConfigureAwait(false);
                     if (i++ % effectiveMaxWorkers != 0 || options.OnThrottleAsync is null) continue;
 
                     metricsTracker.IncrementThrottleEvents();
-                    await options.OnThrottleAsync(i);
+                    await options.OnThrottleAsync(i).ConfigureAwait(false);
                 }
             }
             finally
@@ -111,24 +111,24 @@ public static class AsyncParallelLinq
                     try
                     {
                         if (adaptiveController is not null)
-                            await adaptiveController.AcquireAsync(token);
+                            await adaptiveController.AcquireAsync(token).ConfigureAwait(false);
 
                         if (tokenBucket is not null)
-                            await tokenBucket.AcquireAsync(token);
+                            await tokenBucket.AcquireAsync(token).ConfigureAwait(false);
 
                         progressTracker?.IncrementStarted();
                         metricsTracker.IncrementItemsStarted();
-                        if (options.OnStartItemAsync is not null) await options.OnStartItemAsync(idx);
+                        if (options.OnStartItemAsync is not null) await options.OnStartItemAsync(idx).ConfigureAwait(false);
 
                         TResult result;
                         if (circuitBreaker is not null)
                         {
                             result = await circuitBreaker.ExecuteAsync(async () =>
-                                await RetryPolicy.ExecuteWithRetry(item, taskSelector, options, metricsTracker, idx, token), token);
+                                await RetryPolicy.ExecuteWithRetry(item, taskSelector, options, metricsTracker, idx, token).ConfigureAwait(false), token).ConfigureAwait(false);
                         }
                         else
                         {
-                            result = await RetryPolicy.ExecuteWithRetry(item, taskSelector, options, metricsTracker, idx, token);
+                            result = await RetryPolicy.ExecuteWithRetry(item, taskSelector, options, metricsTracker, idx, token).ConfigureAwait(false);
                         }
 
                         if (options.OrderedOutput)
@@ -138,7 +138,7 @@ public static class AsyncParallelLinq
 
                         progressTracker?.IncrementCompleted();
                         metricsTracker.IncrementItemsCompleted();
-                        if (options.OnCompleteItemAsync is not null) await options.OnCompleteItemAsync(idx);
+                        if (options.OnCompleteItemAsync is not null) await options.OnCompleteItemAsync(idx).ConfigureAwait(false);
 
                         success = true;
                     }
@@ -150,14 +150,14 @@ public static class AsyncParallelLinq
 
                         if (options.OnErrorAsync is not null)
                         {
-                            var cont = await options.OnErrorAsync(idx, ex);
+                            var cont = await options.OnErrorAsync(idx, ex).ConfigureAwait(false);
                             if (!cont)
-                                await cts.CancelAsync();
+                                await cts.CancelAsync().ConfigureAwait(false);
                         }
 
                         if (options.ErrorMode == ErrorMode.FailFast)
                         {
-                            await cts.CancelAsync();
+                            await cts.CancelAsync().ConfigureAwait(false);
                             throw;
                         }
                     }
@@ -260,7 +260,7 @@ public static class AsyncParallelLinq
                 await foreach (var item in source.WithCancellation(token))
                 {
                     token.ThrowIfCancellationRequested();
-                    await input.Writer.WriteAsync((i++, item), token);
+                    await input.Writer.WriteAsync((i++, item), token).ConfigureAwait(false);
                 }
             }
             finally
@@ -279,30 +279,30 @@ public static class AsyncParallelLinq
                 try
                 {
                     if (adaptiveController is not null)
-                        await adaptiveController.AcquireAsync(token);
+                        await adaptiveController.AcquireAsync(token).ConfigureAwait(false);
 
                     if (tokenBucket is not null)
-                        await tokenBucket.AcquireAsync(token);
+                        await tokenBucket.AcquireAsync(token).ConfigureAwait(false);
 
                     progressTracker?.IncrementStarted();
                     metricsTracker.IncrementItemsStarted();
-                    if (options.OnStartItemAsync is not null) await options.OnStartItemAsync(idx);
+                    if (options.OnStartItemAsync is not null) await options.OnStartItemAsync(idx).ConfigureAwait(false);
 
                     TResult res;
                     if (circuitBreaker is not null)
                     {
                         res = await circuitBreaker.ExecuteAsync(async () =>
-                            await RetryPolicy.ExecuteWithRetry(item, taskSelector, options, metricsTracker, idx, token), token);
+                            await RetryPolicy.ExecuteWithRetry(item, taskSelector, options, metricsTracker, idx, token).ConfigureAwait(false), token).ConfigureAwait(false);
                     }
                     else
                     {
-                        res = await RetryPolicy.ExecuteWithRetry(item, taskSelector, options, metricsTracker, idx, token);
+                        res = await RetryPolicy.ExecuteWithRetry(item, taskSelector, options, metricsTracker, idx, token).ConfigureAwait(false);
                     }
 
-                    await output.Writer.WriteAsync((idx, res), token);
+                    await output.Writer.WriteAsync((idx, res), token).ConfigureAwait(false);
                     progressTracker?.IncrementCompleted();
                     metricsTracker.IncrementItemsCompleted();
-                    if (options.OnCompleteItemAsync is not null) await options.OnCompleteItemAsync(idx);
+                    if (options.OnCompleteItemAsync is not null) await options.OnCompleteItemAsync(idx).ConfigureAwait(false);
 
                     success = true;
                 }
@@ -313,14 +313,14 @@ public static class AsyncParallelLinq
 
                     if (options.OnErrorAsync is not null)
                     {
-                        var cont = await options.OnErrorAsync(idx, ex);
-                        if (!cont) await cts.CancelAsync();
+                        var cont = await options.OnErrorAsync(idx, ex).ConfigureAwait(false);
+                        if (!cont) await cts.CancelAsync().ConfigureAwait(false);
                     }
 
                     switch (options.ErrorMode)
                     {
                         case ErrorMode.FailFast:
-                            await cts.CancelAsync();
+                            await cts.CancelAsync().ConfigureAwait(false);
                             throw;
                         case ErrorMode.CollectAndContinue or ErrorMode.BestEffort:
                             break;
