@@ -7,8 +7,12 @@ param(
     [string]$ApiKey = "",
 
     [Parameter(Mandatory=$false)]
-    [string]$ConfigFile = ".smartcommit.config.json"
+    [string]$ConfigFile = ""
 )
+
+if ($ConfigFile -eq "") {
+    $ConfigFile = Join-Path (Split-Path -Parent $MyInvocation.MyCommand.Path) ".smartcommit.config.json"
+}
 
 $ErrorActionPreference = "Stop"
 

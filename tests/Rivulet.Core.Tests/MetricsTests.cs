@@ -556,17 +556,15 @@ public class MetricsTests
     {
         var source = Enumerable.Empty<int>();
         MetricsSnapshot? capturedSnapshot = null;
-        var snapshotCaptured = new TaskCompletionSource<bool>();
 
         var options = new ParallelOptionsRivulet
         {
             Metrics = new MetricsOptions
             {
-                SampleInterval = TimeSpan.FromMilliseconds(10),
+                SampleInterval = TimeSpan.FromMilliseconds(5),
                 OnMetricsSample = snapshot =>
                 {
                     capturedSnapshot = snapshot;
-                    snapshotCaptured.TrySetResult(true);
                     return ValueTask.CompletedTask;
                 }
             }
@@ -581,19 +579,18 @@ public class MetricsTests
             },
             options);
 
-        // Wait for either the first snapshot or the operation to complete
-        await Task.WhenAny(snapshotCaptured.Task, operationTask);
-
-        // Give a bit more time for the snapshot to be captured if operation completed first
-        if (!snapshotCaptured.Task.IsCompleted)
+        // Empty source completes instantly, but we need to give the metrics timer time to fire
+        // Poll for up to 500ms waiting for at least one snapshot
+        var deadline = DateTime.UtcNow.AddMilliseconds(500);
+        while (capturedSnapshot == null && DateTime.UtcNow < deadline)
         {
-            await Task.WhenAny(snapshotCaptured.Task, Task.Delay(100));
+            await Task.Delay(10);
         }
 
         var results = await operationTask;
 
         results.Should().BeEmpty();
-        capturedSnapshot.Should().NotBeNull();
+        capturedSnapshot.Should().NotBeNull("metrics timer should fire at least once within 500ms");
         capturedSnapshot!.ItemsStarted.Should().Be(0);
         capturedSnapshot.ItemsCompleted.Should().Be(0);
     }
