@@ -556,21 +556,24 @@ public class MetricsTests
     {
         var source = Enumerable.Empty<int>();
         MetricsSnapshot? capturedSnapshot = null;
+        var snapshotCaptured = new TaskCompletionSource<bool>();
 
         var options = new ParallelOptionsRivulet
         {
             Metrics = new MetricsOptions
             {
-                SampleInterval = TimeSpan.FromMilliseconds(50),
+                SampleInterval = TimeSpan.FromMilliseconds(10),
                 OnMetricsSample = snapshot =>
                 {
                     capturedSnapshot = snapshot;
+                    snapshotCaptured.TrySetResult(true);
                     return ValueTask.CompletedTask;
                 }
             }
         };
 
-        var results = await source.SelectParallelAsync(
+        // Start the operation (completes immediately for empty source)
+        var operationTask = source.SelectParallelAsync(
             async (x, ct) =>
             {
                 await Task.Delay(5, ct);
@@ -578,7 +581,16 @@ public class MetricsTests
             },
             options);
 
-        await Task.Delay(100);
+        // Wait for either the first snapshot or the operation to complete
+        await Task.WhenAny(snapshotCaptured.Task, operationTask);
+
+        // Give a bit more time for the snapshot to be captured if operation completed first
+        if (!snapshotCaptured.Task.IsCompleted)
+        {
+            await Task.WhenAny(snapshotCaptured.Task, Task.Delay(100));
+        }
+
+        var results = await operationTask;
 
         results.Should().BeEmpty();
         capturedSnapshot.Should().NotBeNull();

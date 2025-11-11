@@ -79,8 +79,9 @@ public class ProgressTrackerInternalTests
     }
 
     [Fact]
-    public void ProgressTracker_ThrowingCallback_DoesNotPropagateException()
+    public async Task ProgressTracker_ThrowingCallback_DoesNotPropagateException()
     {
+        var callbackFired = new TaskCompletionSource<bool>();
         var callbackCount = 0;
         var options = new ProgressOptions
         {
@@ -88,6 +89,7 @@ public class ProgressTrackerInternalTests
             OnProgress = _ =>
             {
                 Interlocked.Increment(ref callbackCount);
+                callbackFired.TrySetResult(true);
                 throw new InvalidOperationException("Test exception");
             }
         };
@@ -98,8 +100,9 @@ public class ProgressTrackerInternalTests
         tracker.IncrementStarted();
         tracker.IncrementCompleted();
 
-        // Increased delay for CI/CD environments where timer may fire slower
-        Thread.Sleep(150);
+        // Wait for callback to actually fire (with timeout for safety)
+        var completedInTime = await Task.WhenAny(callbackFired.Task, Task.Delay(500, CancellationToken.None)) == callbackFired.Task;
+        completedInTime.Should().BeTrue("callback should fire within 500ms");
 
         var act = () => tracker.Dispose();
         act.Should().NotThrow();

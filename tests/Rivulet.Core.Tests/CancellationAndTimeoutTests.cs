@@ -177,16 +177,16 @@ public class CancellationAndTimeoutTests
         var source = Enumerable.Range(1, 5).ToAsyncEnumerable();
         var options = new ParallelOptionsRivulet
         {
-            PerItemTimeout = TimeSpan.FromMilliseconds(100),
+            PerItemTimeout = TimeSpan.FromMilliseconds(200),
             ErrorMode = ErrorMode.BestEffort
         };
 
         var results = await source.SelectParallelStreamAsync(async (x, ct) =>
             {
                 if (x == 3)
-                    await Task.Delay(500, ct);
+                    await Task.Delay(1000, ct);
                 else
-                    await Task.Delay(10, ct);
+                    await Task.Delay(5, ct);
                 return x * 2;
             }, options)
             .ToListAsync();
