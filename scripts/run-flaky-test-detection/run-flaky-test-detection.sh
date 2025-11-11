@@ -186,7 +186,8 @@ sleep 0.5
 
 # Count and kill any orphaned dotnet processes
 dotnet_count=$(pgrep -c dotnet 2>/dev/null || echo "0")
-if [[ $dotnet_count -gt 0 ]]; then
+dotnet_count=$(echo "$dotnet_count" | tr -d '[:space:]')  # Remove all whitespace
+if [[ "$dotnet_count" =~ ^[0-9]+$ ]] && [[ $dotnet_count -gt 0 ]]; then
     echo -e "  ${YELLOW}Found $dotnet_count orphaned dotnet processes, cleaning up...${NC}"
     pkill -9 dotnet 2>/dev/null || true
 fi
