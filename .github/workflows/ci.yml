@@ -43,7 +43,7 @@ jobs:
 
     - name: Run tests for net8.0 and net9.0
       run: dotnet test -c Release --no-build --verbosity normal
-      timeout-minutes: 5
+      timeout-minutes: 3
 
   test-with-coverage:
     name: Test with Coverage (Ubuntu)
@@ -69,7 +69,7 @@ jobs:
 
     - name: Run tests with coverage
       run: dotnet test -c Release --no-build --collect:"XPlat Code Coverage" --results-directory ./coverage
-      timeout-minutes: 5
+      timeout-minutes: 4
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v5
@@ -85,5 +85,5 @@ jobs:
     if: github.event_name == 'pull_request'  # Only run on PRs
     uses: ./.github/workflows/reusable-flaky-test-detection.yml
     with:
-      iterations: 20
-      timeout-minutes: 40
+      iterations: 40
+      timeout-minutes: 80

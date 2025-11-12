@@ -1,4 +1,5 @@
 using System.Diagnostics.Metrics;
+using Rivulet.Core;
 using Rivulet.Core.Observability;
 
 namespace Rivulet.Diagnostics.OpenTelemetry;
@@ -27,17 +28,7 @@ namespace Rivulet.Diagnostics.OpenTelemetry;
 /// </example>
 public sealed class RivuletMetricsExporter : IDisposable
 {
-    /// <summary>
-    /// The name of the Meter for Rivulet metrics.
-    /// </summary>
-    public const string MeterName = "Rivulet.Core";
-
-    /// <summary>
-    /// The version of the Rivulet instrumentation.
-    /// </summary>
-    private const string Version = "1.2.0";
-
-    private static readonly Meter Meter = new(MeterName, Version);
+    private static readonly Meter Meter = new(RivuletSharedConstants.RivuletCore, RivuletOpenTelemetryConstants.InstrumentationVersion);
 
     /// <summary>
     /// <see cref="Dispose"/>

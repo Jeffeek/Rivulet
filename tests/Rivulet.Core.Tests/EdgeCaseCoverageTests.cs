@@ -237,4 +237,60 @@ public class EdgeCaseCoverageTests
 
         attemptCount.Should().BeGreaterThan(1);
     }
+
+    [Fact]
+    public async Task MetricsTracker_ShouldHandleNullOnMetricsSampleCallback()
+    {
+        var options = new ParallelOptionsRivulet
+        {
+            MaxDegreeOfParallelism = 2,
+            Metrics = new Observability.MetricsOptions
+            {
+                SampleInterval = TimeSpan.FromMilliseconds(10),
+                OnMetricsSample = null
+            }
+        };
+
+        var result = await Enumerable.Range(1, 5)
+            .SelectParallelAsync(async (x, ct) =>
+            {
+                await Task.Delay(10, ct);
+                return x * 2;
+            }, options);
+
+        result.Should().HaveCount(5);
+    }
+
+    [Fact]
+    public async Task MetricsTracker_ShouldHandleDisposalDuringMetricsSampling()
+    {
+        var sampledCount = 0;
+        var options = new ParallelOptionsRivulet
+        {
+            MaxDegreeOfParallelism = 2,
+            Metrics = new Observability.MetricsOptions
+            {
+                SampleInterval = TimeSpan.FromMilliseconds(10),
+                OnMetricsSample = async _ =>
+                {
+                    Interlocked.Increment(ref sampledCount);
+                    await ValueTask.CompletedTask;
+                }
+            }
+        };
+
+        var task = Enumerable.Range(1, 100)
+            .SelectParallelAsync(async (x, ct) =>
+            {
+                await Task.Delay(20, ct);
+                return x;
+            }, options);
+
+        await Task.Delay(50);
+
+        var result = await task;
+
+        result.Should().NotBeEmpty();
+        sampledCount.Should().BeGreaterThan(0);
+    }
 }

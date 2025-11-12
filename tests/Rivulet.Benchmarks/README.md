@@ -1,6 +1,6 @@
-# Rivulet.Core Benchmarks
+# Rivulet Benchmarks
 
-This project contains comprehensive performance benchmarks for Rivulet.Core using [BenchmarkDotNet](https://benchmarkdotnet.org/).
+This project contains comprehensive performance benchmarks for Rivulet using [BenchmarkDotNet](https://benchmarkdotnet.org/).
 
 ## Running Benchmarks
 

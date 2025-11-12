@@ -56,7 +56,9 @@ public class EdgeCaseCoverageTests
             // Expected
         }
 
-        await Task.Delay(1100);
+        // Wait for EventSource counters to fire (1s default interval)
+        // Increased from 1100ms to 2000ms to handle CI/CD timing variability
+        await Task.Delay(2000);
 
         var context = new HealthCheckContext();
         var result = await healthCheck.CheckHealthAsync(context);
@@ -116,7 +118,9 @@ public class EdgeCaseCoverageTests
                 // Expected
             }
 
-            await Task.Delay(1100);
+            // Wait for EventSource counters to fire (1s default interval)
+            // Increased from 1100ms to 2000ms to handle CI/CD timing variability
+            await Task.Delay(2000);
         }
         finally
         {
@@ -167,7 +171,9 @@ public class EdgeCaseCoverageTests
                     // Expected
                 }
 
-                await Task.Delay(1100);
+                // Wait for EventSource counters to fire (1s default interval)
+                // Increased from 1100ms to 2000ms to handle CI/CD timing variability
+                await Task.Delay(2000);
             }
 
             await Task.Delay(100);
@@ -203,7 +209,9 @@ public class EdgeCaseCoverageTests
                     })
                     .ToListAsync();
 
-                await Task.Delay(1100);
+                // Wait for EventSource counters to fire (1s default interval)
+                // Increased from 1100ms to 2000ms to handle CI/CD timing variability
+                await Task.Delay(2000);
             }
 
             await Task.Delay(100);
@@ -237,7 +245,9 @@ public class EdgeCaseCoverageTests
                 })
                 .ToListAsync();
 
-            await Task.Delay(1100);
+            // Wait for EventSource counters to fire (1s default interval)
+            // Increased from 1100ms to 2000ms to handle CI/CD timing variability
+            await Task.Delay(2000);
 
             listener.ReceivedCounters.Should().NotBeEmpty();
         }
@@ -264,7 +274,9 @@ public class EdgeCaseCoverageTests
             })
             .ToListAsync();
 
-        await Task.Delay(1100);
+        // Wait for EventSource counters to fire (1s default interval)
+        // Increased from 1100ms to 2000ms to handle CI/CD timing variability
+        await Task.Delay(2000);
     }
 
     [Fact]
@@ -299,7 +311,9 @@ public class EdgeCaseCoverageTests
             }, new ParallelOptionsRivulet())
             .ToListAsync();
 
-        await Task.Delay(1100);
+        // Wait for EventSource counters to fire (1s default interval)
+        // Increased from 1100ms to 2000ms to handle CI/CD timing variability
+        await Task.Delay(2000);
 
         var finalMetrics = exporter.ExportDictionary();
         finalMetrics.Should().NotBeEmpty();

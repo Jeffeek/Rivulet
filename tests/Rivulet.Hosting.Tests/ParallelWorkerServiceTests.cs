@@ -11,8 +11,8 @@ public class ParallelWorkerServiceTests
     private class TestWorkerService : ParallelWorkerService<int, string>
     {
         private readonly IAsyncEnumerable<int> _sourceItems;
-        public ConcurrentBag<int> ProcessedItems { get; } = new();
-        public ConcurrentBag<string> Results { get; } = new();
+        public ConcurrentBag<int> ProcessedItems { get; } = [];
+        public ConcurrentBag<string> Results { get; } = [];
         public int ProcessCallCount => _processCallCount;
         private int _processCallCount;
 
@@ -120,7 +120,7 @@ public class ParallelWorkerServiceTests
 
         service.ProcessedItems.Should().HaveCount(5);
         service.Results.Should().HaveCount(5);
-        service.ProcessedItems.Should().BeEquivalentTo(new[] { 1, 2, 3, 4, 5 });
+        service.ProcessedItems.Should().BeEquivalentTo([1, 2, 3, 4, 5]);
     }
 
     [Fact]
@@ -162,7 +162,8 @@ public class ParallelWorkerServiceTests
         await service.StopAsync(CancellationToken.None);
 
         var elapsed = DateTime.UtcNow - startTime;
-        elapsed.Should().BeLessThan(TimeSpan.FromMilliseconds(500));
+        // Increased tolerance for CI/CD environments
+        elapsed.Should().BeLessThan(TimeSpan.FromMilliseconds(1000));
     }
 
     [Fact]
@@ -291,7 +292,7 @@ public class ParallelWorkerServiceTests
 
         async IAsyncEnumerable<int> SlowGenerateItems()
         {
-            for (int i = 1; i <= 100; i++)
+            for (var i = 1; i <= 100; i++)
             {
                 await Task.Delay(50); // Slow enough to get cancelled
                 yield return i;

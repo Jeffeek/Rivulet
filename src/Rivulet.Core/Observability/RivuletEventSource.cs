@@ -13,7 +13,7 @@ namespace Rivulet.Core.Observability;
 /// - Prometheus exporters
 /// - Custom EventListener implementations
 /// </remarks>
-[EventSource(Name = "Rivulet.Core")]
+[EventSource(Name = RivuletSharedConstants.RivuletCore)]
 internal sealed class RivuletEventSource : EventSource
 {
     /// <summary>

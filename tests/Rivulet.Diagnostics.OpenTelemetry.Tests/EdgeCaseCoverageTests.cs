@@ -14,7 +14,7 @@ public class EdgeCaseCoverageTests
     public async Task WithOpenTelemetryTracing_ShouldHandleNullOperationName()
     {
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletActivitySource.SourceName;
+        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = _ => { };
         ActivitySource.AddActivityListener(listener);
@@ -38,7 +38,7 @@ public class EdgeCaseCoverageTests
     public async Task WithOpenTelemetryTracing_ShouldHandleEmptyOperationName()
     {
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletActivitySource.SourceName;
+        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = _ => { };
         ActivitySource.AddActivityListener(listener);
@@ -58,10 +58,10 @@ public class EdgeCaseCoverageTests
     [Fact]
     public async Task WithOpenTelemetryTracingAndRetries_ShouldHandleNoRetries()
     {
-        var activities = new List<Activity>();
+        var activities = new List<Activity?>();
 
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletActivitySource.SourceName;
+        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = activity => activities.Add(activity);
         ActivitySource.AddActivityListener(listener);
@@ -82,7 +82,8 @@ public class EdgeCaseCoverageTests
         result.Should().HaveCount(5);
 
         var retryEvents = activities
-            .SelectMany(a => a.Events)
+            .Where(a => a?.Events != null)
+            .SelectMany(a => a!.Events)
             .Where(e => e.Name == RivuletOpenTelemetryConstants.EventNames.Retry)
             .ToList();
 
@@ -97,7 +98,7 @@ public class EdgeCaseCoverageTests
         var onErrorCalled = 0;
 
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletActivitySource.SourceName;
+        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         ActivitySource.AddActivityListener(listener);
 
@@ -187,7 +188,7 @@ public class EdgeCaseCoverageTests
         var activities = new System.Collections.Concurrent.ConcurrentBag<Activity>();
 
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletActivitySource.SourceName;
+        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = activity => activities.Add(activity);
         ActivitySource.AddActivityListener(listener);
@@ -210,10 +211,10 @@ public class EdgeCaseCoverageTests
     [Fact]
     public async Task WithOpenTelemetryTracing_ShouldHandleMixedSuccessAndFailure()
     {
-        var activities = new List<Activity>();
+        var activities = new List<Activity?>();
 
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletActivitySource.SourceName;
+        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = activity => activities.Add(activity);
         ActivitySource.AddActivityListener(listener);
@@ -240,10 +241,13 @@ public class EdgeCaseCoverageTests
             // Expected - test intentionally throws
         }
 
-        await Task.Delay(100);
+        // Wait for all activities to be captured by the listener
+        // On slower systems (CI/CD), activities may take longer to be recorded
+        await Task.Delay(300);
 
-        var successActivities = activities.Where(a => a.Status == ActivityStatusCode.Ok).ToList();
-        var errorActivities = activities.Where(a => a.Status == ActivityStatusCode.Error).ToList();
+        // Filter out null activities (can happen during async callback execution)
+        var successActivities = activities.Where(a => a?.Status == ActivityStatusCode.Ok).ToList();
+        var errorActivities = activities.Where(a => a?.Status == ActivityStatusCode.Error).ToList();
 
         successActivities.Should().NotBeEmpty();
         errorActivities.Should().NotBeEmpty();
@@ -252,10 +256,10 @@ public class EdgeCaseCoverageTests
     [Fact]
     public async Task WithOpenTelemetryTracing_ShouldHandleTransientAndNonTransientErrors()
     {
-        var activities = new List<Activity>();
+        var activities = new List<Activity?>();
 
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletActivitySource.SourceName;
+        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = activity => activities.Add(activity);
         ActivitySource.AddActivityListener(listener);
@@ -285,9 +289,12 @@ public class EdgeCaseCoverageTests
             // Expected - test intentionally throws
         }
 
-        await Task.Delay(100);
+        // Wait for all activities to be captured by the listener
+        // On slower systems (CI/CD), activities may take longer to be recorded
+        await Task.Delay(300);
 
-        var errorActivities = activities.Where(a => a.Status == ActivityStatusCode.Error).ToList();
+        // Filter out null activities (can happen during async callback execution)
+        var errorActivities = activities.Where(a => a?.Status == ActivityStatusCode.Error).ToList();
         errorActivities.Should().NotBeEmpty();
     }
 
@@ -304,6 +311,6 @@ public class EdgeCaseCoverageTests
             }, options);
 
         result.Should().HaveCount(5);
-        result.Should().Contain(new[] { 2, 4, 6, 8, 10 });
+        result.Should().Contain([2, 4, 6, 8, 10]);
     }
 }

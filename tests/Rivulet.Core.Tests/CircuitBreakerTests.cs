@@ -289,6 +289,7 @@ public class CircuitBreakerTests
     public async Task CircuitBreaker_OnStateChange_InvokesCallback()
     {
         var stateChanges = new List<(CircuitBreakerState from, CircuitBreakerState to)>();
+        var allTransitionsComplete = new TaskCompletionSource<bool>();
 
         var cb = new CircuitBreaker(new CircuitBreakerOptions
         {
@@ -298,6 +299,11 @@ public class CircuitBreakerTests
             OnStateChange = (from, to) =>
             {
                 stateChanges.Add((from, to));
+                // Signal when we have all expected transitions
+                if (stateChanges.Count >= 3)
+                {
+                    allTransitionsComplete.TrySetResult(true);
+                }
                 return ValueTask.CompletedTask;
             }
         });
@@ -312,18 +318,19 @@ public class CircuitBreakerTests
             catch (InvalidOperationException) { /* Expected - test intentionally throws */ }
         }
 
-        // Wait for HalfOpen transition
-        await Task.Delay(150);
+        // Wait long enough for HalfOpen timeout (100ms + buffer)
+        await Task.Delay(200);
 
-        // Execute successful operation to close circuit
+        // Execute successful operation - this triggers HalfOpen transition and then closes circuit
         await cb.ExecuteAsync(async () =>
         {
             await Task.Delay(1);
             return 1;
         });
 
-        // Allow callbacks to execute
-        await Task.Delay(100);
+        // Wait for all transitions to complete with timeout
+        var completedTask = await Task.WhenAny(allTransitionsComplete.Task, Task.Delay(500));
+        (completedTask == allTransitionsComplete.Task).Should().BeTrue("all transitions should complete within 500ms");
 
         // Verify state transitions
         stateChanges.Should().Contain((CircuitBreakerState.Closed, CircuitBreakerState.Open));

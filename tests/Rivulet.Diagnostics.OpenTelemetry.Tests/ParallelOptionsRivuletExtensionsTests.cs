@@ -20,7 +20,7 @@ public class ParallelOptionsRivuletExtensionsTests
         using var allActivitiesStarted = new ManualResetEventSlim(false);
 
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletActivitySource.SourceName;
+        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         listener.ActivityStarted = activity =>
         {
@@ -64,7 +64,7 @@ public class ParallelOptionsRivuletExtensionsTests
         using var allActivitiesStopped = new ManualResetEventSlim(false);
 
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletActivitySource.SourceName;
+        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = activity =>
         {
@@ -109,7 +109,7 @@ public class ParallelOptionsRivuletExtensionsTests
         using var allActivitiesStopped = new ManualResetEventSlim(false);
 
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletActivitySource.SourceName;
+        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = activity =>
         {
@@ -157,7 +157,7 @@ public class ParallelOptionsRivuletExtensionsTests
     {
         var activities = new List<Activity>();
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletActivitySource.SourceName;
+        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = activity => activities.Add(activity);
         ActivitySource.AddActivityListener(listener);
@@ -204,7 +204,7 @@ public class ParallelOptionsRivuletExtensionsTests
         var onErrorCalled = 0;
 
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletActivitySource.SourceName;
+        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         ActivitySource.AddActivityListener(listener);
 
@@ -213,17 +213,17 @@ public class ParallelOptionsRivuletExtensionsTests
         {
             OnStartItemAsync = async _ =>
             {
-                onStartCalled++;
+                Interlocked.Increment(ref onStartCalled);
                 await Task.CompletedTask;
             },
             OnCompleteItemAsync = async _ =>
             {
-                onCompleteCalled++;
+                Interlocked.Increment(ref onCompleteCalled);
                 await Task.CompletedTask;
             },
             OnErrorAsync = async (_, _) =>
             {
-                onErrorCalled++;
+                Interlocked.Increment(ref onErrorCalled);
                 await Task.CompletedTask;
                 return true;
             }
@@ -246,12 +246,13 @@ public class ParallelOptionsRivuletExtensionsTests
     [Fact]
     public async Task WithOpenTelemetryTracing_ShouldRecordCircuitBreakerStateChanges()
     {
-        var activities = new System.Collections.Concurrent.ConcurrentBag<Activity>();
+        var activities = new System.Collections.Concurrent.ConcurrentBag<Activity?>();
         using var stateChanged = new ManualResetEventSlim(false);
-        var processedCount = 0;
+        using var firstFailureProcessing = new ManualResetEventSlim(false);
+        var failureCount = 0;
 
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletActivitySource.SourceName;
+        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = activity => activities.Add(activity);
         ActivitySource.AddActivityListener(listener);
@@ -259,7 +260,7 @@ public class ParallelOptionsRivuletExtensionsTests
         var items = Enumerable.Range(1, 20); // More items to ensure some are queued
         var options = new ParallelOptionsRivulet
         {
-            MaxDegreeOfParallelism = 6, // Higher concurrency so tasks 4-6 are running when circuit opens after 3 failures
+            MaxDegreeOfParallelism = 8, // Higher concurrency to ensure multiple tasks in flight
             ErrorMode = ErrorMode.BestEffort,
             CircuitBreaker = new CircuitBreakerOptions
             {
@@ -268,7 +269,8 @@ public class ParallelOptionsRivuletExtensionsTests
                 OnStateChange = async (_, _) =>
                 {
                     stateChanged.Set();
-                    await Task.CompletedTask;
+                    // Add delay to ensure state change is recorded while activities are still active
+                    await Task.Delay(200);
                 }
             }
         }.WithOpenTelemetryTracing("CircuitBreakerOperation");
@@ -276,26 +278,40 @@ public class ParallelOptionsRivuletExtensionsTests
         await items.SelectParallelAsync<int, int>(
             async (_, ct) =>
             {
-                // Slow down processing to keep activities alive longer
-                Interlocked.Increment(ref processedCount);
-                // All items fail slowly to ensure activities overlap with state change
-                // Circuit opens after 3rd failure, so items 4-6 will still be in-flight
-                await Task.Delay(1000, ct); // Long delay to ensure activities are still running when circuit opens
+                var currentFailure = Interlocked.Increment(ref failureCount);
+
+                // First few failures signal and delay extra to ensure circuit opens while they're active
+                if (currentFailure <= 5)
+                {
+                    firstFailureProcessing.Set();
+                    // Extra long delay (5s) ensures these activities stay alive during circuit opening
+                    await Task.Delay(5000, ct);
+                }
+                else
+                {
+                    // Later tasks can complete faster
+                    await Task.Delay(500, ct);
+                }
+
                 throw new InvalidOperationException("Always fails");
             },
             options);
 
         // Wait for circuit breaker state change to be recorded
-        var stateChangedSuccessfully = stateChanged.Wait(TimeSpan.FromSeconds(10));
+        var stateChangedSuccessfully = stateChanged.Wait(TimeSpan.FromSeconds(30));
         stateChangedSuccessfully.Should().BeTrue("circuit breaker should change state");
 
         // Give time for event to be recorded on activity and for activities to complete
         // Need to wait for the in-flight activities to complete so they're captured
-        await Task.Delay(1500);
+        // Activities stop asynchronously after the operation completes
+        // Extra long wait (10s) to account for 5s operation delay and Windows timing
+        await Task.Delay(10000);
 
         // Some activities should have circuit breaker state change events
-        var activitiesWithCbEvents = activities.Where(a =>
-            a.Events.Any(e => e.Name == "circuit_breaker_state_change")).ToList();
+        // Filter out null activities and those with null Events collections
+        var activitiesWithCbEvents = activities
+            .Where(a => a?.Events.Any(e => e.Name == "circuit_breaker_state_change") ?? false)
+            .ToList();
 
         activitiesWithCbEvents.Should().NotBeEmpty("circuit breaker state changed and should be recorded on activities");
     }
@@ -305,7 +321,7 @@ public class ParallelOptionsRivuletExtensionsTests
     {
         var activities = new List<Activity>();
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletActivitySource.SourceName;
+        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = activity => activities.Add(activity);
         ActivitySource.AddActivityListener(listener);
@@ -341,6 +357,10 @@ public class ParallelOptionsRivuletExtensionsTests
 
         results.Should().HaveCount(50);
 
+        // Wait for all activities to be stopped and events to be recorded
+        // Activities are stopped asynchronously after the operation completes
+        await Task.Delay(100);
+
         // Adaptive concurrency integration is verified:
         // 1. Activities are created and tracked
         activities.Should().NotBeEmpty();
@@ -370,7 +390,7 @@ public class ParallelOptionsRivuletExtensionsTests
         using var allActivitiesStopped = new ManualResetEventSlim(false);
 
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletActivitySource.SourceName;
+        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = activity =>
         {

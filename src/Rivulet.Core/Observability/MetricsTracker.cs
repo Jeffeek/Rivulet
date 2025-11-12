@@ -2,9 +2,13 @@ using System.Diagnostics;
 
 namespace Rivulet.Core.Observability;
 
-internal sealed class MetricsTracker : IDisposable
+/// <summary>
+/// Active implementation of metrics tracker with full sampling and reporting.
+/// Used when user provides MetricsOptions with custom metrics collection.
+/// </summary>
+internal sealed class MetricsTracker : MetricsTrackerBase
 {
-    private readonly MetricsOptions? _options;
+    private readonly MetricsOptions _options;
     private readonly Stopwatch _stopwatch;
     private readonly CancellationTokenSource _samplerCts;
     private readonly Task _samplerTask;
@@ -19,57 +23,57 @@ internal sealed class MetricsTracker : IDisposable
     private int _queueDepth;
     private bool _disposed;
 
-    public MetricsTracker(MetricsOptions? options, CancellationToken cancellationToken)
+    internal MetricsTracker(MetricsOptions options, CancellationToken cancellationToken)
     {
         _options = options;
         _stopwatch = Stopwatch.StartNew();
         _samplerCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
-        _samplerTask = _options?.OnMetricsSample is not null ? Task.Run(SampleMetricsPeriodically, _samplerCts.Token) : Task.CompletedTask;
+        _samplerTask = Task.Run(SampleMetricsPeriodically, _samplerCts.Token);
     }
 
-    public void IncrementItemsStarted()
+    public override void IncrementItemsStarted()
     {
         Interlocked.Increment(ref _itemsStarted);
         RivuletEventSource.Log.IncrementItemsStarted();
     }
 
-    public void IncrementItemsCompleted()
+    public override void IncrementItemsCompleted()
     {
         Interlocked.Increment(ref _itemsCompleted);
         RivuletEventSource.Log.IncrementItemsCompleted();
     }
 
-    public void IncrementRetries()
+    public override void IncrementRetries()
     {
         Interlocked.Increment(ref _totalRetries);
         RivuletEventSource.Log.IncrementRetries();
     }
 
-    public void IncrementFailures()
+    public override void IncrementFailures()
     {
         Interlocked.Increment(ref _totalFailures);
         RivuletEventSource.Log.IncrementFailures();
     }
 
-    public void IncrementThrottleEvents()
+    public override void IncrementThrottleEvents()
     {
         Interlocked.Increment(ref _throttleEvents);
         RivuletEventSource.Log.IncrementThrottleEvents();
     }
 
-    public void IncrementDrainEvents()
+    public override void IncrementDrainEvents()
     {
         Interlocked.Increment(ref _drainEvents);
         RivuletEventSource.Log.IncrementDrainEvents();
     }
 
-    public void SetActiveWorkers(int count)
+    public override void SetActiveWorkers(int count)
     {
         Interlocked.Exchange(ref _activeWorkers, count);
     }
 
-    public void SetQueueDepth(int depth)
+    public override void SetQueueDepth(int depth)
     {
         Interlocked.Exchange(ref _queueDepth, depth);
     }
@@ -80,7 +84,7 @@ internal sealed class MetricsTracker : IDisposable
         {
             while (!_samplerCts.Token.IsCancellationRequested)
             {
-                await Task.Delay(_options!.SampleInterval, _samplerCts.Token).ConfigureAwait(false);
+                await Task.Delay(_options.SampleInterval, _samplerCts.Token).ConfigureAwait(false);
                 await SampleMetrics().ConfigureAwait(false);
             }
         }
@@ -92,9 +96,6 @@ internal sealed class MetricsTracker : IDisposable
 
     private async Task SampleMetrics()
     {
-        if (_options?.OnMetricsSample is null)
-            return;
-
         var elapsed = _stopwatch.Elapsed;
         var completed = Interlocked.Read(ref _itemsCompleted);
         var started = Interlocked.Read(ref _itemsStarted);
@@ -125,7 +126,8 @@ internal sealed class MetricsTracker : IDisposable
 
         try
         {
-            await _options.OnMetricsSample(snapshot).ConfigureAwait(false);
+            if (_options.OnMetricsSample != null)
+                await _options.OnMetricsSample(snapshot).ConfigureAwait(false);
         }
         catch
         {
@@ -133,39 +135,27 @@ internal sealed class MetricsTracker : IDisposable
         }
     }
 
-    public void Dispose()
+    public override void Dispose()
     {
         if (_disposed)
             return;
 
         _disposed = true;
 
-        // Fire-and-forget final metrics sample to avoid blocking disposal
-        // This prevents potential deadlocks in synchronization contexts (ASP.NET, UI apps)
-        if (_options?.OnMetricsSample is not null)
-        {
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    await SampleMetrics().ConfigureAwait(false);
-                }
-                catch
-                {
-                    // Swallow exceptions to prevent unobserved task exceptions
-                }
-            });
-        }
-
+        // Cancel the background sampler task
+        // The SampleMetricsPeriodically loop will catch OperationCanceledException
+        // and execute one final metrics sample before exiting
         _samplerCts.Cancel();
 
+        // Wait briefly for the sampler task to complete its final sample
+        // Use a short timeout (100ms) to allow final callback execution without indefinite blocking
         try
         {
-            _samplerTask.Wait(TimeSpan.FromSeconds(1));
+            _samplerTask.Wait(TimeSpan.FromMilliseconds(100));
         }
-        catch
+        catch (AggregateException)
         {
-            // ignored
+            // Task was cancelled or faulted, which is expected
         }
 
         _samplerCts.Dispose();

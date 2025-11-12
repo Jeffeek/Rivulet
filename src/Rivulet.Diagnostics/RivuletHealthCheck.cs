@@ -48,7 +48,7 @@ public sealed class RivuletHealthCheck : IHealthCheck, IDisposable
 
             if (metrics.Count == 0)
             {
-                return Task.FromResult(HealthCheckResult.Healthy("No Rivulet operations currently running"));
+                return Task.FromResult(HealthCheckResult.Healthy(RivuletDiagnosticsConstants.HealthCheckMessages.NothingRunning));
             }
 
             var itemsStarted = metrics.GetValueOrDefault(RivuletMetricsConstants.CounterNames.ItemsStarted, 0);
@@ -60,11 +60,11 @@ public sealed class RivuletHealthCheck : IHealthCheck, IDisposable
 
             var data = new Dictionary<string, object>
             {
-                ["items_started"] = itemsStarted,
-                ["items_completed"] = itemsCompleted,
-                ["total_failures"] = totalFailures,
-                ["total_retries"] = totalRetries,
-                ["error_rate"] = errorRate
+                [RivuletDiagnosticsConstants.HealthCheckKeys.ItemsStarted] = itemsStarted,
+                [RivuletDiagnosticsConstants.HealthCheckKeys.ItemsCompleted] = itemsCompleted,
+                [RivuletDiagnosticsConstants.HealthCheckKeys.TotalFailures] = totalFailures,
+                [RivuletDiagnosticsConstants.HealthCheckKeys.TotalRetries] = totalRetries,
+                [RivuletDiagnosticsConstants.HealthCheckKeys.ErrorRate] = errorRate
             };
 
             if (totalFailures >= _options.FailureCountThreshold)

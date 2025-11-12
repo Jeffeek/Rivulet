@@ -9,6 +9,10 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+# Navigate to repository root (2 levels up from scripts/NugetPackage/)
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+Set-Location (Join-Path $ScriptDir "../..")
+
 Write-Host "======================================" -ForegroundColor Cyan
 Write-Host "  NuGet Package Builder & Inspector" -ForegroundColor Cyan
 Write-Host "======================================" -ForegroundColor Cyan
@@ -152,7 +156,9 @@ foreach ($nupkgFile in Get-ChildItem $OutputDir -Filter *.nupkg) {
     }
 
     # Check for DLL files
-    $dllName = "$packageName.dll"
+    # Extract project name without version (e.g., "Rivulet.Core.1.0.0-local-test" -> "Rivulet.Core")
+    $projectName = $packageName -replace '\.\d+\.\d+\.\d+.*$', ''
+    $dllName = "$projectName.dll"
     $dllFiles = Get-ChildItem $extractPath -Recurse -Filter $dllName
     if ($dllFiles) {
         Write-Host "    [OK] $dllName found in $($dllFiles.Count) target(s)" -ForegroundColor Green

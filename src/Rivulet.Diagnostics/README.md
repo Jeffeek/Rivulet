@@ -99,18 +99,28 @@ var metrics = exporter.ExportDictionary();
 
 ```csharp
 // In Program.cs or Startup.cs
+
+// Step 1: Register PrometheusExporter (required dependency for health check)
+builder.Services.AddSingleton<PrometheusExporter>();
+
+// Step 2: Register health check
 builder.Services.AddHealthChecks()
     .AddCheck<RivuletHealthCheck>("rivulet", tags: new[] { "ready" });
 
-// Configure thresholds
+// Step 3: Configure thresholds (optional)
 builder.Services.Configure<RivuletHealthCheckOptions>(options =>
 {
-    options.ErrorRateThreshold = 0.1; // 10% error rate
-    options.FailureCountThreshold = 100;
+    options.ErrorRateThreshold = 0.1;     // 10% error rate triggers degraded status
+    options.FailureCountThreshold = 100;  // 100 failures triggers unhealthy status
 });
 
-// Add health check endpoint
+// Step 4: Add health check endpoint
 app.MapHealthChecks("/health");
+
+// Health check will return:
+// - Healthy: Error rate below threshold and failures below threshold
+// - Degraded: Error rate exceeds threshold
+// - Unhealthy: Failure count exceeds threshold or unable to collect metrics
 ```
 
 ### Fluent Builder API
@@ -149,12 +159,29 @@ Rivulet.Diagnostics exposes the following metrics from Rivulet.Core:
 ### Custom Metric Thresholds
 
 ```csharp
-var healthCheck = new RivuletHealthCheck(new RivuletHealthCheckOptions
+// When creating RivuletHealthCheck manually (not recommended, use DI instead)
+var exporter = new PrometheusExporter();
+var healthCheck = new RivuletHealthCheck(exporter, new RivuletHealthCheckOptions
 {
-    ErrorRateThreshold = 0.05, // 5% error rate
-    FailureCountThreshold = 50
+    ErrorRateThreshold = 0.05,    // 5% error rate triggers degraded
+    FailureCountThreshold = 50    // 50 failures triggers unhealthy
 });
+
+// Recommended: Use dependency injection (shown above in Health Check Integration)
 ```
+
+### Health Check Options
+
+**RivuletHealthCheckOptions properties:**
+
+- `ErrorRateThreshold` (double, default: 0.1)
+  - Error rate (0.0 to 1.0) above which health check reports degraded status
+  - Calculated as: total_failures / items_started
+  - Example: 0.1 = 10% error rate
+
+- `FailureCountThreshold` (long, default: 1000)
+  - Absolute failure count above which health check reports unhealthy status
+  - Useful for catching high-volume failure scenarios
 
 ### Multiple Listeners
 

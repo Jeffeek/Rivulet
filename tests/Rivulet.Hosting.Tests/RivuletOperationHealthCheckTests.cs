@@ -117,7 +117,7 @@ public class RivuletOperationHealthCheckTests
         var healthCheck = new RivuletOperationHealthCheck(options);
 
         // Record enough failures to exceed threshold
-        for (int i = 0; i < 5; i++)
+        for (var i = 0; i < 5; i++)
         {
             healthCheck.RecordFailure();
         }
@@ -141,7 +141,7 @@ public class RivuletOperationHealthCheckTests
         var healthCheck = new RivuletOperationHealthCheck(options);
 
         // Record just below threshold
-        for (int i = 0; i < 9; i++)
+        for (var i = 0; i < 9; i++)
         {
             healthCheck.RecordFailure();
         }
@@ -162,7 +162,7 @@ public class RivuletOperationHealthCheckTests
 
         var healthCheck = new RivuletOperationHealthCheck(options);
 
-        for (int i = 0; i < 3; i++)
+        for (var i = 0; i < 3; i++)
         {
             healthCheck.RecordFailure();
         }
@@ -184,7 +184,7 @@ public class RivuletOperationHealthCheckTests
         var healthCheck = new RivuletOperationHealthCheck(options);
 
         // Record failures
-        for (int i = 0; i < 3; i++)
+        for (var i = 0; i < 3; i++)
         {
             healthCheck.RecordFailure();
         }
@@ -279,7 +279,7 @@ public class RivuletOperationHealthCheckTests
         var healthCheck = new RivuletOperationHealthCheck();
 
         // Record failures
-        for (int i = 0; i < 5; i++)
+        for (var i = 0; i < 5; i++)
         {
             healthCheck.RecordFailure();
         }

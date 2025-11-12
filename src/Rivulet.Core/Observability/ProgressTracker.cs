@@ -37,13 +37,13 @@ internal sealed class ProgressTracker : IDisposable
         {
             while (!_reporterCts.Token.IsCancellationRequested)
             {
-                await Task.Delay(_options.ReportInterval, _reporterCts.Token);
-                await ReportProgress();
+                await Task.Delay(_options.ReportInterval, _reporterCts.Token).ConfigureAwait(false);
+                await ReportProgress().ConfigureAwait(false);
             }
         }
         catch (OperationCanceledException)
         {
-            await ReportProgress();
+            await ReportProgress().ConfigureAwait(false);
         }
     }
 
@@ -87,7 +87,7 @@ internal sealed class ProgressTracker : IDisposable
 
         try
         {
-            await _options.OnProgress(snapshot);
+            await _options.OnProgress(snapshot).ConfigureAwait(false);
         }
         catch
         {
@@ -102,29 +102,20 @@ internal sealed class ProgressTracker : IDisposable
 
         _disposed = true;
 
-        // Fire-and-forget final progress report to avoid blocking disposal
-        // This prevents potential deadlocks in synchronization contexts (ASP.NET, UI apps)
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                await ReportProgress().ConfigureAwait(false);
-            }
-            catch
-            {
-                // Swallow exceptions to prevent unobserved task exceptions
-            }
-        });
-
+        // Cancel the background reporter task
+        // The ReportProgressPeriodically loop will catch OperationCanceledException
+        // and execute one final progress report before exiting
         _reporterCts.Cancel();
 
+        // Wait briefly for the reporter task to complete its final report
+        // Use a short timeout (100ms) to allow final callback execution without indefinite blocking
         try
         {
-            _reporterTask.Wait(TimeSpan.FromSeconds(1));
+            _reporterTask.Wait(TimeSpan.FromMilliseconds(100));
         }
-        catch
+        catch (AggregateException)
         {
-            // ignored
+            // Task was cancelled or faulted, which is expected
         }
 
         _reporterCts.Dispose();

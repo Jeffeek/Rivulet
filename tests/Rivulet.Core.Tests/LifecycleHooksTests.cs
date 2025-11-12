@@ -253,17 +253,20 @@ public class LifecycleHooksTests
         var processedCount = 0;
         var options = new ParallelOptionsRivulet
         {
+            MaxDegreeOfParallelism = 4, // Limit concurrency to reduce in-flight items when error occurs
             ErrorMode = ErrorMode.CollectAndContinue,
             OnErrorAsync = (_, _) => ValueTask.FromResult(false)
         };
 
         var act = async () => await source.SelectParallelAsync(
-            (x, _) =>
+            async (x, ct) =>
             {
                 Interlocked.Increment(ref processedCount);
+                // Add small delay to allow signal propagation when error occurs
+                await Task.Delay(1, ct);
                 if (x == 10)
                     throw new InvalidOperationException("Error");
-                return new ValueTask<int>(x * 2);
+                return x * 2;
             },
             options);
 

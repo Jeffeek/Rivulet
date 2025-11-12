@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Rivulet.Core;
 using Rivulet.Core.Internal;
 
 namespace Rivulet.Diagnostics;
@@ -62,7 +63,7 @@ public sealed class RivuletStructuredLogListener : RivuletEventListenerBase
         var logEntry = new
         {
             timestamp = DateTime.UtcNow,
-            source = "Rivulet.Core",
+            source = RivuletSharedConstants.RivuletCore,
             metric = new
             {
                 name,

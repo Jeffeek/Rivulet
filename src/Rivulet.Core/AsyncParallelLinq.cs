@@ -51,7 +51,7 @@ public static class AsyncParallelLinq
             ? new ProgressTracker(totalItems, options.Progress, token)
             : null;
 
-        var metricsTracker = new MetricsTracker(options.Metrics, token);
+        var metricsTracker = MetricsTrackerBase.Create(options.Metrics, token);
         metricsTracker.SetActiveWorkers(options.MaxDegreeOfParallelism);
 
         var tokenBucket = options.RateLimit is not null
@@ -84,14 +84,14 @@ public static class AsyncParallelLinq
                 foreach (var item in sourceList)
                 {
                     token.ThrowIfCancellationRequested();
-                    if (!await channel.Writer.WaitToWriteAsync(token))
+                    if (!await channel.Writer.WaitToWriteAsync(token).ConfigureAwait(false))
                         break;
 
-                    await channel.Writer.WriteAsync((i, item), token);
+                    await channel.Writer.WriteAsync((i, item), token).ConfigureAwait(false);
                     if (i++ % effectiveMaxWorkers != 0 || options.OnThrottleAsync is null) continue;
 
                     metricsTracker.IncrementThrottleEvents();
-                    await options.OnThrottleAsync(i);
+                    await options.OnThrottleAsync(i).ConfigureAwait(false);
                 }
             }
             finally
@@ -103,7 +103,7 @@ public static class AsyncParallelLinq
         var workers = Enumerable.Range(0, effectiveMaxWorkers)
             .Select(_ => Task.Run(async () =>
             {
-                await foreach (var (idx, item) in channel.Reader.ReadAllAsync(token))
+                await foreach (var (idx, item) in channel.Reader.ReadAllAsync(token).ConfigureAwait(false))
                 {
                     var startTime = Stopwatch.GetTimestamp();
                     var success = false;
@@ -111,24 +111,24 @@ public static class AsyncParallelLinq
                     try
                     {
                         if (adaptiveController is not null)
-                            await adaptiveController.AcquireAsync(token);
+                            await adaptiveController.AcquireAsync(token).ConfigureAwait(false);
 
                         if (tokenBucket is not null)
-                            await tokenBucket.AcquireAsync(token);
+                            await tokenBucket.AcquireAsync(token).ConfigureAwait(false);
 
                         progressTracker?.IncrementStarted();
                         metricsTracker.IncrementItemsStarted();
-                        if (options.OnStartItemAsync is not null) await options.OnStartItemAsync(idx);
+                        if (options.OnStartItemAsync is not null) await options.OnStartItemAsync(idx).ConfigureAwait(false);
 
                         TResult result;
                         if (circuitBreaker is not null)
                         {
                             result = await circuitBreaker.ExecuteAsync(async () =>
-                                await RetryPolicy.ExecuteWithRetry(item, taskSelector, options, metricsTracker, idx, token), token);
+                                await RetryPolicy.ExecuteWithRetry(item, taskSelector, options, metricsTracker, idx, token).ConfigureAwait(false), token).ConfigureAwait(false);
                         }
                         else
                         {
-                            result = await RetryPolicy.ExecuteWithRetry(item, taskSelector, options, metricsTracker, idx, token);
+                            result = await RetryPolicy.ExecuteWithRetry(item, taskSelector, options, metricsTracker, idx, token).ConfigureAwait(false);
                         }
 
                         if (options.OrderedOutput)
@@ -138,7 +138,7 @@ public static class AsyncParallelLinq
 
                         progressTracker?.IncrementCompleted();
                         metricsTracker.IncrementItemsCompleted();
-                        if (options.OnCompleteItemAsync is not null) await options.OnCompleteItemAsync(idx);
+                        if (options.OnCompleteItemAsync is not null) await options.OnCompleteItemAsync(idx).ConfigureAwait(false);
 
                         success = true;
                     }
@@ -150,14 +150,14 @@ public static class AsyncParallelLinq
 
                         if (options.OnErrorAsync is not null)
                         {
-                            var cont = await options.OnErrorAsync(idx, ex);
+                            var cont = await options.OnErrorAsync(idx, ex).ConfigureAwait(false);
                             if (!cont)
-                                await cts.CancelAsync();
+                                await cts.CancelAsync().ConfigureAwait(false);
                         }
 
                         if (options.ErrorMode == ErrorMode.FailFast)
                         {
-                            await cts.CancelAsync();
+                            await cts.CancelAsync().ConfigureAwait(false);
                             throw;
                         }
                     }
@@ -174,7 +174,7 @@ public static class AsyncParallelLinq
 
         try
         {
-            await Task.WhenAll(workers.Prepend(writerTask));
+            await Task.WhenAll(workers.Prepend(writerTask)).ConfigureAwait(false);
         }
         catch when (options.ErrorMode != ErrorMode.FailFast)
         {
@@ -222,7 +222,7 @@ public static class AsyncParallelLinq
             ? new ProgressTracker(null, options.Progress, token)
             : null;
 
-        var metricsTracker = new MetricsTracker(options.Metrics, token);
+        var metricsTracker = MetricsTrackerBase.Create(options.Metrics, token);
 
         var tokenBucket = options.RateLimit is not null
             ? new TokenBucket(options.RateLimit)
@@ -257,10 +257,10 @@ public static class AsyncParallelLinq
             var i = 0;
             try
             {
-                await foreach (var item in source.WithCancellation(token))
+                await foreach (var item in source.WithCancellation(token).ConfigureAwait(false))
                 {
                     token.ThrowIfCancellationRequested();
-                    await input.Writer.WriteAsync((i++, item), token);
+                    await input.Writer.WriteAsync((i++, item), token).ConfigureAwait(false);
                 }
             }
             finally
@@ -271,7 +271,7 @@ public static class AsyncParallelLinq
 
         var workers = Enumerable.Range(0, effectiveMaxWorkers).Select(_ => Task.Run(async () =>
         {
-            await foreach (var (idx, item) in input.Reader.ReadAllAsync(token))
+            await foreach (var (idx, item) in input.Reader.ReadAllAsync(token).ConfigureAwait(false))
             {
                 var startTime = Stopwatch.GetTimestamp();
                 var success = false;
@@ -279,30 +279,30 @@ public static class AsyncParallelLinq
                 try
                 {
                     if (adaptiveController is not null)
-                        await adaptiveController.AcquireAsync(token);
+                        await adaptiveController.AcquireAsync(token).ConfigureAwait(false);
 
                     if (tokenBucket is not null)
-                        await tokenBucket.AcquireAsync(token);
+                        await tokenBucket.AcquireAsync(token).ConfigureAwait(false);
 
                     progressTracker?.IncrementStarted();
                     metricsTracker.IncrementItemsStarted();
-                    if (options.OnStartItemAsync is not null) await options.OnStartItemAsync(idx);
+                    if (options.OnStartItemAsync is not null) await options.OnStartItemAsync(idx).ConfigureAwait(false);
 
                     TResult res;
                     if (circuitBreaker is not null)
                     {
                         res = await circuitBreaker.ExecuteAsync(async () =>
-                            await RetryPolicy.ExecuteWithRetry(item, taskSelector, options, metricsTracker, idx, token), token);
+                            await RetryPolicy.ExecuteWithRetry(item, taskSelector, options, metricsTracker, idx, token).ConfigureAwait(false), token).ConfigureAwait(false);
                     }
                     else
                     {
-                        res = await RetryPolicy.ExecuteWithRetry(item, taskSelector, options, metricsTracker, idx, token);
+                        res = await RetryPolicy.ExecuteWithRetry(item, taskSelector, options, metricsTracker, idx, token).ConfigureAwait(false);
                     }
 
-                    await output.Writer.WriteAsync((idx, res), token);
+                    await output.Writer.WriteAsync((idx, res), token).ConfigureAwait(false);
                     progressTracker?.IncrementCompleted();
                     metricsTracker.IncrementItemsCompleted();
-                    if (options.OnCompleteItemAsync is not null) await options.OnCompleteItemAsync(idx);
+                    if (options.OnCompleteItemAsync is not null) await options.OnCompleteItemAsync(idx).ConfigureAwait(false);
 
                     success = true;
                 }
@@ -313,14 +313,14 @@ public static class AsyncParallelLinq
 
                     if (options.OnErrorAsync is not null)
                     {
-                        var cont = await options.OnErrorAsync(idx, ex);
-                        if (!cont) await cts.CancelAsync();
+                        var cont = await options.OnErrorAsync(idx, ex).ConfigureAwait(false);
+                        if (!cont) await cts.CancelAsync().ConfigureAwait(false);
                     }
 
                     switch (options.ErrorMode)
                     {
                         case ErrorMode.FailFast:
-                            await cts.CancelAsync();
+                            await cts.CancelAsync().ConfigureAwait(false);
                             throw;
                         case ErrorMode.CollectAndContinue or ErrorMode.BestEffort:
                             break;
@@ -341,7 +341,7 @@ public static class AsyncParallelLinq
         {
             try
             {
-                await Task.WhenAll(workers);
+                await Task.WhenAll(workers).ConfigureAwait(false);
             }
             finally
             {
@@ -357,7 +357,7 @@ public static class AsyncParallelLinq
             var buffer = new Dictionary<int, TResult>();
             var nextIndex = 0;
 
-            await foreach (var (idx, result) in output.Reader.ReadAllAsync(token))
+            await foreach (var (idx, result) in output.Reader.ReadAllAsync(token).ConfigureAwait(false))
             {
                 token.ThrowIfCancellationRequested();
 
@@ -377,14 +377,14 @@ public static class AsyncParallelLinq
         }
         else
         {
-            await foreach (var (_, result) in output.Reader.ReadAllAsync(token))
+            await foreach (var (_, result) in output.Reader.ReadAllAsync(token).ConfigureAwait(false))
             {
                 token.ThrowIfCancellationRequested();
                 yield return result;
             }
         }
 
-        await Task.WhenAll(writer, reader);
+        await Task.WhenAll(writer, reader).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -412,7 +412,7 @@ public static class AsyncParallelLinq
 
     private static async Task CollectAsync<T>(this IAsyncEnumerable<T> source, CancellationToken ct)
     {
-        await foreach (var _ in source.WithCancellation(ct)) { }
+        await foreach (var _ in source.WithCancellation(ct).ConfigureAwait(false)) { }
     }
 
     /// <summary>
@@ -441,7 +441,7 @@ public static class AsyncParallelLinq
             throw new ArgumentException("Batch size must be at least 1.", nameof(batchSize));
 
         var batches = CreateBatches(source, batchSize);
-        return await batches.SelectParallelAsync(batchSelector, options, cancellationToken);
+        return await batches.SelectParallelAsync(batchSelector, options, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -471,7 +471,7 @@ public static class AsyncParallelLinq
             throw new ArgumentException("Batch size must be at least 1.", nameof(batchSize));
 
         var batches = CreateBatchesAsync(source, batchSize, batchTimeout, cancellationToken);
-        await foreach (var result in batches.SelectParallelStreamAsync(batchSelector, options, cancellationToken))
+        await foreach (var result in batches.SelectParallelStreamAsync(batchSelector, options, cancellationToken).ConfigureAwait(false))
         {
             yield return result;
         }
@@ -522,19 +522,19 @@ public static class AsyncParallelLinq
                 {
                     var flushTimer = Task.Delay(timeout, token);
 
-                    await foreach (var item in source.WithCancellation(token))
+                    await foreach (var item in source.WithCancellation(token).ConfigureAwait(false))
                     {
                         batch.Add(item);
 
                         if (batch.Count >= batchSize)
                         {
-                            await channel.Writer.WriteAsync(batch, token);
+                            await channel.Writer.WriteAsync(batch, token).ConfigureAwait(false);
                             batch = new List<TSource>(batchSize);
                             flushTimer = Task.Delay(timeout, token);
                         }
                         else if (flushTimer.IsCompleted && batch.Count > 0)
                         {
-                            await channel.Writer.WriteAsync(batch, token);
+                            await channel.Writer.WriteAsync(batch, token).ConfigureAwait(false);
                             batch = new List<TSource>(batchSize);
                             flushTimer = Task.Delay(timeout, token);
                         }
@@ -542,7 +542,7 @@ public static class AsyncParallelLinq
 
                     if (batch.Count > 0)
                     {
-                        await channel.Writer.WriteAsync(batch, token);
+                        await channel.Writer.WriteAsync(batch, token).ConfigureAwait(false);
                     }
                 }
                 finally
@@ -551,16 +551,16 @@ public static class AsyncParallelLinq
                 }
             }, token);
 
-            await foreach (var batchResult in channel.Reader.ReadAllAsync(token))
+            await foreach (var batchResult in channel.Reader.ReadAllAsync(token).ConfigureAwait(false))
             {
                 yield return batchResult;
             }
 
-            await producer;
+            await producer.ConfigureAwait(false);
         }
         else
         {
-            await foreach (var item in source.WithCancellation(cancellationToken))
+            await foreach (var item in source.WithCancellation(cancellationToken).ConfigureAwait(false))
             {
                 batch.Add(item);
                 if (batch.Count < batchSize) continue;

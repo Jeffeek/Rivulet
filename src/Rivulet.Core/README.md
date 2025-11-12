@@ -63,6 +63,40 @@ await items.ForEachParallelAsync(
     });
 ```
 
+### Batch Processing
+
+Process items in batches for efficient bulk operations:
+
+```csharp
+// Materialize results - process 100 items at a time
+var results = await items.BatchParallelAsync(
+    batchSize: 100,
+    async (batch, ct) =>
+    {
+        // Process entire batch together (e.g., bulk database insert)
+        await BulkInsertAsync(batch, ct);
+        return batch.Count();
+    },
+    new ParallelOptionsRivulet
+    {
+        MaxDegreeOfParallelism = 5
+    });
+
+// Streaming results - process batches as they're ready
+await foreach (var batchResult in items.BatchParallelStreamAsync(
+    batchSize: 50,
+    async (batch, ct) =>
+    {
+        await ProcessBatchAsync(batch, ct);
+        return batch.Count();
+    },
+    new ParallelOptionsRivulet { MaxDegreeOfParallelism = 10 },
+    batchTimeout: TimeSpan.FromSeconds(5))) // Flush partial batch after timeout
+{
+    Console.WriteLine($"Processed batch: {batchResult} items");
+}
+```
+
 ### Ordered Output
 
 Maintain input order for sequence-sensitive operations:

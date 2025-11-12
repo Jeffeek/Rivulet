@@ -44,7 +44,7 @@ public sealed class RivuletConsoleListener : RivuletEventListenerBase
     {
         LockHelper.Execute(_lock, () =>
         {
-            var timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
+            var timestamp = DateTime.UtcNow.ToString(RivuletDiagnosticsConstants.DateTimeFormats.Console);
             var formattedValue = FormatValue(value, displayUnits);
 
             if (_useColors)

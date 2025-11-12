@@ -1,6 +1,18 @@
-# Release Guide: Publishing Rivulet v1.0.0 to NuGet
+# Release Guide: Publishing Rivulet to NuGet
 
-This guide walks you through creating and publishing your first release of Rivulet to NuGet.org.
+This guide walks you through creating and publishing Rivulet releases to NuGet.org.
+
+## Rivulet Package Ecosystem
+
+Rivulet v1.2.0 consists of **5 NuGet packages**:
+
+1. **Rivulet.Core** - Core parallel operators with bounded concurrency
+2. **Rivulet.Diagnostics** - EventListeners, metrics aggregation, Prometheus export, health checks
+3. **Rivulet.Diagnostics.OpenTelemetry** - OpenTelemetry integration for distributed tracing
+4. **Rivulet.Testing** - Testing utilities (VirtualTimeProvider, FakeChannel, ChaosInjector, ConcurrencyAsserter)
+5. **Rivulet.Hosting** - Microsoft.Extensions.Hosting integration, background services, configuration binding
+
+All 5 packages are built and published together with the same version number.
 
 ---
 
@@ -11,64 +23,20 @@ Before starting the release process, ensure:
 - [ ] All CI tests pass on `master` branch
 - [ ] Code coverage is at expected (90%>=) level (currently ![Codecov (with branch)](https://img.shields.io/codecov/c/github/Jeffeek/Rivulet/master?style=flat&label=%20)
 )
-- [ ] No flaky tests detected (100 iterations on both Windows & Linux)
+- [ ] No flaky tests detected (50 iterations on both Windows & Linux)
 - [ ] README.md (GitHub repository) is up to date
-- [ ] README.md is up to date
-- [ ] CHANGELOG.md is updated with v1.0.0 changes (create if doesn't exist)
-- [ ] All planned features for v1.0.0 are complete
+- [ ] All package README files are up to date (src/*/README.md)
+- [ ] All planned features for the version are complete
 - [ ] You have a NuGet.org account (create at https://www.nuget.org/users/account/LogOn)
+- [ ] NuGet API key has glob pattern `Rivulet.*` to cover all packages
 
 ---
 
 ## Part 1: Prepare for Release
 
-### Step 1: Create a Changelog (if you don't have one)
+### Step 1: Verify Package Metadata
 
-Create `CHANGELOG.md` in your repository root:
-
-```markdown
-# Changelog
-
-All notable changes to this project will be documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
-## [1.0.0] - 2025-01-XX
-
-### Added
-- `SelectParallelAsync` - Transform collections in parallel with bounded concurrency
-- `SelectParallelStreamAsync` - Stream results as they complete
-- `ForEachParallelAsync` - Execute side effects in parallel
-- Flexible error handling modes: FailFast, CollectAndContinue, BestEffort
-- Retry policy with exponential backoff and transient error detection
-- Per-item timeout support
-- Lifecycle hooks: OnStart, OnComplete, OnError, OnThrottle
-- Cancellation token support throughout
-- Support for .NET 8.0 and .NET 9.0
-
-### Fixed
-- OnErrorAsync callback now properly invoked in FailFast mode
-- SelectParallelStreamAsync cancellation race condition resolved
-
-### Documentation
-- Comprehensive README with examples
-- CI/CD pipeline with 200-iteration flaky test detection
-- 90%+ code coverage
-```
-
-**Commit the changelog:**
-```bash
-git add CHANGELOG.md
-git commit -m "Add CHANGELOG for v1.0.0"
-git push origin master
-```
-
----
-
-### Step 2: Verify Package Metadata
-
-Check `src/Rivulet.Core/Rivulet.Core.csproj` contains correct information:
+Check all 5 .csproj files contain correct information. Example from `src/Rivulet.Core/Rivulet.Core.csproj`:
 
 ```xml
 <PropertyGroup>
@@ -90,15 +58,14 @@ Check `src/Rivulet.Core/Rivulet.Core.csproj` contains correct information:
 </PropertyGroup>
 
 <ItemGroup>
-    <None Include="..\..\assets\nuget_logo.png" Pack="true" PackagePath="\" />
-    <!-- Pack README.md from repo as README.md in package -->
-    <None Include="README.md" Pack="true" PackagePath="\README.md" />
+    <None Include="assets\nuget_logo.png" Pack="true" PackagePath="\" />
+    <None Include="README.md" Pack="true" PackagePath="\" />
 </ItemGroup>
 ```
 
 **If you made changes, commit them:**
 ```bash
-git add src/Rivulet.Core/Rivulet.Core.csproj PACKAGE_README.md
+git add src/Rivulet.Core/Rivulet.Core.csproj README.md
 git commit -m "Update package metadata and README for v1.0.0"
 git push origin master
 ```
@@ -107,11 +74,18 @@ git push origin master
 
 ### Step 3: Create Release
 
-**Recommended: Use the automated Release.ps1 script:**
+**Recommended: Use the automated release script:**
 
+**Windows (PowerShell):**
 ```powershell
 # This creates release/1.0.x branch and v1.0.0 tag
-.\Release.ps1 -Version "1.0.0"
+./scripts/Release/Release.ps1 -Version "1.0.0"
+```
+
+**Linux/macOS (Bash):**
+```bash
+# This creates release/1.0.x branch and v1.0.0 tag
+bash ./scripts/Release/Release.sh "1.0.0"
 ```
 
 The script will:
@@ -121,7 +95,7 @@ The script will:
 - Create tag `v1.0.0` and push everything
 - Trigger the GitHub Actions release workflow
 
-**Manual Alternative (if not using Release.ps1):**
+**Manual Alternative (if not using automated release script):**
 
 ```bash
 # Create release branch (note: uses .x pattern for all 1.0.* patches)
@@ -184,7 +158,7 @@ Verify the package contains:
 
 ### Step 5: Create and Push Git Tag
 
-**If you used Release.ps1 in Step 3, skip this step - it's already done!**
+**If you used the automated release script (Release.ps1 or Release.sh) in Step 3, skip this step - it's already done!**
 
 **Manual Alternative:** This is the critical step that triggers the release workflow:
 
@@ -478,23 +452,28 @@ Check the workflow file (`.github/workflows/release.yml`):
 **Option 3: Regenerate API Key**
 1. Go to https://www.nuget.org/account/apikeys
 2. Click "Regenerate" on your existing key (or create new one)
-3. Set **Glob Pattern** to `Rivulet.Core`
+3. Set **Glob Pattern** to `Rivulet.*` (to cover all Rivulet packages)
 4. Copy the new key
 5. Update GitHub secret: Settings → Secrets and variables → Actions → `NUGET_API_KEY`
 
 ---
 
-### Issue: Multiple .nupkg files in GitHub Release (ConsoleSample + Core)
+### Issue: Multiple .nupkg files in GitHub Release (ConsoleSample + Library packages)
 
-**Problem**: Both `Rivulet.ConsoleSample.*.nupkg` and `Rivulet.Core.*.nupkg` appear in the release assets.
+**Problem**: Both sample/test projects and library packages appear in the release assets.
 
 **Cause**: The `dotnet pack` command was packing ALL projects in the solution.
 
 **Solution** (Already fixed in latest workflow):
 
-1. **Workflow now packs only library project** (`.github/workflows/release.yml` line 46):
+1. **Workflow now packs only library projects** (`.github/workflows/release.yml` lines 45-51):
    ```yaml
-   run: dotnet pack src/Rivulet.Core/Rivulet.Core.csproj -c Release ...
+   run: |
+     dotnet pack src/Rivulet.Core/Rivulet.Core.csproj -c Release --output ./artifacts -p:PackageVersion=$VERSION
+     dotnet pack src/Rivulet.Diagnostics/Rivulet.Diagnostics.csproj -c Release --output ./artifacts -p:PackageVersion=$VERSION
+     dotnet pack src/Rivulet.Diagnostics.OpenTelemetry/Rivulet.Diagnostics.OpenTelemetry.csproj -c Release --output ./artifacts -p:PackageVersion=$VERSION
+     dotnet pack src/Rivulet.Testing/Rivulet.Testing.csproj -c Release --output ./artifacts -p:PackageVersion=$VERSION
+     dotnet pack src/Rivulet.Hosting/Rivulet.Hosting.csproj -c Release --output ./artifacts -p:PackageVersion=$VERSION
    ```
 
 2. **ConsoleSample project marked as non-packable** (`samples/Rivulet.ConsoleSample/Rivulet.ConsoleSample.csproj`):
@@ -504,7 +483,7 @@ Check the workflow file (`.github/workflows/release.yml`):
    </PropertyGroup>
    ```
 
-3. **Test project already marked as non-packable** (`tests/Rivulet.Core.Tests/Rivulet.Core.Tests.csproj`):
+3. **Test projects already marked as non-packable**:
    ```xml
    <PropertyGroup>
      <IsPackable>false</IsPackable>
@@ -514,10 +493,10 @@ Check the workflow file (`.github/workflows/release.yml`):
 **To Clean Up Existing Release**:
 1. Go to your GitHub release
 2. Click "Edit"
-3. Delete unwanted `.nupkg` files (like `Rivulet.ConsoleSample.*.nupkg`)
+3. Delete unwanted `.nupkg` files (sample/test projects)
 4. Save the release
 
-**For Next Release**: The workflow will now automatically only include `Rivulet.Core.*.nupkg`.
+**For Next Release**: The workflow will now automatically only include the 5 library packages.
 
 ---
 
@@ -525,9 +504,16 @@ Check the workflow file (`.github/workflows/release.yml`):
 
 ### For Minor/Major Releases (v1.1.0, v2.0.0):
 
-**Recommended - Use Release.ps1:**
+**Recommended - Use the automated release script:**
+
+**Windows (PowerShell):**
 ```powershell
-.\Release.ps1 -Version "1.1.0"  # Creates release/1.1.x branch and v1.1.0 tag
+./scripts/Release/Release.ps1 -Version "1.1.0"  # Creates release/1.1.x branch and v1.1.0 tag
+```
+
+**Linux/macOS (Bash):**
+```bash
+bash ./scripts/Release/Release.sh "1.1.0"  # Creates release/1.1.x branch and v1.1.0 tag
 ```
 
 **Manual Alternative:**
@@ -539,9 +525,16 @@ Check the workflow file (`.github/workflows/release.yml`):
 
 ### For Patch Releases (v1.0.1, v1.0.2):
 
-**Recommended - Use Release.ps1:**
+**Recommended - Use the automated release script:**
+
+**Windows (PowerShell):**
 ```powershell
-.\Release.ps1 -Version "1.0.1"  # Reuses existing release/1.0.x branch, creates v1.0.1 tag
+./scripts/Release/Release.ps1 -Version "1.0.1"  # Reuses existing release/1.0.x branch, creates v1.0.1 tag
+```
+
+**Linux/macOS (Bash):**
+```bash
+bash ./scripts/Release/Release.sh "1.0.1"  # Reuses existing release/1.0.x branch, creates v1.0.1 tag
 ```
 
 **Manual Alternative:**
@@ -556,15 +549,29 @@ Check the workflow file (`.github/workflows/release.yml`):
 ## Quick Command Reference
 
 **Automated (Recommended):**
+
+**Windows (PowerShell):**
 ```powershell
 # New minor/major release (creates new release/x.y.x branch)
-.\Release.ps1 -Version "1.1.0"
+./scripts/Release/Release.ps1 -Version "1.1.0"
 
 # Patch release (reuses existing release/1.0.x branch)
-.\Release.ps1 -Version "1.0.1"
+./scripts/Release/Release.ps1 -Version "1.0.1"
 
 # Pre-release
-.\Release.ps1 -Version "2.0.0-beta"
+./scripts/Release/Release.ps1 -Version "2.0.0-beta"
+```
+
+**Linux/macOS (Bash):**
+```bash
+# New minor/major release (creates new release/x.y.x branch)
+bash ./scripts/Release/Release.sh "1.1.0"
+
+# Patch release (reuses existing release/1.0.x branch)
+bash ./scripts/Release/Release.sh "1.0.1"
+
+# Pre-release
+bash ./scripts/Release/Release.sh "2.0.0-beta"
 ```
 
 **Manual Alternative:**

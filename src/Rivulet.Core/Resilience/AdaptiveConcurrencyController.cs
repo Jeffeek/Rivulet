@@ -163,14 +163,14 @@ internal sealed class AdaptiveConcurrencyController : IDisposable
                     {
                         for (var i = 0; i < Math.Abs(delta); i++)
                         {
-                            await _semaphore.WaitAsync();
+                            await _semaphore.WaitAsync().ConfigureAwait(false);
                         }
                     }
                     catch
                     {
                         // ignored
                     }
-                });
+                }, CancellationToken.None);
                 break;
         }
 
@@ -182,13 +182,13 @@ internal sealed class AdaptiveConcurrencyController : IDisposable
             {
                 try
                 {
-                    await _options.OnConcurrencyChange(oldConcurrency, newConcurrency);
+                    await _options.OnConcurrencyChange(oldConcurrency, newConcurrency).ConfigureAwait(false);
                 }
                 catch
                 {
                     // ignored
                 }
-            });
+            }, CancellationToken.None);
         }
     }
 
@@ -198,7 +198,11 @@ internal sealed class AdaptiveConcurrencyController : IDisposable
             return;
 
         _disposed = true;
+
+        // Dispose timer - callback checks _disposed flag so it's safe to dispose immediately
+        // No need to wait for callback completion as SampleAndAdjust() returns early if disposed
         _samplingTimer.Dispose();
+
         _semaphore.Dispose();
     }
 }

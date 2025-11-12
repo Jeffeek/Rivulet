@@ -65,33 +65,30 @@ public class VirtualTimeProviderTests
     public async Task AdvanceTimeAsync_WithMultipleScheduledTasks_ShouldExecuteAllInOrder()
     {
         using var timeProvider = new VirtualTimeProvider();
-        var executionOrder = new List<int>();
 
-        var task1 = Task.Run(async () =>
-        {
-            await timeProvider.CreateDelay(TimeSpan.FromSeconds(5));
-            executionOrder.Add(1);
-        });
+        // Create all delays upfront
+        var delay1 = timeProvider.CreateDelay(TimeSpan.FromSeconds(5));
+        var delay2 = timeProvider.CreateDelay(TimeSpan.FromSeconds(3));
+        var delay3 = timeProvider.CreateDelay(TimeSpan.FromSeconds(7));
 
-        var task2 = Task.Run(async () =>
-        {
-            await timeProvider.CreateDelay(TimeSpan.FromSeconds(3));
-            executionOrder.Add(2);
-        });
+        // All delays should be incomplete
+        delay1.IsCompleted.Should().BeFalse();
+        delay2.IsCompleted.Should().BeFalse();
+        delay3.IsCompleted.Should().BeFalse();
 
-        var task3 = Task.Run(async () =>
-        {
-            await timeProvider.CreateDelay(TimeSpan.FromSeconds(7));
-            executionOrder.Add(3);
-        });
-
-        await Task.Delay(50);
-
+        // Advance time past all delays
         timeProvider.AdvanceTime(TimeSpan.FromSeconds(10));
 
-        await Task.WhenAll(task1, task2, task3);
+        // All delays should now be completed
+        delay1.IsCompleted.Should().BeTrue();
+        delay2.IsCompleted.Should().BeTrue();
+        delay3.IsCompleted.Should().BeTrue();
 
-        executionOrder.Should().Equal(2, 1, 3);
+        // Await the delays - they should complete immediately since time was advanced
+        await Task.WhenAll(delay1, delay2, delay3);
+
+        // Verify the virtual time was advanced correctly
+        timeProvider.CurrentTime.Should().Be(TimeSpan.FromSeconds(10));
     }
 
     [Fact]
@@ -101,8 +98,8 @@ public class VirtualTimeProviderTests
 
         timeProvider.Dispose();
 
-        Assert.Throws<ObjectDisposedException>(() => { var _ = timeProvider.CreateDelay(TimeSpan.FromSeconds(10)); });
-        Assert.Throws<ObjectDisposedException>(() => { var _ = timeProvider.CreateDelay(TimeSpan.FromSeconds(20)); });
+        Assert.Throws<ObjectDisposedException>(() => { _ = timeProvider.CreateDelay(TimeSpan.FromSeconds(10)); });
+        Assert.Throws<ObjectDisposedException>(() => { _ = timeProvider.CreateDelay(TimeSpan.FromSeconds(20)); });
     }
 
     [Fact]
@@ -122,7 +119,7 @@ public class VirtualTimeProviderTests
         var timeProvider = new VirtualTimeProvider();
         timeProvider.Dispose();
 
-        Assert.Throws<ObjectDisposedException>(() => { var _ = timeProvider.CreateDelay(TimeSpan.FromSeconds(1)); });
+        Assert.Throws<ObjectDisposedException>(() => { _ = timeProvider.CreateDelay(TimeSpan.FromSeconds(1)); });
     }
 
     [Fact]

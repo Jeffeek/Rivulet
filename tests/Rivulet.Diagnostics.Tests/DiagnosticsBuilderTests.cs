@@ -38,8 +38,9 @@ public class DiagnosticsBuilderTests : IDisposable
                     MaxDegreeOfParallelism = 2
                 });
 
-            // Wait long enough for at least one aggregation interval (2s + buffer)
-            await Task.Delay(2500);
+            // Wait for at least 2x the aggregation interval to ensure timer fires reliably
+            // Increased from 2500ms to 4000ms to handle CI/CD timing variability
+            await Task.Delay(4000);
         } // Dispose to flush all listeners
 
         // Wait for file handle to be released and final aggregations to complete
@@ -134,7 +135,11 @@ public class DiagnosticsBuilderTests : IDisposable
             })
             .ToListAsync();
 
-        await Task.Delay(1500);
+        // Wait for EventCounters to be polled and metrics to be available
+        // EventCounters have a default polling interval of ~1 second
+        // Wait 3000ms to ensure at least 2-3 polling cycles have occurred
+        // This ensures metrics are captured and available for export
+        await Task.Delay(3000);
 
         var prometheusText = exporter.Export();
         prometheusText.Should().Contain("rivulet_items_started");

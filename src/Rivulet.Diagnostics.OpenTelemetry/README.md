@@ -46,6 +46,9 @@ using var meterProvider = Sdk.CreateMeterProviderBuilder()
     .Build();
 
 // Create metrics exporter
+// IMPORTANT: Must remain alive for the duration of the application
+// Bridges EventCounters from Rivulet.Core to OpenTelemetry Meters
+// Disposing it stops the metrics export
 using var metricsExporter = new RivuletMetricsExporter();
 ```
 
@@ -149,6 +152,9 @@ var meterProvider = Sdk.CreateMeterProviderBuilder()
     .Build();
 
 // Metrics available at http://localhost:9090/metrics
+
+// Create exporter and keep it alive for the application lifetime
+// It automatically bridges Rivulet EventCounters to OpenTelemetry
 using var exporter = new RivuletMetricsExporter();
 
 // Use Rivulet normally - metrics automatically exported
@@ -287,6 +293,10 @@ var tracerProvider = Sdk.CreateTracerProviderBuilder()
 4. **Monitor Error Rate**: Alert on `rivulet.error.rate` metric
 5. **Track Retries**: Enable retry tracking for transient error analysis
 6. **Correlate Traces**: Use W3C TraceContext for cross-service correlation
+7. **Keep Exporter Alive**: RivuletMetricsExporter must remain alive for metrics export
+   - In web apps: Register as singleton service
+   - In console apps: Keep reference until application exits
+   - Disposing stops the EventCounter listener and metrics collection
 
 ## Performance
 

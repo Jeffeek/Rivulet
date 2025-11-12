@@ -14,7 +14,7 @@ public static class ServiceCollectionExtensions
     /// </summary>
     public static IServiceCollection AddRivulet(this IServiceCollection services, IConfiguration configuration)
     {
-        services.Configure<ParallelOptionsRivulet>(configuration.GetSection("Rivulet"));
+        services.Configure<ParallelOptionsRivulet>(configuration.GetSection(RivuletHostingConstants.ConfigurationSectionName));
         return services;
     }
 
@@ -32,7 +32,7 @@ public static class ServiceCollectionExtensions
     /// </summary>
     public static IServiceCollection AddRivulet(this IServiceCollection services, string name, IConfiguration configuration)
     {
-        services.Configure<ParallelOptionsRivulet>(name, configuration.GetSection($"Rivulet:{name}"));
+        services.Configure<ParallelOptionsRivulet>(name, configuration.GetSection($"{RivuletHostingConstants.ConfigurationSectionName}:{name}"));
         return services;
     }
 }

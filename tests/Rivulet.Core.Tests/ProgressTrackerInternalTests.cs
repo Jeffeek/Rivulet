@@ -38,7 +38,7 @@ public class ProgressTrackerInternalTests
     }
 
     [Fact]
-    public void ProgressTracker_WithNullCallback_DoesNotReport()
+    public async Task ProgressTracker_WithNullCallback_DoesNotReport()
     {
         var options = new ProgressOptions
         {
@@ -52,7 +52,7 @@ public class ProgressTrackerInternalTests
         tracker.IncrementStarted();
         tracker.IncrementCompleted();
 
-        Thread.Sleep(50);
+        await Task.Delay(50, CancellationToken.None);
 
         var act = () => tracker.Dispose();
         act.Should().NotThrow();
@@ -79,8 +79,9 @@ public class ProgressTrackerInternalTests
     }
 
     [Fact]
-    public void ProgressTracker_ThrowingCallback_DoesNotPropagateException()
+    public async Task ProgressTracker_ThrowingCallback_DoesNotPropagateException()
     {
+        var callbackFired = new TaskCompletionSource<bool>();
         var callbackCount = 0;
         var options = new ProgressOptions
         {
@@ -88,6 +89,7 @@ public class ProgressTrackerInternalTests
             OnProgress = _ =>
             {
                 Interlocked.Increment(ref callbackCount);
+                callbackFired.TrySetResult(true);
                 throw new InvalidOperationException("Test exception");
             }
         };
@@ -98,7 +100,9 @@ public class ProgressTrackerInternalTests
         tracker.IncrementStarted();
         tracker.IncrementCompleted();
 
-        Thread.Sleep(50);
+        // Wait for callback to actually fire (with timeout for safety)
+        var completedInTime = await Task.WhenAny(callbackFired.Task, Task.Delay(500, CancellationToken.None)) == callbackFired.Task;
+        completedInTime.Should().BeTrue("callback should fire within 500ms");
 
         var act = () => tracker.Dispose();
         act.Should().NotThrow();
@@ -136,7 +140,7 @@ public class ProgressTrackerInternalTests
     }
 
     [Fact]
-    public void ProgressTracker_StreamingMode_NullTotalItems_CalculatesCorrectly()
+    public async Task ProgressTracker_StreamingMode_NullTotalItems_CalculatesCorrectly()
     {
         ProgressSnapshot? lastSnapshot = null;
         var options = new ProgressOptions
@@ -160,7 +164,9 @@ public class ProgressTrackerInternalTests
                 tracker.IncrementCompleted();
             }
 
-            Thread.Sleep(50);
+            // Increased delay for CI/CD environments where timer may fire slower
+            // Consistent with other tests in this file (15x the report interval)
+            await Task.Delay(150, CancellationToken.None);
 
             lastSnapshot.Should().NotBeNull();
             lastSnapshot!.TotalItems.Should().BeNull();
@@ -175,7 +181,7 @@ public class ProgressTrackerInternalTests
     }
 
     [Fact]
-    public void ProgressTracker_ErrorCounting_TracksCorrectly()
+    public async Task ProgressTracker_ErrorCounting_TracksCorrectly()
     {
         ProgressSnapshot? lastSnapshot = null;
         var options = new ProgressOptions
@@ -193,6 +199,10 @@ public class ProgressTrackerInternalTests
 
         try
         {
+            // Small delay before starting to allow timer to initialize
+            // This ensures the background reporter task has started
+            await Task.Delay(20, CancellationToken.None);
+
             for (var i = 0; i < 15; i++)
             {
                 tracker.IncrementStarted();
@@ -200,9 +210,17 @@ public class ProgressTrackerInternalTests
                     tracker.IncrementErrors();
                 else
                     tracker.IncrementCompleted();
+
+                // Add delay after every iteration to ensure timer has time to fire
+                // Report interval is 10ms, so 15ms delay ensures timer can capture each state
+                // This is especially important on Windows where timer resolution is ~15ms
+                await Task.Delay(30, CancellationToken.None);
             }
 
-            Thread.Sleep(50);
+            // Wait for final timer ticks to capture all state
+            // Wait 100ms (10x report interval) to ensure all errors are captured
+            // This accounts for Windows timer resolution and CI/CD timing variations
+            await Task.Delay(100, CancellationToken.None);
 
             lastSnapshot.Should().NotBeNull();
             lastSnapshot!.ErrorCount.Should().Be(5);

@@ -7,7 +7,8 @@ namespace Rivulet.Hosting.HealthChecks;
 /// </summary>
 public sealed class RivuletOperationHealthCheck : IHealthCheck
 {
-    private DateTime _lastSuccessTime = DateTime.UtcNow;
+    // Store DateTime as ticks (long) for thread-safe access with Interlocked
+    private long _lastSuccessTimeTicks = DateTime.UtcNow.Ticks;
     private int _consecutiveFailures;
     private readonly RivuletOperationHealthCheckOptions _options;
 
@@ -25,7 +26,7 @@ public sealed class RivuletOperationHealthCheck : IHealthCheck
     /// </summary>
     public void RecordSuccess()
     {
-        _lastSuccessTime = DateTime.UtcNow;
+        Interlocked.Exchange(ref _lastSuccessTimeTicks, DateTime.UtcNow.Ticks);
         Interlocked.Exchange(ref _consecutiveFailures, 0);
     }
 
@@ -45,7 +46,8 @@ public sealed class RivuletOperationHealthCheck : IHealthCheck
     /// <returns>The health check result.</returns>
     public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
     {
-        var timeSinceLastSuccess = DateTime.UtcNow - _lastSuccessTime;
+        var lastSuccessTime = new DateTime(Interlocked.Read(ref _lastSuccessTimeTicks), DateTimeKind.Utc);
+        var timeSinceLastSuccess = DateTime.UtcNow - lastSuccessTime;
         var failures = _consecutiveFailures;
 
         if (failures >= _options.UnhealthyFailureThreshold)
