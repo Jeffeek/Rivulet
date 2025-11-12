@@ -58,7 +58,7 @@ public class EdgeCaseCoverageTests
     [Fact]
     public async Task WithOpenTelemetryTracingAndRetries_ShouldHandleNoRetries()
     {
-        var activities = new List<Activity>();
+        var activities = new List<Activity?>();
 
         using var listener = new ActivityListener();
         listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
@@ -82,7 +82,8 @@ public class EdgeCaseCoverageTests
         result.Should().HaveCount(5);
 
         var retryEvents = activities
-            .SelectMany(a => a.Events)
+            .Where(a => a?.Events != null)
+            .SelectMany(a => a!.Events)
             .Where(e => e.Name == RivuletOpenTelemetryConstants.EventNames.Retry)
             .ToList();
 

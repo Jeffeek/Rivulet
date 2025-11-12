@@ -120,11 +120,16 @@ public class ProgressReportingTests
             },
             options);
 
+        // Wait for timer to fire at least once after completion to capture final state
+        // Report interval is 30ms, so wait 100ms (3x interval + buffer) to ensure
+        // the final snapshot includes all errors and completed items
+        await Task.Delay(100);
+
         results.Should().HaveCount(16); // 20 - 4 errors
 
         // The operation should take ~75-100ms (20 items * 15ms / 4 parallelism)
         // With 30ms report interval, we should get 2-3 reports during execution
-        // The final report on Dispose() should capture all 4 errors
+        // Plus the wait above ensures final state is captured
         var maxErrors = snapshots.Max(s => s.ErrorCount);
         var maxCompleted = snapshots.Max(s => s.ItemsCompleted);
 

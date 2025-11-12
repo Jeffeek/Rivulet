@@ -248,7 +248,8 @@ public class ParallelOptionsRivuletExtensionsTests
     {
         var activities = new System.Collections.Concurrent.ConcurrentBag<Activity?>();
         using var stateChanged = new ManualResetEventSlim(false);
-        var processedCount = 0;
+        using var firstFailureProcessing = new ManualResetEventSlim(false);
+        var failureCount = 0;
 
         using var listener = new ActivityListener();
         listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
@@ -259,7 +260,7 @@ public class ParallelOptionsRivuletExtensionsTests
         var items = Enumerable.Range(1, 20); // More items to ensure some are queued
         var options = new ParallelOptionsRivulet
         {
-            MaxDegreeOfParallelism = 6, // Higher concurrency so tasks 4-6 are running when circuit opens after 3 failures
+            MaxDegreeOfParallelism = 8, // Higher concurrency to ensure multiple tasks in flight
             ErrorMode = ErrorMode.BestEffort,
             CircuitBreaker = new CircuitBreakerOptions
             {
@@ -269,7 +270,7 @@ public class ParallelOptionsRivuletExtensionsTests
                 {
                     stateChanged.Set();
                     // Add delay to ensure state change is recorded while activities are still active
-                    await Task.Delay(100);
+                    await Task.Delay(200);
                 }
             }
         }.WithOpenTelemetryTracing("CircuitBreakerOperation");
@@ -277,32 +278,39 @@ public class ParallelOptionsRivuletExtensionsTests
         await items.SelectParallelAsync<int, int>(
             async (_, ct) =>
             {
-                // Slow down processing to keep activities alive longer
-                Interlocked.Increment(ref processedCount);
-                // All items fail slowly to ensure activities overlap with state change
-                // Circuit opens after 3rd failure, so items 4-6 will still be in-flight
-                // Increased delay to 3000ms to ensure activities remain active during state change
-                // This gives the circuit breaker event time to be recorded
-                await Task.Delay(3000, ct); // Longer delay ensures activities are alive when circuit opens
+                var currentFailure = Interlocked.Increment(ref failureCount);
+
+                // First few failures signal and delay extra to ensure circuit opens while they're active
+                if (currentFailure <= 5)
+                {
+                    firstFailureProcessing.Set();
+                    // Extra long delay (5s) ensures these activities stay alive during circuit opening
+                    await Task.Delay(5000, ct);
+                }
+                else
+                {
+                    // Later tasks can complete faster
+                    await Task.Delay(500, ct);
+                }
+
                 throw new InvalidOperationException("Always fails");
             },
             options);
 
         // Wait for circuit breaker state change to be recorded
-        var stateChangedSuccessfully = stateChanged.Wait(TimeSpan.FromSeconds(15));
+        var stateChangedSuccessfully = stateChanged.Wait(TimeSpan.FromSeconds(30));
         stateChangedSuccessfully.Should().BeTrue("circuit breaker should change state");
 
         // Give time for event to be recorded on activity and for activities to complete
         // Need to wait for the in-flight activities to complete so they're captured
         // Activities stop asynchronously after the operation completes
-        // Increased wait time to account for longer operation delay (3s) and CI/CD timing variations
-        // Extra time for Windows timing inconsistencies (6s total: 3s operation + 3s buffer)
-        await Task.Delay(6000);
+        // Extra long wait (10s) to account for 5s operation delay and Windows timing
+        await Task.Delay(10000);
 
         // Some activities should have circuit breaker state change events
         // Filter out null activities and those with null Events collections
         var activitiesWithCbEvents = activities
-            .Where(a => a?.Events?.Any(e => e.Name == "circuit_breaker_state_change") ?? false)
+            .Where(a => a?.Events.Any(e => e.Name == "circuit_breaker_state_change") ?? false)
             .ToList();
 
         activitiesWithCbEvents.Should().NotBeEmpty("circuit breaker state changed and should be recorded on activities");

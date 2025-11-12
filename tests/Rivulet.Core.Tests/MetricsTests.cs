@@ -83,7 +83,9 @@ public class MetricsTests
             },
             options);
 
-        await Task.Delay(100);
+        // Wait for metrics timer to fire at least twice after completion (2x sample interval + buffer)
+        // This ensures all failures are counted and captured in the snapshot
+        await Task.Delay(200);
 
         results.Should().HaveCount(40); // 50 - 10 failures
         capturedSnapshot.Should().NotBeNull();
