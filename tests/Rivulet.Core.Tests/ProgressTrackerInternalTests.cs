@@ -201,7 +201,7 @@ public class ProgressTrackerInternalTests
         {
             // Small delay before starting to allow timer to initialize
             // This ensures the background reporter task has started
-            await Task.Delay(5, CancellationToken.None);
+            await Task.Delay(20, CancellationToken.None);
 
             for (var i = 0; i < 15; i++)
             {
@@ -211,15 +211,16 @@ public class ProgressTrackerInternalTests
                 else
                     tracker.IncrementCompleted();
 
-                // Small delay every few iterations to allow timer to fire
-                // This simulates realistic async operation timing
-                if (i % 5 == 4)
-                    await Task.Delay(15, CancellationToken.None);
+                // Add delay after every iteration to ensure timer has time to fire
+                // Report interval is 10ms, so 15ms delay ensures timer can capture each state
+                // This is especially important on Windows where timer resolution is ~15ms
+                await Task.Delay(30, CancellationToken.None);
             }
 
-            // Wait for final timer tick to capture all state
-            // On Windows, timer resolution can be ~15ms, so wait longer
-            await Task.Delay(50, CancellationToken.None);
+            // Wait for final timer ticks to capture all state
+            // Wait 100ms (10x report interval) to ensure all errors are captured
+            // This accounts for Windows timer resolution and CI/CD timing variations
+            await Task.Delay(100, CancellationToken.None);
 
             lastSnapshot.Should().NotBeNull();
             lastSnapshot!.ErrorCount.Should().Be(5);

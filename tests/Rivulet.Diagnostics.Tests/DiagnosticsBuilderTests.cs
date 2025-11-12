@@ -135,7 +135,11 @@ public class DiagnosticsBuilderTests : IDisposable
             })
             .ToListAsync();
 
-        await Task.Delay(1500);
+        // Wait for EventCounters to be polled and metrics to be available
+        // EventCounters have a default polling interval of ~1 second
+        // Wait 3000ms to ensure at least 2-3 polling cycles have occurred
+        // This ensures metrics are captured and available for export
+        await Task.Delay(3000);
 
         var prometheusText = exporter.Export();
         prometheusText.Should().Contain("rivulet_items_started");
