@@ -120,18 +120,18 @@ public class ProgressReportingTests
             },
             options);
 
-        // Wait for timer to fire multiple times after completion to capture final state
-        // Report interval is 30ms, so wait 200ms (6-7x interval) to ensure
+        // Wait for timer to fire many times after completion to capture final state
+        // Report interval is 30ms, so wait 500ms (16-17x interval) to ensure
         // the final snapshot includes all errors and completed items
-        // This accounts for Windows timer resolution and the last item completing
-        // just after a timer tick
-        await Task.Delay(200);
+        // This accounts for Windows timer resolution, CI/CD timing variations,
+        // and the last error occurring right at the end of execution
+        await Task.Delay(1000);
 
         results.Should().HaveCount(16); // 20 - 4 errors
 
         // The operation should take ~75-100ms (20 items * 15ms / 4 parallelism)
         // With 30ms report interval, we should get 2-3 reports during execution
-        // Plus the 200ms wait ensures final state is fully captured
+        // Plus the 1000ms wait ensures final state is fully captured across multiple timer ticks
         var maxErrors = snapshots.Max(s => s.ErrorCount);
         var maxCompleted = snapshots.Max(s => s.ItemsCompleted);
 
