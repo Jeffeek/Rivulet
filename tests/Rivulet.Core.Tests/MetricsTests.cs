@@ -582,19 +582,17 @@ public class MetricsTests
             },
             options);
 
-        // Empty source completes instantly, but we need to give the metrics timer time to fire
-        // Poll for up to 1000ms waiting for at least one snapshot (CI/CD can be slow)
-        // Sample interval is 5ms, so waiting 1000ms gives plenty of time (200 cycles)
-        var deadline = DateTime.UtcNow.AddMilliseconds(1000);
-        while (capturedSnapshot == null && DateTime.UtcNow < deadline)
-        {
-            await Task.Delay(20);
-        }
+        // Empty source completes instantly, but the MetricsTracker timer needs time to
+        // initialize and fire at least once before disposal
+        // Sample interval is 5ms, but timer initialization on Windows can take 20-50ms
+        // Wait 100ms to ensure timer has time to initialize and fire multiple times
+        // This ensures capturedSnapshot is populated before tracker disposal
+        await Task.Delay(100);
 
         var results = await operationTask;
 
         results.Should().BeEmpty();
-        capturedSnapshot.Should().NotBeNull("metrics timer should fire at least once within 1000ms");
+        capturedSnapshot.Should().NotBeNull("metrics timer should fire at least once after 100ms wait");
         capturedSnapshot!.ItemsStarted.Should().Be(0);
         capturedSnapshot.ItemsCompleted.Should().Be(0);
     }
@@ -637,7 +635,10 @@ public class MetricsTests
             },
             options);
 
-        await Task.Delay(100);
+        // Wait for timers to fire multiple times after completion
+        // Both sample intervals are 50ms, so wait 200ms (4x interval) to ensure
+        // final state is fully captured in both metrics and progress snapshots
+        await Task.Delay(200);
 
         results.Should().HaveCount(50);
         metricsSnapshot.Should().NotBeNull();
