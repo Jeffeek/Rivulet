@@ -418,6 +418,7 @@ public class MetricsTests
 
         var options1 = new ParallelOptionsRivulet
         {
+            MaxDegreeOfParallelism = 4,
             Metrics = new MetricsOptions
             {
                 SampleInterval = TimeSpan.FromMilliseconds(50),
@@ -427,6 +428,7 @@ public class MetricsTests
 
         var options2 = new ParallelOptionsRivulet
         {
+            MaxDegreeOfParallelism = 4,
             Metrics = new MetricsOptions
             {
                 SampleInterval = TimeSpan.FromMilliseconds(50),
@@ -434,18 +436,19 @@ public class MetricsTests
             }
         };
 
-        // Increased delay from 10ms to 20ms to ensure operations run long enough for metrics to be sampled
-        // This prevents the race where operations complete before the metrics timer fires
-        var task1 = source1.SelectParallelAsync(async (x, ct) => { await Task.Delay(20, ct); return x * 2; }, options1);
-        var task2 = source2.SelectParallelAsync(async (x, ct) => { await Task.Delay(20, ct); return x * 3; }, options2);
+        // Increased delay to 50ms and added explicit parallelism limit (4) to ensure predictable timing
+        // Operation 1: 20 items / 4 parallelism * 50ms = 250ms (5 sample intervals)
+        // Operation 2: 30 items / 4 parallelism * 50ms = 375ms (7.5 sample intervals)
+        // This ensures metrics timers fire multiple times during execution for reliable capture
+        var task1 = source1.SelectParallelAsync(async (x, ct) => { await Task.Delay(50, ct); return x * 2; }, options1);
+        var task2 = source2.SelectParallelAsync(async (x, ct) => { await Task.Delay(50, ct); return x * 3; }, options2);
 
         var results1 = await task1;
         var results2 = await task2;
 
         // Wait for metrics timers to fire and capture final state
-        // Sample interval is 50ms, need to ensure at least one full cycle after operations complete
-        // Using 300ms (6x sample interval) for reliability in CI/CD with varying timing
-        await Task.Delay(300);
+        // Sample interval is 50ms, using 500ms (10x sample interval) for reliability in CI/CD
+        await Task.Delay(500);
 
         results1.Should().HaveCount(20);
         results2.Should().HaveCount(30);

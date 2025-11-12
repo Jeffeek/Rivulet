@@ -16,11 +16,14 @@ public class RivuletEventListenerBaseTests : IDisposable
     [Fact]
     public async Task EventListenerBase_ShouldReceiveCounters_WhenOperationsRun()
     {
+        // Use longer operation (200ms per item) to ensure EventCounters poll DURING execution
+        // EventCounters have ~1 second polling interval, so operation needs to run for 1-2+ seconds
+        // 10 items * 200ms / 2 parallelism = 1000ms (1 second) of operation time
         await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
             .SelectParallelStreamAsync(async (x, ct) =>
             {
-                await Task.Delay(10, ct);
+                await Task.Delay(200, ct);
                 return x * 2;
             }, new ParallelOptionsRivulet
             {
@@ -43,11 +46,13 @@ public class RivuletEventListenerBaseTests : IDisposable
     [Fact]
     public async Task EventListenerBase_ShouldHandleMissingDisplayName()
     {
+        // Use longer operation (200ms per item) to ensure EventCounters poll DURING execution
+        // 5 items * 200ms / 2 parallelism = 500ms of operation time
         await Enumerable.Range(1, 5)
             .ToAsyncEnumerable()
             .SelectParallelStreamAsync(async (x, ct) =>
             {
-                await Task.Delay(10, ct);
+                await Task.Delay(200, ct);
                 return x;
             }, new ParallelOptionsRivulet
             {
@@ -72,11 +77,13 @@ public class RivuletEventListenerBaseTests : IDisposable
     [Fact]
     public async Task EventListenerBase_ShouldHandleMissingDisplayUnits()
     {
+        // Use longer operation (200ms per item) to ensure EventCounters poll DURING execution
+        // 5 items * 200ms / 2 parallelism = 500ms of operation time
         await Enumerable.Range(1, 5)
             .ToAsyncEnumerable()
             .SelectParallelStreamAsync(async (x, ct) =>
             {
-                await Task.Delay(10, ct);
+                await Task.Delay(200, ct);
                 return x;
             }, new ParallelOptionsRivulet
             {
