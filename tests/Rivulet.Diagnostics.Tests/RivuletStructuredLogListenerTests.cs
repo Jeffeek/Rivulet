@@ -59,11 +59,14 @@ public class RivuletStructuredLogListenerTests : IDisposable
     {
         using (new RivuletStructuredLogListener(_testFilePath))
         {
+            // Use longer operation (200ms per item) to ensure EventCounters poll DURING execution
+            // EventCounters have ~1 second polling interval, so operation needs to run for 1-2+ seconds
+            // 10 items * 200ms / 2 parallelism = 1000ms (1 second) of operation time
             await Enumerable.Range(1, 10)
                 .ToAsyncEnumerable()
                 .SelectParallelStreamAsync(async (x, ct) =>
                 {
-                    await Task.Delay(10, ct);
+                    await Task.Delay(200, ct);
                     return x * 2;
                 }, new ParallelOptionsRivulet
                 {
@@ -71,12 +74,13 @@ public class RivuletStructuredLogListenerTests : IDisposable
                 })
                 .ToListAsync();
 
-            // Wait for EventCounters to fire - increased for CI/CD reliability
+            // Wait for EventCounters to poll and write metrics after operation completes
+            // Polling interval is ~1 second, wait 2 seconds to ensure at least 2 polls occur
             await Task.Delay(2000);
         } // Dispose listener to flush and close file
 
-        // Wait a moment for file handle to be fully released
-        await Task.Delay(200);
+        // Wait for file handle to be fully released
+        await Task.Delay(800);
 
         File.Exists(_testFilePath).Should().BeTrue();
         var lines = await File.ReadAllLinesAsync(_testFilePath);
