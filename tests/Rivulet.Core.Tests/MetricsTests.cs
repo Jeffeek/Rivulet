@@ -573,8 +573,8 @@ public class MetricsTests
             }
         };
 
-        // Start the operation (completes immediately for empty source)
-        var operationTask = source.SelectParallelAsync(
+        // For empty source, the operation completes almost instantly
+        var results = await source.SelectParallelAsync(
             async (x, ct) =>
             {
                 await Task.Delay(5, ct);
@@ -582,17 +582,14 @@ public class MetricsTests
             },
             options);
 
-        // Empty source completes instantly, but the MetricsTracker timer needs time to
-        // initialize and fire at least once before disposal
-        // Sample interval is 5ms, but timer initialization on Windows can take 20-50ms
-        // Wait 100ms to ensure timer has time to initialize and fire multiple times
-        // This ensures capturedSnapshot is populated before tracker disposal
-        await Task.Delay(100);
-
-        var results = await operationTask;
+        // After operation completes, wait for timer to fire at least once
+        // Sample interval is 5ms, but timer on Windows can take 20-50ms to initialize and fire
+        // Wait 200ms to ensure timer has adequate time to fire and populate snapshot
+        // This accounts for timer initialization, firing, and callback execution
+        await Task.Delay(200);
 
         results.Should().BeEmpty();
-        capturedSnapshot.Should().NotBeNull("metrics timer should fire at least once after 100ms wait");
+        capturedSnapshot.Should().NotBeNull("metrics timer should fire at least once after completion + 200ms wait");
         capturedSnapshot!.ItemsStarted.Should().Be(0);
         capturedSnapshot.ItemsCompleted.Should().Be(0);
     }
