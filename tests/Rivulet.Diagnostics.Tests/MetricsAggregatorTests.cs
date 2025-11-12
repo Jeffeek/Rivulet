@@ -12,22 +12,24 @@ namespace Rivulet.Diagnostics.Tests
             using var aggregator = new MetricsAggregator(TimeSpan.FromMilliseconds(500));
             aggregator.OnAggregation += metrics => aggregatedMetrics.Add(metrics);
 
-            await Enumerable.Range(1, 20)
+            // Use longer operation (200ms per item) to ensure EventCounters poll DURING execution
+            // EventCounters have ~1 second polling interval, so operation needs to run for 1-2+ seconds
+            // 10 items * 200ms / 2 parallelism = 1000ms (1 second) of operation time
+            await Enumerable.Range(1, 10)
                 .ToAsyncEnumerable()
                 .SelectParallelStreamAsync(async (x, ct) =>
                 {
-                    await Task.Delay(50, ct);
+                    await Task.Delay(200, ct);
                     return x * 2;
                 }, new ParallelOptionsRivulet
                 {
-                    MaxDegreeOfParallelism = 5
+                    MaxDegreeOfParallelism = 2
                 })
                 .ToListAsync();
 
-            // Wait for EventCounters to fire (1s default interval) and aggregations to happen (500ms window)
-            // Increased from 1800ms to 2500ms to ensure reliable timing in CI/CD environments
-            // Total time needed: operation completion (~200ms) + EventSource polling (1s) + aggregation (500ms) + buffer
-            await Task.Delay(2500);
+            // Wait for EventCounters to poll and write metrics, then for aggregation window to fire
+            // Polling interval ~1s, aggregation window 500ms, wait 2s for both to complete reliably
+            await Task.Delay(2000);
 
             aggregatedMetrics.Should().NotBeEmpty();
             var lastAggregation = aggregatedMetrics.Last();
