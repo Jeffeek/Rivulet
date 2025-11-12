@@ -421,7 +421,7 @@ public class MetricsTests
             MaxDegreeOfParallelism = 4,
             Metrics = new MetricsOptions
             {
-                SampleInterval = TimeSpan.FromMilliseconds(50),
+                SampleInterval = TimeSpan.FromMilliseconds(10),
                 OnMetricsSample = snapshot => { snapshots1.Add(snapshot); return ValueTask.CompletedTask; }
             }
         };
@@ -431,24 +431,27 @@ public class MetricsTests
             MaxDegreeOfParallelism = 4,
             Metrics = new MetricsOptions
             {
-                SampleInterval = TimeSpan.FromMilliseconds(50),
+                SampleInterval = TimeSpan.FromMilliseconds(10),
                 OnMetricsSample = snapshot => { snapshots2.Add(snapshot); return ValueTask.CompletedTask; }
             }
         };
 
-        // Increased delay to 50ms and added explicit parallelism limit (4) to ensure predictable timing
-        // Operation 1: 20 items / 4 parallelism * 50ms = 250ms (5 sample intervals)
-        // Operation 2: 30 items / 4 parallelism * 50ms = 375ms (7.5 sample intervals)
-        // This ensures metrics timers fire multiple times during execution for reliable capture
+        // Reduced sample interval to 10ms (from 50ms) to get many more timer firings
+        // Operation 1: 20 items / 4 parallelism * 50ms = 250ms (25 sample intervals)
+        // Operation 2: 30 items / 4 parallelism * 50ms = 375ms (37.5 sample intervals)
+        // This ensures metrics timers fire frequently enough to reliably capture final state
+        // even if last item completes between timer ticks
         var task1 = source1.SelectParallelAsync(async (x, ct) => { await Task.Delay(50, ct); return x * 2; }, options1);
         var task2 = source2.SelectParallelAsync(async (x, ct) => { await Task.Delay(50, ct); return x * 3; }, options2);
 
         var results1 = await task1;
         var results2 = await task2;
 
-        // Wait for metrics timers to fire and capture final state
-        // Sample interval is 50ms, using 500ms (10x sample interval) + buffer for reliability in CI/CD
-        await Task.Delay(500 + 200);
+        // Wait for MetricsTracker disposal to complete
+        // Dispose() triggers a final sample and waits 100ms for completion (MetricsTracker.cs:154)
+        // In CI/CD environments, we need generous time for final callback to execute and add snapshot to bag
+        // Wait 500ms to ensure final sample callback completes even under load
+        await Task.Delay(500);
 
         results1.Should().HaveCount(20);
         results2.Should().HaveCount(30);
