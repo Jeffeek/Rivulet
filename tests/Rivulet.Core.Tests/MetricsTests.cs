@@ -413,8 +413,8 @@ public class MetricsTests
         var source1 = Enumerable.Range(1, 20);
         var source2 = Enumerable.Range(1, 30);
 
-        MetricsSnapshot? snapshot1 = null;
-        MetricsSnapshot? snapshot2 = null;
+        var snapshots1 = new ConcurrentBag<MetricsSnapshot>();
+        var snapshots2 = new ConcurrentBag<MetricsSnapshot>();
 
         var options1 = new ParallelOptionsRivulet
         {
@@ -422,7 +422,7 @@ public class MetricsTests
             Metrics = new MetricsOptions
             {
                 SampleInterval = TimeSpan.FromMilliseconds(50),
-                OnMetricsSample = snapshot => { snapshot1 = snapshot; return ValueTask.CompletedTask; }
+                OnMetricsSample = snapshot => { snapshots1.Add(snapshot); return ValueTask.CompletedTask; }
             }
         };
 
@@ -432,7 +432,7 @@ public class MetricsTests
             Metrics = new MetricsOptions
             {
                 SampleInterval = TimeSpan.FromMilliseconds(50),
-                OnMetricsSample = snapshot => { snapshot2 = snapshot; return ValueTask.CompletedTask; }
+                OnMetricsSample = snapshot => { snapshots2.Add(snapshot); return ValueTask.CompletedTask; }
             }
         };
 
@@ -447,16 +447,22 @@ public class MetricsTests
         var results2 = await task2;
 
         // Wait for metrics timers to fire and capture final state
-        // Sample interval is 50ms, using 500ms (10x sample interval) for reliability in CI/CD
-        await Task.Delay(500);
+        // Sample interval is 50ms, using 500ms (10x sample interval) + buffer for reliability in CI/CD
+        await Task.Delay(500 + 200);
 
         results1.Should().HaveCount(20);
         results2.Should().HaveCount(30);
 
-        snapshot1.Should().NotBeNull();
-        snapshot2.Should().NotBeNull();
-        snapshot1!.ItemsCompleted.Should().Be(20);
-        snapshot2!.ItemsCompleted.Should().Be(30);
+        snapshots1.Should().NotBeEmpty();
+        snapshots2.Should().NotBeEmpty();
+
+        // Use Max() to get the highest completed count across all snapshots
+        // This handles race conditions where timer fires before final item completes
+        var maxCompleted1 = snapshots1.Max(s => s.ItemsCompleted);
+        var maxCompleted2 = snapshots2.Max(s => s.ItemsCompleted);
+
+        maxCompleted1.Should().Be(20);
+        maxCompleted2.Should().Be(30);
     }
 
     [Fact]
