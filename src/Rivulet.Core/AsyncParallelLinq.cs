@@ -222,6 +222,8 @@ public static class AsyncParallelLinq
             ? new ProgressTracker(null, options.Progress, token)
             : null;
 
+        using var metricsTracker = MetricsTrackerBase.Create(options.Metrics, token);
+        metricsTracker.SetActiveWorkers(options.MaxDegreeOfParallelism);
 
         var tokenBucket = options.RateLimit is not null
             ? new TokenBucket(options.RateLimit)
@@ -337,8 +339,6 @@ public static class AsyncParallelLinq
 
         var reader = Task.Run(async () =>
         {
-            using var metricsTracker = MetricsTrackerBase.Create(options.Metrics, token);
-            metricsTracker.SetActiveWorkers(effectiveMaxWorkers);
             try
             {
                 await Task.WhenAll(workers).ConfigureAwait(false);

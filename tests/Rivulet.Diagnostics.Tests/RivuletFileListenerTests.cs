@@ -87,8 +87,8 @@ public class RivuletFileListenerTests : IDisposable
     [Fact]
     public void FileListener_ShouldCreateDirectory_WhenNotExists()
     {
-        var directory = Path.Combine(Path.GetTempPath(), $"rivulet-test-dir-{Guid.NewGuid()}");
-        var filePath = Path.Combine(directory, "test.log");
+        var directory = Path.Join(Path.GetTempPath(), $"rivulet-test-dir-{Guid.NewGuid()}");
+        var filePath = Path.Join(directory, "test.log");
 
         using var listener = new RivuletFileListener(filePath);
 
