@@ -181,38 +181,39 @@ Console.WriteLine("✓ Fake channel demonstrated\n");
 
 // Sample 8: FakeChannel - Tracking read/write operations
 Console.WriteLine("8. FakeChannel - Operation tracking");
-var trackedChannel = new FakeChannel<string>(boundedCapacity: 10);
-
-// Producer
-var producerTask = Task.Run(async () =>
+using (var trackedChannel = new FakeChannel<string>(boundedCapacity: 10))
 {
-    for (int i = 0; i < 5; i++)
+    // Producer
+    var producerTask = Task.Run(async () =>
     {
-        await trackedChannel.WriteAsync($"Message-{i}");
-    }
-    trackedChannel.Complete();
-});
+        for (int i = 0; i < 5; i++)
+        {
+            await trackedChannel.WriteAsync($"Message-{i}");
+        }
+        trackedChannel.Complete();
+    });
 
-// Consumer
-var consumerTask = Task.Run(async () =>
-{
-    var messages = new List<string>();
-    await foreach (var msg in trackedChannel.Reader.ReadAllAsync())
+    // Consumer
+    var consumerTask = Task.Run(async () =>
     {
-        messages.Add(msg);
-    }
-    return messages;
-});
+        var messages = new List<string>();
+        await foreach (var msg in trackedChannel.Reader.ReadAllAsync())
+        {
+            messages.Add(msg);
+        }
+        return messages;
+    });
 
-await producerTask;
-var receivedMessages = await consumerTask;
+    await producerTask;
+    var receivedMessages = await consumerTask;
 
-Console.WriteLine($"Produced: {trackedChannel.WriteCount} messages");
-Console.WriteLine($"Consumed: {trackedChannel.ReadCount} messages");
-Console.WriteLine($"Messages: {string.Join(", ", receivedMessages)}");
+    Console.WriteLine($"Produced: {trackedChannel.WriteCount} messages");
+    Console.WriteLine($"Consumed: {trackedChannel.ReadCount} messages");
+    Console.WriteLine($"Messages: {string.Join(", ", receivedMessages)}");
 
-trackedChannel.Dispose();
-Console.WriteLine("✓ Operation tracking demonstrated\n");
+    // Dispose will be called automatically at the end of this block
+    Console.WriteLine("✓ Operation tracking demonstrated\n");
+}
 
 Console.WriteLine("=== All testing samples completed successfully ===");
 Console.WriteLine("\nTesting utilities summary:");
