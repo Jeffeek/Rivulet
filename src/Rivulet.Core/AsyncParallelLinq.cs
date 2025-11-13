@@ -222,7 +222,6 @@ public static class AsyncParallelLinq
             ? new ProgressTracker(null, options.Progress, token)
             : null;
 
-        var metricsTracker = MetricsTrackerBase.Create(options.Metrics, token);
 
         var tokenBucket = options.RateLimit is not null
             ? new TokenBucket(options.RateLimit)
@@ -237,7 +236,6 @@ public static class AsyncParallelLinq
             : null;
 
         var effectiveMaxWorkers = options.AdaptiveConcurrency?.MaxConcurrency ?? options.MaxDegreeOfParallelism;
-        metricsTracker.SetActiveWorkers(effectiveMaxWorkers);
 
         var input = Channel.CreateBounded<(int idx, TSource item)>(new BoundedChannelOptions(options.ChannelCapacity)
         {
@@ -339,6 +337,8 @@ public static class AsyncParallelLinq
 
         var reader = Task.Run(async () =>
         {
+            using var metricsTracker = MetricsTrackerBase.Create(options.Metrics, token);
+            metricsTracker.SetActiveWorkers(effectiveMaxWorkers);
             try
             {
                 await Task.WhenAll(workers).ConfigureAwait(false);
@@ -347,7 +347,6 @@ public static class AsyncParallelLinq
             {
                 output.Writer.TryComplete();
                 progressTracker?.Dispose();
-                metricsTracker.Dispose();
                 adaptiveController?.Dispose();
             }
         }, token);
