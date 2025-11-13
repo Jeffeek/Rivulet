@@ -51,7 +51,7 @@ public static class AsyncParallelLinq
             ? new ProgressTracker(totalItems, options.Progress, token)
             : null;
 
-        var metricsTracker = MetricsTrackerBase.Create(options.Metrics, token);
+        using var metricsTracker = MetricsTrackerBase.Create(options.Metrics, token);
         metricsTracker.SetActiveWorkers(options.MaxDegreeOfParallelism);
 
         var tokenBucket = options.RateLimit is not null
@@ -183,7 +183,7 @@ public static class AsyncParallelLinq
         finally
         {
             progressTracker?.Dispose();
-            metricsTracker.Dispose();
+            // metricsTracker.Dispose();  // Now disposed by using declaration
             adaptiveController?.Dispose();
         }
 
