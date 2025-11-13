@@ -21,7 +21,7 @@ Console.WriteLine("✓ Console listener demonstrated\n");
 
 // Sample 2: File Listener - Write metrics to a file
 Console.WriteLine("2. RivuletFileListener - File-based metrics logging");
-var metricsFile = Path.Combine(Path.GetTempPath(), "rivulet-metrics.log");
+var metricsFile = Path.Join(Path.GetTempPath(), "rivulet-metrics.log");
 using (new RivuletFileListener(metricsFile))
 {
     var items = Enumerable.Range(1, 30);
@@ -36,7 +36,7 @@ Console.WriteLine($"✓ Metrics written to: {metricsFile}\n");
 
 // Sample 3: Structured Log Listener - JSON format for log aggregation
 Console.WriteLine("3. RivuletStructuredLogListener - JSON structured logging");
-var jsonFile = Path.Combine(Path.GetTempPath(), "rivulet-metrics.json");
+var jsonFile = Path.Join(Path.GetTempPath(), "rivulet-metrics.json");
 using (new RivuletStructuredLogListener(jsonFile))
 {
     var data = Enumerable.Range(1, 25);
