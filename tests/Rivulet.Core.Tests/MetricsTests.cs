@@ -275,6 +275,7 @@ public class MetricsTests
             }, options)
             .ToListAsync();
 
+        // Small delay to ensure final metrics sample completes
         await Task.Delay(100);
 
         results.Should().HaveCount(20); // 30 - 10 failures
@@ -800,7 +801,7 @@ public class MetricsTests
             }
         };
 
-        using var tracker = new MetricsTracker(options, CancellationToken.None);
+        await using var tracker = new MetricsTracker(options, CancellationToken.None);
 
         tracker.IncrementDrainEvents();
         tracker.IncrementDrainEvents();
@@ -827,7 +828,7 @@ public class MetricsTests
             }
         };
 
-        using var tracker = new MetricsTracker(options, CancellationToken.None);
+        await using var tracker = new MetricsTracker(options, CancellationToken.None);
 
         tracker.SetQueueDepth(42);
         tracker.IncrementItemsStarted();
@@ -856,19 +857,19 @@ public class MetricsTests
             tracker.IncrementItemsStarted();
             await Task.Delay(100);
 
-            var act = () => tracker.Dispose();
-            act.Should().NotThrow();
+            var act = async () => await tracker.DisposeAsync();
+            await act.Should().NotThrowAsync();
         }
         finally
         {
-            tracker.Dispose();
+            await tracker.DisposeAsync();
         }
     }
 
     [Fact]
-    public void MetricsTrackerBase_WithoutMetrics_UsesNoOpTracker()
+    public async Task MetricsTrackerBase_WithoutMetrics_UsesNoOpTracker()
     {
-        using var tracker = MetricsTrackerBase.Create(null, CancellationToken.None);
+        await using var tracker = MetricsTrackerBase.Create(null, CancellationToken.None);
 
         // Should be NoOpMetricsTracker (lightweight, no allocations)
         tracker.Should().BeOfType<NoOpMetricsTracker>();
@@ -880,7 +881,7 @@ public class MetricsTests
         tracker.SetQueueDepth(100);
 
         // ReSharper disable once DisposeOnUsingVariable
-        tracker.Dispose();
+        await tracker.DisposeAsync();
     }
 
     [Fact]
@@ -898,7 +899,7 @@ public class MetricsTests
             }
         };
 
-        using var tracker = new MetricsTracker(options, CancellationToken.None);
+        await using var tracker = new MetricsTracker(options, CancellationToken.None);
 
         // Poll for the snapshot with a timeout to avoid flakiness
         var deadline = DateTime.UtcNow.AddMilliseconds(200);
@@ -935,8 +936,8 @@ public class MetricsTests
 
         tcs.SetResult();
 
-        var act = () => tracker.Dispose();
-        act.Should().NotThrow();
+        var act = async () => await tracker.DisposeAsync();
+        await act.Should().NotThrowAsync();
     }
 
     [Fact]
@@ -1038,9 +1039,9 @@ public class MetricsTests
 
         await Task.Delay(50);
 
-        var disposeTask = Task.Run(() =>
+        var disposeTask = Task.Run(async () =>
         {
-            tracker.Dispose();
+            await tracker.DisposeAsync();
         });
 
         await Task.Delay(100);
@@ -1053,7 +1054,7 @@ public class MetricsTests
     }
 
     [Fact]
-    public void MetricsTracker_WithNullCallback_SampleMetricsReturnsEarly()
+    public async Task MetricsTracker_WithNullCallback_SampleMetricsReturnsEarly()
     {
         var tracker = new MetricsTracker(new MetricsOptions { OnMetricsSample = null }, CancellationToken.None);
 
@@ -1064,7 +1065,7 @@ public class MetricsTests
         }
         finally
         {
-            tracker.Dispose();
+            await tracker.DisposeAsync();
         }
     }
 
@@ -1097,12 +1098,12 @@ public class MetricsTests
         }
         finally
         {
-            tracker.Dispose();
+            await tracker.DisposeAsync();
         }
     }
 
     [Fact]
-    public void MetricsTracker_Dispose_WithCallbackThrows_HandlesGracefully()
+    public async Task MetricsTracker_Dispose_WithCallbackThrows_HandlesGracefully()
     {
         var tracker = new MetricsTracker(new MetricsOptions
         {
@@ -1113,8 +1114,8 @@ public class MetricsTests
         tracker.IncrementItemsCompleted();
 
         // Should not throw despite callback exception
-        var act = () => tracker.Dispose();
-        act.Should().NotThrow();
+        var act = async () => await tracker.DisposeAsync();
+        await act.Should().NotThrowAsync();
     }
 
     [Fact]

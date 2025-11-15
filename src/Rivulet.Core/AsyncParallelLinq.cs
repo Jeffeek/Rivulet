@@ -47,11 +47,11 @@ public static class AsyncParallelLinq
         var sourceList = source as ICollection<TSource> ?? source.ToList();
         var totalItems = sourceList.Count;
 
-        using var progressTracker = options.Progress is not null
+        await using var progressTracker = options.Progress is not null
             ? new ProgressTracker(totalItems, options.Progress, token)
             : null;
 
-        using var metricsTracker = MetricsTrackerBase.Create(options.Metrics, token);
+        await using var metricsTracker = MetricsTrackerBase.Create(options.Metrics, token);
 
         var tokenBucket = options.RateLimit is not null
             ? new TokenBucket(options.RateLimit)
@@ -61,7 +61,7 @@ public static class AsyncParallelLinq
             ? new CircuitBreaker(options.CircuitBreaker)
             : null;
 
-        using var adaptiveController = options.AdaptiveConcurrency is not null
+        await using var adaptiveController = options.AdaptiveConcurrency is not null
             ? new AdaptiveConcurrencyController(options.AdaptiveConcurrency)
             : null;
 
@@ -211,11 +211,11 @@ public static class AsyncParallelLinq
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         var token = cts.Token;
 
-        using var progressTracker = options.Progress is not null
+        await using var progressTracker = options.Progress is not null
             ? new ProgressTracker(null, options.Progress, token)
             : null;
 
-        using var metricsTracker = MetricsTrackerBase.Create(options.Metrics, token);
+        await using var metricsTracker = MetricsTrackerBase.Create(options.Metrics, token);
 
         var tokenBucket = options.RateLimit is not null
             ? new TokenBucket(options.RateLimit)
@@ -225,7 +225,7 @@ public static class AsyncParallelLinq
             ? new CircuitBreaker(options.CircuitBreaker)
             : null;
 
-        using var adaptiveController = options.AdaptiveConcurrency is not null
+        await using var adaptiveController = options.AdaptiveConcurrency is not null
             ? new AdaptiveConcurrencyController(options.AdaptiveConcurrency)
             : null;
 
