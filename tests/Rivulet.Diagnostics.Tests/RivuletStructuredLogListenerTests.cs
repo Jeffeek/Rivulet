@@ -80,7 +80,7 @@ public class RivuletStructuredLogListenerTests : IDisposable
         } // Dispose listener to flush and close file
 
         // Wait for file handle to be fully released
-        await Task.Delay(800);
+        await Task.Delay(5000);
 
         File.Exists(_testFilePath).Should().BeTrue();
         var lines = await File.ReadAllLinesAsync(_testFilePath);

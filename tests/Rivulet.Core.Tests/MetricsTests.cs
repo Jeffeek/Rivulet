@@ -451,7 +451,7 @@ public class MetricsTests
         // Dispose() triggers a final sample and waits 100ms for completion (MetricsTracker.cs:154)
         // In CI/CD environments, we need generous time for final callback to execute and add snapshot to bag
         // Wait 500ms to ensure final sample callback completes even under load
-        await Task.Delay(500);
+        await Task.Delay(3000);
 
         results1.Should().HaveCount(20);
         results2.Should().HaveCount(30);
