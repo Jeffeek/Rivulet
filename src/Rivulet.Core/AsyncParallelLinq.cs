@@ -106,11 +106,15 @@ public static class AsyncParallelLinq
                 {
                     var startTime = Stopwatch.GetTimestamp();
                     var success = false;
+                    var acquiredAdaptive = false;
 
                     try
                     {
                         if (adaptiveController is not null)
+                        {
                             await adaptiveController.AcquireAsync(token).ConfigureAwait(false);
+                            acquiredAdaptive = true;
+                        }
 
                         if (tokenBucket is not null)
                             await tokenBucket.AcquireAsync(token).ConfigureAwait(false);
@@ -162,10 +166,10 @@ public static class AsyncParallelLinq
                     }
                     finally
                     {
-                        if (adaptiveController is not null)
+                        if (acquiredAdaptive)
                         {
                             var elapsed = Stopwatch.GetElapsedTime(startTime);
-                            adaptiveController.Release(elapsed, success);
+                            adaptiveController!.Release(elapsed, success);
                         }
                     }
                 }
@@ -268,11 +272,15 @@ public static class AsyncParallelLinq
             {
                 var startTime = Stopwatch.GetTimestamp();
                 var success = false;
+                var acquiredAdaptive = false;
 
                 try
                 {
                     if (adaptiveController is not null)
+                    {
                         await adaptiveController.AcquireAsync(token).ConfigureAwait(false);
+                        acquiredAdaptive = true;
+                    }
 
                     if (tokenBucket is not null)
                         await tokenBucket.AcquireAsync(token).ConfigureAwait(false);
@@ -321,10 +329,10 @@ public static class AsyncParallelLinq
                 }
                 finally
                 {
-                    if (adaptiveController is not null)
+                    if (acquiredAdaptive)
                     {
                         var elapsed = Stopwatch.GetElapsedTime(startTime);
-                        adaptiveController.Release(elapsed, success);
+                        adaptiveController!.Release(elapsed, success);
                     }
                 }
             }
