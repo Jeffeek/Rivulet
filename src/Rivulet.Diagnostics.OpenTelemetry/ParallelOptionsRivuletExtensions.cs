@@ -100,7 +100,7 @@ public static class ParallelOptionsRivuletExtensions
             },
             OnErrorAsync = async (index, exception) =>
             {
-                var activity = asyncLocalActivity.Value ?? itemActivities.GetValueOrDefault(index);
+                using var activity = asyncLocalActivity.Value ?? itemActivities.GetValueOrDefault(index);
 
                 if (activity is not null)
                 {
@@ -124,7 +124,6 @@ public static class ParallelOptionsRivuletExtensions
                             }
                             finally
                             {
-                                activity.Dispose();
                                 asyncLocalActivity.Value = null;
                             }
                         }
@@ -277,7 +276,7 @@ public static class ParallelOptionsRivuletExtensions
             },
             OnRetryAsync = async (index, attemptNumber, exception) =>
             {
-                var activity = asyncLocalActivity.Value ?? itemActivities.GetValueOrDefault(index);
+                using var activity = asyncLocalActivity.Value ?? itemActivities.GetValueOrDefault(index);
                 if (activity is not null)
                 {
                     RivuletActivitySource.RecordRetry(activity, attemptNumber, exception);
@@ -290,7 +289,7 @@ public static class ParallelOptionsRivuletExtensions
             },
             OnErrorAsync = async (index, exception) =>
             {
-                var activity = asyncLocalActivity.Value ?? itemActivities.GetValueOrDefault(index);
+                using var activity = asyncLocalActivity.Value ?? itemActivities.GetValueOrDefault(index);
 
                 if (activity is not null)
                 {
@@ -314,7 +313,6 @@ public static class ParallelOptionsRivuletExtensions
                             }
                             finally
                             {
-                                activity.Dispose();
                                 asyncLocalActivity.Value = null;
                             }
                         }
