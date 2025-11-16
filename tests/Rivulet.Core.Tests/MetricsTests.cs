@@ -286,8 +286,9 @@ public class MetricsTests
         // 2. Timer quantization effects (~15ms resolution on Windows)
         // 3. Async state machine cleanup
         // Using Task.Yield() to force a context switch, ensuring all memory writes are globally visible
+        // Increased from 100ms to 500ms for better Windows CI/CD reliability (flaky 1/50 times)
         await Task.Yield();
-        await Task.Delay(100);
+        await Task.Delay(500);
 
         results.Should().HaveCount(20); // 30 - 10 failures
         capturedSnapshot.Should().NotBeNull();
@@ -462,7 +463,9 @@ public class MetricsTests
         // Wait for MetricsTracker disposal to complete
         // Dispose() triggers a final sample and waits 100ms for completion (MetricsTracker.cs:154)
         // In CI/CD environments, we need generous time for final callback to execute and add snapshot to bag
-        // Wait 500ms to ensure final sample callback completes even under load
+        // Force context switch + memory barrier to ensure all callbacks writes are visible
+        // Then wait to ensure final sample callback completes even under load
+        await Task.Yield();
         await Task.Delay(3000);
 
         results1.Should().HaveCount(20);
