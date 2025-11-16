@@ -257,4 +257,15 @@ public class VirtualTimeProviderTests
         var act = () => timeProvider.Reset();
         act.Should().NotThrow();
     }
+
+    [Fact]
+    public void AdvanceTime_WithNegativeDuration_ShouldThrow()
+    {
+        using var timeProvider = new VirtualTimeProvider();
+
+        var act = () => timeProvider.AdvanceTime(TimeSpan.FromSeconds(-1));
+        act.Should().Throw<ArgumentOutOfRangeException>()
+            .WithParameterName("duration")
+            .WithMessage("*Duration cannot be negative*");
+    }
 }

@@ -101,6 +101,26 @@ public class RivuletEventListenerBaseTests : IDisposable
         }
     }
 
+    [Fact]
+    public void EventListenerBase_WithSyncDispose_ShouldDisposeCleanly()
+    {
+        var listener = new TestEventListener();
+
+        // Run a simple operation asynchronously
+        var task = Enumerable.Range(1, 3)
+            .SelectParallelAsync((x, _) => ValueTask.FromResult(x), new ParallelOptionsRivulet());
+
+#pragma warning disable xUnit1031
+        task.Wait();
+#pragma warning restore xUnit1031
+
+        // Dispose using sync Dispose() method
+        listener.Dispose();
+
+        // Should not throw and should complete cleanly
+        listener.ReceivedCounters.Should().NotBeNull();
+    }
+
     public void Dispose()
     {
         _listener.Dispose();

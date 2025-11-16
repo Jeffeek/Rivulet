@@ -182,11 +182,117 @@ public class DiagnosticsBuilderTests : IDisposable
         loggedLines.Should().NotBeEmpty();
     }
 
+    [Fact]
+    public void DiagnosticsBuilder_WithSyncDispose_ShouldDisposeAllListenersCleanly()
+    {
+        var logFile = Path.Join(Path.GetTempPath(), $"rivulet-sync-dispose-{Guid.NewGuid()}.json");
+        var diagnostics = new DiagnosticsBuilder()
+            .AddFileListener(logFile)
+            .AddConsoleListener()
+            .Build();
+
+        var task = Enumerable.Range(1, 3)
+            .SelectParallelAsync((x, _) => ValueTask.FromResult(x), new ParallelOptionsRivulet());
+#pragma warning disable xUnit1031
+        task.Wait();
+#pragma warning restore xUnit1031
+
+        diagnostics.Dispose();
+
+        // Should not throw
+        TestCleanupHelper.RetryDeleteFile(logFile);
+    }
+
+    [Fact]
+    public void DiagnosticsBuilder_WithMixedListeners_ShouldDisposeAsyncAndSyncListeners()
+    {
+        var logFile = Path.Join(Path.GetTempPath(), $"rivulet-mixed-{Guid.NewGuid()}.json");
+        var loggedLines = new List<string>();
+
+        var diagnostics = new DiagnosticsBuilder()
+            .AddFileListener(logFile) // IAsyncDisposable
+            .AddStructuredLogListener(loggedLines.Add) // IAsyncDisposable
+            .AddConsoleListener() // IDisposable
+            .Build();
+
+        // Run operation
+        var task = Enumerable.Range(1, 3)
+            .SelectParallelAsync((x, _) => ValueTask.FromResult(x), new ParallelOptionsRivulet());
+#pragma warning disable xUnit1031
+        task.Wait();
+#pragma warning restore xUnit1031
+
+        // Dispose sync first to test dual disposal logic
+        diagnostics.Dispose();
+
+        // Should not throw and should handle both types
+        TestCleanupHelper.RetryDeleteFile(logFile);
+    }
+
+    [Fact]
+    public async Task DiagnosticsBuilder_WithAsyncDispose_ShouldDisposeAllListenersCleanly()
+    {
+        var logFile = Path.Join(Path.GetTempPath(), $"rivulet-async-dispose-{Guid.NewGuid()}.json");
+        var diagnostics = new DiagnosticsBuilder()
+            .AddFileListener(logFile)
+            .AddStructuredLogListener(logFile + ".structured")
+            .Build();
+
+        await Enumerable.Range(1, 3)
+            .SelectParallelAsync((x, _) => ValueTask.FromResult(x), new ParallelOptionsRivulet());
+
+        await diagnostics.DisposeAsync();
+
+        // Should not throw
+        TestCleanupHelper.RetryDeleteFile(logFile);
+        TestCleanupHelper.RetryDeleteFile(logFile + ".structured");
+    }
+
+    [Fact]
+    public void DiagnosticsBuilder_WithDoubleDispose_ShouldNotThrow()
+    {
+        var diagnostics = new DiagnosticsBuilder()
+            .AddConsoleListener()
+            .Build();
+
+        // Run minimal operation
+        var task = Enumerable.Range(1, 1)
+            .SelectParallelAsync((x, _) => ValueTask.FromResult(x), new ParallelOptionsRivulet());
+#pragma warning disable xUnit1031
+        task.Wait();
+#pragma warning restore xUnit1031
+
+        // First dispose
+        diagnostics.Dispose();
+
+        // Second dispose should not throw
+        var act = () => diagnostics.Dispose();
+        act.Should().NotThrow();
+    }
+
+    [Fact]
+    public async Task DiagnosticsBuilder_WithDoubleAsyncDispose_ShouldNotThrow()
+    {
+        var logFile = Path.Join(Path.GetTempPath(), $"rivulet-double-{Guid.NewGuid()}.json");
+        var diagnostics = new DiagnosticsBuilder()
+            .AddFileListener(logFile)
+            .Build();
+
+        // First async dispose
+        await diagnostics.DisposeAsync();
+
+        // Second async dispose should not throw
+        var act = async () => await diagnostics.DisposeAsync();
+        await act.Should().NotThrowAsync();
+
+        TestCleanupHelper.RetryDeleteFile(logFile);
+    }
+
     public void Dispose()
     {
         Console.SetOut(_originalOutput);
         _stringWriter.Dispose();
-        
+
         TestCleanupHelper.RetryDeleteFile(_testFilePath);
     }
 }

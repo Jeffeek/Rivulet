@@ -377,11 +377,43 @@ public class ParallelWorkerServiceTests
 
         // Act
         await service.StartAsync(cts.Token);
-        await Task.Delay(50); // Give time for exception
+        await Task.Delay(50, CancellationToken.None); // Give time for exception
         await service.StopAsync(CancellationToken.None);
 
         // Assert - no crash, error was logged
         // The test passes if we reach here without unhandled exception
         true.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenGetSourceItemsThrowsException_ShouldLogErrorAndComplete()
+    {
+        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Error));
+        var logger = loggerFactory.CreateLogger<FatalGetSourceItemsWorkerService>();
+
+        var service = new FatalGetSourceItemsWorkerService(logger);
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+
+        // ReSharper disable once AccessToDisposedClosure
+        var startAct = async () => await service.StartAsync(cts.Token);
+
+        await startAct.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("Fatal error in GetSourceItems");
+    }
+
+    private class FatalGetSourceItemsWorkerService(ILogger<FatalGetSourceItemsWorkerService> logger)
+        : ParallelWorkerService<int, int>(logger)
+    {
+        protected override IAsyncEnumerable<int> GetSourceItems(CancellationToken cancellationToken)
+        {
+            // Throw from GetSourceItems to hit the exception path in ExecuteAsync
+            throw new InvalidOperationException("Fatal error in GetSourceItems");
+        }
+
+        protected override Task<int> ProcessAsync(int item, CancellationToken cancellationToken)
+        {
+            return Task.FromResult(item);
+        }
     }
 }

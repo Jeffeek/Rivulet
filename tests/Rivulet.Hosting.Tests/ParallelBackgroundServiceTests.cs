@@ -198,6 +198,23 @@ public class ParallelBackgroundServiceTests
         await service.StopAsync(CancellationToken.None);
     }
 
+    [Fact]
+    public async Task ExecuteAsync_WhenGetItemsAsyncThrowsException_ShouldLogErrorAndComplete()
+    {
+        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Error));
+        var logger = loggerFactory.CreateLogger<FatalErrorBackgroundService>();
+
+        var service = new FatalErrorBackgroundService(logger);
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+
+        // ReSharper disable once AccessToDisposedClosure
+        var startAct = async () => await service.StartAsync(cts.Token);
+
+        await startAct.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("Fatal error in GetItemsAsync");
+    }
+
     private class ThrowingBackgroundService(
         ILogger<ThrowingBackgroundService> logger,
         IAsyncEnumerable<int> items) : ParallelBackgroundService<int>(logger)
@@ -211,6 +228,21 @@ public class ParallelBackgroundServiceTests
         {
             // Simulate an unhandled exception
             throw new InvalidOperationException($"Test exception for item {item}");
+        }
+    }
+
+    private class FatalErrorBackgroundService(ILogger<FatalErrorBackgroundService> logger)
+        : ParallelBackgroundService<int>(logger)
+    {
+        protected override IAsyncEnumerable<int> GetItemsAsync(CancellationToken cancellationToken)
+        {
+            // Throw from GetItemsAsync to hit the exception path in ExecuteAsync
+            throw new InvalidOperationException("Fatal error in GetItemsAsync");
+        }
+
+        protected override ValueTask ProcessItemAsync(int item, CancellationToken cancellationToken)
+        {
+            return ValueTask.CompletedTask;
         }
     }
 }

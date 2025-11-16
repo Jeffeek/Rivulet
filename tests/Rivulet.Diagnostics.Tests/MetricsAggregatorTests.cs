@@ -146,5 +146,27 @@ namespace Rivulet.Diagnostics.Tests
             var act = () => aggregator.Dispose();
             act.Should().NotThrow();
         }
+
+        [Fact]
+        public void MetricsAggregator_ShouldNotThrow_WhenDoubleDisposed()
+        {
+            var aggregator = new MetricsAggregator();
+            aggregator.Dispose();
+
+            // Second dispose should not throw (tests disposal guard at line 137)
+            var act = () => aggregator.Dispose();
+            act.Should().NotThrow();
+        }
+
+        [Fact]
+        public async Task MetricsAggregator_ShouldNotThrow_WhenDoubleAsyncDisposed()
+        {
+            var aggregator = new MetricsAggregator();
+            await aggregator.DisposeAsync();
+
+            // Second dispose should not throw (tests disposal guard at line 155)
+            var act = async () => await aggregator.DisposeAsync();
+            await act.Should().NotThrowAsync();
+        }
     }
 }
