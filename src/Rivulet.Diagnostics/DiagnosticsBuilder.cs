@@ -1,3 +1,5 @@
+using Rivulet.Core.Internal;
+
 namespace Rivulet.Diagnostics;
 
 /// <summary>
@@ -26,9 +28,17 @@ namespace Rivulet.Diagnostics;
 ///     });
 /// </code>
 /// </example>
-public sealed class DiagnosticsBuilder : IDisposable
+public sealed class DiagnosticsBuilder : IDisposable, IAsyncDisposable
 {
+#if NET9_0_OR_GREATER
+    private readonly Lock _disposeLock = new();
+#else
+    private readonly object _disposeLock = new();
+#endif
+    private bool _disposed;
+
     private readonly List<IDisposable> _listeners = new();
+    private readonly List<IAsyncDisposable> _asyncListeners = new();
 
     /// <summary>
     /// Adds a console listener to the diagnostics pipeline.
@@ -49,7 +59,7 @@ public sealed class DiagnosticsBuilder : IDisposable
     /// <returns>The builder for chaining.</returns>
     public DiagnosticsBuilder AddFileListener(string filePath, long maxFileSizeBytes = 10 * 1024 * 1024)
     {
-        _listeners.Add(new RivuletFileListener(filePath, maxFileSizeBytes));
+        _asyncListeners.Add(new RivuletFileListener(filePath, maxFileSizeBytes));
         return this;
     }
 
@@ -60,7 +70,7 @@ public sealed class DiagnosticsBuilder : IDisposable
     /// <returns>The builder for chaining.</returns>
     public DiagnosticsBuilder AddStructuredLogListener(string filePath)
     {
-        _listeners.Add(new RivuletStructuredLogListener(filePath));
+        _asyncListeners.Add(new RivuletStructuredLogListener(filePath));
         return this;
     }
 
@@ -71,7 +81,7 @@ public sealed class DiagnosticsBuilder : IDisposable
     /// <returns>The builder for chaining.</returns>
     public DiagnosticsBuilder AddStructuredLogListener(Action<string> logAction)
     {
-        _listeners.Add(new RivuletStructuredLogListener(logAction));
+        _asyncListeners.Add(new RivuletStructuredLogListener(logAction));
         return this;
     }
 
@@ -85,7 +95,7 @@ public sealed class DiagnosticsBuilder : IDisposable
     {
         var aggregator = new MetricsAggregator(aggregationWindow);
         aggregator.OnAggregation += onAggregation;
-        _listeners.Add(aggregator);
+        _asyncListeners.Add(aggregator);
         return this;
     }
 
@@ -123,13 +133,96 @@ public sealed class DiagnosticsBuilder : IDisposable
     }
 
     /// <summary>
-    /// Disposes all registered listeners.
+    /// Disposes all registered listeners synchronously.
+    /// Only disposes synchronous listeners. Use DisposeAsync for proper async disposal.
     /// </summary>
     public void Dispose()
     {
+        LockHelper.Execute(_disposeLock, () =>
+        {
+            if (_disposed)
+                return;
+
+            _disposed = true;
+
+            // Dispose synchronous listeners
+            foreach (var listener in _listeners)
+            {
+                try
+                {
+                    listener.Dispose();
+                }
+                catch
+                {
+                    // Swallow exceptions during disposal to ensure all listeners are disposed
+                }
+            }
+
+            _listeners.Clear();
+
+            // For async listeners, we can only dispose them synchronously (not ideal but necessary for IDisposable)
+            // Users should prefer DisposeAsync for proper async disposal
+            foreach (var listener in _asyncListeners)
+            {
+                try
+                {
+                    listener.DisposeAsync().GetAwaiter().GetResult();
+                }
+                catch
+                {
+                    // Swallow exceptions during disposal to ensure all listeners are disposed
+                }
+            }
+
+            _asyncListeners.Clear();
+        });
+    }
+
+    /// <summary>
+    /// Disposes all registered listeners asynchronously.
+    /// This is the preferred disposal method for proper async cleanup.
+    /// </summary>
+    public async ValueTask DisposeAsync()
+    {
+        var shouldDispose = false;
+
+        LockHelper.Execute(_disposeLock, () =>
+        {
+            if (_disposed) return;
+
+            _disposed = true;
+            shouldDispose = true;
+        });
+
+        if (!shouldDispose)
+            return;
+
+        // Dispose async listeners first (preferred)
+        foreach (var listener in _asyncListeners)
+        {
+            try
+            {
+                await listener.DisposeAsync().ConfigureAwait(false);
+            }
+            catch
+            {
+                // Swallow exceptions during disposal to ensure all listeners are disposed
+            }
+        }
+
+        _asyncListeners.Clear();
+
+        // Then dispose synchronous listeners
         foreach (var listener in _listeners)
         {
-            listener.Dispose();
+            try
+            {
+                listener.Dispose();
+            }
+            catch
+            {
+                // Swallow exceptions during disposal to ensure all listeners are disposed
+            }
         }
 
         _listeners.Clear();

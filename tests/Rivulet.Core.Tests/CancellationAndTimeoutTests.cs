@@ -313,7 +313,7 @@ public class CancellationAndTimeoutTests
             cts.Token);
 
         // Wait for timeouts to occur before cancellation
-        await Task.Delay(150, cts.Token);
+        await Task.Delay(50, CancellationToken.None);
         await cts.CancelAsync();
 
         var results = await task;

@@ -47,12 +47,11 @@ public static class AsyncParallelLinq
         var sourceList = source as ICollection<TSource> ?? source.ToList();
         var totalItems = sourceList.Count;
 
-        var progressTracker = options.Progress is not null
+        await using var progressTracker = options.Progress is not null
             ? new ProgressTracker(totalItems, options.Progress, token)
             : null;
 
-        var metricsTracker = MetricsTrackerBase.Create(options.Metrics, token);
-        metricsTracker.SetActiveWorkers(options.MaxDegreeOfParallelism);
+        await using var metricsTracker = MetricsTrackerBase.Create(options.Metrics, token);
 
         var tokenBucket = options.RateLimit is not null
             ? new TokenBucket(options.RateLimit)
@@ -62,7 +61,7 @@ public static class AsyncParallelLinq
             ? new CircuitBreaker(options.CircuitBreaker)
             : null;
 
-        var adaptiveController = options.AdaptiveConcurrency is not null
+        await using var adaptiveController = options.AdaptiveConcurrency is not null
             ? new AdaptiveConcurrencyController(options.AdaptiveConcurrency)
             : null;
 
@@ -107,11 +106,15 @@ public static class AsyncParallelLinq
                 {
                     var startTime = Stopwatch.GetTimestamp();
                     var success = false;
+                    var acquiredAdaptive = false;
 
                     try
                     {
                         if (adaptiveController is not null)
+                        {
                             await adaptiveController.AcquireAsync(token).ConfigureAwait(false);
+                            acquiredAdaptive = true;
+                        }
 
                         if (tokenBucket is not null)
                             await tokenBucket.AcquireAsync(token).ConfigureAwait(false);
@@ -163,10 +166,10 @@ public static class AsyncParallelLinq
                     }
                     finally
                     {
-                        if (adaptiveController is not null)
+                        if (acquiredAdaptive)
                         {
                             var elapsed = Stopwatch.GetElapsedTime(startTime);
-                            adaptiveController.Release(elapsed, success);
+                            adaptiveController!.Release(elapsed, success);
                         }
                     }
                 }
@@ -179,12 +182,6 @@ public static class AsyncParallelLinq
         catch when (options.ErrorMode != ErrorMode.FailFast)
         {
             // Errors are collected in the errors list and handled after cleanup
-        }
-        finally
-        {
-            progressTracker?.Dispose();
-            metricsTracker.Dispose();
-            adaptiveController?.Dispose();
         }
 
         if (options.ErrorMode == ErrorMode.CollectAndContinue && errors.Count > 0)
@@ -218,11 +215,11 @@ public static class AsyncParallelLinq
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         var token = cts.Token;
 
-        var progressTracker = options.Progress is not null
+        await using var progressTracker = options.Progress is not null
             ? new ProgressTracker(null, options.Progress, token)
             : null;
 
-        var metricsTracker = MetricsTrackerBase.Create(options.Metrics, token);
+        await using var metricsTracker = MetricsTrackerBase.Create(options.Metrics, token);
 
         var tokenBucket = options.RateLimit is not null
             ? new TokenBucket(options.RateLimit)
@@ -232,7 +229,7 @@ public static class AsyncParallelLinq
             ? new CircuitBreaker(options.CircuitBreaker)
             : null;
 
-        var adaptiveController = options.AdaptiveConcurrency is not null
+        await using var adaptiveController = options.AdaptiveConcurrency is not null
             ? new AdaptiveConcurrencyController(options.AdaptiveConcurrency)
             : null;
 
@@ -275,11 +272,15 @@ public static class AsyncParallelLinq
             {
                 var startTime = Stopwatch.GetTimestamp();
                 var success = false;
+                var acquiredAdaptive = false;
 
                 try
                 {
                     if (adaptiveController is not null)
+                    {
                         await adaptiveController.AcquireAsync(token).ConfigureAwait(false);
+                        acquiredAdaptive = true;
+                    }
 
                     if (tokenBucket is not null)
                         await tokenBucket.AcquireAsync(token).ConfigureAwait(false);
@@ -328,10 +329,10 @@ public static class AsyncParallelLinq
                 }
                 finally
                 {
-                    if (adaptiveController is not null)
+                    if (acquiredAdaptive)
                     {
                         var elapsed = Stopwatch.GetElapsedTime(startTime);
-                        adaptiveController.Release(elapsed, success);
+                        adaptiveController!.Release(elapsed, success);
                     }
                 }
             }
@@ -346,9 +347,6 @@ public static class AsyncParallelLinq
             finally
             {
                 output.Writer.TryComplete();
-                progressTracker?.Dispose();
-                metricsTracker.Dispose();
-                adaptiveController?.Dispose();
             }
         }, token);
 

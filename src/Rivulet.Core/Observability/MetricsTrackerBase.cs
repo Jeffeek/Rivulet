@@ -4,7 +4,7 @@ namespace Rivulet.Core.Observability;
 /// Base class for metrics tracking implementations.
 /// Provides a common interface for both active and no-op trackers.
 /// </summary>
-internal abstract class MetricsTrackerBase : IDisposable
+internal abstract class MetricsTrackerBase : IAsyncDisposable
 {
     /// <summary>
     /// Increments the count of items started.
@@ -49,16 +49,14 @@ internal abstract class MetricsTrackerBase : IDisposable
     /// <summary>
     /// Disposes resources used by the tracker.
     /// </summary>
-    public abstract void Dispose();
+    public abstract ValueTask DisposeAsync();
 
     /// <summary>
     /// Factory method to create the appropriate tracker based on options.
     /// Returns a lightweight NoOpMetricsTracker if no custom metrics are needed.
     /// </summary>
-    public static MetricsTrackerBase Create(MetricsOptions? options, CancellationToken cancellationToken)
-    {
-        return options?.OnMetricsSample is not null
+    public static MetricsTrackerBase Create(MetricsOptions? options, CancellationToken cancellationToken) =>
+        options?.OnMetricsSample is not null
             ? new MetricsTracker(options, cancellationToken)
             : NoOpMetricsTracker.Instance;
-    }
 }

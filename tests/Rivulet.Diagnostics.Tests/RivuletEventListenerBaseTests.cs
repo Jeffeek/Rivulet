@@ -1,17 +1,13 @@
 using FluentAssertions;
 using Rivulet.Core;
 using System.Collections.Concurrent;
+using Rivulet.Core.Observability;
 
 namespace Rivulet.Diagnostics.Tests;
 
 public class RivuletEventListenerBaseTests : IDisposable
 {
-    private readonly TestEventListener _listener;
-
-    public RivuletEventListenerBaseTests()
-    {
-        _listener = new TestEventListener();
-    }
+    private readonly TestEventListener _listener = new();
 
     [Fact]
     public async Task EventListenerBase_ShouldReceiveCounters_WhenOperationsRun()
@@ -40,7 +36,7 @@ public class RivuletEventListenerBaseTests : IDisposable
         }
 
         _listener.ReceivedCounters.Should().NotBeEmpty();
-        _listener.ReceivedCounters.Keys.Should().Contain("items-started");
+        _listener.ReceivedCounters.Keys.Should().Contain(RivuletMetricsConstants.CounterNames.ItemsStarted);
     }
 
     [Fact]

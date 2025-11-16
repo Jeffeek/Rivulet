@@ -8,7 +8,7 @@ namespace Rivulet.Core.Resilience;
 /// Monitors performance and dynamically adjusts parallelism.
 /// </summary>
 [SuppressMessage("ReSharper", "InconsistentlySynchronizedField")]
-internal sealed class AdaptiveConcurrencyController : IDisposable
+internal sealed class AdaptiveConcurrencyController : IAsyncDisposable
 {
     private readonly AdaptiveConcurrencyOptions _options;
     private readonly SemaphoreSlim _semaphore;
@@ -53,7 +53,7 @@ internal sealed class AdaptiveConcurrencyController : IDisposable
     /// Acquires a slot to execute an operation.
     /// Blocks until a slot is available based on current concurrency limit.
     /// </summary>
-    public async ValueTask AcquireAsync(CancellationToken cancellationToken = default)
+    internal async ValueTask AcquireAsync(CancellationToken cancellationToken = default)
     {
         await _semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -192,7 +192,7 @@ internal sealed class AdaptiveConcurrencyController : IDisposable
         }
     }
 
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
         if (_disposed)
             return;
@@ -200,8 +200,7 @@ internal sealed class AdaptiveConcurrencyController : IDisposable
         _disposed = true;
 
         // Dispose timer - callback checks _disposed flag so it's safe to dispose immediately
-        // No need to wait for callback completion as SampleAndAdjust() returns early if disposed
-        _samplingTimer.Dispose();
+        await _samplingTimer.DisposeAsync().ConfigureAwait(false);
 
         _semaphore.Dispose();
     }

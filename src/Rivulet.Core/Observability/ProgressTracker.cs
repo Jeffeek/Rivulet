@@ -2,7 +2,7 @@ using System.Diagnostics;
 
 namespace Rivulet.Core.Observability;
 
-internal sealed class ProgressTracker : IDisposable
+internal sealed class ProgressTracker : IAsyncDisposable
 {
     private readonly int? _totalItems;
     private readonly ProgressOptions _options;
@@ -95,7 +95,9 @@ internal sealed class ProgressTracker : IDisposable
         }
     }
 
-    public void Dispose()
+    private static TimeSpan DisposeWait => TimeSpan.FromSeconds(5);
+
+    public async ValueTask DisposeAsync()
     {
         if (_disposed)
             return;
@@ -105,15 +107,15 @@ internal sealed class ProgressTracker : IDisposable
         // Cancel the background reporter task
         // The ReportProgressPeriodically loop will catch OperationCanceledException
         // and execute one final progress report before exiting
-        _reporterCts.Cancel();
+        await _reporterCts.CancelAsync().ConfigureAwait(false);
 
         // Wait briefly for the reporter task to complete its final report
-        // Use a short timeout (100ms) to allow final callback execution without indefinite blocking
+        // Use a timeout to allow final callback execution without indefinite blocking
         try
         {
-            _reporterTask.Wait(TimeSpan.FromMilliseconds(100));
+            await _reporterTask.WaitAsync(DisposeWait).ConfigureAwait(false);
         }
-        catch (AggregateException)
+        catch (Exception ex) when (ex is AggregateException or OperationCanceledException)
         {
             // Task was cancelled or faulted, which is expected
         }

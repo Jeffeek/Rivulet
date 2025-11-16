@@ -135,7 +135,9 @@ internal sealed class MetricsTracker : MetricsTrackerBase
         }
     }
 
-    public override void Dispose()
+    private static TimeSpan DisposeWait => TimeSpan.FromSeconds(5);
+
+    public override async ValueTask DisposeAsync()
     {
         if (_disposed)
             return;
@@ -145,15 +147,16 @@ internal sealed class MetricsTracker : MetricsTrackerBase
         // Cancel the background sampler task
         // The SampleMetricsPeriodically loop will catch OperationCanceledException
         // and execute one final metrics sample before exiting
-        _samplerCts.Cancel();
+        await _samplerCts.CancelAsync().ConfigureAwait(false);
 
-        // Wait briefly for the sampler task to complete its final sample
-        // Use a short timeout (100ms) to allow final callback execution without indefinite blocking
+        // Wait for the sampler task to complete its final sample
+        // Use a longer timeout to ensure final metrics are captured even under high CPU contention
+        // This is important for accurate metrics in high-concurrency scenarios
         try
         {
-            _samplerTask.Wait(TimeSpan.FromMilliseconds(100));
+            await _samplerTask.WaitAsync(DisposeWait);
         }
-        catch (AggregateException)
+        catch (Exception ex) when (ex is AggregateException or OperationCanceledException)
         {
             // Task was cancelled or faulted, which is expected
         }

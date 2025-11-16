@@ -12,7 +12,7 @@ namespace Rivulet.Core.Tests;
 public class ProgressTrackerInternalTests
 {
     [Fact]
-    public void ProgressTracker_DoubleDispose_DoesNotThrow()
+    public async Task ProgressTracker_DoubleDispose_DoesNotThrow()
     {
         var options = new ProgressOptions
         {
@@ -28,12 +28,12 @@ public class ProgressTrackerInternalTests
             tracker.IncrementStarted();
             tracker.IncrementCompleted();
 
-            var act = () => tracker.Dispose();
-            act.Should().NotThrow();
+            var act = async () => await tracker.DisposeAsync();
+            await act.Should().NotThrowAsync();
         }
         finally
         {
-            tracker.Dispose();
+            await tracker.DisposeAsync();
         }
     }
 
@@ -54,8 +54,8 @@ public class ProgressTrackerInternalTests
 
         await Task.Delay(50, CancellationToken.None);
 
-        var act = () => tracker.Dispose();
-        act.Should().NotThrow();
+        var act = async () => await tracker.DisposeAsync();
+        await act.Should().NotThrowAsync();
     }
 
     [Fact]
@@ -74,8 +74,8 @@ public class ProgressTrackerInternalTests
 
         await cts.CancelAsync();
 
-        var act = () => tracker.Dispose();
-        act.Should().NotThrow();
+        var act = async () => await tracker.DisposeAsync();
+        await act.Should().NotThrowAsync();
     }
 
     [Fact]
@@ -104,8 +104,8 @@ public class ProgressTrackerInternalTests
         var completedInTime = await Task.WhenAny(callbackFired.Task, Task.Delay(500, CancellationToken.None)) == callbackFired.Task;
         completedInTime.Should().BeTrue("callback should fire within 500ms");
 
-        var act = () => tracker.Dispose();
-        act.Should().NotThrow();
+        var act = async () => await tracker.DisposeAsync();
+        await act.Should().NotThrowAsync();
 
         callbackCount.Should().BeGreaterThan(0);
     }
@@ -133,8 +133,8 @@ public class ProgressTrackerInternalTests
         await Task.Delay(20, CancellationToken.None);
 
         await cts.CancelAsync();
-        var act = () => tracker.Dispose();
-        act.Should().NotThrow();
+        var act = async () => await tracker.DisposeAsync();
+        await act.Should().NotThrowAsync();
 
         reportCount.Should().BeGreaterThan(0);
     }
@@ -176,7 +176,7 @@ public class ProgressTrackerInternalTests
         }
         finally
         {
-            tracker.Dispose();
+            await tracker.DisposeAsync();
         }
     }
 
@@ -229,7 +229,7 @@ public class ProgressTrackerInternalTests
         }
         finally
         {
-            tracker.Dispose();
+            await tracker.DisposeAsync();
         }
     }
 }
