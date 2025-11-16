@@ -144,7 +144,6 @@ public sealed class MetricsAggregator : RivuletEventListenerBase
         _aggregationTimer.Dispose(waitHandle);
         waitHandle.WaitOne();
 
-        AggregateMetrics(null);
         base.Dispose();
     }
 }

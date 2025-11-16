@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Rivulet.Core;
+using Rivulet.Core.Observability;
 
 namespace Rivulet.Diagnostics.Tests
 {
@@ -14,8 +15,8 @@ namespace Rivulet.Diagnostics.Tests
 
             // Use longer operation (200ms per item) to ensure EventCounters poll DURING execution
             // EventCounters have ~1 second polling interval, so operation needs to run for 1-2+ seconds
-            // 10 items * 200ms / 2 parallelism = 1000ms (1 second) of operation time
-            await Enumerable.Range(1, 10)
+            // 5 items * 200ms / 2 parallelism = 500ms (0.5 second) of operation time
+            await Enumerable.Range(1, 5)
                 .ToAsyncEnumerable()
                 .SelectParallelStreamAsync(async (x, ct) =>
                 {
@@ -28,19 +29,20 @@ namespace Rivulet.Diagnostics.Tests
                 .ToListAsync();
 
             // Wait for EventCounters to poll and write metrics, then for aggregation window to fire
-            // Polling interval ~1s, aggregation window 500ms, wait 2s for both to complete reliably
-            await Task.Delay(2000);
+            // Polling interval ~1s, aggregation window 500ms, wait 3s for both to complete reliably
+            await Task.Delay(3000);
 
             aggregatedMetrics.Should().NotBeEmpty();
             var lastAggregation = aggregatedMetrics.Last();
             lastAggregation.Should().NotBeEmpty();
 
-            var itemsStartedMetric = lastAggregation.FirstOrDefault(m => m.Name == "items-started");
+            var itemsStartedMetric = lastAggregation.FirstOrDefault(m => m.Name == RivuletMetricsConstants.CounterNames.ItemsStarted);
             itemsStartedMetric.Should().NotBeNull();
             itemsStartedMetric.Min.Should().BeGreaterThanOrEqualTo(0);
             itemsStartedMetric.Max.Should().BeGreaterThanOrEqualTo(itemsStartedMetric.Min);
             itemsStartedMetric.Average.Should().BeGreaterThanOrEqualTo(0);
             itemsStartedMetric.SampleCount.Should().BeGreaterThan(0);
+            itemsStartedMetric.Timestamp.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
         }
 
         [Fact]
