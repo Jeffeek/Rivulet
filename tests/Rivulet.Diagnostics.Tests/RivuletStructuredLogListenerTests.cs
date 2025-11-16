@@ -28,7 +28,7 @@ public class RivuletStructuredLogListenerTests : IDisposable
         var directory = Path.Join(Path.GetTempPath(), $"rivulet-test-dir-{Guid.NewGuid()}");
         var filePath = Path.Join(directory, "test.json");
 
-        using (new RivuletStructuredLogListener(filePath))
+        await using (new RivuletStructuredLogListener(filePath))
         {
             await Enumerable.Range(1, 5)
                 .ToAsyncEnumerable()
@@ -57,7 +57,7 @@ public class RivuletStructuredLogListenerTests : IDisposable
     [Fact]
     public async Task StructuredLogListener_ShouldWriteJsonToFile_WhenOperationsRun()
     {
-        using (new RivuletStructuredLogListener(_testFilePath))
+        await using (new RivuletStructuredLogListener(_testFilePath))
         {
             // Use longer operation (200ms per item) to ensure EventCounters poll DURING execution
             // EventCounters have ~1 second polling interval, so operation needs to run for 1-2+ seconds
@@ -95,7 +95,7 @@ public class RivuletStructuredLogListenerTests : IDisposable
     public async Task StructuredLogListener_ShouldInvokeAction_WhenUsingCustomAction()
     {
         var loggedLines = new List<string>();
-        using var listener = new RivuletStructuredLogListener(loggedLines.Add);
+        await using var listener = new RivuletStructuredLogListener(loggedLines.Add);
 
         await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
@@ -126,7 +126,7 @@ public class RivuletStructuredLogListenerTests : IDisposable
     public async Task StructuredLogListener_ShouldContainRequiredFields_InJsonOutput()
     {
         var loggedLines = new List<string>();
-        using var listener = new RivuletStructuredLogListener(loggedLines.Add);
+        await using var listener = new RivuletStructuredLogListener(loggedLines.Add);
 
         await Enumerable.Range(1, 5)
             .ToAsyncEnumerable()

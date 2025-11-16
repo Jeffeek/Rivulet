@@ -10,7 +10,7 @@ namespace Rivulet.Diagnostics.Tests
         public async Task MetricsAggregator_ShouldAggregateMetrics_OverTimeWindow()
         {
             var aggregatedMetrics = new List<IReadOnlyList<AggregatedMetrics>>();
-            using var aggregator = new MetricsAggregator(TimeSpan.FromMilliseconds(500));
+            await using var aggregator = new MetricsAggregator(TimeSpan.FromMilliseconds(500));
             aggregator.OnAggregation += metrics => aggregatedMetrics.Add(metrics);
 
             // Use longer operation (200ms per item) to ensure EventCounters poll DURING execution
@@ -49,7 +49,7 @@ namespace Rivulet.Diagnostics.Tests
         public async Task MetricsAggregator_ShouldCalculateCorrectStatistics()
         {
             var aggregatedMetrics = new List<IReadOnlyList<AggregatedMetrics>>();
-            using var aggregator = new MetricsAggregator(TimeSpan.FromSeconds(2));
+            await using var aggregator = new MetricsAggregator(TimeSpan.FromSeconds(2));
             aggregator.OnAggregation += metrics =>
             {
                 if (metrics.Count > 0)
@@ -93,7 +93,7 @@ namespace Rivulet.Diagnostics.Tests
         public async Task MetricsAggregator_ShouldHandleExpiredSamples()
         {
             var aggregatedMetrics = new List<IReadOnlyList<AggregatedMetrics>>();
-            using var aggregator = new MetricsAggregator(TimeSpan.FromSeconds(2));
+            await using var aggregator = new MetricsAggregator(TimeSpan.FromSeconds(2));
             aggregator.OnAggregation += metrics =>
             {
                 if (metrics.Count > 0)

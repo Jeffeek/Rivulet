@@ -10,7 +10,7 @@ public class RivuletFileListenerTests : IDisposable
     [Fact]
     public async Task FileListener_ShouldWriteMetricsToFile_WhenOperationsRun()
     {
-        using (new RivuletFileListener(_testFilePath))
+        await using (new RivuletFileListener(_testFilePath))
         {
             // Use longer operation (200ms per item) to ensure EventCounters poll DURING execution
             // EventCounters have ~1 second polling interval, so operation needs to run for 1-2+ seconds
@@ -45,7 +45,7 @@ public class RivuletFileListenerTests : IDisposable
     public async Task FileListener_ShouldRotateFile_WhenMaxSizeExceeded()
     {
         const long maxSize = 100;
-        using var listener = new RivuletFileListener(_testFilePath, maxSize);
+        await using var listener = new RivuletFileListener(_testFilePath, maxSize);
 
         // Generate enough operations to trigger file rotation
         // Use fewer iterations with more items each to reduce total time

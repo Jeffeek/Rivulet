@@ -18,7 +18,7 @@ namespace Rivulet.Diagnostics;
 ///     });
 /// </code>
 /// </example>
-public sealed class RivuletFileListener : RivuletEventListenerBase
+public sealed class RivuletFileListener : RivuletEventListenerBase, IAsyncDisposable
 {
     private readonly string _filePath;
     private readonly long _maxFileSizeBytes;
@@ -99,7 +99,7 @@ public sealed class RivuletFileListener : RivuletEventListenerBase
         var rotatedFileName = Path.Join(directory, $"{fileNameWithoutExtension}-{timestamp}{extension}");
 
         // Retry file move with brief delays if needed (OS may still have handle open)
-        var retries = 3;
+        const int retries = 3;
         for (var i = 0; i < retries; i++)
         {
             try
@@ -124,11 +124,37 @@ public sealed class RivuletFileListener : RivuletEventListenerBase
     {
         LockHelper.Execute(_lock, () =>
         {
-            _writer?.Flush();
-            _writer?.Close();
-            _writer?.Dispose();
+            if (_writer == null) return;
+
+            _writer.Flush();
+            _writer.Close();
+            _writer.Dispose();
             _writer = null;
         });
+
+        base.Dispose();
+    }
+
+    /// <summary>
+    /// Disposes the file listener asynchronously and closes the file.
+    /// </summary>
+    public async ValueTask DisposeAsync()
+    {
+        // Extract writer under lock to ensure thread-safety
+        StreamWriter? writer = LockHelper.Execute(_lock, () =>
+        {
+            var w = _writer;
+            _writer = null;
+            return w;
+        });
+
+        // Dispose outside lock to avoid holding lock during async I/O
+        if (writer != null)
+        {
+            await writer.FlushAsync().ConfigureAwait(false);
+            writer.Close();
+            await writer.DisposeAsync().ConfigureAwait(false);
+        }
 
         base.Dispose();
     }

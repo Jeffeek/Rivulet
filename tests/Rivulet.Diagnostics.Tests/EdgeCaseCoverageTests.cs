@@ -135,7 +135,7 @@ public class EdgeCaseCoverageTests
 
         try
         {
-            using (new RivuletFileListener(testFile))
+            await using (new RivuletFileListener(testFile))
             {
                 await Enumerable.Range(1, 10)
                     .ToAsyncEnumerable()
@@ -195,7 +195,7 @@ public class EdgeCaseCoverageTests
 
         try
         {
-            using (new RivuletStructuredLogListener(testFile))
+            await using (new RivuletStructuredLogListener(testFile))
             {
                 await Enumerable.Range(1, 5)
                     .ToAsyncEnumerable()
@@ -260,7 +260,7 @@ public class EdgeCaseCoverageTests
     [Fact]
     public async Task MetricsAggregator_ShouldHandleNullCallback()
     {
-        using var aggregator = new MetricsAggregator(TimeSpan.FromSeconds(1));
+        await using var aggregator = new MetricsAggregator(TimeSpan.FromSeconds(1));
 
         await Enumerable.Range(1, 5)
             .ToAsyncEnumerable()
@@ -282,7 +282,7 @@ public class EdgeCaseCoverageTests
     [Fact]
     public async Task MetricsAggregator_ShouldHandleEmptyMetrics()
     {
-        using var aggregator = new MetricsAggregator(TimeSpan.FromMilliseconds(500));
+        await using var aggregator = new MetricsAggregator(TimeSpan.FromMilliseconds(500));
         aggregator.OnAggregation += metrics =>
         {
             _ = true;

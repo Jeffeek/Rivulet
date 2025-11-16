@@ -48,7 +48,7 @@ public sealed class AggregatedMetrics
 /// <summary>
 /// Aggregates Rivulet metrics over a specified time window and provides aggregated statistics.
 /// </summary>
-public sealed class MetricsAggregator : RivuletEventListenerBase
+public sealed class MetricsAggregator : RivuletEventListenerBase, IAsyncDisposable
 {
     private readonly TimeSpan _aggregationWindow;
     private readonly ConcurrentDictionary<string, List<(double Value, DateTime Timestamp)>> _samples = new();
@@ -143,6 +143,22 @@ public sealed class MetricsAggregator : RivuletEventListenerBase
         using var waitHandle = new ManualResetEvent(false);
         _aggregationTimer.Dispose(waitHandle);
         waitHandle.WaitOne();
+
+        base.Dispose();
+    }
+
+    /// <summary>
+    /// Disposes the metrics aggregator and its internal timer asynchronously.
+    /// </summary>
+    public async ValueTask DisposeAsync()
+    {
+        if (_disposed)
+            return;
+
+        _disposed = true;
+
+        // Dispose timer asynchronously without blocking
+        await _aggregationTimer.DisposeAsync().ConfigureAwait(false);
 
         base.Dispose();
     }

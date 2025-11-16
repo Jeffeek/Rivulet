@@ -22,11 +22,11 @@ public class DiagnosticsBuilderTests : IDisposable
     {
         var aggregatedMetrics = new System.Collections.Concurrent.ConcurrentBag<IReadOnlyList<AggregatedMetrics>>();
 
-        using (new DiagnosticsBuilder()
-                   .AddConsoleListener(useColors: false)
-                   .AddFileListener(_testFilePath)
-                   .AddMetricsAggregator(TimeSpan.FromSeconds(2), metrics => aggregatedMetrics.Add(metrics))
-                   .Build())
+        await using (new DiagnosticsBuilder()
+                         .AddConsoleListener(useColors: false)
+                         .AddFileListener(_testFilePath)
+                         .AddMetricsAggregator(TimeSpan.FromSeconds(2), metrics => aggregatedMetrics.Add(metrics))
+                         .Build())
         {
             await Enumerable.Range(1, 10)
                 .SelectParallelAsync(async (x, ct) =>
@@ -59,7 +59,7 @@ public class DiagnosticsBuilderTests : IDisposable
     [Fact]
     public async Task DiagnosticsBuilder_ShouldSupportPrometheusExporter()
     {
-        using var diagnostics = new DiagnosticsBuilder()
+        await using var diagnostics = new DiagnosticsBuilder()
             .AddPrometheusExporter(out var exporter)
             .Build();
 
@@ -86,9 +86,9 @@ public class DiagnosticsBuilderTests : IDisposable
     {
         var logFile = Path.Join(Path.GetTempPath(), $"rivulet-test-{Guid.NewGuid()}.json");
 
-        using (new DiagnosticsBuilder()
-                   .AddStructuredLogListener(logFile)
-                   .Build())
+        await using (new DiagnosticsBuilder()
+                         .AddStructuredLogListener(logFile)
+                         .Build())
         {
             await Enumerable.Range(1, 5)
                 .ToAsyncEnumerable()
@@ -114,7 +114,7 @@ public class DiagnosticsBuilderTests : IDisposable
     [Fact]
     public async Task DiagnosticsBuilder_ShouldSupportHealthCheck()
     {
-        using var diagnostics = new DiagnosticsBuilder()
+        await using var diagnostics = new DiagnosticsBuilder()
             .AddPrometheusExporter(out var exporter)
             .AddHealthCheck(exporter, new RivuletHealthCheckOptions
             {
@@ -161,7 +161,7 @@ public class DiagnosticsBuilderTests : IDisposable
     {
         var loggedLines = new System.Collections.Concurrent.ConcurrentBag<string>();
 
-        using var diagnostics = new DiagnosticsBuilder()
+        await using var diagnostics = new DiagnosticsBuilder()
             .AddStructuredLogListener(loggedLines.Add)
             .Build();
 
