@@ -285,10 +285,11 @@ public class MetricsTests
         // 1. Any CPU cache coherency delays on Windows
         // 2. Timer quantization effects (~15ms resolution on Windows)
         // 3. Async state machine cleanup
+        // 4. Callback execution and memory write propagation in CI/CD under load
         // Using Task.Yield() to force a context switch, ensuring all memory writes are globally visible
-        // Increased from 100ms to 500ms for better Windows CI/CD reliability (flaky 1/50 times)
+        // Increased from 100ms → 500ms → 1000ms due to persistent flakiness on both Windows and Ubuntu CI/CD (1/50 failures)
         await Task.Yield();
-        await Task.Delay(500);
+        await Task.Delay(1000);
 
         results.Should().HaveCount(20); // 30 - 10 failures
         capturedSnapshot.Should().NotBeNull();
