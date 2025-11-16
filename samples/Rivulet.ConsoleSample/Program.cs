@@ -27,18 +27,13 @@ Console.WriteLine($"✓ Processed {results.Count} URLs\n");
 // Sample 2: SelectParallelStreamAsync - Stream results as they complete
 Console.WriteLine("2. SelectParallelStreamAsync - Stream processing");
 var numbers = Enumerable.Range(1, 20);
-var streamResults = new List<int>();
-
-await foreach (var squared in numbers.ToAsyncEnumerable().SelectParallelStreamAsync(
-                   async (num, ct) =>
-                   {
-                       await Task.Delay(Random.Shared.Next(10, 50), ct);
-                       return num * num;
-                   },
-                   new ParallelOptionsRivulet { MaxDegreeOfParallelism = 5, OrderedOutput = false }))
-{
-    streamResults.Add(squared);
-}
+var streamResults = await numbers.ToAsyncEnumerable()
+    .SelectParallelStreamAsync(async (num, ct) =>
+    {
+        await Task.Delay(Random.Shared.Next(10, 50), ct);
+        return num * num;
+    }, new ParallelOptionsRivulet { MaxDegreeOfParallelism = 5, OrderedOutput = false })
+    .ToListAsync();
 
 Console.WriteLine($"✓ Streamed {streamResults.Count} results\n");
 

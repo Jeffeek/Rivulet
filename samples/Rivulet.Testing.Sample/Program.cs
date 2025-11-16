@@ -6,47 +6,45 @@ Console.WriteLine("=== Rivulet.Testing Sample ===\n");
 
 // Sample 1: VirtualTimeProvider - Deterministic time control
 Console.WriteLine("1. VirtualTimeProvider - Virtual time control");
-var virtualTime = new VirtualTimeProvider();
+using (var virtualTime = new VirtualTimeProvider())
+{
+    Console.WriteLine($"Virtual time started at: {virtualTime.CurrentTime}");
 
-Console.WriteLine($"Virtual time started at: {virtualTime.CurrentTime}");
+    // Advance time manually
+    virtualTime.AdvanceTime(TimeSpan.FromMinutes(5));
+    Console.WriteLine($"After advancing 5 minutes: {virtualTime.CurrentTime}");
 
-// Advance time manually
-virtualTime.AdvanceTime(TimeSpan.FromMinutes(5));
-Console.WriteLine($"After advancing 5 minutes: {virtualTime.CurrentTime}");
+    // Create a virtual delay
+    var delayTask = virtualTime.CreateDelay(TimeSpan.FromSeconds(10));
+    Console.WriteLine($"Created virtual delay for 10 seconds. Completed: {delayTask.IsCompleted}");
 
-// Create a virtual delay
-var delayTask = virtualTime.CreateDelay(TimeSpan.FromSeconds(10));
-Console.WriteLine($"Created virtual delay for 10 seconds. Completed: {delayTask.IsCompleted}");
+    // Advance time to complete the delay
+    virtualTime.AdvanceTime(TimeSpan.FromSeconds(5));
+    Console.WriteLine($"After 5 seconds - Delay completed: {delayTask.IsCompleted}");
 
-// Advance time to complete the delay
-virtualTime.AdvanceTime(TimeSpan.FromSeconds(5));
-Console.WriteLine($"After 5 seconds - Delay completed: {delayTask.IsCompleted}");
-
-virtualTime.AdvanceTime(TimeSpan.FromSeconds(6));
-Console.WriteLine($"After 11 seconds total - Delay completed: {delayTask.IsCompleted}");
-
-virtualTime.Dispose();
-Console.WriteLine("✓ Virtual time control demonstrated\n");
+    virtualTime.AdvanceTime(TimeSpan.FromSeconds(6));
+    Console.WriteLine($"After 11 seconds total - Delay completed: {delayTask.IsCompleted}");
+    Console.WriteLine("✓ Virtual time control demonstrated\n");
+}
 
 // Sample 2: VirtualTimeProvider with delays in parallel operations
 Console.WriteLine("2. VirtualTimeProvider - Instant delay simulation");
-var testTime = new VirtualTimeProvider();
-
-var delayedTask = Task.Run(async () =>
+using (var testTime = new VirtualTimeProvider())
 {
-    var startTime = testTime.CurrentTime;
-    await testTime.CreateDelay(TimeSpan.FromMinutes(30));
-    var endTime = testTime.CurrentTime;
-    return (endTime - startTime).TotalMinutes;
-});
+    var delayedTask = Task.Run(async () =>
+    {
+        var startTime = testTime.CurrentTime;
+        await testTime.CreateDelay(TimeSpan.FromMinutes(30));
+        var endTime = testTime.CurrentTime;
+        return (endTime - startTime).TotalMinutes;
+    });
 
-// Advance time to complete the delay instantly
-testTime.AdvanceTime(TimeSpan.FromMinutes(30));
-var duration = await delayedTask;
-Console.WriteLine($"Delay completed in virtual time - Duration: {duration} minutes");
-
-testTime.Dispose();
-Console.WriteLine("✓ Instant delay simulation demonstrated\n");
+    // Advance time to complete the delay instantly
+    testTime.AdvanceTime(TimeSpan.FromMinutes(30));
+    var duration = await delayedTask;
+    Console.WriteLine($"Delay completed in virtual time - Duration: {duration} minutes");
+    Console.WriteLine("✓ Instant delay simulation demonstrated\n");
+}
 
 // Sample 3: ChaosInjector - Simulate failures
 Console.WriteLine("3. ChaosInjector - Fault injection testing");
@@ -155,29 +153,28 @@ Console.WriteLine("✓ Tracked maximum concurrency successfully\n");
 
 // Sample 7: FakeChannel - Controlled channel testing
 Console.WriteLine("7. FakeChannel - Deterministic channel behavior");
-var fakeChannel = new FakeChannel<int>();
-
-// Write items to the channel
-_ = Task.Run(async () =>
+using (var fakeChannel = new FakeChannel<int>())
 {
-    await fakeChannel.WriteAsync(1);
-    await fakeChannel.WriteAsync(2);
-    await fakeChannel.WriteAsync(3);
-    fakeChannel.Complete();
-});
+    // Write items to the channel
+    _ = Task.Run(async () =>
+    {
+        await fakeChannel.WriteAsync(1);
+        await fakeChannel.WriteAsync(2);
+        await fakeChannel.WriteAsync(3);
+        fakeChannel.Complete();
+    });
 
-// Read items from the channel
-Console.WriteLine("Reading items from FakeChannel:");
-await foreach (var item in fakeChannel.Reader.ReadAllAsync())
-{
-    Console.WriteLine($"  Read: {item}");
+    // Read items from the channel
+    Console.WriteLine("Reading items from FakeChannel:");
+    await foreach (var item in fakeChannel.Reader.ReadAllAsync())
+    {
+        Console.WriteLine($"  Read: {item}");
+    }
+
+    Console.WriteLine($"Total writes: {fakeChannel.WriteCount}");
+    Console.WriteLine($"Total reads: {fakeChannel.ReadCount}");
+    Console.WriteLine("✓ Fake channel demonstrated\n");
 }
-
-Console.WriteLine($"Total writes: {fakeChannel.WriteCount}");
-Console.WriteLine($"Total reads: {fakeChannel.ReadCount}");
-
-fakeChannel.Dispose();
-Console.WriteLine("✓ Fake channel demonstrated\n");
 
 // Sample 8: FakeChannel - Tracking read/write operations
 Console.WriteLine("8. FakeChannel - Operation tracking");
