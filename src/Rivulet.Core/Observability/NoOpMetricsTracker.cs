@@ -82,8 +82,9 @@ internal sealed class NoOpMetricsTracker : MetricsTrackerBase
     /// <summary>
     /// No-op (nothing to dispose).
     /// </summary>
-    public override void Dispose()
+    public override ValueTask DisposeAsync()
     {
         // No-op: no resources to dispose
+        return ValueTask.CompletedTask;
     }
 }

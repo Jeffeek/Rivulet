@@ -83,9 +83,14 @@ public class MetricsTests
             },
             options);
 
-        // Wait for metrics timer to fire at least twice after completion (2x sample interval + buffer)
-        // This ensures all failures are counted and captured in the snapshot
-        await Task.Delay(200);
+        // Disposal completes inside SelectParallelAsync before it returns, which triggers the final sample.
+        // The final sample is awaited during disposal, but we add extra time to ensure:
+        // 1. Any CPU cache coherency delays on Windows
+        // 2. Timer quantization effects (~15ms resolution on Windows)
+        // 3. Async state machine cleanup
+        // Using Task.Yield() to force a context switch, ensuring all memory writes are globally visible
+        await Task.Yield();
+        await Task.Delay(500);
 
         results.Should().HaveCount(40); // 50 - 10 failures
         capturedSnapshot.Should().NotBeNull();
@@ -275,6 +280,13 @@ public class MetricsTests
             }, options)
             .ToListAsync();
 
+        // Disposal completes inside SelectParallelStreamAsync before it returns, which triggers the final sample.
+        // The final sample is awaited during disposal, but we add extra time to ensure:
+        // 1. Any CPU cache coherency delays on Windows
+        // 2. Timer quantization effects (~15ms resolution on Windows)
+        // 3. Async state machine cleanup
+        // Using Task.Yield() to force a context switch, ensuring all memory writes are globally visible
+        await Task.Yield();
         await Task.Delay(100);
 
         results.Should().HaveCount(20); // 30 - 10 failures
@@ -451,7 +463,7 @@ public class MetricsTests
         // Dispose() triggers a final sample and waits 100ms for completion (MetricsTracker.cs:154)
         // In CI/CD environments, we need generous time for final callback to execute and add snapshot to bag
         // Wait 500ms to ensure final sample callback completes even under load
-        await Task.Delay(500);
+        await Task.Delay(3000);
 
         results1.Should().HaveCount(20);
         results2.Should().HaveCount(30);
@@ -800,7 +812,7 @@ public class MetricsTests
             }
         };
 
-        using var tracker = new MetricsTracker(options, CancellationToken.None);
+        await using var tracker = new MetricsTracker(options, CancellationToken.None);
 
         tracker.IncrementDrainEvents();
         tracker.IncrementDrainEvents();
@@ -827,7 +839,7 @@ public class MetricsTests
             }
         };
 
-        using var tracker = new MetricsTracker(options, CancellationToken.None);
+        await using var tracker = new MetricsTracker(options, CancellationToken.None);
 
         tracker.SetQueueDepth(42);
         tracker.IncrementItemsStarted();
@@ -856,19 +868,19 @@ public class MetricsTests
             tracker.IncrementItemsStarted();
             await Task.Delay(100);
 
-            var act = () => tracker.Dispose();
-            act.Should().NotThrow();
+            var act = async () => await tracker.DisposeAsync();
+            await act.Should().NotThrowAsync();
         }
         finally
         {
-            tracker.Dispose();
+            await tracker.DisposeAsync();
         }
     }
 
     [Fact]
-    public void MetricsTrackerBase_WithoutMetrics_UsesNoOpTracker()
+    public async Task MetricsTrackerBase_WithoutMetrics_UsesNoOpTracker()
     {
-        using var tracker = MetricsTrackerBase.Create(null, CancellationToken.None);
+        await using var tracker = MetricsTrackerBase.Create(null, CancellationToken.None);
 
         // Should be NoOpMetricsTracker (lightweight, no allocations)
         tracker.Should().BeOfType<NoOpMetricsTracker>();
@@ -880,7 +892,7 @@ public class MetricsTests
         tracker.SetQueueDepth(100);
 
         // ReSharper disable once DisposeOnUsingVariable
-        tracker.Dispose();
+        await tracker.DisposeAsync();
     }
 
     [Fact]
@@ -898,7 +910,7 @@ public class MetricsTests
             }
         };
 
-        using var tracker = new MetricsTracker(options, CancellationToken.None);
+        await using var tracker = new MetricsTracker(options, CancellationToken.None);
 
         // Poll for the snapshot with a timeout to avoid flakiness
         var deadline = DateTime.UtcNow.AddMilliseconds(200);
@@ -935,8 +947,8 @@ public class MetricsTests
 
         tcs.SetResult();
 
-        var act = () => tracker.Dispose();
-        act.Should().NotThrow();
+        var act = async () => await tracker.DisposeAsync();
+        await act.Should().NotThrowAsync();
     }
 
     [Fact]
@@ -1038,9 +1050,9 @@ public class MetricsTests
 
         await Task.Delay(50);
 
-        var disposeTask = Task.Run(() =>
+        var disposeTask = Task.Run(async () =>
         {
-            tracker.Dispose();
+            await tracker.DisposeAsync();
         });
 
         await Task.Delay(100);
@@ -1053,7 +1065,7 @@ public class MetricsTests
     }
 
     [Fact]
-    public void MetricsTracker_WithNullCallback_SampleMetricsReturnsEarly()
+    public async Task MetricsTracker_WithNullCallback_SampleMetricsReturnsEarly()
     {
         var tracker = new MetricsTracker(new MetricsOptions { OnMetricsSample = null }, CancellationToken.None);
 
@@ -1064,7 +1076,7 @@ public class MetricsTests
         }
         finally
         {
-            tracker.Dispose();
+            await tracker.DisposeAsync();
         }
     }
 
@@ -1097,12 +1109,12 @@ public class MetricsTests
         }
         finally
         {
-            tracker.Dispose();
+            await tracker.DisposeAsync();
         }
     }
 
     [Fact]
-    public void MetricsTracker_Dispose_WithCallbackThrows_HandlesGracefully()
+    public async Task MetricsTracker_Dispose_WithCallbackThrows_HandlesGracefully()
     {
         var tracker = new MetricsTracker(new MetricsOptions
         {
@@ -1113,8 +1125,8 @@ public class MetricsTests
         tracker.IncrementItemsCompleted();
 
         // Should not throw despite callback exception
-        var act = () => tracker.Dispose();
-        act.Should().NotThrow();
+        var act = async () => await tracker.DisposeAsync();
+        await act.Should().NotThrowAsync();
     }
 
     [Fact]

@@ -31,7 +31,7 @@ public class ComprehensiveCoverageTests
     public async Task MetricsAggregator_ShouldInvokeCallback_WhenMetricsAggregated()
     {
         var callbackInvoked = false;
-        using var aggregator = new MetricsAggregator(TimeSpan.FromSeconds(1));
+        await using var aggregator = new MetricsAggregator(TimeSpan.FromSeconds(1));
         aggregator.OnAggregation += metrics =>
         {
             if (metrics.Count > 0)
@@ -64,7 +64,7 @@ public class ComprehensiveCoverageTests
 
         try
         {
-            using (new RivuletFileListener(testFile))
+            await using (new RivuletFileListener(testFile))
             {
                 await Enumerable.Range(1, 5)
                     .ToAsyncEnumerable()

@@ -70,9 +70,9 @@ public class AdaptiveConcurrencyTests
     }
 
     [Fact]
-    public void AdaptiveConcurrencyController_InitialConcurrency_UsesConfiguredValue()
+    public async Task AdaptiveConcurrencyController_InitialConcurrency_UsesConfiguredValue()
     {
-        using var controller = new AdaptiveConcurrencyController(new AdaptiveConcurrencyOptions
+        await using var controller = new AdaptiveConcurrencyController(new AdaptiveConcurrencyOptions
         {
             MinConcurrency = 5,
             MaxConcurrency = 20,
@@ -83,9 +83,9 @@ public class AdaptiveConcurrencyTests
     }
 
     [Fact]
-    public void AdaptiveConcurrencyController_InitialConcurrency_DefaultsToMin()
+    public async Task AdaptiveConcurrencyController_InitialConcurrency_DefaultsToMin()
     {
-        using var controller = new AdaptiveConcurrencyController(new AdaptiveConcurrencyOptions
+        await using var controller = new AdaptiveConcurrencyController(new AdaptiveConcurrencyOptions
         {
             MinConcurrency = 5,
             MaxConcurrency = 20
@@ -424,7 +424,7 @@ public class AdaptiveConcurrencyTests
     }
 
     [Fact]
-    public void AdaptiveConcurrencyController_Dispose_StopsAdjustments()
+    public async Task AdaptiveConcurrencyController_Dispose_StopsAdjustments()
     {
         var controller = new AdaptiveConcurrencyController(new AdaptiveConcurrencyOptions
         {
@@ -433,10 +433,10 @@ public class AdaptiveConcurrencyTests
             SampleInterval = TimeSpan.FromMilliseconds(10)
         });
 
-        controller.Dispose();
+        await controller.DisposeAsync();
 
-        var act = () => controller.Dispose();
-        act.Should().NotThrow();
+        var act = async () => await controller.DisposeAsync();
+        await act.Should().NotThrowAsync();
     }
 
     [Fact]
@@ -584,7 +584,7 @@ public class AdaptiveConcurrencyTests
     [Fact]
     public async Task AdaptiveConcurrency_DisposeDuringSampling_HandlesGracefully()
     {
-        using var controller = new AdaptiveConcurrencyController(new AdaptiveConcurrencyOptions
+        await using var controller = new AdaptiveConcurrencyController(new AdaptiveConcurrencyOptions
         {
             MinConcurrency = 1,
             MaxConcurrency = 10,

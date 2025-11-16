@@ -20,7 +20,7 @@ namespace Rivulet.Diagnostics;
 ///     });
 /// </code>
 /// </example>
-public sealed class RivuletStructuredLogListener : RivuletEventListenerBase
+public sealed class RivuletStructuredLogListener : RivuletEventListenerBase, IAsyncDisposable
 {
     private readonly string? _filePath;
     private readonly Action<string>? _logAction;
@@ -111,11 +111,37 @@ public sealed class RivuletStructuredLogListener : RivuletEventListenerBase
     {
         LockHelper.Execute(_lock, () =>
         {
-            _writer?.Flush();
-            _writer?.Close();
-            _writer?.Dispose();
+            if (_writer == null) return;
+
+            _writer.Flush();
+            _writer.Close();
+            _writer.Dispose();
             _writer = null;
         });
+
+        base.Dispose();
+    }
+
+    /// <summary>
+    /// Disposes the structured log listener asynchronously and closes the file if applicable.
+    /// </summary>
+    public async ValueTask DisposeAsync()
+    {
+        // Extract writer under lock to ensure thread-safety
+        var writer = LockHelper.Execute(_lock, () =>
+        {
+            var w = _writer;
+            _writer = null;
+            return w;
+        });
+
+        // Dispose outside lock to avoid holding lock during async I/O
+        if (writer != null)
+        {
+            await writer.FlushAsync().ConfigureAwait(false);
+            writer.Close();
+            await writer.DisposeAsync().ConfigureAwait(false);
+        }
 
         base.Dispose();
     }

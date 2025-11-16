@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Rivulet.Core;
+using Rivulet.Core.Observability;
 
 namespace Rivulet.Diagnostics.Tests;
 
@@ -53,10 +54,10 @@ public class PrometheusExporterTests
 
         var metrics = exporter.ExportDictionary();
         metrics.Should().NotBeEmpty();
-        metrics.Should().ContainKey("items-started");
-        metrics.Should().ContainKey("items-completed");
-        metrics["items-started"].Should().BeGreaterThanOrEqualTo(0);
-        metrics["items-completed"].Should().BeGreaterThanOrEqualTo(0);
+        metrics.Should().ContainKey(RivuletMetricsConstants.CounterNames.ItemsStarted);
+        metrics.Should().ContainKey(RivuletMetricsConstants.CounterNames.ItemsCompleted);
+        metrics[RivuletMetricsConstants.CounterNames.ItemsStarted].Should().BeGreaterThanOrEqualTo(0);
+        metrics[RivuletMetricsConstants.CounterNames.ItemsCompleted].Should().BeGreaterThanOrEqualTo(0);
     }
 
     [Fact]

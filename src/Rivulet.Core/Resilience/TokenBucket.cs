@@ -47,19 +47,8 @@ internal sealed class TokenBucket
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var acquired = LockHelper.Execute(_lock, () =>
-            {
-                RefillTokens();
-
-                if (_availableTokens < _options.TokensPerOperation) return false;
-                _availableTokens -= _options.TokensPerOperation;
-                return true;
-            });
-
-            if (acquired)
-            {
+            if (TryAcquire())
                 return;
-            }
 
             var delayMs = CalculateDelayUntilNextToken();
 
@@ -71,22 +60,18 @@ internal sealed class TokenBucket
     /// Attempts to acquire tokens from the bucket without waiting.
     /// </summary>
     /// <returns>True if tokens were acquired; otherwise, false.</returns>
-    public bool TryAcquire()
-    {
-        return LockHelper.Execute(_lock, () =>
+    internal bool TryAcquire() =>
+        LockHelper.Execute(_lock, () =>
         {
             RefillTokens();
 
             if (_availableTokens < _options.TokensPerOperation)
-            {
                 return false;
-            }
 
             _availableTokens -= _options.TokensPerOperation;
 
             return true;
         });
-    }
 
     /// <summary>
     /// Refills tokens based on elapsed time since last refill.
