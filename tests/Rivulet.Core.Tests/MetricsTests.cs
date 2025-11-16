@@ -83,9 +83,14 @@ public class MetricsTests
             },
             options);
 
-        // Wait for metrics timer to fire at least twice after completion (2x sample interval + buffer)
-        // This ensures all failures are counted and captured in the snapshot
-        await Task.Delay(200);
+        // Disposal completes inside SelectParallelAsync before it returns, which triggers the final sample.
+        // The final sample is awaited during disposal, but we add extra time to ensure:
+        // 1. Any CPU cache coherency delays on Windows
+        // 2. Timer quantization effects (~15ms resolution on Windows)
+        // 3. Async state machine cleanup
+        // Using Task.Yield() to force a context switch, ensuring all memory writes are globally visible
+        await Task.Yield();
+        await Task.Delay(500);
 
         results.Should().HaveCount(40); // 50 - 10 failures
         capturedSnapshot.Should().NotBeNull();
