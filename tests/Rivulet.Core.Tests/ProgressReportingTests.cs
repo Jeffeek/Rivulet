@@ -120,18 +120,19 @@ public class ProgressReportingTests
             },
             options);
 
-        // Wait for timer to fire many times after completion to capture final state
-        // Report interval is 30ms, so wait 500ms (16-17x interval) to ensure
-        // the final snapshot includes all errors and completed items
-        // This accounts for Windows timer resolution, CI/CD timing variations,
-        // and the last error occurring right at the end of execution
+        // Disposal completes inside SelectParallelAsync before it returns, which triggers the final sample.
+        // The final sample is awaited during disposal, but we add extra time to ensure:
+        // 1. Any CPU cache coherency delays on Windows
+        // 2. Timer quantization effects (~15ms resolution on Windows)
+        // 3. Async state machine cleanup
+        // Using Task.Yield() to force a context switch, ensuring all memory writes are globally visible
+        await Task.Yield();
         await Task.Delay(1000);
 
         results.Should().HaveCount(16); // 20 - 4 errors
 
-        // The operation should take ~75-100ms (20 items * 15ms / 4 parallelism)
-        // With 30ms report interval, we should get 2-3 reports during execution
-        // Plus the 1000ms wait ensures final state is fully captured across multiple timer ticks
+        // The final sample during disposal should have captured all errors
+        // We take the max across all samples to account for any timing variations
         var maxErrors = snapshots.Max(s => s.ErrorCount);
         var maxCompleted = snapshots.Max(s => s.ItemsCompleted);
 

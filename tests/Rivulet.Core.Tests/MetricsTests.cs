@@ -275,7 +275,13 @@ public class MetricsTests
             }, options)
             .ToListAsync();
 
-        // Small delay to ensure final metrics sample completes
+        // Disposal completes inside SelectParallelStreamAsync before it returns, which triggers the final sample.
+        // The final sample is awaited during disposal, but we add extra time to ensure:
+        // 1. Any CPU cache coherency delays on Windows
+        // 2. Timer quantization effects (~15ms resolution on Windows)
+        // 3. Async state machine cleanup
+        // Using Task.Yield() to force a context switch, ensuring all memory writes are globally visible
+        await Task.Yield();
         await Task.Delay(100);
 
         results.Should().HaveCount(20); // 30 - 10 failures
