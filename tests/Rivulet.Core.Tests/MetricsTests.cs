@@ -287,9 +287,9 @@ public class MetricsTests
         // 3. Async state machine cleanup
         // 4. Callback execution and memory write propagation in CI/CD under load
         // Using Task.Yield() to force a context switch, ensuring all memory writes are globally visible
-        // Increased from 100ms → 500ms → 1000ms due to persistent flakiness on both Windows and Ubuntu CI/CD (1/50 failures)
+        // Increased from 100ms → 500ms → 1000ms → 2000ms due to persistent flakiness on Windows CI/CD (1/160 failures)
         await Task.Yield();
-        await Task.Delay(1000);
+        await Task.Delay(2000);
 
         results.Should().HaveCount(20); // 30 - 10 failures
         capturedSnapshot.Should().NotBeNull();
@@ -466,8 +466,9 @@ public class MetricsTests
         // In CI/CD environments, we need generous time for final callback to execute and add snapshot to bag
         // Force context switch + memory barrier to ensure all callbacks writes are visible
         // Then wait to ensure final sample callback completes even under load
+        // Increased from 3000ms → 5000ms due to persistent flakiness on Windows CI/CD (1/160 failures, off by 4 items)
         await Task.Yield();
-        await Task.Delay(3000);
+        await Task.Delay(5000);
 
         results1.Should().HaveCount(20);
         results2.Should().HaveCount(30);
@@ -822,7 +823,11 @@ public class MetricsTests
         tracker.IncrementDrainEvents();
         tracker.IncrementDrainEvents();
 
-        await Task.Delay(100);
+        // Wait for metrics sample to capture the drain events
+        // SampleInterval is 50ms, so we wait for multiple intervals plus buffer
+        // Increased from 100ms → 500ms for Windows CI/CD reliability (1/160 failures)
+        await Task.Yield();
+        await Task.Delay(500);
 
         capturedSnapshot.Should().NotBeNull();
         capturedSnapshot!.DrainEvents.Should().Be(3);
