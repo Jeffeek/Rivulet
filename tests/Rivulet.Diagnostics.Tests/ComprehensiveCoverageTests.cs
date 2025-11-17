@@ -51,10 +51,8 @@ public class ComprehensiveCoverageTests
             .ToListAsync();
 
         // Wait for at least 2x the aggregation window to ensure timer fires and EventSource counters are received
-        // Increased from 1100ms → 2100ms → 3000ms for Windows CI/CD reliability (1/160 failures)
-        // EventSource polling, timer quantization, and thread pool delays require generous buffer
-        await Task.Yield();
-        await Task.Delay(3000);
+        // Increased from 1100ms to 2100ms to handle CI/CD timing variability and EventSource polling delays
+        await Task.Delay(2100);
 
         callbackInvoked.Should().BeTrue();
     }

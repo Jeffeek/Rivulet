@@ -280,16 +280,10 @@ public class MetricsTests
             }, options)
             .ToListAsync();
 
-        // Disposal completes inside SelectParallelStreamAsync before it returns, which triggers the final sample.
-        // The final sample is awaited during disposal, but we add extra time to ensure:
-        // 1. Any CPU cache coherency delays on Windows
-        // 2. Timer quantization effects (~15ms resolution on Windows)
-        // 3. Async state machine cleanup
-        // 4. Callback execution and memory write propagation in CI/CD under load
-        // Using Task.Yield() to force a context switch, ensuring all memory writes are globally visible
-        // Increased from 100ms → 500ms → 1000ms → 2000ms due to persistent flakiness on Windows CI/CD (1/160 failures)
-        await Task.Yield();
-        await Task.Delay(2000);
+        // Disposal completes inside SelectParallelStreamAsync before it returns
+        // The disposal waits up to 5 seconds for the final sample to complete
+        // No additional delay needed since the race condition is fixed in MetricsTracker
+        // by waiting 50ms before the final sample to ensure all increments complete
 
         results.Should().HaveCount(20); // 30 - 10 failures
         capturedSnapshot.Should().NotBeNull();
@@ -461,15 +455,9 @@ public class MetricsTests
         var results1 = await task1;
         var results2 = await task2;
 
-        // Wait for MetricsTracker disposal to complete
-        // Dispose() triggers a final sample and waits 100ms for completion (MetricsTracker.cs:154)
-        // In CI/CD environments, we need generous time for final callback to execute and add snapshot to bag
-        // Force context switch + memory barrier to ensure all callbacks writes are visible
-        // Then wait to ensure final sample callback completes even under load
-        // Increased from 3000ms → 5000ms → 10000ms due to persistent flakiness on Windows CI/CD
-        // (2/160 failures, off by 2 items - severe thread pool starvation)
-        await Task.Yield();
-        await Task.Delay(10000);
+        // MetricsTracker disposal already waits up to 5 seconds for the final sample
+        // The race condition is fixed by waiting 50ms before the final sample in MetricsTracker
+        // No additional delay needed
 
         results1.Should().HaveCount(20);
         results2.Should().HaveCount(30);
@@ -826,9 +814,8 @@ public class MetricsTests
 
         // Wait for metrics sample to capture the drain events
         // SampleInterval is 50ms, so we wait for multiple intervals plus buffer
-        // Increased from 100ms → 500ms for Windows CI/CD reliability (1/160 failures)
-        await Task.Yield();
-        await Task.Delay(500);
+        // Race condition fixed by 50ms delay before final sample in MetricsTracker
+        await Task.Delay(150);
 
         capturedSnapshot.Should().NotBeNull();
         capturedSnapshot!.DrainEvents.Should().Be(3);

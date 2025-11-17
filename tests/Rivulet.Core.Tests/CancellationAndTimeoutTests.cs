@@ -85,9 +85,8 @@ public class CancellationAndTimeoutTests
         var source = Enumerable.Range(1, 5);
         var options = new ParallelOptionsRivulet
         {
-            // Increased from 100ms → 1000ms to handle Windows CI/CD thread pool contention (1/160 failures)
-            // Items that normally complete in 10ms can be delayed to 100ms+ under load
-            PerItemTimeout = TimeSpan.FromMilliseconds(1000),
+            // Increased from 100ms → 500ms to handle Windows CI/CD thread pool contention
+            PerItemTimeout = TimeSpan.FromMilliseconds(500),
             ErrorMode = ErrorMode.BestEffort
         };
 
@@ -95,8 +94,8 @@ public class CancellationAndTimeoutTests
             async (x, ct) =>
             {
                 if (x == 3)
-                    // Increased from 500ms → 3000ms to ensure this item definitely times out
-                    await Task.Delay(3000, ct);
+                    // Increased from 500ms → 2000ms to ensure this item definitely times out
+                    await Task.Delay(2000, ct);
                 else
                     await Task.Delay(10, ct);
                 return x * 2;

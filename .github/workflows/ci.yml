@@ -85,5 +85,5 @@ jobs:
     if: github.event_name == 'pull_request'  # Only run on PRs
     uses: ./.github/workflows/reusable-flaky-test-detection.yml
     with:
-      iterations: 160
+      iterations: 180
       timeout-minutes: 360
