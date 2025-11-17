@@ -330,9 +330,10 @@ public class CircuitBreakerTests
 
         // Wait for all transitions to complete with timeout
         // Callbacks are executed via Task.Run in fire-and-forget mode, which can be delayed under load
-        // Increased from 500ms → 2000ms → 5000ms for Windows CI/CD reliability (1/160 failures)
-        var completedTask = await Task.WhenAny(allTransitionsComplete.Task, Task.Delay(5000));
-        (completedTask == allTransitionsComplete.Task).Should().BeTrue("all transitions should complete within 5000ms");
+        // Increased from 500ms → 2000ms → 5000ms → 10000ms for Windows CI/CD reliability
+        // (1/160 failures at 5000ms - extreme thread pool starvation in Windows CI/CD)
+        var completedTask = await Task.WhenAny(allTransitionsComplete.Task, Task.Delay(10000));
+        (completedTask == allTransitionsComplete.Task).Should().BeTrue("all transitions should complete within 10000ms");
 
         // Verify state transitions
         stateChanges.Should().Contain((CircuitBreakerState.Closed, CircuitBreakerState.Open));

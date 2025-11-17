@@ -466,9 +466,10 @@ public class MetricsTests
         // In CI/CD environments, we need generous time for final callback to execute and add snapshot to bag
         // Force context switch + memory barrier to ensure all callbacks writes are visible
         // Then wait to ensure final sample callback completes even under load
-        // Increased from 3000ms → 5000ms due to persistent flakiness on Windows CI/CD (1/160 failures, off by 4 items)
+        // Increased from 3000ms → 5000ms → 10000ms due to persistent flakiness on Windows CI/CD
+        // (2/160 failures, off by 2 items - severe thread pool starvation)
         await Task.Yield();
-        await Task.Delay(5000);
+        await Task.Delay(10000);
 
         results1.Should().HaveCount(20);
         results2.Should().HaveCount(30);

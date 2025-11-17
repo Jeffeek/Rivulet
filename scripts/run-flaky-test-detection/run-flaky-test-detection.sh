@@ -3,6 +3,26 @@
 # Note: We exit on errors for restore/build, but continue for test failures
 # We want to continue testing even when individual test runs fail
 
+function exit_orphaned_processes {
+    # Cleanup any remaining test processes that might have been orphaned
+    echo -e "${DARKYELLOW}Cleaning up any orphaned test processes...${NC}"
+    
+    # Kill testhost and vstest processes first
+    pkill -9 testhost 2>/dev/null || true
+    pkill -9 vstest.console 2>/dev/null || true
+    
+    # Small delay to allow process tree cleanup
+    sleep 0.5
+    
+    # Count and kill any orphaned dotnet processes
+    dotnet_count=$(pgrep -c dotnet 2>/dev/null || echo "0")
+    dotnet_count=$(echo "$dotnet_count" | tr -d '[:space:]')  # Remove all whitespace
+    if [[ "$dotnet_count" =~ ^[0-9]+$ ]] && [[ $dotnet_count -gt 0 ]]; then
+        echo -e "  ${YELLOW}Found $dotnet_count orphaned dotnet processes, cleaning up...${NC}"
+        pkill -9 dotnet 2>/dev/null || true
+    fi
+}
+
 # ANSI color codes
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -170,26 +190,11 @@ else
     echo -e "${YELLOW}  Total iterations: $ITERATIONS${NC}"
     echo -e "${YELLOW}========================================${NC}"
 
+    exit_orphaned_processes
+
     # Exit with error code if flaky tests detected (for CI)
     exit 1
 fi
 
-# Cleanup any remaining test processes that might have been orphaned
-echo -e "${DARKYELLOW}Cleaning up any orphaned test processes...${NC}"
-
-# Kill testhost and vstest processes first
-pkill -9 testhost 2>/dev/null || true
-pkill -9 vstest.console 2>/dev/null || true
-
-# Small delay to allow process tree cleanup
-sleep 0.5
-
-# Count and kill any orphaned dotnet processes
-dotnet_count=$(pgrep -c dotnet 2>/dev/null || echo "0")
-dotnet_count=$(echo "$dotnet_count" | tr -d '[:space:]')  # Remove all whitespace
-if [[ "$dotnet_count" =~ ^[0-9]+$ ]] && [[ $dotnet_count -gt 0 ]]; then
-    echo -e "  ${YELLOW}Found $dotnet_count orphaned dotnet processes, cleaning up...${NC}"
-    pkill -9 dotnet 2>/dev/null || true
-fi
-
+exit_orphaned_processes
 echo ""
