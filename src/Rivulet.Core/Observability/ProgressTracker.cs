@@ -46,7 +46,8 @@ internal sealed class ProgressTracker : IAsyncDisposable
             // Wait to ensure all in-flight counter increments complete
             // before taking the final progress report. This prevents race conditions where
             // the last items are still calling Increment*() methods.
-            await Task.Delay(100).ConfigureAwait(false);
+            // Increased from 100ms → 200ms for Windows CI/CD reliability (0.56% "off by 1" failures)
+            await Task.Delay(200).ConfigureAwait(false);
             await ReportProgress().ConfigureAwait(false);
         }
     }

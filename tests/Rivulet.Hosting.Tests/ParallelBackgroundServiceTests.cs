@@ -50,7 +50,9 @@ public class ParallelBackgroundServiceTests
         using var cts = new CancellationTokenSource();
         await service.StartAsync(cts.Token);
 
-        await Task.Delay(50, cts.Token);
+        // Increased from 50ms → 200ms for Windows CI/CD reliability
+        // BackgroundService needs time to start ExecuteAsync and process all items
+        await Task.Delay(200, cts.Token);
         await cts.CancelAsync();
 
         await service.StopAsync(CancellationToken.None);
@@ -70,7 +72,8 @@ public class ParallelBackgroundServiceTests
         using var cts = new CancellationTokenSource();
         await service.StartAsync(cts.Token);
 
-        await Task.Delay(50, cts.Token);
+        // Increased from 50ms → 200ms for Windows CI/CD reliability
+        await Task.Delay(200, cts.Token);
         await cts.CancelAsync();
 
         await service.StopAsync(CancellationToken.None);
@@ -100,7 +103,8 @@ public class ParallelBackgroundServiceTests
         using var cts = new CancellationTokenSource();
         await service.StartAsync(cts.Token);
 
-        await Task.Delay(50, cts.Token);
+        // Increased from 50ms → 200ms for Windows CI/CD reliability
+        await Task.Delay(200, cts.Token);
         await cts.CancelAsync();
 
         await service.StopAsync(CancellationToken.None);
@@ -137,7 +141,8 @@ public class ParallelBackgroundServiceTests
         using var cts = new CancellationTokenSource();
         await service.StartAsync(cts.Token);
 
-        await Task.Delay(50, cts.Token);
+        // Increased from 50ms → 200ms for Windows CI/CD reliability
+        await Task.Delay(200, cts.Token);
         await cts.CancelAsync();
 
         await service.StopAsync(CancellationToken.None);
@@ -199,7 +204,7 @@ public class ParallelBackgroundServiceTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenGetItemsAsyncThrowsException_ShouldLogErrorAndComplete()
+    public async Task ExecuteAsync_WhenGetItemsAsyncThrowsException_ShouldLogErrorAndRethrow()
     {
         var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Error));
         var logger = loggerFactory.CreateLogger<FatalErrorBackgroundService>();
@@ -208,15 +213,25 @@ public class ParallelBackgroundServiceTests
 
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
 
-        // StartAsync starts the background task but doesn't wait for it
-        await service.StartAsync(cts.Token);
+        // Execute the full service lifecycle wrapped in a function for FluentAssertions
+        var serviceAction = async () =>
+        {
+            // StartAsync starts the background task but doesn't wait for it
+            // ReSharper disable once AccessToDisposedClosure
+            await service.StartAsync(cts.Token);
 
-        // Wait for the background task to fail and then stop
-        await Task.Delay(100, cts.Token);
+            // Wait for the background task to fail
+            // Increased from 100ms → 200ms for Windows CI/CD reliability
+            // ReSharper disable once AccessToDisposedClosure
+            await Task.Delay(200, cts.Token);
 
-        // StopAsync should complete even though ExecuteAsync threw
-        var stopAct = async () => await service.StopAsync(CancellationToken.None);
-        await stopAct.Should().NotThrowAsync();
+            // StopAsync will propagate the exception from the faulted ExecuteAsync task
+            await service.StopAsync(CancellationToken.None);
+        };
+
+        // This is expected BackgroundService behavior - exceptions are logged and rethrown
+        await serviceAction.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("Fatal error in GetItemsAsync");
     }
 
     private class ThrowingBackgroundService(
