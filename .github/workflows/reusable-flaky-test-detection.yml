@@ -4,9 +4,14 @@ on:
   workflow_call:
     inputs:
       iterations:
-        description: 'Number of test iterations to run (timeout = iterations * 2 minutes)'
+        description: 'Number of test iterations to run'
         required: true
         type: number
+      timeout-minutes:
+        description: 'Timeout in minutes for the test execution'
+        required: false
+        type: number
+        default: 45
 
 permissions:
   contents: read
@@ -35,10 +40,10 @@ jobs:
       if: runner.os == 'Windows'
       shell: pwsh
       run: ./scripts/run-flaky-test-detection/run-flaky-test-detection.ps1 -Iterations ${{ inputs.iterations }}
-      timeout-minutes: ${{ inputs.iterations * 2 }}
+      timeout-minutes: ${{ inputs.timeout-minutes }}
 
     - name: Run flaky test detection - Linux
       if: runner.os == 'Linux'
       shell: bash
       run: bash ./scripts/run-flaky-test-detection/run-flaky-test-detection.sh ${{ inputs.iterations }}
-      timeout-minutes: ${{ inputs.iterations * 2 }}
+      timeout-minutes: ${{ inputs.timeout-minutes }}
