@@ -93,14 +93,17 @@ internal sealed class MetricsTracker : MetricsTrackerBase
             // Wait to ensure all in-flight metric increments complete
             // before taking the final sample. This prevents race conditions where
             // the last items are still calling Increment*() methods.
-            // Increased to 200ms for Windows CI/CD reliability (50ms still had 1-2/180 failures)
-            await Task.Delay(200).ConfigureAwait(false);
+            await Task.Delay(100).ConfigureAwait(false);
             await SampleMetrics().ConfigureAwait(false);
         }
     }
 
     private async Task SampleMetrics()
     {
+        // Force a memory barrier to ensure all writes from worker threads are visible
+        // This is critical for final samples where workers just finished processing
+        Thread.MemoryBarrier();
+
         var elapsed = _stopwatch.Elapsed;
         var completed = Interlocked.Read(ref _itemsCompleted);
         var started = Interlocked.Read(ref _itemsStarted);
@@ -138,6 +141,9 @@ internal sealed class MetricsTracker : MetricsTrackerBase
         {
             // ignored
         }
+
+        // Memory barrier after callback ensures callback writes are globally visible
+        Thread.MemoryBarrier();
     }
 
     private static TimeSpan DisposeWait => TimeSpan.FromSeconds(5);

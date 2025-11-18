@@ -46,8 +46,7 @@ internal sealed class ProgressTracker : IAsyncDisposable
             // Wait to ensure all in-flight counter increments complete
             // before taking the final progress report. This prevents race conditions where
             // the last items are still calling Increment*() methods.
-            // Uses same delay as MetricsTracker for consistency
-            await Task.Delay(200).ConfigureAwait(false);
+            await Task.Delay(100).ConfigureAwait(false);
             await ReportProgress().ConfigureAwait(false);
         }
     }
@@ -56,6 +55,10 @@ internal sealed class ProgressTracker : IAsyncDisposable
     {
         if (_options.OnProgress is null)
             return;
+
+        // Force a memory barrier to ensure all writes from worker threads are visible
+        // This is critical for final reports where workers just finished processing
+        Thread.MemoryBarrier();
 
         var elapsed = _stopwatch.Elapsed;
         var completed = _itemsCompleted;
@@ -98,6 +101,9 @@ internal sealed class ProgressTracker : IAsyncDisposable
         {
             // Swallow exceptions from user callback to prevent breaking the operation
         }
+
+        // Memory barrier after callback ensures callback writes are globally visible
+        Thread.MemoryBarrier();
     }
 
     private static TimeSpan DisposeWait => TimeSpan.FromSeconds(5);

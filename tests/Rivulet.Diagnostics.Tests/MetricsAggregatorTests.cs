@@ -114,8 +114,8 @@ namespace Rivulet.Diagnostics.Tests
                 .ToListAsync();
 
             // Wait for at least 2x the aggregation window to ensure timer fires reliably
-            // Increased from 3000ms to 4000ms for better CI/CD reliability
-            await Task.Delay(4000);
+            // Increased from 3000ms → 4000ms → 5000ms for Windows CI/CD reliability (2/180 failures)
+            await Task.Delay(5000);
 
             aggregatedMetrics.Should().NotBeEmpty();
             var firstAggregation = aggregatedMetrics.First();
@@ -123,7 +123,7 @@ namespace Rivulet.Diagnostics.Tests
 
             // Wait for another aggregation window to potentially expire samples
             // This verifies that the aggregator handles sample expiration gracefully
-            await Task.Delay(4000);
+            await Task.Delay(5000);
 
             var totalAggregations = aggregatedMetrics.Count;
             totalAggregations.Should().BeGreaterThanOrEqualTo(1);
