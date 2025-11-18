@@ -43,6 +43,11 @@ internal sealed class ProgressTracker : IAsyncDisposable
         }
         catch (OperationCanceledException)
         {
+            // Wait to ensure all in-flight counter increments complete
+            // before taking the final progress report. This prevents race conditions where
+            // the last items are still calling Increment*() methods.
+            // Uses same delay as MetricsTracker for consistency
+            await Task.Delay(200).ConfigureAwait(false);
             await ReportProgress().ConfigureAwait(false);
         }
     }

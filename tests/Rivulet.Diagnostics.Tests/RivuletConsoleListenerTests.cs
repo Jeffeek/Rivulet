@@ -14,12 +14,6 @@ public class RivuletConsoleListenerTests : IDisposable
     private StringWriter? _stringWriter;
     private TextWriter? _originalOutput;
 
-    public RivuletConsoleListenerTests()
-    {
-        // Console.Out redirection moved to individual test methods to prevent
-        // interference with FluentAssertions static initialization in parallel tests
-    }
-
     [Fact]
     public async Task ConsoleListener_ShouldHandleLargeValues()
     {
@@ -84,6 +78,12 @@ public class RivuletConsoleListenerTests : IDisposable
             }
 
             await Task.Delay(1100);
+
+            // Dispose listener before reading output to prevent race condition
+            // where background EventSource writes conflict with ToString()
+            // ReSharper disable once DisposeOnUsingVariable
+            listener.Dispose();
+            await Task.Delay(100);
 
             var output = consoleOutput.ToString();
 

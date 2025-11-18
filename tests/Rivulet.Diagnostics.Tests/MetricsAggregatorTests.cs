@@ -29,8 +29,9 @@ namespace Rivulet.Diagnostics.Tests
                 .ToListAsync();
 
             // Wait for EventCounters to poll and write metrics, then for aggregation window to fire
-            // Polling interval ~1s, aggregation window 500ms, wait 3s for both to complete reliably
-            await Task.Delay(3000);
+            // Polling interval ~1s, aggregation window 500ms
+            // Increased from 3000ms → 5000ms for Windows CI/CD reliability (1/180 failures)
+            await Task.Delay(5000);
 
             aggregatedMetrics.Should().NotBeEmpty();
             var lastAggregation = aggregatedMetrics.Last();

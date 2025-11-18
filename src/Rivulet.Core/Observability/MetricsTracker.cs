@@ -90,10 +90,11 @@ internal sealed class MetricsTracker : MetricsTrackerBase
         }
         catch (OperationCanceledException)
         {
-            // Wait a moment to ensure all in-flight metric increments complete
+            // Wait to ensure all in-flight metric increments complete
             // before taking the final sample. This prevents race conditions where
             // the last items are still calling Increment*() methods.
-            await Task.Delay(50).ConfigureAwait(false);
+            // Increased to 200ms for Windows CI/CD reliability (50ms still had 1-2/180 failures)
+            await Task.Delay(200).ConfigureAwait(false);
             await SampleMetrics().ConfigureAwait(false);
         }
     }

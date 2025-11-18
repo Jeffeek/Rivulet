@@ -191,7 +191,7 @@ public class ParallelBackgroundServiceTests
         await service.StartAsync(cts.Token);
 
         // Wait for the exception to be thrown and logged
-        await Task.Delay(100);
+        await Task.Delay(100, cts.Token);
 
         // The service should have logged the error
         // Since we can't easily verify logs in this test, we verify the behavior continues

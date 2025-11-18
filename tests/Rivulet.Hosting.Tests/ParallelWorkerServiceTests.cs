@@ -8,26 +8,20 @@ namespace Rivulet.Hosting.Tests;
 
 public class ParallelWorkerServiceTests
 {
-    private class TestWorkerService : ParallelWorkerService<int, string>
+    private class TestWorkerService(
+        ILogger<TestWorkerService> logger,
+        IAsyncEnumerable<int> sourceItems,
+        ParallelOptionsRivulet? options = null)
+        : ParallelWorkerService<int, string>(logger, options)
     {
-        private readonly IAsyncEnumerable<int> _sourceItems;
         public ConcurrentBag<int> ProcessedItems { get; } = [];
         public ConcurrentBag<string> Results { get; } = [];
         public int ProcessCallCount => _processCallCount;
         private int _processCallCount;
 
-        public TestWorkerService(
-            ILogger<TestWorkerService> logger,
-            IAsyncEnumerable<int> sourceItems,
-            ParallelOptionsRivulet? options = null)
-            : base(logger, options)
-        {
-            _sourceItems = sourceItems;
-        }
-
         protected override IAsyncEnumerable<int> GetSourceItems(CancellationToken cancellationToken)
         {
-            return _sourceItems;
+            return sourceItems;
         }
 
         protected override Task<string> ProcessAsync(int item, CancellationToken cancellationToken)
@@ -44,47 +38,30 @@ public class ParallelWorkerServiceTests
         }
     }
 
-    private class DelayedWorkerService : ParallelWorkerService<int, int>
+    private class DelayedWorkerService(
+        ILogger<DelayedWorkerService> logger,
+        IAsyncEnumerable<int> sourceItems,
+        int delayMs,
+        ParallelOptionsRivulet? options = null)
+        : ParallelWorkerService<int, int>(logger, options)
     {
-        private readonly IAsyncEnumerable<int> _sourceItems;
-        private readonly int _delayMs;
-
-        public DelayedWorkerService(
-            ILogger<DelayedWorkerService> logger,
-            IAsyncEnumerable<int> sourceItems,
-            int delayMs,
-            ParallelOptionsRivulet? options = null)
-            : base(logger, options)
-        {
-            _sourceItems = sourceItems;
-            _delayMs = delayMs;
-        }
-
         protected override IAsyncEnumerable<int> GetSourceItems(CancellationToken cancellationToken)
         {
-            return _sourceItems;
+            return sourceItems;
         }
 
         protected override async Task<int> ProcessAsync(int item, CancellationToken cancellationToken)
         {
-            await Task.Delay(_delayMs, cancellationToken);
+            await Task.Delay(delayMs, cancellationToken);
             return item * 2;
         }
     }
 
-    private class ThrowingWorkerService : ParallelWorkerService<int, int>
+    private class ThrowingWorkerService(ILogger<ThrowingWorkerService> logger, IAsyncEnumerable<int> sourceItems) : ParallelWorkerService<int, int>(logger)
     {
-        private readonly IAsyncEnumerable<int> _sourceItems;
-
-        public ThrowingWorkerService(ILogger<ThrowingWorkerService> logger, IAsyncEnumerable<int> sourceItems)
-            : base(logger)
-        {
-            _sourceItems = sourceItems;
-        }
-
         protected override IAsyncEnumerable<int> GetSourceItems(CancellationToken cancellationToken)
         {
-            return _sourceItems;
+            return sourceItems;
         }
 
         protected override Task<int> ProcessAsync(int item, CancellationToken cancellationToken)
@@ -113,9 +90,8 @@ public class ParallelWorkerServiceTests
         using var cts = new CancellationTokenSource();
         await service.StartAsync(cts.Token);
 
-        await Task.Delay(50);
-        cts.Cancel();
-
+        await Task.Delay(50, cts.Token);
+        await cts.CancelAsync();
         await service.StopAsync(CancellationToken.None);
 
         service.ProcessedItems.Should().HaveCount(5);
@@ -133,8 +109,8 @@ public class ParallelWorkerServiceTests
         using var cts = new CancellationTokenSource();
         await service.StartAsync(cts.Token);
 
-        await Task.Delay(50);
-        cts.Cancel();
+        await Task.Delay(50, cts.Token);
+        await cts.CancelAsync();
 
         await service.StopAsync(CancellationToken.None);
 
@@ -180,8 +156,8 @@ public class ParallelWorkerServiceTests
         using var cts = new CancellationTokenSource();
         await service.StartAsync(cts.Token);
 
-        await Task.Delay(50);
-        cts.Cancel();
+        await Task.Delay(50, cts.Token);
+        await cts.CancelAsync();
 
         await service.StopAsync(CancellationToken.None);
 
@@ -198,7 +174,7 @@ public class ParallelWorkerServiceTests
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(500));
 
         await service.StartAsync(cts.Token);
-        await Task.Delay(100);
+        await Task.Delay(100, cts.Token);
 
         await service.StopAsync(CancellationToken.None);
     }
@@ -242,8 +218,8 @@ public class ParallelWorkerServiceTests
         using var cts = new CancellationTokenSource();
         await service.StartAsync(cts.Token);
 
-        await Task.Delay(30);
-        cts.Cancel();
+        await Task.Delay(30, cts.Token);
+        await cts.CancelAsync();
 
         await service.StopAsync(CancellationToken.None);
 
@@ -262,8 +238,8 @@ public class ParallelWorkerServiceTests
         using var cts = new CancellationTokenSource();
         await service.StartAsync(cts.Token);
 
-        await Task.Delay(50);
-        cts.Cancel();
+        await Task.Delay(50, cts.Token);
+        await cts.CancelAsync();
 
         await service.StopAsync(CancellationToken.None);
 
@@ -280,8 +256,8 @@ public class ParallelWorkerServiceTests
 
         using var cts = new CancellationTokenSource();
         await service.StartAsync(cts.Token);
-        await Task.Delay(50);
-        cts.Cancel();
+        await Task.Delay(50, cts.Token);
+        await cts.CancelAsync();
         await service.StopAsync(CancellationToken.None);
 
         service.ProcessedItems.Should().HaveCount(3);
@@ -290,7 +266,6 @@ public class ParallelWorkerServiceTests
     [Fact]
     public async Task ExecuteAsync_WhenCancelled_ShouldLogInformationAndExitGracefully()
     {
-        // Arrange
         var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Information));
         var logger = loggerFactory.CreateLogger<TestWorkerService>();
 
@@ -307,20 +282,17 @@ public class ParallelWorkerServiceTests
 
         using var cts = new CancellationTokenSource();
 
-        // Act
         await service.StartAsync(cts.Token);
-        await Task.Delay(20); // Let it start
+        await Task.Delay(20, cts.Token); // Let it start
         await cts.CancelAsync(); // Cancel it
         await service.StopAsync(CancellationToken.None);
 
-        // Assert - should exit gracefully without throwing
         service.ProcessedItems.Count.Should().BeLessThan(100);
     }
 
     [Fact]
     public async Task ExecuteAsync_WhenProcessThrowsFatalError_ShouldLogErrorAndRethrow()
     {
-        // Arrange
         var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Error));
         var logger = loggerFactory.CreateLogger<FatalErrorWorkerService>();
 
@@ -329,31 +301,21 @@ public class ParallelWorkerServiceTests
 
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
 
-        // Act & Assert
         await service.StartAsync(cts.Token);
-
-        // Wait for the exception to propagate
-        await Task.Delay(100);
+        await Task.Delay(100, cts.Token);
 
         // The service should have logged the fatal error
         await service.StopAsync(CancellationToken.None);
     }
 
-    private class FatalErrorWorkerService : ParallelWorkerService<int, int>
+    private class FatalErrorWorkerService(
+        ILogger<FatalErrorWorkerService> logger,
+        IAsyncEnumerable<int> sourceItems)
+        : ParallelWorkerService<int, int>(logger)
     {
-        private readonly IAsyncEnumerable<int> _sourceItems;
-
-        public FatalErrorWorkerService(
-            ILogger<FatalErrorWorkerService> logger,
-            IAsyncEnumerable<int> sourceItems)
-            : base(logger)
-        {
-            _sourceItems = sourceItems;
-        }
-
         protected override IAsyncEnumerable<int> GetSourceItems(CancellationToken cancellationToken)
         {
-            return _sourceItems;
+            return sourceItems;
         }
 
         protected override Task<int> ProcessAsync(int item, CancellationToken cancellationToken)
@@ -366,7 +328,6 @@ public class ParallelWorkerServiceTests
     [Fact]
     public async Task ExecuteAsync_WithMultipleExceptions_ShouldLogFirstError()
     {
-        // Arrange
         var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Error));
         var logger = loggerFactory.CreateLogger<FatalErrorWorkerService>();
 
@@ -375,7 +336,6 @@ public class ParallelWorkerServiceTests
 
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
 
-        // Act
         await service.StartAsync(cts.Token);
         await Task.Delay(50, CancellationToken.None); // Give time for exception
         await service.StopAsync(CancellationToken.None);
