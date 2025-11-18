@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       iterations:
-        description: 'Number of test iterations'
+        description: 'Number of test iterations (timeout = iterations * 2 minutes)'
         required: false
         default: '50'
         type: string
@@ -21,4 +21,3 @@ jobs:
     uses: ./.github/workflows/reusable-flaky-test-detection.yml
     with:
       iterations: ${{ github.event_name == 'workflow_dispatch' && fromJSON(inputs.iterations) || 100 }}
-      timeout-minutes: 60
