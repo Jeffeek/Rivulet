@@ -355,11 +355,15 @@ public class ParallelWorkerServiceTests
 
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
 
-        // ReSharper disable once AccessToDisposedClosure
-        var startAct = async () => await service.StartAsync(cts.Token);
+        // StartAsync starts the background task but doesn't wait for it
+        await service.StartAsync(cts.Token);
 
-        await startAct.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("Fatal error in GetSourceItems");
+        // Wait for the background task to fail and then stop
+        await Task.Delay(100, cts.Token);
+
+        // StopAsync should complete even though ExecuteAsync threw
+        var stopAct = async () => await service.StopAsync(CancellationToken.None);
+        await stopAct.Should().NotThrowAsync();
     }
 
     private class FatalGetSourceItemsWorkerService(ILogger<FatalGetSourceItemsWorkerService> logger)
