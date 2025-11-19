@@ -20,7 +20,6 @@ public class RivuletOptionsSetupTests
     [Fact]
     public void Configure_WithNonExistentSection_ShouldNotModifyOptions()
     {
-        // Arrange
         var configuration = new ConfigurationBuilder().Build();
         var setup = new RivuletOptionsSetup(configuration);
         var options = new ParallelOptionsRivulet
@@ -40,7 +39,6 @@ public class RivuletOptionsSetupTests
     [Fact]
     public void Configure_WithValidSection_ShouldBindConfiguration()
     {
-        // Arrange
         var configData = new Dictionary<string, string?>
         {
             ["Rivulet:MaxDegreeOfParallelism"] = "8",
@@ -67,7 +65,6 @@ public class RivuletOptionsSetupTests
     [Fact]
     public void Configure_WithRetryOptions_ShouldBindConfiguration()
     {
-        // Arrange
         var configData = new Dictionary<string, string?>
         {
             ["Rivulet:MaxRetries"] = "5",
@@ -92,7 +89,6 @@ public class RivuletOptionsSetupTests
     [Fact]
     public void Configure_WithPartialConfiguration_ShouldBindOnlySpecifiedValues()
     {
-        // Arrange
         var configData = new Dictionary<string, string?>
         {
             ["Rivulet:MaxDegreeOfParallelism"] = "16"
@@ -121,7 +117,6 @@ public class RivuletOptionsSetupTests
     [Fact]
     public void Configure_WithEmptySection_ShouldNotModifyOptions()
     {
-        // Arrange
         var configData = new Dictionary<string, string?>
         {
             ["OtherSection:SomeValue"] = "test"
@@ -147,7 +142,6 @@ public class RivuletOptionsSetupTests
     [Fact]
     public void Configure_WithChannelCapacity_ShouldBindValue()
     {
-        // Arrange
         var configData = new Dictionary<string, string?>
         {
             ["Rivulet:ChannelCapacity"] = "2048"
@@ -170,7 +164,6 @@ public class RivuletOptionsSetupTests
     [Fact]
     public void Configure_WithPerItemTimeout_ShouldBindTimeSpan()
     {
-        // Arrange
         var configData = new Dictionary<string, string?>
         {
             ["Rivulet:PerItemTimeout"] = "00:01:30"
@@ -193,7 +186,6 @@ public class RivuletOptionsSetupTests
     [Fact]
     public void Configure_ImplementsIConfigureOptions_ShouldBeUsableWithOptionsPattern()
     {
-        // Arrange
         var configData = new Dictionary<string, string?>
         {
             ["Rivulet:MaxDegreeOfParallelism"] = "4"
@@ -212,7 +204,6 @@ public class RivuletOptionsSetupTests
     [Fact]
     public void Configure_WithMultipleCallsToSameOptions_ShouldOverwriteValues()
     {
-        // Arrange
         var configData1 = new Dictionary<string, string?>
         {
             ["Rivulet:MaxDegreeOfParallelism"] = "5"
