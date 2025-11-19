@@ -35,6 +35,14 @@ jobs:
       # Note: Test projects multi-target net8.0;net9.0
       # .NET 9 SDK automatically runs tests for BOTH frameworks
 
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+
     - name: Restore dependencies
       run: dotnet restore
 
@@ -61,6 +69,14 @@ jobs:
       with:
         dotnet-version: 9.0.x
 
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+
     - name: Restore dependencies
       run: dotnet restore
 
@@ -70,6 +86,13 @@ jobs:
     - name: Run tests with coverage
       run: dotnet test -c Release --no-build --collect:"XPlat Code Coverage" --results-directory ./coverage
       timeout-minutes: 3
+
+    - name: Upload coverage reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-reports
+        path: ./coverage
+        retention-days: 7
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v5

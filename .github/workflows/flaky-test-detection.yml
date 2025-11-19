@@ -12,6 +12,8 @@ on:
         description: 'Timeout in minutes (optional override)'
         required: false
         type: string
+  schedule:
+    - cron: '0 3 1 * *' # At 03:00 on day-of-month 1.
 
 permissions:
   contents: read
@@ -24,6 +26,8 @@ jobs:
     name: Flaky Test Detection (Manual/Scheduled)
     uses: ./.github/workflows/reusable-flaky-test-detection.yml
     with:
+      # Manual: use input value (default 50), Scheduled: 100 iterations
       iterations: ${{ github.event_name == 'workflow_dispatch' && fromJSON(inputs.iterations) || 100 }}
-      # Default: 100 iterations = 200 minutes, 50 iterations = 100 minutes (from default: 100)
-      timeout-minutes: ${{ inputs.timeout-minutes != '' && fromJSON(inputs.timeout-minutes) || 100 }}
+      # Default: 100 iterations = 200 minutes, 50 iterations = 100 minutes
+      # Formula: timeout = iterations * 2
+      timeout-minutes: ${{ github.event_name == 'workflow_dispatch' && inputs.timeout-minutes != '' && fromJSON(inputs.timeout-minutes) || 200 }}
