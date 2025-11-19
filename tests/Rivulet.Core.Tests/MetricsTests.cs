@@ -456,7 +456,7 @@ public class MetricsTests
         var results2 = await task2;
 
         // MetricsTracker disposal already waits up to 5 seconds for the final sample
-        // The race condition is fixed by waiting 50ms before the final sample in MetricsTracker
+        // The race condition is fixed by waiting 500ms before the final sample in MetricsTracker
         // No additional delay needed
 
         results1.Should().HaveCount(20);
