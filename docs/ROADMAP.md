@@ -45,7 +45,7 @@
 
 ## Roadmap by Version
 
-### v1.3.0 - Common Integrations (Q1-Q2 2026)
+### v1.3.0 - Common Integrations (Q2-Q3 2025)
 **Goal**: Make common scenarios turnkey
 
 | Package | Description | Impact |
@@ -58,7 +58,7 @@
 
 ---
 
-### v1.4.0 - Cloud Native (Q3-Q4 2026)
+### v1.4.0 - Cloud Native (Q4 2025 - Q1 2026)
 **Goal**: Cloud workload integration
 
 | Package | Description | Impact |
@@ -70,7 +70,7 @@
 
 ---
 
-### v1.5.0 - Advanced Features (Q1 2027)
+### v1.5.0 - Advanced Features (Q2 2026)
 **Goal**: Sophisticated data processing
 
 | Package | Description | Impact |
@@ -81,7 +81,7 @@
 
 ---
 
-### v1.6.0 - Durability (Q2 2027)
+### v1.6.0 - Durability (Q3 2026)
 **Goal**: Long-running pipelines
 
 | Package | Description | Impact |
@@ -91,7 +91,7 @@
 
 ---
 
-### v1.7.0 - Message Queues (Q3 2027)
+### v1.7.0 - Message Queues (Q4 2026)
 **Goal**: Event-driven workloads
 
 | Package | Description | Impact |
@@ -102,7 +102,7 @@
 
 ---
 
-### v1.8.0 - Performance (Q4 2027)
+### v1.8.0 - Performance (Q1 2027)
 **Goal**: Optimize hot paths
 
 | Package | Description | Impact |
@@ -112,7 +112,7 @@
 
 ---
 
-### v2.0.0 - Pipeline Composition (Q1 2028)
+### v2.0.0 - Pipeline Composition (Q2 2027)
 **Goal**: Multi-stage processing framework
 
 **Core Enhancement**: Pipeline Composition API
@@ -138,7 +138,7 @@ var results = await pipeline.ExecuteAsync(cancellationToken);
 
 ---
 
-### v2.1.0 - Advanced Tooling (Q3 2028)
+### v2.1.0 - Advanced Tooling (Q3 2027)
 **Goal**: Enhanced developer experience
 
 | Package | Description | Impact |
@@ -200,12 +200,12 @@ Rivulet.Core + Rivulet.Http + Rivulet.Quotas
 - ✅ 10+ projects using Rivulet.Hosting
 - ✅ 95%+ test coverage across all packages
 
-### v1.4.0 (2026)
+### v1.4.0 (Q1 2026)
 - 🎯 1,000+ total ecosystem downloads
 - 🎯 25+ production cloud workloads (Azure/AWS)
 - 🎯 3+ blog posts from external users
 
-### v2.0.0 (2028)
+### v2.0.0 (Q2 2027)
 - 🎯 10,000+ total ecosystem downloads
 - 🎯 100+ production pipelines using v2.0 API
 - 🎯 200+ GitHub stars, 10+ external contributors
@@ -222,6 +222,6 @@ Rivulet.Core + Rivulet.Http + Rivulet.Quotas
 
 ---
 
-**Last Updated**: 2025-11-03
+**Last Updated**: 2025-11-19
 **Version**: 1.2.0
-**Status**: v1.2.0 Complete - Planning v1.3.0
+**Status**: v1.2.0 Released - Planning v1.3.0 (Q2-Q3 2025)
