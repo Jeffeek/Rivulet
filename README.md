@@ -987,6 +987,45 @@ When adding new benchmarks:
 
 See [tests/Rivulet.Benchmarks/README.md](tests/Rivulet.Benchmarks/README.md) for detailed documentation.
 
-### Roadmap
+---
 
-- Additional integrations (OpenTelemetry, Microsoft.Extensions.Hosting, etc.)
+## 🗺️ Roadmap
+
+See the full [Roadmap](docs/ROADMAP.md) for detailed plans.
+
+### v1.3.0 (Q2-Q3 2025) - In Planning
+- **Rivulet.Http** - HttpClient operators, resilient downloads
+- **Rivulet.RetryPolicies** - Advanced backoff strategies, hedging, policy composition
+- **Rivulet.Sql** - Safe parallel database operations, connection pooling
+
+### Future Versions
+- **Rivulet.Azure / Rivulet.Aws** - Cloud provider integrations
+- **Rivulet.Channels** - Advanced queue patterns
+- **Rivulet.Kafka / RabbitMQ / SQS** - Message queue integrations
+- **v2.0.0** - Multi-stage pipeline composition API
+
+---
+
+## 📚 Documentation
+
+- [Contributing Guide](CONTRIBUTING.md)
+- [Release Guide](docs/RELEASE_GUIDE.md) - For maintainers
+- [Roadmap](docs/ROADMAP.md) - Future plans
+- [Security Policy](SECURITY.md) - Vulnerability reporting
+- [Code of Conduct](CODE_OF_CONDUCT.md)
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🙏 Acknowledgments
+
+Built with ❤️ using:
+- .NET 8.0 and .NET 9.0
+- System.Threading.Channels for backpressure
+- xUnit for testing
+- BenchmarkDotNet for performance validation

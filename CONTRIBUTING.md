@@ -167,9 +167,9 @@ public static async Task<List<TResult>> SelectParallelAsync<TSource, TResult>(
 
 ### Coverage Goals
 
-- **Line Coverage**: ≥ 99%
-- **Branch Coverage**: ≥ 95%
-- **Flaky Tests**: 100% pass rate over 100 iterations on Windows + Linux
+- **Line Coverage**: ≥ 90%
+- **Branch Coverage**: ≥ 90%
+- **Flaky Tests**: 100% pass rate over 100 iterations on Windows + Linux (verified via weekly scheduled detection)
 
 ### Test Structure
 
@@ -215,8 +215,12 @@ dotnet test -c Release --collect:"XPlat Code Coverage"
 # Run specific test
 dotnet test --filter "FullyQualifiedName~SelectParallelAsync_WithCancellation"
 
-# Flaky test detection (30 iterations for PRs)
-gh workflow run flaky-test-detection.yml
+# Flaky test detection (manual trigger - specify iterations)
+gh workflow run flaky-test-detection.yml -f iterations=20 -f timeout-minutes=40
+
+# Note: Flaky detection runs automatically:
+# - On every PR: 20 iterations (via ci.yml)
+# - Weekly scheduled: 100 iterations (Sundays 3 AM UTC)
 ```
 
 ---
@@ -235,14 +239,16 @@ gh workflow run flaky-test-detection.yml
 ### PR Checklist
 
 ```markdown
-- [ ] Tests added/updated with ≥99% coverage
+- [ ] Tests added/updated achieving ≥95% line coverage, ≥90% branch coverage
 - [ ] All error modes tested (FailFast, CollectAndContinue, BestEffort)
 - [ ] XML documentation complete for public APIs
-- [ ] README/PACKAGE_README updated (if API changed)
+- [ ] README updated if API/features changed
+- [ ] Package README files updated (src/*/README.md)
 - [ ] ConfigureAwait(false) used consistently
 - [ ] Nullable reference types handled
 - [ ] No breaking changes (or discussed in issue for major version)
 - [ ] Benchmarks run (if performance-sensitive change)
+- [ ] All CI checks pass (tests, coverage, flaky detection, CodeQL)
 ```
 
 ### PR Guidelines

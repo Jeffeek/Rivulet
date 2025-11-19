@@ -21,9 +21,8 @@ All 5 packages are built and published together with the same version number.
 Before starting the release process, ensure:
 
 - [ ] All CI tests pass on `master` branch
-- [ ] Code coverage is at expected (90%>=) level (currently ![Codecov (with branch)](https://img.shields.io/codecov/c/github/Jeffeek/Rivulet/master?style=flat&label=%20)
-)
-- [ ] No flaky tests detected (50 iterations on both Windows & Linux)
+- [ ] Code coverage is at expected level: ≥90% line coverage, ≥90% branch coverage (check ![Codecov](https://img.shields.io/codecov/c/github/Jeffeek/Rivulet/master?style=flat&label=%20))
+- [ ] No flaky tests detected (100 iterations on both Windows & Linux via scheduled weekly detection)
 - [ ] README.md (GitHub repository) is up to date
 - [ ] All package README files are up to date (src/*/README.md)
 - [ ] All planned features for the version are complete
