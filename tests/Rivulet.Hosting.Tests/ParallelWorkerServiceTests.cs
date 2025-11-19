@@ -361,19 +361,18 @@ public class ParallelWorkerServiceTests
 
         var service = new FatalGetSourceItemsWorkerService(logger);
 
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
 
         // Execute the full service lifecycle wrapped in a function for FluentAssertions
         var serviceAction = async () =>
         {
             // StartAsync starts the background task but doesn't wait for it
-            // ReSharper disable once AccessToDisposedClosure
             await service.StartAsync(cts.Token);
 
-            // Wait for the background task to fail
-            // Increased from 100ms → 200ms for Windows CI/CD reliability
-            // ReSharper disable once AccessToDisposedClosure
-            await Task.Delay(200, cts.Token);
+            // Wait for the background task to start and fail
+            // Use CancellationToken.None to avoid timing interference
+            // Increased from 200ms → 500ms to ensure background task has time to start and throw
+            await Task.Delay(500, CancellationToken.None);
 
             // StopAsync will propagate the exception from the faulted ExecuteAsync task
             await service.StopAsync(CancellationToken.None);
