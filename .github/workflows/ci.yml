@@ -35,6 +35,14 @@ jobs:
       # Note: Test projects multi-target net8.0;net9.0
       # .NET 9 SDK automatically runs tests for BOTH frameworks
 
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+
     - name: Restore dependencies
       run: dotnet restore
 
@@ -61,6 +69,14 @@ jobs:
       with:
         dotnet-version: 9.0.x
 
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+
     - name: Restore dependencies
       run: dotnet restore
 
@@ -71,6 +87,13 @@ jobs:
       run: dotnet test -c Release --no-build --collect:"XPlat Code Coverage" --results-directory ./coverage
       timeout-minutes: 3
 
+    - name: Upload coverage reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-reports
+        path: ./coverage
+        retention-days: 7
+
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v5
       with:
@@ -79,10 +102,19 @@ jobs:
         fail_ci_if_error: false
         verbose: true
 
+  codeql-analysis:
+    name: CodeQL Security Analysis
+    needs: quick-test
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    uses: ./.github/workflows/codeql.yml
+
   flaky-test-detection:
     name: Flaky Test Detection (PR)
-    needs: quick-test  # Only run if quick-test passes
-    if: github.event_name == 'pull_request'  # Only run on PRs
+    needs: quick-test
+    if: github.event_name == 'pull_request'
     uses: ./.github/workflows/reusable-flaky-test-detection.yml
     with:
       iterations: 20

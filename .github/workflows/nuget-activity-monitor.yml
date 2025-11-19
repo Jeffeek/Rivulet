@@ -20,7 +20,12 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        package: ['Rivulet.Core', 'Rivulet.Diagnostics']
+        package:
+          - 'Rivulet.Core'
+          - 'Rivulet.Diagnostics'
+          - 'Rivulet.Diagnostics.OpenTelemetry'
+          - 'Rivulet.Testing'
+          - 'Rivulet.Hosting'
       fail-fast: false
 
     steps:

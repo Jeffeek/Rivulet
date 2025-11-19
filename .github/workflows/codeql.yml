@@ -1,18 +1,11 @@
 name: CodeQL Security Analysis
 
 on:
-  pull_request:
-    branches:
-      - "master"
-      - "release/**"
-  push:
-    branches:
-      - "master"
-      - "release/**"
+  workflow_call:  # Called from ci.yml after quick-test passes
+  workflow_dispatch:  # Manual trigger
   schedule:
     # Run weekly on Monday at 00:00 UTC
     - cron: '0 0 * * 1'
-  workflow_dispatch:
 
 permissions:
   security-events: write
@@ -40,6 +33,14 @@ jobs:
       uses: actions/setup-dotnet@v5
       with:
         dotnet-version: 9.0.x
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
 
     - name: Restore dependencies
       run: dotnet restore
