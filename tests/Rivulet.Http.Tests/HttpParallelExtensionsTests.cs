@@ -356,7 +356,7 @@ public class HttpParallelExtensionsTests
         var results = await uris.GetParallelAsync(httpClient, options);
 
         results.Should().HaveCount(20);
-        maxConcurrent.Should().BeLessOrEqualTo(5);
+        maxConcurrent.Should().BeLessThanOrEqualTo(5);
 
         foreach (var response in results)
         {
