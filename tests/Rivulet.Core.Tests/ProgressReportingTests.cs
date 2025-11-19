@@ -120,14 +120,9 @@ public class ProgressReportingTests
             },
             options);
 
-        // Disposal completes inside SelectParallelAsync before it returns, which triggers the final sample.
-        // The final sample is awaited during disposal, but we add extra time to ensure:
-        // 1. Any CPU cache coherency delays on Windows
-        // 2. Timer quantization effects (~15ms resolution on Windows)
-        // 3. Async state machine cleanup
-        // Using Task.Yield() to force a context switch, ensuring all memory writes are globally visible
-        await Task.Yield();
-        await Task.Delay(1000);
+        // Disposal completes inside SelectParallelAsync before it returns
+        // The disposal waits up to 5 seconds for the final progress report to complete
+        // Race condition fixed by 200ms delay before final report in ProgressTracker
 
         results.Should().HaveCount(16); // 20 - 4 errors
 

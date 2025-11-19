@@ -12,7 +12,8 @@ public class OrderedOutputTests
         {
             MaxDegreeOfParallelism = 16,
             OrderedOutput = true
-        };
+        };
+
         var results = await source.SelectParallelAsync(
             async (x, ct) =>
             {
@@ -72,7 +73,8 @@ public class OrderedOutputTests
                 await Task.Delay(Random.Shared.Next(1, 10), ct);
                 return x * 2;
             }, options)
-            .ToListAsync();
+            .ToListAsync();
+
 
         results.Should().HaveCount(100);
         results.Should().Equal(Enumerable.Range(1, 100).Select(x => x * 2));
@@ -111,7 +113,8 @@ public class OrderedOutputTests
             MaxDegreeOfParallelism = 8,
             OrderedOutput = true,
             ErrorMode = ErrorMode.BestEffort
-        };
+        };
+
         var results = await source.SelectParallelAsync(
             async (x, ct) =>
             {
@@ -140,7 +143,8 @@ public class OrderedOutputTests
             OrderedOutput = true
         };
 
-        var results = new List<int>();
+        var results = new List<int>();
+
         try
         {
             await foreach (var result in source.SelectParallelStreamAsync(
@@ -171,7 +175,8 @@ public class OrderedOutputTests
     public async Task SelectParallelAsync_OrderedOutput_EmptySource_ReturnsEmpty()
     {
         var source = Enumerable.Empty<int>();
-        var options = new ParallelOptionsRivulet { OrderedOutput = true };
+        var options = new ParallelOptionsRivulet { OrderedOutput = true };
+
         var results = await source.SelectParallelAsync(
             async (x, ct) =>
             {
@@ -187,7 +192,8 @@ public class OrderedOutputTests
     public async Task SelectParallelAsync_OrderedOutput_SingleItem_ReturnsSingleItem()
     {
         var source = new[] { 42 };
-        var options = new ParallelOptionsRivulet { OrderedOutput = true };
+        var options = new ParallelOptionsRivulet { OrderedOutput = true };
+
         var results = await source.SelectParallelAsync(
             async (x, ct) =>
             {
@@ -235,7 +241,8 @@ public class OrderedOutputTests
         {
             MaxDegreeOfParallelism = 32,
             OrderedOutput = true
-        };
+        };
+
         var results = await source.SelectParallelAsync(
             async (x, ct) =>
             {

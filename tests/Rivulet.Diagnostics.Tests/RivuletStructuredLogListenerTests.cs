@@ -75,8 +75,9 @@ public class RivuletStructuredLogListenerTests : IDisposable
                 .ToListAsync();
 
             // Wait for EventCounters to poll and write metrics after operation completes
-            // Polling interval is ~1 second, wait 2 seconds to ensure at least 2 polls occur
-            await Task.Delay(2000);
+            // Increased from 2000ms → 5000ms for Windows CI/CD reliability (1/180 failures)
+            // Polling interval is ~1 second but can be delayed under load
+            await Task.Delay(5000);
         } // Dispose listener to flush and close file
 
         // Wait for file handle to be fully released
@@ -143,7 +144,7 @@ public class RivuletStructuredLogListenerTests : IDisposable
         await Task.Delay(1500);
 
         loggedLines.Should().NotBeEmpty();
-        
+
         var firstLog = JsonDocument.Parse(loggedLines[0]);
         firstLog.RootElement.TryGetProperty("timestamp", out _).Should().BeTrue();
         firstLog.RootElement.TryGetProperty("source", out _).Should().BeTrue();
@@ -151,6 +152,45 @@ public class RivuletStructuredLogListenerTests : IDisposable
         metric.TryGetProperty("name", out _).Should().BeTrue();
         metric.TryGetProperty("displayName", out _).Should().BeTrue();
         metric.TryGetProperty("value", out _).Should().BeTrue();
+    }
+
+    [Fact]
+    public void StructuredLogListener_WithSyncDispose_ShouldDisposeCleanly()
+    {
+        var testFile = Path.Join(Path.GetTempPath(), $"rivulet-sync-dispose-{Guid.NewGuid()}.json");
+        var listener = new RivuletStructuredLogListener(testFile);
+
+        var task = Enumerable.Range(1, 3)
+            .SelectParallelAsync((x, _) => ValueTask.FromResult(x), new ParallelOptionsRivulet());
+#pragma warning disable xUnit1031
+        task.Wait();
+#pragma warning restore xUnit1031
+
+        // Call sync Dispose explicitly to test that path
+        listener.Dispose();
+
+        // Should not throw and file should be properly closed
+        // Clean up
+        TestCleanupHelper.RetryDeleteFile(testFile);
+    }
+
+    [Fact]
+    public void StructuredLogListener_WithLogAction_AndSyncDispose_ShouldDisposeCleanly()
+    {
+        var loggedLines = new List<string>();
+        var listener = new RivuletStructuredLogListener(loggedLines.Add);
+
+        var task = Enumerable.Range(1, 3)
+            .SelectParallelAsync((x, _) => ValueTask.FromResult(x), new ParallelOptionsRivulet());
+#pragma warning disable xUnit1031
+        task.Wait();
+#pragma warning restore xUnit1031
+
+        // Call sync Dispose explicitly (tests the _filePath == null path)
+        listener.Dispose();
+
+        // Should not throw even though there's no file writer
+        loggedLines.Should().NotBeNull();
     }
 
     public void Dispose()

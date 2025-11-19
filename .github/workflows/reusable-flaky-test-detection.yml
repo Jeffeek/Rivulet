@@ -8,10 +8,10 @@ on:
         required: true
         type: number
       timeout-minutes:
-        description: 'Timeout in minutes for the test execution'
+        description: 'Timeout in minutes (recommended: iterations * 2, e.g., 50 iterations = 100 minutes)'
         required: false
         type: number
-        default: 45
+        default: 100
 
 permissions:
   contents: read

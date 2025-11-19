@@ -23,8 +23,10 @@ public class PrometheusExporterTests
             })
             .ToListAsync();
 
-        // Wait for EventCounters to fire - increased for CI/CD reliability
-        await Task.Delay(2000);
+        // Wait for EventCounters to fire
+        // Increased from 2000ms → 5000ms for Windows CI/CD reliability (2/180 failures)
+        // EventCounters have ~1s polling interval but can be delayed under load
+        await Task.Delay(5000);
 
         var prometheusText = exporter.Export();
         prometheusText.Should().Contain("# Rivulet.Core Metrics");
@@ -49,8 +51,10 @@ public class PrometheusExporterTests
                 MaxDegreeOfParallelism = 2
             });
 
-        // Wait for EventCounters to fire - increased for CI/CD reliability
-        await Task.Delay(2000);
+        // Wait for EventCounters to fire
+        // Increased from 2000ms → 5000ms for Windows CI/CD reliability (3/180 failures)
+        // EventCounters have ~1s polling interval but can be delayed under load
+        await Task.Delay(5000);
 
         var metrics = exporter.ExportDictionary();
         metrics.Should().NotBeEmpty();

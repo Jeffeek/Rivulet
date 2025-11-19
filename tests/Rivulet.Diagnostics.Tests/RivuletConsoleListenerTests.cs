@@ -11,15 +11,8 @@ namespace Rivulet.Diagnostics.Tests;
 [Collection("Serial EventSource Tests")]
 public class RivuletConsoleListenerTests : IDisposable
 {
-    private readonly StringWriter _stringWriter;
-    private readonly TextWriter _originalOutput;
-
-    public RivuletConsoleListenerTests()
-    {
-        _stringWriter = new StringWriter();
-        _originalOutput = Console.Out;
-        Console.SetOut(_stringWriter);
-    }
+    private StringWriter? _stringWriter;
+    private TextWriter? _originalOutput;
 
     [Fact]
     public async Task ConsoleListener_ShouldHandleLargeValues()
@@ -86,6 +79,12 @@ public class RivuletConsoleListenerTests : IDisposable
 
             await Task.Delay(1100);
 
+            // Dispose listener before reading output to prevent race condition
+            // where background EventSource writes conflict with ToString()
+            // ReSharper disable once DisposeOnUsingVariable
+            listener.Dispose();
+            await Task.Delay(100);
+
             var output = consoleOutput.ToString();
 
             // Note: Console redirection may not work under code coverage tools on Linux
@@ -143,30 +142,46 @@ public class RivuletConsoleListenerTests : IDisposable
     [Fact]
     public async Task ConsoleListener_ShouldWriteMetrics_WhenOperationsRun()
     {
-        using var listener = new RivuletConsoleListener(useColors: false);
+        // Set up Console.Out redirection for this test
+        _stringWriter = new StringWriter();
+        _originalOutput = Console.Out;
+        Console.SetOut(_stringWriter);
 
-        await Enumerable.Range(1, 10)
-            .ToAsyncEnumerable()
-            .SelectParallelStreamAsync(async (x, ct) =>
+        try
+        {
+            using var listener = new RivuletConsoleListener(useColors: false);
+
+            await Enumerable.Range(1, 10)
+                .ToAsyncEnumerable()
+                .SelectParallelStreamAsync(async (x, ct) =>
+                {
+                    await Task.Delay(10, ct);
+                    return x * 2;
+                }, new ParallelOptionsRivulet
+                {
+                    MaxDegreeOfParallelism = 2
+                })
+                .ToListAsync();
+
+            // EventCounters fire every 1 second. Wait for at least 2 intervals
+            // to ensure metrics are published.
+            await Task.Delay(2500);
+
+            // Give a brief moment for console output to be written
+            await Task.Delay(100);
+
+            var output = _stringWriter.ToString();
+            output.Should().Contain("Items Started");
+            output.Should().Contain("Items Completed");
+        }
+        finally
+        {
+            // Restore Console.Out immediately after test
+            if (_originalOutput != null)
             {
-                await Task.Delay(10, ct);
-                return x * 2;
-            }, new ParallelOptionsRivulet
-            {
-                MaxDegreeOfParallelism = 2
-            })
-            .ToListAsync();
-
-        // EventCounters fire every 1 second. Wait for at least 2 intervals
-        // to ensure metrics are published.
-        await Task.Delay(2500);
-
-        // Give a brief moment for console output to be written
-        await Task.Delay(100);
-
-        var output = _stringWriter.ToString();
-        output.Should().Contain("Items Started");
-        output.Should().Contain("Items Completed");
+                Console.SetOut(_originalOutput);
+            }
+        }
     }
 
     [Fact]
@@ -179,7 +194,10 @@ public class RivuletConsoleListenerTests : IDisposable
 
     public void Dispose()
     {
-        Console.SetOut(_originalOutput);
-        _stringWriter.Dispose();
+        if (_originalOutput != null)
+        {
+            Console.SetOut(_originalOutput);
+        }
+        _stringWriter?.Dispose();
     }
 }

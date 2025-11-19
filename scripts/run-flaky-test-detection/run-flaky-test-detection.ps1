@@ -3,6 +3,27 @@ param(
     [int]$Iterations = 20
 )
 
+function Exit-OrphanedProcesses {
+    # Cleanup any remaining test processes that might have been orphaned
+    # Target specific test-related processes to avoid killing unrelated dotnet processes
+    Write-Host "Cleaning up any orphaned test processes..." -ForegroundColor Gray
+    
+    # Kill testhost and vstest processes first
+    Get-Process testhost -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+    Get-Process vstest.console -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+    
+    # Small delay to allow process tree cleanup
+    Start-Sleep -Milliseconds 500
+    
+    # Now kill any orphaned dotnet processes that were spawned by the test jobs
+    # These are processes that should have exited when the jobs completed
+    $dotnetProcesses = Get-Process dotnet -ErrorAction SilentlyContinue
+    if ($dotnetProcesses) {
+        Write-Host "  Found $($dotnetProcesses.Count) orphaned dotnet.exe processes, cleaning up..." -ForegroundColor Yellow
+        $dotnetProcesses | Stop-Process -Force -ErrorAction SilentlyContinue
+    }
+}
+
 # Navigate to repository root (2 levels up from scripts/run-flaky-test-detection/)
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location (Join-Path $ScriptDir "../..")
@@ -168,28 +189,12 @@ if ($results.Count -eq 0) {
     Write-Host "  Total flaky tests: $($results.Count)" -ForegroundColor Yellow
     Write-Host "  Total iterations: $Iterations" -ForegroundColor Yellow
     Write-Host "========================================" -ForegroundColor Yellow
+	
+	Exit-OrphanedProcesses
 
     # Exit with error code if flaky tests detected (for CI)
     exit 1
 }
 
-# Cleanup any remaining test processes that might have been orphaned
-# Target specific test-related processes to avoid killing unrelated dotnet processes
-Write-Host "Cleaning up any orphaned test processes..." -ForegroundColor Gray
-
-# Kill testhost and vstest processes first
-Get-Process testhost -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
-Get-Process vstest.console -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
-
-# Small delay to allow process tree cleanup
-Start-Sleep -Milliseconds 500
-
-# Now kill any orphaned dotnet processes that were spawned by the test jobs
-# These are processes that should have exited when the jobs completed
-$dotnetProcesses = Get-Process dotnet -ErrorAction SilentlyContinue
-if ($dotnetProcesses) {
-    Write-Host "  Found $($dotnetProcesses.Count) orphaned dotnet.exe processes, cleaning up..." -ForegroundColor Yellow
-    $dotnetProcesses | Stop-Process -Force -ErrorAction SilentlyContinue
-}
-
+Exit-OrphanedProcesses
 Write-Host ""

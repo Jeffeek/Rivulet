@@ -29,8 +29,9 @@ namespace Rivulet.Diagnostics.Tests
                 .ToListAsync();
 
             // Wait for EventCounters to poll and write metrics, then for aggregation window to fire
-            // Polling interval ~1s, aggregation window 500ms, wait 3s for both to complete reliably
-            await Task.Delay(3000);
+            // Polling interval ~1s, aggregation window 500ms
+            // Increased from 3000ms → 5000ms for Windows CI/CD reliability (1/180 failures)
+            await Task.Delay(5000);
 
             aggregatedMetrics.Should().NotBeEmpty();
             var lastAggregation = aggregatedMetrics.Last();
@@ -113,8 +114,8 @@ namespace Rivulet.Diagnostics.Tests
                 .ToListAsync();
 
             // Wait for at least 2x the aggregation window to ensure timer fires reliably
-            // Increased from 3000ms to 4000ms for better CI/CD reliability
-            await Task.Delay(4000);
+            // Increased from 3000ms → 4000ms → 5000ms for Windows CI/CD reliability (2/180 failures)
+            await Task.Delay(5000);
 
             aggregatedMetrics.Should().NotBeEmpty();
             var firstAggregation = aggregatedMetrics.First();
@@ -122,7 +123,7 @@ namespace Rivulet.Diagnostics.Tests
 
             // Wait for another aggregation window to potentially expire samples
             // This verifies that the aggregator handles sample expiration gracefully
-            await Task.Delay(4000);
+            await Task.Delay(5000);
 
             var totalAggregations = aggregatedMetrics.Count;
             totalAggregations.Should().BeGreaterThanOrEqualTo(1);
@@ -145,6 +146,28 @@ namespace Rivulet.Diagnostics.Tests
             var aggregator = new MetricsAggregator();
             var act = () => aggregator.Dispose();
             act.Should().NotThrow();
+        }
+
+        [Fact]
+        public void MetricsAggregator_ShouldNotThrow_WhenDoubleDisposed()
+        {
+            var aggregator = new MetricsAggregator();
+            aggregator.Dispose();
+
+            // Second dispose should not throw (tests disposal guard at line 137)
+            var act = () => aggregator.Dispose();
+            act.Should().NotThrow();
+        }
+
+        [Fact]
+        public async Task MetricsAggregator_ShouldNotThrow_WhenDoubleAsyncDisposed()
+        {
+            var aggregator = new MetricsAggregator();
+            await aggregator.DisposeAsync();
+
+            // Second dispose should not throw (tests disposal guard at line 155)
+            var act = async () => await aggregator.DisposeAsync();
+            await act.Should().NotThrowAsync();
         }
     }
 }

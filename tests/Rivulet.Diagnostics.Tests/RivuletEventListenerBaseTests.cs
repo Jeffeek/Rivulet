@@ -28,8 +28,8 @@ public class RivuletEventListenerBaseTests : IDisposable
             .ToListAsync();
 
         // EventSource publishes counters every 1 second
-        // Wait up to 2 seconds polling for counters to handle timing variations in CI/CD
-        var deadline = DateTime.UtcNow.AddMilliseconds(2000);
+        // Increased from 2000ms → 5000ms for Windows CI/CD reliability
+        var deadline = DateTime.UtcNow.AddMilliseconds(5000);
         while (_listener.ReceivedCounters.IsEmpty && DateTime.UtcNow < deadline)
         {
             await Task.Delay(100);
@@ -57,7 +57,8 @@ public class RivuletEventListenerBaseTests : IDisposable
             .ToListAsync();
 
         // EventSource publishes counters every 1 second - poll with timeout
-        var deadline = DateTime.UtcNow.AddMilliseconds(2000);
+        // Increased from 2000ms → 5000ms for Windows CI/CD reliability (1/180 failures)
+        var deadline = DateTime.UtcNow.AddMilliseconds(5000);
         while (_listener.ReceivedCounters.IsEmpty && DateTime.UtcNow < deadline)
         {
             await Task.Delay(100);
@@ -88,7 +89,8 @@ public class RivuletEventListenerBaseTests : IDisposable
             .ToListAsync();
 
         // EventSource publishes counters every 1 second - poll with timeout
-        var deadline = DateTime.UtcNow.AddMilliseconds(2000);
+        // Increased from 2000ms → 5000ms for Windows CI/CD reliability (2/180 failures)
+        var deadline = DateTime.UtcNow.AddMilliseconds(5000);
         while (_listener.ReceivedCounters.IsEmpty && DateTime.UtcNow < deadline)
         {
             await Task.Delay(100);
@@ -99,6 +101,26 @@ public class RivuletEventListenerBaseTests : IDisposable
         {
             counter.Value.DisplayUnits.Should().NotBeNull();
         }
+    }
+
+    [Fact]
+    public void EventListenerBase_WithSyncDispose_ShouldDisposeCleanly()
+    {
+        var listener = new TestEventListener();
+
+        // Run a simple operation asynchronously
+        var task = Enumerable.Range(1, 3)
+            .SelectParallelAsync((x, _) => ValueTask.FromResult(x), new ParallelOptionsRivulet());
+
+#pragma warning disable xUnit1031
+        task.Wait();
+#pragma warning restore xUnit1031
+
+        // Dispose using sync Dispose() method
+        listener.Dispose();
+
+        // Should not throw and should complete cleanly
+        listener.ReceivedCounters.Should().NotBeNull();
     }
 
     public void Dispose()

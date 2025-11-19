@@ -50,7 +50,9 @@ public class ParallelBackgroundServiceTests
         using var cts = new CancellationTokenSource();
         await service.StartAsync(cts.Token);
 
-        await Task.Delay(50, cts.Token);
+        // Increased from 50ms → 200ms for Windows CI/CD reliability
+        // BackgroundService needs time to start ExecuteAsync and process all items
+        await Task.Delay(200, cts.Token);
         await cts.CancelAsync();
 
         await service.StopAsync(CancellationToken.None);
@@ -70,7 +72,8 @@ public class ParallelBackgroundServiceTests
         using var cts = new CancellationTokenSource();
         await service.StartAsync(cts.Token);
 
-        await Task.Delay(50, cts.Token);
+        // Increased from 50ms → 200ms for Windows CI/CD reliability
+        await Task.Delay(200, cts.Token);
         await cts.CancelAsync();
 
         await service.StopAsync(CancellationToken.None);
@@ -100,7 +103,8 @@ public class ParallelBackgroundServiceTests
         using var cts = new CancellationTokenSource();
         await service.StartAsync(cts.Token);
 
-        await Task.Delay(50, cts.Token);
+        // Increased from 50ms → 200ms for Windows CI/CD reliability
+        await Task.Delay(200, cts.Token);
         await cts.CancelAsync();
 
         await service.StopAsync(CancellationToken.None);
@@ -137,7 +141,8 @@ public class ParallelBackgroundServiceTests
         using var cts = new CancellationTokenSource();
         await service.StartAsync(cts.Token);
 
-        await Task.Delay(50, cts.Token);
+        // Increased from 50ms → 200ms for Windows CI/CD reliability
+        await Task.Delay(200, cts.Token);
         await cts.CancelAsync();
 
         await service.StopAsync(CancellationToken.None);
@@ -191,11 +196,41 @@ public class ParallelBackgroundServiceTests
         await service.StartAsync(cts.Token);
 
         // Wait for the exception to be thrown and logged
-        await Task.Delay(100);
+        await Task.Delay(100, cts.Token);
 
         // The service should have logged the error
         // Since we can't easily verify logs in this test, we verify the behavior continues
         await service.StopAsync(CancellationToken.None);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenGetItemsAsyncThrowsException_ShouldLogErrorAndRethrow()
+    {
+        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Error));
+        var logger = loggerFactory.CreateLogger<FatalErrorBackgroundService>();
+
+        var service = new FatalErrorBackgroundService(logger);
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+
+        // Execute the full service lifecycle wrapped in a function for FluentAssertions
+        var serviceAction = async () =>
+        {
+            // StartAsync starts the background task but doesn't wait for it
+            await service.StartAsync(cts.Token);
+
+            // Wait for the background task to start and fail
+            // Use CancellationToken.None to avoid timing interference
+            // Increased from 200ms → 500ms to ensure background task has time to start and throw
+            await Task.Delay(500, CancellationToken.None);
+
+            // StopAsync will propagate the exception from the faulted ExecuteAsync task
+            await service.StopAsync(CancellationToken.None);
+        };
+
+        // This is expected BackgroundService behavior - exceptions are logged and rethrown
+        await serviceAction.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("Fatal error in GetItemsAsync");
     }
 
     private class ThrowingBackgroundService(
@@ -211,6 +246,21 @@ public class ParallelBackgroundServiceTests
         {
             // Simulate an unhandled exception
             throw new InvalidOperationException($"Test exception for item {item}");
+        }
+    }
+
+    private class FatalErrorBackgroundService(ILogger<FatalErrorBackgroundService> logger)
+        : ParallelBackgroundService<int>(logger)
+    {
+        protected override IAsyncEnumerable<int> GetItemsAsync(CancellationToken cancellationToken)
+        {
+            // Throw from GetItemsAsync to hit the exception path in ExecuteAsync
+            throw new InvalidOperationException("Fatal error in GetItemsAsync");
+        }
+
+        protected override ValueTask ProcessItemAsync(int item, CancellationToken cancellationToken)
+        {
+            return ValueTask.CompletedTask;
         }
     }
 }
