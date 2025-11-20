@@ -74,15 +74,16 @@ public class SqlParallelExtensionsTests
     public async Task ExecuteQueriesParallelAsync_WithParameters_ShouldConfigureCommand()
     {
         var commandsReceived = new List<string>();
+        var lockObj = new object();
         var queriesWithParams = new[]
         {
             (query: "SELECT * FROM Users WHERE Id = @id", configureParams: cmd =>
             {
-                commandsReceived.Add(cmd.CommandText);
+                lock (lockObj) { commandsReceived.Add(cmd.CommandText); }
             }),
             (query: "SELECT * FROM Products WHERE Id = @id", configureParams: (Action<IDbCommand>?)(cmd =>
             {
-                commandsReceived.Add(cmd.CommandText);
+                lock (lockObj) { commandsReceived.Add(cmd.CommandText); }
             }))
         };
 
@@ -127,15 +128,16 @@ public class SqlParallelExtensionsTests
     public async Task ExecuteCommandsParallelAsync_WithParameters_ShouldConfigureCommand()
     {
         var commandsReceived = new List<string>();
+        var lockObj = new object();
         var commandsWithParams = new[]
         {
             (command: "UPDATE Users SET Name = @name WHERE Id = @id", configureParams: cmd =>
             {
-                commandsReceived.Add(cmd.CommandText);
+                lock (lockObj) { commandsReceived.Add(cmd.CommandText); }
             }),
             (command: "DELETE FROM Users WHERE Id = @id", configureParams: (Action<IDbCommand>)(cmd =>
             {
-                commandsReceived.Add(cmd.CommandText);
+                lock (lockObj) { commandsReceived.Add(cmd.CommandText); }
             }))
         };
 

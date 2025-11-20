@@ -195,6 +195,7 @@ public class SqlBulkExtensionsTests
         var items = Enumerable.Range(1, 300).ToList();
         var batchStarted = new List<int>();
         var batchCompleted = new List<int>();
+        var lockObj = new object();
 
         var result = await items.BulkInsertAsync(
             () => new TestDbConnection(executeNonQueryFunc: _ => 100),
@@ -208,12 +209,12 @@ public class SqlBulkExtensionsTests
                 BatchSize = 100,
                 OnBatchStartAsync = (_, batchNum) =>
                 {
-                    batchStarted.Add(batchNum);
+                    lock (lockObj) { batchStarted.Add(batchNum); }
                     return ValueTask.CompletedTask;
                 },
                 OnBatchCompleteAsync = (_, batchNum, _) =>
                 {
-                    batchCompleted.Add(batchNum);
+                    lock (lockObj) { batchCompleted.Add(batchNum); }
                     return ValueTask.CompletedTask;
                 }
             });
@@ -272,7 +273,7 @@ public class SqlBulkExtensionsTests
         var result = await items.BulkInsertAsync(
             () => new TestDbConnection(executeNonQueryFunc: _ =>
             {
-                batchesExecuted++;
+                Interlocked.Increment(ref batchesExecuted);
                 return 250;
             }),
             async (_, cmd, _) =>
