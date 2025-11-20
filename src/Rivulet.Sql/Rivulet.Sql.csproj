@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net9.0;net8.0;</TargetFrameworks>
+    <LangVersion>12</LangVersion>
+    <Nullable>enable</Nullable>
+	<ImplicitUsings>enable</ImplicitUsings>
+	<GenerateDocumentationFile>true</GenerateDocumentationFile>
+	<IncludeSymbols>true</IncludeSymbols>
+	<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PackageId>Rivulet.Sql</PackageId>
+	<Title>Rivulet.Sql</Title>
+	<Authors>Jeffeek</Authors>
+    <Description>Safe parallel SQL operations with connection pooling awareness and bulk operations for Rivulet.Core</Description>
+    <PackageTags>parallel;async;sql;database;bulk;ado.net;performance</PackageTags>
+    <RepositoryUrl>https://github.com/Jeffeek/Rivulet</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+	<PackageIcon>nuget_logo.png</PackageIcon>
+	<PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+  <ItemGroup>
+  	<None Include="nuget_logo.png" Pack="true" PackagePath="\" />
+  	<None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Rivulet.Core\Rivulet.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+  	<InternalsVisibleTo Include="Rivulet.Sql.Tests" />
+  </ItemGroup>
+</Project>
