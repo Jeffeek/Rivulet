@@ -153,7 +153,6 @@ public class ParallelBackgroundServiceTests
     [Fact]
     public async Task ExecuteAsync_WhenCancelled_ShouldLogInformationAndExitGracefully()
     {
-        // Arrange
         var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Information));
         var logger = loggerFactory.CreateLogger<TestBackgroundService>();
 
@@ -183,7 +182,6 @@ public class ParallelBackgroundServiceTests
     [Fact]
     public async Task ExecuteAsync_WhenProcessThrowsException_ShouldLogErrorAndRethrow()
     {
-        // Arrange
         var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Error));
         var logger = loggerFactory.CreateLogger<ThrowingBackgroundService>();
 

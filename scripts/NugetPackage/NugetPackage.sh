@@ -30,6 +30,7 @@ PROJECTS["Diagnostics"]="src/Rivulet.Diagnostics/Rivulet.Diagnostics.csproj"
 PROJECTS["DiagnosticsOpenTelemetry"]="src/Rivulet.Diagnostics.OpenTelemetry/Rivulet.Diagnostics.OpenTelemetry.csproj"
 PROJECTS["Testing"]="src/Rivulet.Testing/Rivulet.Testing.csproj"
 PROJECTS["Hosting"]="src/Rivulet.Hosting/Rivulet.Hosting.csproj"
+PROJECTS["Http"]="src/Rivulet.Http/Rivulet.Http.csproj"
 
 # Validate project parameter
 VALID_PROJECTS="Core Diagnostics DiagnosticsOpenTelemetry Testing Hosting All"
@@ -199,6 +200,7 @@ echo -e "${GRAY}                             ./NugetPackage.sh <version> Diagnos
 echo -e "${GRAY}                             ./NugetPackage.sh <version> DiagnosticsOpenTelemetry${NC}"
 echo -e "${GRAY}                             ./NugetPackage.sh <version> Testing${NC}"
 echo -e "${GRAY}                             ./NugetPackage.sh <version> Hosting${NC}"
+echo -e "${GRAY}                             ./NugetPackage.sh <version> Http${NC}"
 echo -e "${GRAY}  - Build all packages:      ./NugetPackage.sh <version> All${NC}"
 echo -e "${GRAY}  - Test locally:            dotnet add package Rivulet.Core --source ./test-packages${NC}"
 echo ""

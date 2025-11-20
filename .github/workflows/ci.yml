@@ -118,4 +118,4 @@ jobs:
     uses: ./.github/workflows/reusable-flaky-test-detection.yml
     with:
       iterations: 20
-      timeout-minutes: 40
+      timeout-minutes: 60

@@ -26,6 +26,7 @@ jobs:
           - 'Rivulet.Diagnostics.OpenTelemetry'
           - 'Rivulet.Testing'
           - 'Rivulet.Hosting'
+          - 'Rivulet.Http'
       fail-fast: false
 
     steps:
