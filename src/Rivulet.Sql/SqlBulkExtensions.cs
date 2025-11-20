@@ -119,16 +119,18 @@ public static class SqlBulkExtensions
             .Select(IReadOnlyList<T> (g) => g.Select(x => x.item).ToList())
             .ToList();
 
-        var batchResults = await batches.SelectParallelAsync(
-            async (batch, ct) => await ExecuteBatchAsync(
-                batch,
-                connectionFactory,
-                commandBuilder,
-                options,
-                batches.IndexOf(batch),
-                ct),
-            parallelOptions,
-            cancellationToken).ConfigureAwait(false);
+        var batchResults = await batches
+            .Select((batch, index) => (batch, index))
+            .SelectParallelAsync(
+                async (item, ct) => await ExecuteBatchAsync(
+                    item.batch,
+                    connectionFactory,
+                    commandBuilder,
+                    options,
+                    item.index,
+                    ct),
+                parallelOptions,
+                cancellationToken).ConfigureAwait(false);
 
         return batchResults.Sum();
     }
