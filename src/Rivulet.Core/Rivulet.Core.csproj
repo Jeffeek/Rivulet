@@ -1,22 +1,25 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-  	<TargetFrameworks>net9.0;net8.0;</TargetFrameworks>
+    <!-- Compile settings -->
+	<TargetFrameworks>net9.0;net8.0;</TargetFrameworks>
 	<LangVersion>12</LangVersion>
   	<Nullable>enable</Nullable>
   	<ImplicitUsings>enable</ImplicitUsings>
   	<GenerateDocumentationFile>true</GenerateDocumentationFile>
   	<IncludeSymbols>true</IncludeSymbols>
+    <!-- NuGet settings -->
+    <Version>1.2.0</Version>
   	<SymbolPackageFormat>snupkg</SymbolPackageFormat>
   	<PackageId>Rivulet.Core</PackageId>
   	<Title>Rivulet.Core</Title>
-  	<Authors>Jeffeek</Authors>
   	<Description>Safe, async-first parallel operators with bounded concurrency, retries, and backpressure for I/O-heavy workloads.</Description>
   	<PackageTags>async;parallel;linq;throttling;io;dotnet;channels</PackageTags>
-  	<RepositoryUrl>https://github.com/Jeffeek/Rivulet</RepositoryUrl>
-  	<PackageLicenseExpression>MIT</PackageLicenseExpression>
-  	<PackageProjectUrl>https://github.com/Jeffeek/Rivulet</PackageProjectUrl>
   	<PackageIcon>nuget_logo.png</PackageIcon>
   	<PackageReadmeFile>README.md</PackageReadmeFile>
+  	<Authors>Jeffeek</Authors>
+  	<RepositoryUrl>https://github.com/Jeffeek/Rivulet</RepositoryUrl>
+  	<PackageProjectUrl>https://github.com/Jeffeek/Rivulet</PackageProjectUrl>
+  	<PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
   <ItemGroup>
   	<None Include="nuget_logo.png" Pack="true" PackagePath="\" />

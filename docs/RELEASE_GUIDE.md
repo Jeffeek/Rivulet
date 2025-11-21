@@ -4,15 +4,21 @@ This guide walks you through creating and publishing Rivulet releases to NuGet.o
 
 ## Rivulet Package Ecosystem
 
-Rivulet v1.2.0 consists of **5 NuGet packages**:
+Rivulet v1.3.0 consists of **8 NuGet packages**:
 
+### Core Packages (v1.2.0)
 1. **Rivulet.Core** - Core parallel operators with bounded concurrency
 2. **Rivulet.Diagnostics** - EventListeners, metrics aggregation, Prometheus export, health checks
 3. **Rivulet.Diagnostics.OpenTelemetry** - OpenTelemetry integration for distributed tracing
 4. **Rivulet.Testing** - Testing utilities (VirtualTimeProvider, FakeChannel, ChaosInjector, ConcurrencyAsserter)
 5. **Rivulet.Hosting** - Microsoft.Extensions.Hosting integration, background services, configuration binding
 
-All 5 packages are built and published together with the same version number.
+### Integration Packages (v1.3.0)
+6. **Rivulet.Http** - Parallel HTTP operations, resilient downloads, HttpClientFactory integration
+7. **Rivulet.Sql** - Provider-agnostic parallel SQL operations, connection pooling, bulk operations
+8. **Rivulet.Polly** - Polly resilience integration with hedging, result-based retry, policy composition
+
+All packages are versioned together and can be released independently or as a set.
 
 ---
 

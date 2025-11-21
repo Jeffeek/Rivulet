@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using FluentAssertions;
 using Rivulet.Core;
 
 namespace Rivulet.Diagnostics.OpenTelemetry.Tests;

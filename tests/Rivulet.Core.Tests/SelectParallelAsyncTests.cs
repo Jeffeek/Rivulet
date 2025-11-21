@@ -1,5 +1,3 @@
-using FluentAssertions;
-
 namespace Rivulet.Core.Tests;
 
 public class SelectParallelAsyncTests

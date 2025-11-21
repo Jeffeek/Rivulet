@@ -1,5 +1,3 @@
-using FluentAssertions;
-
 namespace Rivulet.Testing.Tests;
 
 public class ConcurrencyAsserterTests

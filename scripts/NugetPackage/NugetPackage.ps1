@@ -3,7 +3,7 @@ param(
     [string]$Version = "1.0.0-local-test",
 
     [Parameter(Mandatory=$false)]
-    [ValidateSet("Core", "Diagnostics", "DiagnosticsOpenTelemetry", "Testing", "Hosting", "Http", "All")]
+    [ValidateSet("Core", "Diagnostics", "DiagnosticsOpenTelemetry", "Testing", "Hosting", "Http", "Polly" "All")]
     [string]$Project = "All"
 )
 
@@ -26,6 +26,7 @@ $Projects = @{
     "Testing" = "src\Rivulet.Testing\Rivulet.Testing.csproj"
     "Hosting" = "src\Rivulet.Hosting\Rivulet.Hosting.csproj"
     "Http" = "src\Rivulet.Http\Rivulet.Http.csproj"
+    "Polly" = "src\Rivulet.Http\Rivulet.Polly.csproj"
 }
 
 # Determine which projects to pack
@@ -185,6 +186,7 @@ Write-Host "                             .\NugetPackage.ps1 -Project Diagnostics
 Write-Host "                             .\NugetPackage.ps1 -Project Testing" -ForegroundColor Gray
 Write-Host "                             .\NugetPackage.ps1 -Project Hosting" -ForegroundColor Gray
 Write-Host "                             .\NugetPackage.ps1 -Project Http" -ForegroundColor Gray
+Write-Host "                             .\NugetPackage.ps1 -Project Polly" -ForegroundColor Gray
 Write-Host "  - Build all packages:      .\NugetPackage.ps1 -Project All" -ForegroundColor Gray
 Write-Host "  - Test locally:            dotnet add package Rivulet.Core --source ./test-packages" -ForegroundColor Gray
 Write-Host ""

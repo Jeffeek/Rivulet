@@ -1,5 +1,4 @@
 using System.Diagnostics.CodeAnalysis;
-using FluentAssertions;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Rivulet.Core;
 

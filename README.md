@@ -21,85 +21,31 @@
 
 ## 📦 Packages
 
-<table>
-<tr>
-<td width="33%" align="center">
+### Core Packages (v1.2.0)
 
-### Rivulet.Core
-[![NuGet](https://img.shields.io/nuget/v/Rivulet.Core?label=version)](https://www.nuget.org/packages/Rivulet.Core/)
-[![Downloads](https://img.shields.io/nuget/dt/Rivulet.Core)](https://www.nuget.org/packages/Rivulet.Core/)
+| Package | Description | Links |
+|---------|-------------|-------|
+| **Rivulet.Core** | Core parallel operators with bounded concurrency, retries, backpressure, and streaming | [![NuGet](https://img.shields.io/nuget/v/Rivulet.Core?label=version)](https://www.nuget.org/packages/Rivulet.Core/) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Core)](https://www.nuget.org/packages/Rivulet.Core/) <br/> 📖 [Docs](src/Rivulet.Core/README.md) |
+| **Rivulet.Diagnostics** | Enterprise observability with EventListeners, metrics aggregation, Prometheus export, and health checks | [![NuGet](https://img.shields.io/nuget/v/Rivulet.Diagnostics?label=version)](https://www.nuget.org/packages/Rivulet.Diagnostics/) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Diagnostics)](https://www.nuget.org/packages/Rivulet.Diagnostics/) <br/> 📖 [Docs](src/Rivulet.Diagnostics/README.md) |
+| **Rivulet.Diagnostics.OpenTelemetry** | Distributed tracing and OpenTelemetry integration | [![NuGet](https://img.shields.io/nuget/v/Rivulet.Diagnostics.OpenTelemetry?label=version)](https://www.nuget.org/packages/Rivulet.Diagnostics.OpenTelemetry/) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Diagnostics.OpenTelemetry)](https://www.nuget.org/packages/Rivulet.Diagnostics.OpenTelemetry/) <br/> 📖 [Docs](src/Rivulet.Diagnostics.OpenTelemetry/README.md) |
+| **Rivulet.Testing** | Testing utilities: VirtualTimeProvider, ChaosInjector, ConcurrencyAsserter, FakeChannel | [![NuGet](https://img.shields.io/nuget/v/Rivulet.Testing?label=version)](https://www.nuget.org/packages/Rivulet.Testing/) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Testing)](https://www.nuget.org/packages/Rivulet.Testing/) <br/> 📖 [Docs](src/Rivulet.Testing/README.md) |
+| **Rivulet.Hosting** | Microsoft.Extensions.Hosting integration: background services, DI, configuration, health checks | [![NuGet](https://img.shields.io/nuget/v/Rivulet.Hosting?label=version)](https://www.nuget.org/packages/Rivulet.Hosting/) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Hosting)](https://www.nuget.org/packages/Rivulet.Hosting/) <br/> 📖 [Docs](src/Rivulet.Hosting/README.md) |
 
-Core parallel operators with bounded concurrency, retries, backpressure, and streaming
+### Integration Packages (v1.3.0)
 
+| Package | Description | Links |
+|---------|-------------|-------|
+| **Rivulet.Http** | Parallel HTTP operations with resilient downloads, streaming, and HttpClientFactory integration | [![NuGet](https://img.shields.io/nuget/v/Rivulet.Http?label=version)](https://www.nuget.org/packages/Rivulet.Http/) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Http)](https://www.nuget.org/packages/Rivulet.Http/) <br/> 📖 [Docs](src/Rivulet.Http/README.md) |
+| **Rivulet.Sql** | Provider-agnostic parallel SQL operations with connection pooling and bulk operations | [![NuGet](https://img.shields.io/nuget/v/Rivulet.Sql?label=version)](https://www.nuget.org/packages/Rivulet.Sql/) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Sql)](https://www.nuget.org/packages/Rivulet.Sql/) <br/> 📖 [Docs](src/Rivulet.Sql/README.md) |
+| **Rivulet.Polly** | Polly resilience integration with hedging, result-based retry, and policy composition | [![NuGet](https://img.shields.io/nuget/v/Rivulet.Polly?label=version)](https://www.nuget.org/packages/Rivulet.Polly/) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Polly)](https://www.nuget.org/packages/Rivulet.Polly/) <br/> 📖 [Docs](src/Rivulet.Polly/README.md) |
+
+**Installation:**
 ```bash
 dotnet add package Rivulet.Core
-```
-
-</td>
-<td width="33%" align="center">
-
-### Rivulet.Diagnostics
-[![NuGet](https://img.shields.io/nuget/v/Rivulet.Diagnostics?label=version)](https://www.nuget.org/packages/Rivulet.Diagnostics/)
-[![Downloads](https://img.shields.io/nuget/dt/Rivulet.Diagnostics)](https://www.nuget.org/packages/Rivulet.Diagnostics/)
-
-Enterprise observability with EventListeners, metrics aggregation, Prometheus export, and health checks
-
-📖 [Documentation](src/Rivulet.Diagnostics/README.md)
-
-```bash
 dotnet add package Rivulet.Diagnostics
+dotnet add package Rivulet.Http
+# ... etc
 ```
-
-</td>
-<td width="33%" align="center">
-
-### Rivulet.Diagnostics.OpenTelemetry
-[![NuGet](https://img.shields.io/nuget/v/Rivulet.Diagnostics.OpenTelemetry?label=version)](https://www.nuget.org/packages/Rivulet.Diagnostics.OpenTelemetry/)
-[![Downloads](https://img.shields.io/nuget/dt/Rivulet.Diagnostics.OpenTelemetry)](https://www.nuget.org/packages/Rivulet.Diagnostics.OpenTelemetry/)
-
-Distributed tracing and OpenTelemetry integration
-
-📖 [Documentation](src/Rivulet.Diagnostics.OpenTelemetry/README.md)
-
-```bash
-dotnet add package Rivulet.Diagnostics.OpenTelemetry
-```
-
-</td>
-</tr>
-<tr>
-<td width="50%" align="center" colspan="2">
-
-### Rivulet.Testing
-[![NuGet](https://img.shields.io/nuget/v/Rivulet.Testing?label=version)](https://www.nuget.org/packages/Rivulet.Testing/)
-[![Downloads](https://img.shields.io/nuget/dt/Rivulet.Testing)](https://www.nuget.org/packages/Rivulet.Testing/)
-
-Testing utilities: VirtualTimeProvider, ChaosInjector, ConcurrencyAsserter, FakeChannel for deterministic parallel operation tests
-
-📖 [Documentation](src/Rivulet.Testing/README.md)
-
-```bash
-dotnet add package Rivulet.Testing
-```
-
-</td>
-<td width="50%" align="center" colspan="1">
-
-### Rivulet.Hosting
-[![NuGet](https://img.shields.io/nuget/v/Rivulet.Hosting?label=version)](https://www.nuget.org/packages/Rivulet.Hosting/)
-[![Downloads](https://img.shields.io/nuget/dt/Rivulet.Hosting)](https://www.nuget.org/packages/Rivulet.Hosting/)
-
-Microsoft.Extensions.Hosting integration: background services, dependency injection, configuration binding, health checks
-
-📖 [Documentation](src/Rivulet.Hosting/README.md)
-
-```bash
-dotnet add package Rivulet.Hosting
-```
-
-</td>
-</tr>
-</table>
 
 ---
 
@@ -993,14 +939,15 @@ See [tests/Rivulet.Benchmarks/README.md](tests/Rivulet.Benchmarks/README.md) for
 
 See the full [Roadmap](docs/ROADMAP.md) for detailed plans.
 
-### v1.3.0 (Q2-Q3 2025) - In Planning
-- **Rivulet.Http** - HttpClient operators, resilient downloads
-- **Rivulet.RetryPolicies** - Advanced backoff strategies, hedging, policy composition
-- **Rivulet.Sql** - Safe parallel database operations, connection pooling
+### v1.3.0 (Q2-Q3 2025) - ✅ Completed
+- **Rivulet.Http** ✅ - HttpClient operators, resilient downloads
+- **Rivulet.Sql** ✅ - Safe parallel database operations, connection pooling
+- **Rivulet.Polly** ✅ - Polly integration, hedging, result-based retry
 
 ### Future Versions
+- **Rivulet.Sql.SqlServer** - SqlBulkCopy integration (10-100x faster)
 - **Rivulet.Azure / Rivulet.Aws** - Cloud provider integrations
-- **Rivulet.Channels** - Advanced queue patterns
+- **Rivulet.EntityFramework** - EF Core parallel queries, multi-tenant support
 - **Rivulet.Kafka / RabbitMQ / SQS** - Message queue integrations
 - **v2.0.0** - Multi-stage pipeline composition API
 

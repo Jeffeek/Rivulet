@@ -1,4 +1,3 @@
-using FluentAssertions;
 using System.Collections.Concurrent;
 
 namespace Rivulet.Core.Tests;
