@@ -378,4 +378,169 @@ public class SqlParallelExtensionsTests
         results.Should().HaveCount(50);
         maxConcurrent.Should().BeLessThanOrEqualTo(5);
     }
+
+    [Fact]
+    public async Task ExecuteQueriesParallelAsync_WithAutoManageConnectionFalse_ShouldNotManageConnection()
+    {
+        var connection = new TestDbConnection(
+            executeReaderFunc: _ => new TestDataReader([new() { ["Value"] = 1 }]));
+        connection.Open(); // Manually open
+
+        var queries = new[] { "SELECT 1", "SELECT 2" };
+
+        var results = await queries.ExecuteQueriesParallelAsync(
+            () => connection,
+            reader =>
+            {
+                reader.Read();
+                return reader.GetInt32(0);
+            },
+            new() { AutoManageConnection = false });
+
+        results.Should().HaveCount(2);
+        connection.State.Should().Be(ConnectionState.Open); // Should still be open
+        connection.Close();
+    }
+
+    [Fact]
+    public async Task ExecuteCommandsParallelAsync_WithAutoManageConnectionFalse_ShouldNotManageConnection()
+    {
+        var connection = new TestDbConnection(executeNonQueryFunc: _ => 1);
+        connection.Open();
+
+        var commands = new[] { "INSERT 1", "INSERT 2" };
+
+        var results = await commands.ExecuteCommandsParallelAsync(
+            () => connection,
+            new() { AutoManageConnection = false });
+
+        results.Should().AllSatisfy(r => r.Should().Be(1));
+        connection.State.Should().Be(ConnectionState.Open); // Should still be open
+        connection.Close();
+    }
+
+    [Fact]
+    public async Task ExecuteScalarParallelAsync_WithAutoManageConnectionFalse_ShouldNotManageConnection()
+    {
+        var callCount = 0;
+        var connection = new TestDbConnection(executeScalarFunc: _ => ++callCount);
+        connection.Open();
+
+        var queries = new[] { "SELECT 42", "SELECT 99" };
+
+        var results = await queries.ExecuteScalarParallelAsync<int>(
+            () => connection,
+            new SqlOptions { AutoManageConnection = false });
+
+        results.Should().HaveCount(2);
+        connection.State.Should().Be(ConnectionState.Open); // Should still be open
+        connection.Close();
+    }
+
+    [Fact]
+    public async Task ExecuteQueriesParallelAsync_WithOnSqlErrorCallback_ShouldInvokeOnError()
+    {
+        string? capturedQuery = null;
+        Exception? capturedException = null;
+        var options = new SqlOptions
+        {
+            OnSqlErrorAsync = (query, ex, _) =>
+            {
+                capturedQuery = query as string;
+                capturedException = ex;
+                return ValueTask.CompletedTask;
+            }
+        };
+
+        var queries = new[] { "INVALID SQL QUERY" };
+
+        await Assert.ThrowsAnyAsync<Exception>(async () =>
+            await queries.ExecuteQueriesParallelAsync(
+                () => new TestDbConnection(executeReaderFunc: _ => throw new InvalidOperationException("SQL Error")),
+                reader => reader.GetInt32(0),
+                options));
+
+        capturedQuery.Should().Be("INVALID SQL QUERY");
+        capturedException.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task ExecuteCommandsParallelAsync_WithOnSqlErrorCallback_ShouldInvokeOnError()
+    {
+        string? capturedCommand = null;
+        Exception? capturedException = null;
+        var options = new SqlOptions
+        {
+            OnSqlErrorAsync = (cmd, ex, _) =>
+            {
+                capturedCommand = cmd as string;
+                capturedException = ex;
+                return ValueTask.CompletedTask;
+            }
+        };
+
+        var commands = new[] { "INVALID SQL" };
+
+        await Assert.ThrowsAnyAsync<Exception>(async () =>
+            await commands.ExecuteCommandsParallelAsync(
+                () => new TestDbConnection(executeNonQueryFunc: _ => throw new InvalidOperationException("SQL Error")),
+                options));
+
+        capturedCommand.Should().Be("INVALID SQL");
+        capturedException.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task ExecuteScalarParallelAsync_WithOnSqlErrorCallback_ShouldInvokeOnError()
+    {
+        string? capturedQuery = null;
+        Exception? capturedException = null;
+        var options = new SqlOptions
+        {
+            OnSqlErrorAsync = (query, ex, _) =>
+            {
+                capturedQuery = query as string;
+                capturedException = ex;
+                return ValueTask.CompletedTask;
+            }
+        };
+
+        var queries = new[] { "INVALID SQL" };
+
+        await Assert.ThrowsAnyAsync<Exception>(async () =>
+            await queries.ExecuteScalarParallelAsync<int>(
+                () => new TestDbConnection(executeScalarFunc: _ => throw new InvalidOperationException("SQL Error")),
+                options));
+
+        capturedQuery.Should().Be("INVALID SQL");
+        capturedException.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task ExecuteScalarParallelAsync_WithNullResult_ShouldReturnDefault()
+    {
+        var connection = new TestDbConnection(executeScalarFunc: _ => null);
+
+        var queries = new[] { "SELECT NULL" };
+
+        var results = await queries.ExecuteScalarParallelAsync<string>(
+            () => connection);
+
+        results.Should().ContainSingle();
+        results[0].Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ExecuteScalarParallelAsync_WithDBNullValue_ShouldReturnDefault()
+    {
+        var connection = new TestDbConnection(executeScalarFunc: _ => DBNull.Value);
+
+        var queries = new[] { "SELECT NULL" };
+
+        var results = await queries.ExecuteScalarParallelAsync<int?>(
+            () => connection);
+
+        results.Should().ContainSingle();
+        results[0].Should().BeNull();
+    }
 }
