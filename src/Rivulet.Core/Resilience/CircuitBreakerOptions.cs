@@ -41,7 +41,7 @@ public sealed class CircuitBreakerOptions
     /// Validates the circuit breaker options.
     /// </summary>
     /// <exception cref="ArgumentException">Thrown when options are invalid.</exception>
-    internal void Validate()
+    public void Validate()
     {
         if (FailureThreshold <= 0)
             throw new ArgumentException("FailureThreshold must be greater than 0.", nameof(FailureThreshold));

@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Headers;
 
 namespace Rivulet.Http.Tests;
 
@@ -11,7 +10,7 @@ public class HttpParallelExtensionsAdditionalTests
     private static HttpClient CreateTestClient(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> handler)
     {
         var messageHandler = new TestHttpMessageHandler(handler);
-        return new HttpClient(messageHandler) { BaseAddress = new Uri("http://test.local") };
+        return new(messageHandler) { BaseAddress = new("http://test.local") };
     }
 
     [Fact]
@@ -30,14 +29,14 @@ public class HttpParallelExtensionsAdditionalTests
                 });
 
             var response = new HttpResponseMessage(HttpStatusCode.TooManyRequests);
-            response.Headers.RetryAfter = new RetryConditionHeaderValue(TimeSpan.FromMilliseconds(50));
+            response.Headers.RetryAfter = new(TimeSpan.FromMilliseconds(50));
             return Task.FromResult(response);
         });
 
         var options = new HttpOptions
         {
             RespectRetryAfterHeader = true,
-            ParallelOptions = new Core.ParallelOptionsRivulet
+            ParallelOptions = new()
             {
                 MaxRetries = 3,
                 BaseDelay = TimeSpan.FromMilliseconds(10)
@@ -69,7 +68,7 @@ public class HttpParallelExtensionsAdditionalTests
                 return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK));
 
             var response = new HttpResponseMessage(HttpStatusCode.TooManyRequests);
-            response.Headers.RetryAfter = new RetryConditionHeaderValue(TimeSpan.FromSeconds(10));
+            response.Headers.RetryAfter = new(TimeSpan.FromSeconds(10));
             return Task.FromResult(response);
 
         });
@@ -77,7 +76,7 @@ public class HttpParallelExtensionsAdditionalTests
         var options = new HttpOptions
         {
             RespectRetryAfterHeader = false,
-            ParallelOptions = new Core.ParallelOptionsRivulet
+            ParallelOptions = new()
             {
                 MaxRetries = 3,
                 BaseDelay = TimeSpan.FromMilliseconds(10)
@@ -109,7 +108,7 @@ public class HttpParallelExtensionsAdditionalTests
                 return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK));
 
             var response = new HttpResponseMessage(HttpStatusCode.ServiceUnavailable);
-            response.Headers.RetryAfter = new RetryConditionHeaderValue(DateTimeOffset.UtcNow.AddSeconds(1));
+            response.Headers.RetryAfter = new(DateTimeOffset.UtcNow.AddSeconds(1));
             return Task.FromResult(response);
 
         });
@@ -117,7 +116,7 @@ public class HttpParallelExtensionsAdditionalTests
         var options = new HttpOptions
         {
             RespectRetryAfterHeader = true,
-            ParallelOptions = new Core.ParallelOptionsRivulet
+            ParallelOptions = new()
             {
                 MaxRetries = 3,
                 BaseDelay = TimeSpan.FromMilliseconds(10)
@@ -152,7 +151,7 @@ public class HttpParallelExtensionsAdditionalTests
                 callbackStatus = status;
                 return ValueTask.CompletedTask;
             },
-            ParallelOptions = new Core.ParallelOptionsRivulet
+            ParallelOptions = new()
             {
                 ErrorMode = Core.ErrorMode.BestEffort,
                 MaxRetries = 0
@@ -183,7 +182,7 @@ public class HttpParallelExtensionsAdditionalTests
                 callbackInvoked = true;
                 return ValueTask.CompletedTask;
             },
-            ParallelOptions = new Core.ParallelOptionsRivulet
+            ParallelOptions = new()
             {
                 ErrorMode = Core.ErrorMode.BestEffort,
                 MaxRetries = 0

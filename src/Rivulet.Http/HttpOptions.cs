@@ -83,7 +83,7 @@ public sealed class HttpOptions
     {
         var baseOptions = ParallelOptions ?? new ParallelOptionsRivulet();
 
-        return new ParallelOptionsRivulet
+        return new()
         {
             MaxDegreeOfParallelism = baseOptions.MaxDegreeOfParallelism,
             PerItemTimeout = RequestTimeout ?? baseOptions.PerItemTimeout,

@@ -24,7 +24,7 @@ public class CoreOperatorsBenchmarks
     {
         return await _source.SelectParallelAsync(
             (x, _) => new ValueTask<int>(x * 2),
-            new ParallelOptionsRivulet { MaxDegreeOfParallelism = 8 });
+            new() { MaxDegreeOfParallelism = 8 });
     }
 
     [Benchmark(Description = "SelectParallelAsync - I/O simulation")]
@@ -36,7 +36,7 @@ public class CoreOperatorsBenchmarks
                 await Task.Delay(1, ct);
                 return x * 2;
             },
-            new ParallelOptionsRivulet { MaxDegreeOfParallelism = 32 });
+            new() { MaxDegreeOfParallelism = 32 });
     }
 
     [Benchmark(Description = "SelectParallelAsync - Ordered output")]
@@ -48,7 +48,7 @@ public class CoreOperatorsBenchmarks
                 await Task.Delay(1, ct);
                 return x * 2;
             },
-            new ParallelOptionsRivulet
+            new()
             {
                 MaxDegreeOfParallelism = 32,
                 OrderedOutput = true
@@ -58,7 +58,7 @@ public class CoreOperatorsBenchmarks
     [Benchmark(Description = "SelectParallelStreamAsync - Streaming results")]
     public async Task<int> SelectParallelStream_Streaming()
     {
-        return await _source.ToAsyncEnumerable().SelectParallelStreamAsync((x, _) => new ValueTask<int>(x * 2), new ParallelOptionsRivulet { MaxDegreeOfParallelism = 8 }).CountAsync();
+        return await _source.ToAsyncEnumerable().SelectParallelStreamAsync((x, _) => new ValueTask<int>(x * 2), new() { MaxDegreeOfParallelism = 8 }).CountAsync();
     }
 
     [Benchmark(Description = "ForEachParallelAsync - Side effects")]
@@ -71,7 +71,7 @@ public class CoreOperatorsBenchmarks
                 Interlocked.Add(ref sum, x);
                 return ValueTask.CompletedTask;
             },
-            new ParallelOptionsRivulet { MaxDegreeOfParallelism = 8 });
+            new() { MaxDegreeOfParallelism = 8 });
     }
 
     [Benchmark(Baseline = true, Description = "Baseline - Sequential processing")]

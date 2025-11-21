@@ -93,6 +93,32 @@ public sealed class ParallelOptionsRivulet
     public BackoffStrategy BackoffStrategy { get; init; } = BackoffStrategy.Exponential;
 
     /// <summary>
+    /// Gets a callback to provide a fallback value when an operation fails after all retries are exhausted.
+    /// Receives the item index and the exception that caused the failure.
+    /// The returned value will be used as the result instead of throwing the exception.
+    /// If null, exceptions will propagate normally based on the configured <see cref="ErrorMode"/>.
+    /// </summary>
+    /// <remarks>
+    /// Fallback enables graceful degradation by providing default values for failed operations.
+    /// This differs from <see cref="ErrorMode.BestEffort"/> which skips failed items entirely.
+    /// With fallback, you maintain the same number of results as inputs, with fallback values replacing failures.
+    /// Useful for scenarios where partial results are acceptable (e.g., returning cached data, default values, or sentinel values).
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// // Return -1 for any failed items
+    /// OnFallback = (index, ex) => -1
+    ///
+    /// // Return null for reference types
+    /// OnFallback = (index, ex) => null
+    ///
+    /// // Return different fallback based on exception type
+    /// OnFallback = (index, ex) => ex is TimeoutException ? 0 : -1
+    /// </code>
+    /// </example>
+    public Func<int, Exception, object?>? OnFallback { get; init; }
+
+    /// <summary>
     /// Gets the channel capacity for buffering items in streaming operations.
     /// Controls backpressure by limiting how many items can be queued.
     /// Defaults to 1024.

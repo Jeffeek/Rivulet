@@ -17,7 +17,7 @@ public class ProgressReportingTests
         var options = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 10,
-            Progress = new ProgressOptions
+            Progress = new()
             {
                 ReportInterval = TimeSpan.FromMilliseconds(50),
                 OnProgress = snapshot =>
@@ -56,7 +56,7 @@ public class ProgressReportingTests
         var options = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 5,
-            Progress = new ProgressOptions
+            Progress = new()
             {
                 ReportInterval = TimeSpan.FromMilliseconds(50),
                 OnProgress = snapshot =>
@@ -97,7 +97,7 @@ public class ProgressReportingTests
             MaxRetries = 0,
             ErrorMode = ErrorMode.BestEffort,
             MaxDegreeOfParallelism = 4, // Limit parallelism to slow down execution
-            Progress = new ProgressOptions
+            Progress = new()
             {
                 ReportInterval = TimeSpan.FromMilliseconds(30), // Faster reporting for better capture
                 OnProgress = snapshot =>
@@ -144,7 +144,7 @@ public class ProgressReportingTests
         var options = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 10,
-            Progress = new ProgressOptions
+            Progress = new()
             {
                 ReportInterval = TimeSpan.FromMilliseconds(100),
                 OnProgress = snapshot =>
@@ -180,7 +180,7 @@ public class ProgressReportingTests
         var options = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 10,
-            Progress = new ProgressOptions
+            Progress = new()
             {
                 ReportInterval = TimeSpan.FromMilliseconds(50),
                 OnProgress = snapshot =>
@@ -213,7 +213,7 @@ public class ProgressReportingTests
         var options = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 5,
-            Progress = new ProgressOptions
+            Progress = new()
             {
                 ReportInterval = TimeSpan.FromMilliseconds(50),
                 OnProgress = snapshot =>
@@ -268,7 +268,7 @@ public class ProgressReportingTests
         var options = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 5,
-            Progress = new ProgressOptions
+            Progress = new()
             {
                 ReportInterval = TimeSpan.FromMilliseconds(50),
                 OnProgress = snapshot =>
@@ -301,7 +301,7 @@ public class ProgressReportingTests
         {
             MaxDegreeOfParallelism = 8,
             OrderedOutput = true,
-            Progress = new ProgressOptions
+            Progress = new()
             {
                 ReportInterval = TimeSpan.FromMilliseconds(50),
                 OnProgress = snapshot =>
@@ -335,7 +335,7 @@ public class ProgressReportingTests
         var options = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 5,
-            Progress = new ProgressOptions
+            Progress = new()
             {
                 ReportInterval = TimeSpan.FromMilliseconds(50),
                 OnProgress = snapshot =>
@@ -367,7 +367,7 @@ public class ProgressReportingTests
 
         var options = new ParallelOptionsRivulet
         {
-            Progress = new ProgressOptions
+            Progress = new()
             {
                 ReportInterval = TimeSpan.FromMilliseconds(50),
                 OnProgress = _ =>
@@ -398,7 +398,7 @@ public class ProgressReportingTests
 
         var options = new ParallelOptionsRivulet
         {
-            Progress = new ProgressOptions
+            Progress = new()
             {
                 ReportInterval = TimeSpan.FromMilliseconds(50),
                 OnProgress = snapshot =>
@@ -435,7 +435,7 @@ public class ProgressReportingTests
         {
             MaxDegreeOfParallelism = 5,
             OrderedOutput = true,
-            Progress = new ProgressOptions
+            Progress = new()
             {
                 ReportInterval = TimeSpan.FromMilliseconds(50),
                 OnProgress = snapshot =>
@@ -469,7 +469,7 @@ public class ProgressReportingTests
         {
             MaxRetries = 0,
             ErrorMode = ErrorMode.BestEffort,
-            Progress = new ProgressOptions
+            Progress = new()
             {
                 ReportInterval = TimeSpan.FromMilliseconds(50),
                 OnProgress = snapshot =>
@@ -542,7 +542,7 @@ public class ProgressReportingTests
 
         var options = new ParallelOptionsRivulet
         {
-            Progress = new ProgressOptions
+            Progress = new()
             {
                 ReportInterval = TimeSpan.FromMilliseconds(50),
                 OnProgress = snapshot =>
@@ -575,7 +575,7 @@ public class ProgressReportingTests
 
         var options = new ParallelOptionsRivulet
         {
-            Progress = new ProgressOptions
+            Progress = new()
             {
                 ReportInterval = TimeSpan.FromMilliseconds(50),
                 OnProgress = null
@@ -602,7 +602,7 @@ public class ProgressReportingTests
         var options = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 10,
-            Progress = new ProgressOptions
+            Progress = new()
             {
                 ReportInterval = TimeSpan.FromMilliseconds(1),
                 OnProgress = snapshot =>
@@ -631,7 +631,7 @@ public class ProgressReportingTests
 
         var options = new ParallelOptionsRivulet
         {
-            Progress = new ProgressOptions
+            Progress = new()
             {
                 ReportInterval = TimeSpan.FromMilliseconds(50),
                 OnProgress = _ =>
@@ -661,7 +661,7 @@ public class ProgressReportingTests
 
         var options = new ParallelOptionsRivulet
         {
-            Progress = new ProgressOptions
+            Progress = new()
             {
                 ReportInterval = TimeSpan.FromMilliseconds(50),
                 OnProgress = async _ =>
@@ -691,7 +691,7 @@ public class ProgressReportingTests
 
         var options = new ParallelOptionsRivulet
         {
-            Progress = new ProgressOptions
+            Progress = new()
             {
                 OnProgress = null
             }
@@ -716,7 +716,7 @@ public class ProgressReportingTests
 
         var options = new ParallelOptionsRivulet
         {
-            Progress = new ProgressOptions
+            Progress = new()
             {
                 ReportInterval = TimeSpan.FromMilliseconds(10),
                 OnProgress = _ => ValueTask.CompletedTask
@@ -745,7 +745,7 @@ public class ProgressReportingTests
 
         var options = new ParallelOptionsRivulet
         {
-            Progress = new ProgressOptions
+            Progress = new()
             {
                 ReportInterval = TimeSpan.FromMilliseconds(1),
                 OnProgress = _ =>
@@ -776,7 +776,7 @@ public class ProgressReportingTests
         var options = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 10,
-            Progress = new ProgressOptions
+            Progress = new()
             {
                 ReportInterval = TimeSpan.FromMilliseconds(1),
                 OnProgress = snapshot =>
@@ -803,7 +803,7 @@ public class ProgressReportingTests
 
         var options = new ParallelOptionsRivulet
         {
-            Progress = new ProgressOptions
+            Progress = new()
             {
                 ReportInterval = TimeSpan.FromMilliseconds(10),
                 OnProgress = _ =>

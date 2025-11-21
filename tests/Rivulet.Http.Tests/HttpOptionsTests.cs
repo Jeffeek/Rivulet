@@ -135,7 +135,7 @@ public class HttpOptionsTests
     {
         var options = new HttpOptions
         {
-            ParallelOptions = new ParallelOptionsRivulet
+            ParallelOptions = new()
             {
                 MaxRetries = 0
             }
@@ -170,8 +170,8 @@ public class HttpOptionsTests
         options.OnRedirectAsync.Should().NotBeNull();
 
         // Verify callbacks can be invoked
-        options.OnHttpErrorAsync!.Invoke(new Uri("http://example.com"), HttpStatusCode.NotFound, new Exception());
-        options.OnRedirectAsync!.Invoke(new Uri("http://example.com"), new Uri("http://redirected.com"));
+        options.OnHttpErrorAsync!.Invoke(new("http://example.com"), HttpStatusCode.NotFound, new());
+        options.OnRedirectAsync!.Invoke(new("http://example.com"), new("http://redirected.com"));
 
         httpErrorCalled.Should().BeTrue();
         redirectCalled.Should().BeTrue();

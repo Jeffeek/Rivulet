@@ -9,7 +9,7 @@ public class HttpParallelExtensionsTests
     private static HttpClient CreateTestClient(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> handler)
     {
         var messageHandler = new TestHttpMessageHandler(handler);
-        return new HttpClient(messageHandler) { BaseAddress = new Uri("http://test.local") };
+        return new(messageHandler) { BaseAddress = new("http://test.local") };
     }
 
     [Fact]
@@ -117,7 +117,7 @@ public class HttpParallelExtensionsTests
     {
         var requests = new[]
         {
-            (uri: new Uri("http://test.local/post1"), content: new StringContent("data1")),
+            (uri: new("http://test.local/post1"), content: new("data1")),
             (uri: new Uri("http://test.local/post2"), content: new StringContent("data2"))
         };
 
@@ -147,7 +147,7 @@ public class HttpParallelExtensionsTests
     {
         var requests = new[]
         {
-            (uri: new Uri("http://test.local/put1"), content: new StringContent("update1")),
+            (uri: new("http://test.local/put1"), content: new StringContent("update1")),
             (uri: new Uri("http://test.local/put2"), content: (HttpContent)new StringContent("update2"))
         };
 
@@ -219,7 +219,7 @@ public class HttpParallelExtensionsTests
 
         var options = new HttpOptions
         {
-            ParallelOptions = new ParallelOptionsRivulet
+            ParallelOptions = new()
             {
                 MaxRetries = 3,
                 BaseDelay = TimeSpan.FromMilliseconds(10)
@@ -253,7 +253,7 @@ public class HttpParallelExtensionsTests
 
         var options = new HttpOptions
         {
-            ParallelOptions = new ParallelOptionsRivulet
+            ParallelOptions = new()
             {
                 MaxRetries = 3,
                 ErrorMode = ErrorMode.BestEffort
@@ -282,7 +282,7 @@ public class HttpParallelExtensionsTests
                 callbackStatus = status;
                 return ValueTask.CompletedTask;
             },
-            ParallelOptions = new ParallelOptionsRivulet
+            ParallelOptions = new()
             {
                 ErrorMode = ErrorMode.BestEffort,
                 MaxRetries = 0
@@ -306,7 +306,7 @@ public class HttpParallelExtensionsTests
         {
             await Task.Delay(100, CancellationToken.None); // Use CancellationToken.None to avoid canceling delay
             ct.ThrowIfCancellationRequested();
-            return new HttpResponseMessage(HttpStatusCode.OK);
+            return new(HttpStatusCode.OK);
         });
 
         // Cancel after a short delay
@@ -339,7 +339,7 @@ public class HttpParallelExtensionsTests
                 currentConcurrent--;
             }
 
-            return new HttpResponseMessage(HttpStatusCode.OK)
+            return new(HttpStatusCode.OK)
             {
                 Content = new StringContent("OK")
             };
@@ -347,7 +347,7 @@ public class HttpParallelExtensionsTests
 
         var options = new HttpOptions
         {
-            ParallelOptions = new ParallelOptionsRivulet
+            ParallelOptions = new()
             {
                 MaxDegreeOfParallelism = 5
             }

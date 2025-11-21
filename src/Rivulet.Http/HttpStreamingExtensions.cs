@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Net;
-using System.Net.Http.Headers;
 using Rivulet.Core;
 
 namespace Rivulet.Http;
@@ -30,7 +29,7 @@ public static class HttpStreamingExtensions
         ArgumentNullException.ThrowIfNull(downloads);
         ArgumentNullException.ThrowIfNull(httpClient);
 
-        options ??= new StreamingDownloadOptions();
+        options ??= new();
         var httpOptions = options.HttpOptions ?? new HttpOptions();
         var parallelOptions = httpOptions.GetMergedParallelOptions();
 
@@ -72,7 +71,7 @@ public static class HttpStreamingExtensions
         ArgumentNullException.ThrowIfNull(destination);
         ArgumentNullException.ThrowIfNull(httpClient);
 
-        options ??= new StreamingDownloadOptions();
+        options ??= new();
 
         var request = new HttpRequestMessage(HttpMethod.Get, uri);
 
@@ -182,7 +181,7 @@ public static class HttpStreamingExtensions
         // Add Range header for resume
         if (existingFileSize > 0)
         {
-            request.Headers.Range = new RangeHeaderValue(existingFileSize, null);
+            request.Headers.Range = new(existingFileSize, null);
         }
 
         using var response = await httpClient.SendAsync(

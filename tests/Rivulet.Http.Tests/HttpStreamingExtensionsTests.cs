@@ -7,7 +7,7 @@ public class HttpStreamingExtensionsTests
     private static HttpClient CreateTestClient(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> handler)
     {
         var messageHandler = new TestHttpMessageHandler(handler);
-        return new HttpClient(messageHandler) { BaseAddress = new Uri("http://test.local") };
+        return new(messageHandler) { BaseAddress = new("http://test.local") };
     }
 
     [Fact]
@@ -155,7 +155,7 @@ public class HttpStreamingExtensionsTests
         {
             var downloads = new[]
             {
-                (uri: new Uri("http://test.local/file1.txt"), destinationPath: Path.Combine(tempDir, "file1.txt")),
+                (uri: new("http://test.local/file1.txt"), destinationPath: Path.Combine(tempDir, "file1.txt")),
                 (uri: new Uri("http://test.local/file2.txt"), destinationPath: Path.Combine(tempDir, "file2.txt"))
             };
 

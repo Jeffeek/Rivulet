@@ -32,6 +32,12 @@
   	<InternalsVisibleTo Include="Rivulet.Testing.Tests" />
   	<InternalsVisibleTo Include="Rivulet.Hosting" />
   	<InternalsVisibleTo Include="Rivulet.Hosting.Tests" />
+    <InternalsVisibleTo Include="Rivulet.Http" />
+    <InternalsVisibleTo Include="Rivulet.Http.Tests" />
+    <InternalsVisibleTo Include="Rivulet.Sql" />
+    <InternalsVisibleTo Include="Rivulet.Sql.Tests" />
+  	<InternalsVisibleTo Include="Rivulet.Polly" />
+  	<InternalsVisibleTo Include="Rivulet.Polly.Tests" />
   </ItemGroup>
   <ItemGroup>
   	<PackageReference Include="System.Linq.Async" Version="6.0.3" />
