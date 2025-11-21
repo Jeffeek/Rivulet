@@ -5,6 +5,9 @@ on:
     tags:
       - 'v*'  # Triggers on tags like v1.0.0, v1.2.3, etc.
 
+permissions:
+  contents: read
+
 jobs:
   build-and-publish:
     name: Build and Publish NuGet Package
@@ -14,18 +17,23 @@ jobs:
       packages: write
 
     steps:
+    - name: Harden the runner (Audit all outbound calls)
+      uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+      with:
+        egress-policy: audit
+
     - name: Checkout
-      uses: actions/checkout@v5
+      uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
       with:
         fetch-depth: 0
 
     - name: Setup .NET 9.0.x
-      uses: actions/setup-dotnet@v5
+      uses: actions/setup-dotnet@d4c94342e560b34958eacfc5d055d21461ed1c5d # v5.0.0
       with:
         dotnet-version: 9.0.x
 
     - name: Cache NuGet packages
-      uses: actions/cache@v4
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
       with:
         path: ~/.nuget/packages
         key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
@@ -65,7 +73,7 @@ jobs:
       run: ls -la ./artifacts
 
     - name: Create GitHub Release
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@5be0e66d93ac7ed76da52eca8bb058f665c3a5fe # v2.4.2
       with:
         files: ./artifacts/*.nupkg
         generate_release_notes: true
@@ -75,7 +83,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Upload artifacts to workflow
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
       with:
         name: nuget-packages-${{ steps.get_version.outputs.version }}
         path: ./artifacts/*.nupkg
