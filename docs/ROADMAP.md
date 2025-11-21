@@ -17,6 +17,7 @@
 ### ✅ Completed Packages (v1.3.0)
 - **Rivulet.Http** - Parallel HTTP operations, resilient downloads, HttpClientFactory integration
 - **Rivulet.Sql** - Provider-agnostic parallel SQL operations, connection pooling awareness, bulk operations
+- **Rivulet.Polly** - Integration with Polly resilience library, advanced patterns (hedging, result-based retry)
 
 ---
 
@@ -29,7 +30,7 @@
    High  5 |  [OTel]✅           [Pipeline v2.0]
            |  [Sql.SqlServer]
            |
-   High  4 |  [Testing]✅   [RetryPolicies]  [Channels]
+   High  4 |  [Testing]✅   [Polly]✅  [Channels]
            |  [Hosting]✅   [Sql]✅  [EntityFramework]
            |
   Medium 3 |  [Azure]   [Batching]   [Persistence]
@@ -58,10 +59,13 @@
 |---------|-------------|--------|
 | **Rivulet.Http** ✅ | HttpClient operators, streaming, resilient downloads | 🟢 Very High |
 | **Rivulet.Sql** ✅ | Provider-agnostic parallel SQL operations, connection pooling, batching | 🟢 High |
+| **Rivulet.Polly** ✅ | Integration with Polly resilience library, advanced patterns (hedging, result-based retry) | 🟢 High |
 
-**Why**: HTTP is 80% of I/O workloads. Database parallelization is critical for performance.
+**Why**: HTTP is 80% of I/O workloads. Database parallelization is critical for performance. Polly is the industry-standard resilience library - native integration provides best-of-both-worlds.
 
-**Note**: Rivulet.Sql is provider-agnostic and works with SQL Server, PostgreSQL, MySQL, SQLite, Oracle, and any ADO.NET provider.
+**Note**:
+- Rivulet.Sql is provider-agnostic and works with SQL Server, PostgreSQL, MySQL, SQLite, Oracle, and any ADO.NET provider.
+- Rivulet.Core has built-in retry/circuit breaker for parallel operations. Use Rivulet.Polly for advanced Polly features (hedging, result-based retry, etc.) or to use Polly policies with Rivulet.
 
 ---
 

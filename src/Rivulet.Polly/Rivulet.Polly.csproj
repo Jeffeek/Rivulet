@@ -10,12 +10,12 @@
 	<!-- NuGet settings -->
     <Version>1.3.0</Version>
 	<SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <PackageId>Rivulet.RetryPolicies</PackageId>
-	<Title>Rivulet.RetryPolicies</Title>
-    <Description>Declarative retry policies, timeouts, fallbacks, and policy composition for Rivulet.Core parallel operations</Description>
+    <PackageId>Rivulet.Polly</PackageId>
+	<Title>Rivulet.Polly</Title>
+    <Description>Integration between Rivulet parallel processing and Polly resilience policies</Description>
 	<PackageIcon>nuget_logo.png</PackageIcon>
 	<PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageTags>async;parallel;retry;resilience;policy;timeout;fallback</PackageTags>
+    <PackageTags>async;parallel;polly;resilience;policy;retry;circuit-breaker</PackageTags>
 	<Authors>Jeffeek</Authors>
 	<RepositoryUrl>https://github.com/Jeffeek/Rivulet</RepositoryUrl>
 	<PackageProjectUrl>https://github.com/Jeffeek/Rivulet</PackageProjectUrl>
@@ -25,10 +25,13 @@
     <ProjectReference Include="..\Rivulet.Core\Rivulet.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Polly" Version="8.6.4" />
+  </ItemGroup>
+  <ItemGroup>
   	<None Include="nuget_logo.png" Pack="true" PackagePath="\" />
   	<None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
   <ItemGroup>
-  	<InternalsVisibleTo Include="Rivulet.RetryPolicies.Tests" />
+  	<InternalsVisibleTo Include="Rivulet.Polly.Tests" />
   </ItemGroup>
 </Project>

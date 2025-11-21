@@ -143,7 +143,7 @@ public class HttpClientFactoryExtensionsTests
     {
         var requests = new[]
         {
-            (uri: new Uri("http://test.local/post1"), content: new StringContent("data1")),
+            (uri: new("http://test.local/post1"), content: new("data1")),
             (uri: new Uri("http://test.local/post2"), content: new StringContent("data2"))
         };
 
@@ -172,7 +172,7 @@ public class HttpClientFactoryExtensionsTests
     {
         var requests = new[]
         {
-            (uri: new Uri("http://test.local/put1"), content: new StringContent("update1")),
+            (uri: new("http://test.local/put1"), content: new StringContent("update1")),
             (uri: new Uri("http://test.local/put2"), content: (HttpContent)new StringContent("update2"))
         };
 
@@ -288,7 +288,7 @@ public class HttpClientFactoryExtensionsTests
 
         var options = new HttpOptions
         {
-            ParallelOptions = new Core.ParallelOptionsRivulet
+            ParallelOptions = new()
             {
                 MaxRetries = 3,
                 BaseDelay = TimeSpan.FromMilliseconds(10)

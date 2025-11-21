@@ -28,7 +28,7 @@ public static class HttpParallelExtensions
         ArgumentNullException.ThrowIfNull(uris);
         ArgumentNullException.ThrowIfNull(httpClient);
 
-        options ??= new HttpOptions();
+        options ??= new();
         var parallelOptions = options.GetMergedParallelOptions();
 
         return await uris.SelectParallelAsync(
@@ -59,7 +59,7 @@ public static class HttpParallelExtensions
         ArgumentNullException.ThrowIfNull(uris);
         ArgumentNullException.ThrowIfNull(httpClient);
 
-        options ??= new HttpOptions();
+        options ??= new();
         var parallelOptions = options.GetMergedParallelOptions();
 
         return await uris.SelectParallelAsync(
@@ -95,7 +95,7 @@ public static class HttpParallelExtensions
         ArgumentNullException.ThrowIfNull(uris);
         ArgumentNullException.ThrowIfNull(httpClient);
 
-        options ??= new HttpOptions();
+        options ??= new();
         var parallelOptions = options.GetMergedParallelOptions();
 
         return await uris.SelectParallelAsync(
@@ -132,7 +132,7 @@ public static class HttpParallelExtensions
         ArgumentNullException.ThrowIfNull(requests);
         ArgumentNullException.ThrowIfNull(httpClient);
 
-        options ??= new HttpOptions();
+        options ??= new();
         var parallelOptions = options.GetMergedParallelOptions();
 
         return await requests.SelectParallelAsync(
@@ -164,7 +164,7 @@ public static class HttpParallelExtensions
         ArgumentNullException.ThrowIfNull(requests);
         ArgumentNullException.ThrowIfNull(httpClient);
 
-        options ??= new HttpOptions();
+        options ??= new();
         var parallelOptions = options.GetMergedParallelOptions();
 
         return await requests.SelectParallelAsync(
@@ -195,7 +195,7 @@ public static class HttpParallelExtensions
         ArgumentNullException.ThrowIfNull(uris);
         ArgumentNullException.ThrowIfNull(httpClient);
 
-        options ??= new HttpOptions();
+        options ??= new();
         var parallelOptions = options.GetMergedParallelOptions();
 
         return await uris.SelectParallelAsync(

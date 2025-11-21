@@ -5,7 +5,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Rivulet.Core;
 
 namespace Rivulet.Sql.Tests;
 
@@ -30,7 +29,7 @@ public class SqlBulkExtensionsTests
                     $"INSERT INTO Users (Id, Name) VALUES ({item.Id}, '{item.Name}')"));
                 await Task.CompletedTask;
             },
-            new BulkOperationOptions
+            new()
             {
                 BatchSize = 1000
             });
@@ -90,7 +89,7 @@ public class SqlBulkExtensionsTests
                     $"UPDATE Users SET Name = '{item.Name}' WHERE Id = {item.Id}"));
                 await Task.CompletedTask;
             },
-            new BulkOperationOptions
+            new()
             {
                 BatchSize = 500
             });
@@ -110,7 +109,7 @@ public class SqlBulkExtensionsTests
                 cmd.CommandText = $"DELETE FROM Users WHERE Id IN ({string.Join(",", batch)})";
                 await Task.CompletedTask;
             },
-            new BulkOperationOptions
+            new()
             {
                 BatchSize = 1000
             });
@@ -139,7 +138,7 @@ public class SqlBulkExtensionsTests
                 cmd.CommandText = "INSERT INTO Users (Id) VALUES (...)";
                 await Task.CompletedTask;
             },
-            new BulkOperationOptions
+            new()
             {
                 UseTransaction = true,
                 BatchSize = 100
@@ -172,13 +171,13 @@ public class SqlBulkExtensionsTests
                     cmd.CommandText = "INSERT INTO Users (Id) VALUES (...)";
                     await Task.CompletedTask;
                 },
-                new BulkOperationOptions
+                new()
                 {
                     UseTransaction = true,
                     BatchSize = 100,
-                    SqlOptions = new SqlOptions
+                    SqlOptions = new()
                     {
-                        ParallelOptions = new ParallelOptionsRivulet
+                        ParallelOptions = new()
                         {
                             MaxRetries = 0
                         }
@@ -204,7 +203,7 @@ public class SqlBulkExtensionsTests
                 cmd.CommandText = "INSERT INTO Users (Id) VALUES (...)";
                 await Task.CompletedTask;
             },
-            new BulkOperationOptions
+            new()
             {
                 BatchSize = 100,
                 OnBatchStartAsync = (_, batchNum) =>
@@ -241,7 +240,7 @@ public class SqlBulkExtensionsTests
                     cmd.CommandText = "INSERT INTO Users (Id) VALUES (...)";
                     await Task.CompletedTask;
                 },
-                new BulkOperationOptions
+                new()
                 {
                     BatchSize = 100,
                     OnBatchErrorAsync = (_, batchNum, ex) =>
@@ -250,9 +249,9 @@ public class SqlBulkExtensionsTests
                         errorException = ex;
                         return ValueTask.CompletedTask;
                     },
-                    SqlOptions = new SqlOptions
+                    SqlOptions = new()
                     {
-                        ParallelOptions = new ParallelOptionsRivulet
+                        ParallelOptions = new()
                         {
                             MaxRetries = 0
                         }
@@ -281,7 +280,7 @@ public class SqlBulkExtensionsTests
                 cmd.CommandText = "INSERT INTO Users (Id) VALUES (...)";
                 await Task.CompletedTask;
             },
-            new BulkOperationOptions
+            new()
             {
                 BatchSize = 250
             });
@@ -321,12 +320,12 @@ public class SqlBulkExtensionsTests
                 cmd.CommandText = "INSERT INTO Users (Id) VALUES (...)";
                 await Task.CompletedTask;
             },
-            new BulkOperationOptions
+            new()
             {
                 BatchSize = 500,
-                SqlOptions = new SqlOptions
+                SqlOptions = new()
                 {
-                    ParallelOptions = new ParallelOptionsRivulet
+                    ParallelOptions = new()
                     {
                         MaxDegreeOfParallelism = 3
                     }
@@ -334,7 +333,7 @@ public class SqlBulkExtensionsTests
             });
 
         result.Should().BeGreaterThan(0);
-        maxConcurrent.Should().BeLessOrEqualTo(3);
+        maxConcurrent.Should().BeLessThanOrEqualTo(3);
     }
 
     [Fact]
@@ -358,11 +357,11 @@ public class SqlBulkExtensionsTests
                 cmd.CommandText = "INSERT INTO Users (Id) VALUES (...)";
                 await Task.CompletedTask;
             },
-            new BulkOperationOptions
+            new()
             {
                 UseTransaction = true,
                 BatchSize = 100,
-                SqlOptions = new SqlOptions
+                SqlOptions = new()
                 {
                     IsolationLevel = IsolationLevel.Serializable
                 }
@@ -394,12 +393,12 @@ public class SqlBulkExtensionsTests
                 cmd.CommandText = "UPDATE Users SET Name = 'Updated'";
                 await Task.CompletedTask;
             },
-            new BulkOperationOptions
+            new()
             {
                 BatchSize = 100,
-                SqlOptions = new SqlOptions
+                SqlOptions = new()
                 {
-                    ParallelOptions = new ParallelOptionsRivulet
+                    ParallelOptions = new()
                     {
                         MaxRetries = 3,
                         BaseDelay = TimeSpan.FromMilliseconds(10)
@@ -432,7 +431,7 @@ public class SqlBulkExtensionsTests
                     cmd.CommandText = "INSERT INTO Users (Id) VALUES (...)";
                     await Task.CompletedTask;
                 },
-                new BulkOperationOptions
+                new()
                 {
                     BatchSize = 1000
                 },

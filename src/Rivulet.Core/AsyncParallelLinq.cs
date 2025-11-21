@@ -32,7 +32,7 @@ public static class AsyncParallelLinq
         ParallelOptionsRivulet? options = null,
         CancellationToken cancellationToken = default)
     {
-        options ??= new ParallelOptionsRivulet();
+        options ??= new();
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         var token = cts.Token;
 
@@ -211,7 +211,7 @@ public static class AsyncParallelLinq
         ParallelOptionsRivulet? options = null,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        options ??= new ParallelOptionsRivulet();
+        options ??= new();
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         var token = cts.Token;
 
@@ -408,6 +408,24 @@ public static class AsyncParallelLinq
             cancellationToken
         ).CollectAsync(cancellationToken);
 
+    /// <summary>
+    /// Executes an async action on each element in an enumerable in parallel with bounded concurrency.
+    /// No results are returned; this is suitable for side effect operations like logging, updates, or fire-and-forget processing.
+    /// </summary>
+    /// <typeparam name="TSource">The type of elements in the source collection.</typeparam>
+    /// <param name="source">The source enumerable to process.</param>
+    /// <param name="action">The async action to execute for each element.</param>
+    /// <param name="options">Configuration options for parallel execution, including concurrency limits, retry policies, and lifecycle hooks. If null, defaults are used.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    /// <returns>A task that completes when all items have been processed.</returns>
+    /// <exception cref="OperationCanceledException">Thrown when the operation is cancelled via the cancellation token.</exception>
+    public static async Task ForEachParallelAsync<TSource>(
+        this IEnumerable<TSource> source,
+        Func<TSource, CancellationToken, ValueTask> action,
+        ParallelOptionsRivulet? options = null,
+        CancellationToken cancellationToken = default) =>
+        await source.ToAsyncEnumerable().ForEachParallelAsync(action, options, cancellationToken);
+
     private static async Task CollectAsync<T>(this IAsyncEnumerable<T> source, CancellationToken ct)
     {
         await foreach (var _ in source.WithCancellation(ct).ConfigureAwait(false)) { }
@@ -484,7 +502,7 @@ public static class AsyncParallelLinq
             if (batch.Count < batchSize) continue;
 
             yield return batch;
-            batch = new List<TSource>(batchSize);
+            batch = new(batchSize);
         }
 
         if (batch.Count > 0)
@@ -527,13 +545,13 @@ public static class AsyncParallelLinq
                         if (batch.Count >= batchSize)
                         {
                             await channel.Writer.WriteAsync(batch, token).ConfigureAwait(false);
-                            batch = new List<TSource>(batchSize);
+                            batch = new(batchSize);
                             flushTimer = Task.Delay(timeout, token);
                         }
                         else if (flushTimer.IsCompleted && batch.Count > 0)
                         {
                             await channel.Writer.WriteAsync(batch, token).ConfigureAwait(false);
-                            batch = new List<TSource>(batchSize);
+                            batch = new(batchSize);
                             flushTimer = Task.Delay(timeout, token);
                         }
                     }
@@ -564,7 +582,7 @@ public static class AsyncParallelLinq
                 if (batch.Count < batchSize) continue;
 
                 yield return batch;
-                batch = new List<TSource>(batchSize);
+                batch = new(batchSize);
             }
 
             if (batch.Count > 0)

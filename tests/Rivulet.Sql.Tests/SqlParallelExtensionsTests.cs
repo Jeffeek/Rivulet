@@ -381,6 +381,6 @@ public class SqlParallelExtensionsTests
             });
 
         results.Should().HaveCount(50);
-        maxConcurrent.Should().BeLessOrEqualTo(5);
+        maxConcurrent.Should().BeLessThanOrEqualTo(5);
     }
 }

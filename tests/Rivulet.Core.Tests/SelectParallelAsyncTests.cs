@@ -174,6 +174,159 @@ public class SelectParallelAsyncTests
         var results = await source.SelectParallelAsync(
             (s, _) => new ValueTask<string>(s.ToUpper()));
 
-        results.Should().BeEquivalentTo(new[] { "HELLO", "WORLD", "TEST", "XUNIT" });
+        results.Should().BeEquivalentTo("HELLO", "WORLD", "TEST", "XUNIT");
+    }
+
+    [Fact]
+    public async Task SelectParallelAsync_WithFallback_ReturnsAllResultsWithFallbackForFailures()
+    {
+        var source = Enumerable.Range(1, 10);
+        var failOn = new HashSet<int> { 3, 7 };
+
+        var results = await source.SelectParallelAsync(
+            (x, _) =>
+            {
+                if (failOn.Contains(x))
+                    throw new InvalidOperationException($"Failed on {x}");
+                return new ValueTask<int>(x * 2);
+            },
+            new()
+            {
+                OnFallback = (_, _) => -1
+            });
+
+        results.Should().HaveCount(10);
+        results.Should().Contain([2, 4, -1, 8, 10, 12, -1, 16, 18, 20]);
+    }
+
+    [Fact]
+    public async Task SelectParallelAsync_WithFallback_UsesFallbackAfterRetriesExhausted()
+    {
+        var source = new[] { 1, 2, 3, 4, 5 };
+        var attemptCounts = new System.Collections.Concurrent.ConcurrentDictionary<int, int>();
+
+        var results = await source.SelectParallelAsync(
+            (x, _) =>
+            {
+                attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
+                if (x == 3)
+                    throw new TimeoutException("Always fails");
+                return new ValueTask<int>(x * 10);
+            },
+            new()
+            {
+                MaxRetries = 2,
+                IsTransient = ex => ex is TimeoutException,
+                BaseDelay = TimeSpan.FromMilliseconds(1),
+                OnFallback = (_, _) => 999
+            });
+
+        results.Should().HaveCount(5);
+        results.Should().Contain([10, 20, 999, 40, 50]);
+        attemptCounts[3].Should().Be(3); // Initial + 2 retries
+    }
+
+    [Fact]
+    public async Task SelectParallelAsync_WithFallback_NullFallbackForReferenceTypes()
+    {
+        var source = new[] { "a", "b", "c" };
+
+        var results = await source.SelectParallelAsync(
+            (x, _) =>
+            {
+                if (x == "b")
+                    throw new InvalidOperationException();
+                return new ValueTask<string>(x.ToUpper());
+            },
+            new()
+            {
+                OnFallback = (_, _) => null
+            });
+
+        results.Should().HaveCount(3);
+        results.Should().BeEquivalentTo("A", null, "C");
+    }
+
+    [Fact]
+    public async Task SelectParallelAsync_WithFallback_DifferentFallbackBasedOnException()
+    {
+        var source = Enumerable.Range(1, 5);
+
+        var results = await source.SelectParallelAsync(
+            (x, _) =>
+            {
+                if (x == 2)
+                    throw new TimeoutException();
+                if (x == 4)
+                    throw new InvalidOperationException();
+                return new ValueTask<int>(x * 10);
+            },
+            new()
+            {
+                OnFallback = (_, ex) => ex is TimeoutException ? -1 : -2
+            });
+
+        results.Should().HaveCount(5);
+        results.Should().Contain([10, -1, 30, -2, 50]);
+    }
+
+    [Fact]
+    public async Task SelectParallelAsync_WithFallback_UsesIndexInFallback()
+    {
+        var source = new[] { 10, 20, 30, 40 };
+
+        var results = await source.SelectParallelAsync(
+            (x, _) =>
+            {
+                if (x == 20 || x == 40)
+                    throw new();
+                return new ValueTask<int>(x);
+            },
+            new()
+            {
+                OnFallback = (index, _) => index * 1000
+            });
+
+        results.Should().HaveCount(4);
+        // Index 0 -> 10, Index 1 -> 1000, Index 2 -> 30, Index 3 -> 3000
+        results.Should().Contain([10, 1000, 30, 3000]);
+    }
+
+    [Fact]
+    public async Task SelectParallelAsync_WithoutFallback_ThrowsAsNormal()
+    {
+        var source = Enumerable.Range(1, 5);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        {
+            await source.SelectParallelAsync(
+                (x, _) =>
+                {
+                    if (x == 3)
+                        throw new InvalidOperationException();
+                    return new ValueTask<int>(x * 2);
+                });
+        });
+    }
+
+    [Fact]
+    public async Task SelectParallelAsync_WithFallback_WorksWithComplexTypes()
+    {
+        var source = new[] { 1, 2, 3, 4 };
+
+        var results = await source.SelectParallelAsync(
+            (x, _) =>
+            {
+                if (x == 2)
+                    throw new();
+                return new ValueTask<(int Value, string Status)>((x, "OK"));
+            },
+            new()
+            {
+                OnFallback = (_, _) => (0, "FAILED")
+            });
+
+        results.Should().HaveCount(4);
+        results.Should().Contain([(1, "OK"), (0, "FAILED"), (3, "OK"), (4, "OK")]);
     }
 }

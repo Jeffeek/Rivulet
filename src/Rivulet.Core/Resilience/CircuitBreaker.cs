@@ -39,7 +39,7 @@ internal sealed class CircuitBreaker
         _options.Validate();
 
         _state = CircuitBreakerState.Closed;
-        _failureTimestamps = new ConcurrentQueue<DateTime>();
+        _failureTimestamps = new();
         _consecutiveFailures = 0;
         _consecutiveSuccesses = 0;
         _openedAt = DateTime.MinValue;

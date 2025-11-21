@@ -17,7 +17,7 @@ public class PrometheusExporterTests
             {
                 await Task.Delay(10, ct);
                 return x * 2;
-            }, new ParallelOptionsRivulet
+            }, new()
             {
                 MaxDegreeOfParallelism = 2
             })
@@ -46,7 +46,7 @@ public class PrometheusExporterTests
             .ForEachParallelAsync(async (_, ct) =>
             {
                 await Task.Delay(10, ct);
-            }, new ParallelOptionsRivulet
+            }, new()
             {
                 MaxDegreeOfParallelism = 2
             });

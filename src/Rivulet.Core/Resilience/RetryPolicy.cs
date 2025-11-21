@@ -36,70 +36,15 @@ internal static class RetryPolicy
                     await options.OnRetryAsync(itemIndex, attempt, ex).ConfigureAwait(false);
                 }
 
-                var delay = CalculateDelay(options.BackoffStrategy, options.BaseDelay, attempt, ref previousDelay);
+                var delay = BackoffCalculator.CalculateDelay(options.BackoffStrategy, options.BaseDelay, attempt, ref previousDelay);
                 await Task.Delay(delay, ct).ConfigureAwait(false);
             }
+            catch (Exception ex) when (options.OnFallback is not null)
+            {
+                // All retries exhausted or non-transient error - use fallback if provided
+                var fallbackValue = options.OnFallback(itemIndex, ex);
+                return fallbackValue is TResult result ? result : default!;
+            }
         }
-    }
-
-    private static TimeSpan CalculateDelay(
-        BackoffStrategy strategy,
-        TimeSpan baseDelay,
-        int attempt,
-        ref TimeSpan previousDelay)
-    {
-        var baseDelayMs = baseDelay.TotalMilliseconds;
-
-        return strategy switch
-        {
-            BackoffStrategy.Exponential => CalculateExponentialDelay(baseDelayMs, attempt),
-            BackoffStrategy.ExponentialJitter => CalculateExponentialJitterDelay(baseDelayMs, attempt),
-            BackoffStrategy.DecorrelatedJitter => CalculateDecorrelatedJitterDelay(baseDelayMs, attempt, ref previousDelay),
-            BackoffStrategy.Linear => CalculateLinearDelay(baseDelayMs, attempt),
-            BackoffStrategy.LinearJitter => CalculateLinearJitterDelay(baseDelayMs, attempt),
-            _ => CalculateExponentialDelay(baseDelayMs, attempt)
-        };
-    }
-
-    private static TimeSpan CalculateExponentialDelay(double baseDelayMs, int attempt)
-    {
-        var delayMs = baseDelayMs * Math.Pow(2, attempt - 1);
-        return TimeSpan.FromMilliseconds(delayMs);
-    }
-
-    private static TimeSpan CalculateExponentialJitterDelay(double baseDelayMs, int attempt)
-    {
-        var maxDelayMs = baseDelayMs * Math.Pow(2, attempt - 1);
-        var jitteredDelayMs = Random.Shared.NextDouble() * maxDelayMs;
-        return TimeSpan.FromMilliseconds(jitteredDelayMs);
-    }
-
-    private static TimeSpan CalculateDecorrelatedJitterDelay(double baseDelayMs, int attempt, ref TimeSpan previousDelay)
-    {
-        if (attempt == 1 || previousDelay == TimeSpan.Zero)
-        {
-            var firstDelayMs = Random.Shared.NextDouble() * baseDelayMs;
-            previousDelay = TimeSpan.FromMilliseconds(firstDelayMs);
-            return previousDelay;
-        }
-
-        var maxDelayMs = previousDelay.TotalMilliseconds * 3;
-        var delayMs = baseDelayMs + Random.Shared.NextDouble() * (maxDelayMs - baseDelayMs);
-
-        previousDelay = TimeSpan.FromMilliseconds(delayMs);
-        return previousDelay;
-    }
-
-    private static TimeSpan CalculateLinearDelay(double baseDelayMs, int attempt)
-    {
-        var delayMs = baseDelayMs * attempt;
-        return TimeSpan.FromMilliseconds(delayMs);
-    }
-
-    private static TimeSpan CalculateLinearJitterDelay(double baseDelayMs, int attempt)
-    {
-        var maxDelayMs = baseDelayMs * attempt;
-        var jitteredDelayMs = Random.Shared.NextDouble() * maxDelayMs;
-        return TimeSpan.FromMilliseconds(jitteredDelayMs);
     }
 }

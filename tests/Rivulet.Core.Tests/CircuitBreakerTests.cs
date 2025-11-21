@@ -50,7 +50,7 @@ public class CircuitBreakerTests
     [Fact]
     public void CircuitBreaker_Constructor_ValidatesOptions()
     {
-        var act = () => new CircuitBreaker(new CircuitBreakerOptions { FailureThreshold = 0 });
+        var act = () => new CircuitBreaker(new() { FailureThreshold = 0 });
         act.Should().Throw<ArgumentException>()
             .WithMessage("*FailureThreshold*");
     }
@@ -58,7 +58,7 @@ public class CircuitBreakerTests
     [Fact]
     public void CircuitBreaker_InitialState_IsClosed()
     {
-        var cb = new CircuitBreaker(new CircuitBreakerOptions());
+        var cb = new CircuitBreaker(new());
         cb.State.Should().Be(CircuitBreakerState.Closed);
     }
 
@@ -66,7 +66,7 @@ public class CircuitBreakerTests
     public async Task CircuitBreaker_Opens_AfterFailureThreshold()
     {
         // Circuit should open after 3 consecutive failures
-        var cb = new CircuitBreaker(new CircuitBreakerOptions
+        var cb = new CircuitBreaker(new()
         {
             FailureThreshold = 3,
             OpenTimeout = TimeSpan.FromSeconds(1)
@@ -112,7 +112,7 @@ public class CircuitBreakerTests
     [Fact]
     public async Task CircuitBreaker_TransitionsToHalfOpen_AfterTimeout()
     {
-        var cb = new CircuitBreaker(new CircuitBreakerOptions
+        var cb = new CircuitBreaker(new()
         {
             FailureThreshold = 2,
             OpenTimeout = TimeSpan.FromMilliseconds(100)
@@ -154,7 +154,7 @@ public class CircuitBreakerTests
     [Fact]
     public async Task CircuitBreaker_ClosesFromHalfOpen_AfterSuccessThreshold()
     {
-        var cb = new CircuitBreaker(new CircuitBreakerOptions
+        var cb = new CircuitBreaker(new()
         {
             FailureThreshold = 2,
             SuccessThreshold = 2,
@@ -192,7 +192,7 @@ public class CircuitBreakerTests
     [Fact]
     public async Task CircuitBreaker_ReopensFromHalfOpen_OnFailure()
     {
-        var cb = new CircuitBreaker(new CircuitBreakerOptions
+        var cb = new CircuitBreaker(new()
         {
             FailureThreshold = 2,
             SuccessThreshold = 2,
@@ -237,7 +237,7 @@ public class CircuitBreakerTests
     [Fact]
     public async Task CircuitBreaker_WithSamplingDuration_TracksFailuresInWindow()
     {
-        var cb = new CircuitBreaker(new CircuitBreakerOptions
+        var cb = new CircuitBreaker(new()
         {
             FailureThreshold = 3,
             SamplingDuration = TimeSpan.FromMilliseconds(200),
@@ -291,7 +291,7 @@ public class CircuitBreakerTests
         var stateChanges = new List<(CircuitBreakerState from, CircuitBreakerState to)>();
         var allTransitionsComplete = new TaskCompletionSource<bool>();
 
-        var cb = new CircuitBreaker(new CircuitBreakerOptions
+        var cb = new CircuitBreaker(new()
         {
             FailureThreshold = 2,
             SuccessThreshold = 1,
@@ -343,7 +343,7 @@ public class CircuitBreakerTests
     [Fact]
     public async Task CircuitBreaker_Reset_ClosesCircuit()
     {
-        var cb = new CircuitBreaker(new CircuitBreakerOptions
+        var cb = new CircuitBreaker(new()
         {
             FailureThreshold = 2,
             OpenTimeout = TimeSpan.FromSeconds(10)
@@ -383,7 +383,7 @@ public class CircuitBreakerTests
         var options = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 1, // Sequential to ensure predictable failure order
-            CircuitBreaker = new CircuitBreakerOptions
+            CircuitBreaker = new()
             {
                 FailureThreshold = 3,
                 OpenTimeout = TimeSpan.FromSeconds(1)
@@ -415,7 +415,7 @@ public class CircuitBreakerTests
         var options = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 1,
-            CircuitBreaker = new CircuitBreakerOptions
+            CircuitBreaker = new()
             {
                 FailureThreshold = 5,
                 SuccessThreshold = 2,
@@ -451,7 +451,7 @@ public class CircuitBreakerTests
             MaxDegreeOfParallelism = 1,
             MaxRetries = 2,
             IsTransient = ex => ex is InvalidOperationException,
-            CircuitBreaker = new CircuitBreakerOptions
+            CircuitBreaker = new()
             {
                 FailureThreshold = 2, // Open after 2 items fully fail (after retries)
                 OpenTimeout = TimeSpan.FromSeconds(1)
@@ -490,7 +490,7 @@ public class CircuitBreakerTests
         var options = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 1,
-            CircuitBreaker = new CircuitBreakerOptions
+            CircuitBreaker = new()
             {
                 FailureThreshold = 50,
                 OpenTimeout = TimeSpan.FromSeconds(1)
@@ -525,7 +525,7 @@ public class CircuitBreakerTests
         {
             MaxDegreeOfParallelism = 4,
             OrderedOutput = true,
-            CircuitBreaker = new CircuitBreakerOptions
+            CircuitBreaker = new()
             {
                 FailureThreshold = 100, // High threshold to not interfere
                 OpenTimeout = TimeSpan.FromSeconds(1)
@@ -565,7 +565,7 @@ public class CircuitBreakerTests
     public async Task CircuitBreaker_OnStateChangeCallback_ThrowsException_DoesNotCrash()
     {
         var callbackInvoked = 0;
-        var cb = new CircuitBreaker(new CircuitBreakerOptions
+        var cb = new CircuitBreaker(new()
         {
             FailureThreshold = 2,
             SuccessThreshold = 1,
@@ -597,7 +597,7 @@ public class CircuitBreakerTests
     public async Task CircuitBreaker_OnStateChange_AllTransitions_InvokeCallback()
     {
         var transitions = new List<(CircuitBreakerState, CircuitBreakerState)>();
-        var cb = new CircuitBreaker(new CircuitBreakerOptions
+        var cb = new CircuitBreaker(new()
         {
             FailureThreshold = 2,
             SuccessThreshold = 1,

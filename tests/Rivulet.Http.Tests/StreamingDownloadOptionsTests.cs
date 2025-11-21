@@ -60,9 +60,9 @@ public class StreamingDownloadOptionsTests
         options.OnProgressAsync.Should().NotBeNull();
         options.OnResumeAsync.Should().NotBeNull();
         options.OnCompleteAsync.Should().NotBeNull();
-        options.OnProgressAsync!.Invoke(new Uri("http://test.local"), 100, 200);
-        options.OnResumeAsync!.Invoke(new Uri("http://test.local"), 50);
-        options.OnCompleteAsync!.Invoke(new Uri("http://test.local"), "/path/file.txt", 200);
+        options.OnProgressAsync!.Invoke(new("http://test.local"), 100, 200);
+        options.OnResumeAsync!.Invoke(new("http://test.local"), 50);
+        options.OnCompleteAsync!.Invoke(new("http://test.local"), "/path/file.txt", 200);
 
         progressCalled.Should().BeTrue();
         resumeCalled.Should().BeTrue();
@@ -148,10 +148,10 @@ public class StreamingDownloadOptionsTests
             }
         };
 
-        await options.OnProgressAsync!.Invoke(new Uri("http://test.local"), 50, 100);
-        await options.OnProgressAsync!.Invoke(new Uri("http://test.local"), 100, 100);
-        await options.OnResumeAsync!.Invoke(new Uri("http://test.local"), 50);
-        await options.OnCompleteAsync!.Invoke(new Uri("http://test.local"), "/path", 100);
+        await options.OnProgressAsync!.Invoke(new("http://test.local"), 50, 100);
+        await options.OnProgressAsync!.Invoke(new("http://test.local"), 100, 100);
+        await options.OnResumeAsync!.Invoke(new("http://test.local"), 50);
+        await options.OnCompleteAsync!.Invoke(new("http://test.local"), "/path", 100);
 
         progressCount.Should().Be(2);
         resumeCount.Should().Be(1);
