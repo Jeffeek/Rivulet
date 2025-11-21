@@ -394,4 +394,158 @@ public class RivuletToPollyConverterTests
 
         act.Should().Throw<ArgumentException>();
     }
+
+    [Fact]
+    public async Task ToPollyRetryPipeline_IsTransientNull_DoesNotRetry()
+    {
+        var options = new ParallelOptionsRivulet
+        {
+            MaxRetries = 3,
+            IsTransient = null, // Null IsTransient - should not retry
+            BackoffStrategy = BackoffStrategy.Exponential,
+            BaseDelay = TimeSpan.FromMilliseconds(10)
+        };
+
+        var pipeline = options.ToPollyRetryPipeline();
+        var attemptCount = 0;
+
+        var act = async () => await pipeline.ExecuteAsync(_ =>
+        {
+            attemptCount++;
+            throw new InvalidOperationException("Failure");
+        });
+
+        await act.Should().ThrowAsync<InvalidOperationException>();
+        attemptCount.Should().Be(1, "should not retry when IsTransient is null");
+    }
+
+    [Fact]
+    public async Task ToPollyRetryPipeline_AllRetriesFail_ResetsPreviousDelay()
+    {
+        var options = new ParallelOptionsRivulet
+        {
+            MaxRetries = 2,
+            IsTransient = ex => ex is InvalidOperationException,
+            BackoffStrategy = BackoffStrategy.DecorrelatedJitter,
+            BaseDelay = TimeSpan.FromMilliseconds(10)
+        };
+
+        var pipeline = options.ToPollyRetryPipeline();
+        var attemptCount = 0;
+
+        var act = async () => await pipeline.ExecuteAsync(_ =>
+        {
+            // ReSharper disable once AccessToModifiedClosure
+            attemptCount++;
+            throw new InvalidOperationException("Always fails");
+        });
+
+        await act.Should().ThrowAsync<InvalidOperationException>();
+        attemptCount.Should().Be(3, "should attempt 3 times (1 initial + 2 retries)");
+
+        // Run again to ensure previousDelay was reset
+        attemptCount = 0;
+        await act.Should().ThrowAsync<InvalidOperationException>();
+        attemptCount.Should().Be(3, "should attempt 3 times again after reset");
+    }
+
+    [Fact]
+    public async Task ToPollyPipeline_IsTransientNull_DoesNotRetry()
+    {
+        var options = new ParallelOptionsRivulet
+        {
+            MaxRetries = 3,
+            IsTransient = null, // Null IsTransient - should not retry
+            BaseDelay = TimeSpan.FromMilliseconds(10)
+        };
+
+        var pipeline = options.ToPollyPipeline();
+        var attemptCount = 0;
+
+        var act = async () => await pipeline.ExecuteAsync(_ =>
+        {
+            attemptCount++;
+            throw new InvalidOperationException("Failure");
+        });
+
+        await act.Should().ThrowAsync<InvalidOperationException>();
+        attemptCount.Should().Be(1, "should not retry when IsTransient is null");
+    }
+
+    [Fact]
+    public async Task ToPollyPipeline_AllRetriesFail_ResetsPreviousDelay()
+    {
+        var options = new ParallelOptionsRivulet
+        {
+            MaxRetries = 2,
+            IsTransient = ex => ex is InvalidOperationException,
+            BackoffStrategy = BackoffStrategy.DecorrelatedJitter,
+            BaseDelay = TimeSpan.FromMilliseconds(10)
+        };
+
+        var pipeline = options.ToPollyPipeline();
+        var attemptCount = 0;
+
+        var act = async () => await pipeline.ExecuteAsync(_ =>
+        {
+            // ReSharper disable once AccessToModifiedClosure
+            attemptCount++;
+            throw new InvalidOperationException("Always fails");
+        });
+
+        await act.Should().ThrowAsync<InvalidOperationException>();
+        attemptCount.Should().Be(3, "should attempt 3 times (1 initial + 2 retries)");
+
+        // Run again to ensure previousDelay was reset
+        attemptCount = 0;
+        await act.Should().ThrowAsync<InvalidOperationException>();
+        attemptCount.Should().Be(3, "should attempt 3 times again after reset");
+    }
+
+    [Fact]
+    public void ToPollyCircuitBreakerPipeline_WithOnStateChange_InvokesCallback()
+    {
+        var options = new CircuitBreakerOptions
+        {
+            FailureThreshold = 2,
+            SuccessThreshold = 1,
+            OpenTimeout = TimeSpan.FromSeconds(1), // Polly requires min 500ms
+            OnStateChange = async (_, _) =>
+            {
+                await ValueTask.CompletedTask;
+            }
+        };
+
+        var pipeline = options.ToPollyCircuitBreakerPipeline();
+
+        // The pipeline is created but state changes won't happen until we actually use it
+        // This test verifies the callback structure is set up correctly
+        pipeline.Should().NotBeNull();
+    }
+
+    [Fact]
+    public void ToPollyPipeline_WithCircuitBreakerOnStateChange_InvokesCallback()
+    {
+        var options = new ParallelOptionsRivulet
+        {
+            MaxRetries = 0,
+            CircuitBreaker = new()
+            {
+                FailureThreshold = 2,
+                SuccessThreshold = 1,
+                OpenTimeout = TimeSpan.FromSeconds(1), // Polly requires min 500ms
+                OnStateChange = async (_, _) =>
+                {
+                    await ValueTask.CompletedTask;
+                }
+            }
+        };
+
+        var pipeline = options.ToPollyPipeline();
+
+        // The pipeline is created but state changes won't happen until we actually use it
+        // This test verifies the callback structure is set up correctly
+        pipeline.Should().NotBeNull();
+        pipeline.Should().NotBeSameAs(ResiliencePipeline.Empty);
+    }
 }

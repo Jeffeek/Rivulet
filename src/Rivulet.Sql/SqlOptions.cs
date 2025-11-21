@@ -83,9 +83,10 @@ public sealed class SqlOptions
             {
                 TimeoutException => true,
                 InvalidOperationException invalidOp when invalidOp.Message.Contains("timeout", StringComparison.OrdinalIgnoreCase) => true,
-                _ when ex.GetType().Name.Contains("SqlException") => IsSqlTransientError(ex),
-                _ when ex.GetType().Name.Contains("NpgsqlException") => IsNpgsqlTransientError(ex),
+                // Check MySQL and Npgsql before SqlException since "MySqlException" contains "SqlException"
                 _ when ex.GetType().Name.Contains("MySqlException") => IsMySqlTransientError(ex),
+                _ when ex.GetType().Name.Contains("NpgsqlException") => IsNpgsqlTransientError(ex),
+                _ when ex.GetType().Name.Contains("SqlException") => IsSqlTransientError(ex),
                 _ => false
             };
         }

@@ -1,4 +1,6 @@
 using System.Data;
+using System.Reflection;
+using System.Reflection.Emit;
 using Rivulet.Core;
 
 namespace Rivulet.Sql.Tests;
@@ -147,5 +149,328 @@ public class SqlOptionsTests
         var mergedOptions = options.GetMergedParallelOptions();
 
         mergedOptions.MaxRetries.Should().Be(SqlOptions.DefaultRetryCount);
+    }
+
+    [Theory]
+    [InlineData(-2, true)]   // Timeout
+    [InlineData(-1, true)]   // Connection broken
+    [InlineData(2, true)]    // Connection timeout
+    [InlineData(53, true)]   // Connection does not exist
+    [InlineData(64, true)]   // Error on server
+    [InlineData(233, true)]  // Connection initialization failed
+    [InlineData(10053, true)] // Transport-level error
+    [InlineData(10054, true)] // Connection reset by peer
+    [InlineData(10060, true)] // Network timeout
+    [InlineData(40197, true)] // Service unavailable
+    [InlineData(40501, true)] // Service busy
+    [InlineData(40613, true)] // Database unavailable
+    [InlineData(49918, true)] // Cannot process request
+    [InlineData(49919, true)] // Cannot process create or update
+    [InlineData(49920, true)] // Cannot process more than requests
+    [InlineData(9999, false)] // Non-transient error code
+    public void GetMergedParallelOptions_IsTransient_SqlServerErrors(int errorNumber, bool expectedTransient)
+    {
+        var options = new SqlOptions();
+        var mergedOptions = options.GetMergedParallelOptions();
+
+        // Create a mock SqlException using reflection
+        var sqlException = CreateMockSqlException(errorNumber);
+
+        mergedOptions.IsTransient!.Invoke(sqlException).Should().Be(expectedTransient);
+    }
+
+    [Theory]
+    [InlineData("08000", true)]  // Connection exception
+    [InlineData("08003", true)]  // Connection does not exist
+    [InlineData("08006", true)]  // Connection failure
+    [InlineData("08001", true)]  // Unable to establish connection
+    [InlineData("08004", true)]  // Server rejected connection
+    [InlineData("53300", true)]  // Too many connections
+    [InlineData("57P03", true)]  // Cannot connect now
+    [InlineData("58000", true)]  // System error
+    [InlineData("58030", true)]  // IO error
+    [InlineData("23505", false)] // Non-transient error (unique violation)
+    public void GetMergedParallelOptions_IsTransient_PostgreSqlErrors(string sqlState, bool expectedTransient)
+    {
+        var options = new SqlOptions();
+        var mergedOptions = options.GetMergedParallelOptions();
+
+        // Create a mock NpgsqlException using reflection
+        var npgsqlException = CreateMockNpgsqlException(sqlState);
+
+        mergedOptions.IsTransient!.Invoke(npgsqlException).Should().Be(expectedTransient);
+    }
+
+    [Theory]
+    [InlineData(1040, true)]  // Too many connections
+    [InlineData(1205, true)]  // Lock wait timeout
+    [InlineData(1213, true)]  // Deadlock found
+    [InlineData(1226, true)]  // User has exceeded resource limit
+    [InlineData(2002, true)]  // Can't connect to server
+    [InlineData(2003, true)]  // Can't connect to server
+    [InlineData(2006, true)]  // Server has gone away
+    [InlineData(2013, true)]  // Lost connection during query
+    [InlineData(1062, false)] // Non-transient error (duplicate entry)
+    public void GetMergedParallelOptions_IsTransient_MySqlErrors(int errorNumber, bool expectedTransient)
+    {
+        var options = new SqlOptions();
+        var mergedOptions = options.GetMergedParallelOptions();
+
+        // Create a mock MySqlException using reflection
+        var mySqlException = CreateMockMySqlException(errorNumber);
+
+        mergedOptions.IsTransient!.Invoke(mySqlException).Should().Be(expectedTransient);
+    }
+
+    [Fact]
+    public void GetMergedParallelOptions_IsTransient_NonSqlException_ShouldReturnFalse()
+    {
+        var options = new SqlOptions();
+        var mergedOptions = options.GetMergedParallelOptions();
+
+        var nonSqlException = new ArgumentException("Not a SQL exception");
+
+        mergedOptions.IsTransient!.Invoke(nonSqlException).Should().BeFalse();
+    }
+
+    [Fact]
+    public void GetMergedParallelOptions_IsTransient_SqlExceptionWithoutNumber_ShouldReturnFalse()
+    {
+        var options = new SqlOptions();
+        var mergedOptions = options.GetMergedParallelOptions();
+
+        // Create exception with type name containing "SqlException" but no Number property
+        var mockException = CreateMockExceptionWithTypeName("MockSqlException", null);
+
+        mergedOptions.IsTransient!.Invoke(mockException).Should().BeFalse();
+    }
+
+    [Fact]
+    public void GetMergedParallelOptions_IsTransient_UserProvidedTakesPrecedence()
+    {
+        var userTransientCalled = false;
+        var customParallelOptions = new ParallelOptionsRivulet
+        {
+            IsTransient = _ =>
+            {
+                userTransientCalled = true;
+                return true; // User says everything is transient
+            }
+        };
+
+        var options = new SqlOptions
+        {
+            ParallelOptions = customParallelOptions
+        };
+
+        var mergedOptions = options.GetMergedParallelOptions();
+
+        // Even a non-SQL exception should be transient if user says so
+        var nonSqlException = new ArgumentException("Test");
+        var result = mergedOptions.IsTransient!.Invoke(nonSqlException);
+
+        result.Should().BeTrue();
+        userTransientCalled.Should().BeTrue();
+    }
+
+    [Fact]
+    public void GetMergedParallelOptions_IsTransient_UserAndBuiltInBothApply()
+    {
+        var customParallelOptions = new ParallelOptionsRivulet
+        {
+            IsTransient = ex => ex is ArgumentException // User defines ArgumentException as transient
+        };
+
+        var options = new SqlOptions
+        {
+            ParallelOptions = customParallelOptions
+        };
+
+        var mergedOptions = options.GetMergedParallelOptions();
+
+        // User-defined transient exception
+        mergedOptions.IsTransient!.Invoke(new ArgumentException()).Should().BeTrue();
+
+        // Built-in transient exception (TimeoutException)
+        mergedOptions.IsTransient!.Invoke(new TimeoutException()).Should().BeTrue();
+
+        // Neither user-defined nor built-in
+        mergedOptions.IsTransient!.Invoke(new DivideByZeroException()).Should().BeFalse();
+    }
+
+    [Fact]
+    public void GetMergedParallelOptions_ShouldPreserveAllBaseOptions()
+    {
+        var progress = new Core.Observability.ProgressOptions();
+        var metrics = new Core.Observability.MetricsOptions();
+        var circuitBreaker = new Core.Resilience.CircuitBreakerOptions();
+        var rateLimit = new Core.Resilience.RateLimitOptions();
+        var adaptiveConcurrency = new Core.Resilience.AdaptiveConcurrencyOptions();
+
+        var baseOptions = new ParallelOptionsRivulet
+        {
+            MaxDegreeOfParallelism = 42,
+            BaseDelay = TimeSpan.FromSeconds(2),
+            BackoffStrategy = Core.Resilience.BackoffStrategy.LinearJitter,
+            ErrorMode = ErrorMode.BestEffort,
+            OnStartItemAsync = _ => ValueTask.CompletedTask,
+            OnCompleteItemAsync = _ => ValueTask.CompletedTask,
+            OnErrorAsync = (_, _) => ValueTask.FromResult(true),
+            CircuitBreaker = circuitBreaker,
+            RateLimit = rateLimit,
+            Progress = progress,
+            OrderedOutput = true,
+            Metrics = metrics,
+            AdaptiveConcurrency = adaptiveConcurrency
+        };
+
+        var options = new SqlOptions { ParallelOptions = baseOptions };
+        var merged = options.GetMergedParallelOptions();
+
+        merged.MaxDegreeOfParallelism.Should().Be(42);
+        merged.BaseDelay.Should().Be(TimeSpan.FromSeconds(2));
+        merged.BackoffStrategy.Should().Be(Core.Resilience.BackoffStrategy.LinearJitter);
+        merged.ErrorMode.Should().Be(ErrorMode.BestEffort);
+        merged.OnStartItemAsync.Should().BeSameAs(baseOptions.OnStartItemAsync);
+        merged.OnCompleteItemAsync.Should().BeSameAs(baseOptions.OnCompleteItemAsync);
+        merged.OnErrorAsync.Should().BeSameAs(baseOptions.OnErrorAsync);
+        merged.CircuitBreaker.Should().BeSameAs(circuitBreaker);
+        merged.RateLimit.Should().BeSameAs(rateLimit);
+        merged.Progress.Should().BeSameAs(progress);
+        merged.OrderedOutput.Should().BeTrue();
+        merged.Metrics.Should().BeSameAs(metrics);
+        merged.AdaptiveConcurrency.Should().BeSameAs(adaptiveConcurrency);
+    }
+
+    // Helper methods to create mock exceptions
+    private static Exception CreateMockSqlException(int errorNumber)
+    {
+        var exceptionType = AssemblyBuilder.DefineDynamicAssembly(
+            new("DynamicAssembly"),
+            AssemblyBuilderAccess.Run)
+            .DefineDynamicModule("DynamicModule")
+            .DefineType("SqlException", TypeAttributes.Public, typeof(Exception));
+
+        var numberProperty = exceptionType.DefineProperty("Number", PropertyAttributes.None, typeof(int), null);
+        var numberField = exceptionType.DefineField("_number", typeof(int), FieldAttributes.Private);
+
+        var numberGetter = exceptionType.DefineMethod("get_Number",
+            MethodAttributes.Public | MethodAttributes.Virtual,
+            typeof(int), Type.EmptyTypes);
+
+        var getterIl = numberGetter.GetILGenerator();
+        getterIl.Emit(OpCodes.Ldarg_0);
+        getterIl.Emit(OpCodes.Ldfld, numberField);
+        getterIl.Emit(OpCodes.Ret);
+
+        numberProperty.SetGetMethod(numberGetter);
+
+        var createdType = exceptionType.CreateType();
+        var instance = Activator.CreateInstance(createdType);
+
+        var field = createdType.GetField("_number", BindingFlags.NonPublic | BindingFlags.Instance);
+        field!.SetValue(instance, errorNumber);
+
+        return (Exception)instance!;
+    }
+
+    private static Exception CreateMockNpgsqlException(string sqlState)
+    {
+        var exceptionType = AssemblyBuilder.DefineDynamicAssembly(
+            new("DynamicAssembly2"),
+            AssemblyBuilderAccess.Run)
+            .DefineDynamicModule("DynamicModule")
+            .DefineType("NpgsqlException", TypeAttributes.Public, typeof(Exception));
+
+        var sqlStateProperty = exceptionType.DefineProperty("SqlState", PropertyAttributes.None, typeof(string), null);
+        var sqlStateField = exceptionType.DefineField("_sqlState", typeof(string), FieldAttributes.Private);
+
+        var sqlStateGetter = exceptionType.DefineMethod("get_SqlState",
+            MethodAttributes.Public | MethodAttributes.Virtual,
+            typeof(string), Type.EmptyTypes);
+
+        var getterIl = sqlStateGetter.GetILGenerator();
+        getterIl.Emit(OpCodes.Ldarg_0);
+        getterIl.Emit(OpCodes.Ldfld, sqlStateField);
+        getterIl.Emit(OpCodes.Ret);
+
+        sqlStateProperty.SetGetMethod(sqlStateGetter);
+
+        var createdType = exceptionType.CreateType();
+        var instance = Activator.CreateInstance(createdType);
+
+        var field = createdType.GetField("_sqlState", BindingFlags.NonPublic | BindingFlags.Instance);
+        field!.SetValue(instance, sqlState);
+
+        return (Exception)instance!;
+    }
+
+    private static Exception CreateMockMySqlException(int errorNumber)
+    {
+        var exceptionType = AssemblyBuilder.DefineDynamicAssembly(
+            new("DynamicAssembly3"),
+            AssemblyBuilderAccess.Run)
+            .DefineDynamicModule("DynamicModule")
+            .DefineType("MySqlException", TypeAttributes.Public, typeof(Exception));
+
+        var numberProperty = exceptionType.DefineProperty("Number", PropertyAttributes.None, typeof(int), null);
+        var numberField = exceptionType.DefineField("_number", typeof(int), FieldAttributes.Private);
+
+        var numberGetter = exceptionType.DefineMethod("get_Number",
+            MethodAttributes.Public | MethodAttributes.Virtual,
+            typeof(int), Type.EmptyTypes);
+
+        var getterIl = numberGetter.GetILGenerator();
+        getterIl.Emit(OpCodes.Ldarg_0);
+        getterIl.Emit(OpCodes.Ldfld, numberField);
+        getterIl.Emit(OpCodes.Ret);
+
+        numberProperty.SetGetMethod(numberGetter);
+
+        var createdType = exceptionType.CreateType();
+        var instance = Activator.CreateInstance(createdType);
+
+        var field = createdType.GetField("_number", BindingFlags.NonPublic | BindingFlags.Instance);
+        field!.SetValue(instance, errorNumber);
+
+        return (Exception)instance!;
+    }
+
+    private static Exception CreateMockExceptionWithTypeName(string typeName, int? number)
+    {
+        var assemblyName = $"DynamicAssembly_{Guid.NewGuid():N}";
+        var exceptionType = AssemblyBuilder.DefineDynamicAssembly(
+            new(assemblyName),
+            AssemblyBuilderAccess.Run)
+            .DefineDynamicModule("DynamicModule")
+            .DefineType(typeName, TypeAttributes.Public, typeof(Exception));
+
+        if (number.HasValue)
+        {
+            var numberProperty = exceptionType.DefineProperty("Number", PropertyAttributes.None, typeof(int), null);
+            var numberField = exceptionType.DefineField("_number", typeof(int), FieldAttributes.Private);
+
+            var numberGetter = exceptionType.DefineMethod("get_Number",
+                MethodAttributes.Public | MethodAttributes.Virtual,
+                typeof(int), Type.EmptyTypes);
+
+            var getterIl = numberGetter.GetILGenerator();
+            getterIl.Emit(OpCodes.Ldarg_0);
+            getterIl.Emit(OpCodes.Ldfld, numberField);
+            getterIl.Emit(OpCodes.Ret);
+
+            numberProperty.SetGetMethod(numberGetter);
+        }
+
+        var createdType = exceptionType.CreateType();
+        var instance = Activator.CreateInstance(createdType);
+
+        if (number.HasValue)
+        {
+            var field = createdType.GetField("_number", BindingFlags.NonPublic | BindingFlags.Instance);
+            field!.SetValue(instance, number.Value);
+        }
+
+        return (Exception)instance!;
     }
 }

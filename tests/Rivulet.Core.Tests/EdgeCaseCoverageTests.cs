@@ -243,7 +243,7 @@ public class EdgeCaseCoverageTests
         var options = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 2,
-            Metrics = new Observability.MetricsOptions
+            Metrics = new Core.Observability.MetricsOptions
             {
                 SampleInterval = TimeSpan.FromMilliseconds(10),
                 OnMetricsSample = null
@@ -267,7 +267,7 @@ public class EdgeCaseCoverageTests
         var options = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 2,
-            Metrics = new Observability.MetricsOptions
+            Metrics = new Core.Observability.MetricsOptions
             {
                 SampleInterval = TimeSpan.FromMilliseconds(10),
                 OnMetricsSample = async _ =>
