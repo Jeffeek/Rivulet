@@ -43,7 +43,7 @@
   	<InternalsVisibleTo Include="Rivulet.Polly.Tests" />
   </ItemGroup>
   <ItemGroup>
-  	<PackageReference Include="System.Linq.Async" Version="6.0.3" />
+  	<PackageReference Include="System.Linq.Async" Version="7.0.0" />
   	<PackageReference Include="System.Threading.Channels" Version="10.0.0" />
   </ItemGroup>
 </Project>
