@@ -1,4 +1,3 @@
-using FluentAssertions;
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using Rivulet.Core.Observability;

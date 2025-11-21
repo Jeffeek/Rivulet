@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using FluentAssertions;
 using Rivulet.Core;
 using Rivulet.Core.Resilience;
 

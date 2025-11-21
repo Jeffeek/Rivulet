@@ -31,9 +31,10 @@ PROJECTS["DiagnosticsOpenTelemetry"]="src/Rivulet.Diagnostics.OpenTelemetry/Rivu
 PROJECTS["Testing"]="src/Rivulet.Testing/Rivulet.Testing.csproj"
 PROJECTS["Hosting"]="src/Rivulet.Hosting/Rivulet.Hosting.csproj"
 PROJECTS["Http"]="src/Rivulet.Http/Rivulet.Http.csproj"
+PROJECTS["Polly"]="src/Rivulet.Http/Rivulet.Polly.csproj"
 
 # Validate project parameter
-VALID_PROJECTS="Core Diagnostics DiagnosticsOpenTelemetry Testing Hosting All"
+VALID_PROJECTS="Core Diagnostics DiagnosticsOpenTelemetry Testing Hosting Http Polly All"
 if [[ ! " $VALID_PROJECTS " =~ " $PROJECT " ]]; then
     echo -e "${RED}Error: Invalid project '$PROJECT'${NC}"
     echo -e "${YELLOW}Valid projects: $VALID_PROJECTS${NC}"
@@ -201,6 +202,7 @@ echo -e "${GRAY}                             ./NugetPackage.sh <version> Diagnos
 echo -e "${GRAY}                             ./NugetPackage.sh <version> Testing${NC}"
 echo -e "${GRAY}                             ./NugetPackage.sh <version> Hosting${NC}"
 echo -e "${GRAY}                             ./NugetPackage.sh <version> Http${NC}"
+echo -e "${GRAY}                             ./NugetPackage.sh <version> Polly{NC}"
 echo -e "${GRAY}  - Build all packages:      ./NugetPackage.sh <version> All${NC}"
 echo -e "${GRAY}  - Test locally:            dotnet add package Rivulet.Core --source ./test-packages${NC}"
 echo ""

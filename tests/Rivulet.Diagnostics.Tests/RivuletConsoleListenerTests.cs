@@ -1,5 +1,4 @@
 using System.Runtime.InteropServices;
-using FluentAssertions;
 using Rivulet.Core;
 
 namespace Rivulet.Diagnostics.Tests;

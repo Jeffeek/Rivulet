@@ -27,6 +27,7 @@ jobs:
           - 'Rivulet.Testing'
           - 'Rivulet.Hosting'
           - 'Rivulet.Http'
+          - 'Rivulet.Polly'
       fail-fast: false
 
     steps:

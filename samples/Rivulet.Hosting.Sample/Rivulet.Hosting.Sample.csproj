@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
-
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
+    <LangVersion>12</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>false</IsPackable>
@@ -12,5 +12,4 @@
     <ProjectReference Include="..\..\src\Rivulet.Hosting\Rivulet.Hosting.csproj" />
     <ProjectReference Include="..\..\src\Rivulet.Diagnostics\Rivulet.Diagnostics.csproj" />
   </ItemGroup>
-
 </Project>

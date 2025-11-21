@@ -1,6 +1,4 @@
-﻿using FluentAssertions;
-
-namespace Rivulet.Core.Tests;
+﻿namespace Rivulet.Core.Tests;
 
 public class OrderedOutputTests
 {

@@ -1,4 +1,3 @@
-using FluentAssertions;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using Rivulet.Core;

@@ -30,8 +30,8 @@
    High  5 |  [OTel]✅           [Pipeline v2.0]
            |  [Sql.SqlServer]
            |
-   High  4 |  [Testing]✅   [Polly]✅  [Channels]
-           |  [Hosting]✅   [Sql]✅  [EntityFramework]
+   High  4 |  [Testing]✅   [Polly]✅  [EntityFramework]
+           |  [Hosting]✅   [Sql]✅
            |
   Medium 3 |  [Azure]   [Batching]   [Persistence]
            |  [Aws]     [Caching]    [Quotas]
@@ -90,7 +90,6 @@
 | Package | Description | Impact |
 |---------|-------------|--------|
 | **Rivulet.EntityFramework** | Parallel queries with automatic DbContext lifecycle, multi-tenant scenarios, parallel migrations, EF Core-aware retry logic | 🟢 High |
-| **Rivulet.Channels** | Priority queues, work-stealing, custom backpressure | 🟢 High |
 | **Rivulet.Batching** | Adaptive batching, time-window + size-window hybrid | 🟡 Med-High |
 | **Rivulet.Caching** | Async cache layers, de-dupe, dog-pile prevention | 🟡 Med-High |
 

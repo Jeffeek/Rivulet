@@ -1,5 +1,4 @@
 using System.Diagnostics.CodeAnalysis;
-using FluentAssertions;
 using System.Threading.Channels;
 
 namespace Rivulet.Testing.Tests;
