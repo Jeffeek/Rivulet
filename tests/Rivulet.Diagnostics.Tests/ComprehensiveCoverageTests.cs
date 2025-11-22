@@ -43,7 +43,7 @@ public class ComprehensiveCoverageTests
             {
                 await Task.Delay(1, ct);
                 return x;
-            }, new ParallelOptionsRivulet
+            }, new()
             {
                 MaxDegreeOfParallelism = 2
             })
@@ -71,7 +71,7 @@ public class ComprehensiveCoverageTests
                     {
                         await Task.Delay(1, ct);
                         return x;
-                    }, new ParallelOptionsRivulet
+                    }, new()
                     {
                         MaxDegreeOfParallelism = 2
                     })

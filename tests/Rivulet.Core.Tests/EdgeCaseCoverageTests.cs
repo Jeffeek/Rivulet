@@ -70,7 +70,7 @@ public class EdgeCaseCoverageTests
         {
             MaxDegreeOfParallelism = 2,
             ErrorMode = ErrorMode.BestEffort,
-            CircuitBreaker = new CircuitBreakerOptions
+            CircuitBreaker = new()
             {
                 FailureThreshold = 3,
                 OpenTimeout = TimeSpan.FromMilliseconds(100),
@@ -122,7 +122,7 @@ public class EdgeCaseCoverageTests
     {
         var options = new ParallelOptionsRivulet
         {
-            AdaptiveConcurrency = new AdaptiveConcurrencyOptions
+            AdaptiveConcurrency = new()
             {
                 MinConcurrency = 1,
                 MaxConcurrency = 10,
@@ -159,7 +159,7 @@ public class EdgeCaseCoverageTests
                 await Task.Delay(1, ct);
                 return x;
             },
-            new ParallelOptionsRivulet { MaxDegreeOfParallelism = 2 });
+            new() { MaxDegreeOfParallelism = 2 });
 
         result.Should().BeEmpty();
     }
@@ -175,7 +175,7 @@ public class EdgeCaseCoverageTests
                 await Task.Delay(10, ct);
                 return x * 2;
             },
-            new ParallelOptionsRivulet { MaxDegreeOfParallelism = 10 });
+            new() { MaxDegreeOfParallelism = 10 });
 
         result.Should().HaveCount(1).And.Contain(2);
     }
@@ -243,7 +243,7 @@ public class EdgeCaseCoverageTests
         var options = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 2,
-            Metrics = new Core.Observability.MetricsOptions
+            Metrics = new()
             {
                 SampleInterval = TimeSpan.FromMilliseconds(10),
                 OnMetricsSample = null
@@ -267,7 +267,7 @@ public class EdgeCaseCoverageTests
         var options = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 2,
-            Metrics = new Core.Observability.MetricsOptions
+            Metrics = new()
             {
                 SampleInterval = TimeSpan.FromMilliseconds(10),
                 OnMetricsSample = async _ =>

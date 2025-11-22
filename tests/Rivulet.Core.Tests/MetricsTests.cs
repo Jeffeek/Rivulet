@@ -23,7 +23,7 @@ public class MetricsTests
         var options = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 4,
-            Metrics = new MetricsOptions
+            Metrics = new()
             {
                 SampleInterval = TimeSpan.FromMilliseconds(50),
                 OnMetricsSample = snapshot =>
@@ -61,7 +61,7 @@ public class MetricsTests
         {
             MaxDegreeOfParallelism = 4,
             ErrorMode = ErrorMode.BestEffort,
-            Metrics = new MetricsOptions
+            Metrics = new()
             {
                 SampleInterval = TimeSpan.FromMilliseconds(50),
                 OnMetricsSample = snapshot =>
@@ -109,7 +109,7 @@ public class MetricsTests
             MaxDegreeOfParallelism = 4,
             MaxRetries = 3,
             IsTransient = ex => ex is InvalidOperationException,
-            Metrics = new MetricsOptions
+            Metrics = new()
             {
                 SampleInterval = TimeSpan.FromMilliseconds(50),
                 OnMetricsSample = snapshot =>
@@ -153,7 +153,7 @@ public class MetricsTests
                 throttleCount++;
                 return ValueTask.CompletedTask;
             },
-            Metrics = new MetricsOptions
+            Metrics = new()
             {
                 SampleInterval = TimeSpan.FromMilliseconds(50),
                 OnMetricsSample = snapshot =>
@@ -188,7 +188,7 @@ public class MetricsTests
         var options = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 8,
-            Metrics = new MetricsOptions
+            Metrics = new()
             {
                 SampleInterval = TimeSpan.FromMilliseconds(50),
                 OnMetricsSample = snapshot =>
@@ -224,7 +224,7 @@ public class MetricsTests
         var options = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 4,
-            Metrics = new MetricsOptions
+            Metrics = new()
             {
                 SampleInterval = TimeSpan.FromMilliseconds(50),
                 OnMetricsSample = snapshot =>
@@ -260,7 +260,7 @@ public class MetricsTests
         {
             MaxDegreeOfParallelism = 4,
             ErrorMode = ErrorMode.BestEffort,
-            Metrics = new MetricsOptions
+            Metrics = new()
             {
                 SampleInterval = TimeSpan.FromMilliseconds(50),
                 OnMetricsSample = snapshot =>
@@ -297,7 +297,7 @@ public class MetricsTests
         var options = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 4,
-            Metrics = new MetricsOptions
+            Metrics = new()
             {
                 SampleInterval = TimeSpan.FromMilliseconds(50),
                 OnMetricsSample = null
@@ -323,7 +323,7 @@ public class MetricsTests
         var options = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 4,
-            Metrics = new MetricsOptions
+            Metrics = new()
             {
                 SampleInterval = TimeSpan.FromMilliseconds(50),
                 OnMetricsSample = _ => throw new InvalidOperationException("Callback error")
@@ -351,7 +351,7 @@ public class MetricsTests
         var options = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 4,
-            Metrics = new MetricsOptions
+            Metrics = new()
             {
                 SampleInterval = TimeSpan.FromMilliseconds(50),
                 OnMetricsSample = _ =>
@@ -389,7 +389,7 @@ public class MetricsTests
         {
             MaxDegreeOfParallelism = 4,
             ErrorMode = ErrorMode.FailFast,
-            Metrics = new MetricsOptions
+            Metrics = new()
             {
                 SampleInterval = TimeSpan.FromMilliseconds(50),
                 OnMetricsSample = snapshot =>
@@ -426,7 +426,7 @@ public class MetricsTests
         var options1 = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 4,
-            Metrics = new MetricsOptions
+            Metrics = new()
             {
                 SampleInterval = TimeSpan.FromMilliseconds(10),
                 OnMetricsSample = snapshot => { snapshots1.Add(snapshot); return ValueTask.CompletedTask; }
@@ -436,7 +436,7 @@ public class MetricsTests
         var options2 = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 4,
-            Metrics = new MetricsOptions
+            Metrics = new()
             {
                 SampleInterval = TimeSpan.FromMilliseconds(10),
                 OnMetricsSample = snapshot => { snapshots2.Add(snapshot); return ValueTask.CompletedTask; }
@@ -483,7 +483,7 @@ public class MetricsTests
         {
             MaxDegreeOfParallelism = 4,
             OrderedOutput = true,
-            Metrics = new MetricsOptions
+            Metrics = new()
             {
                 SampleInterval = TimeSpan.FromMilliseconds(50),
                 OnMetricsSample = snapshot =>
@@ -546,7 +546,7 @@ public class MetricsTests
         var options = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 2,
-            Metrics = new MetricsOptions
+            Metrics = new()
             {
                 SampleInterval = TimeSpan.FromMilliseconds(20),
                 OnMetricsSample = _ =>
@@ -583,7 +583,7 @@ public class MetricsTests
 
         var options = new ParallelOptionsRivulet
         {
-            Metrics = new MetricsOptions
+            Metrics = new()
             {
                 SampleInterval = TimeSpan.FromMilliseconds(10),
                 OnMetricsSample = snapshot =>
@@ -624,7 +624,7 @@ public class MetricsTests
         var options = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 4,
-            Metrics = new MetricsOptions
+            Metrics = new()
             {
                 SampleInterval = TimeSpan.FromMilliseconds(50),
                 OnMetricsSample = snapshot =>
@@ -633,7 +633,7 @@ public class MetricsTests
                     return ValueTask.CompletedTask;
                 }
             },
-            Progress = new ProgressOptions
+            Progress = new()
             {
                 ReportInterval = TimeSpan.FromMilliseconds(50),
                 OnProgress = snapshot =>
@@ -673,7 +673,7 @@ public class MetricsTests
         var options = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 16,
-            Metrics = new MetricsOptions
+            Metrics = new()
             {
                 SampleInterval = TimeSpan.FromMilliseconds(100),
                 OnMetricsSample = snapshot =>
@@ -721,7 +721,7 @@ public class MetricsTests
             {
                 MaxDegreeOfParallelism = 4,
                 ErrorMode = errorMode,
-                Metrics = new MetricsOptions
+                Metrics = new()
                 {
                     SampleInterval = TimeSpan.FromMilliseconds(50),
                     OnMetricsSample = snapshot =>
@@ -959,7 +959,7 @@ public class MetricsTests
             MaxRetries = 2,
             IsTransient = ex => ex is InvalidOperationException,
             ErrorMode = ErrorMode.BestEffort,
-            Metrics = new MetricsOptions
+            Metrics = new()
             {
                 SampleInterval = TimeSpan.FromMilliseconds(50),
                 OnMetricsSample = snapshot =>
@@ -1063,7 +1063,7 @@ public class MetricsTests
     [Fact]
     public async Task MetricsTracker_WithNullCallback_SampleMetricsReturnsEarly()
     {
-        var tracker = new MetricsTracker(new MetricsOptions { OnMetricsSample = null }, CancellationToken.None);
+        var tracker = new MetricsTracker(new() { OnMetricsSample = null }, CancellationToken.None);
 
         try
         {
@@ -1080,7 +1080,7 @@ public class MetricsTests
     public async Task MetricsTracker_CallbackThrowsException_DoesNotCrash()
     {
         var callbackCount = 0;
-        var tracker = new MetricsTracker(new MetricsOptions
+        var tracker = new MetricsTracker(new()
         {
             SampleInterval = TimeSpan.FromMilliseconds(20),
             OnMetricsSample = _ =>
@@ -1112,7 +1112,7 @@ public class MetricsTests
     [Fact]
     public async Task MetricsTracker_Dispose_WithCallbackThrows_HandlesGracefully()
     {
-        var tracker = new MetricsTracker(new MetricsOptions
+        var tracker = new MetricsTracker(new()
         {
             SampleInterval = TimeSpan.FromMilliseconds(100),
             OnMetricsSample = _ => throw new InvalidOperationException("Error!")
@@ -1158,7 +1158,7 @@ public class MetricsTests
             BaseDelay = TimeSpan.FromMilliseconds(1),
             IsTransient = ex => ex is InvalidOperationException,
             ErrorMode = ErrorMode.BestEffort,
-            Metrics = new MetricsOptions
+            Metrics = new()
             {
                 SampleInterval = TimeSpan.FromMilliseconds(50),
                 OnMetricsSample = s =>
@@ -1173,7 +1173,7 @@ public class MetricsTests
         await source.SelectParallelAsync(
             (x, _) =>
             {
-                if (x != 5) return new ValueTask<int>(x * 2);
+                if (x != 5) return new(x * 2);
                 var attempt = Interlocked.Increment(ref attemptCount);
                 if (attempt <= 2) // Fail first 2 attempts
                     throw new InvalidOperationException("Transient");

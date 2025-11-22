@@ -174,7 +174,7 @@ public class EdgeCaseCoverageTests
             {
                 await Task.Delay(1, ct);
                 return x;
-            }, new ParallelOptionsRivulet())
+            }, new())
             .ToListAsync();
 
         await Task.Delay(100);

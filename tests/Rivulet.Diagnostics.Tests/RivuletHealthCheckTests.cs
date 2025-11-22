@@ -45,7 +45,7 @@ public class RivuletHealthCheckTests
     public async Task HealthCheck_ShouldReturnHealthy_WhenOperationsSucceed()
     {
         using var exporter = new PrometheusExporter();
-        var healthCheck = new RivuletHealthCheck(exporter, new RivuletHealthCheckOptions
+        var healthCheck = new RivuletHealthCheck(exporter, new()
         {
             ErrorRateThreshold = 1.0, // 100% - should always pass for successful operations
             FailureCountThreshold = 10000 // Very high threshold to avoid failures from previous tests
@@ -57,7 +57,7 @@ public class RivuletHealthCheckTests
             {
                 await Task.Delay(10, ct);
                 return x * 2;
-            }, new ParallelOptionsRivulet
+            }, new()
             {
                 MaxDegreeOfParallelism = 2
             })
@@ -79,7 +79,7 @@ public class RivuletHealthCheckTests
         using var exporter = new PrometheusExporter();
 
         // Use failure count threshold instead of error rate to avoid issues with shared static counters
-        var healthCheck = new RivuletHealthCheck(exporter, new RivuletHealthCheckOptions
+        var healthCheck = new RivuletHealthCheck(exporter, new()
         {
             ErrorRateThreshold = 1.0, // Set high to not trigger on rate
             FailureCountThreshold = 50 // Trigger on absolute failure count
@@ -94,7 +94,7 @@ public class RivuletHealthCheckTests
                 {
                     await Task.Delay(10, ct);
                     throw new InvalidOperationException("Test error");
-                }, new ParallelOptionsRivulet
+                }, new()
                 {
                     MaxDegreeOfParallelism = 8,
                     ErrorMode = ErrorMode.CollectAndContinue
@@ -124,7 +124,7 @@ public class RivuletHealthCheckTests
     public async Task HealthCheck_ShouldReturnUnhealthy_WhenFailureCountExceedsThreshold()
     {
         using var exporter = new PrometheusExporter();
-        var healthCheck = new RivuletHealthCheck(exporter, new RivuletHealthCheckOptions
+        var healthCheck = new RivuletHealthCheck(exporter, new()
         {
             ErrorRateThreshold = 1.0,
             FailureCountThreshold = 5
@@ -138,7 +138,7 @@ public class RivuletHealthCheckTests
                 {
                     await Task.Delay(10, ct);
                     throw new InvalidOperationException("Test error");
-                }, new ParallelOptionsRivulet
+                }, new()
                 {
                     MaxDegreeOfParallelism = 2,
                     ErrorMode = ErrorMode.CollectAndContinue
@@ -172,7 +172,7 @@ public class RivuletHealthCheckTests
     public async Task HealthCheck_ShouldReturnDegraded_WhenErrorRateExceedsThresholdButNotFailureCount()
     {
         using var exporter = new PrometheusExporter();
-        var healthCheck = new RivuletHealthCheck(exporter, new RivuletHealthCheckOptions
+        var healthCheck = new RivuletHealthCheck(exporter, new()
         {
             ErrorRateThreshold = 0.2,
             FailureCountThreshold = 1000
@@ -190,7 +190,7 @@ public class RivuletHealthCheckTests
                         throw new InvalidOperationException("Test error");
                     }
                     return x * 2;
-                }, new ParallelOptionsRivulet
+                }, new()
                 {
                     MaxDegreeOfParallelism = 2,
                     ErrorMode = ErrorMode.CollectAndContinue
@@ -269,7 +269,7 @@ public class RivuletHealthCheckTests
             {
                 await Task.Delay(10, ct);
                 return x * 2;
-            }, new ParallelOptionsRivulet
+            }, new()
             {
                 MaxDegreeOfParallelism = 2
             })

@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Rivulet.Core;
-using Rivulet.Core.Resilience;
 
 namespace Rivulet.Diagnostics.OpenTelemetry.Tests;
 
@@ -59,7 +58,7 @@ public class ParallelOptionsRivuletExtensionsTests
     {
         var activities = new System.Collections.Concurrent.ConcurrentBag<Activity>();
         var activityCount = 0;
-        var expectedCount = 3;
+        const int expectedCount = 3;
         using var allActivitiesStopped = new ManualResetEventSlim(false);
 
         using var listener = new ActivityListener();
@@ -261,7 +260,7 @@ public class ParallelOptionsRivuletExtensionsTests
         {
             MaxDegreeOfParallelism = 8, // Higher concurrency to ensure multiple tasks in flight
             ErrorMode = ErrorMode.BestEffort,
-            CircuitBreaker = new CircuitBreakerOptions
+            CircuitBreaker = new()
             {
                 FailureThreshold = 3,
                 OpenTimeout = TimeSpan.FromMilliseconds(100),
@@ -330,7 +329,7 @@ public class ParallelOptionsRivuletExtensionsTests
         var options = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 8,
-            AdaptiveConcurrency = new AdaptiveConcurrencyOptions
+            AdaptiveConcurrency = new()
             {
                 MinConcurrency = 1,
                 MaxConcurrency = 16,

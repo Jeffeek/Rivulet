@@ -27,7 +27,7 @@ public class EdgeCaseCoverageTests
     public async Task HealthCheck_ShouldHandleDegradedState()
     {
         using var exporter = new PrometheusExporter();
-        var healthCheck = new RivuletHealthCheck(exporter, new RivuletHealthCheckOptions
+        var healthCheck = new RivuletHealthCheck(exporter, new()
         {
             ErrorRateThreshold = 0.2,
             FailureCountThreshold = 50
@@ -43,7 +43,7 @@ public class EdgeCaseCoverageTests
                     if (x <= 90)
                         throw new InvalidOperationException("Test failure");
                     return x;
-                }, new ParallelOptionsRivulet
+                }, new()
                 {
                     MaxDegreeOfParallelism = 8,
                     ErrorMode = ErrorMode.CollectAndContinue
@@ -104,7 +104,7 @@ public class EdgeCaseCoverageTests
                             throw new InvalidOperationException("Retry");
                         }
                         return x;
-                    }, new ParallelOptionsRivulet
+                    }, new()
                     {
                         MaxRetries = 2,
                         IsTransient = _ => true,
@@ -142,7 +142,7 @@ public class EdgeCaseCoverageTests
                     {
                         await Task.Delay(1, ct);
                         return x;
-                    }, new ParallelOptionsRivulet
+                    }, new()
                     {
                         MaxDegreeOfParallelism = 2
                     })
@@ -158,7 +158,7 @@ public class EdgeCaseCoverageTests
                             if (x % 2 == 0)
                                 throw new InvalidOperationException();
                             return x;
-                        }, new ParallelOptionsRivulet
+                        }, new()
                         {
                             MaxDegreeOfParallelism = 2,
                             ErrorMode = ErrorMode.CollectAndContinue
@@ -202,7 +202,7 @@ public class EdgeCaseCoverageTests
                     {
                         await Task.Delay(1, ct);
                         return x;
-                    }, new ParallelOptionsRivulet
+                    }, new()
                     {
                         MaxDegreeOfParallelism = 2
                     })
@@ -238,7 +238,7 @@ public class EdgeCaseCoverageTests
                 {
                     await Task.Delay(1, ct);
                     return x;
-                }, new ParallelOptionsRivulet
+                }, new()
                 {
                     MaxDegreeOfParallelism = 2
                 })
@@ -267,7 +267,7 @@ public class EdgeCaseCoverageTests
             {
                 await Task.Delay(1, ct);
                 return x;
-            }, new ParallelOptionsRivulet
+            }, new()
             {
                 MaxDegreeOfParallelism = 2
             })
@@ -307,7 +307,7 @@ public class EdgeCaseCoverageTests
             {
                 await Task.Delay(1, ct);
                 return x;
-            }, new ParallelOptionsRivulet())
+            }, new())
             .ToListAsync();
 
         // Wait for EventSource counters to fire (1s default interval)

@@ -106,7 +106,7 @@ public sealed class DiagnosticsBuilder : IDisposable, IAsyncDisposable
     /// <returns>The builder for chaining.</returns>
     public DiagnosticsBuilder AddPrometheusExporter(out PrometheusExporter exporter)
     {
-        exporter = new PrometheusExporter();
+        exporter = new();
         _listeners.Add(exporter);
         return this;
     }

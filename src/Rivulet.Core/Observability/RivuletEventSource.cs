@@ -107,7 +107,7 @@ internal sealed class RivuletEventSource : EventSource
     {
         if (command.Command != EventCommand.Enable) return;
 
-        _itemsStartedCounter ??= new PollingCounter(
+        _itemsStartedCounter ??= new(
             RivuletMetricsConstants.CounterNames.ItemsStarted,
             this,
             () => GetItemsStarted())
@@ -116,7 +116,7 @@ internal sealed class RivuletEventSource : EventSource
             DisplayUnits = RivuletMetricsConstants.DisplayUnits.Items
         };
 
-        _itemsCompletedCounter ??= new PollingCounter(
+        _itemsCompletedCounter ??= new(
             RivuletMetricsConstants.CounterNames.ItemsCompleted,
             this,
             () => GetItemsCompleted())
@@ -125,7 +125,7 @@ internal sealed class RivuletEventSource : EventSource
             DisplayUnits = RivuletMetricsConstants.DisplayUnits.Items
         };
 
-        _totalRetriesCounter ??= new PollingCounter(
+        _totalRetriesCounter ??= new(
             RivuletMetricsConstants.CounterNames.TotalRetries,
             this,
             () => GetTotalRetries())
@@ -134,7 +134,7 @@ internal sealed class RivuletEventSource : EventSource
             DisplayUnits = RivuletMetricsConstants.DisplayUnits.Retries
         };
 
-        _totalFailuresCounter ??= new PollingCounter(
+        _totalFailuresCounter ??= new(
             RivuletMetricsConstants.CounterNames.TotalFailures,
             this,
             () => GetTotalFailures())
@@ -143,7 +143,7 @@ internal sealed class RivuletEventSource : EventSource
             DisplayUnits = RivuletMetricsConstants.DisplayUnits.Failures
         };
 
-        _throttleEventsCounter ??= new PollingCounter(
+        _throttleEventsCounter ??= new(
             RivuletMetricsConstants.CounterNames.ThrottleEvents,
             this,
             () => GetThrottleEvents())
@@ -152,7 +152,7 @@ internal sealed class RivuletEventSource : EventSource
             DisplayUnits = RivuletMetricsConstants.DisplayUnits.Events
         };
 
-        _drainEventsCounter ??= new PollingCounter(
+        _drainEventsCounter ??= new(
             RivuletMetricsConstants.CounterNames.DrainEvents,
             this,
             () => GetDrainEvents())

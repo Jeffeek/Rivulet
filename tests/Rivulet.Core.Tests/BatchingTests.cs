@@ -110,7 +110,7 @@ public class BatchingTests
                 await Task.Delay(Random.Shared.Next(5, 20), ct);
                 return batch.First();
             },
-            new ParallelOptionsRivulet
+            new()
             {
                 MaxDegreeOfParallelism = 5,
                 OrderedOutput = true
@@ -133,10 +133,10 @@ public class BatchingTests
                 await Task.Delay(10, ct);
                 return batch.Sum();
             },
-            new ParallelOptionsRivulet
+            new()
             {
                 MaxDegreeOfParallelism = 5,
-                Progress = new ProgressOptions
+                Progress = new()
                 {
                     ReportInterval = TimeSpan.FromMilliseconds(50),
                     OnProgress = snapshot =>
@@ -172,7 +172,7 @@ public class BatchingTests
 
                 return batch.Sum();
             },
-            new ParallelOptionsRivulet
+            new()
             {
                 MaxRetries = 2,
                 IsTransient = ex => ex is InvalidOperationException,
@@ -197,7 +197,7 @@ public class BatchingTests
                     throw new InvalidOperationException("Permanent error");
                 return batch.Sum();
             },
-            new ParallelOptionsRivulet
+            new()
             {
                 MaxRetries = 0,
                 ErrorMode = ErrorMode.BestEffort
@@ -337,7 +337,7 @@ public class BatchingTests
                 await Task.Delay(Random.Shared.Next(5, 20), ct);
                 return batch.First();
             },
-            new ParallelOptionsRivulet
+            new()
             {
                 MaxDegreeOfParallelism = 5,
                 OrderedOutput = true
@@ -385,7 +385,7 @@ public class BatchingTests
                 await Task.Delay(1, ct);
                 return batch.Count;
             },
-            new ParallelOptionsRivulet
+            new()
             {
                 MaxDegreeOfParallelism = 4
             });
@@ -407,9 +407,9 @@ public class BatchingTests
                 await Task.Delay(10, ct);
                 return batch.Sum();
             },
-            new ParallelOptionsRivulet
+            new()
             {
-                Progress = new ProgressOptions
+                Progress = new()
                 {
                     ReportInterval = TimeSpan.FromMilliseconds(50),
                     OnProgress = snapshot =>
@@ -436,7 +436,7 @@ public class BatchingTests
                 await Task.Delay(5, ct);
                 return batch.Single();
             },
-            new ParallelOptionsRivulet { OrderedOutput = true });
+            new() { OrderedOutput = true });
 
         results.Should().HaveCount(10);
         results.Should().Equal(Enumerable.Range(1, 10));
@@ -454,7 +454,7 @@ public class BatchingTests
                 await Task.Delay(5, ct);
                 return batch.Single();
             },
-            new ParallelOptionsRivulet { OrderedOutput = true }).ToListAsync();
+            new() { OrderedOutput = true }).ToListAsync();
 
         results.Should().HaveCount(10);
         results.Should().Equal(Enumerable.Range(1, 10));
@@ -481,14 +481,14 @@ public class BatchingTests
 
                 return batch.Sum();
             },
-            new ParallelOptionsRivulet
+            new()
             {
                 MaxDegreeOfParallelism = 3,
                 MaxRetries = 2,
                 IsTransient = ex => ex is InvalidOperationException,
                 ErrorMode = ErrorMode.CollectAndContinue,
                 OrderedOutput = true,
-                Progress = new ProgressOptions
+                Progress = new()
                 {
                     ReportInterval = TimeSpan.FromMilliseconds(50),
                     OnProgress = snapshot =>
@@ -583,7 +583,7 @@ public class BatchingTests
                 await Task.Delay(5, ct);
                 return batch.Sum();
             },
-            new ParallelOptionsRivulet
+            new()
             {
                 PerItemTimeout = TimeSpan.FromSeconds(1)
             });
@@ -763,7 +763,7 @@ public class BatchingTests
         {
             await Task.Delay(5, ct);
             return batch.Count;
-        }, new ParallelOptionsRivulet
+        }, new()
         {
             MaxDegreeOfParallelism = 2,
             OnStartItemAsync = idx =>
@@ -844,7 +844,7 @@ public class BatchingTests
                 await Task.Delay(5, ct);
                 if (batch.First() == 21) throw new InvalidOperationException("Test exception");
                 return batch.Sum();
-            }, new ParallelOptionsRivulet { ErrorMode = ErrorMode.FailFast }, batchTimeout: null)
+            }, new() { ErrorMode = ErrorMode.FailFast }, batchTimeout: null)
             .CountAsync();
         };
 

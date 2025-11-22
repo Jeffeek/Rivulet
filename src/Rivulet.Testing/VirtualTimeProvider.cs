@@ -79,7 +79,7 @@ public sealed class VirtualTimeProvider : IDisposable
         LockHelper.Execute(_lock, () =>
         {
             var executionTime = _currentTime + delay;
-            _scheduledTasks.Add(new ScheduledTask(executionTime, tcs));
+            _scheduledTasks.Add(new(executionTime, tcs));
         });
 
         return tcs.Task;

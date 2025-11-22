@@ -71,7 +71,7 @@ public class AdaptiveConcurrencyTests
     [Fact]
     public async Task AdaptiveConcurrencyController_InitialConcurrency_UsesConfiguredValue()
     {
-        await using var controller = new AdaptiveConcurrencyController(new AdaptiveConcurrencyOptions
+        await using var controller = new AdaptiveConcurrencyController(new()
         {
             MinConcurrency = 5,
             MaxConcurrency = 20,
@@ -84,7 +84,7 @@ public class AdaptiveConcurrencyTests
     [Fact]
     public async Task AdaptiveConcurrencyController_InitialConcurrency_DefaultsToMin()
     {
-        await using var controller = new AdaptiveConcurrencyController(new AdaptiveConcurrencyOptions
+        await using var controller = new AdaptiveConcurrencyController(new()
         {
             MinConcurrency = 5,
             MaxConcurrency = 20
@@ -101,7 +101,7 @@ public class AdaptiveConcurrencyTests
 
         var options = new ParallelOptionsRivulet
         {
-            AdaptiveConcurrency = new AdaptiveConcurrencyOptions
+            AdaptiveConcurrency = new()
             {
                 MinConcurrency = 1,
                 MaxConcurrency = 10,
@@ -152,7 +152,7 @@ public class AdaptiveConcurrencyTests
 
         var options = new ParallelOptionsRivulet
         {
-            AdaptiveConcurrency = new AdaptiveConcurrencyOptions
+            AdaptiveConcurrency = new()
             {
                 MinConcurrency = 1,
                 MaxConcurrency = 10,
@@ -204,7 +204,7 @@ public class AdaptiveConcurrencyTests
 
         var options = new ParallelOptionsRivulet
         {
-            AdaptiveConcurrency = new AdaptiveConcurrencyOptions
+            AdaptiveConcurrency = new()
             {
                 MinConcurrency = 1,
                 MaxConcurrency = 10,
@@ -260,7 +260,7 @@ public class AdaptiveConcurrencyTests
 
         var options = new ParallelOptionsRivulet
         {
-            AdaptiveConcurrency = new AdaptiveConcurrencyOptions
+            AdaptiveConcurrency = new()
             {
                 MinConcurrency = 3,
                 MaxConcurrency = 5,
@@ -305,7 +305,7 @@ public class AdaptiveConcurrencyTests
 
         var options = new ParallelOptionsRivulet
         {
-            AdaptiveConcurrency = new AdaptiveConcurrencyOptions
+            AdaptiveConcurrency = new()
             {
                 MinConcurrency = 1,
                 MaxConcurrency = 8,
@@ -354,7 +354,7 @@ public class AdaptiveConcurrencyTests
         var options = new ParallelOptionsRivulet
         {
             OrderedOutput = true,
-            AdaptiveConcurrency = new AdaptiveConcurrencyOptions
+            AdaptiveConcurrency = new()
             {
                 MinConcurrency = 1,
                 MaxConcurrency = 6,
@@ -386,7 +386,7 @@ public class AdaptiveConcurrencyTests
         var options = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 4, // Limit concurrency for more predictable cancellation
-            AdaptiveConcurrency = new AdaptiveConcurrencyOptions
+            AdaptiveConcurrency = new()
             {
                 MinConcurrency = 1,
                 MaxConcurrency = 4, // Match MaxDegreeOfParallelism
@@ -425,7 +425,7 @@ public class AdaptiveConcurrencyTests
     [Fact]
     public async Task AdaptiveConcurrencyController_Dispose_StopsAdjustments()
     {
-        var controller = new AdaptiveConcurrencyController(new AdaptiveConcurrencyOptions
+        var controller = new AdaptiveConcurrencyController(new()
         {
             MinConcurrency = 1,
             MaxConcurrency = 10,
@@ -446,7 +446,7 @@ public class AdaptiveConcurrencyTests
 
         var options = new ParallelOptionsRivulet
         {
-            AdaptiveConcurrency = new AdaptiveConcurrencyOptions
+            AdaptiveConcurrency = new()
             {
                 MinConcurrency = 1,
                 MaxConcurrency = 20,
@@ -498,7 +498,7 @@ public class AdaptiveConcurrencyTests
 
         var options = new ParallelOptionsRivulet
         {
-            AdaptiveConcurrency = new AdaptiveConcurrencyOptions
+            AdaptiveConcurrency = new()
             {
                 MinConcurrency = 1,
                 MaxConcurrency = 15,
@@ -551,7 +551,7 @@ public class AdaptiveConcurrencyTests
 
         var options = new ParallelOptionsRivulet
         {
-            AdaptiveConcurrency = new AdaptiveConcurrencyOptions
+            AdaptiveConcurrency = new()
             {
                 MinConcurrency = 1,
                 MaxConcurrency = 10,
@@ -583,7 +583,7 @@ public class AdaptiveConcurrencyTests
     [Fact]
     public async Task AdaptiveConcurrency_DisposeDuringSampling_HandlesGracefully()
     {
-        await using var controller = new AdaptiveConcurrencyController(new AdaptiveConcurrencyOptions
+        await using var controller = new AdaptiveConcurrencyController(new()
         {
             MinConcurrency = 1,
             MaxConcurrency = 10,

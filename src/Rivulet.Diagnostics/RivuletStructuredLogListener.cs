@@ -40,7 +40,7 @@ public sealed class RivuletStructuredLogListener : RivuletEventListenerBase, IAs
     public RivuletStructuredLogListener(string filePath, bool writeIndented = false)
     {
         _filePath = filePath ?? throw new ArgumentNullException(nameof(filePath));
-        _jsonOptions = new JsonSerializerOptions { WriteIndented = writeIndented };
+        _jsonOptions = new() { WriteIndented = writeIndented };
         InitializeWriter();
     }
 
@@ -52,7 +52,7 @@ public sealed class RivuletStructuredLogListener : RivuletEventListenerBase, IAs
     public RivuletStructuredLogListener(Action<string> logAction, bool writeIndented = false)
     {
         _logAction = logAction ?? throw new ArgumentNullException(nameof(logAction));
-        _jsonOptions = new JsonSerializerOptions { WriteIndented = writeIndented };
+        _jsonOptions = new() { WriteIndented = writeIndented };
     }
 
     /// <summary>
@@ -98,7 +98,7 @@ public sealed class RivuletStructuredLogListener : RivuletEventListenerBase, IAs
             Directory.CreateDirectory(directory);
         }
 
-        _writer = new StreamWriter(_filePath, append: true, System.Text.Encoding.UTF8)
+        _writer = new(_filePath, append: true, System.Text.Encoding.UTF8)
         {
             AutoFlush = false
         };
