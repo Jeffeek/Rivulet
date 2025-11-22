@@ -940,17 +940,28 @@ See [tests/Rivulet.Benchmarks/README.md](tests/Rivulet.Benchmarks/README.md) for
 
 See the full [Roadmap](docs/ROADMAP.md) for detailed plans.
 
-### v1.3.0 (Q2-Q3 2025) - ✅ Completed
-- **Rivulet.Http** ✅ - HttpClient operators, resilient downloads
-- **Rivulet.Sql** ✅ - Safe parallel database operations, connection pooling
-- **Rivulet.Polly** ✅ - Polly integration, hedging, result-based retry
+### v1.3.0 (Q2-Q3 2025) - 🚧 In Development
+- **Rivulet.Http** 🚧 - HttpClient operators, resilient downloads
+- **Rivulet.Sql** 🚧 - Safe parallel database operations, connection pooling
+- **Rivulet.Polly** 🚧 - Polly integration, hedging, result-based retry
 
-### Future Versions
-- **Rivulet.Sql.SqlServer** - SqlBulkCopy integration (10-100x faster)
-- **Rivulet.Azure / Rivulet.Aws** - Cloud provider integrations
-- **Rivulet.EntityFramework** - EF Core parallel queries, multi-tenant support
-- **Rivulet.Kafka / RabbitMQ / SQS** - Message queue integrations
-- **v2.0.0** - Multi-stage pipeline composition API
+### v1.4.0 (Q4 2025) - Fundamentals + Database Performance
+- **Rivulet.Sql.SqlServer** - SqlBulkCopy integration (10-100x faster bulk inserts)
+- **Rivulet.Json** 🆕 - Parallel JSON processing, deserialization, JsonPath queries
+- **Rivulet.IO** 🆕 - Parallel file operations, directory processing
+- **Rivulet.Azure.Storage** - Blob Storage parallel operations
+- **Rivulet.Aws.S3** - S3 parallel operations
+
+### v1.5.0 (Q1-Q2 2026) - ORM + Data Formats
+- **Rivulet.EntityFramework** - EF Core parallel queries, multi-tenant support, safe DbContext management
+- **Rivulet.Csv** 🆕 - Parallel CSV parsing and writing
+
+### v1.6.0 (Q3 2026) - Multi-Database Performance
+- **Rivulet.Sql.PostgreSql** - COPY command integration (10-100x faster)
+- **Rivulet.Sql.MySql** - LOAD DATA INFILE integration (10-100x faster)
+
+### v2.0.0 (2027) - Pipeline Composition
+- **Pipeline Composition API** - Multi-stage processing with different concurrency per stage
 
 ---
 
