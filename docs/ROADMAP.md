@@ -1,6 +1,6 @@
 # Rivulet Roadmap & Packages
 
-## Current Status (v1.3.0)
+## Current Status (v1.3.0 - In Development)
 
 ### ✅ Implemented in Rivulet.Core v1.1.x
 - EventCounters + Metrics
@@ -14,7 +14,7 @@
 - **Rivulet.Testing** - Virtual time, chaos injection, test helpers
 - **Rivulet.Hosting** - .NET Generic Host integration
 
-### ✅ Completed Packages (v1.3.0)
+### 🚧 In Development (v1.3.0)
 - **Rivulet.Http** - Parallel HTTP operations, resilient downloads, HttpClientFactory integration
 - **Rivulet.Sql** - Provider-agnostic parallel SQL operations, connection pooling awareness, bulk operations
 - **Rivulet.Polly** - Integration with Polly resilience library, advanced patterns (hedging, result-based retry)
@@ -26,21 +26,19 @@
 ```
          Impact
            ^
-   Very    |  [Diagnostics]✅    [Http]✅
-   High  5 |  [OTel]✅           [Pipeline v2.0]
-           |  [Sql.SqlServer]
+   Very    |  [Diagnostics]✅    [Http]🚧     [Sql.SqlServer]
+   High  5 |  [Diagnostics.OpenTelemetry]✅           [EntityFramework]
+           |  [Json]🆕  [IO]🆕
            |
-   High  4 |  [Testing]✅   [Polly]✅  [EntityFramework]
-           |  [Hosting]✅   [Sql]✅
+   High  4 |  [Testing]✅   [Polly]🚧  [Csv]🆕
+           |  [Hosting]✅   [Sql]🚧    [Azure.Storage]
            |
-  Medium 3 |  [Azure]   [Batching]   [Persistence]
-           |  [Aws]     [Caching]    [Quotas]
-           |  [Sql.PostgreSql]  [Sql.MySql]
+  Medium 3 |  [Aws.S3]  [Sql.PostgreSql]  [Sql.MySql]
+           |  [Pipeline v2.0]
            |
-   Low   2 |  [Kafka]  [Serialization]  [Prometheus]
-           |  [RabbitMQ]  [SQS]
+   Low   2 |  [Batching?]  [Generators?]
            |
-         1 |  [Tracing]  [Dataflow]  [Generators]
+         1 |
            |
            +---------------------------------------->
               Low     Medium    Med-High    High
@@ -52,48 +50,59 @@
 
 ## Roadmap by Version
 
-### v1.3.0 - Common Integrations ✅ (Q2-Q3 2025)
-**Goal**: Make common scenarios turnkey
+### v1.4.0 - Fundamentals + Database Performance (Q4 2025)
+**Goal**: Cover the basics (JSON, IO) + high-performance database operations
 
-| Package | Description | Impact |
-|---------|-------------|--------|
-| **Rivulet.Http** ✅ | HttpClient operators, streaming, resilient downloads | 🟢 Very High |
-| **Rivulet.Sql** ✅ | Provider-agnostic parallel SQL operations, connection pooling, batching | 🟢 High |
-| **Rivulet.Polly** ✅ | Integration with Polly resilience library, advanced patterns (hedging, result-based retry) | 🟢 High |
+| Package | Description | Impact | Status |
+|---------|-------------|--------|--------|
+| **Rivulet.Sql.SqlServer** | SqlBulkCopy integration (10-100x faster bulk inserts), table-valued parameters, SQL Server-specific optimizations | 🟢 Very High | Planned |
+| **Rivulet.Json** 🆕 | Parallel JSON deserialization from streams, System.Text.Json/Newtonsoft.Json support, JsonPath parallel queries | 🟢 Very High | Planned |
+| **Rivulet.IO** 🆕 | Parallel file reading/writing, directory operations, file transformations | 🟢 Very High | Planned |
+| **Rivulet.Azure.Storage** | Blob Storage parallel operations (download, upload, transformation) | 🟡 Med-High | Planned |
+| **Rivulet.Aws.S3** | S3 parallel operations (get, put, batch operations) | 🟡 Med-High | Planned |
 
-**Why**: HTTP is 80% of I/O workloads. Database parallelization is critical for performance. Polly is the industry-standard resilience library - native integration provides best-of-both-worlds.
+**Why**:
+- **JSON is everywhere**: 90% of modern APIs use JSON. Parallel processing is critical.
+- **File I/O is fundamental**: Data processing pipelines need parallel file operations.
+- **SqlBulkCopy provides 10-100x performance**: SQL Server users need this for high-throughput workloads.
+- **Cloud storage is common**: But scope down to storage only (Blob/S3), not full cloud suites.
+
+**Example (Rivulet.Json)**:
+```csharp
+// Parallel JSON deserialization from multiple files
+var users = await jsonFiles
+    .DeserializeParallelAsync<User>(new JsonOptions { ... });
+
+// Parallel JsonPath queries
+var results = await documents
+    .SelectParallelAsync(doc => doc.SelectTokens("$.orders[?(@.total > 100)]"));
+```
+
+**Example (Rivulet.IO)**:
+```csharp
+// Parallel file processing
+await Directory.GetFiles("*.csv")
+    .ProcessFilesParallelAsync(ProcessFileAsync, new ParallelOptionsRivulet { ... });
+```
 
 **Note**:
-- Rivulet.Sql is provider-agnostic and works with SQL Server, PostgreSQL, MySQL, SQLite, Oracle, and any ADO.NET provider.
-- Rivulet.Core has built-in retry/circuit breaker for parallel operations. Use Rivulet.Polly for advanced Polly features (hedging, result-based retry, etc.) or to use Polly policies with Rivulet.
+- Rivulet.Sql.SqlServer is optional - use base Rivulet.Sql for cross-database code.
+- Azure/AWS packages focus on storage only. Other services (Functions, Cosmos, Lambda) deferred.
 
 ---
 
-### v1.4.0 - High-Performance Database (Q4 2025)
-**Goal**: Provider-specific optimizations for massive performance gains
+### v1.5.0 - ORM + Data Formats (Q1-Q2 2026)
+**Goal**: Entity Framework integration and common data formats
 
-| Package | Description | Impact |
-|---------|-------------|--------|
-| **Rivulet.Sql.SqlServer** | SqlBulkCopy integration (10-100x faster bulk inserts), table-valued parameters, SQL Server-specific optimizations | 🟢 Very High |
-| **Rivulet.Azure** | Blob Storage, Cosmos DB, Service Bus, Functions adapters | 🟡 Med-High |
-| **Rivulet.Aws** | S3, DynamoDB, SQS, Lambda adapters | 🟡 Med-High |
+| Package | Description | Impact | Status |
+|---------|-------------|--------|--------|
+| **Rivulet.EntityFramework** | Parallel queries with automatic DbContext lifecycle, multi-tenant scenarios, parallel migrations, EF Core-aware retry logic | 🟢 Very High | Planned |
+| **Rivulet.Csv** 🆕 | Parallel CSV parsing (CsvHelper integration), parallel CSV writing with batching | 🟢 High | Planned |
 
-**Why**: SqlBulkCopy provides 10-100x performance improvement over batched INSERTs. Users with high-throughput SQL Server workloads need this.
-
-**Note**: Rivulet.Sql.SqlServer is optional - use base Rivulet.Sql for cross-database code. Use provider-specific packages for maximum performance.
-
----
-
-### v1.5.0 - ORM & Advanced Features (Q1-Q2 2026)
-**Goal**: Entity Framework integration and sophisticated data processing
-
-| Package | Description | Impact |
-|---------|-------------|--------|
-| **Rivulet.EntityFramework** | Parallel queries with automatic DbContext lifecycle, multi-tenant scenarios, parallel migrations, EF Core-aware retry logic | 🟢 High |
-| **Rivulet.Batching** | Adaptive batching, time-window + size-window hybrid | 🟡 Med-High |
-| **Rivulet.Caching** | Async cache layers, de-dupe, dog-pile prevention | 🟡 Med-High |
-
-**Why**: Entity Framework Core is extremely popular. Users need safe parallel context management for multi-tenant queries, report generation, and parallel migrations.
+**Why**:
+- Entity Framework Core is extremely popular. Safe parallel context management is a huge pain point.
+- Multi-tenant parallel queries are a common scenario that's difficult to get right.
+- CSV is ubiquitous in data processing and ETL pipelines.
 
 **Note**:
 - **Focus**: Context lifecycle management, parallel queries, multi-tenant scenarios
@@ -111,19 +120,21 @@ var results = await tenantIds.QueryParallelAsync(
         QueryTracking = QueryTrackingBehavior.NoTracking,
         ParallelOptions = new ParallelOptionsRivulet { MaxDegreeOfParallelism = 10 }
     });
+
+// Parallel CSV parsing
+var records = await csvFiles
+    .ParseCsvParallelAsync<Product>(new CsvOptions { ... });
 ```
 
 ---
 
-### v1.6.0 - Multi-Database & Durability (Q3 2026)
-**Goal**: PostgreSQL/MySQL optimizations and long-running pipelines
+### v1.6.0 - Multi-Database Performance (Q3 2026)
+**Goal**: PostgreSQL and MySQL-specific optimizations
 
-| Package | Description | Impact |
-|---------|-------------|--------|
-| **Rivulet.Sql.PostgreSql** | COPY command integration (very fast bulk operations), Npgsql-specific features, PostgreSQL-specific optimizations | 🟡 Medium |
-| **Rivulet.Sql.MySql** | LOAD DATA INFILE integration, MySqlConnector optimizations, MySQL-specific features | 🟡 Medium |
-| **Rivulet.Persistence** | Checkpointing, resume, idempotency tokens | 🟡 Medium |
-| **Rivulet.Quotas** | Token bucket per tenant/key, dynamic throttles | 🟡 Medium |
+| Package | Description | Impact | Status |
+|---------|-------------|--------|--------|
+| **Rivulet.Sql.PostgreSql** | COPY command integration (very fast bulk operations), Npgsql-specific features, PostgreSQL-specific optimizations | 🟡 Medium-High | Planned |
+| **Rivulet.Sql.MySql** | LOAD DATA INFILE integration, MySqlConnector optimizations, MySQL-specific features | 🟡 Medium | Planned |
 
 **Why**: PostgreSQL and MySQL users need provider-specific bulk operation performance similar to SqlBulkCopy.
 
@@ -131,28 +142,7 @@ var results = await tenantIds.QueryParallelAsync(
 
 ---
 
-### v1.7.0 - Message Queues (Q4 2026)
-**Goal**: Event-driven workloads
-
-| Package | Description | Impact |
-|---------|-------------|--------|
-| **Rivulet.Kafka** | Backpressure-aware consumption, checkpointing | 🟡 Med-High |
-| **Rivulet.RabbitMQ** | Channel pooling, ack/nack semantics | 🟡 Medium |
-| **Rivulet.SQS** | Visibility timeout management, batch operations | 🟡 Medium |
-
----
-
-### v1.8.0 - Performance (Q1 2027)
-**Goal**: Optimize hot paths
-
-| Package | Description | Impact |
-|---------|-------------|--------|
-| **Rivulet.Serialization** | High-performance serializers (JSON, protobuf, MessagePack) | 🟡 Medium |
-| **Rivulet.Monitoring.Prometheus** | Prometheus metrics exporter | 🟡 Medium |
-
----
-
-### v2.0.0 - Pipeline Composition (Q2 2027)
+### v2.0.0 - Pipeline Composition (Q2-Q3 2027)
 **Goal**: Multi-stage processing framework
 
 **Core Enhancement**: Pipeline Composition API
@@ -176,16 +166,34 @@ var pipeline = PipelineBuilder<string, ProcessedData>
 var results = await pipeline.ExecuteAsync(cancellationToken);
 ```
 
+**Why**: This is the natural evolution of Rivulet. Multi-stage pipelines are common in real-world scenarios.
+
 ---
 
-### v2.1.0 - Advanced Tooling (Q3 2027)
-**Goal**: Enhanced developer experience
+### Future Considerations (Post-v2.0)
 
-| Package | Description | Impact |
-|---------|-------------|--------|
-| **Rivulet.Generators** | Source generators for compile-time optimizations | 🟡 Medium |
-| **Rivulet.Dataflow** | TPL Dataflow interoperability, migration helpers | 🟡 Medium |
-| **Rivulet.Tracing** | Lightweight tracing without full OTel dependency | 🟡 Medium |
+#### Under Evaluation
+
+| Package | Status | Reasoning |
+|---------|--------|-----------|
+| **Rivulet.Batching** | ❓ Deferred | Rivulet.Core already has BatchParallelAsync. Only create if adaptive batching/complex features justify separate package. **Wait for user demand.** |
+| **Rivulet.Generators** | ❓ Deferred | Source generators are complex to maintain. Only worth it if perf analysis shows clear gains. **Defer until v2.0 is stable.** |
+
+#### Explicitly Removed
+
+| Package | Status | Reasoning |
+|---------|--------|-----------|
+| **Rivulet.Caching** | ❌ Removed | Overlaps with existing .NET caching (IMemoryCache, IDistributedCache). **Provide samples instead.** |
+| **Rivulet.Persistence** | ❌ Removed | Checkpointing/resume is complex. Many existing solutions (Durable Task, Rebus, MassTransit). **Don't reinvent wheel.** |
+| **Rivulet.Quotas** | ❌ Removed | Token bucket per tenant is already in Core (RateLimiter). **Might not need separate package.** |
+| **Rivulet.Kafka** | ❌ Removed | Heavy dependency, significant maintenance burden. **Wait for v2.0 pipeline API + user demand.** |
+| **Rivulet.RabbitMQ** | ❌ Removed | Heavy dependency, overlaps with MassTransit/NServiceBus. **Wait for v2.0 pipeline API + user demand.** |
+| **Rivulet.SQS** | ❌ Removed | Heavy dependency, AWS SDK complexity. **Wait for v2.0 pipeline API + user demand.** |
+| **Rivulet.Serialization** | ❌ Removed | System.Text.Json, MessagePack, protobuf-net already exist. **Users can use any serializer. Provide samples instead.** |
+| **Rivulet.Monitoring.Prometheus** | ❌ Removed | **Already exists in Rivulet.Diagnostics!** PrometheusExporter is included. **Redundant package.** |
+| **Rivulet.Dataflow** | ❌ Removed | TPL Dataflow is built into .NET. **Provide migration guide/samples instead of package.** |
+| **Rivulet.Tracing** | ❌ Removed | Lightweight tracing exists (Activity API, System.Diagnostics). **Use existing .NET tracing APIs.** |
+| **Full Azure/AWS packages** | ❌ Removed | Too broad. **Focus on storage (Blob/S3) first.** Defer other services (Cosmos, Functions, Lambda, DynamoDB) until storage proves demand. |
 
 ---
 
@@ -195,7 +203,9 @@ var results = await pipeline.ExecuteAsync(cancellationToken);
 
 - **📊 Monitor production pipelines** → `Rivulet.Diagnostics`, `Rivulet.Diagnostics.OpenTelemetry`
 - **🌐 Call HTTP APIs in parallel** → `Rivulet.Http`
-- **☁️ Process cloud storage files** → `Rivulet.Azure` or `Rivulet.Aws`
+- **📄 Process JSON files/APIs** → `Rivulet.Json` (v1.4.0+)
+- **📁 Process files in parallel** → `Rivulet.IO` (v1.4.0+)
+- **☁️ Process cloud storage files** → `Rivulet.Azure.Storage` or `Rivulet.Aws.S3` (v1.4.0+)
 - **🗃️ Run parallel database operations** → Start with `Rivulet.Sql` (works with any database)
   - **High-performance SQL Server bulk operations** → `Rivulet.Sql.SqlServer` (10-100x faster)
   - **High-performance PostgreSQL bulk operations** → `Rivulet.Sql.PostgreSql` (v1.6.0+)
@@ -204,8 +214,7 @@ var results = await pipeline.ExecuteAsync(cancellationToken);
   - Parallel queries across tenant databases
   - Multi-tenant scenarios with automatic DbContext lifecycle
   - Parallel database migrations
-- **📨 Process message queue events** → `Rivulet.Kafka`, `Rivulet.RabbitMQ`, `Rivulet.SQS`
-- **⚡ Optimize performance-critical code** → `Rivulet.Serialization`, `Rivulet.Caching`
+- **📊 Process CSV files** → `Rivulet.Csv` (v1.5.0+)
 - **🏢 Deploy as hosted service** → `Rivulet.Hosting`
 - **🧪 Test my pipeline code** → `Rivulet.Testing`
 - **🔄 Build multi-stage pipeline** → Wait for v2.0.0 Pipeline Composition API
@@ -216,35 +225,36 @@ var results = await pipeline.ExecuteAsync(cancellationToken);
 
 ### Production Web API
 ```
-Rivulet.Core + Rivulet.Http + Rivulet.Diagnostics.OpenTelemetry
+Rivulet.Core + Rivulet.Http + Rivulet.Json + Rivulet.Diagnostics.OpenTelemetry
 + Rivulet.Hosting
 ```
 
 ### Cloud ETL Pipeline
 ```
-Rivulet.Core + Rivulet.Azure + Rivulet.Sql + Rivulet.Sql.SqlServer
-+ Rivulet.Diagnostics + Rivulet.Batching
+Rivulet.Core + Rivulet.Azure.Storage + Rivulet.Sql + Rivulet.Sql.SqlServer
++ Rivulet.Diagnostics + Rivulet.IO + Rivulet.Csv
 ```
 
 ### High-Throughput Data Processing
 ```
 Rivulet.Core + Rivulet.Sql.SqlServer (or .PostgreSql/.MySql)
-+ Rivulet.Diagnostics + Rivulet.Hosting
++ Rivulet.Diagnostics + Rivulet.Hosting + Rivulet.IO
 ```
 *Use provider-specific packages for 10-100x bulk operation performance*
 
 ### Multi-Tenant SaaS with EF Core
 ```
-Rivulet.Core + Rivulet.EntityFramework + Rivulet.Http
-+ Rivulet.Quotas + Rivulet.Diagnostics.OpenTelemetry
+Rivulet.Core + Rivulet.EntityFramework + Rivulet.Http + Rivulet.Json
++ Rivulet.Diagnostics.OpenTelemetry
 ```
 *Parallel queries across tenant databases with automatic context management*
 
-### Event-Driven System
+### Data Import/Export Pipeline
 ```
-Rivulet.Core + Rivulet.Kafka + Rivulet.Persistence
-+ Rivulet.Diagnostics.OpenTelemetry + Rivulet.Hosting
+Rivulet.Core + Rivulet.IO + Rivulet.Csv + Rivulet.Json
++ Rivulet.Sql + Rivulet.Diagnostics
 ```
+*Process files (CSV, JSON) and load into database in parallel*
 
 ### Cross-Database Application
 ```
@@ -257,17 +267,16 @@ Rivulet.Core + Rivulet.Sql (provider-agnostic)
 
 ## Success Metrics
 
-### v1.2.0 (Current)
-- ✅ 5+ production deployments using Rivulet.Diagnostics
-- ✅ 10+ projects using Rivulet.Hosting
-- ✅ 95%+ test coverage across all packages
+### v1.3.0 (In Development)
+- 🚧 95%+ test coverage target across all packages
+- 🚧 Comprehensive integration with HTTP, SQL, and Polly
 
-### v1.4.0 (Q1 2026)
+### v1.4.0 (Q4 2025)
 - 🎯 1,000+ total ecosystem downloads
-- 🎯 25+ production cloud workloads (Azure/AWS)
+- 🎯 25+ production workloads using new packages
 - 🎯 3+ blog posts from external users
 
-### v2.0.0 (Q2 2027)
+### v2.0.0 (2027)
 - 🎯 10,000+ total ecosystem downloads
 - 🎯 100+ production pipelines using v2.0 API
 - 🎯 200+ GitHub stars, 10+ external contributors
@@ -281,6 +290,7 @@ Rivulet.Core + Rivulet.Sql (provider-agnostic)
 3. **Consistent API Patterns** - Extension methods, Options classes, async-first
 4. **High Quality** - ≥95% test coverage, performance benchmarks
 5. **Synchronized Versioning** - All packages align with Core version
+6. **Don't Duplicate .NET** - Use existing .NET features when available
 
 ---
 
@@ -315,6 +325,27 @@ await users.BulkInsertUsingSqlBulkCopyAsync(
 
 ---
 
-**Last Updated**: 2025-11-20
+## Lessons Learned
+
+### What We Got Right ✅
+1. **JSON, IO, CSV are critical** - These are more important than niche integrations
+2. **Provider-specific SQL packages have proven value** - SqlBulkCopy is 10-100x faster
+3. **Focus on fundamentals first** - HTTP, JSON, files before message queues
+4. **Prometheus export in Diagnostics** - No need for separate package
+
+### What We're Deferring 🚧
+1. **Message queues** - Heavy dependencies, wait for v2.0 + user demand
+2. **Caching, Persistence, Quotas** - Complex, overlaps with existing solutions
+3. **Full cloud suites** - Too broad, focus on storage first
+
+### What We're Not Doing ❌
+1. **Serialization** - Already exists (System.Text.Json, MessagePack)
+2. **Tracing** - Already exists (Activity API, System.Diagnostics)
+3. **Dataflow** - Already exists (TPL Dataflow)
+4. **Duplicate .NET features** - Provide samples/migration guides instead
+
+---
+
+**Last Updated**: 2025-11-22
 **Version**: 1.3.0
-**Status**: v1.3.0 Released - Planning v1.4.0 (Q4 2025)
+**Status**: v1.3.0 In Development - Planning v1.4.0 (Q4 2025)
