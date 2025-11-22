@@ -215,4 +215,24 @@ public class ConcurrencyAsserterTests
         asserter.CurrentConcurrency.Should().Be(0);
         asserter.MaxConcurrency.Should().Be(3);
     }
+
+    [Fact]
+    public async Task ExtremeContention_ShouldHandleCompareExchangeRetries()
+    {
+        // This test creates extreme contention to force the CompareExchange retry path (line 35)
+        var asserter = new ConcurrencyAsserter();
+        var barrier = new Barrier(100);
+
+        var tasks = Enumerable.Range(0, 100).Select(async _ =>
+        {
+            barrier.SignalAndWait(); // Synchronize all threads to start at the same time
+            using var scope = asserter.Enter();
+            await Task.Delay(1);
+        }).ToArray();
+
+        await Task.WhenAll(tasks);
+
+        asserter.CurrentConcurrency.Should().Be(0);
+        asserter.MaxConcurrency.Should().BeGreaterThan(50); // With 100 threads, expect high concurrency
+    }
 }

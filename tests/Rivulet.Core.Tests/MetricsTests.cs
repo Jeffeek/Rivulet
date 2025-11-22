@@ -1187,4 +1187,29 @@ public class MetricsTests
         snapshot!.TotalRetries.Should().BeGreaterThan(0);
     }
 
+    [Fact]
+    public async Task NoOpMetricsTracker_AllMethods_DoNotThrow()
+    {
+        // Test that all NoOpMetricsTracker methods can be called without throwing
+        await using var tracker = MetricsTrackerBase.Create(null, CancellationToken.None);
+
+        tracker.Should().BeOfType<NoOpMetricsTracker>();
+
+        // Call all increment methods
+        tracker.IncrementItemsStarted();
+        tracker.IncrementItemsCompleted();
+        tracker.IncrementRetries();
+        tracker.IncrementFailures();
+        tracker.IncrementThrottleEvents();
+        tracker.IncrementDrainEvents();
+
+        // Call all set methods
+        tracker.SetActiveWorkers(10);
+        tracker.SetQueueDepth(50);
+
+        // Call dispose - using statement handles this but also call explicitly
+        // ReSharper disable once DisposeOnUsingVariable
+        await tracker.DisposeAsync();
+    }
+
 }
