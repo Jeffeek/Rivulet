@@ -294,4 +294,101 @@ public class DiagnosticsBuilderTests : IDisposable
 
         TestCleanupHelper.RetryDeleteFile(_testFilePath);
     }
+
+    [Fact]
+    public void DiagnosticsBuilder_WithEmptyBuilder_ShouldBuildSuccessfully()
+    {
+        var diagnostics = new DiagnosticsBuilder().Build();
+        diagnostics.Should().NotBeNull();
+
+        var act = () => diagnostics.Dispose();
+        act.Should().NotThrow();
+    }
+
+    [Fact]
+    public async Task DiagnosticsBuilder_WithEmptyBuilder_ShouldDisposeAsyncSuccessfully()
+    {
+        var diagnostics = new DiagnosticsBuilder().Build();
+        diagnostics.Should().NotBeNull();
+
+        var act = async () => await diagnostics.DisposeAsync();
+        await act.Should().NotThrowAsync();
+    }
+
+    [Fact]
+    public void DiagnosticsBuilder_ShouldChainAllMethods()
+    {
+        var logFile = Path.Join(Path.GetTempPath(), $"rivulet-chain-{Guid.NewGuid()}.log");
+        var structuredFile = Path.Join(Path.GetTempPath(), $"rivulet-chain-{Guid.NewGuid()}.json");
+        var loggedLines = new List<string>();
+
+        var diagnostics = new DiagnosticsBuilder()
+            .AddConsoleListener(useColors: true)
+            .AddFileListener(logFile)
+            .AddStructuredLogListener(structuredFile)
+            .AddStructuredLogListener(loggedLines.Add)
+            .AddMetricsAggregator(TimeSpan.FromSeconds(5), _ => { })
+            .AddPrometheusExporter(out var exporter)
+            .AddHealthCheck(exporter)
+            .Build();
+
+        diagnostics.Should().NotBeNull();
+        exporter.Should().NotBeNull();
+
+        diagnostics.Dispose();
+        TestCleanupHelper.RetryDeleteFile(logFile);
+        TestCleanupHelper.RetryDeleteFile(structuredFile);
+    }
+
+    [Fact]
+    public void DiagnosticsBuilder_WithColoredConsoleListener_ShouldNotThrow()
+    {
+        var diagnostics = new DiagnosticsBuilder()
+            .AddConsoleListener(useColors: true)
+            .Build();
+
+        diagnostics.Should().NotBeNull();
+        diagnostics.Dispose();
+    }
+
+    [Fact]
+    public void DiagnosticsBuilder_WithCustomMaxFileSize_ShouldAcceptParameter()
+    {
+        var logFile = Path.Join(Path.GetTempPath(), $"rivulet-custom-{Guid.NewGuid()}.log");
+        var diagnostics = new DiagnosticsBuilder()
+            .AddFileListener(logFile, maxFileSizeBytes: 5 * 1024 * 1024) // 5 MB
+            .Build();
+
+        diagnostics.Should().NotBeNull();
+        diagnostics.Dispose();
+        TestCleanupHelper.RetryDeleteFile(logFile);
+    }
+
+    [Fact]
+    public void DiagnosticsBuilder_WithHealthCheckOptions_ShouldAcceptOptions()
+    {
+        var diagnostics = new DiagnosticsBuilder()
+            .AddPrometheusExporter(out var exporter)
+            .AddHealthCheck(exporter, new RivuletHealthCheckOptions
+            {
+                ErrorRateThreshold = 0.2,
+                FailureCountThreshold = 50
+            })
+            .Build();
+
+        diagnostics.Should().NotBeNull();
+        diagnostics.Dispose();
+    }
+
+    [Fact]
+    public void DiagnosticsBuilder_WithHealthCheckNoOptions_ShouldUseDefaults()
+    {
+        var diagnostics = new DiagnosticsBuilder()
+            .AddPrometheusExporter(out var exporter)
+            .AddHealthCheck(exporter)
+            .Build();
+
+        diagnostics.Should().NotBeNull();
+        diagnostics.Dispose();
+    }
 }

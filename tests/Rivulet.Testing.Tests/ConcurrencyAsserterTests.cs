@@ -242,4 +242,82 @@ public class ConcurrencyAsserterTests
         asserter.CurrentConcurrency.Should().Be(0);
         asserter.MaxConcurrency.Should().BeGreaterThan(50); // With 100 threads, expect high concurrency
     }
+
+    [Fact]
+    public void PropertyGetters_ShouldReturnCorrectValues()
+    {
+        var asserter = new ConcurrencyAsserter();
+
+        // Initial state
+        asserter.MaxConcurrency.Should().Be(0);
+        asserter.CurrentConcurrency.Should().Be(0);
+
+        // After entering
+        var scope = asserter.Enter();
+        asserter.CurrentConcurrency.Should().Be(1);
+        asserter.MaxConcurrency.Should().Be(1);
+
+        // After disposing
+        scope.Dispose();
+        asserter.CurrentConcurrency.Should().Be(0);
+        asserter.MaxConcurrency.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task SequentialEnters_ShouldOnlyIncreaseConcurrencyByOne()
+    {
+        var asserter = new ConcurrencyAsserter();
+
+        // Enter and exit sequentially - max should stay at 1
+        for (var i = 0; i < 10; i++)
+        {
+            using (asserter.Enter())
+            {
+                await Task.Delay(1);
+                asserter.CurrentConcurrency.Should().Be(1);
+                asserter.MaxConcurrency.Should().Be(1);
+            }
+        }
+
+        asserter.CurrentConcurrency.Should().Be(0);
+        asserter.MaxConcurrency.Should().Be(1);
+    }
+
+    [Fact]
+    public void ResetDuringActiveScope_ShouldResetCountersButNotAffectScope()
+    {
+        var asserter = new ConcurrencyAsserter();
+        var scope = asserter.Enter();
+
+        asserter.CurrentConcurrency.Should().Be(1);
+        asserter.MaxConcurrency.Should().Be(1);
+
+        // Reset while scope is still active
+        asserter.Reset();
+
+        asserter.CurrentConcurrency.Should().Be(0);
+        asserter.MaxConcurrency.Should().Be(0);
+
+        // Disposing the scope should still decrement
+        scope.Dispose();
+        asserter.CurrentConcurrency.Should().Be(-1); // Will go negative since we reset
+    }
+
+    [Fact]
+    public async Task RapidEnterExit_ShouldMaintainCorrectCounts()
+    {
+        var asserter = new ConcurrencyAsserter();
+
+        // Rapidly enter and exit without any delays
+        var tasks = Enumerable.Range(0, 1000).Select(_ => Task.Run(() =>
+        {
+            using var scope = asserter.Enter();
+            // No delay - immediate exit
+        })).ToArray();
+
+        await Task.WhenAll(tasks);
+
+        asserter.CurrentConcurrency.Should().Be(0);
+        asserter.MaxConcurrency.Should().BeGreaterThan(0);
+    }
 }

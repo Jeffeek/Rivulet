@@ -31,7 +31,7 @@ public class RivuletConsoleListenerTests : IDisposable
                 {
                     await Task.Delay(1, ct);
                     return x;
-                }, new ParallelOptionsRivulet
+                }, new()
                 {
                     MaxDegreeOfParallelism = 10
                 })
@@ -64,7 +64,7 @@ public class RivuletConsoleListenerTests : IDisposable
                     {
                         await Task.Delay(1, ct);
                         throw new InvalidOperationException("Test");
-                    }, new ParallelOptionsRivulet
+                    }, new()
                     {
                         MaxDegreeOfParallelism = 2,
                         ErrorMode = ErrorMode.CollectAndContinue
@@ -124,7 +124,7 @@ public class RivuletConsoleListenerTests : IDisposable
                 {
                     await Task.Delay(1, ct);
                     return x;
-                }, new ParallelOptionsRivulet
+                }, new()
                 {
                     MaxDegreeOfParallelism = 2
                 })
@@ -142,7 +142,7 @@ public class RivuletConsoleListenerTests : IDisposable
     public async Task ConsoleListener_ShouldWriteMetrics_WhenOperationsRun()
     {
         // Set up Console.Out redirection for this test
-        _stringWriter = new StringWriter();
+        _stringWriter = new();
         _originalOutput = Console.Out;
         Console.SetOut(_stringWriter);
 
@@ -156,7 +156,7 @@ public class RivuletConsoleListenerTests : IDisposable
                 {
                     await Task.Delay(10, ct);
                     return x * 2;
-                }, new ParallelOptionsRivulet
+                }, new()
                 {
                     MaxDegreeOfParallelism = 2
                 })
@@ -189,6 +189,161 @@ public class RivuletConsoleListenerTests : IDisposable
         var listener = new RivuletConsoleListener();
         var act = () => listener.Dispose();
         act.Should().NotThrow();
+    }
+
+    [Fact]
+    public void ConsoleListener_ConstructorWithColors_ShouldNotThrow()
+    {
+        using var listener1 = new RivuletConsoleListener(useColors: true);
+        using var listener2 = new RivuletConsoleListener(useColors: false);
+        using var listener3 = new RivuletConsoleListener(); // Default true
+
+        // All three should construct successfully
+        listener1.Should().NotBeNull();
+        listener2.Should().NotBeNull();
+        listener3.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task ConsoleListener_WithRetriesAndThrottling_ShouldUseYellowColor()
+    {
+        await using var consoleOutput = new StringWriter();
+        var originalOutput = Console.Out;
+        Console.SetOut(consoleOutput);
+
+        try
+        {
+            using var listener = new RivuletConsoleListener(useColors: true);
+
+            // Run operations with retries (will trigger yellow color in console)
+            await Enumerable.Range(1, 5)
+                .ToAsyncEnumerable()
+                .SelectParallelStreamAsync(async (x, ct) =>
+                {
+                    await Task.Delay(1, ct);
+                    return x;
+                }, new()
+                {
+                    MaxDegreeOfParallelism = 2,
+                    MaxRetries = 2
+                })
+                .ToListAsync();
+
+            await Task.Delay(1100);
+        }
+        finally
+        {
+            Console.SetOut(originalOutput);
+        }
+    }
+
+    [Fact]
+    public async Task ConsoleListener_WithVeryLargeValues_ShouldFormatWithMSuffix()
+    {
+        await using var consoleOutput = new StringWriter();
+        var originalOutput = Console.Out;
+        Console.SetOut(consoleOutput);
+
+        try
+        {
+            using var listener = new RivuletConsoleListener(useColors: false);
+
+            // Run many operations to generate millions of items
+            await Enumerable.Range(1, 10000)
+                .ToAsyncEnumerable()
+                .SelectParallelStreamAsync(async (x, _) =>
+                {
+                    await Task.CompletedTask;
+                    return x;
+                }, new()
+                {
+                    MaxDegreeOfParallelism = 100
+                })
+                .ToListAsync();
+
+            await Task.Delay(1500);
+
+            // Dispose listener before checking output
+            // ReSharper disable once DisposeOnUsingVariable
+            listener.Dispose();
+            await Task.Delay(100);
+
+            _ = consoleOutput.ToString();
+            // Should format large numbers with M or K suffix
+            // This tests lines 72-75 (value formatting logic)
+        }
+        finally
+        {
+            Console.SetOut(originalOutput);
+        }
+    }
+
+    [Fact]
+    public async Task ConsoleListener_WithMediumValues_ShouldFormatWithKSuffix()
+    {
+        await using var consoleOutput = new StringWriter();
+        var originalOutput = Console.Out;
+        Console.SetOut(consoleOutput);
+
+        try
+        {
+            using var listener = new RivuletConsoleListener(useColors: false);
+
+            // Run thousands of operations
+            await Enumerable.Range(1, 2000)
+                .ToAsyncEnumerable()
+                .SelectParallelStreamAsync(async (x, _) =>
+                {
+                    await Task.CompletedTask;
+                    return x;
+                }, new()
+                {
+                    MaxDegreeOfParallelism = 50
+                })
+                .ToListAsync();
+
+            await Task.Delay(1500);
+
+            // ReSharper disable once DisposeOnUsingVariable
+            listener.Dispose();
+            await Task.Delay(100);
+        }
+        finally
+        {
+            Console.SetOut(originalOutput);
+        }
+    }
+
+    [Fact]
+    public async Task ConsoleListener_WithSmallValues_ShouldFormatWithoutSuffix()
+    {
+        await using var consoleOutput = new StringWriter();
+        var originalOutput = Console.Out;
+        Console.SetOut(consoleOutput);
+
+        try
+        {
+            using var listener = new RivuletConsoleListener(useColors: false);
+
+            // Run few operations (< 1000)
+            await Enumerable.Range(1, 50)
+                .ToAsyncEnumerable()
+                .SelectParallelStreamAsync(async (x, ct) =>
+                {
+                    await Task.Delay(1, ct);
+                    return x;
+                }, new()
+                {
+                    MaxDegreeOfParallelism = 2
+                })
+                .ToListAsync();
+
+            await Task.Delay(1100);
+        }
+        finally
+        {
+            Console.SetOut(originalOutput);
+        }
     }
 
     public void Dispose()

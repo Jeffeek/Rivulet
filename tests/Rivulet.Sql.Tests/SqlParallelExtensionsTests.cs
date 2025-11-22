@@ -543,4 +543,201 @@ public class SqlParallelExtensionsTests
         results.Should().ContainSingle();
         results[0].Should().BeNull();
     }
+
+    [Fact]
+    public async Task ExecuteQueriesParallelAsync_WithNullQueriesWithParams_ShouldThrowArgumentNullException()
+    {
+        IEnumerable<(string query, Action<IDbCommand> configureParams)> queriesWithParams = null!;
+
+        await Assert.ThrowsAsync<ArgumentNullException>(
+            async () => await queriesWithParams.ExecuteQueriesParallelAsync(
+                () => new TestDbConnection(),
+                _ => new List<string>()));
+    }
+
+    [Fact]
+    public async Task ExecuteQueriesParallelAsync_WithNullConnectionFactoryWithParams_ShouldThrowArgumentNullException()
+    {
+        var queriesWithParams = new[]
+        {
+            (query: "SELECT 1", configureParams: (Action<IDbCommand>)(_ => { }))
+        };
+
+        await Assert.ThrowsAsync<ArgumentNullException>(
+            async () => await queriesWithParams.ExecuteQueriesParallelAsync(
+                null!,
+                _ => new List<string>()));
+    }
+
+    [Fact]
+    public async Task ExecuteQueriesParallelAsync_WithNullReaderMapperWithParams_ShouldThrowArgumentNullException()
+    {
+        var queriesWithParams = new[]
+        {
+            (query: "SELECT 1", configureParams: (Action<IDbCommand>)(_ => { }))
+        };
+
+        await Assert.ThrowsAsync<ArgumentNullException>(
+            async () => await queriesWithParams.ExecuteQueriesParallelAsync<string>(
+                () => new TestDbConnection(),
+                null!));
+    }
+
+    [Fact]
+    public async Task ExecuteCommandsParallelAsync_WithNullConnectionFactory_ShouldThrowArgumentNullException()
+    {
+        var commands = new[] { "INSERT 1" };
+
+        await Assert.ThrowsAsync<ArgumentNullException>(
+            async () => await commands.ExecuteCommandsParallelAsync(null!));
+    }
+
+    [Fact]
+    public async Task ExecuteCommandsParallelAsync_WithNullCommandsWithParams_ShouldThrowArgumentNullException()
+    {
+        IEnumerable<(string command, Action<IDbCommand> configureParams)> commandsWithParams = null!;
+
+        await Assert.ThrowsAsync<ArgumentNullException>(
+            async () => await commandsWithParams.ExecuteCommandsParallelAsync(() => new TestDbConnection()));
+    }
+
+    [Fact]
+    public async Task ExecuteCommandsParallelAsync_WithNullConnectionFactoryWithParams_ShouldThrowArgumentNullException()
+    {
+        var commandsWithParams = new[]
+        {
+            (command: "INSERT 1", configureParams: (Action<IDbCommand>)(_ => { }))
+        };
+
+        await Assert.ThrowsAsync<ArgumentNullException>(
+            async () => await commandsWithParams.ExecuteCommandsParallelAsync(null!));
+    }
+
+    [Fact]
+    public async Task ExecuteScalarParallelAsync_WithNullConnectionFactory_ShouldThrowArgumentNullException()
+    {
+        var queries = new[] { "SELECT 1" };
+
+        await Assert.ThrowsAsync<ArgumentNullException>(
+            async () => await queries.ExecuteScalarParallelAsync<int>(null!));
+    }
+
+    [Fact]
+    public async Task ExecuteScalarParallelAsync_WithNullQueriesWithParams_ShouldThrowArgumentNullException()
+    {
+        IEnumerable<(string query, Action<IDbCommand> configureParams)> queriesWithParams = null!;
+
+        await Assert.ThrowsAsync<ArgumentNullException>(
+            async () => await queriesWithParams.ExecuteScalarParallelAsync<int>(() => new TestDbConnection()));
+    }
+
+    [Fact]
+    public async Task ExecuteScalarParallelAsync_WithNullConnectionFactoryWithParams_ShouldThrowArgumentNullException()
+    {
+        var queriesWithParams = new[]
+        {
+            (query: "SELECT 1", configureParams: (Action<IDbCommand>)(_ => { }))
+        };
+
+        await Assert.ThrowsAsync<ArgumentNullException>(
+            async () => await queriesWithParams.ExecuteScalarParallelAsync<int>(null!));
+    }
+
+    [Fact]
+    public async Task ExecuteQueriesParallelAsync_WithNonDbConnection_ShouldUseTaskRunFallback()
+    {
+        // Use a custom IDbConnection that's not DbConnection to test Task.Run fallback
+        var queries = new[] { "SELECT 1" };
+
+        var results = await queries.ExecuteQueriesParallelAsync(
+            () => new NonDbConnection(
+                executeReaderFunc: _ => new TestDataReader([new() { ["Value"] = 1 }])),
+            reader =>
+            {
+                reader.Read();
+                return reader.GetInt32(0);
+            });
+
+        results.Should().HaveCount(1);
+        results[0].Should().Be(1);
+    }
+
+    [Fact]
+    public async Task ExecuteCommandsParallelAsync_WithNonDbConnection_ShouldUseTaskRunFallback()
+    {
+        // Use a custom IDbConnection that's not DbConnection to test Task.Run fallback
+        var commands = new[] { "INSERT 1" };
+
+        var results = await commands.ExecuteCommandsParallelAsync(
+            () => new NonDbConnection(executeNonQueryFunc: _ => 1));
+
+        results.Should().HaveCount(1);
+        results[0].Should().Be(1);
+    }
+
+    [Fact]
+    public async Task ExecuteScalarParallelAsync_WithNonDbConnection_ShouldUseTaskRunFallback()
+    {
+        // Use a custom IDbConnection that's not DbConnection to test Task.Run fallback
+        var queries = new[] { "SELECT 42" };
+
+        var results = await queries.ExecuteScalarParallelAsync<int>(
+            () => new NonDbConnection(executeScalarFunc: _ => 42));
+
+        results.Should().HaveCount(1);
+        results[0].Should().Be(42);
+    }
+
+    [Fact]
+    public async Task ExecuteQueriesParallelAsync_WithoutOptions_ShouldUseDefaults()
+    {
+        var queries = new[] { "SELECT 1", "SELECT 2" };
+        var commandTimeouts = new List<int>();
+
+        var results = await queries.ExecuteQueriesParallelAsync(
+            () => new TestDbConnection(
+                executeReaderFunc: cmd =>
+                {
+                    commandTimeouts.Add(cmd.CommandTimeout);
+                    return new TestDataReader([]);
+                }),
+            _ => 1);
+
+        results.Should().HaveCount(2);
+        commandTimeouts.Should().AllSatisfy(timeout => timeout.Should().Be(30)); // Default timeout
+    }
+
+    [Fact]
+    public async Task ExecuteCommandsParallelAsync_WithoutOptions_ShouldUseDefaults()
+    {
+        var commands = new[] { "INSERT 1", "INSERT 2" };
+        var commandTimeouts = new List<int>();
+
+        var results = await commands.ExecuteCommandsParallelAsync(
+            () => new TestDbConnection(executeNonQueryFunc: cmd =>
+            {
+                commandTimeouts.Add(cmd.CommandTimeout);
+                return 1;
+            }));
+
+        results.Should().HaveCount(2);
+        commandTimeouts.Should().AllSatisfy(timeout => timeout.Should().Be(30)); // Default timeout
+    }
+
+    [Fact]
+    public async Task ExecuteScalarParallelAsync_WithoutOptions_ShouldUseDefaults()
+    {
+        var queries = new[] { "SELECT 1", "SELECT 2" };
+        var commandTimeouts = new List<int>();
+
+        var results = await queries.ExecuteScalarParallelAsync<int>(
+            () => new TestDbConnection(executeScalarFunc: cmd =>
+            {
+                commandTimeouts.Add(cmd.CommandTimeout);
+                return 42;
+            }));
+
+        results.Should().HaveCount(2);
+        commandTimeouts.Should().AllSatisfy(timeout => timeout.Should().Be(30)); // Default timeout
+    }
 }
