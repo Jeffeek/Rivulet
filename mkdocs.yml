@@ -1,0 +1,144 @@
+# MkDocs configuration for Rivulet documentation
+site_name: Rivulet Documentation
+site_description: Safe, async-first parallel operators with bounded concurrency, retries, cancellation, and streaming backpressure for I/O-heavy workloads
+site_author: Rivulet Contributors
+site_url: https://rivulet2.readthedocs.io/
+
+# Repository information
+repo_name: Jeffeek/Rivulet
+repo_url: https://github.com/Jeffeek/Rivulet
+edit_uri: edit/master/docs/
+
+# Copyright
+copyright: Copyright &copy; 2024 Rivulet Contributors
+
+# Theme configuration
+theme:
+  name: material
+  language: en
+  palette:
+    # Light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    # Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  font:
+    text: Roboto
+    code: Roboto Mono
+  features:
+    - navigation.instant       # Instant loading
+    - navigation.tracking      # URL tracking
+    - navigation.tabs          # Top-level navigation tabs
+    - navigation.tabs.sticky   # Sticky navigation tabs
+    - navigation.sections      # Navigation sections
+    - navigation.expand        # Expand navigation by default
+    - navigation.top           # Back to top button
+    - navigation.footer        # Footer navigation
+    - search.suggest           # Search suggestions
+    - search.highlight         # Highlight search results
+    - search.share             # Share search results
+    - content.code.copy        # Copy code button
+    - content.code.annotate    # Code annotations
+  icon:
+    repo: fontawesome/brands/github
+    logo: material/water
+
+# Plugins
+plugins:
+  - search:
+      separator: '[\s\-,:!=\[\]()"/]+|(?!\b)(?=[A-Z][a-z])|\.(?!\d)|&[lg]t;'
+  - git-revision-date-localized:
+      enable_creation_date: true
+      type: timeago
+  - minify:
+      minify_html: true
+      minify_js: true
+      minify_css: true
+      htmlmin_opts:
+        remove_comments: true
+
+# Extensions
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - attr_list
+  - md_in_html
+  - def_list
+  - footnotes
+  - tables
+  - toc:
+      permalink: true
+      toc_depth: 3
+
+# Extra CSS and JavaScript
+extra_css:
+  - stylesheets/extra.css
+
+extra_javascript:
+  - javascripts/extra.js
+
+# Social links and extra configuration
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/Jeffeek/Rivulet
+      name: Rivulet on GitHub
+  version:
+    provider: mike
+  analytics:
+    provider: google
+    property: !ENV [GOOGLE_ANALYTICS_KEY, ""]
+
+# Navigation structure
+nav:
+  - Home: index.md
+  - Overview: readme-main.md
+  - Packages:
+      - Rivulet.Core: packages/rivulet-core.md
+      - Rivulet.Diagnostics: packages/rivulet-diagnostics.md
+      - Rivulet.Diagnostics.OpenTelemetry: packages/rivulet-diagnostics-opentelemetry.md
+      - Rivulet.Testing: packages/rivulet-testing.md
+      - Rivulet.Hosting: packages/rivulet-hosting.md
+      - Rivulet.Http: packages/rivulet-http.md
+      - Rivulet.Sql: packages/rivulet-sql.md
+      - Rivulet.Sql.SqlServer: packages/rivulet-sql-sqlserver.md
+      - Rivulet.Sql.PostgreSql: packages/rivulet-sql-postgresql.md
+      - Rivulet.Sql.MySql: packages/rivulet-sql-mysql.md
+      - Rivulet.Polly: packages/rivulet-polly.md
+  - Development:
+      - Contributing: CONTRIBUTING.md
+      - Release Guide: RELEASE_GUIDE.md
+      - Roadmap: ROADMAP.md
+      - Security: SECURITY.md
+  - About:
+      - License: license.md
+      - Code of Conduct: CODE_OF_CONDUCT.md

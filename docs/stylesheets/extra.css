@@ -1,0 +1,27 @@
+/* Custom styles for Rivulet documentation */
+
+:root {
+  --md-primary-fg-color: #3949ab;
+  --md-accent-fg-color: #3949ab;
+}
+
+/* Add custom branding or styling here */
+.md-header {
+  background-color: var(--md-primary-fg-color);
+}
+
+/* Code block enhancements */
+.highlight pre {
+  border-radius: 4px;
+}
+
+/* Improve table styling */
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+table th {
+  background-color: var(--md-primary-fg-color);
+  color: white;
+}
