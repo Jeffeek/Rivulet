@@ -21,7 +21,7 @@ namespace Rivulet.Diagnostics.Tests
                 {
                     await Task.Delay(200, ct);
                     return x * 2;
-                }, new ParallelOptionsRivulet
+                }, new()
                 {
                     MaxDegreeOfParallelism = 2
                 })
@@ -62,7 +62,7 @@ namespace Rivulet.Diagnostics.Tests
                 {
                     await Task.Delay(10, ct);
                     return x;
-                }, new ParallelOptionsRivulet
+                }, new()
                 {
                     MaxDegreeOfParallelism = 2
                 })
@@ -106,7 +106,7 @@ namespace Rivulet.Diagnostics.Tests
                 {
                     await Task.Delay(10, ct);
                     return x;
-                }, new ParallelOptionsRivulet
+                }, new()
                 {
                     MaxDegreeOfParallelism = 2
                 })

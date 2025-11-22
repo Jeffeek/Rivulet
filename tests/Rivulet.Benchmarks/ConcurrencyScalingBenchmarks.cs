@@ -31,6 +31,6 @@ public class ConcurrencyScalingBenchmarks
                 await Task.Delay(1, ct);
                 return x * 2;
             },
-            new ParallelOptionsRivulet { MaxDegreeOfParallelism = MaxDegreeOfParallelism });
+            new() { MaxDegreeOfParallelism = MaxDegreeOfParallelism });
     }
 }

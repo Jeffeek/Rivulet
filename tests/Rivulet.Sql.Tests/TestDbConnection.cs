@@ -355,8 +355,8 @@ public class NonDbConnection(
     public string Database => "TestDatabase";
     public ConnectionState State => _state;
 
-    public IDbTransaction BeginTransaction() => new TestDbTransaction(new TestDbConnection(), IsolationLevel.Unspecified);
-    public IDbTransaction BeginTransaction(IsolationLevel il) => new TestDbTransaction(new TestDbConnection(), il);
+    public IDbTransaction BeginTransaction() => new TestDbTransaction(new(), IsolationLevel.Unspecified);
+    public IDbTransaction BeginTransaction(IsolationLevel il) => new TestDbTransaction(new(), il);
     public void ChangeDatabase(string databaseName) { }
 
     public void Close()

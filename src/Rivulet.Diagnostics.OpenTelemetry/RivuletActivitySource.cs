@@ -80,8 +80,8 @@ public static class RivuletActivitySource
     {
         if (activity is null) return;
 
-        activity.AddEvent(new ActivityEvent(RivuletOpenTelemetryConstants.EventNames.Retry,
-            tags: new ActivityTagsCollection
+        activity.AddEvent(new(RivuletOpenTelemetryConstants.EventNames.Retry,
+            tags: new()
             {
                 { RivuletOpenTelemetryConstants.TagNames.RetryAttempt, attemptNumber },
                 { RivuletOpenTelemetryConstants.TagNames.ExceptionType, exception?.GetType().FullName },
@@ -126,8 +126,8 @@ public static class RivuletActivitySource
     /// <param name="state">The new circuit breaker state.</param>
     public static void RecordCircuitBreakerStateChange(Activity? activity, string state)
     {
-        activity?.AddEvent(new ActivityEvent(RivuletOpenTelemetryConstants.EventNames.CircuitBreakerStateChange,
-            tags: new ActivityTagsCollection
+        activity?.AddEvent(new(RivuletOpenTelemetryConstants.EventNames.CircuitBreakerStateChange,
+            tags: new()
             {
                 { RivuletOpenTelemetryConstants.TagNames.CircuitBreakerState, state }
             }));
@@ -143,8 +143,8 @@ public static class RivuletActivitySource
     {
         if (activity is null) return;
 
-        activity.AddEvent(new ActivityEvent(RivuletOpenTelemetryConstants.EventNames.AdaptiveConcurrencyChange,
-            tags: new ActivityTagsCollection
+        activity.AddEvent(new(RivuletOpenTelemetryConstants.EventNames.AdaptiveConcurrencyChange,
+            tags: new()
             {
                 { RivuletOpenTelemetryConstants.TagNames.ConcurrencyOld, oldConcurrency },
                 { RivuletOpenTelemetryConstants.TagNames.ConcurrencyNew, newConcurrency }

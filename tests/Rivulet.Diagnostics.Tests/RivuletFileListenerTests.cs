@@ -20,7 +20,7 @@ public class RivuletFileListenerTests : IDisposable
                 {
                     await Task.Delay(200, ct);
                     return x * 2;
-                }, new ParallelOptionsRivulet
+                }, new()
                 {
                     MaxDegreeOfParallelism = 2
                 })
@@ -56,7 +56,7 @@ public class RivuletFileListenerTests : IDisposable
                 {
                     await Task.Delay(1, ct);
                     return x;
-                }, new ParallelOptionsRivulet
+                }, new()
                 {
                     MaxDegreeOfParallelism = 4
                 })

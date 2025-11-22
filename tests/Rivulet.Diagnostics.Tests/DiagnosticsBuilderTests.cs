@@ -11,7 +11,7 @@ public class DiagnosticsBuilderTests : IDisposable
     public DiagnosticsBuilderTests()
     {
         _testFilePath = Path.Join(Path.GetTempPath(), $"rivulet-test-{Guid.NewGuid()}.log");
-        _stringWriter = new StringWriter();
+        _stringWriter = new();
         _originalOutput = Console.Out;
         Console.SetOut(_stringWriter);
     }
@@ -32,7 +32,7 @@ public class DiagnosticsBuilderTests : IDisposable
                 {
                     await Task.Delay(10, ct);
                     return x * 2;
-                }, new ParallelOptionsRivulet
+                }, new()
                 {
                     MaxDegreeOfParallelism = 2
                 });
@@ -68,7 +68,7 @@ public class DiagnosticsBuilderTests : IDisposable
             {
                 await Task.Delay(10, ct);
                 return x * 2;
-            }, new ParallelOptionsRivulet
+            }, new()
             {
                 MaxDegreeOfParallelism = 2
             })
@@ -95,7 +95,7 @@ public class DiagnosticsBuilderTests : IDisposable
                 {
                     await Task.Delay(10, ct);
                     return x;
-                }, new ParallelOptionsRivulet
+                }, new()
                 {
                     MaxDegreeOfParallelism = 2
                 })
@@ -115,7 +115,7 @@ public class DiagnosticsBuilderTests : IDisposable
     {
         await using var diagnostics = new DiagnosticsBuilder()
             .AddPrometheusExporter(out var exporter)
-            .AddHealthCheck(exporter, new RivuletHealthCheckOptions
+            .AddHealthCheck(exporter, new()
             {
                 ErrorRateThreshold = 0.5,
                 FailureCountThreshold = 100
@@ -128,7 +128,7 @@ public class DiagnosticsBuilderTests : IDisposable
             {
                 await Task.Delay(10, ct);
                 return x;
-            }, new ParallelOptionsRivulet
+            }, new()
             {
                 MaxDegreeOfParallelism = 2
             })
@@ -170,7 +170,7 @@ public class DiagnosticsBuilderTests : IDisposable
             {
                 await Task.Delay(10, ct);
                 return x;
-            }, new ParallelOptionsRivulet
+            }, new()
             {
                 MaxDegreeOfParallelism = 2
             })
@@ -191,7 +191,7 @@ public class DiagnosticsBuilderTests : IDisposable
             .Build();
 
         var task = Enumerable.Range(1, 3)
-            .SelectParallelAsync((x, _) => ValueTask.FromResult(x), new ParallelOptionsRivulet());
+            .SelectParallelAsync((x, _) => ValueTask.FromResult(x), new());
 #pragma warning disable xUnit1031
         task.Wait();
 #pragma warning restore xUnit1031
@@ -216,7 +216,7 @@ public class DiagnosticsBuilderTests : IDisposable
 
         // Run operation
         var task = Enumerable.Range(1, 3)
-            .SelectParallelAsync((x, _) => ValueTask.FromResult(x), new ParallelOptionsRivulet());
+            .SelectParallelAsync((x, _) => ValueTask.FromResult(x), new());
 #pragma warning disable xUnit1031
         task.Wait();
 #pragma warning restore xUnit1031
@@ -238,7 +238,7 @@ public class DiagnosticsBuilderTests : IDisposable
             .Build();
 
         await Enumerable.Range(1, 3)
-            .SelectParallelAsync((x, _) => ValueTask.FromResult(x), new ParallelOptionsRivulet());
+            .SelectParallelAsync((x, _) => ValueTask.FromResult(x), new());
 
         await diagnostics.DisposeAsync();
 
@@ -256,7 +256,7 @@ public class DiagnosticsBuilderTests : IDisposable
 
         // Run minimal operation
         var task = Enumerable.Range(1, 1)
-            .SelectParallelAsync((x, _) => ValueTask.FromResult(x), new ParallelOptionsRivulet());
+            .SelectParallelAsync((x, _) => ValueTask.FromResult(x), new());
 #pragma warning disable xUnit1031
         task.Wait();
 #pragma warning restore xUnit1031
@@ -369,7 +369,7 @@ public class DiagnosticsBuilderTests : IDisposable
     {
         var diagnostics = new DiagnosticsBuilder()
             .AddPrometheusExporter(out var exporter)
-            .AddHealthCheck(exporter, new RivuletHealthCheckOptions
+            .AddHealthCheck(exporter, new()
             {
                 ErrorRateThreshold = 0.2,
                 FailureCountThreshold = 50

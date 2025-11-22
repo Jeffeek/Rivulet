@@ -72,7 +72,7 @@ public sealed class RivuletFileListener : RivuletEventListenerBase, IAsyncDispos
             Directory.CreateDirectory(directory);
         }
 
-        _writer = new StreamWriter(_filePath, append: true, System.Text.Encoding.UTF8)
+        _writer = new(_filePath, append: true, System.Text.Encoding.UTF8)
         {
             AutoFlush = false
         };

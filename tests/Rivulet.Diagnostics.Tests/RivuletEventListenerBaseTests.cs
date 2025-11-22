@@ -21,7 +21,7 @@ public class RivuletEventListenerBaseTests : IDisposable
             {
                 await Task.Delay(200, ct);
                 return x * 2;
-            }, new ParallelOptionsRivulet
+            }, new()
             {
                 MaxDegreeOfParallelism = 2
             })
@@ -50,7 +50,7 @@ public class RivuletEventListenerBaseTests : IDisposable
             {
                 await Task.Delay(200, ct);
                 return x;
-            }, new ParallelOptionsRivulet
+            }, new()
             {
                 MaxDegreeOfParallelism = 2
             })
@@ -82,7 +82,7 @@ public class RivuletEventListenerBaseTests : IDisposable
             {
                 await Task.Delay(200, ct);
                 return x;
-            }, new ParallelOptionsRivulet
+            }, new()
             {
                 MaxDegreeOfParallelism = 2
             })
@@ -110,7 +110,7 @@ public class RivuletEventListenerBaseTests : IDisposable
 
         // Run a simple operation asynchronously
         var task = Enumerable.Range(1, 3)
-            .SelectParallelAsync((x, _) => ValueTask.FromResult(x), new ParallelOptionsRivulet());
+            .SelectParallelAsync((x, _) => ValueTask.FromResult(x), new());
 
 #pragma warning disable xUnit1031
         task.Wait();
@@ -134,7 +134,7 @@ public class RivuletEventListenerBaseTests : IDisposable
 
         protected override void OnCounterReceived(string name, string displayName, double value, string displayUnits)
         {
-            ReceivedCounters[name] = new CounterData(displayName, displayUnits);
+            ReceivedCounters[name] = new(displayName, displayUnits);
         }
     }
 
@@ -206,7 +206,7 @@ public class RivuletEventListenerBaseTests : IDisposable
 
         public RivuletTestEventSource()
         {
-            _testCounter = new EventCounter("test-counter", this);
+            _testCounter = new("test-counter", this);
         }
 
         public void EmitCounterWithoutDisplayName()
@@ -285,7 +285,7 @@ public class RivuletEventListenerBaseTests : IDisposable
             {
                 await Task.Delay(100, ct);
                 return x;
-            }, new ParallelOptionsRivulet())
+            }, new())
             .ToListAsync();
 
         // Wait for counters

@@ -10,7 +10,7 @@ public class RivuletOperationHealthCheckTests
     {
         var healthCheck = new RivuletOperationHealthCheck();
 
-        var result = await healthCheck.CheckHealthAsync(new HealthCheckContext());
+        var result = await healthCheck.CheckHealthAsync(new());
 
         result.Status.Should().Be(HealthStatus.Healthy);
     }
@@ -29,7 +29,7 @@ public class RivuletOperationHealthCheckTests
         // Wait for stalled threshold to pass
         await Task.Delay(1100);
 
-        var result = await healthCheck.CheckHealthAsync(new HealthCheckContext());
+        var result = await healthCheck.CheckHealthAsync(new());
 
         result.Status.Should().Be(HealthStatus.Degraded);
         result.Description.Should().Contain("No successful operations");
@@ -48,7 +48,7 @@ public class RivuletOperationHealthCheckTests
         // Record success
         healthCheck.RecordSuccess();
 
-        var result = await healthCheck.CheckHealthAsync(new HealthCheckContext());
+        var result = await healthCheck.CheckHealthAsync(new());
 
         result.Status.Should().Be(HealthStatus.Healthy);
         result.Data["consecutive_failures"].Should().Be(0);
@@ -63,7 +63,7 @@ public class RivuletOperationHealthCheckTests
         healthCheck.RecordFailure();
         healthCheck.RecordFailure();
 
-        var result = await healthCheck.CheckHealthAsync(new HealthCheckContext());
+        var result = await healthCheck.CheckHealthAsync(new());
 
         result.Status.Should().Be(HealthStatus.Healthy);
         result.Data["consecutive_failures"].Should().Be(3);
@@ -76,7 +76,7 @@ public class RivuletOperationHealthCheckTests
 
         healthCheck.RecordSuccess();
 
-        var result = await healthCheck.CheckHealthAsync(new HealthCheckContext());
+        var result = await healthCheck.CheckHealthAsync(new());
 
         result.Status.Should().Be(HealthStatus.Healthy);
         result.Description.Should().Contain("Operation healthy");
@@ -97,7 +97,7 @@ public class RivuletOperationHealthCheckTests
         // Wait for stalled threshold
         await Task.Delay(150);
 
-        var result = await healthCheck.CheckHealthAsync(new HealthCheckContext());
+        var result = await healthCheck.CheckHealthAsync(new());
 
         result.Status.Should().Be(HealthStatus.Degraded);
         result.Description.Should().Contain("No successful operations");
@@ -121,7 +121,7 @@ public class RivuletOperationHealthCheckTests
             healthCheck.RecordFailure();
         }
 
-        var result = await healthCheck.CheckHealthAsync(new HealthCheckContext());
+        var result = await healthCheck.CheckHealthAsync(new());
 
         result.Status.Should().Be(HealthStatus.Unhealthy);
         result.Description.Should().Contain("Operation has failed 5 consecutive times");
@@ -145,7 +145,7 @@ public class RivuletOperationHealthCheckTests
             healthCheck.RecordFailure();
         }
 
-        var result = await healthCheck.CheckHealthAsync(new HealthCheckContext());
+        var result = await healthCheck.CheckHealthAsync(new());
 
         result.Status.Should().Be(HealthStatus.Healthy);
         result.Data["consecutive_failures"].Should().Be(9);
@@ -166,7 +166,7 @@ public class RivuletOperationHealthCheckTests
             healthCheck.RecordFailure();
         }
 
-        var result = await healthCheck.CheckHealthAsync(new HealthCheckContext());
+        var result = await healthCheck.CheckHealthAsync(new());
 
         result.Status.Should().Be(HealthStatus.Unhealthy);
     }
@@ -191,7 +191,7 @@ public class RivuletOperationHealthCheckTests
         // Wait for stalled threshold
         await Task.Delay(50);
 
-        var result = await healthCheck.CheckHealthAsync(new HealthCheckContext());
+        var result = await healthCheck.CheckHealthAsync(new());
 
         // Unhealthy due to failures takes precedence
         result.Status.Should().Be(HealthStatus.Unhealthy);
@@ -212,7 +212,7 @@ public class RivuletOperationHealthCheckTests
         await Task.Delay(50);
         healthCheck.RecordSuccess();
 
-        var result = await healthCheck.CheckHealthAsync(new HealthCheckContext());
+        var result = await healthCheck.CheckHealthAsync(new());
 
         result.Status.Should().Be(HealthStatus.Healthy);
         var timeSinceSuccess = (TimeSpan)result.Data["time_since_last_success"];
@@ -226,15 +226,15 @@ public class RivuletOperationHealthCheckTests
 
         healthCheck.RecordFailure();
         healthCheck.RecordFailure();
-        var result1 = await healthCheck.CheckHealthAsync(new HealthCheckContext());
+        var result1 = await healthCheck.CheckHealthAsync(new());
         result1.Data["consecutive_failures"].Should().Be(2);
 
         healthCheck.RecordFailure();
-        var result2 = await healthCheck.CheckHealthAsync(new HealthCheckContext());
+        var result2 = await healthCheck.CheckHealthAsync(new());
         result2.Data["consecutive_failures"].Should().Be(3);
 
         healthCheck.RecordSuccess();
-        var result3 = await healthCheck.CheckHealthAsync(new HealthCheckContext());
+        var result3 = await healthCheck.CheckHealthAsync(new());
         result3.Data["consecutive_failures"].Should().Be(0);
     }
 
@@ -244,7 +244,7 @@ public class RivuletOperationHealthCheckTests
         var healthCheck = new RivuletOperationHealthCheck();
 
         using var cts = new CancellationTokenSource();
-        var result = await healthCheck.CheckHealthAsync(new HealthCheckContext(), cts.Token);
+        var result = await healthCheck.CheckHealthAsync(new(), cts.Token);
 
         result.Should().NotBeNull();
         result.Status.Should().Be(HealthStatus.Healthy);
@@ -290,7 +290,7 @@ public class RivuletOperationHealthCheckTests
 
         await Task.WhenAll(tasks);
 
-        var result = await healthCheck.CheckHealthAsync(new HealthCheckContext());
+        var result = await healthCheck.CheckHealthAsync(new());
 
         result.Data["consecutive_failures"].Should().Be(0);
     }
@@ -307,7 +307,7 @@ public class RivuletOperationHealthCheckTests
 
         await Task.WhenAll(tasks);
 
-        var result = await healthCheck.CheckHealthAsync(new HealthCheckContext());
+        var result = await healthCheck.CheckHealthAsync(new());
 
         result.Data["consecutive_failures"].Should().Be(100);
     }
@@ -320,7 +320,7 @@ public class RivuletOperationHealthCheckTests
         healthCheck.RecordFailure();
         healthCheck.RecordFailure();
 
-        var result = await healthCheck.CheckHealthAsync(new HealthCheckContext());
+        var result = await healthCheck.CheckHealthAsync(new());
 
         result.Data.Should().ContainKey("consecutive_failures");
         result.Data.Should().ContainKey("time_since_last_success");

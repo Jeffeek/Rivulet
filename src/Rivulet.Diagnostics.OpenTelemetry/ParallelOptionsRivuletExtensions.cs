@@ -43,7 +43,7 @@ public static class ParallelOptionsRivuletExtensions
         var itemActivities = new System.Collections.Concurrent.ConcurrentDictionary<int, Activity>();
         var asyncLocalActivity = new AsyncLocal<Activity?>();
 
-        return new ParallelOptionsRivulet
+        return new()
         {
             MaxDegreeOfParallelism = options.MaxDegreeOfParallelism,
             PerItemTimeout = options.PerItemTimeout,
@@ -220,7 +220,7 @@ public static class ParallelOptionsRivuletExtensions
         var itemActivities = new System.Collections.Concurrent.ConcurrentDictionary<int, Activity>();
         var asyncLocalActivity = new AsyncLocal<Activity?>();
 
-        return new ParallelOptionsRivulet
+        return new()
         {
             MaxDegreeOfParallelism = options.MaxDegreeOfParallelism,
             PerItemTimeout = options.PerItemTimeout,

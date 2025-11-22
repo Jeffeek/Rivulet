@@ -1,8 +1,6 @@
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Jobs;
 using Rivulet.Core;
-using Rivulet.Core.Observability;
-using Rivulet.Core.Resilience;
 
 namespace Rivulet.Benchmarks;
 
@@ -30,7 +28,7 @@ public class AdvancedFeaturesBenchmarks
                 await Task.Delay(2, ct);
                 return x * 2;
             },
-            new ParallelOptionsRivulet { MaxDegreeOfParallelism = 16 });
+            new() { MaxDegreeOfParallelism = 16 });
     }
 
     [Benchmark(Description = "With CircuitBreaker")]
@@ -42,10 +40,10 @@ public class AdvancedFeaturesBenchmarks
                 await Task.Delay(2, ct);
                 return x * 2;
             },
-            new ParallelOptionsRivulet
+            new()
             {
                 MaxDegreeOfParallelism = 16,
-                CircuitBreaker = new CircuitBreakerOptions
+                CircuitBreaker = new()
                 {
                     FailureThreshold = 5,
                     SuccessThreshold = 2,
@@ -63,10 +61,10 @@ public class AdvancedFeaturesBenchmarks
                 await Task.Delay(2, ct);
                 return x * 2;
             },
-            new ParallelOptionsRivulet
+            new()
             {
                 MaxDegreeOfParallelism = 16,
-                RateLimit = new RateLimitOptions
+                RateLimit = new()
                 {
                     TokensPerSecond = 1000,
                     BurstCapacity = 100
@@ -83,10 +81,10 @@ public class AdvancedFeaturesBenchmarks
                 await Task.Delay(2, ct);
                 return x * 2;
             },
-            new ParallelOptionsRivulet
+            new()
             {
                 MaxDegreeOfParallelism = 32,
-                AdaptiveConcurrency = new AdaptiveConcurrencyOptions
+                AdaptiveConcurrency = new()
                 {
                     MinConcurrency = 4,
                     MaxConcurrency = 32,
@@ -104,10 +102,10 @@ public class AdvancedFeaturesBenchmarks
                 await Task.Delay(2, ct);
                 return x * 2;
             },
-            new ParallelOptionsRivulet
+            new()
             {
                 MaxDegreeOfParallelism = 16,
-                Progress = new ProgressOptions
+                Progress = new()
                 {
                     ReportInterval = TimeSpan.FromMilliseconds(100),
                     OnProgress = _ => ValueTask.CompletedTask
@@ -124,10 +122,10 @@ public class AdvancedFeaturesBenchmarks
                 await Task.Delay(2, ct);
                 return x * 2;
             },
-            new ParallelOptionsRivulet
+            new()
             {
                 MaxDegreeOfParallelism = 16,
-                Metrics = new MetricsOptions
+                Metrics = new()
                 {
                     SampleInterval = TimeSpan.FromMilliseconds(100),
                     OnMetricsSample = _ => ValueTask.CompletedTask
@@ -144,26 +142,26 @@ public class AdvancedFeaturesBenchmarks
                 await Task.Delay(2, ct);
                 return x * 2;
             },
-            new ParallelOptionsRivulet
+            new()
             {
                 MaxDegreeOfParallelism = 16,
-                CircuitBreaker = new CircuitBreakerOptions
+                CircuitBreaker = new()
                 {
                     FailureThreshold = 5,
                     SuccessThreshold = 2,
                     OpenTimeout = TimeSpan.FromSeconds(10)
                 },
-                RateLimit = new RateLimitOptions
+                RateLimit = new()
                 {
                     TokensPerSecond = 1000,
                     BurstCapacity = 100
                 },
-                Progress = new ProgressOptions
+                Progress = new()
                 {
                     ReportInterval = TimeSpan.FromMilliseconds(100),
                     OnProgress = _ => ValueTask.CompletedTask
                 },
-                Metrics = new MetricsOptions
+                Metrics = new()
                 {
                     SampleInterval = TimeSpan.FromMilliseconds(100),
                     OnMetricsSample = _ => ValueTask.CompletedTask

@@ -68,7 +68,7 @@ public sealed class MetricsAggregator : RivuletEventListenerBase, IAsyncDisposab
     public MetricsAggregator(TimeSpan? aggregationWindow = null)
     {
         _aggregationWindow = aggregationWindow ?? TimeSpan.FromSeconds(10);
-        _aggregationTimer = new Timer(AggregateMetrics, null, _aggregationWindow, _aggregationWindow);
+        _aggregationTimer = new(AggregateMetrics, null, _aggregationWindow, _aggregationWindow);
     }
 
     /// <summary>
@@ -108,7 +108,7 @@ public sealed class MetricsAggregator : RivuletEventListenerBase, IAsyncDisposab
                 var values = samples.Select(s => s.Value).ToList();
                 var metadata = _metricMetadata.GetValueOrDefault(name, (name, string.Empty));
 
-                aggregatedMetrics.Add(new AggregatedMetrics
+                aggregatedMetrics.Add(new()
                 {
                     Name = name,
                     DisplayName = metadata.Item1,

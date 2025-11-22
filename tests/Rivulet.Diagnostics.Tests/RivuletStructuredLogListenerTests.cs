@@ -35,7 +35,7 @@ public class RivuletStructuredLogListenerTests : IDisposable
                 {
                     await Task.Delay(10, ct);
                     return x;
-                }, new ParallelOptionsRivulet
+                }, new()
                 {
                     MaxDegreeOfParallelism = 2
                 })
@@ -67,7 +67,7 @@ public class RivuletStructuredLogListenerTests : IDisposable
                 {
                     await Task.Delay(200, ct);
                     return x * 2;
-                }, new ParallelOptionsRivulet
+                }, new()
                 {
                     MaxDegreeOfParallelism = 2
                 })
@@ -103,7 +103,7 @@ public class RivuletStructuredLogListenerTests : IDisposable
             {
                 await Task.Delay(10, ct);
                 return x * 2;
-            }, new ParallelOptionsRivulet
+            }, new()
             {
                 MaxDegreeOfParallelism = 2
             })
@@ -134,7 +134,7 @@ public class RivuletStructuredLogListenerTests : IDisposable
             {
                 await Task.Delay(10, ct);
                 return x;
-            }, new ParallelOptionsRivulet
+            }, new()
             {
                 MaxDegreeOfParallelism = 2
             })
@@ -160,7 +160,7 @@ public class RivuletStructuredLogListenerTests : IDisposable
         var listener = new RivuletStructuredLogListener(testFile);
 
         var task = Enumerable.Range(1, 3)
-            .SelectParallelAsync((x, _) => ValueTask.FromResult(x), new ParallelOptionsRivulet());
+            .SelectParallelAsync((x, _) => ValueTask.FromResult(x), new());
 #pragma warning disable xUnit1031
         task.Wait();
 #pragma warning restore xUnit1031
@@ -180,7 +180,7 @@ public class RivuletStructuredLogListenerTests : IDisposable
         var listener = new RivuletStructuredLogListener(loggedLines.Add);
 
         var task = Enumerable.Range(1, 3)
-            .SelectParallelAsync((x, _) => ValueTask.FromResult(x), new ParallelOptionsRivulet());
+            .SelectParallelAsync((x, _) => ValueTask.FromResult(x), new());
 #pragma warning disable xUnit1031
         task.Wait();
 #pragma warning restore xUnit1031

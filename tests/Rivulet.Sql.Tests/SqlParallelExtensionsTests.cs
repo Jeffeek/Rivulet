@@ -430,7 +430,7 @@ public class SqlParallelExtensionsTests
 
         var results = await queries.ExecuteScalarParallelAsync<int>(
             () => connection,
-            new SqlOptions { AutoManageConnection = false });
+            new() { AutoManageConnection = false });
 
         results.Should().HaveCount(2);
         connection.State.Should().Be(ConnectionState.Open); // Should still be open

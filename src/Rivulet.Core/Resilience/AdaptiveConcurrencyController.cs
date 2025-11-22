@@ -40,9 +40,9 @@ internal sealed class AdaptiveConcurrencyController : IAsyncDisposable
         _options.Validate();
 
         _currentConcurrency = options.InitialConcurrency ?? options.MinConcurrency;
-        _semaphore = new SemaphoreSlim(_currentConcurrency, options.MaxConcurrency);
+        _semaphore = new(_currentConcurrency, options.MaxConcurrency);
 
-        _samplingTimer = new Timer(
+        _samplingTimer = new(
             _ => SampleAndAdjust(),
             null,
             _options.SampleInterval,

@@ -18,7 +18,7 @@ public class RateLimitingTests
         var options = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 50,
-            RateLimit = new RateLimitOptions
+            RateLimit = new()
             {
                 TokensPerSecond = 100, // 100 ops/sec
                 BurstCapacity = 50     // Can burst 50
@@ -51,7 +51,7 @@ public class RateLimitingTests
         var options = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 20,
-            RateLimit = new RateLimitOptions
+            RateLimit = new()
             {
                 TokensPerSecond = 10, // Low rate
                 BurstCapacity = 20    // But allow burst of 20
@@ -86,7 +86,7 @@ public class RateLimitingTests
         var options = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 20,
-            RateLimit = new RateLimitOptions
+            RateLimit = new()
             {
                 TokensPerSecond = 50,
                 BurstCapacity = 25,
@@ -121,7 +121,7 @@ public class RateLimitingTests
         var options = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 30,
-            RateLimit = new RateLimitOptions
+            RateLimit = new()
             {
                 TokensPerSecond = 100,
                 BurstCapacity = 30
@@ -180,7 +180,7 @@ public class RateLimitingTests
     [Fact]
     public void TokenBucket_Constructor_ValidatesOptions()
     {
-        var act = () => new TokenBucket(new RateLimitOptions { TokensPerSecond = 0 });
+        var act = () => new TokenBucket(new() { TokensPerSecond = 0 });
         act.Should().Throw<ArgumentException>()
             .WithMessage("*TokensPerSecond*");
     }
@@ -231,7 +231,7 @@ public class RateLimitingTests
         var options = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 4,
-            RateLimit = new RateLimitOptions
+            RateLimit = new()
             {
                 TokensPerSecond = 10, // Very slow
                 BurstCapacity = 10
@@ -272,7 +272,7 @@ public class RateLimitingTests
             MaxDegreeOfParallelism = 15,
             MaxRetries = 2,
             IsTransient = ex => ex is InvalidOperationException,
-            RateLimit = new RateLimitOptions
+            RateLimit = new()
             {
                 TokensPerSecond = 50,
                 BurstCapacity = 20
@@ -310,7 +310,7 @@ public class RateLimitingTests
         {
             MaxDegreeOfParallelism = 10,
             OrderedOutput = true,
-            RateLimit = new RateLimitOptions
+            RateLimit = new()
             {
                 TokensPerSecond = 100,
                 BurstCapacity = 100
@@ -341,7 +341,7 @@ public class RateLimitingTests
         var options = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 64,
-            RateLimit = new RateLimitOptions
+            RateLimit = new()
             {
                 TokensPerSecond = 1000, // High rate
                 BurstCapacity = 500
@@ -375,7 +375,7 @@ public class RateLimitingTests
         var options = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 12,
-            RateLimit = new RateLimitOptions
+            RateLimit = new()
             {
                 TokensPerSecond = 5, // Very low rate: 5 ops/sec
                 BurstCapacity = 3
@@ -407,7 +407,7 @@ public class RateLimitingTests
         {
             MaxDegreeOfParallelism = 10,
             ErrorMode = ErrorMode.BestEffort,
-            RateLimit = new RateLimitOptions
+            RateLimit = new()
             {
                 TokensPerSecond = 100,
                 BurstCapacity = 100
@@ -431,7 +431,7 @@ public class RateLimitingTests
     [Fact]
     public void TokenBucket_TryAcquire_ReturnsTrue_WhenTokensAvailable()
     {
-        var bucket = new TokenBucket(new RateLimitOptions
+        var bucket = new TokenBucket(new()
         {
             TokensPerSecond = 100,
             BurstCapacity = 10,
@@ -445,7 +445,7 @@ public class RateLimitingTests
     [Fact]
     public void TokenBucket_TryAcquire_ReturnsFalse_WhenTokensExhausted()
     {
-        var bucket = new TokenBucket(new RateLimitOptions
+        var bucket = new TokenBucket(new()
         {
             TokensPerSecond = 10,
             BurstCapacity = 2,
@@ -462,7 +462,7 @@ public class RateLimitingTests
     [Fact]
     public void TokenBucket_GetAvailableTokens_ReturnsCorrectValue()
     {
-        var bucket = new TokenBucket(new RateLimitOptions
+        var bucket = new TokenBucket(new()
         {
             TokensPerSecond = 100,
             BurstCapacity = 50,
@@ -476,7 +476,7 @@ public class RateLimitingTests
     [Fact]
     public async Task TokenBucket_GetAvailableTokens_RefillsOverTime()
     {
-        var bucket = new TokenBucket(new RateLimitOptions
+        var bucket = new TokenBucket(new()
         {
             TokensPerSecond = 100,
             BurstCapacity = 10,
@@ -500,7 +500,7 @@ public class RateLimitingTests
     [Fact]
     public void TokenBucket_TryAcquire_WithMultipleTokensPerOperation()
     {
-        var bucket = new TokenBucket(new RateLimitOptions
+        var bucket = new TokenBucket(new()
         {
             TokensPerSecond = 100,
             BurstCapacity = 10,
@@ -520,7 +520,7 @@ public class RateLimitingTests
     [Fact]
     public void TokenBucket_RapidCalls_HandlesZeroElapsedTime()
     {
-        var bucket = new TokenBucket(new RateLimitOptions
+        var bucket = new TokenBucket(new()
         {
             TokensPerSecond = 1000,
             BurstCapacity = 100,

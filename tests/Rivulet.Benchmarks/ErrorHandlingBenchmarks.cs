@@ -25,7 +25,7 @@ public class ErrorHandlingBenchmarks
     {
         return await _source.SelectParallelAsync(
             (x, _) => new ValueTask<int>(x * 2),
-            new ParallelOptionsRivulet
+            new()
             {
                 MaxDegreeOfParallelism = 8,
                 MaxRetries = 0
@@ -48,7 +48,7 @@ public class ErrorHandlingBenchmarks
 
                 return new ValueTask<int>(x * 2);
             },
-            new ParallelOptionsRivulet
+            new()
             {
                 MaxDegreeOfParallelism = 8,
                 MaxRetries = 3,
@@ -65,7 +65,7 @@ public class ErrorHandlingBenchmarks
         {
             return await _source.SelectParallelAsync(
                 (x, _) => new ValueTask<int>(x * 2),
-                new ParallelOptionsRivulet
+                new()
                 {
                     MaxDegreeOfParallelism = 8,
                     ErrorMode = ErrorMode.FailFast
@@ -82,7 +82,7 @@ public class ErrorHandlingBenchmarks
     {
         return await _source.SelectParallelAsync(
             (x, _) => new ValueTask<int>(x * 2),
-            new ParallelOptionsRivulet
+            new()
             {
                 MaxDegreeOfParallelism = 8,
                 ErrorMode = ErrorMode.BestEffort
@@ -104,7 +104,7 @@ public class ErrorHandlingBenchmarks
 
                 return new ValueTask<int>(x * 2);
             },
-            new ParallelOptionsRivulet
+            new()
             {
                 MaxDegreeOfParallelism = 8,
                 MaxRetries = 3,
@@ -129,7 +129,7 @@ public class ErrorHandlingBenchmarks
 
                 return new ValueTask<int>(x * 2);
             },
-            new ParallelOptionsRivulet
+            new()
             {
                 MaxDegreeOfParallelism = 8,
                 MaxRetries = 3,

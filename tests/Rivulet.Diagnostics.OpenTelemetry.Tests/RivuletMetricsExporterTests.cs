@@ -19,7 +19,7 @@ public class RivuletMetricsExporterTests : IDisposable
             .AddInMemoryExporter(_exportedMetrics)
             .Build();
 
-        _exporter = new RivuletMetricsExporter();
+        _exporter = new();
     }
 
     public void Dispose()
@@ -181,7 +181,7 @@ public class RivuletMetricsExporterTests : IDisposable
                 await Task.Delay(1, ct);
                 return x * 2;
             },
-            new ParallelOptionsRivulet
+            new()
             {
                 MaxDegreeOfParallelism = 4
             });
