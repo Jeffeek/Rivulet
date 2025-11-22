@@ -13,7 +13,7 @@ REPO_ROOT = DOCS_DIR.parent
 # Define source -> destination mappings
 SYNC_FILES = {
     # Root documentation files
-    REPO_ROOT / "README.md": DOCS_DIR / "readme-main.md",
+    REPO_ROOT / "README.md": DOCS_DIR / "index.md",  # Homepage
     REPO_ROOT / "LICENSE.txt": DOCS_DIR / "license.md",
     REPO_ROOT / "CONTRIBUTING.md": DOCS_DIR / "CONTRIBUTING.md",
     REPO_ROOT / "SECURITY.md": DOCS_DIR / "SECURITY.md",

@@ -121,7 +121,6 @@ extra:
 # Navigation structure
 nav:
   - Home: index.md
-  - Overview: readme-main.md
   - Packages:
       - Rivulet.Core: packages/rivulet-core.md
       - Rivulet.Diagnostics: packages/rivulet-diagnostics.md
