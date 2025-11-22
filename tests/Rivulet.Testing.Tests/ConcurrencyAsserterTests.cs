@@ -220,15 +220,22 @@ public class ConcurrencyAsserterTests
     public async Task ExtremeContention_ShouldHandleCompareExchangeRetries()
     {
         // This test creates extreme contention to force the CompareExchange retry path (line 35)
+        // Using Task.Run to create true thread contention instead of async state machine
         var asserter = new ConcurrencyAsserter();
-        var barrier = new Barrier(100);
+        var startSignal = new TaskCompletionSource<bool>();
 
-        var tasks = Enumerable.Range(0, 100).Select(async _ =>
+        var tasks = Enumerable.Range(0, 100).Select(_ => Task.Run(async () =>
         {
-            barrier.SignalAndWait(); // Synchronize all threads to start at the same time
+            await startSignal.Task; // Wait for signal to start all at once
             using var scope = asserter.Enter();
             await Task.Delay(1);
-        }).ToArray();
+        })).ToArray();
+
+        // Give threads time to all reach the wait point
+        await Task.Delay(50);
+
+        // Release all threads at once to create maximum contention
+        startSignal.SetResult(true);
 
         await Task.WhenAll(tasks);
 
