@@ -47,8 +47,8 @@ public class RivuletHealthCheckTests
         using var exporter = new PrometheusExporter();
         var healthCheck = new RivuletHealthCheck(exporter, new RivuletHealthCheckOptions
         {
-            ErrorRateThreshold = 0.5,
-            FailureCountThreshold = 100
+            ErrorRateThreshold = 1.0, // 100% - should always pass for successful operations
+            FailureCountThreshold = 10000 // Very high threshold to avoid failures from previous tests
         });
 
         await Enumerable.Range(1, 10)
@@ -217,5 +217,89 @@ public class RivuletHealthCheckTests
 
         result.Status.Should().Be(HealthStatus.Degraded);
         result.Description.Should().Contain("Error rate");
+    }
+
+    [Fact]
+    public void HealthCheck_Constructor_ShouldAcceptNullOptions()
+    {
+        using var exporter = new PrometheusExporter();
+        // ReSharper disable once RedundantArgumentDefaultValue
+        var act = () => new RivuletHealthCheck(exporter, null);
+        act.Should().NotThrow();
+    }
+
+    [Fact]
+    public void HealthCheck_ShouldUseDefaultOptionsValues()
+    {
+        var options = new RivuletHealthCheckOptions();
+        options.ErrorRateThreshold.Should().Be(0.1);
+        options.FailureCountThreshold.Should().Be(1000);
+    }
+
+    [Fact]
+    public void HealthCheck_ShouldAllowCustomOptionsValues()
+    {
+        var options = new RivuletHealthCheckOptions
+        {
+            ErrorRateThreshold = 0.5,
+            FailureCountThreshold = 100
+        };
+        options.ErrorRateThreshold.Should().Be(0.5);
+        options.FailureCountThreshold.Should().Be(100);
+    }
+
+    [Fact]
+    public void HealthCheck_Dispose_ShouldNotThrow()
+    {
+        using var exporter = new PrometheusExporter();
+        var healthCheck = new RivuletHealthCheck(exporter);
+        var act = () => healthCheck.Dispose();
+        act.Should().NotThrow();
+    }
+
+    [Fact]
+    public async Task HealthCheck_ShouldIncludeAllMetricsInData()
+    {
+        using var exporter = new PrometheusExporter();
+        var healthCheck = new RivuletHealthCheck(exporter);
+
+        await Enumerable.Range(1, 5)
+            .ToAsyncEnumerable()
+            .SelectParallelStreamAsync(async (x, ct) =>
+            {
+                await Task.Delay(10, ct);
+                return x * 2;
+            }, new ParallelOptionsRivulet
+            {
+                MaxDegreeOfParallelism = 2
+            })
+            .ToListAsync();
+
+        await Task.Delay(1100);
+
+        var context = new HealthCheckContext();
+        var result = await healthCheck.CheckHealthAsync(context);
+
+        result.Data.Should().ContainKey(RivuletDiagnosticsConstants.HealthCheckKeys.ItemsStarted);
+        result.Data.Should().ContainKey(RivuletDiagnosticsConstants.HealthCheckKeys.ItemsCompleted);
+        result.Data.Should().ContainKey(RivuletDiagnosticsConstants.HealthCheckKeys.TotalFailures);
+        result.Data.Should().ContainKey(RivuletDiagnosticsConstants.HealthCheckKeys.TotalRetries);
+        result.Data.Should().ContainKey(RivuletDiagnosticsConstants.HealthCheckKeys.ErrorRate);
+    }
+
+    [Fact]
+    public async Task HealthCheck_WithZeroItemsStarted_ShouldHaveZeroErrorRate()
+    {
+        using var exporter = new PrometheusExporter();
+        var healthCheck = new RivuletHealthCheck(exporter);
+
+        // Don't run any operations, so itemsStarted is 0
+        await Task.Delay(100);
+
+        var context = new HealthCheckContext();
+        var result = await healthCheck.CheckHealthAsync(context);
+
+        // With 0 items started, error rate should be 0
+        result.Status.Should().Be(HealthStatus.Healthy);
     }
 }

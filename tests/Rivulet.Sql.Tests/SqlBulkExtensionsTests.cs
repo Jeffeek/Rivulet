@@ -432,4 +432,244 @@ public class SqlBulkExtensionsTests
                 },
                 cts.Token));
     }
+
+    [Fact]
+    public async Task BulkInsertAsync_WithNullOptions_ShouldUseDefaultOptions()
+    {
+        var items = Enumerable.Range(1, 10).ToList();
+
+        var result = await items.BulkInsertAsync(
+            () => new TestDbConnection(executeNonQueryFunc: _ => 10),
+            async (_, cmd, _) =>
+            {
+                cmd.CommandText = "INSERT INTO Users (Id) VALUES (...)";
+                await Task.CompletedTask;
+            },
+            options: null);
+
+        result.Should().Be(10);
+    }
+
+    [Fact]
+    public async Task BulkUpdateAsync_WithNullOptions_ShouldUseDefaultOptions()
+    {
+        var items = Enumerable.Range(1, 10).ToList();
+
+        var result = await items.BulkUpdateAsync(
+            () => new TestDbConnection(executeNonQueryFunc: _ => 10),
+            async (_, cmd, _) =>
+            {
+                cmd.CommandText = "UPDATE Users SET Name = 'Updated'";
+                await Task.CompletedTask;
+            },
+            options: null);
+
+        result.Should().Be(10);
+    }
+
+    [Fact]
+    public async Task BulkDeleteAsync_WithNullOptions_ShouldUseDefaultOptions()
+    {
+        var items = Enumerable.Range(1, 10).ToList();
+
+        var result = await items.BulkDeleteAsync(
+            () => new TestDbConnection(executeNonQueryFunc: _ => 10),
+            async (_, cmd, _) =>
+            {
+                cmd.CommandText = "DELETE FROM Users WHERE Id IN (...)";
+                await Task.CompletedTask;
+            },
+            options: null);
+
+        result.Should().Be(10);
+    }
+
+    [Fact]
+    public async Task BulkInsertAsync_WithAutoManageConnection_ShouldCloseConnectionAfterBatch()
+    {
+        var items = Enumerable.Range(1, 10).ToList();
+        TestDbConnection? capturedConnection = null;
+
+        var result = await items.BulkInsertAsync(
+            () =>
+            {
+                var conn = new TestDbConnection(executeNonQueryFunc: _ => 10);
+                capturedConnection = conn;
+                return conn;
+            },
+            async (_, cmd, _) =>
+            {
+                cmd.CommandText = "INSERT INTO Users (Id) VALUES (...)";
+                await Task.CompletedTask;
+            },
+            new()
+            {
+                BatchSize = 10,
+                SqlOptions = new()
+                {
+                    AutoManageConnection = true
+                }
+            });
+
+        result.Should().Be(10);
+        capturedConnection.Should().NotBeNull();
+        capturedConnection!.State.Should().Be(ConnectionState.Closed);
+    }
+
+    [Fact]
+    public async Task BulkInsertAsync_WithNonDbConnection_ShouldUseTaskRunFallback()
+    {
+        var items = Enumerable.Range(1, 10).ToList();
+        var openCalled = false;
+
+        var result = await items.BulkInsertAsync(
+            () => new NonDbConnectionMock(() => openCalled = true, () => 10),
+            async (_, cmd, _) =>
+            {
+                cmd.CommandText = "INSERT INTO Users (Id) VALUES (...)";
+                await Task.CompletedTask;
+            },
+            new()
+            {
+                BatchSize = 10
+            });
+
+        result.Should().Be(10);
+        openCalled.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task BulkInsertAsync_WithNonDbCommand_ShouldUseTaskRunFallback()
+    {
+        var items = Enumerable.Range(1, 10).ToList();
+        var executeNonQueryCalled = false;
+
+        var result = await items.BulkInsertAsync(
+            () => new NonDbConnectionWithNonDbCommandMock(() =>
+            {
+                executeNonQueryCalled = true;
+                return 10;
+            }),
+            async (_, cmd, _) =>
+            {
+                cmd.CommandText = "INSERT INTO Users (Id) VALUES (...)";
+                await Task.CompletedTask;
+            },
+            new()
+            {
+                BatchSize = 10
+            });
+
+        result.Should().Be(10);
+        executeNonQueryCalled.Should().BeTrue();
+    }
+
+    // Mock IDbConnection that does NOT extend DbConnection (for lines 219, 225)
+    private class NonDbConnectionMock(Action onOpen, Func<int> executeNonQueryFunc) : IDbConnection
+    {
+        private ConnectionState _state = ConnectionState.Closed;
+
+        [AllowNull]
+        public string ConnectionString { get; set; } = string.Empty;
+        public int ConnectionTimeout => 30;
+        public string Database => "TestDB";
+        public ConnectionState State => _state;
+
+        public void Open()
+        {
+            _state = ConnectionState.Open;
+            onOpen();
+        }
+
+        public void Close()
+        {
+            _state = ConnectionState.Closed;
+        }
+
+        public IDbTransaction BeginTransaction() => new NonDbTransactionMock();
+        public IDbTransaction BeginTransaction(IsolationLevel il) => new NonDbTransactionMock();
+        public void ChangeDatabase(string databaseName) { }
+
+        public IDbCommand CreateCommand() => new NonDbCommandMock(executeNonQueryFunc);
+
+        public void Dispose()
+        {
+            _state = ConnectionState.Closed;
+        }
+    }
+
+    // Mock IDbCommand that does NOT extend DbCommand (for lines 231, 236)
+    private class NonDbCommandMock(Func<int> executeNonQueryFunc) : IDbCommand
+    {
+        [AllowNull]
+        public string CommandText { get; set; } = string.Empty;
+        public int CommandTimeout { get; set; }
+        public CommandType CommandType { get; set; }
+        public IDbConnection? Connection { get; set; }
+        public IDataParameterCollection Parameters { get; } = new NonDbParameterCollectionMock();
+        public IDbTransaction? Transaction { get; set; }
+        public UpdateRowSource UpdatedRowSource { get; set; }
+
+        public int ExecuteNonQuery() => executeNonQueryFunc();
+        public IDataReader ExecuteReader() => throw new NotImplementedException();
+        public IDataReader ExecuteReader(CommandBehavior behavior) => throw new NotImplementedException();
+        public object ExecuteScalar() => throw new NotImplementedException();
+        public void Cancel() { }
+        public IDbDataParameter CreateParameter() => throw new NotImplementedException();
+        public void Prepare() { }
+        public void Dispose() { }
+    }
+
+    private class NonDbTransactionMock : IDbTransaction
+    {
+        public IDbConnection? Connection => null;
+        public IsolationLevel IsolationLevel => IsolationLevel.ReadCommitted;
+        public void Commit() { }
+        public void Rollback() { }
+        public void Dispose() { }
+    }
+
+    private class NonDbParameterCollectionMock : IDataParameterCollection
+    {
+        private readonly List<object?> _items = [];
+        public object this[string parameterName] { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public object? this[int index] { get => _items[index]; set => _items[index] = value; }
+        public bool IsFixedSize => false;
+        public bool IsReadOnly => false;
+        public int Count => _items.Count;
+        public bool IsSynchronized => false;
+        public object SyncRoot => this;
+        public int Add(object? value) { _items.Add(value); return _items.Count - 1; }
+        public void Clear() => _items.Clear();
+        public bool Contains(object? value) => _items.Contains(value);
+        public bool Contains(string parameterName) => throw new NotImplementedException();
+        public void CopyTo(Array array, int index) => throw new NotImplementedException();
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => _items.GetEnumerator();
+        public int IndexOf(object? value) => _items.IndexOf(value);
+        public int IndexOf(string parameterName) => throw new NotImplementedException();
+        public void Insert(int index, object? value) => _items.Insert(index, value);
+        public void Remove(object? value) => _items.Remove(value);
+        public void RemoveAt(int index) => _items.RemoveAt(index);
+        public void RemoveAt(string parameterName) => throw new NotImplementedException();
+    }
+
+    // Mock that uses NonDbCommandMock for testing line 236
+    private class NonDbConnectionWithNonDbCommandMock(Func<int> executeNonQueryFunc) : IDbConnection
+    {
+        private ConnectionState _state = ConnectionState.Closed;
+
+        [AllowNull]
+        public string ConnectionString { get; set; } = string.Empty;
+        public int ConnectionTimeout => 30;
+        public string Database => "TestDB";
+        public ConnectionState State => _state;
+
+        public void Open() => _state = ConnectionState.Open;
+        public void Close() => _state = ConnectionState.Closed;
+        public IDbTransaction BeginTransaction() => new NonDbTransactionMock();
+        public IDbTransaction BeginTransaction(IsolationLevel il) => new NonDbTransactionMock();
+        public void ChangeDatabase(string databaseName) { }
+        public IDbCommand CreateCommand() => new NonDbCommandMock(executeNonQueryFunc);
+        public void Dispose() => _state = ConnectionState.Closed;
+    }
 }

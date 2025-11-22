@@ -336,3 +336,94 @@ public class TestDataReader(List<Dictionary<string, object>> rows) : DbDataReade
         _isClosed = true;
     }
 }
+
+/// <summary>
+/// A test connection that implements IDbConnection directly (not DbConnection)
+/// to test the Task.Run fallback paths in SqlParallelExtensions.
+/// </summary>
+public class NonDbConnection(
+    Func<IDbCommand, object?>? executeScalarFunc = null,
+    Func<IDbCommand, int>? executeNonQueryFunc = null,
+    Func<IDbCommand, IDataReader>? executeReaderFunc = null)
+    : IDbConnection
+{
+    private ConnectionState _state = ConnectionState.Closed;
+
+    [AllowNull]
+    public string ConnectionString { get; set; } = string.Empty;
+    public int ConnectionTimeout => 30;
+    public string Database => "TestDatabase";
+    public ConnectionState State => _state;
+
+    public IDbTransaction BeginTransaction() => new TestDbTransaction(new TestDbConnection(), IsolationLevel.Unspecified);
+    public IDbTransaction BeginTransaction(IsolationLevel il) => new TestDbTransaction(new TestDbConnection(), il);
+    public void ChangeDatabase(string databaseName) { }
+
+    public void Close()
+    {
+        _state = ConnectionState.Closed;
+    }
+
+    public void Open()
+    {
+        _state = ConnectionState.Open;
+    }
+
+    public IDbCommand CreateCommand()
+    {
+        return new NonDbCommand(executeScalarFunc, executeNonQueryFunc, executeReaderFunc);
+    }
+
+    public void Dispose()
+    {
+        _state = ConnectionState.Closed;
+    }
+}
+
+/// <summary>
+/// A test command that implements IDbCommand directly (not DbCommand)
+/// to test the Task.Run fallback paths in SqlParallelExtensions.
+/// </summary>
+public class NonDbCommand(
+    Func<IDbCommand, object?>? executeScalarFunc,
+    Func<IDbCommand, int>? executeNonQueryFunc,
+    Func<IDbCommand, IDataReader>? executeReaderFunc)
+    : IDbCommand
+{
+    [AllowNull]
+    public string CommandText { get; set; } = string.Empty;
+    public int CommandTimeout { get; set; } = 30;
+    public CommandType CommandType { get; set; }
+    public IDbConnection? Connection { get; set; }
+    public IDbTransaction? Transaction { get; set; }
+    public UpdateRowSource UpdatedRowSource { get; set; }
+    public IDataParameterCollection Parameters { get; } = new TestDbParameterCollection();
+
+    public void Cancel() { }
+
+    public IDbDataParameter CreateParameter() => new TestDbParameter();
+
+    public int ExecuteNonQuery()
+    {
+        return executeNonQueryFunc?.Invoke(this) ?? 0;
+    }
+
+    public IDataReader ExecuteReader()
+    {
+        return executeReaderFunc?.Invoke(this) ?? new TestDataReader([]);
+    }
+
+    public IDataReader ExecuteReader(CommandBehavior behavior)
+    {
+        return ExecuteReader();
+    }
+
+    public object? ExecuteScalar()
+    {
+        return executeScalarFunc?.Invoke(this);
+    }
+
+    public void Prepare() { }
+
+    public void Dispose() { }
+}

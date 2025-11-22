@@ -44,14 +44,14 @@ public static class SqlParallelExtensions
     /// Executes SQL queries in parallel with parameters and returns results mapped by the provided function.
     /// </summary>
     /// <typeparam name="TResult">The result type from each query.</typeparam>
-    /// <param name="queriesWithParams">The SQL queries with their parameters.</param>
+    /// <param name="queriesWithParams">The SQL queries with their parameters. Use the string overload if parameters are not needed.</param>
     /// <param name="connectionFactory">Factory function to create database connections.</param>
     /// <param name="readerMapper">Function to map IDataReader to TResult.</param>
     /// <param name="options">SQL execution options.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of query results.</returns>
     public static async Task<List<TResult>> ExecuteQueriesParallelAsync<TResult>(
-        this IEnumerable<(string query, Action<IDbCommand>? configureParams)> queriesWithParams,
+        this IEnumerable<(string query, Action<IDbCommand> configureParams)> queriesWithParams,
         Func<IDbConnection> connectionFactory,
         Func<IDataReader, TResult> readerMapper,
         SqlOptions? options = null,
