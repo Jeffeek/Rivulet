@@ -72,11 +72,11 @@ public class SqlParallelExtensionsTests
         var lockObj = new object();
         var queriesWithParams = new[]
         {
-            (query: "SELECT * FROM Users WHERE Id = @id", configureParams: cmd =>
+            (query: "SELECT * FROM Users WHERE Id = @id", configureParams: (Action<IDbCommand>)(cmd =>
             {
                 lock (lockObj) { commandsReceived.Add(cmd.CommandText); }
-            }),
-            (query: "SELECT * FROM Products WHERE Id = @id", configureParams: (Action<IDbCommand>?)(cmd =>
+            })),
+            (query: "SELECT * FROM Products WHERE Id = @id", configureParams: (Action<IDbCommand>)(cmd =>
             {
                 lock (lockObj) { commandsReceived.Add(cmd.CommandText); }
             }))
