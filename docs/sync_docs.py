@@ -57,8 +57,8 @@ def convert_github_to_mkdocs(content: str) -> str:
 
         # Check if this is a logo image (single <img> tag)
         if div_content.startswith('<img') and div_content.count('<img') == 1:
-            # Keep image without the div wrapper
-            return f'\n{div_content}\n'
+            # Keep image with center alignment
+            return f'\n<div align="center">\n{div_content}\n</div>\n'
 
         # Check if this is a badge block (contains badge markdown)
         if '![' in div_content:
@@ -66,10 +66,23 @@ def convert_github_to_mkdocs(content: str) -> str:
             badge_lines = [line.strip() for line in div_content.split('\n')
                           if line.strip() and '![' in line]
             if badge_lines:
-                # Put all badges on one line with spaces
+                # Convert badge markdown to HTML directly (don't rely on markdown processor)
+                # Pattern: [![alt](image-url)](link-url) -> <a href="link-url"><img src="image-url" alt="alt"></a>
+                html_badges = []
+                for badge in badge_lines:
+                    # Match [![alt](img-url)](link-url) pattern
+                    match = re.match(r'\[\!\[([^\]]*)\]\(([^\)]+)\)\]\(([^\)]+)\)', badge)
+                    if match:
+                        alt_text, img_url, link_url = match.groups()
+                        html_badges.append(f'<a href="{link_url}"><img src="{img_url}" alt="{alt_text}"></a>')
+
+                if html_badges:
+                    badges_html = ' '.join(html_badges)
+                    return f'\n<p align="center">\n{badges_html}\n</p>\n'
+
+                # Fallback: if regex didn't match, use markdown approach
                 badges = ' '.join(badge_lines)
-                # Use paragraph with center alignment (MkDocs Material supports this)
-                return f'\n<p align="center">\n{badges}\n</p>\n'
+                return f'\n<div class="badges" markdown="1" align="center">\n\n{badges}\n\n</div>\n'
 
         # Default: keep content without div wrapper
         return f'\n{div_content}\n'
