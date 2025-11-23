@@ -135,12 +135,6 @@ await users.BulkInsertUsingSqlBulkCopyAsync(
 - SQL Server 2012 or later
 - Microsoft.Data.SqlClient
 
-## Related Packages
-
-- **Rivulet.Sql** - Provider-agnostic base package
-- **Rivulet.Sql.PostgreSql** - PostgreSQL COPY command integration
-- **Rivulet.Sql.MySql** - MySQL LOAD DATA INFILE integration
-
 ## License
 
 MIT License - see [LICENSE](../../LICENSE) for details.

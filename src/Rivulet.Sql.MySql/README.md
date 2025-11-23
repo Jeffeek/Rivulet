@@ -146,12 +146,6 @@ And in your connection string:
 "Server=localhost;Database=mydb;User=root;Password=pass;AllowLoadLocalInfile=true"
 ```
 
-## Related Packages
-
-- **Rivulet.Sql** - Provider-agnostic base package
-- **Rivulet.Sql.SqlServer** - SqlBulkCopy integration for SQL Server
-- **Rivulet.Sql.PostgreSql** - PostgreSQL COPY command integration
-
 ## License
 
 MIT License - see [LICENSE](../../LICENSE) for details.

@@ -8,9 +8,12 @@ import re
 import shutil
 from pathlib import Path
 
-# Get repository root (parent of docs directory)
+# Get repository root
+# __file__ is docs/readthedocs/sync_docs.py
+# DOCS_DIR is docs/readthedocs/
+# REPO_ROOT should be the git repository root (two levels up)
 DOCS_DIR = Path(__file__).parent
-REPO_ROOT = DOCS_DIR.parent
+REPO_ROOT = DOCS_DIR.parent.parent
 
 # Define source -> destination mappings
 SYNC_FILES = {
