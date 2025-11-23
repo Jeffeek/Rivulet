@@ -1,20 +1,26 @@
 param(
     [Parameter(Mandatory=$false)]
-    [int]$Iterations = 20
+    [int]$Iterations = 20,
+
+    [Parameter(Mandatory=$false)]
+    [switch]$SkipRestore,
+
+    [Parameter(Mandatory=$false)]
+    [switch]$SkipBuild
 )
 
 function Exit-OrphanedProcesses {
     # Cleanup any remaining test processes that might have been orphaned
     # Target specific test-related processes to avoid killing unrelated dotnet processes
     Write-Host "Cleaning up any orphaned test processes..." -ForegroundColor Gray
-    
+
     # Kill testhost and vstest processes first
     Get-Process testhost -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
     Get-Process vstest.console -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
-    
+
     # Small delay to allow process tree cleanup
     Start-Sleep -Milliseconds 500
-    
+
     # Now kill any orphaned dotnet processes that were spawned by the test jobs
     # These are processes that should have exited when the jobs completed
     $dotnetProcesses = Get-Process dotnet -ErrorAction SilentlyContinue
@@ -36,8 +42,28 @@ Write-Host ""
 
 # Fail fast for restore/build errors
 $ErrorActionPreference = "Stop"
-dotnet restore
-dotnet build -c Release --no-restore
+
+# Restore dependencies (unless skipped - useful when using pipeline cache)
+if (-not $SkipRestore) {
+    Write-Host "Restoring NuGet packages..." -ForegroundColor Gray
+    dotnet restore
+} else {
+    Write-Host "Skipping restore (using cached packages)" -ForegroundColor DarkGray
+}
+
+# Build solution (unless skipped - useful when using pipeline cache)
+if (-not $SkipBuild) {
+    Write-Host "Building solution in Release mode..." -ForegroundColor Gray
+    if ($SkipRestore) {
+        dotnet build -c Release
+    } else {
+        dotnet build -c Release --no-restore
+    }
+} else {
+    Write-Host "Skipping build (using cached binaries)" -ForegroundColor DarkGray
+}
+
+Write-Host ""
 
 # But continue on test failures - we want to track flaky tests
 $ErrorActionPreference = "Continue"

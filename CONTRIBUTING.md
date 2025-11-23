@@ -467,7 +467,6 @@ By contributing, you agree that your contributions will be licensed under the sa
 - [START_SESSION_AI.md](TestResults/START_SESSION_AI.md) - Comprehensive AI session guide
 - [ROADMAP.md](ROADMAP.md) - Future plans and ecosystem packages
 - [.github/workflows/WORKFLOW_README.md](.github/workflows/WORKFLOW_README.md) - CI/CD documentation
-- [RELEASE_GUIDE.md](RELEASE_GUIDE.md) - Release process for maintainers
 
 ---
 

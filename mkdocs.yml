@@ -56,7 +56,7 @@ theme:
   icon:
     repo: fontawesome/brands/github
   logo: assets/PackageVectors/Rivulet.Core.svg
-  favicon: static/images/favicon.ico
+  favicon: favicon.ico
 
 # Plugins
 plugins:

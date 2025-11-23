@@ -49,14 +49,20 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-nuget-
 
+    - name: Restore NuGet packages
+      run: dotnet restore
+
+    - name: Build solution (Release)
+      run: dotnet build -c Release --no-restore
+
     - name: Run flaky test detection - Windows
       if: runner.os == 'Windows'
       shell: pwsh
-      run: ./scripts/run-flaky-test-detection/run-flaky-test-detection.ps1 -Iterations ${{ inputs.iterations }}
+      run: ./scripts/run-flaky-test-detection/run-flaky-test-detection.ps1 -Iterations ${{ inputs.iterations }} -SkipRestore -SkipBuild
       timeout-minutes: ${{ inputs.timeout-minutes }}
 
     - name: Run flaky test detection - Linux
       if: runner.os == 'Linux'
       shell: bash
-      run: bash ./scripts/run-flaky-test-detection/run-flaky-test-detection.sh ${{ inputs.iterations }}
+      run: bash ./scripts/run-flaky-test-detection/run-flaky-test-detection.sh ${{ inputs.iterations }} --skip-restore --skip-build
       timeout-minutes: ${{ inputs.timeout-minutes }}
