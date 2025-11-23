@@ -55,7 +55,7 @@ theme:
     - content.code.annotate    # Code annotations
   icon:
     repo: fontawesome/brands/github
-  logo: static/images/PackageVectors/Rivulet.Core.svg
+  logo: assets/PackageVectors/Rivulet.Core.svg
   favicon: static/images/favicon.ico
 
 # Plugins
