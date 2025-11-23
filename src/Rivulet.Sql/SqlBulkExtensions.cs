@@ -143,74 +143,72 @@ public static class SqlBulkExtensions
         int batchNumber,
         CancellationToken cancellationToken)
     {
-        IDbConnection? connection = null;
-        IDbCommand? command = null;
-        IDbTransaction? transaction = null;
-
-        try
+        if (options.OnBatchStartAsync != null)
         {
-            if (options.OnBatchStartAsync != null)
-            {
-                await options.OnBatchStartAsync(batch.Cast<object>().ToList(), batchNumber).ConfigureAwait(false);
-            }
-
-            connection = connectionFactory();
-            var sqlOptions = options.SqlOptions ?? new SqlOptions();
-
-            if (sqlOptions.AutoManageConnection && connection.State != ConnectionState.Open)
-            {
-                await OpenConnectionAsync(connection, cancellationToken).ConfigureAwait(false);
-            }
-
-            if (options.UseTransaction)
-            {
-                transaction = connection.BeginTransaction(sqlOptions.IsolationLevel);
-            }
-
-            command = connection.CreateCommand();
-            command.CommandTimeout = sqlOptions.CommandTimeout;
-
-            if (transaction != null)
-            {
-                command.Transaction = transaction;
-            }
-
-            await commandBuilder(batch, command, cancellationToken).ConfigureAwait(false);
-
-            var affectedRows = await ExecuteNonQueryAsync(command, cancellationToken).ConfigureAwait(false);
-
-            transaction?.Commit();
-
-            if (options.OnBatchCompleteAsync != null)
-            {
-                await options.OnBatchCompleteAsync(batch.Cast<object>().ToList(), batchNumber, affectedRows).ConfigureAwait(false);
-            }
-
-            return affectedRows;
+            await options.OnBatchStartAsync(batch.Cast<object>().ToList(), batchNumber).ConfigureAwait(false);
         }
-        catch (Exception ex)
+
+        var connection = connectionFactory();
+        var sqlOptions = options.SqlOptions ?? new SqlOptions();
+
+        using (connection)
         {
-            transaction?.Rollback();
-
-            if (options.OnBatchErrorAsync != null)
+            try
             {
-                await options.OnBatchErrorAsync(batch.Cast<object>().ToList(), batchNumber, ex).ConfigureAwait(false);
+                if (sqlOptions.AutoManageConnection && connection.State != ConnectionState.Open)
+                {
+                    await OpenConnectionAsync(connection, cancellationToken).ConfigureAwait(false);
+                }
+
+                var transaction = options.UseTransaction
+                    ? connection.BeginTransaction(sqlOptions.IsolationLevel)
+                    : null;
+
+                using (transaction)
+                {
+                    try
+                    {
+                        using var command = connection.CreateCommand();
+                        command.CommandTimeout = sqlOptions.CommandTimeout;
+
+                        if (transaction != null)
+                        {
+                            command.Transaction = transaction;
+                        }
+
+                        await commandBuilder(batch, command, cancellationToken).ConfigureAwait(false);
+
+                        var affectedRows = await ExecuteNonQueryAsync(command, cancellationToken).ConfigureAwait(false);
+
+                        transaction?.Commit();
+
+                        if (options.OnBatchCompleteAsync != null)
+                        {
+                            await options.OnBatchCompleteAsync(batch.Cast<object>().ToList(), batchNumber, affectedRows).ConfigureAwait(false);
+                        }
+
+                        return affectedRows;
+                    }
+                    catch (Exception ex)
+                    {
+                        transaction?.Rollback();
+
+                        if (options.OnBatchErrorAsync != null)
+                        {
+                            await options.OnBatchErrorAsync(batch.Cast<object>().ToList(), batchNumber, ex).ConfigureAwait(false);
+                        }
+
+                        throw;
+                    }
+                }
             }
-
-            throw;
-        }
-        finally
-        {
-            transaction?.Dispose();
-            command?.Dispose();
-
-            var sqlOptions = options.SqlOptions ?? new SqlOptions();
-            if (sqlOptions.AutoManageConnection && connection?.State == ConnectionState.Open)
+            finally
             {
-                connection.Close();
+                if (sqlOptions.AutoManageConnection && connection.State == ConnectionState.Open)
+                {
+                    connection.Close();
+                }
             }
-
-            connection?.Dispose();
         }
     }
 

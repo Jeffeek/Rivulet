@@ -73,7 +73,7 @@ public static class HttpStreamingExtensions
 
         options ??= new();
 
-        var request = new HttpRequestMessage(HttpMethod.Get, uri);
+        using var request = new HttpRequestMessage(HttpMethod.Get, uri);
 
         using var response = await httpClient.SendAsync(
             request,
@@ -176,7 +176,7 @@ public static class HttpStreamingExtensions
             throw new IOException($"File already exists at '{destinationPath}' and OverwriteExisting is false");
         }
 
-        var request = new HttpRequestMessage(HttpMethod.Get, uri);
+        using var request = new HttpRequestMessage(HttpMethod.Get, uri);
 
         // Add Range header for resume
         if (existingFileSize > 0)
@@ -277,14 +277,16 @@ public static class HttpStreamingExtensions
     {
         try
         {
-            var request = new HttpRequestMessage(HttpMethod.Head, uri);
+            using var request = new HttpRequestMessage(HttpMethod.Head, uri);
             using var response = await httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
 
             return response.Headers.AcceptRanges.Contains("bytes");
         }
         catch
         {
-            // If HEAD fails, assume no range support
+            // Generic catch is intentional: if HEAD request fails for any reason
+            // (network issues, server errors, authorization, etc.), we assume no range support
+            // and fall back to full download. This provides maximum compatibility.
             return false;
         }
     }
