@@ -47,9 +47,9 @@ def convert_github_to_mkdocs(content: str) -> str:
     - Remove GitHub-specific HTML tags
     """
 
-    # Fix image paths: assets/ -> ../assets/
-    content = content.replace('src="assets/', 'src="../assets/')
-    content = content.replace('src="./assets/', 'src="../assets/')
+    # Fix image paths: assets/ -> assets/ (assets folder is copied to docs/assets/)
+    # No need to change the path since assets will be in docs/assets/
+    # content = content.replace('src="assets/', 'src="assets/')  # No-op, keeping same path
 
     # Process <div align="center"> blocks - extract content and check if it contains badges or images
     def process_center_div(match):
@@ -123,6 +123,17 @@ def convert_github_to_mkdocs(content: str) -> str:
 def sync_docs():
     """Copy and convert documentation files from source locations."""
     print("Syncing documentation files...")
+
+    # Copy assets directory
+    assets_source = REPO_ROOT / "assets"
+    assets_dest = DOCS_DIR / "assets"
+    if assets_source.exists():
+        # Remove existing assets directory if it exists
+        if assets_dest.exists():
+            shutil.rmtree(assets_dest)
+        # Copy entire assets directory
+        shutil.copytree(assets_source, assets_dest)
+        print(f"  [OK] assets/ directory copied")
 
     for source, (dest, convert) in SYNC_FILES.items():
         if not source.exists():

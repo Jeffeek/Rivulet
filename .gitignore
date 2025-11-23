@@ -384,3 +384,4 @@ docs/SECURITY.md
 docs/CODE_OF_CONDUCT.md
 docs/packages/*.md
 !docs/packages/.gitkeep
+docs/assets/
