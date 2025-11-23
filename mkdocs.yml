@@ -4,6 +4,9 @@ site_description: Safe, async-first parallel operators with bounded concurrency,
 site_author: Rivulet Contributors
 site_url: https://rivulet2.readthedocs.io/
 
+# Documentation directory (where markdown files are located)
+docs_dir: docs/readthedocs
+
 # Repository information
 repo_name: Jeffeek/Rivulet
 repo_url: https://github.com/Jeffeek/Rivulet
@@ -137,7 +140,6 @@ nav:
       - Rivulet.IO: packages/rivulet-io.md
   - Development:
       - Contributing: CONTRIBUTING.md
-      - Release Guide: RELEASE_GUIDE.md
       - Roadmap: ROADMAP.md
       - Security: SECURITY.md
   - About:
