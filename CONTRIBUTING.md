@@ -59,6 +59,12 @@ We welcome pull requests for:
 - **.NET SDK**: 8.0 and 9.0 (for multi-targeting)
 - **IDE**: Visual Studio 2022, JetBrains Rider, or VS Code with C# extension
 - **Git**: For version control
+- **Docker Desktop** (optional, required for integration tests):
+  - **Windows**: [Docker Desktop for Windows](https://www.docker.com/products/docker-desktop/)
+  - **Linux**: Docker Engine or Docker Desktop
+  - **macOS**: [Docker Desktop for Mac](https://www.docker.com/products/docker-desktop/)
+
+> **Note**: Docker is only required for running integration tests that use [Testcontainers](https://dotnet.testcontainers.org/) (e.g., SQL Server, MySQL, PostgreSQL bulk copy tests). Unit tests run without Docker.
 
 ### Clone and Build
 
@@ -198,16 +204,27 @@ public async Task SelectParallelAsync_WithCancellation_ThrowsOperationCanceledEx
 ### Test Categories
 
 1. **Unit Tests**: Test each method in isolation
-2. **Error Handling Tests**: Verify all error modes (FailFast, CollectAndContinue, BestEffort)
-3. **Edge Cases**: Empty collections, null handlers, cancellation, timeouts
-4. **Concurrency Tests**: Verify parallelism limits, backpressure, race conditions
-5. **Performance Tests**: Ensure no regressions (use BenchmarkDotNet)
+2. **Integration Tests**: Test with real infrastructure (databases via Testcontainers)
+   - Marked with `[Trait("Category", "Integration")]`
+   - Require Docker Desktop to be running
+   - Excluded from flaky test detection (deterministic but slow)
+   - Use `IAsyncLifetime` per test class or `ICollectionFixture` for shared containers
+3. **Error Handling Tests**: Verify all error modes (FailFast, CollectAndContinue, BestEffort)
+4. **Edge Cases**: Empty collections, null handlers, cancellation, timeouts
+5. **Concurrency Tests**: Verify parallelism limits, backpressure, race conditions
+6. **Performance Tests**: Ensure no regressions (use BenchmarkDotNet)
 
 ### Running Tests
 
 ```bash
-# Run all tests
+# Run all tests (requires Docker Desktop for integration tests)
 dotnet test -c Release
+
+# Run only unit tests (no Docker required)
+dotnet test -c Release --filter "Category!=Integration"
+
+# Run only integration tests (requires Docker Desktop)
+dotnet test -c Release --filter "Category=Integration"
 
 # Run with coverage
 dotnet test -c Release --collect:"XPlat Code Coverage"
@@ -215,12 +232,49 @@ dotnet test -c Release --collect:"XPlat Code Coverage"
 # Run specific test
 dotnet test --filter "FullyQualifiedName~SelectParallelAsync_WithCancellation"
 
-# Flaky test detection (manual trigger - specify iterations)
+# Flaky test detection (manual trigger - excludes integration tests)
 gh workflow run flaky-test-detection.yml -f iterations=20 -f timeout-minutes=40
 
 # Note: Flaky detection runs automatically:
-# - On every PR: 20 iterations (via ci.yml)
-# - Weekly scheduled: 100 iterations (Sundays 3 AM UTC)
+# - On every PR: 20 iterations (via ci.yml) - unit tests only
+# - Weekly scheduled: 100 iterations (Sundays 3 AM UTC) - unit tests only
+# - Integration tests excluded (deterministic but slow)
+```
+
+### Integration Test Guidelines
+
+When adding integration tests that use Testcontainers:
+
+1. **Mark with trait**: `[Trait("Category", "Integration")]` on test class
+2. **Container lifecycle**:
+   - Use `IAsyncLifetime` for per-test-class isolation
+   - Use `ICollectionFixture<T>` + `[Collection("Name")]` to share containers across test classes
+3. **Table isolation**: Create unique table names if sharing containers
+4. **Documentation**: Add XML comments explaining Docker requirement
+
+Example:
+```csharp
+/// <summary>
+/// Integration tests using Testcontainers.
+/// Requires Docker Desktop to be running.
+/// </summary>
+[Trait("Category", "Integration")]
+public class MyIntegrationTests : IAsyncLifetime
+{
+    private MsSqlContainer? _container;
+
+    public async Task InitializeAsync()
+    {
+        _container = new MsSqlBuilder().Build();
+        await _container.StartAsync();
+    }
+
+    public async Task DisposeAsync()
+    {
+        if (_container != null)
+            await _container.DisposeAsync();
+    }
+}
 ```
 
 ---

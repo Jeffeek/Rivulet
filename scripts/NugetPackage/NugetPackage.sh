@@ -31,7 +31,11 @@ PROJECTS["DiagnosticsOpenTelemetry"]="src/Rivulet.Diagnostics.OpenTelemetry/Rivu
 PROJECTS["Testing"]="src/Rivulet.Testing/Rivulet.Testing.csproj"
 PROJECTS["Hosting"]="src/Rivulet.Hosting/Rivulet.Hosting.csproj"
 PROJECTS["Http"]="src/Rivulet.Http/Rivulet.Http.csproj"
-PROJECTS["Polly"]="src/Rivulet.Http/Rivulet.Polly.csproj"
+PROJECTS["Polly"]="src/Rivulet.Polly/Rivulet.Polly.csproj"
+PROJECTS["Sql"]="src/Rivulet.Sql/Rivulet.Sql.csproj"
+PROJECTS["Sql.SqlServer"]="src/Rivulet.Sql.SqlServer/Rivulet.Sql.SqlServer.csproj"
+PROJECTS["Sql.MySql"]="src/Rivulet.Sql.MySql/Rivulet.Sql.MySql.csproj"
+PROJECTS["Sql.PostgreSql"]="src/Rivulet.Sql.PostgreSql/Rivulet.Sql.PostgreSql.csproj"
 
 # Validate project parameter
 VALID_PROJECTS="Core Diagnostics DiagnosticsOpenTelemetry Testing Hosting Http Polly All"
@@ -203,6 +207,10 @@ echo -e "${GRAY}                             ./NugetPackage.sh <version> Testing
 echo -e "${GRAY}                             ./NugetPackage.sh <version> Hosting${NC}"
 echo -e "${GRAY}                             ./NugetPackage.sh <version> Http${NC}"
 echo -e "${GRAY}                             ./NugetPackage.sh <version> Polly{NC}"
+echo -e "${GRAY}                             ./NugetPackage.sh <version> Sql{NC}"
+echo -e "${GRAY}                             ./NugetPackage.sh <version> Sql.SqlServer{NC}"
+echo -e "${GRAY}                             ./NugetPackage.sh <version> Sql.MySql{NC}"
+echo -e "${GRAY}                             ./NugetPackage.sh <version> Sql.PostgreSql{NC}"
 echo -e "${GRAY}  - Build all packages:      ./NugetPackage.sh <version> All${NC}"
 echo -e "${GRAY}  - Test locally:            dotnet add package Rivulet.Core --source ./test-packages${NC}"
 echo ""
