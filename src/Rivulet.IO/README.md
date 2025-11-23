@@ -585,12 +585,6 @@ This layered architecture provides flexibility while maintaining a single source
 - .NET 8.0 or .NET 9.0
 - Rivulet.Core (included)
 
-## Related Packages
-
-- **Rivulet.Core** - Core parallel operators and resilience features
-- **Rivulet.Http** - Parallel HTTP operations
-- **Rivulet.Sql** - Parallel database operations
-
 ## License
 
 MIT License - see [LICENSE](../../LICENSE.txt) for details.

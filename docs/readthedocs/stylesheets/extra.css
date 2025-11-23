@@ -1,0 +1,117 @@
+/* Custom styles for Rivulet documentation */
+
+:root {
+  --md-primary-fg-color: #3949ab;
+  --md-accent-fg-color: #3949ab;
+  --rivulet-gradient-start: #3949ab;
+  --rivulet-gradient-end: #5e72df;
+}
+
+/* Custom header with logo background */
+.md-header {
+  background: linear-gradient(135deg, var(--rivulet-gradient-start) 0%, var(--rivulet-gradient-end) 100%);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Header logo enhancement */
+.md-header__button.md-logo {
+  padding: 0.2rem;
+}
+
+.md-header__button.md-logo img,
+.md-header__button.md-logo svg {
+  height: 2.5rem;
+  width: auto;
+  filter: brightness(0) invert(1);
+}
+
+/* Hero section on homepage */
+.md-content article > h1:first-of-type {
+  text-align: center;
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  background: linear-gradient(135deg, var(--rivulet-gradient-start), var(--rivulet-gradient-end));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Enhanced badges styling */
+.md-content p > a > img[alt*="NuGet"],
+.md-content p > a > img[alt*="Downloads"],
+.md-content p > a > img[alt*="License"],
+.md-content p > a > img[alt*="Documentation"] {
+  vertical-align: middle;
+  margin: 0.2rem;
+  transition: transform 0.2s ease;
+}
+
+.md-content p > a > img[alt*="NuGet"]:hover,
+.md-content p > a > img[alt*="Downloads"]:hover {
+  transform: scale(1.05);
+}
+
+/* Code block enhancements */
+.highlight pre {
+  border-radius: 6px;
+  border-left: 4px solid var(--md-primary-fg-color);
+}
+
+/* Improve table styling */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+table th {
+  background: linear-gradient(135deg, var(--rivulet-gradient-start), var(--rivulet-gradient-end));
+  color: white;
+  font-weight: 600;
+  padding: 1rem;
+  text-align: left;
+}
+
+table td {
+  padding: 0.8rem 1rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+table tbody tr:hover {
+  background-color: rgba(57, 73, 171, 0.03);
+  transition: background-color 0.2s ease;
+}
+
+/* Package emojis styling */
+table td strong {
+  font-size: 1.05rem;
+}
+
+/* Documentation link styling */
+table td a[href*="README.md"]::before {
+  content: "📖 ";
+}
+
+/* Admonition enhancements */
+.admonition {
+  border-left: 4px solid var(--md-primary-fg-color);
+  border-radius: 4px;
+}
+
+/* Navigation improvements */
+.md-nav__item--active > .md-nav__link {
+  color: var(--md-primary-fg-color);
+  font-weight: 600;
+}
+
+/* Search box enhancement */
+.md-search__input {
+  border-radius: 20px;
+}
+
+/* Footer styling */
+.md-footer {
+  background: linear-gradient(135deg, var(--rivulet-gradient-start) 0%, var(--rivulet-gradient-end) 100%);
+}

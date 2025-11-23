@@ -7,7 +7,7 @@ site_url: https://rivulet2.readthedocs.io/
 # Repository information
 repo_name: Jeffeek/Rivulet
 repo_url: https://github.com/Jeffeek/Rivulet
-edit_uri: edit/master/docs/
+edit_uri: edit/master/docs/readthedocs/
 
 # Copyright
 copyright: Copyright &copy; 2024 Rivulet Contributors
@@ -52,7 +52,8 @@ theme:
     - content.code.annotate    # Code annotations
   icon:
     repo: fontawesome/brands/github
-    logo: material/water
+  logo: static/images/PackageVectors/Rivulet.Core.svg
+  favicon: static/images/favicon.ico
 
 # Plugins
 plugins:
@@ -133,6 +134,7 @@ nav:
       - Rivulet.Sql.PostgreSql: packages/rivulet-sql-postgresql.md
       - Rivulet.Sql.MySql: packages/rivulet-sql-mysql.md
       - Rivulet.Polly: packages/rivulet-polly.md
+      - Rivulet.IO: packages/rivulet-io.md
   - Development:
       - Contributing: CONTRIBUTING.md
       - Release Guide: RELEASE_GUIDE.md

@@ -239,8 +239,3 @@ app.MapGet("/metrics", () => exporter.Export());
 ## License
 
 MIT License - see LICENSE file for details
-
-## Related Packages
-
-- **Rivulet.Core**: Core parallel operators - [NuGet](https://www.nuget.org/packages/Rivulet.Core/)
-- **Rivulet.Diagnostics.OpenTelemetry**: OpenTelemetry integration for distributed tracing - [NuGet](https://www.nuget.org/packages/Rivulet.Diagnostics.OpenTelemetry/) | [Documentation](../Rivulet.Diagnostics.OpenTelemetry/README.md)

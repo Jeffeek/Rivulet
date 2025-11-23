@@ -134,12 +134,6 @@ await products.BulkInsertUsingCopyAsync(
 - PostgreSQL 10 or later
 - Npgsql
 
-## Related Packages
-
-- **Rivulet.Sql** - Provider-agnostic base package
-- **Rivulet.Sql.SqlServer** - SqlBulkCopy integration for SQL Server
-- **Rivulet.Sql.MySql** - MySQL LOAD DATA INFILE integration
-
 ## License
 
 MIT License - see [LICENSE](../../LICENSE) for details.

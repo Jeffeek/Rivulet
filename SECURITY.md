@@ -6,7 +6,8 @@ The following versions of Rivulet are currently supported with security updates:
 
 | Version | Supported          | End of Support |
 | ------- | ------------------ | -------------- |
-| 1.2.x   | :white_check_mark: | Active development |
+| 1.3.x   |  | Active development |
+| 1.2.x   | :white_check_mark: | Until 1.3.0 release |
 | 1.1.x   | :white_check_mark: | Until 1.3.0 release |
 | 1.0.x   | :white_check_mark: | Until 1.3.0 release |
 | 1.0.0-alpha| :x:                | No longer supported |

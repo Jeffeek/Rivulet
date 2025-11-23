@@ -504,12 +504,3 @@ Works seamlessly with:
 ## License
 
 MIT License - see [LICENSE](../../LICENSE.txt) for details.
-
-## Related Packages
-
-- **Rivulet.Core** - Core parallel operators
-- **Rivulet.Http** - HTTP operations with retries and resilient downloads
-- **Rivulet.Diagnostics** - EventSource-based metrics
-- **Rivulet.Diagnostics.OpenTelemetry** - OpenTelemetry integration
-- **Rivulet.Hosting** - IHostedService integration
-- **Rivulet.Testing** - Testing utilities for parallel code

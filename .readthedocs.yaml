@@ -32,4 +32,4 @@ build:
 # Python dependencies
 python:
   install:
-    - requirements: docs/requirements.txt
+    - requirements: docs/readthedocs/requirements.txt
