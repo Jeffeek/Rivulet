@@ -17,7 +17,9 @@ coverage:
   # Ignore patterns - exclude test projects and generated files
   ignore:
     - "tests/**/*"              # Exclude all test projects
+    - "samples/**/*"            # Exclude all sample projects
     - "**/*.Tests/**/*"         # Exclude any .Tests projects
+    - "**/*.Sample/**/*"         # Exclude any .Sample projects
     - "**/obj/**"               # Exclude build artifacts
     - "**/bin/**"               # Exclude build artifacts
     - "**/*.Designer.cs"        # Exclude designer files

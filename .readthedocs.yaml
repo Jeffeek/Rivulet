@@ -24,7 +24,7 @@ build:
       - git fetch --unshallow || true
     pre_build:
       # Sync documentation files from source locations
-      - python docs/sync_docs.py
+      - python docs/readthedocs/sync_docs.py
     post_build:
       # Generate sitemap
       - echo "Documentation built successfully"
