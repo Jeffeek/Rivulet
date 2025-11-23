@@ -6,14 +6,14 @@
 function exit_orphaned_processes {
     # Cleanup any remaining test processes that might have been orphaned
     echo -e "${DARKYELLOW}Cleaning up any orphaned test processes...${NC}"
-    
+
     # Kill testhost and vstest processes first
     pkill -9 testhost 2>/dev/null || true
     pkill -9 vstest.console 2>/dev/null || true
-    
+
     # Small delay to allow process tree cleanup
     sleep 0.5
-    
+
     # Count and kill any orphaned dotnet processes
     dotnet_count=$(pgrep -c dotnet 2>/dev/null || echo "0")
     dotnet_count=$(echo "$dotnet_count" | tr -d '[:space:]')  # Remove all whitespace
@@ -29,14 +29,41 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
 DARKYELLOW='\033[0;33m'
+GRAY='\033[0;90m'
 NC='\033[0m' # No Color
 
 # Navigate to repository root (2 levels up from scripts/run-flaky-test-detection/)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR/../.."
 
-# Default iterations
-ITERATIONS="${1:-20}"
+# Parse command line arguments
+ITERATIONS=20
+SKIP_RESTORE=false
+SKIP_BUILD=false
+
+# Process arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --skip-restore)
+            SKIP_RESTORE=true
+            shift
+            ;;
+        --skip-build)
+            SKIP_BUILD=true
+            shift
+            ;;
+        [0-9]*)
+            ITERATIONS=$1
+            shift
+            ;;
+        *)
+            echo -e "${RED}Unknown argument: $1${NC}"
+            echo "Usage: $0 [iterations] [--skip-restore] [--skip-build]"
+            echo "Example: $0 50 --skip-restore --skip-build"
+            exit 1
+            ;;
+    esac
+done
 
 declare -A results
 declare -A errorDetails # Store first error occurrence for each test
@@ -46,8 +73,29 @@ echo ""
 
 # Fail fast for restore/build errors
 set -e
-dotnet restore
-dotnet build -c Release --no-restore
+
+# Restore dependencies (unless skipped - useful when using pipeline cache)
+if [ "$SKIP_RESTORE" = false ]; then
+    echo -e "${GRAY}Restoring NuGet packages...${NC}"
+    dotnet restore
+else
+    echo -e "${GRAY}Skipping restore (using cached packages)${NC}"
+fi
+
+# Build solution (unless skipped - useful when using pipeline cache)
+if [ "$SKIP_BUILD" = false ]; then
+    echo -e "${GRAY}Building solution in Release mode...${NC}"
+    if [ "$SKIP_RESTORE" = true ]; then
+        dotnet build -c Release
+    else
+        dotnet build -c Release --no-restore
+    fi
+else
+    echo -e "${GRAY}Skipping build (using cached binaries)${NC}"
+fi
+
+echo ""
+
 set +e  # But continue on test failures
 
 for ((i = 1; i <= ITERATIONS; i++)); do

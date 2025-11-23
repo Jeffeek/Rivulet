@@ -15,9 +15,13 @@
 - **Rivulet.Hosting** - .NET Generic Host integration
 
 ### 🚧 In Development (v1.3.0)
-- **Rivulet.Http** - Parallel HTTP operations, resilient downloads, HttpClientFactory integration
-- **Rivulet.Sql** - Provider-agnostic parallel SQL operations, connection pooling awareness, bulk operations
-- **Rivulet.Polly** - Integration with Polly resilience library, advanced patterns (hedging, result-based retry)
+- **Rivulet.Http** - Parallel HTTP operations with HttpClientFactory integration
+- **Rivulet.IO** - Parallel file operations, directory processing, file transformations
+- **Rivulet.Sql** - Provider-agnostic parallel SQL operations with connection pooling awareness
+- **Rivulet.Sql.SqlServer** - SqlBulkCopy integration (10-100x faster bulk inserts)
+- **Rivulet.Sql.PostgreSql** - COPY command integration (10-100x faster bulk operations)
+- **Rivulet.Sql.MySql** - LOAD DATA INFILE integration with MySqlBulkLoader
+- **Rivulet.Polly** - Polly v8 integration with hedging, result-based retry, pipeline composition
 
 ---
 
@@ -26,14 +30,14 @@
 ```
          Impact
            ^
-   Very    |  [Diagnostics]✅    [Http]🚧     [Sql.SqlServer]
+   Very    |  [Diagnostics]✅    [Http]🚧     [Sql.SqlServer]🚧
    High  5 |  [Diagnostics.OpenTelemetry]✅           [EntityFramework]
-           |  [Json]🆕  [IO]🆕
+           |  [Json]🆕  [IO]🚧
            |
    High  4 |  [Testing]✅   [Polly]🚧  [Csv]🆕
            |  [Hosting]✅   [Sql]🚧    [Azure.Storage]
            |
-  Medium 3 |  [Aws.S3]  [Sql.PostgreSql]  [Sql.MySql]
+  Medium 3 |  [Aws.S3]  [Sql.PostgreSql]🚧  [Sql.MySql]🚧
            |  [Pipeline v2.0]
            |
    Low   2 |  [Batching?]  [Generators?]
@@ -50,21 +54,17 @@
 
 ## Roadmap by Version
 
-### v1.4.0 - Fundamentals + Database Performance (Q4 2025)
-**Goal**: Cover the basics (JSON, IO) + high-performance database operations
+### v1.4.0 - JSON + Cloud Storage (Q1-Q2 2026)
+**Goal**: JSON processing and cloud storage integrations
 
 | Package | Description | Impact | Status |
 |---------|-------------|--------|--------|
-| **Rivulet.Sql.SqlServer** | SqlBulkCopy integration (10-100x faster bulk inserts), table-valued parameters, SQL Server-specific optimizations | 🟢 Very High | Planned |
 | **Rivulet.Json** 🆕 | Parallel JSON deserialization from streams, System.Text.Json/Newtonsoft.Json support, JsonPath parallel queries | 🟢 Very High | Planned |
-| **Rivulet.IO** 🆕 | Parallel file reading/writing, directory operations, file transformations | 🟢 Very High | Planned |
 | **Rivulet.Azure.Storage** | Blob Storage parallel operations (download, upload, transformation) | 🟡 Med-High | Planned |
 | **Rivulet.Aws.S3** | S3 parallel operations (get, put, batch operations) | 🟡 Med-High | Planned |
 
 **Why**:
 - **JSON is everywhere**: 90% of modern APIs use JSON. Parallel processing is critical.
-- **File I/O is fundamental**: Data processing pipelines need parallel file operations.
-- **SqlBulkCopy provides 10-100x performance**: SQL Server users need this for high-throughput workloads.
 - **Cloud storage is common**: But scope down to storage only (Blob/S3), not full cloud suites.
 
 **Example (Rivulet.Json)**:
@@ -78,20 +78,12 @@ var results = await documents
     .SelectParallelAsync(doc => doc.SelectTokens("$.orders[?(@.total > 100)]"));
 ```
 
-**Example (Rivulet.IO)**:
-```csharp
-// Parallel file processing
-await Directory.GetFiles("*.csv")
-    .ProcessFilesParallelAsync(ProcessFileAsync, new ParallelOptionsRivulet { ... });
-```
-
 **Note**:
-- Rivulet.Sql.SqlServer is optional - use base Rivulet.Sql for cross-database code.
 - Azure/AWS packages focus on storage only. Other services (Functions, Cosmos, Lambda) deferred.
 
 ---
 
-### v1.5.0 - ORM + Data Formats (Q1-Q2 2026)
+### v1.5.0 - ORM + Data Formats (Q2-Q3 2026)
 **Goal**: Entity Framework integration and common data formats
 
 | Package | Description | Impact | Status |
@@ -128,21 +120,7 @@ var records = await csvFiles
 
 ---
 
-### v1.6.0 - Multi-Database Performance (Q3 2026)
-**Goal**: PostgreSQL and MySQL-specific optimizations
-
-| Package | Description | Impact | Status |
-|---------|-------------|--------|--------|
-| **Rivulet.Sql.PostgreSql** | COPY command integration (very fast bulk operations), Npgsql-specific features, PostgreSQL-specific optimizations | 🟡 Medium-High | Planned |
-| **Rivulet.Sql.MySql** | LOAD DATA INFILE integration, MySqlConnector optimizations, MySQL-specific features | 🟡 Medium | Planned |
-
-**Why**: PostgreSQL and MySQL users need provider-specific bulk operation performance similar to SqlBulkCopy.
-
-**Note**: These packages provide massive performance gains for PostgreSQL/MySQL users (similar to Rivulet.Sql.SqlServer). Optional - use base Rivulet.Sql for cross-database compatibility.
-
----
-
-### v2.0.0 - Pipeline Composition (Q2-Q3 2027)
+### v2.0.0 - Pipeline Composition (Q4 2026 - Q1 2027)
 **Goal**: Multi-stage processing framework
 
 **Core Enhancement**: Pipeline Composition API
@@ -203,13 +181,13 @@ var results = await pipeline.ExecuteAsync(cancellationToken);
 
 - **📊 Monitor production pipelines** → `Rivulet.Diagnostics`, `Rivulet.Diagnostics.OpenTelemetry`
 - **🌐 Call HTTP APIs in parallel** → `Rivulet.Http`
+- **📁 Process files in parallel** → `Rivulet.IO`
 - **📄 Process JSON files/APIs** → `Rivulet.Json` (v1.4.0+)
-- **📁 Process files in parallel** → `Rivulet.IO` (v1.4.0+)
 - **☁️ Process cloud storage files** → `Rivulet.Azure.Storage` or `Rivulet.Aws.S3` (v1.4.0+)
 - **🗃️ Run parallel database operations** → Start with `Rivulet.Sql` (works with any database)
   - **High-performance SQL Server bulk operations** → `Rivulet.Sql.SqlServer` (10-100x faster)
-  - **High-performance PostgreSQL bulk operations** → `Rivulet.Sql.PostgreSql` (v1.6.0+)
-  - **High-performance MySQL bulk operations** → `Rivulet.Sql.MySql` (v1.6.0+)
+  - **High-performance PostgreSQL bulk operations** → `Rivulet.Sql.PostgreSql` (10-100x faster)
+  - **High-performance MySQL bulk operations** → `Rivulet.Sql.MySql` (10-100x faster)
 - **🏛️ Use Entity Framework Core** → `Rivulet.EntityFramework` (v1.5.0+)
   - Parallel queries across tenant databases
   - Multi-tenant scenarios with automatic DbContext lifecycle
@@ -231,16 +209,16 @@ Rivulet.Core + Rivulet.Http + Rivulet.Json + Rivulet.Diagnostics.OpenTelemetry
 
 ### Cloud ETL Pipeline
 ```
-Rivulet.Core + Rivulet.Azure.Storage + Rivulet.Sql + Rivulet.Sql.SqlServer
-+ Rivulet.Diagnostics + Rivulet.IO + Rivulet.Csv
+Rivulet.Core + Rivulet.IO + Rivulet.Sql + Rivulet.Sql.SqlServer
++ Rivulet.Diagnostics + Rivulet.Azure.Storage (v1.4.0+)
 ```
 
 ### High-Throughput Data Processing
 ```
-Rivulet.Core + Rivulet.Sql.SqlServer (or .PostgreSql/.MySql)
-+ Rivulet.Diagnostics + Rivulet.Hosting + Rivulet.IO
+Rivulet.Core + Rivulet.Sql.SqlServer (or .PostgreSql/.MySql) + Rivulet.IO
++ Rivulet.Diagnostics + Rivulet.Hosting
 ```
-*Use provider-specific packages for 10-100x bulk operation performance*
+*Use provider-specific SQL packages for 10-100x bulk operation performance*
 
 ### Multi-Tenant SaaS with EF Core
 ```
@@ -251,10 +229,10 @@ Rivulet.Core + Rivulet.EntityFramework + Rivulet.Http + Rivulet.Json
 
 ### Data Import/Export Pipeline
 ```
-Rivulet.Core + Rivulet.IO + Rivulet.Csv + Rivulet.Json
-+ Rivulet.Sql + Rivulet.Diagnostics
+Rivulet.Core + Rivulet.IO + Rivulet.Sql + Rivulet.Diagnostics
++ Rivulet.Csv (v1.5.0+) + Rivulet.Json (v1.4.0+)
 ```
-*Process files (CSV, JSON) and load into database in parallel*
+*Process files and load into database in parallel*
 
 ### Cross-Database Application
 ```
@@ -271,12 +249,12 @@ Rivulet.Core + Rivulet.Sql (provider-agnostic)
 - 🚧 95%+ test coverage target across all packages
 - 🚧 Comprehensive integration with HTTP, SQL, and Polly
 
-### v1.4.0 (Q4 2025)
+### v1.4.0 (Q1-Q2 2026)
 - 🎯 1,000+ total ecosystem downloads
 - 🎯 25+ production workloads using new packages
 - 🎯 3+ blog posts from external users
 
-### v2.0.0 (2027)
+### v2.0.0 (Q4 2026 - Q1 2027)
 - 🎯 10,000+ total ecosystem downloads
 - 🎯 100+ production pipelines using v2.0 API
 - 🎯 200+ GitHub stars, 10+ external contributors
@@ -346,6 +324,6 @@ await users.BulkInsertUsingSqlBulkCopyAsync(
 
 ---
 
-**Last Updated**: 2025-11-22
+**Last Updated**: 2025-11-24
 **Version**: 1.3.0
-**Status**: v1.3.0 In Development - Planning v1.4.0 (Q4 2025)
+**Status**: v1.3.0 In Development (Http, IO, Sql, Polly) - Planning v1.4.0 (Q1-Q2 2026)
