@@ -139,6 +139,28 @@ public class RivuletEventSourceTests
         RivuletEventSource.Log.Should().NotBeNull();
     }
 
+    [Fact]
+    public void Dispose_ShouldDisposeCounters()
+    {
+        // Create a listener to enable counters
+        using var listener = new TestEventListener();
+        listener.EnableEvents(RivuletEventSource.Log, EventLevel.Verbose);
+
+        // Increment some values to ensure counters are created and used
+        RivuletEventSource.Log.IncrementItemsStarted();
+        RivuletEventSource.Log.IncrementItemsCompleted();
+        RivuletEventSource.Log.IncrementRetries();
+        RivuletEventSource.Log.IncrementFailures();
+        RivuletEventSource.Log.IncrementThrottleEvents();
+        RivuletEventSource.Log.IncrementDrainEvents();
+
+        // Dispose should clean up counters without throwing
+        RivuletEventSource.Log.Dispose();
+
+        // EventSource should still be accessible (singleton pattern)
+        RivuletEventSource.Log.Should().NotBeNull();
+    }
+
     private class TestEventListener : EventListener
     {
         protected override void OnEventWritten(EventWrittenEventArgs eventData)
