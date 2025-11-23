@@ -51,17 +51,36 @@ def convert_github_to_mkdocs(content: str) -> str:
     content = content.replace('src="assets/', 'src="../assets/')
     content = content.replace('src="./assets/', 'src="../assets/')
 
-    # Extract badges from <div align="center"> blocks and put them on one line
-    # Pattern: <div align="center">\n\n[![...](...)(...)\n...badges...\n\n</div>
-    badge_pattern = r'<div align="center">\s*\n\s*\n((?:!\[.*?\].*?\n?)+)\s*\n</div>'
+    # Process <div align="center"> blocks - extract content and check if it contains badges or images
+    def process_center_div(match):
+        div_content = match.group(1).strip()
 
-    def extract_badges(match):
-        badges = match.group(1).strip()
-        # Put all badges on one line with spaces
-        badges = badges.replace('\n', ' ')
-        return badges
+        # Check if this is a logo image (single <img> tag)
+        if div_content.startswith('<img') and div_content.count('<img') == 1:
+            # Keep image without the div wrapper
+            return f'\n{div_content}\n'
 
-    content = re.sub(badge_pattern, extract_badges, content, flags=re.MULTILINE)
+        # Check if this is a badge block (contains badge markdown)
+        if '![' in div_content:
+            # Extract badge lines (filter out empty lines and CI/CD badges already removed)
+            badge_lines = [line.strip() for line in div_content.split('\n')
+                          if line.strip() and '![' in line]
+            if badge_lines:
+                # Put all badges on one line with spaces
+                badges = ' '.join(badge_lines)
+                # Use paragraph with center alignment (MkDocs Material supports this)
+                return f'\n<p align="center">\n{badges}\n</p>\n'
+
+        # Default: keep content without div wrapper
+        return f'\n{div_content}\n'
+
+    # Match <div align="center"> blocks with their content
+    content = re.sub(
+        r'<div align="center">\s*\n(.*?)\n\s*</div>',
+        process_center_div,
+        content,
+        flags=re.DOTALL
+    )
 
     # Convert package documentation links from src/*/README.md to packages/*.md
     # Pattern: [Docs](src/Rivulet.Core/README.md) -> [Docs](packages/rivulet-core.md)
