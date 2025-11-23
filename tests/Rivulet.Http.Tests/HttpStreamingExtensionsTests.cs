@@ -148,15 +148,15 @@ public class HttpStreamingExtensionsTests
     [Fact]
     public async Task DownloadParallelAsync_WithValidDownloads_ShouldDownloadAllFiles()
     {
-        var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        var tempDir = Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(tempDir);
 
         try
         {
             var downloads = new[]
             {
-                (uri: new("http://test.local/file1.txt"), destinationPath: Path.Combine(tempDir, "file1.txt")),
-                (uri: new Uri("http://test.local/file2.txt"), destinationPath: Path.Combine(tempDir, "file2.txt"))
+                (uri: new("http://test.local/file1.txt"), destinationPath: Path.Join(tempDir, "file1.txt")),
+                (uri: new Uri("http://test.local/file2.txt"), destinationPath: Path.Join(tempDir, "file2.txt"))
             };
 
             using var httpClient = CreateTestClient((request, _) =>
@@ -175,10 +175,10 @@ public class HttpStreamingExtensionsTests
             results.Should().HaveCount(2);
             results.Should().OnlyContain(r => r.bytesDownloaded > 0);
 
-            File.Exists(Path.Combine(tempDir, "file1.txt")).Should().BeTrue();
-            File.Exists(Path.Combine(tempDir, "file2.txt")).Should().BeTrue();
+            File.Exists(Path.Join(tempDir, "file1.txt")).Should().BeTrue();
+            File.Exists(Path.Join(tempDir, "file2.txt")).Should().BeTrue();
 
-            var content1 = await File.ReadAllTextAsync(Path.Combine(tempDir, "file1.txt"));
+            var content1 = await File.ReadAllTextAsync(Path.Join(tempDir, "file1.txt"));
             content1.Should().Contain("file1.txt");
         }
         finally
@@ -193,12 +193,12 @@ public class HttpStreamingExtensionsTests
     [Fact]
     public async Task DownloadParallelAsync_WithExistingFileAndOverwriteFalse_ShouldThrowIOException()
     {
-        var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        var tempDir = Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(tempDir);
 
         try
         {
-            var filePath = Path.Combine(tempDir, "existing.txt");
+            var filePath = Path.Join(tempDir, "existing.txt");
             await File.WriteAllTextAsync(filePath, "Existing content");
 
             var downloads = new[]
@@ -236,12 +236,12 @@ public class HttpStreamingExtensionsTests
     [Fact]
     public async Task DownloadParallelAsync_WithResumeSupport_ShouldResumePartialDownload()
     {
-        var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        var tempDir = Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(tempDir);
 
         try
         {
-            var filePath = Path.Combine(tempDir, "partial.txt");
+            var filePath = Path.Join(tempDir, "partial.txt");
             const string partialContent = "Partial ";
             await File.WriteAllTextAsync(filePath, partialContent);
 
@@ -311,12 +311,12 @@ public class HttpStreamingExtensionsTests
     [Fact]
     public async Task DownloadParallelAsync_WithCompletedFile_ShouldReturnExistingSize()
     {
-        var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        var tempDir = Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(tempDir);
 
         try
         {
-            var filePath = Path.Combine(tempDir, "complete.txt");
+            var filePath = Path.Join(tempDir, "complete.txt");
             const string content = "Complete file";
             await File.WriteAllTextAsync(filePath, content);
 
@@ -368,12 +368,12 @@ public class HttpStreamingExtensionsTests
     [Fact]
     public async Task DownloadParallelAsync_WithCallbacks_ShouldInvokeAllCallbacks()
     {
-        var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        var tempDir = Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(tempDir);
 
         try
         {
-            var filePath = Path.Combine(tempDir, "callback.txt");
+            var filePath = Path.Join(tempDir, "callback.txt");
             var downloads = new[]
             {
                 (uri: new Uri("http://test.local/file.txt"), destinationPath: filePath)

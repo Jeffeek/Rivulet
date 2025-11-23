@@ -225,14 +225,14 @@ public class HttpClientFactoryExtensionsTests
     [Fact]
     public async Task DownloadParallelAsync_WithNamedClient_ShouldDownloadFiles()
     {
-        var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        var tempDir = Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(tempDir);
 
         try
         {
             var downloads = new[]
             {
-                (uri: new Uri("http://test.local/file1.txt"), destinationPath: Path.Combine(tempDir, "file1.txt"))
+                (uri: new Uri("http://test.local/file1.txt"), destinationPath: Path.Join(tempDir, "file1.txt"))
             };
 
             var factory = CreateTestFactory((request, _) =>
@@ -250,7 +250,7 @@ public class HttpClientFactoryExtensionsTests
 
             results.Should().HaveCount(1);
             results[0].bytesDownloaded.Should().BeGreaterThan(0);
-            File.Exists(Path.Combine(tempDir, "file1.txt")).Should().BeTrue();
+            File.Exists(Path.Join(tempDir, "file1.txt")).Should().BeTrue();
         }
         finally
         {
