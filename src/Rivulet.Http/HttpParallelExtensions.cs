@@ -225,13 +225,12 @@ public static class HttpParallelExtensions
                 return response;
 
             // Handle Retry-After header for 429/503
-            if (options.RespectRetryAfterHeader && response.StatusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable)
+            if (options.RespectRetryAfterHeader &&
+                response.StatusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable &&
+                response.Headers.RetryAfter?.Delta.HasValue == true)
             {
-                if (response.Headers.RetryAfter?.Delta.HasValue == true)
-                {
-                    var retryDelay = response.Headers.RetryAfter.Delta.Value;
-                    await Task.Delay(retryDelay, cancellationToken).ConfigureAwait(false);
-                }
+                var retryDelay = response.Headers.RetryAfter.Delta.Value;
+                await Task.Delay(retryDelay, cancellationToken).ConfigureAwait(false);
             }
 
             // Invoke error callback if provided
