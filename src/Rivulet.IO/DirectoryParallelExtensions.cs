@@ -183,7 +183,7 @@ public static class DirectoryParallelExtensions
         var filePairs = sourceFiles.Select(sourcePath =>
         {
             var relativePath = Path.GetRelativePath(sourceDirectory, sourcePath);
-            var destPath = Path.Combine(destinationDirectory, relativePath);
+            var destPath = Path.Join(destinationDirectory, relativePath);
             return (sourcePath, destPath);
         });
 
@@ -221,7 +221,7 @@ public static class DirectoryParallelExtensions
         var filePairs = sourceFiles.Select(sourcePath =>
         {
             var relativePath = Path.GetRelativePath(sourceDirectory, sourcePath);
-            var destPath = Path.Combine(destinationDirectory, relativePath);
+            var destPath = Path.Join(destinationDirectory, relativePath);
             return (sourcePath, destPath);
         });
 

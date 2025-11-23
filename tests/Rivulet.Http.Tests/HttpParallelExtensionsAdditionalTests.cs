@@ -234,12 +234,12 @@ public class HttpParallelExtensionsAdditionalTests
     [Fact]
     public async Task DownloadParallelAsync_WithOverwriteEnabled_ShouldOverwriteExisting()
     {
-        var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        var tempDir = Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(tempDir);
 
         try
         {
-            var filePath = Path.Combine(tempDir, "overwrite.txt");
+            var filePath = Path.Join(tempDir, "overwrite.txt");
             await File.WriteAllTextAsync(filePath, "Old content");
 
             var downloads = new[]
@@ -282,12 +282,12 @@ public class HttpParallelExtensionsAdditionalTests
     public async Task DownloadParallelAsync_WithServerNotSupportingResume_ShouldStartOver()
     {
 
-        var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        var tempDir = Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(tempDir);
 
         try
         {
-            var filePath = Path.Combine(tempDir, "partial-no-resume.txt");
+            var filePath = Path.Join(tempDir, "partial-no-resume.txt");
             const string partialContent = "Partial";
             await File.WriteAllTextAsync(filePath, partialContent);
             const string fullContent = "Partial is wrong - start over";

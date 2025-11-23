@@ -6,7 +6,7 @@ public class DirectoryInfoExtensionsTests : IDisposable
 
     public DirectoryInfoExtensionsTests()
     {
-        _testDirectory = Path.Combine(Path.GetTempPath(), $"RivuletTests_{Guid.NewGuid()}");
+        _testDirectory = Path.Join(Path.GetTempPath(), $"RivuletTests_{Guid.NewGuid()}");
         Directory.CreateDirectory(_testDirectory);
     }
 
@@ -24,9 +24,9 @@ public class DirectoryInfoExtensionsTests : IDisposable
         // Arrange
         var directory = new DirectoryInfo(_testDirectory);
 
-        await File.WriteAllTextAsync(Path.Combine(_testDirectory, "file1.txt"), "Content1");
-        await File.WriteAllTextAsync(Path.Combine(_testDirectory, "file2.txt"), "Content2");
-        await File.WriteAllTextAsync(Path.Combine(_testDirectory, "file3.txt"), "Content3");
+        await File.WriteAllTextAsync(Path.Join(_testDirectory, "file1.txt"), "Content1");
+        await File.WriteAllTextAsync(Path.Join(_testDirectory, "file2.txt"), "Content2");
+        await File.WriteAllTextAsync(Path.Join(_testDirectory, "file3.txt"), "Content3");
 
         // Act
         var results = await directory.ProcessFilesParallelAsync(
@@ -48,8 +48,8 @@ public class DirectoryInfoExtensionsTests : IDisposable
         // Arrange
         var directory = new DirectoryInfo(_testDirectory);
 
-        var file1 = Path.Combine(_testDirectory, "read1.txt");
-        var file2 = Path.Combine(_testDirectory, "read2.txt");
+        var file1 = Path.Join(_testDirectory, "read1.txt");
+        var file2 = Path.Join(_testDirectory, "read2.txt");
 
         await File.WriteAllTextAsync(file1, "Content A");
         await File.WriteAllTextAsync(file2, "Content B");
@@ -69,9 +69,9 @@ public class DirectoryInfoExtensionsTests : IDisposable
         // Arrange
         var directory = new DirectoryInfo(_testDirectory);
 
-        File.WriteAllText(Path.Combine(_testDirectory, "enum1.txt"), "Test1");
-        File.WriteAllText(Path.Combine(_testDirectory, "enum2.txt"), "Test2");
-        File.WriteAllText(Path.Combine(_testDirectory, "skip.dat"), "Skip");
+        File.WriteAllText(Path.Join(_testDirectory, "enum1.txt"), "Test1");
+        File.WriteAllText(Path.Join(_testDirectory, "enum2.txt"), "Test2");
+        File.WriteAllText(Path.Join(_testDirectory, "skip.dat"), "Skip");
 
         // Act
         var files = directory.GetFilesEnumerable("*.txt").ToList();
@@ -86,10 +86,10 @@ public class DirectoryInfoExtensionsTests : IDisposable
     {
         // Arrange
         var sourceDirectory = new DirectoryInfo(_testDirectory);
-        var destDirectory = Path.Combine(_testDirectory, "transformed");
+        var destDirectory = Path.Join(_testDirectory, "transformed");
 
-        await File.WriteAllTextAsync(Path.Combine(_testDirectory, "trans1.txt"), "lower");
-        await File.WriteAllTextAsync(Path.Combine(_testDirectory, "trans2.txt"), "case");
+        await File.WriteAllTextAsync(Path.Join(_testDirectory, "trans1.txt"), "lower");
+        await File.WriteAllTextAsync(Path.Join(_testDirectory, "trans2.txt"), "case");
 
         // Act
         var results = await sourceDirectory.TransformFilesParallelAsync(
@@ -99,8 +99,8 @@ public class DirectoryInfoExtensionsTests : IDisposable
 
         // Assert
         results.Should().HaveCount(2);
-        var destFile1 = Path.Combine(destDirectory, "trans1.txt");
-        var destFile2 = Path.Combine(destDirectory, "trans2.txt");
+        var destFile1 = Path.Join(destDirectory, "trans1.txt");
+        var destFile2 = Path.Join(destDirectory, "trans2.txt");
 
         File.Exists(destFile1).Should().BeTrue();
         File.Exists(destFile2).Should().BeTrue();
@@ -117,10 +117,10 @@ public class DirectoryInfoExtensionsTests : IDisposable
     {
         // Arrange
         var sourceDirectory = new DirectoryInfo(_testDirectory);
-        var destDirectory = Path.Combine(_testDirectory, "copied");
+        var destDirectory = Path.Join(_testDirectory, "copied");
 
-        var file1 = Path.Combine(_testDirectory, "copy1.txt");
-        var file2 = Path.Combine(_testDirectory, "copy2.txt");
+        var file1 = Path.Join(_testDirectory, "copy1.txt");
+        var file2 = Path.Join(_testDirectory, "copy2.txt");
 
         await File.WriteAllTextAsync(file1, "Copy Content 1");
         await File.WriteAllTextAsync(file2, "Copy Content 2");
@@ -131,8 +131,8 @@ public class DirectoryInfoExtensionsTests : IDisposable
         // Assert
         results.Should().HaveCount(2);
 
-        var destFile1 = Path.Combine(destDirectory, "copy1.txt");
-        var destFile2 = Path.Combine(destDirectory, "copy2.txt");
+        var destFile1 = Path.Join(destDirectory, "copy1.txt");
+        var destFile2 = Path.Join(destDirectory, "copy2.txt");
 
         File.Exists(destFile1).Should().BeTrue();
         File.Exists(destFile2).Should().BeTrue();
@@ -150,9 +150,9 @@ public class DirectoryInfoExtensionsTests : IDisposable
         // Arrange
         var directory = new DirectoryInfo(_testDirectory);
 
-        var file1 = Path.Combine(_testDirectory, "delete1.tmp");
-        var file2 = Path.Combine(_testDirectory, "delete2.tmp");
-        var keepFile = Path.Combine(_testDirectory, "keep.txt");
+        var file1 = Path.Join(_testDirectory, "delete1.tmp");
+        var file2 = Path.Join(_testDirectory, "delete2.tmp");
+        var keepFile = Path.Join(_testDirectory, "keep.txt");
 
         await File.WriteAllTextAsync(file1, "Delete me");
         await File.WriteAllTextAsync(file2, "Delete me too");
@@ -172,14 +172,14 @@ public class DirectoryInfoExtensionsTests : IDisposable
     public async Task ProcessMultipleDirectoriesParallelAsync_ShouldProcessAllDirectories()
     {
         // Arrange
-        var dir1 = new DirectoryInfo(Path.Combine(_testDirectory, "dir1"));
-        var dir2 = new DirectoryInfo(Path.Combine(_testDirectory, "dir2"));
+        var dir1 = new DirectoryInfo(Path.Join(_testDirectory, "dir1"));
+        var dir2 = new DirectoryInfo(Path.Join(_testDirectory, "dir2"));
 
         dir1.Create();
         dir2.Create();
 
-        await File.WriteAllTextAsync(Path.Combine(dir1.FullName, "file1.txt"), "Dir1Content");
-        await File.WriteAllTextAsync(Path.Combine(dir2.FullName, "file2.txt"), "Dir2Content");
+        await File.WriteAllTextAsync(Path.Join(dir1.FullName, "file1.txt"), "Dir1Content");
+        await File.WriteAllTextAsync(Path.Join(dir2.FullName, "file2.txt"), "Dir2Content");
 
         var directories = new[] { dir1, dir2 };
 
@@ -201,7 +201,7 @@ public class DirectoryInfoExtensionsTests : IDisposable
     public async Task ProcessFilesParallelAsync_WithNonExistentDirectory_ShouldThrow()
     {
         // Arrange
-        var directory = new DirectoryInfo(Path.Combine(_testDirectory, "nonexistent"));
+        var directory = new DirectoryInfo(Path.Join(_testDirectory, "nonexistent"));
 
         // Act
         var act = async () => await directory.ProcessFilesParallelAsync(
@@ -217,11 +217,11 @@ public class DirectoryInfoExtensionsTests : IDisposable
     {
         // Arrange
         var directory = new DirectoryInfo(_testDirectory);
-        var subDirectory = Path.Combine(_testDirectory, "sub");
+        var subDirectory = Path.Join(_testDirectory, "sub");
         Directory.CreateDirectory(subDirectory);
 
-        await File.WriteAllTextAsync(Path.Combine(_testDirectory, "root.txt"), "Root");
-        await File.WriteAllTextAsync(Path.Combine(subDirectory, "sub.txt"), "Sub");
+        await File.WriteAllTextAsync(Path.Join(_testDirectory, "root.txt"), "Root");
+        await File.WriteAllTextAsync(Path.Join(subDirectory, "sub.txt"), "Sub");
 
         // Act
         var results = await directory.ReadAllFilesParallelAsync(
@@ -239,9 +239,9 @@ public class DirectoryInfoExtensionsTests : IDisposable
     {
         // Arrange
         var sourceDirectory = new DirectoryInfo(_testDirectory);
-        var destDirectory = Path.Combine(_testDirectory, "customtransform");
+        var destDirectory = Path.Join(_testDirectory, "customtransform");
 
-        await File.WriteAllTextAsync(Path.Combine(_testDirectory, "custom.txt"), "test");
+        await File.WriteAllTextAsync(Path.Join(_testDirectory, "custom.txt"), "test");
 
         var startCalled = false;
         var completeCalled = false;
@@ -278,11 +278,11 @@ public class DirectoryInfoExtensionsTests : IDisposable
     {
         // Arrange
         var sourceDirectory = new DirectoryInfo(_testDirectory);
-        var destDirectory = Path.Combine(_testDirectory, "overwrite");
+        var destDirectory = Path.Join(_testDirectory, "overwrite");
         Directory.CreateDirectory(destDirectory);
 
-        var sourceFile = Path.Combine(_testDirectory, "overwrite.txt");
-        var destFile = Path.Combine(destDirectory, "overwrite.txt");
+        var sourceFile = Path.Join(_testDirectory, "overwrite.txt");
+        var destFile = Path.Join(destDirectory, "overwrite.txt");
 
         await File.WriteAllTextAsync(sourceFile, "New content");
         await File.WriteAllTextAsync(destFile, "Old content");
