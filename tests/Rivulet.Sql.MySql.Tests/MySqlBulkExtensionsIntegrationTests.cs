@@ -19,7 +19,6 @@ public class MySqlBulkExtensionsIntegrationTests : IAsyncLifetime
         _container = new MySqlBuilder()
             .WithImage("mysql:8.0")
             .WithCommand("--local-infile=1") // Enable LOAD DATA LOCAL INFILE
-            .WithCreateParameterModifier(parameters => parameters.Platform = "linux/amd64")
             .Build();
 
         await _container.StartAsync();

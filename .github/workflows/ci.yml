@@ -54,9 +54,15 @@ jobs:
     - name: Build (Release)
       run: dotnet build -c Release --no-restore
 
-    - name: Run tests for net8.0 and net9.0
+    - name: Run tests for net8.0 and net9.0 (Ubuntu - All tests including integration)
+      if: runner.os == 'Linux'
       run: dotnet test -c Release --no-build --verbosity normal
       timeout-minutes: 8
+
+    - name: Run tests for net8.0 and net9.0 (Windows - Unit tests only, integration tests require Linux containers)
+      if: runner.os == 'Windows'
+      run: dotnet test -c Release --no-build --verbosity normal --filter "Category!=Integration"
+      timeout-minutes: 3
 
   test-with-coverage:
     name: Test with Coverage (Ubuntu)

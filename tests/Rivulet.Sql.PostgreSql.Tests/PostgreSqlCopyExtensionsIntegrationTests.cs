@@ -20,7 +20,6 @@ public class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
     {
         _container = new PostgreSqlBuilder()
             .WithImage("postgres:16-alpine")
-            .WithCreateParameterModifier(parameters => parameters.Platform = "linux/amd64")
             .Build();
 
         await _container.StartAsync();
