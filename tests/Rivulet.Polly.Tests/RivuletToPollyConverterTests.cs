@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Polly;
+using Polly.Timeout;
 using Rivulet.Core;
 using Rivulet.Core.Resilience;
 
@@ -548,4 +549,116 @@ public class RivuletToPollyConverterTests
         pipeline.Should().NotBeNull();
         pipeline.Should().NotBeSameAs(ResiliencePipeline.Empty);
     }
+
+    [Fact]
+    public async Task ToPollyTimeoutPipeline_ExceedsTimeout_ThrowsTimeoutException()
+    {
+        var timeout = TimeSpan.FromMilliseconds(50);
+        var pipeline = timeout.ToPollyTimeoutPipeline();
+
+        var act = async () => await pipeline.ExecuteAsync(async ct =>
+        {
+            await Task.Delay(5000, ct); // Much longer than timeout
+            return 42;
+        });
+
+        await act.Should().ThrowAsync<TimeoutRejectedException>();
+    }
+
+    [Fact]
+    public async Task ToPollyCircuitBreakerPipeline_OpensAndClosesCircuit_InvokesStateChangeCallbacks()
+    {
+        var stateChanges = new List<(CircuitBreakerState From, CircuitBreakerState To)>();
+        var options = new CircuitBreakerOptions
+        {
+            FailureThreshold = 3,
+            SuccessThreshold = 1,
+            OpenTimeout = TimeSpan.FromMilliseconds(500),
+            OnStateChange = async (from, to) =>
+            {
+                stateChanges.Add((from, to));
+                await ValueTask.CompletedTask;
+            }
+        };
+
+        var pipeline = options.ToPollyCircuitBreakerPipeline();
+
+        // Trigger failures to open circuit
+        for (var i = 0; i < 3; i++)
+        {
+            try
+            {
+                await pipeline.ExecuteAsync(_ => throw new InvalidOperationException("Test failure"));
+            }
+            catch (InvalidOperationException)
+            {
+                // Expected
+            }
+        }
+
+        // Circuit should be open now
+        stateChanges.Should().ContainSingle(sc => sc.From == CircuitBreakerState.Closed && sc.To == CircuitBreakerState.Open);
+
+        // Wait for circuit to transition to HalfOpen
+        await Task.Delay(600);
+
+        // Next call should trigger HalfOpen -> Closed transition on success
+        var result = await pipeline.ExecuteAsync(_ => ValueTask.FromResult(42));
+        result.Should().Be(42);
+
+        // Verify all state transitions occurred
+        stateChanges.Should().Contain(sc => sc.From == CircuitBreakerState.Open && sc.To == CircuitBreakerState.HalfOpen);
+        stateChanges.Should().Contain(sc => sc.From == CircuitBreakerState.HalfOpen && sc.To == CircuitBreakerState.Closed);
+    }
+
+    [Fact]
+    public async Task ToPollyPipeline_WithCircuitBreakerStateChanges_InvokesCallbacks()
+    {
+        var stateChanges = new List<(CircuitBreakerState From, CircuitBreakerState To)>();
+        var options = new ParallelOptionsRivulet
+        {
+            MaxRetries = 0,
+            CircuitBreaker = new()
+            {
+                FailureThreshold = 3,
+                SuccessThreshold = 1,
+                OpenTimeout = TimeSpan.FromMilliseconds(500),
+                OnStateChange = async (from, to) =>
+                {
+                    stateChanges.Add((from, to));
+                    await ValueTask.CompletedTask;
+                }
+            }
+        };
+
+        var pipeline = options.ToPollyPipeline();
+
+        // Trigger failures to open circuit
+        for (var i = 0; i < 3; i++)
+        {
+            try
+            {
+                await pipeline.ExecuteAsync(_ => throw new InvalidOperationException("Test failure"));
+            }
+            catch (InvalidOperationException)
+            {
+                // Expected
+            }
+        }
+
+        // Circuit should be open
+        stateChanges.Should().ContainSingle(sc => sc.From == CircuitBreakerState.Closed && sc.To == CircuitBreakerState.Open);
+
+        // Wait for circuit to transition to HalfOpen
+        await Task.Delay(600);
+
+        // Success should trigger HalfOpen -> Closed
+        var result = await pipeline.ExecuteAsync(_ => ValueTask.FromResult(42));
+        result.Should().Be(42);
+
+        // Verify state transitions
+        stateChanges.Should().Contain(sc => sc.From == CircuitBreakerState.Open && sc.To == CircuitBreakerState.HalfOpen);
+        stateChanges.Should().Contain(sc => sc.From == CircuitBreakerState.HalfOpen && sc.To == CircuitBreakerState.Closed);
+    }
+
 }

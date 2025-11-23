@@ -28,6 +28,10 @@ jobs:
           - 'Rivulet.Hosting'
           - 'Rivulet.Http'
           - 'Rivulet.Polly'
+          - 'Rivulet.Sql'
+          - 'Rivulet.Sql.SqlServer'
+          - 'Rivulet.Sql.MySql'
+          - 'Rivulet.Sql.PostgreSql'
       fail-fast: false
 
     steps:

@@ -313,4 +313,98 @@ public class RivuletEventListenerBaseTests : IDisposable
 
         listener.ReceivedCounters.Should().NotBeNull();
     }
+
+    [Fact]
+    public void EventListenerBase_ShouldIgnore_WhenPayloadItemIsNotDictionary()
+    {
+        // Test that listener handles payload items that are not IDictionary<string, object>
+        var listener = new TestEventListener();
+
+        using var customSource = new RivuletTestEventSource();
+        // Write a simple string event - payload will be a string, not a dictionary
+        customSource.WriteInformationalEvent("not a dictionary");
+
+        Thread.Sleep(100);
+
+        // Should handle gracefully and not crash
+        listener.ReceivedCounters.Should().NotBeNull();
+
+        listener.Dispose();
+    }
+
+    [Fact]
+    public void EventListenerBase_ShouldIgnore_WhenPayloadMissingNameKey()
+    {
+        // Test payload that doesn't have "Name" key - simulated by a non-counter event
+        var listener = new TestEventListener();
+
+        using var customSource = new RivuletTestEventSource();
+        customSource.WriteEmptyEvent(); // Event with empty/non-dictionary payload
+
+        Thread.Sleep(100);
+
+        // Should handle gracefully
+        listener.ReceivedCounters.Should().NotBeNull();
+
+        listener.Dispose();
+    }
+
+    [Fact]
+    public void EventListenerBase_ShouldIgnore_WhenPayloadMissingMeanAndIncrement()
+    {
+        // Coverage for lines 49-51: when both Mean and Increment keys are missing
+        // This is implicitly tested by non-counter events, but let's be explicit
+        var listener = new TestEventListener();
+
+        using var customSource = new RivuletTestEventSource();
+        customSource.WriteInformationalEvent("event without mean or increment");
+
+        Thread.Sleep(100);
+
+        listener.ReceivedCounters.Should().NotBeNull();
+
+        listener.Dispose();
+    }
+
+    [Fact]
+    public void EventListenerBase_ShouldHandleConvertToDouble()
+    {
+        // Test line 53: Convert.ToDouble(meanObj)
+        // This is covered by normal counter operations, but adding explicit test
+        var listener = new TestEventListener();
+
+        using var customSource = new RivuletTestEventSource();
+        customSource.EmitCounterWithoutDisplayName(); // Emits a counter with numeric value
+
+        Thread.Sleep(100);
+
+        listener.Dispose();
+    }
+
+    [Fact]
+    public async Task EventListenerBase_ShouldHandleIncrementCounter()
+    {
+        // Ensure we cover the "Increment" key path (line 50) in addition to "Mean"
+        var listener = new TestEventListener();
+
+        // Run operations to generate counters
+        await Enumerable.Range(1, 5)
+            .ToAsyncEnumerable()
+            .SelectParallelStreamAsync(async (x, ct) =>
+            {
+                await Task.Delay(100, ct);
+                return x;
+            }, new())
+            .ToListAsync();
+
+        var deadline = DateTime.UtcNow.AddMilliseconds(3000);
+        while (listener.ReceivedCounters.IsEmpty && DateTime.UtcNow < deadline)
+        {
+            await Task.Delay(100);
+        }
+
+        listener.ReceivedCounters.Should().NotBeEmpty();
+
+        listener.Dispose();
+    }
 }

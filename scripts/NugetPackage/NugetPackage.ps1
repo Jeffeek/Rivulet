@@ -26,7 +26,11 @@ $Projects = @{
     "Testing" = "src\Rivulet.Testing\Rivulet.Testing.csproj"
     "Hosting" = "src\Rivulet.Hosting\Rivulet.Hosting.csproj"
     "Http" = "src\Rivulet.Http\Rivulet.Http.csproj"
-    "Polly" = "src\Rivulet.Http\Rivulet.Polly.csproj"
+    "Polly" = "src\Rivulet.Polly\Rivulet.Polly.csproj"
+    "Sql" = "src\Rivulet.Sql\Rivulet.Sql.csproj"
+    "Sql.SqlServer" = "src\Rivulet.Sql.SqlServer\Rivulet.Sql.SqlServer.csproj"
+    "Sql.MySql" = "src\Rivulet.Sql.MySql\Rivulet.Sql.MySql.csproj"
+    "Sql.PostgreSql" = "src\Rivulet.Sql.PostgreSql\Rivulet.Sql.PostgreSql.csproj"
 }
 
 # Determine which projects to pack
@@ -187,6 +191,10 @@ Write-Host "                             .\NugetPackage.ps1 -Project Testing" -F
 Write-Host "                             .\NugetPackage.ps1 -Project Hosting" -ForegroundColor Gray
 Write-Host "                             .\NugetPackage.ps1 -Project Http" -ForegroundColor Gray
 Write-Host "                             .\NugetPackage.ps1 -Project Polly" -ForegroundColor Gray
+Write-Host "                             .\NugetPackage.ps1 -Project Sql" -ForegroundColor Gray
+Write-Host "                             .\NugetPackage.ps1 -Project Sql.SqlServer" -ForegroundColor Gray
+Write-Host "                             .\NugetPackage.ps1 -Project Sql.MySql" -ForegroundColor Gray
+Write-Host "                             .\NugetPackage.ps1 -Project Sql.PostgreSql" -ForegroundColor Gray
 Write-Host "  - Build all packages:      .\NugetPackage.ps1 -Project All" -ForegroundColor Gray
 Write-Host "  - Test locally:            dotnet add package Rivulet.Core --source ./test-packages" -ForegroundColor Gray
 Write-Host ""

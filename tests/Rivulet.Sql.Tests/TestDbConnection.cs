@@ -248,7 +248,7 @@ public class TestDataReader(List<Dictionary<string, object>> rows) : DbDataReade
     private int _currentRow = -1;
     private bool _isClosed;
 
-    public override int FieldCount => _currentRow >= 0 && _currentRow < rows.Count ? rows[_currentRow].Count : 0;
+    public override int FieldCount => rows.Count > 0 ? rows[0].Count : 0;
     public override bool HasRows => rows.Count > 0;
     public override bool IsClosed => _isClosed;
     public override int RecordsAffected => rows.Count;
@@ -275,22 +275,22 @@ public class TestDataReader(List<Dictionary<string, object>> rows) : DbDataReade
 
     public override string GetName(int ordinal)
     {
-        if (_currentRow < 0 || _currentRow >= rows.Count)
+        if (rows.Count == 0)
         {
-            throw new InvalidOperationException("No current row");
+            throw new InvalidOperationException("No rows available");
         }
 
-        return rows[_currentRow].Keys.ElementAt(ordinal);
+        return rows[0].Keys.ElementAt(ordinal);
     }
 
     public override int GetOrdinal(string name)
     {
-        if (_currentRow < 0 || _currentRow >= rows.Count)
+        if (rows.Count == 0)
         {
-            throw new InvalidOperationException("No current row");
+            throw new InvalidOperationException("No rows available");
         }
 
-        var keys = rows[_currentRow].Keys.ToList();
+        var keys = rows[0].Keys.ToList();
         return keys.IndexOf(name);
     }
 
@@ -334,6 +334,31 @@ public class TestDataReader(List<Dictionary<string, object>> rows) : DbDataReade
     public override void Close()
     {
         _isClosed = true;
+    }
+
+    public override DataTable? GetSchemaTable()
+    {
+        if (rows.Count == 0)
+            return null;
+
+        var schemaTable = new DataTable("SchemaTable");
+        schemaTable.Columns.Add("ColumnName", typeof(string));
+        schemaTable.Columns.Add("ColumnOrdinal", typeof(int));
+        schemaTable.Columns.Add("ColumnSize", typeof(int));
+        schemaTable.Columns.Add("DataType", typeof(Type));
+
+        var ordinal = 0;
+        foreach (var key in rows[0].Keys)
+        {
+            var row = schemaTable.NewRow();
+            row["ColumnName"] = key;
+            row["ColumnOrdinal"] = ordinal++;
+            row["ColumnSize"] = -1;
+            row["DataType"] = rows[0][key].GetType();
+            schemaTable.Rows.Add(row);
+        }
+
+        return schemaTable;
     }
 }
 

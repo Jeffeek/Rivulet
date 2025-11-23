@@ -25,7 +25,7 @@
     <ProjectReference Include="..\Rivulet.Core\Rivulet.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Polly" Version="8.6.4" />
+    <PackageReference Include="Polly" Version="8.6.5" />
   </ItemGroup>
   <ItemGroup>
   	<None Include="nuget_logo.png" Pack="true" PackagePath="\" />

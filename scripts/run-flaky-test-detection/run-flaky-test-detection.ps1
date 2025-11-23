@@ -48,11 +48,12 @@ for ($i = 1; $i -le $Iterations; $i++) {
 
     # Run tests with 5-minute timeout per iteration to catch hangs
     # IMPORTANT: Pass working directory to job since Start-Job doesn't inherit it
+    # FILTER: Exclude integration tests (Testcontainers) - they are deterministic but slow
     $currentDir = Get-Location
     $job = Start-Job -ScriptBlock {
         param($dir)
         Set-Location $dir
-        dotnet test -c Release 2>&1 | Out-String
+        dotnet test -c Release --filter "Category!=Integration" 2>&1 | Out-String
     } -ArgumentList $currentDir
 
     $completed = Wait-Job -Job $job -Timeout 300 # 5 minutes

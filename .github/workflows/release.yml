@@ -56,7 +56,7 @@ jobs:
 
     - name: Run tests
       run: dotnet test -c Release --no-build --verbosity normal
-      timeout-minutes: 5
+      timeout-minutes: 8
 
     - name: Pack NuGet packages
       run: |

@@ -54,11 +54,11 @@ public static class PostgreSqlCopyExtensions
             .Chunk(batchSize)
             .ForEachParallelAsync(async (batch, ct) =>
             {
-                // Validate all rows before starting write operation
-                var validatedRows = new List<(T item, object?[] rowData)>(batch.Length);
-                foreach (var item in batch)
+                try
                 {
-                    try
+                    // Validate all rows before starting write operation
+                    var validatedRows = new List<(T item, object?[] rowData)>(batch.Length);
+                    foreach (var item in batch)
                     {
                         var rowData = mapToRow(item);
                         if (rowData.Length != columns.Length)
@@ -68,26 +68,18 @@ public static class PostgreSqlCopyExtensions
                         }
                         validatedRows.Add((item, rowData));
                     }
-                    catch (Exception ex)
+
+                    var connection = connectionFactory();
+                    if (connection == null)
+                        throw new InvalidOperationException("Connection factory returned null");
+
+                    await using (connection)
                     {
-                        throw new InvalidOperationException(
-                            $"Failed to map item to row data for table '{tableName}'", ex);
-                    }
-                }
+                        await connection.OpenAsync(ct).ConfigureAwait(false);
 
-                var connection = connectionFactory();
-                if (connection == null)
-                    throw new InvalidOperationException("Connection factory returned null");
+                        await using var writer = await connection.BeginBinaryImportAsync(copyCommand, ct)
+                            .ConfigureAwait(false);
 
-                await using (connection)
-                {
-                    await connection.OpenAsync(ct).ConfigureAwait(false);
-
-                    await using var writer = await connection.BeginBinaryImportAsync(copyCommand, ct)
-                        .ConfigureAwait(false);
-
-                    try
-                    {
                         foreach (var (_, rowData) in validatedRows)
                         {
                             await writer.StartRowAsync(ct).ConfigureAwait(false);
@@ -99,11 +91,21 @@ public static class PostgreSqlCopyExtensions
 
                         await writer.CompleteAsync(ct).ConfigureAwait(false);
                     }
-                    catch (Exception ex)
+                }
+                catch (Exception ex)
+                {
+                    var detailMessage = $"[PostgreSQL COPY] Failed to bulk insert batch of {batch.Length} rows to table '{tableName}'. " +
+                        $"Copy command: {copyCommand}. " +
+                        $"Exception: {ex.GetType().FullName} - {ex.Message}";
+                    if (ex.InnerException != null)
                     {
-                        throw new InvalidOperationException(
-                            $"Failed to bulk insert batch of {batch.Length} rows to table '{tableName}'", ex);
+                        detailMessage += $" | InnerException: {ex.InnerException.GetType().FullName} - {ex.InnerException.Message}";
                     }
+                    if (ex.StackTrace != null)
+                    {
+                        detailMessage += $" | StackTrace: {ex.StackTrace[..Math.Min(500, ex.StackTrace.Length)]}";
+                    }
+                    throw new InvalidOperationException(detailMessage, ex);
                 }
             }, options, cancellationToken)
             .ConfigureAwait(false);
@@ -166,16 +168,14 @@ public static class PostgreSqlCopyExtensions
                 {
                     await connection.OpenAsync(ct).ConfigureAwait(false);
 
-                    await using var writer = await connection.BeginTextImportAsync(copyCommand, ct)
-                        .ConfigureAwait(false);
-
                     try
                     {
+                        await using var writer = await connection.BeginTextImportAsync(copyCommand, ct)
+                            .ConfigureAwait(false);
                         foreach (var line in batch)
                         {
                             await writer.WriteLineAsync(line).ConfigureAwait(false);
                         }
-                        // The writer will be automatically completed and disposed by await using
                     }
                     catch (Exception ex)
                     {
@@ -236,16 +236,14 @@ public static class PostgreSqlCopyExtensions
                 {
                     await connection.OpenAsync(ct).ConfigureAwait(false);
 
-                    await using var writer = await connection.BeginTextImportAsync(copyCommand, ct)
-                        .ConfigureAwait(false);
-
                     try
                     {
+                        await using var writer = await connection.BeginTextImportAsync(copyCommand, ct)
+                            .ConfigureAwait(false);
                         foreach (var line in batch)
                         {
                             await writer.WriteLineAsync(line).ConfigureAwait(false);
                         }
-                        // The writer will be automatically completed and disposed by await using
                     }
                     catch (Exception ex)
                     {

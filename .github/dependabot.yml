@@ -57,31 +57,6 @@ updates:
           - "*"
 
   - package-ecosystem: nuget
-    directory: /samples/Rivulet.ConsoleSample
-    schedule:
-      interval: daily
-
-  - package-ecosystem: nuget
-    directory: /samples/Rivulet.Diagnostics.Sample
-    schedule:
-      interval: daily
-
-  - package-ecosystem: nuget
-    directory: /samples/Rivulet.Hosting.Sample
-    schedule:
-      interval: daily
-
-  - package-ecosystem: nuget
-    directory: /samples/Rivulet.OpenTelemetry.Sample
-    schedule:
-      interval: daily
-
-  - package-ecosystem: nuget
-    directory: /samples/Rivulet.Testing.Sample
-    schedule:
-      interval: daily
-
-  - package-ecosystem: nuget
     directory: /src/Rivulet.Core
     schedule:
       interval: daily
@@ -113,6 +88,21 @@ updates:
 
   - package-ecosystem: nuget
     directory: /src/Rivulet.Sql
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /src/Rivulet.Sql.SqlServer
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /src/Rivulet.Sql.MySql
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /src/Rivulet.Sql.PostgreSql
     schedule:
       interval: daily
 
@@ -157,11 +147,26 @@ updates:
       interval: daily
 
   - package-ecosystem: nuget
+    directory: /tests/Rivulet.Testing.Tests
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
     directory: /tests/Rivulet.Sql.Tests
     schedule:
       interval: daily
 
   - package-ecosystem: nuget
-    directory: /tests/Rivulet.Testing.Tests
+    directory: /tests/Rivulet.Sql.SqlServer.Tests
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /tests/Rivulet.Sql.MySql.Tests
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /tests/Rivulet.Sql.PostgreSql.Tests
     schedule:
       interval: daily
