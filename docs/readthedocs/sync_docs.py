@@ -108,6 +108,14 @@ def convert_github_to_mkdocs(content: str) -> str:
         content
     )
 
+    # Convert HTML href links to package documentation
+    # Pattern: <a href="src/Rivulet.Core/README.md">Docs</a> -> <a href="packages/rivulet-core/">Docs</a>
+    content = re.sub(
+        r'<a href="src/Rivulet\.([^/]+)/README\.md">',
+        lambda m: f'<a href="packages/rivulet-{m.group(1).lower().replace(".", "-")}/">',
+        content
+    )
+
     # Fix other relative links to package READMEs
     content = re.sub(
         r'\(src/([^)]+)/README\.md\)',
@@ -121,6 +129,41 @@ def convert_github_to_mkdocs(content: str) -> str:
         '',
         content,
         flags=re.MULTILINE
+    )
+
+    # Improve packages table rendering for ReadTheDocs
+    # Convert stacked badges in table cells to horizontal layout
+    def improve_table_cell(match):
+        cell_content = match.group(1)
+
+        # If cell contains multiple lines with badges, make them horizontal
+        lines = [line.strip() for line in cell_content.split('<br/>') if line.strip()]
+        if len(lines) > 1:
+            # Separate NuGet badges from Docs link
+            badges = [line for line in lines if '<img' in line]
+            docs_link = [line for line in lines if 'Docs</a>' in line]
+
+            if badges and docs_link:
+                # Put badges horizontally, then docs link below with spacing
+                horizontal_badges = ' '.join(badges)
+                return f'{horizontal_badges}<br/><br/>{docs_link[0]}'
+
+        return cell_content
+
+    # Process table cells containing badges
+    content = re.sub(
+        r'<td>\s*((?:<a[^>]*>.*?</a>\s*(?:<br/>)?)+)\s*</td>',
+        lambda m: f'<td>\n{improve_table_cell(m)}\n</td>',
+        content,
+        flags=re.DOTALL
+    )
+
+    # Make package names in table smaller (reduce font size)
+    # Pattern: <td><strong>emoji PackageName</strong></td>
+    content = re.sub(
+        r'<td><strong>(.*?Rivulet\.[^<]+)</strong></td>',
+        lambda m: f'<td><span style="font-size: 0.9em; font-weight: 600;">{m.group(1)}</span></td>',
+        content
     )
 
     return content
