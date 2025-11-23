@@ -17,6 +17,7 @@ public class SqlServerFixture : IAsyncLifetime
     {
         _container = new MsSqlBuilder()
             .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
+            .WithCreateParameterModifier(parameters => parameters.Platform = "linux/amd64")
             .Build();
 
         await _container.StartAsync();
