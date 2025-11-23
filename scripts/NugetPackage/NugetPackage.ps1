@@ -31,6 +31,7 @@ $Projects = @{
     "Sql.SqlServer" = "src\Rivulet.Sql.SqlServer\Rivulet.Sql.SqlServer.csproj"
     "Sql.MySql" = "src\Rivulet.Sql.MySql\Rivulet.Sql.MySql.csproj"
     "Sql.PostgreSql" = "src\Rivulet.Sql.PostgreSql\Rivulet.Sql.PostgreSql.csproj"
+    "IO" = "src\Rivulet.IO\Rivulet.IO.csproj"
 }
 
 # Determine which projects to pack
@@ -195,6 +196,7 @@ Write-Host "                             .\NugetPackage.ps1 -Project Sql" -Foreg
 Write-Host "                             .\NugetPackage.ps1 -Project Sql.SqlServer" -ForegroundColor Gray
 Write-Host "                             .\NugetPackage.ps1 -Project Sql.MySql" -ForegroundColor Gray
 Write-Host "                             .\NugetPackage.ps1 -Project Sql.PostgreSql" -ForegroundColor Gray
+Write-Host "                             .\NugetPackage.ps1 -Project IO" -ForegroundColor Gray
 Write-Host "  - Build all packages:      .\NugetPackage.ps1 -Project All" -ForegroundColor Gray
 Write-Host "  - Test locally:            dotnet add package Rivulet.Core --source ./test-packages" -ForegroundColor Gray
 Write-Host ""

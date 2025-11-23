@@ -32,6 +32,7 @@ jobs:
           - 'Rivulet.Sql.SqlServer'
           - 'Rivulet.Sql.MySql'
           - 'Rivulet.Sql.PostgreSql'
+          - 'Rivulet.IO'
       fail-fast: false
 
     steps:

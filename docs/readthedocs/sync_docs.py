@@ -33,6 +33,7 @@ SYNC_FILES = {
     REPO_ROOT / "src/Rivulet.Sql.PostgreSql/README.md": (DOCS_DIR / "packages/rivulet-sql-postgresql.md", False),
     REPO_ROOT / "src/Rivulet.Sql.MySql/README.md": (DOCS_DIR / "packages/rivulet-sql-mysql.md", False),
     REPO_ROOT / "src/Rivulet.Polly/README.md": (DOCS_DIR / "packages/rivulet-polly.md", False),
+    REPO_ROOT / "src/Rivulet.IO/README.md": (DOCS_DIR / "packages/rivulet-io.md", False),
 }
 
 
@@ -124,16 +125,20 @@ def sync_docs():
     """Copy and convert documentation files from source locations."""
     print("Syncing documentation files...")
 
-    # Copy assets directory
+    # Copy assets directory to static/images
     assets_source = REPO_ROOT / "assets"
-    assets_dest = DOCS_DIR / "assets"
+    static_images_dest = DOCS_DIR / "static" / "images"
     if assets_source.exists():
-        # Remove existing assets directory if it exists
-        if assets_dest.exists():
-            shutil.rmtree(assets_dest)
-        # Copy entire assets directory
-        shutil.copytree(assets_source, assets_dest)
-        print(f"  [OK] assets/ directory copied")
+        # Remove existing static/images directory if it exists
+        if static_images_dest.exists():
+            shutil.rmtree(static_images_dest)
+
+        # Create parent directory
+        static_images_dest.parent.mkdir(parents=True, exist_ok=True)
+
+        # Copy all assets to static/images (no filtering)
+        shutil.copytree(assets_source, static_images_dest)
+        print(f"  [OK] assets/ directory copied to static/images/")
 
     for source, (dest, convert) in SYNC_FILES.items():
         if not source.exists():
