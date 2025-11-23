@@ -23,6 +23,7 @@ SYNC_FILES = {
     REPO_ROOT / "CONTRIBUTING.md": (DOCS_DIR / "CONTRIBUTING.md", False),
     REPO_ROOT / "SECURITY.md": (DOCS_DIR / "SECURITY.md", False),
     REPO_ROOT / "CODE_OF_CONDUCT.md": (DOCS_DIR / "CODE_OF_CONDUCT.md", False),
+    REPO_ROOT / "ROADMAP.md": (DOCS_DIR / "ROADMAP.md", False),
 
     # packages (copy as-is)
     REPO_ROOT / "src/Rivulet.Core/README.md": (DOCS_DIR / "packages/rivulet-core.md", False),
@@ -130,7 +131,7 @@ def sync_docs():
 
     # Copy assets directory to static/images
     assets_source = REPO_ROOT / "assets"
-    static_images_dest = DOCS_DIR / "static" / "images"
+    static_images_dest = DOCS_DIR / "assets"
     if assets_source.exists():
         # Remove existing static/images directory if it exists
         if static_images_dest.exists():
@@ -141,7 +142,7 @@ def sync_docs():
 
         # Copy all assets to static/images (no filtering)
         shutil.copytree(assets_source, static_images_dest)
-        print(f"  [OK] assets/ directory copied to static/images/")
+        print(f"  [OK] assets/ directory copied to assets/")
 
     for source, (dest, convert) in SYNC_FILES.items():
         if not source.exists():
