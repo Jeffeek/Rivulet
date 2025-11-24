@@ -83,10 +83,10 @@ public class MetricsTests
             options);
 
         // Disposal completes inside SelectParallelAsync before it returns, which triggers the final sample.
-        // The final sample is awaited during disposal, but we add extra time to ensure:
-        // 1. Any CPU cache coherency delays on Windows
-        // 2. Timer quantization effects (~15ms resolution on Windows)
-        // 3. Async state machine cleanup
+        // The final sample has a 1000ms delay built-in (see MetricsTracker.cs disposal handler).
+        // We add minimal extra time to ensure the callback has fully completed:
+        // 1. Callback execution time
+        // 2. Any remaining async state machine cleanup
         // Using Task.Yield() to force a context switch, ensuring all memory writes are globally visible
         await Task.Yield();
         await Task.Delay(500);

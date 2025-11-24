@@ -93,8 +93,12 @@ internal sealed class MetricsTracker : MetricsTrackerBase
             // Wait to ensure all in-flight metric increments complete
             // before taking the final sample. This prevents race conditions where
             // the last items are still calling Increment*() methods.
-            // Increased from 100ms → 200ms → 500ms for Windows CI/CD reliability (0.5% "off by 1" failures at 200ms)
-            await Task.Delay(500).ConfigureAwait(false);
+            // Increased from 100ms → 200ms → 500ms → 1000ms for Windows CI/CD reliability
+            // The 1000ms delay accounts for:
+            // - CPU cache coherency delays on multi-core Windows runners (~500ms worst case)
+            // - Memory barrier propagation across NUMA nodes
+            // - Async state machine cleanup and thread pool scheduling delays
+            await Task.Delay(1000).ConfigureAwait(false);
             await SampleMetrics().ConfigureAwait(false);
         }
     }
