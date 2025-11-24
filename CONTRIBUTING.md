@@ -350,7 +350,6 @@ Rivulet/
 - **Tests**: `tests/Rivulet.Core.Tests/`
 - **Benchmarks**: `tests/Rivulet.Benchmarks/`
 - **CI/CD**: `.github/workflows/`
-- **AI Context**: `TestResults/START_SESSION_AI.md`
 
 ---
 
@@ -442,7 +441,6 @@ public async ValueTask<T> ProcessAsync() { /* ... */ }
 - **Questions**: Open a [GitHub Discussion](https://github.com/Jeffeek/Rivulet/discussions)
 - **Bugs**: Use [bug report template](.github/ISSUE_TEMPLATE/bug_report.md)
 - **Features**: Use [feature request template](.github/ISSUE_TEMPLATE/feature_request.md)
-- **Chat**: [Join our Discord/Slack] (if available)
 
 ---
 

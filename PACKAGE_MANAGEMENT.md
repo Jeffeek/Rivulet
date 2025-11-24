@@ -60,17 +60,17 @@ All documentation, workflows, and scripts are **automatically generated** from `
 
 **Linux/macOS:**
 ```bash
-./scripts/update-all.sh
+./scripts/UpdateAll/update-all.sh
 ```
 
 **Windows (PowerShell):**
 ```powershell
-.\scripts\update-all.ps1
+.\scripts\UpdateAll\update-all.ps1
 ```
 
 **Windows (Command Prompt):**
 ```cmd
-pwsh -File .\scripts\update-all.ps1
+pwsh -File .\scripts\UpdateAll\update-all.ps1
 ```
 
 3. **Review the changes:**
@@ -230,10 +230,10 @@ A GitHub Actions workflow validates that generated files are up-to-date:
 
 ```yaml
 - name: Validate package registry
-  run: python scripts/generate-all.py --check
+  run: python scripts/UpdateAll/generate-all.py --check
 ```
 
-If generated files are out of date, the CI build will **fail** and remind you to run `./scripts/update-all.sh`.
+If generated files are out of date, the CI build will **fail** and remind you to run `./scripts/UpdateAll/update-all.sh`.
 
 ---
 
@@ -246,10 +246,10 @@ If generated files are out of date, the CI build will **fail** and remind you to
 **Usage:**
 ```bash
 # Linux/macOS
-./scripts/update-all.sh
+./scripts/UpdateAll/update-all.sh
 
 # Windows (PowerShell)
-.\scripts\update-all.ps1 [-Verbose]
+.\scripts\UpdateAll\update-all.ps1 [-Verbose]
 ```
 
 **What It Does:**
@@ -298,10 +298,10 @@ packages = registry.get_core_packages()
 **Usage:**
 ```bash
 # Generate all files
-python scripts/generate-all.py [--verbose]
+python scripts/UpdateAll/generate-all.py [--verbose]
 
 # Check if files need regeneration (for CI)
-python scripts/generate-all.py --check
+python scripts/UpdateAll/generate-all.py --check
 ```
 
 **Options:**
@@ -342,7 +342,7 @@ Edit `packages.yml` and add your package entry (see schema above).
 
 **Step 3:** Regenerate all files
 ```bash
-./scripts/update-all.sh
+./scripts/UpdateAll/update-all.sh
 ```
 
 **Step 4:** Review and commit
@@ -362,7 +362,7 @@ Update the package entry (e.g., add features, change description).
 
 **Step 2:** Regenerate
 ```bash
-./scripts/update-all.sh
+./scripts/UpdateAll/update-all.sh
 ```
 
 **Step 3:** Review and commit
@@ -382,7 +382,7 @@ Delete the package entry.
 
 **Step 2:** Regenerate
 ```bash
-./scripts/update-all.sh
+./scripts/UpdateAll/update-all.sh
 ```
 
 **Step 3:** Remove directories
@@ -449,7 +449,7 @@ This is automatically run by `update-all.sh` before generation.
 vim packages.yml
 
 # Regenerate
-./scripts/update-all.sh
+./scripts/UpdateAll/update-all.sh
 
 # Review
 git diff
@@ -534,7 +534,7 @@ python: command not found
 
 **Solution:**
 ```bash
-./scripts/update-all.sh
+./scripts/UpdateAll/update-all.sh
 git add README.md samples/README.md docs/ROADMAP.md .invisible/START_SESSION_AI.md
 git commit -m "Update generated files"
 git push
@@ -556,7 +556,7 @@ When contributing new packages, please follow this workflow:
 
 1. Create the package structure (src, tests, samples)
 2. Add package to `packages.yml`
-3. Run `./scripts/update-all.sh`
+3. Run `./scripts/UpdateAll/update-all.sh`
 4. Commit all changes together
 5. Submit a pull request
 

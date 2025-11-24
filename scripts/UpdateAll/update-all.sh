@@ -20,8 +20,9 @@ echo -e "${CYAN}========================================${NC}"
 echo ""
 
 # Navigate to repository root
+# Script is in scripts/UpdateAll/, so go up two levels to reach repo root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR/.."
+cd "$SCRIPT_DIR/../.."
 
 # Check if Python is available
 if ! command -v python3 &> /dev/null && ! command -v python &> /dev/null; then

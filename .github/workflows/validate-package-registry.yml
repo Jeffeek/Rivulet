@@ -13,8 +13,8 @@ on:
       - '.github/workflows/release.yml'
       - '.github/workflows/nuget-activity-monitor.yml'
       - '.github/dependabot.yml'
-      - 'scripts/package_registry.py'
-      - 'scripts/generate-all.py'
+      - 'scripts/UpdateAll/package_registry.py'
+      - 'scripts/UpdateAll/generate-all.py'
       - '.github/workflows/validate-package-registry.yml'
   push:
     branches:
@@ -28,8 +28,8 @@ on:
       - '.github/workflows/release.yml'
       - '.github/workflows/nuget-activity-monitor.yml'
       - '.github/dependabot.yml'
-      - 'scripts/package_registry.py'
-      - 'scripts/generate-all.py'
+      - 'scripts/UpdateAll/package_registry.py'
+      - 'scripts/UpdateAll/generate-all.py'
       - '.github/workflows/validate-package-registry.yml'
 
 permissions:
@@ -66,7 +66,7 @@ jobs:
         echo "========================================="
         echo "Validating package registry..."
         echo "========================================="
-        python scripts/package_registry.py
+        python scripts/UpdateAll/package_registry.py
 
     - name: Check if generated files are up-to-date
       run: |
@@ -74,7 +74,7 @@ jobs:
         echo "========================================="
         echo "Checking if generated files are up-to-date..."
         echo "========================================="
-        python scripts/generate-all.py --check --verbose
+        python scripts/UpdateAll/generate-all.py --check --verbose
 
     - name: Validation succeeded
       if: success()
@@ -90,7 +90,7 @@ jobs:
         echo "❌ Package registry validation failed!"
         echo ""
         echo "If generated files are out of date, run:"
-        echo "  ./scripts/update-all.sh"
+        echo "  ./scripts/UpdateAll/update-all.sh"
         echo ""
         echo "Then commit the changes:"
         echo "  git add packages.yml README.md samples/README.md ROADMAP.md .github/"

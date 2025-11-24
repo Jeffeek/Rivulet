@@ -16,8 +16,9 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
 # Navigate to repository root
+# Script is in scripts/UpdateAll/, so go up two levels to reach repo root
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-Set-Location (Join-Path $ScriptDir "..")
+Set-Location (Join-Path $ScriptDir ".." | Join-Path -ChildPath "..")
 
 # Check if Python is available
 $pythonCmd = $null
