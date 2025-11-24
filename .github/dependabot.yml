@@ -182,3 +182,68 @@ updates:
     schedule:
       interval: daily
   # PACKAGE_DIRECTORIES_END
+
+  - package-ecosystem: pip
+    directory: /docs/readthedocs
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /samples/Rivulet.Console.Sample
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /samples/Rivulet.Diagnostics.Sample
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /samples/Rivulet.Hosting.Sample
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /samples/Rivulet.Http.Sample
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /samples/Rivulet.IO.Sample
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /samples/Rivulet.OpenTelemetry.Sample
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /samples/Rivulet.Polly.Sample
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /samples/Rivulet.Sql.MySql.Sample
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /samples/Rivulet.Sql.PostgreSql.Sample
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /samples/Rivulet.Sql.Sample
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /samples/Rivulet.Sql.SqlServer.Sample
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /samples/Rivulet.Testing.Sample
+    schedule:
+      interval: daily
