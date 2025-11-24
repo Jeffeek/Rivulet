@@ -60,18 +60,20 @@ jobs:
 
     - name: Pack NuGet packages
       run: |
+        # PACK_COMMANDS_START
         dotnet pack src/Rivulet.Core/Rivulet.Core.csproj -c Release --output ./artifacts -p:PackageVersion=${{ steps.get_version.outputs.version }}
         dotnet pack src/Rivulet.Diagnostics/Rivulet.Diagnostics.csproj -c Release --output ./artifacts -p:PackageVersion=${{ steps.get_version.outputs.version }}
         dotnet pack src/Rivulet.Diagnostics.OpenTelemetry/Rivulet.Diagnostics.OpenTelemetry.csproj -c Release --output ./artifacts -p:PackageVersion=${{ steps.get_version.outputs.version }}
-        dotnet pack src/Rivulet.Testing/Rivulet.Testing.csproj -c Release --output ./artifacts -p:PackageVersion=${{ steps.get_version.outputs.version }}
         dotnet pack src/Rivulet.Hosting/Rivulet.Hosting.csproj -c Release --output ./artifacts -p:PackageVersion=${{ steps.get_version.outputs.version }}
+        dotnet pack src/Rivulet.Testing/Rivulet.Testing.csproj -c Release --output ./artifacts -p:PackageVersion=${{ steps.get_version.outputs.version }}
         dotnet pack src/Rivulet.Http/Rivulet.Http.csproj -c Release --output ./artifacts -p:PackageVersion=${{ steps.get_version.outputs.version }}
-        dotnet pack src/Rivulet.Polly/Rivulet.Polly.csproj -c Release --output ./artifacts -p:PackageVersion=${{ steps.get_version.outputs.version }}
+        dotnet pack src/Rivulet.IO/Rivulet.IO.csproj -c Release --output ./artifacts -p:PackageVersion=${{ steps.get_version.outputs.version }}
         dotnet pack src/Rivulet.Sql/Rivulet.Sql.csproj -c Release --output ./artifacts -p:PackageVersion=${{ steps.get_version.outputs.version }}
         dotnet pack src/Rivulet.Sql.SqlServer/Rivulet.Sql.SqlServer.csproj -c Release --output ./artifacts -p:PackageVersion=${{ steps.get_version.outputs.version }}
-        dotnet pack src/Rivulet.Sql.MySql/Rivulet.Sql.MySql.csproj -c Release --output ./artifacts -p:PackageVersion=${{ steps.get_version.outputs.version }}
         dotnet pack src/Rivulet.Sql.PostgreSql/Rivulet.Sql.PostgreSql.csproj -c Release --output ./artifacts -p:PackageVersion=${{ steps.get_version.outputs.version }}
-        dotnet pack src/Rivulet.IO/Rivulet.IO.csproj -c Release --output ./artifacts -p:PackageVersion=${{ steps.get_version.outputs.version }}
+        dotnet pack src/Rivulet.Sql.MySql/Rivulet.Sql.MySql.csproj -c Release --output ./artifacts -p:PackageVersion=${{ steps.get_version.outputs.version }}
+        dotnet pack src/Rivulet.Polly/Rivulet.Polly.csproj -c Release --output ./artifacts -p:PackageVersion=${{ steps.get_version.outputs.version }}
+        # PACK_COMMANDS_END
       timeout-minutes: 10
 
     - name: List artifacts

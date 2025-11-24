@@ -1,0 +1,98 @@
+name: Validate Package Registry
+
+on:
+  pull_request:
+    branches:
+      - "master"
+      - "release/**"
+    paths:
+      - 'packages.yml'
+      - 'README.md'
+      - 'ROADMAP.md'
+      - 'samples/README.md'
+      - '.github/workflows/release.yml'
+      - '.github/workflows/nuget-activity-monitor.yml'
+      - '.github/dependabot.yml'
+      - 'scripts/package_registry.py'
+      - 'scripts/generate-all.py'
+      - '.github/workflows/validate-package-registry.yml'
+  push:
+    branches:
+      - "master"
+      - "release/**"
+    paths:
+      - 'packages.yml'
+      - 'README.md'
+      - 'ROADMAP.md'
+      - 'samples/README.md'
+      - '.github/workflows/release.yml'
+      - '.github/workflows/nuget-activity-monitor.yml'
+      - '.github/dependabot.yml'
+      - 'scripts/package_registry.py'
+      - 'scripts/generate-all.py'
+      - '.github/workflows/validate-package-registry.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate Package Registry
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Harden the runner (Audit all outbound calls)
+      uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+      with:
+        egress-policy: audit
+
+    - name: Checkout
+      uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      with:
+        fetch-depth: 0
+
+    - name: Setup Python 3.12
+      uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a20 # v5.3.0
+      with:
+        python-version: '3.12'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyyaml
+
+    - name: Validate package registry
+      run: |
+        echo "========================================="
+        echo "Validating package registry..."
+        echo "========================================="
+        python scripts/package_registry.py
+
+    - name: Check if generated files are up-to-date
+      run: |
+        echo ""
+        echo "========================================="
+        echo "Checking if generated files are up-to-date..."
+        echo "========================================="
+        python scripts/generate-all.py --check --verbose
+
+    - name: Validation succeeded
+      if: success()
+      run: |
+        echo ""
+        echo "✅ Package registry validation passed!"
+        echo "✅ All generated files are up-to-date!"
+
+    - name: Validation failed
+      if: failure()
+      run: |
+        echo ""
+        echo "❌ Package registry validation failed!"
+        echo ""
+        echo "If generated files are out of date, run:"
+        echo "  ./scripts/update-all.sh"
+        echo ""
+        echo "Then commit the changes:"
+        echo "  git add packages.yml README.md samples/README.md ROADMAP.md .github/"
+        echo "  git commit -m 'Update generated files'"
+        exit 1

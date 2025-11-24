@@ -29,148 +29,152 @@
 
 ## 📦 Packages
 
-<table>
-<thead>
-<tr>
-<th width="25%">Package</th>
-<th width="50%">Description</th>
-<th width="25%">Links</th>
-</tr>
-</thead>
-<tbody>
+<!-- PACKAGES_START -->
+### Core Packages
 
-<!-- Core & Infrastructure -->
-<tr>
-<td><strong>🌊 Rivulet.Core</strong></td>
-<td>Core parallel operators with bounded concurrency, retries, backpressure, and streaming</td>
-<td>
-  <a href="https://www.nuget.org/packages/Rivulet.Core/"><img src="https://img.shields.io/nuget/v/Rivulet.Core?label=version" alt="NuGet"></a><br/>
-  <a href="https://www.nuget.org/packages/Rivulet.Core/"><img src="https://img.shields.io/nuget/dt/Rivulet.Core" alt="Downloads"></a><br/>
-  📖 <a href="src/Rivulet.Core/README.md">Docs</a>
-</td>
-</tr>
+#### ✅ [Rivulet.Core](https://www.nuget.org/packages/Rivulet.Core)
+[![NuGet](https://img.shields.io/nuget/v/Rivulet.Core.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Core) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Core.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Core)
 
-<tr>
-<td><strong>📊 Rivulet.Diagnostics</strong></td>
-<td>Enterprise observability with EventListeners, metrics aggregation, Prometheus export, and health checks</td>
-<td>
-  <a href="https://www.nuget.org/packages/Rivulet.Diagnostics/"><img src="https://img.shields.io/nuget/v/Rivulet.Diagnostics?label=version" alt="NuGet"></a><br/>
-  <a href="https://www.nuget.org/packages/Rivulet.Diagnostics/"><img src="https://img.shields.io/nuget/dt/Rivulet.Diagnostics" alt="Downloads"></a><br/>
-  📖 <a href="src/Rivulet.Diagnostics/README.md">Docs</a>
-</td>
-</tr>
+Core parallel processing operators with bounded concurrency, retry policies, and error handling
 
-<tr>
-<td><strong>🔭 Rivulet.Diagnostics.OpenTelemetry</strong></td>
-<td>Distributed tracing and OpenTelemetry integration</td>
-<td>
-  <a href="https://www.nuget.org/packages/Rivulet.Diagnostics.OpenTelemetry/"><img src="https://img.shields.io/nuget/v/Rivulet.Diagnostics.OpenTelemetry?label=version" alt="NuGet"></a><br/>
-  <a href="https://www.nuget.org/packages/Rivulet.Diagnostics.OpenTelemetry/"><img src="https://img.shields.io/nuget/dt/Rivulet.Diagnostics.OpenTelemetry" alt="Downloads"></a><br/>
-  📖 <a href="src/Rivulet.Diagnostics.OpenTelemetry/README.md">Docs</a>
-</td>
-</tr>
+**Key Features:**
+- Bounded concurrency control
+- Retry policies with exponential backoff
+- Circuit breaker pattern
+- Error handling modes (StopOnFirstError, CollectAndContinue)
+- Ordered and unordered output
 
-<tr>
-<td><strong>🧪 Rivulet.Testing</strong></td>
-<td>Testing utilities: VirtualTimeProvider, ChaosInjector, ConcurrencyAsserter, FakeChannel</td>
-<td>
-  <a href="https://www.nuget.org/packages/Rivulet.Testing/"><img src="https://img.shields.io/nuget/v/Rivulet.Testing?label=version" alt="NuGet"></a><br/>
-  <a href="https://www.nuget.org/packages/Rivulet.Testing/"><img src="https://img.shields.io/nuget/dt/Rivulet.Testing" alt="Downloads"></a><br/>
-  📖 <a href="src/Rivulet.Testing/README.md">Docs</a>
-</td>
-</tr>
+#### ✅ [Rivulet.Diagnostics](https://www.nuget.org/packages/Rivulet.Diagnostics)
+[![NuGet](https://img.shields.io/nuget/v/Rivulet.Diagnostics.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Diagnostics) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Diagnostics.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Diagnostics)
 
-<tr>
-<td><strong>🏠 Rivulet.Hosting</strong></td>
-<td>Microsoft.Extensions.Hosting integration: background services, DI, configuration, health checks</td>
-<td>
-  <a href="https://www.nuget.org/packages/Rivulet.Hosting/"><img src="https://img.shields.io/nuget/v/Rivulet.Hosting?label=version" alt="NuGet"></a><br/>
-  <a href="https://www.nuget.org/packages/Rivulet.Hosting/"><img src="https://img.shields.io/nuget/dt/Rivulet.Hosting" alt="Downloads"></a><br/>
-  📖 <a href="src/Rivulet.Hosting/README.md">Docs</a>
-</td>
-</tr>
+Production-ready observability with EventSource metrics, structured logging, and health checks
 
-<!-- Integration Packages -->
-<tr>
-<td><strong>🌐 Rivulet.Http</strong></td>
-<td>Parallel HTTP operations with resilient downloads, streaming, and HttpClientFactory integration</td>
-<td>
-  <a href="https://www.nuget.org/packages/Rivulet.Http/"><img src="https://img.shields.io/nuget/v/Rivulet.Http?label=version" alt="NuGet"></a><br/>
-  <a href="https://www.nuget.org/packages/Rivulet.Http/"><img src="https://img.shields.io/nuget/dt/Rivulet.Http" alt="Downloads"></a><br/>
-  📖 <a href="src/Rivulet.Http/README.md">Docs</a>
-</td>
-</tr>
+**Key Features:**
+- EventSource-based metrics (ETW, EventPipe)
+- Multiple export formats
+- Health monitoring
+- Throughput and error rate tracking
+- Zero allocation in hot paths
 
-<tr>
-<td><strong>🗄️ Rivulet.Sql</strong></td>
-<td>Provider-agnostic parallel SQL operations with connection pooling and bulk operations</td>
-<td>
-  <a href="https://www.nuget.org/packages/Rivulet.Sql/"><img src="https://img.shields.io/nuget/v/Rivulet.Sql?label=version" alt="NuGet"></a><br/>
-  <a href="https://www.nuget.org/packages/Rivulet.Sql/"><img src="https://img.shields.io/nuget/dt/Rivulet.Sql" alt="Downloads"></a><br/>
-  📖 <a href="src/Rivulet.Sql/README.md">Docs</a>
-</td>
-</tr>
+#### ✅ [Rivulet.Diagnostics.OpenTelemetry](https://www.nuget.org/packages/Rivulet.Diagnostics.OpenTelemetry)
+[![NuGet](https://img.shields.io/nuget/v/Rivulet.Diagnostics.OpenTelemetry.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Diagnostics.OpenTelemetry) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Diagnostics.OpenTelemetry.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Diagnostics.OpenTelemetry)
 
-<tr>
-<td><strong>&nbsp;&nbsp;↳ Rivulet.Sql.SqlServer</strong></td>
-<td>SQL Server-specific optimizations with SqlBulkCopy integration <strong>(10-100x faster)</strong></td>
-<td>
-  <a href="https://www.nuget.org/packages/Rivulet.Sql.SqlServer/"><img src="https://img.shields.io/nuget/v/Rivulet.Sql.SqlServer?label=version" alt="NuGet"></a><br/>
-  <a href="https://www.nuget.org/packages/Rivulet.Sql.SqlServer/"><img src="https://img.shields.io/nuget/dt/Rivulet.Sql.SqlServer" alt="Downloads"></a><br/>
-  📖 <a href="src/Rivulet.Sql.SqlServer/README.md">Docs</a>
-</td>
-</tr>
+OpenTelemetry integration for distributed tracing and W3C Trace Context propagation
 
-<tr>
-<td><strong>&nbsp;&nbsp;↳ Rivulet.Sql.MySql</strong></td>
-<td>MySQL-specific optimizations with MySqlBulkCopy and LOAD DATA INFILE integration</td>
-<td>
-  <a href="https://www.nuget.org/packages/Rivulet.Sql.MySql/"><img src="https://img.shields.io/nuget/v/Rivulet.Sql.MySql?label=version" alt="NuGet"></a><br/>
-  <a href="https://www.nuget.org/packages/Rivulet.Sql.MySql/"><img src="https://img.shields.io/nuget/dt/Rivulet.Sql.MySql" alt="Downloads"></a><br/>
-  📖 <a href="src/Rivulet.Sql.MySql/README.md">Docs</a>
-</td>
-</tr>
+**Key Features:**
+- W3C Trace Context propagation
+- OpenTelemetry Metrics and Traces
+- Correlation across distributed systems
+- Integration with Jaeger/Zipkin/OTLP exporters
 
-<tr>
-<td><strong>&nbsp;&nbsp;↳ Rivulet.Sql.PostgreSql</strong></td>
-<td>PostgreSQL-specific optimizations with COPY command integration <strong>(10-100x faster)</strong></td>
-<td>
-  <a href="https://www.nuget.org/packages/Rivulet.Sql.PostgreSql/"><img src="https://img.shields.io/nuget/v/Rivulet.Sql.PostgreSql?label=version" alt="NuGet"></a><br/>
-  <a href="https://www.nuget.org/packages/Rivulet.Sql.PostgreSql/"><img src="https://img.shields.io/nuget/dt/Rivulet.Sql.PostgreSql" alt="Downloads"></a><br/>
-  📖 <a href="src/Rivulet.Sql.PostgreSql/README.md">Docs</a>
-</td>
-</tr>
+#### ✅ [Rivulet.Hosting](https://www.nuget.org/packages/Rivulet.Hosting)
+[![NuGet](https://img.shields.io/nuget/v/Rivulet.Hosting.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Hosting) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Hosting.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Hosting)
 
-<tr>
-<td><strong>📁 Rivulet.IO</strong></td>
-<td>Parallel file and directory operations with bounded concurrency, resilience, and streaming support</td>
-<td>
-  <a href="https://www.nuget.org/packages/Rivulet.IO/"><img src="https://img.shields.io/nuget/v/Rivulet.IO?label=version" alt="NuGet"></a><br/>
-  <a href="https://www.nuget.org/packages/Rivulet.IO/"><img src="https://img.shields.io/nuget/dt/Rivulet.IO" alt="Downloads"></a><br/>
-  📖 <a href="src/Rivulet.IO/README.md">Docs</a>
-</td>
-</tr>
+ASP.NET Core integration with background services, dependency injection, and configuration binding
 
-<tr>
-<td><strong>🛡️ Rivulet.Polly</strong></td>
-<td>Polly resilience integration with hedging, result-based retry, and policy composition</td>
-<td>
-  <a href="https://www.nuget.org/packages/Rivulet.Polly/"><img src="https://img.shields.io/nuget/v/Rivulet.Polly?label=version" alt="NuGet"></a><br/>
-  <a href="https://www.nuget.org/packages/Rivulet.Polly/"><img src="https://img.shields.io/nuget/dt/Rivulet.Polly" alt="Downloads"></a><br/>
-  📖 <a href="src/Rivulet.Polly/README.md">Docs</a>
-</td>
-</tr>
+**Key Features:**
+- Dependency injection integration
+- Configuration binding (appsettings.json)
+- Background services
+- Health checks
+- Graceful shutdown support
 
-</tbody>
-</table>
+#### ✅ [Rivulet.Testing](https://www.nuget.org/packages/Rivulet.Testing)
+[![NuGet](https://img.shields.io/nuget/v/Rivulet.Testing.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Testing) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Testing.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Testing)
 
-**Installation:**
-```bash
-dotnet add package Rivulet.Core
-dotnet add package Rivulet.Diagnostics
-dotnet add package Rivulet.Http
-# ... etc
-```
+Testing utilities for deterministic tests with time control, chaos injection, and concurrency verification
+
+**Key Features:**
+- Fast deterministic tests
+- Fault injection testing
+- Concurrency verification
+- No actual delays needed
+- Integration with xUnit/NUnit/MSTest
+
+### Integration Packages (v1.3.0 🚧)
+
+#### 🚧 [Rivulet.Http](https://www.nuget.org/packages/Rivulet.Http)
+[![NuGet](https://img.shields.io/nuget/v/Rivulet.Http.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Http) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Http.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Http)
+
+Parallel HTTP operations with HttpClientFactory integration and connection pooling awareness
+
+**Key Features:**
+- HttpClientFactory integration
+- Connection pooling awareness
+- Transient error handling (timeouts, 5xx responses)
+- Bounded concurrency to avoid overwhelming servers
+- Progress reporting for downloads
+
+#### 🚧 [Rivulet.IO](https://www.nuget.org/packages/Rivulet.IO)
+[![NuGet](https://img.shields.io/nuget/v/Rivulet.IO.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.IO) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.IO.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.IO)
+
+Parallel file operations with safe directory processing and file transformations
+
+**Key Features:**
+- Safe concurrent file access
+- Directory tree processing
+- File pattern matching (glob patterns)
+- Progress reporting
+- Atomic write operations
+
+#### 🚧 [Rivulet.Sql](https://www.nuget.org/packages/Rivulet.Sql)
+[![NuGet](https://img.shields.io/nuget/v/Rivulet.Sql.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Sql) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Sql.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Sql)
+
+Provider-agnostic parallel SQL operations with connection pooling awareness
+
+**Key Features:**
+- Works with any ADO.NET provider
+- Connection pooling awareness
+- Transaction support
+- Parameterized queries
+- Respects database connection pool limits
+
+#### 🚧 [Rivulet.Sql.SqlServer](https://www.nuget.org/packages/Rivulet.Sql.SqlServer)
+[![NuGet](https://img.shields.io/nuget/v/Rivulet.Sql.SqlServer.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Sql.SqlServer) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Sql.SqlServer.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Sql.SqlServer)
+
+SQL Server optimizations with SqlBulkCopy integration (10-100x faster bulk inserts)
+
+**Key Features:**
+- SqlBulkCopy integration (10-100x faster)
+- Batch size optimization
+- Table-valued parameters
+- Progress reporting
+- Automatic table creation
+
+#### 🚧 [Rivulet.Sql.PostgreSql](https://www.nuget.org/packages/Rivulet.Sql.PostgreSql)
+[![NuGet](https://img.shields.io/nuget/v/Rivulet.Sql.PostgreSql.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Sql.PostgreSql) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Sql.PostgreSql.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Sql.PostgreSql)
+
+PostgreSQL optimizations with COPY command integration (10-100x faster bulk operations)
+
+**Key Features:**
+- COPY command integration (10-100x faster)
+- Binary and text format support
+- Progress reporting
+- Automatic table creation
+
+#### 🚧 [Rivulet.Sql.MySql](https://www.nuget.org/packages/Rivulet.Sql.MySql)
+[![NuGet](https://img.shields.io/nuget/v/Rivulet.Sql.MySql.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Sql.MySql) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Sql.MySql.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Sql.MySql)
+
+MySQL optimizations with LOAD DATA INFILE integration using MySqlBulkLoader
+
+**Key Features:**
+- MySqlBulkLoader integration (10-100x faster)
+- Local and remote file loading
+- Progress reporting
+- Automatic table creation
+
+#### 🚧 [Rivulet.Polly](https://www.nuget.org/packages/Rivulet.Polly)
+[![NuGet](https://img.shields.io/nuget/v/Rivulet.Polly.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Polly) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Polly.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Polly)
+
+Polly v8 integration with hedging, result-based retry, and resilience pipeline composition
+
+**Key Features:**
+- Polly v8 ResiliencePipeline integration
+- Hedging pattern support
+- Result-based retry policies
+- Policy composition
+- Fallback strategies
+<!-- PACKAGES_END -->
 
 ---
 
@@ -1062,7 +1066,7 @@ See [tests/Rivulet.Benchmarks/README.md](tests/Rivulet.Benchmarks/README.md) for
 
 ## 🗺️ Roadmap
 
-See the full [Roadmap](docs/ROADMAP.md) for detailed plans.
+See the full [Roadmap](ROADMAP.md) for detailed plans.
 
 ### v1.3.0 - 🚧 In Development
 - **Rivulet.Http** 🚧 - Parallel HTTP operations with HttpClientFactory integration
@@ -1091,7 +1095,7 @@ See the full [Roadmap](docs/ROADMAP.md) for detailed plans.
 
 - [Contributing Guide](CONTRIBUTING.md)
 - [Release Guide](docs/RELEASE_GUIDE.md) - For maintainers
-- [Roadmap](docs/ROADMAP.md) - Future plans
+- [Roadmap](ROADMAP.md) - Future plans
 - [Security Policy](SECURITY.md) - Vulnerability reporting
 - [Code of Conduct](CODE_OF_CONDUCT.md)
 
