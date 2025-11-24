@@ -6,7 +6,7 @@
 
 param(
     [Parameter(Mandatory=$false)]
-    [switch]$Verbose
+    [switch]$IsVerbose
 )
 
 Write-Host "========================================" -ForegroundColor Cyan
@@ -20,26 +20,57 @@ Write-Host ""
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location (Join-Path $ScriptDir ".." | Join-Path -ChildPath "..")
 
-# Check if Python is available
+# Check if Python is available and intelligently select the best one
 $pythonCmd = $null
+$python3Available = $false
+$pythonAvailable = $false
+$python3HasYaml = $false
+$pythonHasYaml = $false
+
+# Check python3
 if (Get-Command python3 -ErrorAction SilentlyContinue) {
-    $pythonCmd = "python3"
-} elseif (Get-Command python -ErrorAction SilentlyContinue) {
-    $pythonCmd = "python"
-} else {
+    $python3Available = $true
+    $null = & python3 -c "import yaml" 2>&1
+    if ($LASTEXITCODE -eq 0) {
+        $python3HasYaml = $true
+    }
+}
+
+# Check python
+if (Get-Command python -ErrorAction SilentlyContinue) {
+    $pythonAvailable = $true
+    $null = & python -c "import yaml" 2>&1
+    if ($LASTEXITCODE -eq 0) {
+        $pythonHasYaml = $true
+    }
+}
+
+# Exit if no Python found
+if (-not $python3Available -and -not $pythonAvailable) {
     Write-Host "❌ Error: Python 3 is required but not found" -ForegroundColor Red
     Write-Host "   Please install Python 3.8 or later" -ForegroundColor Red
     exit 1
 }
 
-# Check if PyYAML is installed
-$yamlCheck = & $pythonCmd -c "import yaml" 2>&1
+# Prefer the Python command that already has PyYAML installed
+if ($python3HasYaml) {
+    $pythonCmd = "python3"
+} elseif ($pythonHasYaml) {
+    $pythonCmd = "python"
+} elseif ($python3Available) {
+    $pythonCmd = "python3"
+} else {
+    $pythonCmd = "python"
+}
+
+# Install PyYAML if needed
+$null = & $pythonCmd -c "import yaml" 2>&1
 if ($LASTEXITCODE -ne 0) {
     Write-Host "⚠️  PyYAML not found. Installing..." -ForegroundColor Yellow
-    & $pythonCmd -m pip install --quiet pyyaml
+    & $pythonCmd -m pip install --user --quiet pyyaml
     if ($LASTEXITCODE -ne 0) {
         Write-Host "❌ Failed to install PyYAML" -ForegroundColor Red
-        Write-Host "   Please run: pip install pyyaml" -ForegroundColor Red
+        Write-Host "   Please run: $pythonCmd -m pip install pyyaml" -ForegroundColor Red
         exit 1
     }
     Write-Host "✅ PyYAML installed" -ForegroundColor Green
@@ -48,7 +79,7 @@ if ($LASTEXITCODE -ne 0) {
 
 # Run validation first
 Write-Host "Step 1: Validating package registry..." -ForegroundColor Cyan
-& $pythonCmd scripts/package_registry.py
+& $pythonCmd scripts/UpdateAll/package_registry.py
 if ($LASTEXITCODE -ne 0) {
     Write-Host ""
     Write-Host "❌ Package registry validation failed" -ForegroundColor Red
@@ -59,8 +90,8 @@ Write-Host ""
 
 # Generate all files
 Write-Host "Step 2: Generating files..." -ForegroundColor Cyan
-$generateArgs = @("scripts/generate-all.py")
-if ($Verbose) {
+$generateArgs = @("scripts/UpdateAll/generate-all.py")
+if ($IsVerbose) {
     $generateArgs += "--verbose"
 }
 
