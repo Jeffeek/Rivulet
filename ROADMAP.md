@@ -8,20 +8,31 @@
 - Circuit Breaker Pattern
 - Adaptive Concurrency
 
-### ✅ Completed Packages (v1.2.0)
-- **Rivulet.Diagnostics** - Production observability
-- **Rivulet.Diagnostics.OpenTelemetry** - Industry standard distributed tracing
-- **Rivulet.Testing** - Virtual time, chaos injection, test helpers
-- **Rivulet.Hosting** - .NET Generic Host integration
+<!-- VERSIONS_START -->
+### ✅ 1.0.0 - Released
 
-### 🚧 In Development (v1.3.0)
-- **Rivulet.Http** - Parallel HTTP operations with HttpClientFactory integration
-- **Rivulet.IO** - Parallel file operations, directory processing, file transformations
+- **Rivulet.Core** - Core parallel processing operators with bounded concurrency, retry policies, and error handling
+
+### ✅ 1.1.0 - Released
+
+- **Rivulet.Diagnostics** - Production-ready observability with EventSource metrics, structured logging, and health checks
+- **Rivulet.Diagnostics.OpenTelemetry** - OpenTelemetry integration for distributed tracing and W3C Trace Context propagation
+
+### ✅ 1.2.0 - Released
+
+- **Rivulet.Hosting** - ASP.NET Core integration with background services, dependency injection, and configuration binding
+- **Rivulet.Testing** - Testing utilities for deterministic tests with time control, chaos injection, and concurrency verification
+
+### 🚧 1.3.0 - In Development
+
+- **Rivulet.Http** - Parallel HTTP operations with HttpClientFactory integration and connection pooling awareness
+- **Rivulet.IO** - Parallel file operations with safe directory processing and file transformations
 - **Rivulet.Sql** - Provider-agnostic parallel SQL operations with connection pooling awareness
-- **Rivulet.Sql.SqlServer** - SqlBulkCopy integration (10-100x faster bulk inserts)
-- **Rivulet.Sql.PostgreSql** - COPY command integration (10-100x faster bulk operations)
-- **Rivulet.Sql.MySql** - LOAD DATA INFILE integration with MySqlBulkLoader
-- **Rivulet.Polly** - Polly v8 integration with hedging, result-based retry, pipeline composition
+- **Rivulet.Sql.SqlServer** - SQL Server optimizations with SqlBulkCopy integration (10-100x faster bulk inserts)
+- **Rivulet.Sql.PostgreSql** - PostgreSQL optimizations with COPY command integration (10-100x faster bulk operations)
+- **Rivulet.Sql.MySql** - MySQL optimizations with LOAD DATA INFILE integration using MySqlBulkLoader
+- **Rivulet.Polly** - Polly v8 integration with hedging, result-based retry, and resilience pipeline composition
+<!-- VERSIONS_END -->
 
 ---
 

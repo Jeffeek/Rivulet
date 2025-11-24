@@ -1,0 +1,487 @@
+# Rivulet Package Registry
+# This file is the SINGLE SOURCE OF TRUTH for all package information.
+# When you add a new package, update this file and run: ./scripts/update-all.sh (or update-all.ps1 on Windows)
+#
+# All documentation, workflows, and scripts are generated from this file.
+# See PACKAGE_MANAGEMENT.md for complete documentation.
+
+metadata:
+  schema_version: "1.0"
+  last_updated: "2025-11-24"
+  repository: "https://github.com/Jeffeek/Rivulet"
+
+packages:
+  # ============================================================================
+  # CORE PACKAGES (v1.0.0+)
+  # ============================================================================
+
+  - name: Rivulet.Core
+    id: core
+    category: core
+    version: 1.0.0
+    status: released
+    nuget_id: Rivulet.Core
+    description: Core parallel processing operators with bounded concurrency, retry policies, and error handling
+    path: src/Rivulet.Core
+    test_path: tests/Rivulet.Core.Tests
+    sample_path: samples/Rivulet.Console.Sample
+    sample_name: Rivulet.ConsoleSample
+    features:
+      - SelectParallelAsync - Process items and collect results
+      - SelectParallelStreamAsync - Stream results as they complete
+      - ForEachParallelAsync - Fire-and-forget parallel processing
+      - BatchParallelAsync - Process items in configurable batches
+    key_features:
+      - Bounded concurrency control
+      - Retry policies with exponential backoff
+      - Circuit breaker pattern
+      - Error handling modes (StopOnFirstError, CollectAndContinue)
+      - Ordered and unordered output
+    dependencies: []
+    targets:
+      - net8.0
+      - net9.0
+
+  - name: Rivulet.Diagnostics
+    id: diagnostics
+    category: core
+    version: 1.1.0
+    status: released
+    nuget_id: Rivulet.Diagnostics
+    description: Production-ready observability with EventSource metrics, structured logging, and health checks
+    path: src/Rivulet.Diagnostics
+    test_path: tests/Rivulet.Diagnostics.Tests
+    sample_path: samples/Rivulet.Diagnostics.Sample
+    sample_name: Rivulet.Diagnostics.Sample
+    features:
+      - RivuletEventSource - EventSource-based metrics
+      - RivuletConsoleListener - Real-time console metrics
+      - RivuletFileListener - File-based logging with rotation
+      - RivuletStructuredLogListener - JSON structured logging
+      - PrometheusExporter - Prometheus text format export
+      - RivuletHealthCheck - Health check integration
+      - MetricsAggregator - Statistical analysis
+    key_features:
+      - EventSource-based metrics (ETW, EventPipe)
+      - Multiple export formats
+      - Health monitoring
+      - Throughput and error rate tracking
+      - Zero allocation in hot paths
+    dependencies:
+      - Rivulet.Core
+    targets:
+      - net8.0
+      - net9.0
+
+  - name: Rivulet.Diagnostics.OpenTelemetry
+    id: diagnostics-otel
+    category: core
+    version: 1.1.0
+    status: released
+    nuget_id: Rivulet.Diagnostics.OpenTelemetry
+    description: OpenTelemetry integration for distributed tracing and W3C Trace Context propagation
+    path: src/Rivulet.Diagnostics.OpenTelemetry
+    test_path: tests/Rivulet.Diagnostics.OpenTelemetry.Tests
+    sample_path: samples/Rivulet.OpenTelemetry.Sample
+    sample_name: Rivulet.OpenTelemetry.Sample
+    features:
+      - Activity/Span creation - Automatic distributed tracing
+      - Retry tracking - Record retry attempts with context
+      - Error recording - Detailed error tracking with transient classification
+      - Custom attributes - Attach business context to spans
+      - Circuit breaker events - Track state changes
+      - Adaptive concurrency - Monitor concurrency adjustments
+    key_features:
+      - W3C Trace Context propagation
+      - OpenTelemetry Metrics and Traces
+      - Correlation across distributed systems
+      - Integration with Jaeger/Zipkin/OTLP exporters
+    dependencies:
+      - Rivulet.Core
+      - Rivulet.Diagnostics
+    targets:
+      - net8.0
+      - net9.0
+
+  - name: Rivulet.Hosting
+    id: hosting
+    category: core
+    version: 1.2.0
+    status: released
+    nuget_id: Rivulet.Hosting
+    description: ASP.NET Core integration with background services, dependency injection, and configuration binding
+    path: src/Rivulet.Hosting
+    test_path: tests/Rivulet.Hosting.Tests
+    sample_path: samples/Rivulet.Hosting.Sample
+    sample_name: Rivulet.Hosting.Sample
+    features:
+      - ParallelWorkerService - Background worker base class
+      - ParallelBackgroundService - Queue processor base class
+      - AddRivulet() - DI integration
+      - RivuletOptions - Configuration binding
+    key_features:
+      - Dependency injection integration
+      - Configuration binding (appsettings.json)
+      - Background services
+      - Health checks
+      - Graceful shutdown support
+    dependencies:
+      - Rivulet.Core
+    targets:
+      - net8.0
+      - net9.0
+
+  - name: Rivulet.Testing
+    id: testing
+    category: core
+    version: 1.2.0
+    status: released
+    nuget_id: Rivulet.Testing
+    description: Testing utilities for deterministic tests with time control, chaos injection, and concurrency verification
+    path: src/Rivulet.Testing
+    test_path: tests/Rivulet.Testing.Tests
+    sample_path: samples/Rivulet.Testing.Sample
+    sample_name: Rivulet.Testing.Sample
+    features:
+      - VirtualTimeProvider - Control time for deterministic tests
+      - ChaosInjector - Inject failures and latency
+      - ConcurrencyAsserter - Verify concurrency limits
+      - FakeChannel - Deterministic channel behavior
+      - DeterministicScheduler - Predictable task execution
+    key_features:
+      - Fast deterministic tests
+      - Fault injection testing
+      - Concurrency verification
+      - No actual delays needed
+      - Integration with xUnit/NUnit/MSTest
+    dependencies:
+      - Rivulet.Core
+    targets:
+      - net8.0
+      - net9.0
+
+  # ============================================================================
+  # INTEGRATION PACKAGES (v1.3.0 - In Development)
+  # ============================================================================
+
+  - name: Rivulet.Http
+    id: http
+    category: integration
+    version: 1.3.0
+    status: in_development
+    nuget_id: Rivulet.Http
+    description: Parallel HTTP operations with HttpClientFactory integration and connection pooling awareness
+    path: src/Rivulet.Http
+    test_path: tests/Rivulet.Http.Tests
+    sample_path: samples/Rivulet.Http.Sample
+    sample_name: Rivulet.Http.Sample
+    features:
+      - GetParallelAsync - Fetch multiple URLs concurrently
+      - PostParallelAsync - Submit data in parallel
+      - DownloadParallelAsync - Download files in parallel
+    key_features:
+      - HttpClientFactory integration
+      - Connection pooling awareness
+      - Transient error handling (timeouts, 5xx responses)
+      - Bounded concurrency to avoid overwhelming servers
+      - Progress reporting for downloads
+    dependencies:
+      - Rivulet.Core
+    targets:
+      - net8.0
+      - net9.0
+
+  - name: Rivulet.IO
+    id: io
+    category: integration
+    version: 1.3.0
+    status: in_development
+    nuget_id: Rivulet.IO
+    description: Parallel file operations with safe directory processing and file transformations
+    path: src/Rivulet.IO
+    test_path: tests/Rivulet.IO.Tests
+    sample_path: samples/Rivulet.IO.Sample
+    sample_name: Rivulet.IO.Sample
+    features:
+      - ReadAllTextParallelAsync - Read multiple files
+      - WriteAllTextParallelAsync - Write multiple files
+      - ProcessFilesParallelAsync - Process files in directory
+      - TransformFilesParallelAsync - Transform files
+    key_features:
+      - Safe concurrent file access
+      - Directory tree processing
+      - File pattern matching (glob patterns)
+      - Progress reporting
+      - Atomic write operations
+    dependencies:
+      - Rivulet.Core
+    targets:
+      - net8.0
+      - net9.0
+
+  - name: Rivulet.Sql
+    id: sql
+    category: integration
+    version: 1.3.0
+    status: in_development
+    nuget_id: Rivulet.Sql
+    description: Provider-agnostic parallel SQL operations with connection pooling awareness
+    path: src/Rivulet.Sql
+    test_path: tests/Rivulet.Sql.Tests
+    sample_path: samples/Rivulet.Sql.Sample
+    sample_name: Rivulet.Sql.Sample
+    features:
+      - ExecuteQueriesParallelAsync - Execute multiple queries
+      - ExecuteCommandsParallelAsync - Execute multiple commands
+      - BulkInsertAsync - Provider-agnostic bulk insert
+    key_features:
+      - Works with any ADO.NET provider
+      - Connection pooling awareness
+      - Transaction support
+      - Parameterized queries
+      - Respects database connection pool limits
+    dependencies:
+      - Rivulet.Core
+    targets:
+      - net8.0
+      - net9.0
+
+  - name: Rivulet.Sql.SqlServer
+    id: sql-sqlserver
+    category: integration
+    version: 1.3.0
+    status: in_development
+    nuget_id: Rivulet.Sql.SqlServer
+    description: SQL Server optimizations with SqlBulkCopy integration (10-100x faster bulk inserts)
+    path: src/Rivulet.Sql.SqlServer
+    test_path: tests/Rivulet.Sql.SqlServer.Tests
+    sample_path: samples/Rivulet.Sql.SqlServer.Sample
+    sample_name: Rivulet.Sql.SqlServer.Sample
+    features:
+      - BulkInsertUsingSqlBulkCopyAsync - Optimized bulk insert
+      - BulkInsertUsingSqlBulkCopyAsync (3 overloads)
+    key_features:
+      - SqlBulkCopy integration (10-100x faster)
+      - Batch size optimization
+      - Table-valued parameters
+      - Progress reporting
+      - Automatic table creation
+    dependencies:
+      - Rivulet.Core
+      - Rivulet.Sql
+    targets:
+      - net8.0
+      - net9.0
+
+  - name: Rivulet.Sql.PostgreSql
+    id: sql-postgresql
+    category: integration
+    version: 1.3.0
+    status: in_development
+    nuget_id: Rivulet.Sql.PostgreSql
+    description: PostgreSQL optimizations with COPY command integration (10-100x faster bulk operations)
+    path: src/Rivulet.Sql.PostgreSql
+    test_path: tests/Rivulet.Sql.PostgreSql.Tests
+    sample_path: samples/Rivulet.Sql.PostgreSql.Sample
+    sample_name: Rivulet.Sql.PostgreSql.Sample
+    features:
+      - BulkInsertUsingCopyAsync - COPY command integration
+    key_features:
+      - COPY command integration (10-100x faster)
+      - Binary and text format support
+      - Progress reporting
+      - Automatic table creation
+    dependencies:
+      - Rivulet.Core
+      - Rivulet.Sql
+    targets:
+      - net8.0
+      - net9.0
+
+  - name: Rivulet.Sql.MySql
+    id: sql-mysql
+    category: integration
+    version: 1.3.0
+    status: in_development
+    nuget_id: Rivulet.Sql.MySql
+    description: MySQL optimizations with LOAD DATA INFILE integration using MySqlBulkLoader
+    path: src/Rivulet.Sql.MySql
+    test_path: tests/Rivulet.Sql.MySql.Tests
+    sample_path: samples/Rivulet.Sql.MySql.Sample
+    sample_name: Rivulet.Sql.MySql.Sample
+    features:
+      - BulkInsertUsingMySqlBulkLoaderAsync - MySqlBulkLoader integration
+    key_features:
+      - MySqlBulkLoader integration (10-100x faster)
+      - Local and remote file loading
+      - Progress reporting
+      - Automatic table creation
+    dependencies:
+      - Rivulet.Core
+      - Rivulet.Sql
+    targets:
+      - net8.0
+      - net9.0
+
+  - name: Rivulet.Polly
+    id: polly
+    category: integration
+    version: 1.3.0
+    status: in_development
+    nuget_id: Rivulet.Polly
+    description: Polly v8 integration with hedging, result-based retry, and resilience pipeline composition
+    path: src/Rivulet.Polly
+    test_path: tests/Rivulet.Polly.Tests
+    sample_path: samples/Rivulet.Polly.Sample
+    sample_name: Rivulet.Polly.Sample
+    features:
+      - SelectParallelWithPolicyAsync - Apply Polly policies to parallel operations
+      - SelectParallelWithHedgingAsync - Hedging pattern (parallel redundant requests)
+      - ToPollyRetryPipeline - Convert Rivulet retry to Polly pipeline
+    key_features:
+      - Polly v8 ResiliencePipeline integration
+      - Hedging pattern support
+      - Result-based retry policies
+      - Policy composition
+      - Fallback strategies
+    dependencies:
+      - Rivulet.Core
+    targets:
+      - net8.0
+      - net9.0
+
+# ============================================================================
+# GENERATION RULES
+# ============================================================================
+
+generation:
+  # Files to generate from this registry
+  targets:
+    - type: readme
+      template: templates/README.md.mustache
+      output: README.md
+
+    - type: roadmap
+      template: templates/ROADMAP.md.mustache
+      output: docs/ROADMAP.md
+
+    - type: samples_readme
+      template: templates/samples-README.md.mustache
+      output: samples/README.md
+
+    - type: workflow_matrix
+      template: templates/ci-matrix.yml.mustache
+      output: .github/workflows/ci.yml
+
+    - type: mkdocs_nav
+      template: templates/mkdocs-nav.yml.mustache
+      output: mkdocs.yml
+
+    - type: start_session_ai
+      template: templates/START_SESSION_AI.md.mustache
+      output: .invisible/START_SESSION_AI.md
+
+  # Validation rules
+  validation:
+    # Ensure all paths exist
+    check_paths: true
+
+    # Ensure no duplicate IDs
+    check_unique_ids: true
+
+    # Ensure test projects exist for all packages
+    require_tests: true
+
+    # Ensure sample projects exist for all packages
+    require_samples: true
+
+    # Ensure all dependencies are valid package IDs
+    check_dependencies: true
+
+# ============================================================================
+# CATEGORIZATION
+# ============================================================================
+
+categories:
+  core:
+    display_name: "Core Packages"
+    description: "Essential packages providing core functionality"
+    badge_color: "blue"
+
+  integration:
+    display_name: "Integration Packages"
+    description: "Packages integrating with external systems and libraries"
+    badge_color: "green"
+
+# ============================================================================
+# VERSION ROADMAP
+# ============================================================================
+
+versions:
+  - version: "1.0.0"
+    release_date: "2024-01-15"
+    status: released
+    packages:
+      - core
+
+  - version: "1.1.0"
+    release_date: "2024-06-20"
+    status: released
+    packages:
+      - diagnostics
+      - diagnostics-otel
+
+  - version: "1.2.0"
+    release_date: "2024-11-10"
+    status: released
+    packages:
+      - hosting
+      - testing
+
+  - version: "1.3.0"
+    release_date: "2026-03-15"
+    status: in_development
+    packages:
+      - http
+      - io
+      - sql
+      - sql-sqlserver
+      - sql-postgresql
+      - sql-mysql
+      - polly
+
+  - version: "1.4.0"
+    release_date: "2026-06-15"
+    status: planned
+    packages:
+      - grpc
+      - messaging
+      - caching
+
+  - version: "1.5.0"
+    release_date: "2026-09-15"
+    status: planned
+    packages:
+      - azure
+      - aws
+
+  - version: "2.0.0"
+    release_date: "2027-01-15"
+    status: planned
+    packages:
+      - core-v2
+
+# ============================================================================
+# BADGES AND LINKS
+# ============================================================================
+
+badges:
+  nuget_url: "https://www.nuget.org/packages/{nuget_id}"
+  nuget_badge: "https://img.shields.io/nuget/v/{nuget_id}.svg?style=flat-square"
+  nuget_downloads: "https://img.shields.io/nuget/dt/{nuget_id}.svg?style=flat-square"
+
+links:
+  documentation: "https://rivulet.readthedocs.io"
+  repository: "https://github.com/your-org/Rivulet"
+  issues: "https://github.com/your-org/Rivulet/issues"
+  discussions: "https://github.com/your-org/Rivulet/discussions"

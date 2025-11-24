@@ -21,18 +21,20 @@ jobs:
     strategy:
       matrix:
         package:
+          # PACKAGE_LIST_START
           - 'Rivulet.Core'
           - 'Rivulet.Diagnostics'
           - 'Rivulet.Diagnostics.OpenTelemetry'
-          - 'Rivulet.Testing'
           - 'Rivulet.Hosting'
+          - 'Rivulet.Testing'
           - 'Rivulet.Http'
-          - 'Rivulet.Polly'
+          - 'Rivulet.IO'
           - 'Rivulet.Sql'
           - 'Rivulet.Sql.SqlServer'
-          - 'Rivulet.Sql.MySql'
           - 'Rivulet.Sql.PostgreSql'
-          - 'Rivulet.IO'
+          - 'Rivulet.Sql.MySql'
+          - 'Rivulet.Polly'
+          # PACKAGE_LIST_END
       fail-fast: false
 
     steps:
