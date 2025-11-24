@@ -141,13 +141,17 @@ public class RivuletEventListenerBaseTests : IDisposable
     private sealed record CounterData(string DisplayName, string DisplayUnits);
 
     [Fact]
-    public void EventListenerBase_ShouldIgnoreEvents_WhenEventSourceNameIsWrong()
+    public async Task EventListenerBase_ShouldIgnoreEvents_WhenEventSourceNameIsWrong()
     {
         var listener = new TestEventListener();
 
         // Create a custom EventSource with a different name
         using var customSource = new CustomEventSource("NotRivuletCore");
         customSource.WriteEvent(1, "test");
+
+        // Wait to ensure any events are processed before asserting
+        // EventSource events are processed asynchronously
+        await Task.Delay(1000);
 
         // Should not receive any counters because event source name doesn't match
         listener.ReceivedCounters.Should().BeEmpty();
@@ -156,7 +160,7 @@ public class RivuletEventListenerBaseTests : IDisposable
     }
 
     [Fact]
-    public void EventListenerBase_ShouldHandleNullDisplayName()
+    public async Task EventListenerBase_ShouldHandleNullDisplayName()
     {
         // This test ensures the null coalescing operator on line 61 for displayName is covered
         // When EventSource doesn't provide DisplayName, it should fall back to name
@@ -167,13 +171,13 @@ public class RivuletEventListenerBaseTests : IDisposable
         customSource.EmitCounterWithoutDisplayName();
 
         // Wait a bit for the event to be processed
-        Thread.Sleep(100);
+        await Task.Delay(1000);
 
         listener.Dispose();
     }
 
     [Fact]
-    public void EventListenerBase_ShouldHandleNullDisplayUnits()
+    public async Task EventListenerBase_ShouldHandleNullDisplayUnits()
     {
         // This test ensures the null coalescing operator on line 61 for displayUnits is covered
         // When EventSource doesn't provide DisplayUnits, it should fall back to empty string
@@ -184,7 +188,7 @@ public class RivuletEventListenerBaseTests : IDisposable
         customSource.EmitCounterWithoutDisplayUnits();
 
         // Wait a bit for the event to be processed
-        Thread.Sleep(100);
+        await Task.Delay(1000);
 
         listener.Dispose();
     }
@@ -239,7 +243,7 @@ public class RivuletEventListenerBaseTests : IDisposable
     }
 
     [Fact]
-    public void EventListenerBase_ShouldHandleEventWithNullPayload()
+    public async Task EventListenerBase_ShouldHandleEventWithNullPayload()
     {
         // Test that listener can handle events with null or empty payload
         var listener = new TestEventListener();
@@ -247,7 +251,7 @@ public class RivuletEventListenerBaseTests : IDisposable
         using var customSource = new RivuletTestEventSource();
         customSource.WriteEmptyEvent(); // This creates an event with empty payload
 
-        Thread.Sleep(100);
+        await Task.Delay(1000);
 
         // Should not crash and should not add any counters for empty payload
         listener.ReceivedCounters.Should().NotBeNull();
@@ -256,7 +260,7 @@ public class RivuletEventListenerBaseTests : IDisposable
     }
 
     [Fact]
-    public void EventListenerBase_ShouldHandleNonCounterEvents()
+    public async Task EventListenerBase_ShouldHandleNonCounterEvents()
     {
         // Test that listener ignores non-counter events from RivuletCore
         var listener = new TestEventListener();
@@ -264,7 +268,7 @@ public class RivuletEventListenerBaseTests : IDisposable
         using var customSource = new RivuletTestEventSource();
         customSource.WriteInformationalEvent("test message");
 
-        Thread.Sleep(100);
+        await Task.Delay(1000);
 
         // Should handle gracefully
         listener.ReceivedCounters.Should().NotBeNull();
@@ -315,7 +319,7 @@ public class RivuletEventListenerBaseTests : IDisposable
     }
 
     [Fact]
-    public void EventListenerBase_ShouldIgnore_WhenPayloadItemIsNotDictionary()
+    public async Task EventListenerBase_ShouldIgnore_WhenPayloadItemIsNotDictionary()
     {
         // Test that listener handles payload items that are not IDictionary<string, object>
         var listener = new TestEventListener();
@@ -324,7 +328,7 @@ public class RivuletEventListenerBaseTests : IDisposable
         // Write a simple string event - payload will be a string, not a dictionary
         customSource.WriteInformationalEvent("not a dictionary");
 
-        Thread.Sleep(100);
+        await Task.Delay(1000);
 
         // Should handle gracefully and not crash
         listener.ReceivedCounters.Should().NotBeNull();
@@ -333,7 +337,7 @@ public class RivuletEventListenerBaseTests : IDisposable
     }
 
     [Fact]
-    public void EventListenerBase_ShouldIgnore_WhenPayloadMissingNameKey()
+    public async Task EventListenerBase_ShouldIgnore_WhenPayloadMissingNameKey()
     {
         // Test payload that doesn't have "Name" key - simulated by a non-counter event
         var listener = new TestEventListener();
@@ -341,7 +345,7 @@ public class RivuletEventListenerBaseTests : IDisposable
         using var customSource = new RivuletTestEventSource();
         customSource.WriteEmptyEvent(); // Event with empty/non-dictionary payload
 
-        Thread.Sleep(100);
+        await Task.Delay(1000);
 
         // Should handle gracefully
         listener.ReceivedCounters.Should().NotBeNull();
@@ -350,7 +354,7 @@ public class RivuletEventListenerBaseTests : IDisposable
     }
 
     [Fact]
-    public void EventListenerBase_ShouldIgnore_WhenPayloadMissingMeanAndIncrement()
+    public async Task EventListenerBase_ShouldIgnore_WhenPayloadMissingMeanAndIncrement()
     {
         // Coverage for lines 49-51: when both Mean and Increment keys are missing
         // This is implicitly tested by non-counter events, but let's be explicit
@@ -359,7 +363,7 @@ public class RivuletEventListenerBaseTests : IDisposable
         using var customSource = new RivuletTestEventSource();
         customSource.WriteInformationalEvent("event without mean or increment");
 
-        Thread.Sleep(100);
+        await Task.Delay(1000);
 
         listener.ReceivedCounters.Should().NotBeNull();
 
@@ -367,7 +371,7 @@ public class RivuletEventListenerBaseTests : IDisposable
     }
 
     [Fact]
-    public void EventListenerBase_ShouldHandleConvertToDouble()
+    public async Task EventListenerBase_ShouldHandleConvertToDouble()
     {
         // Test line 53: Convert.ToDouble(meanObj)
         // This is covered by normal counter operations, but adding explicit test
@@ -376,7 +380,7 @@ public class RivuletEventListenerBaseTests : IDisposable
         using var customSource = new RivuletTestEventSource();
         customSource.EmitCounterWithoutDisplayName(); // Emits a counter with numeric value
 
-        Thread.Sleep(100);
+        await Task.Delay(1000);
 
         listener.Dispose();
     }

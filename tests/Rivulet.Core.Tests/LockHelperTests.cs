@@ -231,7 +231,7 @@ public class LockHelperTests
             var threadId = i;
             tasks[i] = Task.Run(() =>
             {
-                LockHelper.Execute(_lock, () =>
+                LockHelper.Execute(_lock, async () =>
                 {
                     var current = Interlocked.Increment(ref activeCount);
 
@@ -243,7 +243,7 @@ public class LockHelperTests
                     }
 
                     executionOrder.Add(threadId);
-                    Thread.Sleep(10); // Simulate work
+                    await Task.Delay(1000);
 
                     Interlocked.Decrement(ref activeCount);
                 });
