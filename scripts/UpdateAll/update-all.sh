@@ -20,27 +20,57 @@ echo -e "${CYAN}========================================${NC}"
 echo ""
 
 # Navigate to repository root
+# Script is in scripts/UpdateAll/, so go up two levels to reach repo root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR/.."
+cd "$SCRIPT_DIR/../.."
 
-# Check if Python is available
-if ! command -v python3 &> /dev/null && ! command -v python &> /dev/null; then
+# Check if Python is available and intelligently select the best one
+PYTHON_CMD=""
+PYTHON3_AVAILABLE=false
+PYTHON_AVAILABLE=false
+PYTHON3_HAS_YAML=false
+PYTHON_HAS_YAML=false
+
+# Check python3
+if command -v python3 &> /dev/null; then
+    PYTHON3_AVAILABLE=true
+    if python3 -c "import yaml" &> /dev/null; then
+        PYTHON3_HAS_YAML=true
+    fi
+fi
+
+# Check python
+if command -v python &> /dev/null; then
+    PYTHON_AVAILABLE=true
+    if python -c "import yaml" &> /dev/null; then
+        PYTHON_HAS_YAML=true
+    fi
+fi
+
+# Exit if no Python found
+if [ "$PYTHON3_AVAILABLE" = false ] && [ "$PYTHON_AVAILABLE" = false ]; then
     echo -e "${RED}❌ Error: Python 3 is required but not found${NC}"
     echo "   Please install Python 3.8 or later"
     exit 1
 fi
 
-PYTHON_CMD="python3"
-if ! command -v python3 &> /dev/null; then
+# Prefer the Python command that already has PyYAML installed
+if [ "$PYTHON3_HAS_YAML" = true ]; then
+    PYTHON_CMD="python3"
+elif [ "$PYTHON_HAS_YAML" = true ]; then
+    PYTHON_CMD="python"
+elif [ "$PYTHON3_AVAILABLE" = true ]; then
+    PYTHON_CMD="python3"
+else
     PYTHON_CMD="python"
 fi
 
-# Check if PyYAML is installed
+# Install PyYAML if needed
 if ! $PYTHON_CMD -c "import yaml" &> /dev/null; then
     echo -e "${YELLOW}⚠️  PyYAML not found. Installing...${NC}"
-    $PYTHON_CMD -m pip install --quiet pyyaml || {
+    $PYTHON_CMD -m pip install --user --quiet pyyaml || {
         echo -e "${RED}❌ Failed to install PyYAML${NC}"
-        echo "   Please run: pip install pyyaml"
+        echo "   Please run: $PYTHON_CMD -m pip install pyyaml"
         exit 1
     }
     echo -e "${GREEN}✅ PyYAML installed${NC}"
@@ -49,7 +79,7 @@ fi
 
 # Run validation first
 echo -e "${CYAN}Step 1: Validating package registry...${NC}"
-$PYTHON_CMD scripts/package_registry.py || {
+$PYTHON_CMD scripts/UpdateAll/package_registry.py || {
     echo ""
     echo -e "${RED}❌ Package registry validation failed${NC}"
     echo "   Please fix the errors in packages.yml"
@@ -59,7 +89,7 @@ echo ""
 
 # Generate all files
 echo -e "${CYAN}Step 2: Generating files...${NC}"
-$PYTHON_CMD scripts/generate-all.py --verbose || {
+$PYTHON_CMD scripts/UpdateAll/generate-all.py --verbose || {
     echo ""
     echo -e "${RED}❌ File generation failed${NC}"
     exit 1

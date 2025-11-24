@@ -3,9 +3,13 @@
 Sync documentation files from source locations to docs directory.
 This script copies README files from packages and converts GitHub-specific
 markdown to MkDocs-compatible format.
+
+IMPORTANT: This script reads from packages.yml (single source of truth).
+No hardcoding of package paths!
 """
 import re
 import shutil
+import yaml
 from pathlib import Path
 
 # Get repository root
@@ -15,30 +19,166 @@ from pathlib import Path
 DOCS_DIR = Path(__file__).parent
 REPO_ROOT = DOCS_DIR.parent.parent
 
-# Define source -> destination mappings
-SYNC_FILES = {
-    # Root documentation files (will be converted for MkDocs)
-    REPO_ROOT / "README.md": (DOCS_DIR / "index.md", True),  # Convert for MkDocs
-    REPO_ROOT / "LICENSE.txt": (DOCS_DIR / "license.md", False),
-    REPO_ROOT / "CONTRIBUTING.md": (DOCS_DIR / "CONTRIBUTING.md", False),
-    REPO_ROOT / "SECURITY.md": (DOCS_DIR / "SECURITY.md", False),
-    REPO_ROOT / "CODE_OF_CONDUCT.md": (DOCS_DIR / "CODE_OF_CONDUCT.md", False),
-    REPO_ROOT / "ROADMAP.md": (DOCS_DIR / "ROADMAP.md", False),
+def load_packages_yml():
+    """Load packages.yml - the single source of truth for package information."""
+    packages_file = REPO_ROOT / "packages.yml"
+    with open(packages_file, 'r', encoding='utf-8') as f:
+        return yaml.safe_load(f)
 
-    # packages (copy as-is)
-    REPO_ROOT / "src/Rivulet.Core/README.md": (DOCS_DIR / "packages/rivulet-core.md", False),
-    REPO_ROOT / "src/Rivulet.Diagnostics/README.md": (DOCS_DIR / "packages/rivulet-diagnostics.md", False),
-    REPO_ROOT / "src/Rivulet.Diagnostics.OpenTelemetry/README.md": (DOCS_DIR / "packages/rivulet-diagnostics-opentelemetry.md", False),
-    REPO_ROOT / "src/Rivulet.Testing/README.md": (DOCS_DIR / "packages/rivulet-testing.md", False),
-    REPO_ROOT / "src/Rivulet.Hosting/README.md": (DOCS_DIR / "packages/rivulet-hosting.md", False),
-    REPO_ROOT / "src/Rivulet.Http/README.md": (DOCS_DIR / "packages/rivulet-http.md", False),
-    REPO_ROOT / "src/Rivulet.Sql/README.md": (DOCS_DIR / "packages/rivulet-sql.md", False),
-    REPO_ROOT / "src/Rivulet.Sql.SqlServer/README.md": (DOCS_DIR / "packages/rivulet-sql-sqlserver.md", False),
-    REPO_ROOT / "src/Rivulet.Sql.PostgreSql/README.md": (DOCS_DIR / "packages/rivulet-sql-postgresql.md", False),
-    REPO_ROOT / "src/Rivulet.Sql.MySql/README.md": (DOCS_DIR / "packages/rivulet-sql-mysql.md", False),
-    REPO_ROOT / "src/Rivulet.Polly/README.md": (DOCS_DIR / "packages/rivulet-polly.md", False),
-    REPO_ROOT / "src/Rivulet.IO/README.md": (DOCS_DIR / "packages/rivulet-io.md", False),
-}
+def build_sync_files():
+    """
+    Build SYNC_FILES dictionary dynamically from packages.yml.
+    This is the GENERIC solution - no hardcoding!
+    """
+    sync_files = {}
+
+    # Root documentation files (always included)
+    sync_files[REPO_ROOT / "README.md"] = (DOCS_DIR / "index.md", True)  # Convert for MkDocs
+    sync_files[REPO_ROOT / "LICENSE.txt"] = (DOCS_DIR / "license.md", False)
+    sync_files[REPO_ROOT / "CONTRIBUTING.md"] = (DOCS_DIR / "CONTRIBUTING.md", False)
+    sync_files[REPO_ROOT / "SECURITY.md"] = (DOCS_DIR / "SECURITY.md", False)
+    sync_files[REPO_ROOT / "CODE_OF_CONDUCT.md"] = (DOCS_DIR / "CODE_OF_CONDUCT.md", False)
+    sync_files[REPO_ROOT / "ROADMAP.md"] = (DOCS_DIR / "ROADMAP.md", False)
+
+    # Additional documentation
+    sync_files[REPO_ROOT / "tests/Rivulet.Benchmarks/README.md"] = (DOCS_DIR / "benchmarks.md", False)
+
+    # Load packages from packages.yml
+    packages_data = load_packages_yml()
+
+    # Add package READMEs dynamically
+    for package in packages_data.get('packages', []):
+        package_path = package.get('path')
+        package_name = package.get('name')
+
+        if not package_path or not package_name:
+            continue
+
+        # Source: src/Rivulet.Example/README.md
+        source = REPO_ROOT / package_path / "README.md"
+
+        # Destination: docs/readthedocs/packages/rivulet-example.md
+        # Convert "Rivulet.Example" -> "rivulet-example"
+        dest_name = package_name.lower().replace('.', '-') + '.md'
+        destination = DOCS_DIR / "packages" / dest_name
+
+        sync_files[source] = (destination, False)  # Don't convert, copy as-is
+
+    return sync_files
+
+# Build SYNC_FILES dynamically from packages.yml
+SYNC_FILES = build_sync_files()
+
+
+def filter_badges_for_versioned_docs(content: str) -> str:
+    """
+    GENERIC badge filtering for versioned documentation.
+
+    For versioned docs (v1.3.0, v1.4.0, etc.), badges should be static snapshots.
+    This function AUTOMATICALLY detects and removes dynamic badges based on URL patterns,
+    WITHOUT hardcoding specific badge services.
+
+    Keep (static badges):
+    - opensource.org (license info - static)
+    - dotnet.microsoft.com (framework info - static)
+    - nuget.org (package badges - acceptable, version-specific)
+
+    Remove (dynamic badges showing current master state):
+    - github.com/OWNER/REPO (CI status, release badges for master branch)
+    - codecov.io (current coverage, not for frozen version)
+    - scorecard.dev (current security score)
+    - readthedocs build status (current build, not for frozen version)
+    - shields.io badges pointing to github/codecov/etc
+    """
+
+    # Pattern to match badge links: <a href="URL"><img src="..." alt="..."></a>
+    # We'll examine the href URL to decide if it's dynamic or static
+
+    def is_dynamic_badge(url: str) -> bool:
+        """
+        Determine if a badge URL is dynamic (shows current state) vs static (frozen info).
+        Returns True if badge should be REMOVED from versioned docs.
+        """
+        url_lower = url.lower()
+
+        # Keep static badges (return False)
+        static_domains = [
+            'opensource.org',      # License info
+            'dotnet.microsoft.com', # .NET framework info
+            'nuget.org',           # NuGet package pages
+        ]
+
+        for domain in static_domains:
+            if domain in url_lower:
+                return False  # Keep this badge
+
+        # Remove dynamic badges (return True)
+        dynamic_patterns = [
+            'github.com/',         # GitHub repo badges (CI, release, etc.)
+            'codecov.io/',         # Coverage badges
+            'scorecard.dev/',      # Security score badges
+            # Note: readthedocs badges are usually shields.io with readthedocs in the URL
+            # They'll be caught by the shields.io check below
+        ]
+
+        for pattern in dynamic_patterns:
+            if pattern in url_lower:
+                return True  # Remove this badge
+
+        # Special case: shields.io badges
+        # Keep shields.io for static info (nuget, .NET version)
+        # Remove shields.io for dynamic info (readthedocs build, github, codecov)
+        if 'shields.io' in url_lower or 'img.shields.io' in url_lower:
+            # Check if it's pointing to dynamic data
+            dynamic_shields_patterns = [
+                'readthedocs',    # Build status
+                'github',         # GitHub repo data
+                'codecov',        # Coverage data
+            ]
+            for pattern in dynamic_shields_patterns:
+                if pattern in url_lower:
+                    return True  # Remove dynamic shields.io badge
+
+            # Otherwise keep it (likely NuGet or .NET version badge)
+            return False
+
+        # Default: keep badges we don't recognize
+        return False
+
+    def filter_badge(match):
+        """Filter individual badge based on URL."""
+        full_match = match.group(0)
+        href_url = match.group(1)
+
+        # Also check the img src URL (important for shields.io badges)
+        img_match = re.search(r'<img[^>]+src="([^"]+)"', full_match)
+        img_src = img_match.group(1) if img_match else ''
+
+        # Remove badge if EITHER the href or img src is dynamic
+        if is_dynamic_badge(href_url) or is_dynamic_badge(img_src):
+            # Remove this badge (return empty string)
+            return ''
+        else:
+            # Keep this badge (return original)
+            return full_match
+
+    # Match badge pattern: <a href="URL">...<img...>...</a>
+    # Using non-greedy matching to avoid matching across multiple badges
+    content = re.sub(
+        r'<a href="([^"]+)">[^<]*<img[^>]*>[^<]*</a>\s*',
+        filter_badge,
+        content
+    )
+
+    # Also remove CI/CD Pipeline markdown badges (if any)
+    content = re.sub(
+        r'!\[CI/CD Pipeline\].*?\n',
+        '',
+        content,
+        flags=re.MULTILINE
+    )
+
+    return content
 
 
 def convert_github_to_mkdocs(content: str) -> str:
@@ -123,13 +263,9 @@ def convert_github_to_mkdocs(content: str) -> str:
         content
     )
 
-    # Remove CI/CD Pipeline badges section (GitHub Actions specific)
-    content = re.sub(
-        r'!\[CI/CD Pipeline\].*?\n',
-        '',
-        content,
-        flags=re.MULTILINE
-    )
+    # GENERIC badge filtering for versioned docs
+    # Instead of hardcoding specific badges, we filter by URL patterns
+    content = filter_badges_for_versioned_docs(content)
 
     # Improve packages table rendering for ReadTheDocs
     # Convert stacked badges in table cells to horizontal layout
@@ -163,6 +299,114 @@ def convert_github_to_mkdocs(content: str) -> str:
     content = re.sub(
         r'<td><strong>(.*?Rivulet\.[^<]+)</strong></td>',
         lambda m: f'<td><span style="font-size: 0.9em; font-weight: 600;">{m.group(1)}</span></td>',
+        content
+    )
+
+    # Generic markdown link conversion - automatically converts ALL .md links
+    content = convert_markdown_links(content)
+
+    return content
+
+
+def convert_markdown_links(content: str) -> str:
+    """
+    GENERIC solution for VERSIONED DOCS: Automatically convert ALL markdown links to either:
+    1. Relative docs paths (if file is synced to docs via SYNC_FILES) ✅
+    2. Remove the link/line (if file exists but not synced) ❌ No GitHub URLs for versioned docs!
+    3. Keep as-is (external URLs like nuget.org, anchors)
+
+    Why no GitHub URLs?
+    - ReadTheDocs docs are versioned (v1.3.0, v1.4.0, etc.)
+    - Each version should be static/frozen in time
+    - GitHub URLs point to master branch which keeps changing
+    - This would break the "snapshot" nature of versioned documentation
+
+    This works for ANY .md file without hardcoding specific filenames.
+    No cherry-picking required - fully automatic!
+    """
+
+    def convert_link(match):
+        link_text = match.group(1)
+        link_path = match.group(2)
+
+        # Skip external URLs (already correct)
+        if link_path.startswith(('http://', 'https://')):
+            return match.group(0)
+
+        # Skip anchors (already correct)
+        if link_path.startswith('#'):
+            return match.group(0)
+
+        # Special case: LICENSE (without extension) → LICENSE.txt
+        # Many people link to LICENSE without .txt extension
+        if link_path == 'LICENSE':
+            link_path = 'LICENSE.txt'
+
+        # Resolve the linked file (assume relative to REPO_ROOT since README is at root)
+        linked_file = REPO_ROOT / link_path
+
+        # Try to normalize the path
+        try:
+            linked_file = linked_file.resolve()
+        except Exception:
+            # If path resolution fails, keep original link
+            return match.group(0)
+
+        # Check if this file is in SYNC_FILES (will be synced to docs)
+        if linked_file in SYNC_FILES:
+            # File is synced! Convert to docs path
+            dest_path, _ = SYNC_FILES[linked_file]
+            rel_path = dest_path.relative_to(DOCS_DIR)
+            return f'[{link_text}]({rel_path})'
+
+        # File exists in repo but NOT synced to docs
+        # For versioned docs, we CANNOT use GitHub URLs (they point to master)
+        # Solution: Remove the link/line entirely
+        if linked_file.exists():
+            # Check if this is a list item or a sentence
+            start_pos = match.start()
+            line_start = content.rfind('\n', 0, start_pos) + 1
+            line_prefix = content[line_start:start_pos]
+
+            if line_prefix.strip().startswith('-'):
+                # List item - mark entire line for removal
+                return '___REMOVE_THIS_LINE___'
+            else:
+                # Inline link - mark just the link for removal
+                return '___REMOVE_THIS_LINK___'
+
+        # File doesn't exist - remove the link line if it's in a list
+        start_pos = match.start()
+        line_start = content.rfind('\n', 0, start_pos) + 1
+        line_prefix = content[line_start:start_pos]
+
+        if line_prefix.strip().startswith('-'):
+            # This is a list item with a broken link - mark for removal
+            return '___REMOVE_THIS_LINE___'
+
+        # Keep original link as fallback (shouldn't happen often)
+        return match.group(0)
+
+    # Match [text](path) but NOT ![text](path) (images)
+    # Negative lookbehind (?<!\!) ensures we don't match image links
+    content = re.sub(
+        r'(?<!\!)\[([^\]]+)\]\(([^\)]+)\)',
+        convert_link,
+        content
+    )
+
+    # Remove lines that contain broken links (marked with our special marker)
+    content = re.sub(
+        r'^.*___REMOVE_THIS_LINE___.*\n',
+        '',
+        content,
+        flags=re.MULTILINE
+    )
+
+    # Remove inline links that are marked for removal (keep the surrounding text)
+    content = re.sub(
+        r'___REMOVE_THIS_LINK___',
+        '',
         content
     )
 

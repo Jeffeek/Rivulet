@@ -6,7 +6,6 @@ This script generates all files that reference package information:
 - README.md (package list, badges)
 - samples/README.md (sample project listings)
 - ROADMAP.md (version timeline)
-- .invisible/START_SESSION_AI.md (AI context)
 
 Usage:
     python scripts/generate-all.py [--check] [--verbose]
@@ -199,7 +198,7 @@ class SamplesReadmeGenerator(FileGenerator):
             "",
             "## Learning Path",
             "",
-            "1. **Start with Rivulet.ConsoleSample** to understand core operators",
+            "1. **Start with Rivulet.Console.Sample** to understand core operators",
             "2. **Explore Rivulet.Diagnostics.Sample** for production observability",
             "3. **Review Rivulet.OpenTelemetry.Sample** for distributed tracing",
             "4. **Study Rivulet.Testing.Sample** for testing strategies",
@@ -207,9 +206,9 @@ class SamplesReadmeGenerator(FileGenerator):
             "",
             "## Next Steps",
             "",
-            "- Read the [Documentation](https://rivulet.readthedocs.io)",
+            "- Read the [Documentation](https://rivulet2.readthedocs.io)",
             "- Review [ROADMAP.md](../ROADMAP.md) for upcoming features",
-            "- Contribute on [GitHub](https://github.com/your-org/Rivulet)",
+            "- Contribute on [GitHub](https://github.com/Jeffeek/Rivulet)",
             "",
             "## Support",
             "",
@@ -444,53 +443,6 @@ class DependabotGenerator(FileGenerator):
             lines.pop()
 
         return '\n'.join(lines)
-
-
-class StartSessionAIGenerator(FileGenerator):
-    """Generates .invisible/START_SESSION_AI.md."""
-
-    def generate(self) -> str:
-        """Generate START_SESSION_AI.md package list."""
-        self.log("Generating .invisible/START_SESSION_AI.md package list...")
-
-        ai_doc_path = self.repo_root / '.invisible' / 'START_SESSION_AI.md'
-        if not ai_doc_path.exists():
-            self.log("  ⚠️  START_SESSION_AI.md not found - skipping")
-            return ""
-
-        with open(ai_doc_path, 'r', encoding='utf-8') as f:
-            content = f.read()
-
-        # Generate package list
-        package_list = self._generate_package_list()
-
-        # Replace package list section
-        pattern = r'<!-- PACKAGES_START -->.*?<!-- PACKAGES_END -->'
-        replacement = f'<!-- PACKAGES_START -->\n{package_list}\n<!-- PACKAGES_END -->'
-
-        if re.search(pattern, content, re.DOTALL):
-            new_content = re.sub(pattern, replacement, content, flags=re.DOTALL)
-        else:
-            self.log("  ⚠️  Package markers not found in START_SESSION_AI.md")
-            return content
-
-        return new_content
-
-    def _generate_package_list(self) -> str:
-        """Generate package list for AI documentation."""
-        lines = []
-
-        lines.append("#### Core Packages")
-        for pkg in self.registry.get_core_packages():
-            lines.append(f"{len(lines) // 2 + 1}. **{pkg['name']}** - {pkg['description']}")
-
-        lines.append("")
-        lines.append("#### Integration Packages (v1.3.0 🚧 In Development)")
-        for pkg in self.registry.get_integration_packages():
-            lines.append(f"{len(lines) // 2 + 1}. **{pkg['name']}** - {pkg['description']}")
-
-        return '\n'.join(lines)
-
 
 def generate_all(check_only: bool = False, verbose: bool = False) -> int:
     """

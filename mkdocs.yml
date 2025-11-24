@@ -142,6 +142,7 @@ nav:
       - Contributing: CONTRIBUTING.md
       - Roadmap: ROADMAP.md
       - Security: SECURITY.md
+      - Benchmarks: benchmarks.md
   - About:
       - License: license.md
       - Code of Conduct: CODE_OF_CONDUCT.md

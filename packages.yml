@@ -1,6 +1,6 @@
 # Rivulet Package Registry
 # This file is the SINGLE SOURCE OF TRUTH for all package information.
-# When you add a new package, update this file and run: ./scripts/update-all.sh (or update-all.ps1 on Windows)
+# When you add a new package, update this file and run: ./scripts/UpdateAll/update-all.sh (or update-all.ps1 on Windows)
 #
 # All documentation, workflows, and scripts are generated from this file.
 # See PACKAGE_MANAGEMENT.md for complete documentation.
