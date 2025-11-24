@@ -75,7 +75,7 @@ public class SqlBulkExtensionsTests
         var result = await items.BulkUpdateAsync(
             () => new TestDbConnection(executeNonQueryFunc: _ =>
             {
-                batchesExecuted++;
+                Interlocked.Increment(ref batchesExecuted);
                 return 500;
             }),
             async (batch, cmd, _) =>
