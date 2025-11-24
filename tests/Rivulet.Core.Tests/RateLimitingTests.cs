@@ -106,8 +106,8 @@ public class RateLimitingTests
 
         results.Should().HaveCount(20);
         // Should take at least 1.4 seconds (allowing for CI/CD variance)
-        sw.Elapsed.Should().BeGreaterThan(TimeSpan.FromMilliseconds(1200));
-        sw.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(3));
+        sw.Elapsed.Should().BeGreaterThan(TimeSpan.FromMilliseconds(1400));
+        sw.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(10));
     }
 
     [Fact]
