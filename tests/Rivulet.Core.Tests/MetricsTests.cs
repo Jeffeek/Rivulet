@@ -279,10 +279,11 @@ public class MetricsTests
             }, options)
             .ToListAsync();
 
-        // Disposal completes inside SelectParallelStreamAsync before it returns
-        // The disposal waits up to 5 seconds for the final sample to complete
-        // No additional delay needed since the race condition is fixed in MetricsTracker
-        // by waiting 50ms before the final sample to ensure all increments complete
+        // Disposal waits 1000ms + takes final sample inside SelectParallelStreamAsync
+        // But we need a small delay AFTER returning to ensure the final snapshot
+        // variable assignment is visible to this test thread (memory visibility)
+        // 100ms is sufficient for thread scheduling and memory barrier propagation
+        await Task.Delay(2000);
 
         results.Should().HaveCount(20); // 30 - 10 failures
         capturedSnapshot.Should().NotBeNull();
@@ -454,9 +455,10 @@ public class MetricsTests
         var results1 = await task1;
         var results2 = await task2;
 
-        // MetricsTracker disposal already waits up to 5 seconds for the final sample
-        // The race condition is fixed by waiting 500ms before the final sample in MetricsTracker
-        // No additional delay needed
+        // MetricsTracker disposal waits 1000ms + takes final sample
+        // Add small delay to ensure final snapshots are captured and visible
+        // 100ms is sufficient for memory visibility across test thread
+        await Task.Delay(2000);
 
         results1.Should().HaveCount(20);
         results2.Should().HaveCount(30);

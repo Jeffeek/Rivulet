@@ -23,7 +23,7 @@ try
     await csvLines.BulkInsertUsingMySqlBulkLoaderAsync(
         () => new MySqlConnection(connectionString),
         "Users",
-        new[] { "Id", "Name", "Email", "CreatedAt" },
+        ["Id", "Name", "Email", "CreatedAt"],
         new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 4,
@@ -47,7 +47,7 @@ try
     await tsvLines.BulkInsertUsingMySqlBulkLoaderAsync(
         () => new MySqlConnection(connectionString),
         "AlternateUsers",
-        new[] { "UserId", "FullName", "EmailAddress" },
+        ["UserId", "FullName", "EmailAddress"],
         new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 2
@@ -76,7 +76,7 @@ try
     await largeBatches.BulkInsertUsingMySqlBulkLoaderAsync(
         () => new MySqlConnection(connectionString),
         "Transactions",
-        new[] { "Id", "Name", "Value" },
+        ["Id", "Name", "Value"],
         new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 4,
@@ -95,7 +95,7 @@ try
     var tempFiles = Enumerable.Range(1, 3)
         .Select(fileIndex =>
         {
-            var filePath = Path.Combine(Path.GetTempPath(), $"mysql_bulk_{fileIndex}.csv");
+            var filePath = Path.Join(Path.GetTempPath(), $"mysql_bulk_{fileIndex}.csv");
             var lines = Enumerable.Range(1, 500)
                 .Select(i => $"{(fileIndex * 500) + i},Product_{(fileIndex * 500) + i},{i * 9.99:F2}");
             File.WriteAllLines(filePath, lines);
@@ -106,7 +106,7 @@ try
     await tempFiles.BulkInsertFromFilesUsingMySqlBulkLoaderAsync(
         () => new MySqlConnection(connectionString),
         "Products",
-        new[] { "Id", "ProductName", "Price" },
+        ["Id", "ProductName", "Price"],
         new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 3
@@ -117,10 +117,9 @@ try
     Console.WriteLine($"✓ Loaded {tempFiles.Count} CSV files (1,500 total rows)\n");
 
     // Cleanup temp files
-    foreach (var file in tempFiles)
+    foreach (var file in tempFiles.Where(File.Exists))
     {
-        if (File.Exists(file))
-            File.Delete(file);
+        File.Delete(file);
     }
 
     // Sample 5: Bulk insert from object collection (convert to CSV)
@@ -145,7 +144,7 @@ try
     await productCsvLines.BulkInsertUsingMySqlBulkLoaderAsync(
         () => new MySqlConnection(connectionString),
         "ProductCatalog",
-        new[] { "Id", "ProductName", "Category", "Price", "InStock" },
+        ["Id", "ProductName", "Category", "Price", "InStock"],
         new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 2
@@ -164,7 +163,7 @@ try
     await pipeLines.BulkInsertUsingMySqlBulkLoaderAsync(
         () => new MySqlConnection(connectionString),
         "Orders",
-        new[] { "Id", "OrderNumber", "Amount", "OrderDate" },
+        ["Id", "OrderNumber", "Amount", "OrderDate"],
         new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 1

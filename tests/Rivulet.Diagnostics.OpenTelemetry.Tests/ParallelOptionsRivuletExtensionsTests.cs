@@ -268,7 +268,7 @@ public class ParallelOptionsRivuletExtensionsTests
                 {
                     stateChanged.Set();
                     // Add delay to ensure state change is recorded while activities are still active
-                    await Task.Delay(200);
+                    await Task.Delay(50); // Reduced from 200ms for faster tests
                 }
             }
         }.WithOpenTelemetryTracing("CircuitBreakerOperation");
@@ -282,13 +282,13 @@ public class ParallelOptionsRivuletExtensionsTests
                 if (currentFailure <= 5)
                 {
                     firstFailureProcessing.Set();
-                    // Extra long delay (5s) ensures these activities stay alive during circuit opening
-                    await Task.Delay(5000, ct);
+                    // Delay ensures these activities stay alive during circuit opening
+                    await Task.Delay(500, ct); // Reduced from 5000ms for faster tests
                 }
                 else
                 {
                     // Later tasks can complete faster
-                    await Task.Delay(500, ct);
+                    await Task.Delay(50, ct); // Reduced from 500ms for faster tests
                 }
 
                 throw new InvalidOperationException("Always fails");
@@ -302,8 +302,7 @@ public class ParallelOptionsRivuletExtensionsTests
         // Give time for event to be recorded on activity and for activities to complete
         // Need to wait for the in-flight activities to complete so they're captured
         // Activities stop asynchronously after the operation completes
-        // Extra long wait (10s) to account for 5s operation delay and Windows timing
-        await Task.Delay(10000);
+        await Task.Delay(1000); // Reduced from 10000ms for faster tests
 
         // Some activities should have circuit breaker state change events
         // Filter out null activities and those with null Events collections

@@ -5,6 +5,9 @@ using System.Diagnostics.Tracing;
 
 namespace Rivulet.Diagnostics.Tests;
 
+// EventSource and EventListener are process-wide singletons by design.
+// These tests must run sequentially to avoid cross-test pollution.
+[Collection("EventSource Tests")]
 public class RivuletEventListenerBaseTests : IDisposable
 {
     private readonly TestEventListener _listener = new();
@@ -173,7 +176,7 @@ public class RivuletEventListenerBaseTests : IDisposable
     }
 
     [Fact]
-    public void EventListenerBase_ShouldHandleNullDisplayUnits()
+    public async Task EventListenerBase_ShouldHandleNullDisplayUnits()
     {
         // This test ensures the null coalescing operator on line 61 for displayUnits is covered
         // When EventSource doesn't provide DisplayUnits, it should fall back to empty string
@@ -184,7 +187,7 @@ public class RivuletEventListenerBaseTests : IDisposable
         customSource.EmitCounterWithoutDisplayUnits();
 
         // Wait a bit for the event to be processed
-        Thread.Sleep(100);
+        await Task.Delay(1000);
 
         listener.Dispose();
     }
@@ -408,3 +411,9 @@ public class RivuletEventListenerBaseTests : IDisposable
         listener.Dispose();
     }
 }
+
+// Collection definition to disable parallelization for EventSource tests
+// EventSource and EventListener are process-wide singletons - parallel execution
+// causes cross-test pollution where listeners receive events from other tests
+[CollectionDefinition("EventSource Tests", DisableParallelization = true)]
+public class EventSourceTestCollection { }

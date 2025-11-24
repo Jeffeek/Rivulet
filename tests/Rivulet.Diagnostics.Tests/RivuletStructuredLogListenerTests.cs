@@ -74,13 +74,12 @@ public class RivuletStructuredLogListenerTests : IDisposable
                 .ToListAsync();
 
             // Wait for EventCounters to poll and write metrics after operation completes
-            // Increased from 2000ms → 5000ms for Windows CI/CD reliability (1/180 failures)
             // Polling interval is ~1 second but can be delayed under load
-            await Task.Delay(5000);
+            await Task.Delay(2000); // Reduced from 5000ms for faster tests
         } // Dispose listener to flush and close file
 
         // Wait for file handle to be fully released
-        await Task.Delay(5000);
+        await Task.Delay(500); // Reduced from 5000ms for faster tests
 
         File.Exists(_testFilePath).Should().BeTrue();
         var lines = await File.ReadAllLinesAsync(_testFilePath);
