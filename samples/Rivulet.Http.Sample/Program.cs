@@ -18,7 +18,7 @@ var urls = new[]
 var responses = await urls.SelectParallelAsync(
     async (url, ct) =>
     {
-        var response = await httpClient.GetAsync(url, ct);
+        using var response = await httpClient.GetAsync(url, ct);
         var content = await response.Content.ReadAsStringAsync(ct);
         return (url, statusCode: (int)response.StatusCode, contentLength: content.Length);
     },
@@ -47,8 +47,8 @@ var postResults = await postData.SelectParallelAsync(
     async (data, ct) =>
     {
         var json = System.Text.Json.JsonSerializer.Serialize(data);
-        var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
-        var response = await httpClient.PostAsync("https://httpbin.org/post", content, ct);
+        using var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+        using var response = await httpClient.PostAsync("https://httpbin.org/post", content, ct);
         return (data.id, statusCode: (int)response.StatusCode);
     },
     new ParallelOptionsRivulet
@@ -68,16 +68,16 @@ Console.WriteLine("3. Download files - Parallel file downloads");
 
 var fileUrls = new[]
 {
-    ("https://httpbin.org/json", Path.Combine(Path.GetTempPath(), "sample1.json")),
-    ("https://httpbin.org/uuid", Path.Combine(Path.GetTempPath(), "sample2.json")),
-    ("https://httpbin.org/base64/aGVsbG8=", Path.Combine(Path.GetTempPath(), "sample3.txt"))
+    ("https://httpbin.org/json", Path.Join(Path.GetTempPath(), "sample1.json")),
+    ("https://httpbin.org/uuid", Path.Join(Path.GetTempPath(), "sample2.json")),
+    ("https://httpbin.org/base64/aGVsbG8=", Path.Join(Path.GetTempPath(), "sample3.txt"))
 };
 
 var downloadResults = await fileUrls.SelectParallelAsync(
     async (item, ct) =>
     {
         var (url, filePath) = item;
-        var response = await httpClient.GetAsync(url, ct);
+        using var response = await httpClient.GetAsync(url, ct);
         var bytes = await response.Content.ReadAsByteArrayAsync(ct);
         await File.WriteAllBytesAsync(filePath, bytes, ct);
         return (url, filePath, bytes.Length);
@@ -113,7 +113,7 @@ var unreliableUrls = new[]
 var retryResults = await unreliableUrls.SelectParallelAsync(
     async (url, ct) =>
     {
-        var response = await httpClient.GetAsync(url, ct);
+        using var response = await httpClient.GetAsync(url, ct);
         // Don't throw on non-success - just return the status
         return (url, statusCode: (int)response.StatusCode, success: response.IsSuccessStatusCode);
     },

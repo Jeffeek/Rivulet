@@ -29,8 +29,8 @@ try
     await users.BulkInsertUsingCopyAsync(
         () => new NpgsqlConnection(connectionString),
         "users",
-        new[] { "id", "name", "email", "created_at" },
-        user => new object?[] { user.Id, user.Name, user.Email, user.CreatedAt },
+        ["id", "name", "email", "created_at"],
+        user => [user.Id, user.Name, user.Email, user.CreatedAt],
         new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 4,
@@ -58,8 +58,8 @@ try
     await customUsers.BulkInsertUsingCopyAsync(
         () => new NpgsqlConnection(connectionString),
         "alternate_users",
-        new[] { "user_id", "full_name", "email_address", "is_active" },
-        u => new object?[] { u.UserId, u.FullName, u.EmailAddress, u.IsActive },
+        ["user_id", "full_name", "email_address", "is_active"],
+        u => [u.UserId, u.FullName, u.EmailAddress, u.IsActive],
         new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 2
@@ -84,8 +84,8 @@ try
     await transactions.BulkInsertUsingCopyAsync(
         () => new NpgsqlConnection(connectionString),
         "transactions",
-        new[] { "id", "name", "value" },
-        t => new object?[] { t.Id, t.Name, t.Value },
+        ["id", "name", "value"],
+        t => [t.Id, t.Name, t.Value],
         new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 4,
@@ -107,7 +107,7 @@ try
     await csvLines.BulkInsertUsingCopyCsvAsync(
         () => new NpgsqlConnection(connectionString),
         "products",
-        new[] { "id", "product_name", "price" },
+        ["id", "product_name", "price"],
         new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 2
@@ -128,7 +128,7 @@ try
     await textLines.BulkInsertUsingCopyTextAsync(
         () => new NpgsqlConnection(connectionString),
         "orders",
-        new[] { "id", "order_number", "total_amount", "order_date" },
+        ["id", "order_number", "total_amount", "order_date"],
         new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 2
@@ -153,8 +153,8 @@ try
     await inventory.BulkInsertUsingCopyAsync(
         () => new NpgsqlConnection(connectionString),
         "inventory",
-        new[] { "id", "item_name", "quantity", "last_restocked" },
-        item => new object?[] { item.Id, item.ItemName, item.Quantity, item.LastRestocked },
+        ["id", "item_name", "quantity", "last_restocked"],
+        item => [item.Id, item.ItemName, item.Quantity, item.LastRestocked],
         new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 3
@@ -179,8 +179,8 @@ try
     await documents.BulkInsertUsingCopyAsync(
         () => new NpgsqlConnection(connectionString),
         "documents",
-        new[] { "id", "title", "tags", "scores" },
-        doc => new object?[] { doc.Id, doc.Title, doc.Tags, doc.Scores },
+        ["id", "title", "tags", "scores"],
+        doc => [doc.Id, doc.Title, doc.Tags, doc.Scores],
         new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 2

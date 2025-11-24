@@ -5,9 +5,9 @@ using Rivulet.IO;
 Console.WriteLine("=== Rivulet.IO Sample ===\n");
 
 // Setup sample directories
-var sampleDir = Path.Combine(Path.GetTempPath(), "RivuletIO.Sample");
-var inputDir = Path.Combine(sampleDir, "input");
-var outputDir = Path.Combine(sampleDir, "output");
+var sampleDir = Path.Join(Path.GetTempPath(), "RivuletIO.Sample");
+var inputDir = Path.Join(sampleDir, "input");
+var outputDir = Path.Join(sampleDir, "output");
 
 Directory.CreateDirectory(inputDir);
 Directory.CreateDirectory(outputDir);
@@ -17,7 +17,7 @@ try
     // Sample 1: Write files in parallel
     Console.WriteLine("1. WriteAllTextParallelAsync - Create sample files");
     var files = Enumerable.Range(1, 10)
-        .Select(i => (Path.Combine(inputDir, $"file{i}.txt"), $"Content for file {i}"))
+        .Select(i => (Path.Join(inputDir, $"file{i}.txt"), $"Content for file {i}"))
         .ToList();
 
     await files.WriteAllTextParallelAsync(
@@ -43,7 +43,7 @@ try
     // Sample 3: Transform files in parallel
     Console.WriteLine("3. TransformFilesParallelAsync - Transform and save");
     var transformations = filePaths.Select(f =>
-        (f, Path.Combine(outputDir, Path.GetFileName(f))))
+        (f, Path.Join(outputDir, Path.GetFileName(f))))
         .ToList();
 
     await transformations.TransformFilesParallelAsync(
@@ -80,9 +80,9 @@ try
 
     // Sample 5: Copy files in parallel
     Console.WriteLine("5. CopyFilesParallelAsync - Copy to backup");
-    var backupDir = Path.Combine(sampleDir, "backup");
+    var backupDir = Path.Join(sampleDir, "backup");
     var copyPairs = filePaths.Select(f =>
-        (f, Path.Combine(backupDir, Path.GetFileName(f))))
+        (f, Path.Join(backupDir, Path.GetFileName(f))))
         .ToList();
 
     await copyPairs.CopyFilesParallelAsync(
@@ -108,7 +108,7 @@ try
 
     // Sample 6: FileInfo extensions
     Console.WriteLine("6. FileInfo extensions - Idiomatic .NET API");
-    var fileInfo = new FileInfo(Path.Combine(inputDir, "file1.txt"));
+    var fileInfo = new FileInfo(Path.Join(inputDir, "file1.txt"));
     var fileContent = await fileInfo.ReadAllTextAsync();
     Console.WriteLine($"✓ Read via FileInfo: {fileContent}\n");
 

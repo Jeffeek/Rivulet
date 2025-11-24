@@ -83,8 +83,8 @@ public class FileParallelExtensionsTests : IDisposable
         var file1Path = Path.Join(_testDirectory, "lines1.txt");
         var file2Path = Path.Join(_testDirectory, "lines2.txt");
 
-        await File.WriteAllLinesAsync(file1Path, new[] { "Line 1", "Line 2" });
-        await File.WriteAllLinesAsync(file2Path, new[] { "Line A", "Line B", "Line C" });
+        await File.WriteAllLinesAsync(file1Path, ["Line 1", "Line 2"]);
+        await File.WriteAllLinesAsync(file2Path, ["Line A", "Line B", "Line C"]);
 
         // Act
         var results = await new[] { file1Path, file2Path }.ReadAllLinesParallelAsync(
@@ -144,7 +144,7 @@ public class FileParallelExtensionsTests : IDisposable
         // Arrange
         var writes = new[]
         {
-            (Path.Join(_testDirectory, "bytes1.bin"), new byte[] { 1, 2, 3 }),
+            (Path.Join(_testDirectory, "bytes1.bin"), [1, 2, 3]),
             (Path.Join(_testDirectory, "bytes2.bin"), new byte[] { 4, 5, 6 })
         };
 
