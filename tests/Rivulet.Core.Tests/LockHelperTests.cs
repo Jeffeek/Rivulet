@@ -243,7 +243,7 @@ public class LockHelperTests
                     }
 
                     executionOrder.Add(threadId);
-                    Thread.Sleep(1000);
+                    Thread.Sleep(50); // Reduced from 1000ms to 50ms for faster tests
 
                     Interlocked.Decrement(ref activeCount);
                 });

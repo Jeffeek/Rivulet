@@ -93,7 +93,7 @@ namespace Rivulet.Diagnostics.Tests
         public async Task MetricsAggregator_ShouldHandleExpiredSamples()
         {
             var aggregatedMetrics = new List<IReadOnlyList<AggregatedMetrics>>();
-            await using var aggregator = new MetricsAggregator(TimeSpan.FromSeconds(2));
+            await using var aggregator = new MetricsAggregator(TimeSpan.FromSeconds(1)); // Reduced from 2s for faster tests
             aggregator.OnAggregation += metrics =>
             {
                 if (metrics.Count > 0)
@@ -113,8 +113,7 @@ namespace Rivulet.Diagnostics.Tests
                 .ToListAsync();
 
             // Wait for at least 2x the aggregation window to ensure timer fires reliably
-            // Increased from 3000ms → 4000ms → 5000ms for Windows CI/CD reliability (2/180 failures)
-            await Task.Delay(5000);
+            await Task.Delay(2000); // Reduced from 5000ms for faster tests
 
             aggregatedMetrics.Should().NotBeEmpty();
             var firstAggregation = aggregatedMetrics.First();
@@ -122,7 +121,7 @@ namespace Rivulet.Diagnostics.Tests
 
             // Wait for another aggregation window to potentially expire samples
             // This verifies that the aggregator handles sample expiration gracefully
-            await Task.Delay(5000);
+            await Task.Delay(2000); // Reduced from 5000ms for faster tests
 
             var totalAggregations = aggregatedMetrics.Count;
             totalAggregations.Should().BeGreaterThanOrEqualTo(1);
