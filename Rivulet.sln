@@ -97,6 +97,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rivulet.Sql.MySql.Sample", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rivulet.Sql.PostgreSql.Sample", "samples\Rivulet.Sql.PostgreSql.Sample\Rivulet.Sql.PostgreSql.Sample.csproj", "{BB61DD0D-500B-42F7-A70C-6011BDEC311B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rivulet.Base.Tests", "tests\Rivulet.Base.Tests\Rivulet.Base.Tests.csproj", "{0918BD24-5FE1-4A2A-BB2A-99504189A3EA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -551,6 +553,18 @@ Global
 		{BB61DD0D-500B-42F7-A70C-6011BDEC311B}.Release|x64.Build.0 = Release|Any CPU
 		{BB61DD0D-500B-42F7-A70C-6011BDEC311B}.Release|x86.ActiveCfg = Release|Any CPU
 		{BB61DD0D-500B-42F7-A70C-6011BDEC311B}.Release|x86.Build.0 = Release|Any CPU
+		{0918BD24-5FE1-4A2A-BB2A-99504189A3EA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0918BD24-5FE1-4A2A-BB2A-99504189A3EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0918BD24-5FE1-4A2A-BB2A-99504189A3EA}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{0918BD24-5FE1-4A2A-BB2A-99504189A3EA}.Debug|x64.Build.0 = Debug|Any CPU
+		{0918BD24-5FE1-4A2A-BB2A-99504189A3EA}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{0918BD24-5FE1-4A2A-BB2A-99504189A3EA}.Debug|x86.Build.0 = Debug|Any CPU
+		{0918BD24-5FE1-4A2A-BB2A-99504189A3EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0918BD24-5FE1-4A2A-BB2A-99504189A3EA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0918BD24-5FE1-4A2A-BB2A-99504189A3EA}.Release|x64.ActiveCfg = Release|Any CPU
+		{0918BD24-5FE1-4A2A-BB2A-99504189A3EA}.Release|x64.Build.0 = Release|Any CPU
+		{0918BD24-5FE1-4A2A-BB2A-99504189A3EA}.Release|x86.ActiveCfg = Release|Any CPU
+		{0918BD24-5FE1-4A2A-BB2A-99504189A3EA}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -593,6 +607,7 @@ Global
 		{E889F752-6CBD-4247-940D-BD46C6A9E7C4} = {B9651AC5-56FD-4860-ADDA-27E67FCD75D4}
 		{39429758-CFBE-4CC1-B626-2B47D3C4B0D5} = {B9651AC5-56FD-4860-ADDA-27E67FCD75D4}
 		{BB61DD0D-500B-42F7-A70C-6011BDEC311B} = {B9651AC5-56FD-4860-ADDA-27E67FCD75D4}
+		{0918BD24-5FE1-4A2A-BB2A-99504189A3EA} = {0D2BF9AB-6598-46B6-9D64-59E4B546DA61}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F2330629-3D38-4DEB-969C-24196B99DAB2}

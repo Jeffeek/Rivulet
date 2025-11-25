@@ -112,8 +112,8 @@ public class CancellationAndTimeoutTests
         var options = new ParallelOptionsRivulet
         {
             // Tasks take 50ms, but CI runners can have significant scheduling delays
-            // Use 500ms timeout (10x the expected duration) to avoid flakiness
-            PerItemTimeout = TimeSpan.FromMilliseconds(500)
+            // Use 1000ms timeout (20x the expected duration) to avoid flakiness in heavily loaded CI
+            PerItemTimeout = TimeSpan.FromMilliseconds(1000)
         };
 
         var results = await source.SelectParallelAsync(

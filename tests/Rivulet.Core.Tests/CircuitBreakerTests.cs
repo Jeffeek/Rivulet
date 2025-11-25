@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using Rivulet.Base.Tests;
 using Rivulet.Core.Resilience;
 
 namespace Rivulet.Core.Tests;
@@ -635,7 +636,19 @@ public class CircuitBreakerTests
         await Task.Delay(50);
         await cb.ExecuteAsync(() => ValueTask.FromResult(1), CancellationToken.None);
 
-        await Task.Delay(100);
+        // Poll for expected transitions to be captured (state changes may be delayed in CI)
+        await Extensions.ApplyDeadlineAsync(
+            DateTime.UtcNow.AddMilliseconds(500),
+            () => Task.Delay(20),
+            () =>
+            {
+                lock (transitions)
+                {
+                    var hasOpen = transitions.Any(t => t.Item2 == CircuitBreakerState.Open);
+                    var hasOther = transitions.Any(t => t.Item2 == CircuitBreakerState.HalfOpen || t.Item2 == CircuitBreakerState.Closed);
+                    return !hasOpen || !hasOther;
+                }
+            });
 
         lock (transitions)
         {

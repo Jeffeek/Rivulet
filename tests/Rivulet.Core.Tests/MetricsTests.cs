@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
+using Rivulet.Base.Tests;
 using Rivulet.Core.Observability;
 
 namespace Rivulet.Core.Tests;
@@ -280,10 +281,12 @@ public class MetricsTests
             .ToListAsync();
 
         // Disposal waits 1000ms + takes final sample inside SelectParallelStreamAsync
-        // But we need a small delay AFTER returning to ensure the final snapshot
-        // variable assignment is visible to this test thread (memory visibility)
-        // 100ms is sufficient for thread scheduling and memory barrier propagation
-        await Task.Delay(2000);
+        // Poll for the snapshot to be captured with correct value to handle memory visibility
+        // and callback execution timing in CI environments
+        await Extensions.ApplyDeadlineAsync(
+            DateTime.UtcNow.AddMilliseconds(3000),
+            () => Task.Delay(100),
+            () => capturedSnapshot == null || capturedSnapshot.TotalFailures != 10);
 
         results.Should().HaveCount(20); // 30 - 10 failures
         capturedSnapshot.Should().NotBeNull();
@@ -456,9 +459,19 @@ public class MetricsTests
         var results2 = await task2;
 
         // MetricsTracker disposal waits 1000ms + takes final sample
-        // Add small delay to ensure final snapshots are captured and visible
-        // 100ms is sufficient for memory visibility across test thread
-        await Task.Delay(2000);
+        // Poll for snapshots to be captured with correct values to handle memory visibility
+        // and callback execution timing in CI environments
+        await Extensions.ApplyDeadlineAsync(
+            DateTime.UtcNow.AddMilliseconds(3000),
+            () => Task.Delay(100),
+            () =>
+            {
+                if (!snapshots1.Any() || !snapshots2.Any())
+                    return true;
+                var max1 = snapshots1.Max(s => s.ItemsCompleted);
+                var max2 = snapshots2.Max(s => s.ItemsCompleted);
+                return max1 != 20 || max2 != 30;
+            });
 
         results1.Should().HaveCount(20);
         results2.Should().HaveCount(30);
@@ -911,11 +924,10 @@ public class MetricsTests
         await using var tracker = new MetricsTracker(options, CancellationToken.None);
 
         // Poll for the snapshot with a timeout to avoid flakiness
-        var deadline = DateTime.UtcNow.AddMilliseconds(200);
-        while (capturedSnapshot is null && DateTime.UtcNow < deadline)
-        {
-            await Task.Delay(5);
-        }
+        await Extensions.ApplyDeadlineAsync(
+            DateTime.UtcNow.AddMilliseconds(200),
+            () => Task.Delay(5),
+            () => capturedSnapshot is null);
 
         capturedSnapshot.Should().NotBeNull();
         capturedSnapshot!.ItemsPerSecond.Should().BeGreaterThanOrEqualTo(0);

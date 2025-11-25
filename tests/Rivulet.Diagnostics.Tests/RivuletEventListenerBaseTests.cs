@@ -1,3 +1,4 @@
+using Rivulet.Base.Tests;
 using Rivulet.Core;
 using System.Collections.Concurrent;
 using Rivulet.Core.Observability;
@@ -32,11 +33,10 @@ public class RivuletEventListenerBaseTests : IDisposable
 
         // EventSource publishes counters every 1 second
         // Increased from 2000ms → 5000ms for Windows CI/CD reliability
-        var deadline = DateTime.UtcNow.AddMilliseconds(5000);
-        while (_listener.ReceivedCounters.IsEmpty && DateTime.UtcNow < deadline)
-        {
-            await Task.Delay(100);
-        }
+        await Extensions.ApplyDeadlineAsync(
+            DateTime.UtcNow.AddMilliseconds(5000),
+            () => Task.Delay(100),
+            () => _listener.ReceivedCounters.IsEmpty);
 
         _listener.ReceivedCounters.Should().NotBeEmpty();
         _listener.ReceivedCounters.Keys.Should().Contain(RivuletMetricsConstants.CounterNames.ItemsStarted);
@@ -292,11 +292,10 @@ public class RivuletEventListenerBaseTests : IDisposable
             .ToListAsync();
 
         // Wait for counters
-        var deadline = DateTime.UtcNow.AddMilliseconds(3000);
-        while (listener.ReceivedCounters.IsEmpty && DateTime.UtcNow < deadline)
-        {
-            await Task.Delay(100);
-        }
+        await Extensions.ApplyDeadlineAsync(
+            DateTime.UtcNow.AddMilliseconds(3000),
+            () => Task.Delay(100),
+            () => listener.ReceivedCounters.IsEmpty);
 
         // Listener should have received counters, proving IsEnabled was set to true
         listener.ReceivedCounters.Should().NotBeEmpty();
