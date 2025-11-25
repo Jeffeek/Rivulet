@@ -4,10 +4,12 @@ using Rivulet.Core;
 namespace Rivulet.Diagnostics.Tests;
 
 /// <summary>
-/// Tests for RivuletConsoleListener.
+/// Tests for RivuletConsoleListener that manipulate Console.Out must run serially on Windows.
+/// Parallel execution causes ObjectDisposedException in FluentAssertions when one test
+/// disposes the console TextWriter while another test (or FluentAssertions) is using it.
 /// Note: Console redirection tests may not work reliably when running under code coverage tools.
 /// </summary>
-[Collection("Serial EventSource Tests")]
+[Collection("Serial Console Tests")]
 public class RivuletConsoleListenerTests : IDisposable
 {
     private StringWriter? _stringWriter;

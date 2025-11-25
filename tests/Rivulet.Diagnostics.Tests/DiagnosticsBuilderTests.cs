@@ -2,6 +2,12 @@ using Rivulet.Core;
 
 namespace Rivulet.Diagnostics.Tests;
 
+/// <summary>
+/// Tests that manipulate Console.Out must run serially to avoid interference on Windows.
+/// Parallel execution can cause ObjectDisposedException in FluentAssertions when one test
+/// disposes the console TextWriter while another test is using it.
+/// </summary>
+[Collection("Serial Console Tests")]
 public class DiagnosticsBuilderTests : IDisposable
 {
     private readonly string _testFilePath;

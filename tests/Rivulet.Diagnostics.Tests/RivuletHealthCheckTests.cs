@@ -175,24 +175,24 @@ public class RivuletHealthCheckTests
         var healthCheck = new RivuletHealthCheck(exporter, new()
         {
             ErrorRateThreshold = 0.2,
-            FailureCountThreshold = 1000
+            FailureCountThreshold = 10000
         });
 
         try
         {
-            await Enumerable.Range(1, 10)
+            await Enumerable.Range(1, 5000)
                 .ToAsyncEnumerable()
                 .SelectParallelStreamAsync(async (x, ct) =>
                 {
-                    await Task.Delay(10, ct);
-                    if (x <= 3)
+                    await Task.Delay(1, ct);
+                    if (x <= 4000)
                     {
                         throw new InvalidOperationException("Test error");
                     }
                     return x * 2;
                 }, new()
                 {
-                    MaxDegreeOfParallelism = 2,
+                    MaxDegreeOfParallelism = 20,
                     ErrorMode = ErrorMode.CollectAndContinue
                 })
                 .ToListAsync();
@@ -202,7 +202,8 @@ public class RivuletHealthCheckTests
             // ignored
         }
 
-        await Task.Delay(1100);
+        await Task.Yield();
+        await Task.Delay(2500);
 
         var context = new HealthCheckContext();
         var result = await healthCheck.CheckHealthAsync(context);
@@ -213,7 +214,7 @@ public class RivuletHealthCheckTests
 
         result.Data.Should().ContainKey("total_failures");
         var failures = (double)result.Data["total_failures"];
-        failures.Should().BeLessThan(1000);
+        failures.Should().BeLessThan(10000);
 
         result.Status.Should().Be(HealthStatus.Degraded);
         result.Description.Should().Contain("Error rate");
