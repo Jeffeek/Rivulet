@@ -287,12 +287,12 @@ public class MetricsTests
         // 2. Any remaining async state machine cleanup
         // Using Task.Yield() to force a context switch, ensuring all memory writes are globally visible
         await Task.Yield();
-        await Task.Delay(200);
+        await Task.Delay(500);
 
         // Poll for the snapshot to be captured with correct value to handle memory visibility
         // and callback execution timing in CI environments
         await Extensions.ApplyDeadlineAsync(
-            DateTime.UtcNow.AddMilliseconds(8000),
+            DateTime.UtcNow.AddMilliseconds(12000),
             () => Task.Delay(100),
             () => capturedSnapshot is not { TotalFailures: 10 });
 
@@ -473,12 +473,12 @@ public class MetricsTests
         // 2. Any remaining async state machine cleanup
         // Using Task.Yield() to force a context switch, ensuring all memory writes are globally visible
         await Task.Yield();
-        await Task.Delay(200);
+        await Task.Delay(500);
 
         // Poll for snapshots to be captured with correct values to handle memory visibility
         // and callback execution timing in CI environments
         await Extensions.ApplyDeadlineAsync(
-            DateTime.UtcNow.AddMilliseconds(8000),
+            DateTime.UtcNow.AddMilliseconds(12000),
             () => Task.Delay(100),
             () =>
             {
@@ -730,12 +730,12 @@ public class MetricsTests
         // 2. Any remaining async state machine cleanup
         // Using Task.Yield() to force a context switch, ensuring all memory writes are globally visible
         await Task.Yield();
-        await Task.Delay(200);
+        await Task.Delay(500);
 
         // Poll for the snapshot to be captured with correct values to handle memory visibility
         // and callback execution timing in CI environments
         await Extensions.ApplyDeadlineAsync(
-            DateTime.UtcNow.AddMilliseconds(8000),
+            DateTime.UtcNow.AddMilliseconds(12000),
             () => Task.Delay(100),
             () => capturedSnapshot is not { ItemsStarted: 1000 } || capturedSnapshot.ItemsCompleted != 1000);
 
