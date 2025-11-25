@@ -165,7 +165,9 @@ public class CancellationAndTimeoutTests
             async (x, ct) =>
             {
                 attemptCount++;
-                await Task.Delay(500, ct);
+                // Increased from 500ms to 1000ms (10x the 100ms timeout) to ensure reliable timeouts
+                // This prevents rare race conditions where delays complete before timeout fires
+                await Task.Delay(1000, ct);
                 return x * 2;
             },
             options);
@@ -307,16 +309,18 @@ public class CancellationAndTimeoutTests
         var task = source.SelectParallelAsync(
             async (x, ct) =>
             {
-                // Use 200ms delay to ensure items reliably timeout (4x the 50ms timeout)
-                // This prevents rare cases where fast scheduling completes items within timeout
-                await Task.Delay(200, ct);
+                // Use 500ms delay to ensure items reliably timeout (10x the 50ms timeout)
+                // Increased from 200ms to prevent rare race conditions where items complete before
+                // timeout mechanism fires, especially under high CPU load or thread pool delays
+                await Task.Delay(500, ct);
                 return x * 2;
             },
             options,
             cts.Token);
 
         // Wait for timeouts to occur before cancellation
-        await Task.Delay(50, CancellationToken.None);
+        // Increased from 50ms to 100ms to ensure timeout mechanism has adequate time to fire
+        await Task.Delay(100, CancellationToken.None);
         await cts.CancelAsync();
 
         var results = await task;

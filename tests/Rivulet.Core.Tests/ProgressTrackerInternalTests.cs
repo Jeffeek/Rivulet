@@ -219,6 +219,10 @@ public class ProgressTrackerInternalTests
                 await Task.Delay(30, CancellationToken.None);
             }
 
+            // Disposal completes after the loop, ensure memory visibility
+            // Using Task.Yield() to force a context switch, ensuring all memory writes are globally visible
+            await Task.Yield();
+
             // Poll for snapshot to capture all errors (timer fires every 10ms but may be delayed in CI)
             await Extensions.ApplyDeadlineAsync(
                 DateTime.UtcNow.AddMilliseconds(500),

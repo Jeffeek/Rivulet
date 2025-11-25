@@ -280,7 +280,14 @@ public class MetricsTests
             }, options)
             .ToListAsync();
 
-        // Disposal waits 1000ms + takes final sample inside SelectParallelStreamAsync
+        // Disposal completes inside SelectParallelStreamAsync before it returns, which triggers the final sample.
+        // The final sample has a 1000ms delay built-in (see MetricsTracker.cs disposal handler).
+        // We add minimal extra time to ensure the callback has fully completed:
+        // 1. Callback execution time
+        // 2. Any remaining async state machine cleanup
+        // Using Task.Yield() to force a context switch, ensuring all memory writes are globally visible
+        await Task.Yield();
+
         // Poll for the snapshot to be captured with correct value to handle memory visibility
         // and callback execution timing in CI environments
         await Extensions.ApplyDeadlineAsync(
@@ -458,7 +465,14 @@ public class MetricsTests
         var results1 = await task1;
         var results2 = await task2;
 
-        // MetricsTracker disposal waits 1000ms + takes final sample
+        // Disposal completes inside SelectParallelAsync before it returns, which triggers the final sample.
+        // The final sample has a 1000ms delay built-in (see MetricsTracker.cs disposal handler).
+        // We add minimal extra time to ensure the callback has fully completed:
+        // 1. Callback execution time
+        // 2. Any remaining async state machine cleanup
+        // Using Task.Yield() to force a context switch, ensuring all memory writes are globally visible
+        await Task.Yield();
+
         // Poll for snapshots to be captured with correct values to handle memory visibility
         // and callback execution timing in CI environments
         await Extensions.ApplyDeadlineAsync(
@@ -707,7 +721,20 @@ public class MetricsTests
             },
             options);
 
-        await Task.Delay(200);
+        // Disposal completes inside SelectParallelAsync before it returns, which triggers the final sample.
+        // The final sample has a 1000ms delay built-in (see MetricsTracker.cs disposal handler).
+        // We add minimal extra time to ensure the callback has fully completed:
+        // 1. Callback execution time
+        // 2. Any remaining async state machine cleanup
+        // Using Task.Yield() to force a context switch, ensuring all memory writes are globally visible
+        await Task.Yield();
+
+        // Poll for the snapshot to be captured with correct values to handle memory visibility
+        // and callback execution timing in CI environments
+        await Extensions.ApplyDeadlineAsync(
+            DateTime.UtcNow.AddMilliseconds(3000),
+            () => Task.Delay(100),
+            () => capturedSnapshot is not { ItemsStarted: 1000 } || capturedSnapshot.ItemsCompleted != 1000);
 
         results.Should().HaveCount(1000);
         capturedSnapshot.Should().NotBeNull();

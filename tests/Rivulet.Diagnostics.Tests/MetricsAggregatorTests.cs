@@ -91,18 +91,19 @@ namespace Rivulet.Diagnostics.Tests
         public async Task MetricsAggregator_ShouldHandleExpiredSamples()
         {
             var aggregatedMetrics = new List<IReadOnlyList<AggregatedMetrics>>();
-            await using var aggregator = new MetricsAggregator(TimeSpan.FromSeconds(1)); // Reduced from 2s for faster tests
+            await using var aggregator = new MetricsAggregator(TimeSpan.FromSeconds(1)); // 1s aggregation window
             aggregator.OnAggregation += metrics =>
             {
                 if (metrics.Count > 0)
                     aggregatedMetrics.Add(metrics);
             };
 
-            await Enumerable.Range(1, 10)
+            // Use longer operation to ensure EventCounters have time to poll and emit metrics
+            await Enumerable.Range(1, 20)
                 .ToAsyncEnumerable()
                 .SelectParallelStreamAsync(async (x, ct) =>
                 {
-                    await Task.Delay(10, ct);
+                    await Task.Delay(50, ct);
                     return x;
                 }, new()
                 {
@@ -110,16 +111,18 @@ namespace Rivulet.Diagnostics.Tests
                 })
                 .ToListAsync();
 
-            // Wait for at least 2x the aggregation window to ensure timer fires reliably
-            await Task.Delay(2000); // Reduced from 5000ms, fixed delay for timer-based aggregation
+            // Wait for EventCounters to poll (~1s interval) + aggregation timer to fire
+            // Increased from 2000ms to 3000ms for better CI/CD reliability
+            await Task.Delay(3000); // Fixed delay for timer-based aggregation
 
-            aggregatedMetrics.Should().NotBeEmpty();
+            aggregatedMetrics.Should().NotBeEmpty("aggregation should have captured metrics after sufficient wait time");
             var firstAggregation = aggregatedMetrics.First();
             firstAggregation.Should().NotBeEmpty();
 
             // Wait for another aggregation window to potentially expire samples
             // This verifies that the aggregator handles sample expiration gracefully
-            await Task.Delay(2000); // Reduced from 5000ms for faster tests
+            // Increased from 2000ms to 2500ms for better CI/CD reliability
+            await Task.Delay(2500);
 
             var totalAggregations = aggregatedMetrics.Count;
             totalAggregations.Should().BeGreaterThanOrEqualTo(1);

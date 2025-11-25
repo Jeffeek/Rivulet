@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
+using Rivulet.Base.Tests;
 using Rivulet.Core.Observability;
 
 namespace Rivulet.Core.Tests;
@@ -146,6 +147,16 @@ public class BatchingTests
                     }
                 }
             });
+
+        // Disposal completes inside BatchParallelAsync before it returns
+        // Using Task.Yield() to force a context switch, ensuring all memory writes are globally visible
+        await Task.Yield();
+
+        // Poll for snapshots to capture final progress state
+        await Extensions.ApplyDeadlineAsync(
+            DateTime.UtcNow.AddMilliseconds(1000),
+            () => Task.Delay(100),
+            () => !snapshots.Any() || snapshots.Max(s => s.ItemsCompleted) != 10);
 
         results.Should().HaveCount(10);
         snapshots.Should().NotBeEmpty();

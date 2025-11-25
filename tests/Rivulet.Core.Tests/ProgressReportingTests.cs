@@ -121,7 +121,8 @@ public class ProgressReportingTests
 
         // Disposal completes inside SelectParallelAsync before it returns
         // The disposal waits up to 5 seconds for the final progress report to complete
-        // Race condition fixed by 200ms delay before final report in ProgressTracker
+        // Using Task.Yield() to force a context switch, ensuring all memory writes are globally visible
+        await Task.Yield();
 
         results.Should().HaveCount(16); // 20 - 4 errors
 
