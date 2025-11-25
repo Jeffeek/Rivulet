@@ -156,10 +156,10 @@ public class SqlParallelExtensionsTests
         };
 
         var values = new[] { 10, 100, 1 };
-        var index = 0;
+        var index = -1; // Start at -1 because Interlocked.Increment happens before indexing
 
         var results = await queries.ExecuteScalarParallelAsync<int>(
-            () => new TestDbConnection(executeScalarFunc: _ => values[index++ % values.Length]));
+            () => new TestDbConnection(executeScalarFunc: _ => values[Interlocked.Increment(ref index) % values.Length]));
 
         results.Should().HaveCount(3);
         results.Should().Contain(10);

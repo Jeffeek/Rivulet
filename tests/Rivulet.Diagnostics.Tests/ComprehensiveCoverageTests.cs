@@ -1,3 +1,4 @@
+using Rivulet.Base.Tests;
 using Rivulet.Core;
 
 namespace Rivulet.Diagnostics.Tests;
@@ -51,7 +52,10 @@ public class ComprehensiveCoverageTests
 
         // Wait for at least 2x the aggregation window to ensure timer fires and EventSource counters are received
         // Increased from 1100ms to 2100ms to handle CI/CD timing variability and EventSource polling delays
-        await Task.Delay(2100);
+        await Extensions.ApplyDeadlineAsync(
+            DateTime.UtcNow.AddMilliseconds(2100),
+            () => Task.Delay(100),
+            () => !callbackInvoked);
 
         callbackInvoked.Should().BeTrue();
     }
@@ -82,6 +86,7 @@ public class ComprehensiveCoverageTests
                 await Task.Delay(2000);
             }
 
+            // Brief wait for file handle release
             await Task.Delay(100);
 
             File.Exists(testFile).Should().BeTrue();

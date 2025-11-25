@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using Rivulet.Base.Tests;
 using Rivulet.Core.Observability;
 
 namespace Rivulet.Core.Tests;
@@ -163,9 +164,11 @@ public class ProgressTrackerInternalTests
                 tracker.IncrementCompleted();
             }
 
-            // Increased delay for CI/CD environments where timer may fire slower
-            // Consistent with other tests in this file (15x the report interval)
-            await Task.Delay(150, CancellationToken.None);
+            // Poll for snapshot to be captured (timer fires every 10ms but may be delayed in CI)
+            await Extensions.ApplyDeadlineAsync(
+                DateTime.UtcNow.AddMilliseconds(500),
+                () => Task.Delay(20, CancellationToken.None),
+                () => lastSnapshot == null);
 
             lastSnapshot.Should().NotBeNull();
             lastSnapshot!.TotalItems.Should().BeNull();
@@ -216,10 +219,11 @@ public class ProgressTrackerInternalTests
                 await Task.Delay(30, CancellationToken.None);
             }
 
-            // Wait for final timer ticks to capture all state
-            // Wait 100ms (10x report interval) to ensure all errors are captured
-            // This accounts for Windows timer resolution and CI/CD timing variations
-            await Task.Delay(100, CancellationToken.None);
+            // Poll for snapshot to capture all errors (timer fires every 10ms but may be delayed in CI)
+            await Extensions.ApplyDeadlineAsync(
+                DateTime.UtcNow.AddMilliseconds(500),
+                () => Task.Delay(20, CancellationToken.None),
+                () => lastSnapshot == null || lastSnapshot.ErrorCount != 5);
 
             lastSnapshot.Should().NotBeNull();
             lastSnapshot!.ErrorCount.Should().Be(5);

@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using Rivulet.Base.Tests;
 using Rivulet.Core.Resilience;
 
 namespace Rivulet.Core.Tests;
@@ -130,11 +131,10 @@ public class AdaptiveConcurrencyTests
         results.Should().HaveCount(200);
 
         // Poll for callbacks with timeout
-        var deadline = DateTime.UtcNow.AddSeconds(2);
-        while (concurrencyLevels.Count == 0 && DateTime.UtcNow < deadline)
-        {
-            await Task.Delay(50);
-        }
+        await Extensions.ApplyDeadlineAsync(
+            DateTime.UtcNow.AddSeconds(2),
+            () => Task.Delay(50),
+            () => concurrencyLevels.Count == 0);
 
         // Should have increased concurrency at least once
         lock (concurrencyLevels)
@@ -182,11 +182,10 @@ public class AdaptiveConcurrencyTests
         results.Should().HaveCount(100);
 
         // Poll for callbacks with timeout
-        var deadline = DateTime.UtcNow.AddSeconds(2);
-        while (concurrencyLevels.Count == 0 && DateTime.UtcNow < deadline)
-        {
-            await Task.Delay(50);
-        }
+        await Extensions.ApplyDeadlineAsync(
+            DateTime.UtcNow.AddSeconds(2),
+            () => Task.Delay(50),
+            () => concurrencyLevels.Count == 0);
 
         // Should have decreased concurrency
         lock (concurrencyLevels)
@@ -238,11 +237,10 @@ public class AdaptiveConcurrencyTests
         results.Count.Should().BeLessThan(100);
 
         // Poll for callbacks with timeout
-        var deadline = DateTime.UtcNow.AddSeconds(2);
-        while (concurrencyLevels.Count == 0 && DateTime.UtcNow < deadline)
-        {
-            await Task.Delay(50);
-        }
+        await Extensions.ApplyDeadlineAsync(
+            DateTime.UtcNow.AddSeconds(2),
+            () => Task.Delay(50),
+            () => concurrencyLevels.Count == 0);
 
         // Should have decreased concurrency due to low success rate
         lock (concurrencyLevels)
@@ -334,11 +332,10 @@ public class AdaptiveConcurrencyTests
         count.Should().Be(150);
 
         // Poll for callbacks with timeout
-        var deadline = DateTime.UtcNow.AddSeconds(2);
-        while (concurrencyLevels.Count == 0 && DateTime.UtcNow < deadline)
-        {
-            await Task.Delay(50);
-        }
+        await Extensions.ApplyDeadlineAsync(
+            DateTime.UtcNow.AddSeconds(2),
+            () => Task.Delay(50),
+            () => concurrencyLevels.Count == 0);
 
         lock (concurrencyLevels)
         {
@@ -476,11 +473,10 @@ public class AdaptiveConcurrencyTests
 
         results.Should().HaveCount(300);
 
-        var deadline = DateTime.UtcNow.AddSeconds(3);
-        while (concurrencyLevels.Count == 0 && DateTime.UtcNow < deadline)
-        {
-            await Task.Delay(50);
-        }
+        await Extensions.ApplyDeadlineAsync(
+            DateTime.UtcNow.AddSeconds(3),
+            () => Task.Delay(50),
+            () => concurrencyLevels.Count == 0);
 
         lock (concurrencyLevels)
         {
@@ -529,11 +525,10 @@ public class AdaptiveConcurrencyTests
 
         results.Should().HaveCount(150);
 
-        var deadline = DateTime.UtcNow.AddSeconds(3);
-        while (concurrencyLevels.Count == 0 && DateTime.UtcNow < deadline)
-        {
-            await Task.Delay(50);
-        }
+        await Extensions.ApplyDeadlineAsync(
+            DateTime.UtcNow.AddSeconds(3),
+            () => Task.Delay(50),
+            () => concurrencyLevels.Count == 0);
 
         lock (concurrencyLevels)
         {

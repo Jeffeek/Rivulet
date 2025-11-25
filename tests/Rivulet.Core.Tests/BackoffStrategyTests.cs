@@ -403,7 +403,7 @@ public class BackoffStrategyTests
             },
             options);
 
-        results.Should().Equal(new[] { 2, 4, 6, 8, 10 });
+        results.Should().Equal(2, 4, 6, 8, 10);
         attemptCounts[3].Should().Be(3);
     }
 

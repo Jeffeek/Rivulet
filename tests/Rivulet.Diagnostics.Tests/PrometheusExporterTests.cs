@@ -1,3 +1,4 @@
+using Rivulet.Base.Tests;
 using Rivulet.Core;
 using Rivulet.Core.Observability;
 
@@ -25,7 +26,10 @@ public class PrometheusExporterTests
         // Wait for EventCounters to fire
         // Increased from 2000ms → 5000ms for Windows CI/CD reliability (2/180 failures)
         // EventCounters have ~1s polling interval but can be delayed under load
-        await Task.Delay(5000);
+        await Extensions.ApplyDeadlineAsync(
+            DateTime.UtcNow.AddMilliseconds(5000),
+            () => Task.Delay(100),
+            () => string.IsNullOrEmpty(exporter.Export()) || !exporter.Export().Contains("rivulet_items_started"));
 
         var prometheusText = exporter.Export();
         prometheusText.Should().Contain("# Rivulet.Core Metrics");
@@ -53,7 +57,10 @@ public class PrometheusExporterTests
         // Wait for EventCounters to fire
         // Increased from 2000ms → 5000ms for Windows CI/CD reliability (3/180 failures)
         // EventCounters have ~1s polling interval but can be delayed under load
-        await Task.Delay(5000);
+        await Extensions.ApplyDeadlineAsync(
+            DateTime.UtcNow.AddMilliseconds(5000),
+            () => Task.Delay(100),
+            () => exporter.ExportDictionary().Count == 0);
 
         var metrics = exporter.ExportDictionary();
         metrics.Should().NotBeEmpty();
