@@ -283,23 +283,22 @@ public class MetricsTests
 
         // Disposal completes inside SelectParallelStreamAsync before it returns, which triggers the final sample.
         // The final sample has a 1000ms delay built-in (see MetricsTracker.cs disposal handler).
-        // We add minimal extra time to ensure the callback has fully completed:
-        // 1. Callback execution time
-        // 2. Any remaining async state machine cleanup
+        // Wait for disposal to complete: 1000ms (disposal delay) + 1500ms (buffer for callback + memory barriers)
         // Using Task.Yield() to force a context switch, ensuring all memory writes are globally visible
         await Task.Yield();
-        await Task.Delay(500);
+        await Task.Delay(2500);
 
         // Poll for the snapshot to be captured with correct value to handle memory visibility
         // and callback execution timing in CI environments
+        // First ensure snapshot was captured at all, then check for correct failure count
         await Extensions.ApplyDeadlineAsync(
-            DateTime.UtcNow.AddMilliseconds(12000),
+            DateTime.UtcNow.AddMilliseconds(5000),
             () => Task.Delay(100),
             () => capturedSnapshot is not { TotalFailures: 10 });
 
         results.Should().HaveCount(20); // 30 - 10 failures
-        capturedSnapshot.Should().NotBeNull();
-        capturedSnapshot!.TotalFailures.Should().Be(10);
+        capturedSnapshot.Should().NotBeNull("the metrics callback should have been invoked during disposal");
+        capturedSnapshot!.TotalFailures.Should().Be(10, "exactly 10 items (every 3rd out of 30) should have failed");
     }
 
     [Fact]
@@ -469,17 +468,15 @@ public class MetricsTests
 
         // Disposal completes inside SelectParallelAsync before it returns, which triggers the final sample.
         // The final sample has a 1000ms delay built-in (see MetricsTracker.cs disposal handler).
-        // We add minimal extra time to ensure the callback has fully completed:
-        // 1. Callback execution time
-        // 2. Any remaining async state machine cleanup
+        // Wait for disposal to complete: 1000ms (disposal delay) + 1500ms (buffer for callback + memory barriers)
         // Using Task.Yield() to force a context switch, ensuring all memory writes are globally visible
         await Task.Yield();
-        await Task.Delay(500);
+        await Task.Delay(2500);
 
         // Poll for snapshots to be captured with correct values to handle memory visibility
         // and callback execution timing in CI environments
         await Extensions.ApplyDeadlineAsync(
-            DateTime.UtcNow.AddMilliseconds(12000),
+            DateTime.UtcNow.AddMilliseconds(5000),
             () => Task.Delay(100),
             () =>
             {
@@ -726,22 +723,20 @@ public class MetricsTests
 
         // Disposal completes inside SelectParallelAsync before it returns, which triggers the final sample.
         // The final sample has a 1000ms delay built-in (see MetricsTracker.cs disposal handler).
-        // We add minimal extra time to ensure the callback has fully completed:
-        // 1. Callback execution time
-        // 2. Any remaining async state machine cleanup
+        // Wait for disposal to complete: 1000ms (disposal delay) + 1500ms (buffer for callback + memory barriers)
         // Using Task.Yield() to force a context switch, ensuring all memory writes are globally visible
         await Task.Yield();
-        await Task.Delay(500);
+        await Task.Delay(2500);
 
         // Poll for the snapshot to be captured with correct values to handle memory visibility
         // and callback execution timing in CI environments
         await Extensions.ApplyDeadlineAsync(
-            DateTime.UtcNow.AddMilliseconds(12000),
+            DateTime.UtcNow.AddMilliseconds(5000),
             () => Task.Delay(100),
             () => capturedSnapshot is not { ItemsStarted: 1000 } || capturedSnapshot.ItemsCompleted != 1000);
 
         results.Should().HaveCount(1000);
-        capturedSnapshot.Should().NotBeNull();
+        capturedSnapshot.Should().NotBeNull("the metrics callback should have been invoked during disposal");
         capturedSnapshot!.ItemsStarted.Should().Be(1000);
         capturedSnapshot.ItemsCompleted.Should().Be(1000);
         capturedSnapshot.TotalFailures.Should().Be(0);

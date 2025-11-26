@@ -73,8 +73,12 @@ namespace Rivulet.Diagnostics.Tests
 
             aggregatedMetrics.Should().NotBeEmpty();
 
+            // Take a snapshot of the list to avoid "Collection was modified" exception
+            // The aggregator timer may still be running and adding items during iteration
+            var snapshot = aggregatedMetrics.ToList();
+
             // Check all aggregations, not just the last one, to avoid timing issues
-            foreach (var aggregation in aggregatedMetrics)
+            foreach (var aggregation in snapshot)
             {
                 aggregation.Should().NotBeEmpty();
 
