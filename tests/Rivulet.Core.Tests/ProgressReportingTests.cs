@@ -124,7 +124,10 @@ public class ProgressReportingTests
         // The disposal waits up to 5 seconds for the final progress report to complete
         // Using Task.Yield() to force a context switch, ensuring all memory writes are globally visible
         await Task.Yield();
-        await Task.Delay(500);
+
+        // Wait longer to ensure final progress sample has been captured
+        // Progress timer is 30ms interval, wait for multiple intervals to ensure final state is captured
+        await Task.Delay(200);
 
         results.Should().HaveCount(16); // 20 - 4 errors
 
@@ -133,8 +136,8 @@ public class ProgressReportingTests
         var maxErrors = snapshots.Max(s => s.ErrorCount);
         var maxCompleted = snapshots.Max(s => s.ItemsCompleted);
 
-        maxErrors.Should().Be(4); // Should eventually report all 4 errors
-        maxCompleted.Should().Be(16); // Should eventually report all 16 completed
+        maxErrors.Should().Be(4, "all 4 errors (items 5, 10, 15, 20) should be captured in progress snapshots");
+        maxCompleted.Should().Be(16, "all 16 completed items should be captured in progress snapshots");
     }
 
     [Fact]

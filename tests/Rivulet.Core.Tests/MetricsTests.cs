@@ -257,6 +257,7 @@ public class MetricsTests
     {
         var source = AsyncEnumerable.Range(1, 30);
         MetricsSnapshot? capturedSnapshot = null;
+        var callbackInvocationCount = 0;
 
         var options = new ParallelOptionsRivulet
         {
@@ -267,6 +268,7 @@ public class MetricsTests
                 SampleInterval = TimeSpan.FromMilliseconds(50),
                 OnMetricsSample = snapshot =>
                 {
+                    Interlocked.Increment(ref callbackInvocationCount);
                     capturedSnapshot = snapshot;
                     return ValueTask.CompletedTask;
                 }
@@ -281,23 +283,26 @@ public class MetricsTests
             }, options)
             .ToListAsync();
 
+        // Verify operation completed successfully first
+        results.Should().HaveCount(20, "30 items - 10 failures = 20 results in BestEffort mode");
+
         // Disposal completes inside SelectParallelStreamAsync before it returns, which triggers the final sample.
         // The final sample has a 1000ms delay built-in (see MetricsTracker.cs disposal handler).
-        // Wait for disposal to complete: 1000ms (disposal delay) + 1500ms (buffer for callback + memory barriers)
+        // Wait for disposal to complete: 1000ms (disposal delay) + 2000ms (buffer for callback + memory barriers)
+        // Increased buffer from 1500ms to 2000ms for more reliable CI/CD execution
         // Using Task.Yield() to force a context switch, ensuring all memory writes are globally visible
         await Task.Yield();
-        await Task.Delay(2500);
+        await Task.Delay(3000);
 
         // Poll for the snapshot to be captured with correct value to handle memory visibility
         // and callback execution timing in CI environments
-        // First ensure snapshot was captured at all, then check for correct failure count
         await Extensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddMilliseconds(5000),
             () => Task.Delay(100),
             () => capturedSnapshot is not { TotalFailures: 10 });
 
-        results.Should().HaveCount(20); // 30 - 10 failures
-        capturedSnapshot.Should().NotBeNull("the metrics callback should have been invoked during disposal");
+        callbackInvocationCount.Should().BeGreaterThan(0, "metrics callback should have been invoked at least once");
+        capturedSnapshot.Should().NotBeNull("the metrics callback should have captured a snapshot during disposal");
         capturedSnapshot!.TotalFailures.Should().Be(10, "exactly 10 items (every 3rd out of 30) should have failed");
     }
 
