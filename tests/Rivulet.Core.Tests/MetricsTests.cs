@@ -12,6 +12,7 @@ namespace Rivulet.Core.Tests;
 [CollectionDefinition("EventSource Sequential Tests", DisableParallelization = true)]
 public class EventSourceTestCollection;
 
+[Collection("EventSource Sequential Tests")]
 [SuppressMessage("ReSharper", "AccessToDisposedClosure")]
 public class MetricsTests
 {

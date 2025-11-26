@@ -4,6 +4,7 @@ using Rivulet.Core.Observability;
 
 namespace Rivulet.Diagnostics.Tests;
 
+[Collection("Serial EventSource Tests")]
 public class PrometheusExporterTests
 {
     [Fact]

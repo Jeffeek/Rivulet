@@ -4,6 +4,7 @@ using Rivulet.Core.Observability;
 
 namespace Rivulet.Core.Tests;
 
+[Collection("EventSource Sequential Tests")]
 [SuppressMessage("ReSharper", "AccessToDisposedClosure")]
 public class ProgressReportingTests
 {

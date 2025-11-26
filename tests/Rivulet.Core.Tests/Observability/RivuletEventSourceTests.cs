@@ -3,6 +3,7 @@ using Rivulet.Core.Observability;
 
 namespace Rivulet.Core.Tests.Observability;
 
+[Collection("EventSource Sequential Tests")]
 public class RivuletEventSourceTests
 {
     [Fact]
