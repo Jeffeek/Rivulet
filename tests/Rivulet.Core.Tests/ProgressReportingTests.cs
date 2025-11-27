@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
+using Rivulet.Base.Tests;
 using Rivulet.Core.Observability;
 
 namespace Rivulet.Core.Tests;
@@ -125,11 +126,20 @@ public class ProgressReportingTests
         // Using Task.Yield() to force a context switch, ensuring all memory writes are globally visible
         await Task.Yield();
 
-        // Wait longer to ensure final progress sample has been captured
-        // Progress timer is 30ms interval, wait for multiple intervals to ensure final state is captured
-        await Task.Delay(200);
+        // Poll for the final progress state to be captured
+        // Progress timer is 30ms interval, but on slow CI/CD machines the callback might take longer
+        await Extensions.ApplyDeadlineAsync(
+            DateTime.UtcNow.AddMilliseconds(3000),
+            () => Task.Delay(50),
+            () =>
+            {
+                if (!snapshots.Any()) return true;
+                var currentMaxErrors = snapshots.Max(s => s.ErrorCount);
+                var currentMaxCompleted = snapshots.Max(s => s.ItemsCompleted);
+                return currentMaxErrors != 4 || currentMaxCompleted != 16;
+            });
 
-        results.Should().HaveCount(16); // 20 - 4 errors
+        results.Should().HaveCount(16, "20 items - 4 errors = 16 results in BestEffort mode");
 
         // The final sample during disposal should have captured all errors
         // We take the max across all samples to account for any timing variations

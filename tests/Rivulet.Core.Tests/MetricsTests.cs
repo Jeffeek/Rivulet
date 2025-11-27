@@ -288,18 +288,18 @@ public class MetricsTests
 
         // Disposal completes inside SelectParallelStreamAsync before it returns, which triggers the final sample.
         // The final sample has a 1000ms delay built-in (see MetricsTracker.cs disposal handler).
-        // Wait for disposal to complete: 1000ms (disposal delay) + 2000ms (buffer for callback + memory barriers)
-        // Increased buffer from 1500ms to 2000ms for more reliable CI/CD execution
         // Using Task.Yield() to force a context switch, ensuring all memory writes are globally visible
         await Task.Yield();
-        await Task.Delay(3000);
 
         // Poll for the snapshot to be captured with correct value to handle memory visibility
         // and callback execution timing in CI environments
+        // Increased timeout from 8s to 10s total for extremely slow CI/CD machines
         await Extensions.ApplyDeadlineAsync(
-            DateTime.UtcNow.AddMilliseconds(5000),
-            () => Task.Delay(100),
-            () => capturedSnapshot is not { TotalFailures: 10 });
+            DateTime.UtcNow.AddMilliseconds(10000),
+            () => Task.Delay(200),
+            () => callbackInvocationCount == 0 ||
+                  capturedSnapshot == null ||
+                  capturedSnapshot.TotalFailures != 10);
 
         callbackInvocationCount.Should().BeGreaterThan(0, "metrics callback should have been invoked at least once");
         capturedSnapshot.Should().NotBeNull("the metrics callback should have captured a snapshot during disposal");
@@ -471,40 +471,50 @@ public class MetricsTests
         var results1 = await task1;
         var results2 = await task2;
 
+        results1.Should().HaveCount(20);
+        results2.Should().HaveCount(30);
+
         // Disposal completes inside SelectParallelAsync before it returns, which triggers the final sample.
         // The final sample has a 1000ms delay built-in (see MetricsTracker.cs disposal handler).
-        // Wait for disposal to complete: 1000ms (disposal delay) + 1500ms (buffer for callback + memory barriers)
         // Using Task.Yield() to force a context switch, ensuring all memory writes are globally visible
         await Task.Yield();
-        await Task.Delay(2500);
 
         // Poll for snapshots to be captured with correct values to handle memory visibility
         // and callback execution timing in CI environments
         await Extensions.ApplyDeadlineAsync(
-            DateTime.UtcNow.AddMilliseconds(5000),
-            () => Task.Delay(100),
+            DateTime.UtcNow.AddMilliseconds(8000),
+            () => Task.Delay(200),
             () =>
             {
                 if (!snapshots1.Any() || !snapshots2.Any())
                     return true;
-                var max1 = snapshots1.Max(s => s.ItemsCompleted);
-                var max2 = snapshots2.Max(s => s.ItemsCompleted);
+
+                // Take immutable snapshots to avoid concurrent modification during Max() operation
+                var list1 = snapshots1.ToList();
+                var list2 = snapshots2.ToList();
+
+                var max1 = list1.Max(s => s.ItemsCompleted);
+                var max2 = list2.Max(s => s.ItemsCompleted);
                 return max1 != 20 || max2 != 30;
             });
 
-        results1.Should().HaveCount(20);
-        results2.Should().HaveCount(30);
+        // Wait a bit more to ensure all async callbacks have fully completed
+        await Task.Delay(500);
 
         snapshots1.Should().NotBeEmpty();
         snapshots2.Should().NotBeEmpty();
 
+        // Take final immutable snapshots to avoid race conditions with ConcurrentBag enumeration
+        var finalSnapshots1 = snapshots1.ToList();
+        var finalSnapshots2 = snapshots2.ToList();
+
         // Use Max() to get the highest completed count across all snapshots
         // This handles race conditions where timer fires before final item completes
-        var maxCompleted1 = snapshots1.Max(s => s.ItemsCompleted);
-        var maxCompleted2 = snapshots2.Max(s => s.ItemsCompleted);
+        var maxCompleted1 = finalSnapshots1.Max(s => s.ItemsCompleted);
+        var maxCompleted2 = finalSnapshots2.Max(s => s.ItemsCompleted);
 
-        maxCompleted1.Should().Be(20);
-        maxCompleted2.Should().Be(30);
+        maxCompleted1.Should().Be(20, "operation 1 should eventually capture all 20 completed items");
+        maxCompleted2.Should().Be(30, "operation 2 should eventually capture all 30 completed items");
     }
 
     [Fact]
