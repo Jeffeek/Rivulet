@@ -90,16 +90,8 @@ internal sealed class MetricsTracker : MetricsTrackerBase
         }
         catch (OperationCanceledException)
         {
-            // Wait to ensure all in-flight metric increments complete
-            // before taking the final sample. This prevents race conditions where
-            // the last items are still calling Increment*() methods.
-            // Increased from 100ms → 200ms → 500ms → 1000ms for Windows CI/CD reliability
-            // The 1000ms delay accounts for:
-            // - CPU cache coherency delays on multi-core Windows runners (~500ms worst case)
-            // - Memory barrier propagation across NUMA nodes
-            // - Async state machine cleanup and thread pool scheduling delays
-            await Task.Delay(1000).ConfigureAwait(false);
-            await SampleMetrics().ConfigureAwait(false);
+            // Cancellation is expected during disposal - just exit cleanly
+            // Final sample will be taken synchronously in DisposeAsync to guarantee completion
         }
     }
 
@@ -122,25 +114,24 @@ internal sealed class MetricsTracker : MetricsTrackerBase
         var itemsPerSecond = elapsed.TotalSeconds > 0 ? completed / elapsed.TotalSeconds : 0;
         var errorRate = started > 0 ? (double)failures / started : 0.0;
 
-        var snapshot = new MetricsSnapshot
-        {
-            ActiveWorkers = activeWorkers,
-            QueueDepth = queueDepth,
-            ItemsStarted = started,
-            ItemsCompleted = completed,
-            TotalRetries = retries,
-            TotalFailures = failures,
-            ThrottleEvents = throttles,
-            DrainEvents = drains,
-            Elapsed = elapsed,
-            ItemsPerSecond = itemsPerSecond,
-            ErrorRate = errorRate
-        };
 
         try
         {
             if (_options.OnMetricsSample != null)
-                await _options.OnMetricsSample(snapshot).ConfigureAwait(false);
+                await _options.OnMetricsSample(new MetricsSnapshot
+                {
+                    ActiveWorkers = activeWorkers,
+                    QueueDepth = queueDepth,
+                    ItemsStarted = started,
+                    ItemsCompleted = completed,
+                    TotalRetries = retries,
+                    TotalFailures = failures,
+                    ThrottleEvents = throttles,
+                    DrainEvents = drains,
+                    Elapsed = elapsed,
+                    ItemsPerSecond = itemsPerSecond,
+                    ErrorRate = errorRate
+                }).ConfigureAwait(false);
         }
         catch
         {
@@ -151,7 +142,7 @@ internal sealed class MetricsTracker : MetricsTrackerBase
         Thread.MemoryBarrier();
     }
 
-    private static TimeSpan DisposeWait => TimeSpan.FromSeconds(5);
+    private static TimeSpan DisposeWait => TimeSpan.FromSeconds(2);
 
     public override async ValueTask DisposeAsync()
     {
@@ -160,22 +151,33 @@ internal sealed class MetricsTracker : MetricsTrackerBase
 
         _disposed = true;
 
-        // Cancel the background sampler task
-        // The SampleMetricsPeriodically loop will catch OperationCanceledException
-        // and execute one final metrics sample before exiting
+        // Cancel the background periodic sampling loop
+        // The loop will exit cleanly without taking a final sample
         await _samplerCts.CancelAsync().ConfigureAwait(false);
 
-        // Wait for the sampler task to complete its final sample
-        // Use a longer timeout to ensure final metrics are captured even under high CPU contention
-        // This is important for accurate metrics in high-concurrency scenarios
+        // Wait for the background loop to exit (should be fast - just exits on cancellation)
+        // Use a short timeout since the loop should exit immediately
         try
         {
-            await _samplerTask.WaitAsync(DisposeWait);
+            await _samplerTask.WaitAsync(DisposeWait).ConfigureAwait(false);
         }
-        catch (Exception ex) when (ex is AggregateException or OperationCanceledException)
+        catch (Exception ex) when (ex is AggregateException or OperationCanceledException or TimeoutException)
         {
-            // Task was cancelled or faulted, which is expected
+            // Background loop is stuck or took too long - this is unexpected but don't block disposal
+            // The final sample will still be taken below
         }
+
+        // Take the final sample synchronously in the disposal context
+        // This guarantees the final sample completes regardless of background task state
+        // Wait to ensure all in-flight metric increments complete before sampling
+        // The 1000ms delay accounts for:
+        // - CPU cache coherency delays on multi-core systems (~500ms worst case)
+        // - Memory barrier propagation across NUMA nodes
+        // - Async state machine cleanup and thread pool scheduling delays
+        await Task.Delay(1000).ConfigureAwait(false);
+
+        // Take final sample - this will always complete because it's in our disposal context
+        await SampleMetrics().ConfigureAwait(false);
 
         _samplerCts.Dispose();
         _stopwatch.Stop();

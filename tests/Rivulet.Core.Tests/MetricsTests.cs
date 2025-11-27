@@ -286,16 +286,20 @@ public class MetricsTests
         // Verify operation completed successfully first
         results.Should().HaveCount(20, "30 items - 10 failures = 20 results in BestEffort mode");
 
-        // Disposal completes inside SelectParallelStreamAsync before it returns, which triggers the final sample.
-        // The final sample has a 1000ms delay built-in (see MetricsTracker.cs disposal handler).
+        // Disposal completes inside SelectParallelStreamAsync before it returns.
+        // The disposal takes final sample synchronously (see MetricsTracker.cs:146 DisposeAsync):
+        //   1. Cancels background sampler (exits immediately)
+        //   2. Waits 1000ms for in-flight operations
+        //   3. Takes final sample with callback
+        // Total disposal time: ~1-2 seconds on normal machines, up to 5s on slow CI/CD
         // Using Task.Yield() to force a context switch, ensuring all memory writes are globally visible
         await Task.Yield();
 
         // Poll for the snapshot to be captured with correct value to handle memory visibility
         // and callback execution timing in CI environments
-        // Increased timeout from 8s to 10s total for extremely slow CI/CD machines
+        // Allow up to 8 seconds for disposal to complete on slow CI/CD machines
         await Extensions.ApplyDeadlineAsync(
-            DateTime.UtcNow.AddMilliseconds(10000),
+            DateTime.UtcNow.AddMilliseconds(8000),
             () => Task.Delay(200),
             () => callbackInvocationCount == 0 ||
                   capturedSnapshot == null ||
@@ -474,13 +478,18 @@ public class MetricsTests
         results1.Should().HaveCount(20);
         results2.Should().HaveCount(30);
 
-        // Disposal completes inside SelectParallelAsync before it returns, which triggers the final sample.
-        // The final sample has a 1000ms delay built-in (see MetricsTracker.cs disposal handler).
+        // Disposal completes inside SelectParallelAsync before it returns.
+        // The disposal takes final sample synchronously (see MetricsTracker.cs:146 DisposeAsync):
+        //   1. Cancels background sampler (exits immediately)
+        //   2. Waits 1000ms for in-flight operations
+        //   3. Takes final sample with callback
+        // Total disposal time per operation: ~1-2 seconds on normal machines, up to 5s on slow CI/CD
         // Using Task.Yield() to force a context switch, ensuring all memory writes are globally visible
         await Task.Yield();
 
         // Poll for snapshots to be captured with correct values to handle memory visibility
         // and callback execution timing in CI environments
+        // Allow up to 8 seconds for both disposals to complete on slow CI/CD machines
         await Extensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddMilliseconds(8000),
             () => Task.Delay(200),
@@ -736,19 +745,22 @@ public class MetricsTests
             },
             options);
 
-        // Disposal completes inside SelectParallelAsync before it returns, which triggers the final sample.
-        // The final sample has a 1000ms delay built-in (see MetricsTracker.cs disposal handler).
-        // Wait for disposal to complete: 1000ms (disposal delay) + 1500ms (buffer for callback + memory barriers)
+        // Disposal completes inside SelectParallelAsync before it returns.
+        // The disposal takes final sample synchronously (see MetricsTracker.cs:146 DisposeAsync):
+        //   1. Cancels background sampler (exits immediately)
+        //   2. Waits 1000ms for in-flight operations
+        //   3. Takes final sample with callback
+        // Total disposal time: ~1-2 seconds on normal machines, up to 5s on slow CI/CD
         // Using Task.Yield() to force a context switch, ensuring all memory writes are globally visible
         await Task.Yield();
-        await Task.Delay(2500);
 
         // Poll for the snapshot to be captured with correct values to handle memory visibility
         // and callback execution timing in CI environments
+        // Allow up to 8 seconds for disposal to complete on slow CI/CD machines
         await Extensions.ApplyDeadlineAsync(
-            DateTime.UtcNow.AddMilliseconds(5000),
-            () => Task.Delay(100),
-            () => capturedSnapshot is not { ItemsStarted: 1000 } || capturedSnapshot.ItemsCompleted != 1000);
+            DateTime.UtcNow.AddMilliseconds(8000),
+            () => Task.Delay(200),
+            () => capturedSnapshot == null || capturedSnapshot.ItemsStarted != 1000 || capturedSnapshot.ItemsCompleted != 1000);
 
         results.Should().HaveCount(1000);
         capturedSnapshot.Should().NotBeNull("the metrics callback should have been invoked during disposal");
