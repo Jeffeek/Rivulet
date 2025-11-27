@@ -6,7 +6,7 @@ namespace Rivulet.Diagnostics.OpenTelemetry.Tests;
 /// <summary>
 /// Tests specifically designed to cover edge cases and improve code coverage.
 /// </summary>
-[Collection("ActivitySource Tests")]
+[Collection(TestCollections.ActivitySource)]
 public class EdgeCaseCoverageTests
 {
     [Fact]

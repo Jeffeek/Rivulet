@@ -8,7 +8,7 @@ namespace Rivulet.Diagnostics.Tests;
 /// These tests use RivuletEventSource which is a static singleton shared across all test assemblies.
 /// Some tests are added to a serial collection to prevent parallel execution issues with metrics.
 /// </summary>
-[Collection("Serial EventSource Tests")]
+[Collection(TestCollections.SerialEventSource)]
 [SuppressMessage("ReSharper", "AccessToDisposedClosure")]
 public class RivuletHealthCheckTests
 {

@@ -56,7 +56,7 @@ jobs:
 
     - name: Run tests
       run: dotnet test -c Release --no-build --verbosity normal
-      timeout-minutes: 8
+      timeout-minutes: 5
 
     - name: Pack NuGet packages
       run: |
@@ -74,7 +74,7 @@ jobs:
         dotnet pack src/Rivulet.Sql.MySql/Rivulet.Sql.MySql.csproj -c Release --output ./artifacts -p:PackageVersion=${{ steps.get_version.outputs.version }}
         dotnet pack src/Rivulet.Polly/Rivulet.Polly.csproj -c Release --output ./artifacts -p:PackageVersion=${{ steps.get_version.outputs.version }}
         # PACK_COMMANDS_END
-      timeout-minutes: 10
+      timeout-minutes: 20
 
     - name: List artifacts
       run: ls -la ./artifacts

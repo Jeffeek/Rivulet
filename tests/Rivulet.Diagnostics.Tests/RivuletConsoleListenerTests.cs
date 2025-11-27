@@ -9,7 +9,7 @@ namespace Rivulet.Diagnostics.Tests;
 /// disposes the console TextWriter while another test (or FluentAssertions) is using it.
 /// Note: Console redirection tests may not work reliably when running under code coverage tools.
 /// </summary>
-[Collection("Serial Console Tests")]
+[Collection(TestCollections.SerialConsole)]
 public class RivuletConsoleListenerTests : IDisposable
 {
     private StringWriter? _stringWriter;

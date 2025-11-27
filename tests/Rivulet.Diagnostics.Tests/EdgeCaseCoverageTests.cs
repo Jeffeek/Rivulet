@@ -6,7 +6,7 @@ namespace Rivulet.Diagnostics.Tests;
 /// <summary>
 /// Tests specifically designed to cover edge cases and improve code coverage.
 /// </summary>
-[Collection("Serial EventSource Tests")]
+[Collection(TestCollections.SerialEventSource)]
 public class EdgeCaseCoverageTests
 {
     [Fact]

@@ -5,7 +5,7 @@ using Rivulet.Core.Observability;
 
 namespace Rivulet.Core.Tests;
 
-[Collection("EventSource Sequential Tests")]
+[Collection(TestCollections.EventSourceSequential)]
 [SuppressMessage("ReSharper", "AccessToDisposedClosure")]
 public class ProgressReportingTests
 {
@@ -121,15 +121,10 @@ public class ProgressReportingTests
             },
             options);
 
-        // Disposal completes inside SelectParallelAsync before it returns
-        // The disposal waits up to 5 seconds for the final progress report to complete
-        // Using Task.Yield() to force a context switch, ensuring all memory writes are globally visible
         await Task.Yield();
 
-        // Poll for the final progress state to be captured
-        // Progress timer is 30ms interval, but on slow CI/CD machines the callback might take longer
         await Extensions.ApplyDeadlineAsync(
-            DateTime.UtcNow.AddMilliseconds(3000),
+            DateTime.UtcNow.AddMilliseconds(2000),
             () => Task.Delay(50),
             () =>
             {
@@ -139,15 +134,13 @@ public class ProgressReportingTests
                 return currentMaxErrors != 4 || currentMaxCompleted != 16;
             });
 
-        results.Should().HaveCount(16, "20 items - 4 errors = 16 results in BestEffort mode");
+        results.Should().HaveCount(16, "20 items minus 4 failures (items 5,10,15,20) equals 16 successful results");
 
-        // The final sample during disposal should have captured all errors
-        // We take the max across all samples to account for any timing variations
         var maxErrors = snapshots.Max(s => s.ErrorCount);
         var maxCompleted = snapshots.Max(s => s.ItemsCompleted);
 
-        maxErrors.Should().Be(4, "all 4 errors (items 5, 10, 15, 20) should be captured in progress snapshots");
-        maxCompleted.Should().Be(16, "all 16 completed items should be captured in progress snapshots");
+        maxErrors.Should().Be(4, "items 5,10,15,20 should have failed (4 total errors)");
+        maxCompleted.Should().Be(16, "all 16 non-failing items should have completed successfully");
     }
 
     [Fact]

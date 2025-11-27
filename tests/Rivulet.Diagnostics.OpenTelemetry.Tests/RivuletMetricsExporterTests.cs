@@ -5,7 +5,7 @@ using Rivulet.Core.Observability;
 
 namespace Rivulet.Diagnostics.OpenTelemetry.Tests;
 
-[Collection("Metrics Tests")]
+[Collection(TestCollections.Metrics)]
 public class RivuletMetricsExporterTests : IDisposable
 {
     private readonly List<Metric> _exportedMetrics = new();

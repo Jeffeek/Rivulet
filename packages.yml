@@ -481,7 +481,7 @@ badges:
   nuget_downloads: "https://img.shields.io/nuget/dt/{nuget_id}.svg?style=flat-square"
 
 links:
-  documentation: "https://rivulet.readthedocs.io"
-  repository: "https://github.com/your-org/Rivulet"
-  issues: "https://github.com/your-org/Rivulet/issues"
-  discussions: "https://github.com/your-org/Rivulet/discussions"
+  documentation: "https://rivulet2.readthedocs.io"
+  repository: "https://github.com/Jeffeek/Rivulet"
+  issues: "https://github.com/Jeffeek/Rivulet/issues"
+  discussions: "https://github.com/Jeffeek/Rivulet/discussions"

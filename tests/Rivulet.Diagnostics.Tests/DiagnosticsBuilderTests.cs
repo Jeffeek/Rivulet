@@ -7,7 +7,7 @@ namespace Rivulet.Diagnostics.Tests;
 /// Parallel execution can cause ObjectDisposedException in FluentAssertions when one test
 /// disposes the console TextWriter while another test is using it.
 /// </summary>
-[Collection("Serial Console Tests")]
+[Collection(TestCollections.SerialConsole)]
 public class DiagnosticsBuilderTests : IDisposable
 {
     private readonly string _testFilePath;

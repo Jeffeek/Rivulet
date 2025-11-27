@@ -7,7 +7,7 @@ namespace Rivulet.Core.Tests;
 /// Tests for EventSource metrics that must run sequentially.
 /// EventSource is a singleton, so these tests cannot run in parallel with each other.
 /// </summary>
-[Collection("EventSource Sequential Tests")]
+[Collection(TestCollections.EventSourceSequential)]
 public class EventSourceTests
 {
     [Fact]

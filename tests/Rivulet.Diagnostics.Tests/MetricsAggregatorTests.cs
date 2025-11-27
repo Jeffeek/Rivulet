@@ -3,7 +3,7 @@ using Rivulet.Core.Observability;
 
 namespace Rivulet.Diagnostics.Tests
 {
-    [Collection("Serial EventSource Tests")]
+    [Collection(TestCollections.SerialEventSource)]
     public class MetricsAggregatorTests
     {
         [Fact]

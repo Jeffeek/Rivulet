@@ -8,7 +8,7 @@ namespace Rivulet.Diagnostics.Tests;
 
 // EventSource and EventListener are process-wide singletons by design.
 // These tests must run sequentially to avoid cross-test pollution.
-[Collection("EventSource Tests")]
+[Collection(TestCollections.EventSource)]
 public class RivuletEventListenerBaseTests : IDisposable
 {
     private readonly TestEventListener _listener = new();
@@ -414,5 +414,5 @@ public class RivuletEventListenerBaseTests : IDisposable
 // Collection definition to disable parallelization for EventSource tests
 // EventSource and EventListener are process-wide singletons - parallel execution
 // causes cross-test pollution where listeners receive events from other tests
-[CollectionDefinition("EventSource Tests", DisableParallelization = true)]
+[CollectionDefinition(TestCollections.EventSource, DisableParallelization = true)]
 public class EventSourceTestCollection { }

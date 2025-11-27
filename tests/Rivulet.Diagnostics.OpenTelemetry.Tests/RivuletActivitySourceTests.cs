@@ -3,7 +3,7 @@ using System.Diagnostics;
 
 namespace Rivulet.Diagnostics.OpenTelemetry.Tests;
 
-[Collection("ActivitySource Tests")]
+[Collection(TestCollections.ActivitySource)]
 public class RivuletActivitySourceTests
 {
 

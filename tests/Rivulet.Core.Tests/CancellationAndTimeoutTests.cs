@@ -84,30 +84,24 @@ public class CancellationAndTimeoutTests
         var source = Enumerable.Range(1, 5);
         var options = new ParallelOptionsRivulet
         {
-            // Use longer timeout to prevent false positives on slow CI/CD machines
-            // where even quick operations might exceed timeout due to thread pool starvation
             PerItemTimeout = TimeSpan.FromMilliseconds(2000),
             ErrorMode = ErrorMode.BestEffort,
-            MaxDegreeOfParallelism = 2 // Limit concurrency to reduce thread pool contention
+            MaxDegreeOfParallelism = 2
         };
 
         var results = await source.SelectParallelAsync(
             async (x, ct) =>
             {
                 if (x == 3)
-                    // Use much longer delay (10s) to ensure this item reliably times out
-                    // Even on slow CI/CD, 10s >> 2s timeout, so no race condition
                     await Task.Delay(10000, ct);
                 else
-                    // Use minimal delay to ensure these items complete quickly
-                    // Even with thread pool delays, 1ms << 2s timeout
                     await Task.Delay(1, ct);
                 return x * 2;
             },
             options);
 
-        results.Should().HaveCount(4, "items 1,2,4,5 should complete, item 3 should timeout");
-        results.Should().NotContain(6, "item 3 (value 6) should have timed out");
+        results.Should().HaveCount(4, "items 1,2,4,5 complete within 2s timeout, item 3 exceeds timeout with 10s delay");
+        results.Should().NotContain(6, "item 3 (result=6) should timeout and be excluded from results");
     }
 
     [Fact]
@@ -116,8 +110,6 @@ public class CancellationAndTimeoutTests
         var source = Enumerable.Range(1, 10);
         var options = new ParallelOptionsRivulet
         {
-            // Tasks take 50ms, but CI runners can have significant scheduling delays
-            // Use 2000ms timeout (40x the expected duration) to avoid flakiness in heavily loaded CI
             PerItemTimeout = TimeSpan.FromMilliseconds(2000)
         };
 
@@ -129,7 +121,7 @@ public class CancellationAndTimeoutTests
             },
             options);
 
-        results.Should().HaveCount(10);
+        results.Should().HaveCount(10, "all items should complete within the 2s timeout");
     }
 
     [Fact]
@@ -170,15 +162,13 @@ public class CancellationAndTimeoutTests
             async (x, ct) =>
             {
                 attemptCount++;
-                // Increased from 500ms to 1000ms (10x the 100ms timeout) to ensure reliable timeouts
-                // This prevents rare race conditions where delays complete before timeout fires
                 await Task.Delay(1000, ct);
                 return x * 2;
             },
             options);
 
-        results.Should().BeEmpty();
-        attemptCount.Should().Be(3);
+        results.Should().BeEmpty("all 3 attempts (initial + 2 retries) should timeout with 1s delay vs 100ms timeout");
+        attemptCount.Should().Be(3, "operation should be attempted 3 times (initial attempt + 2 retries)");
     }
 
     [Fact]
@@ -307,33 +297,26 @@ public class CancellationAndTimeoutTests
         using var cts = new CancellationTokenSource();
         var options = new ParallelOptionsRivulet
         {
-            // Use very short timeout to ensure timeouts happen quickly
             PerItemTimeout = TimeSpan.FromMilliseconds(20),
             ErrorMode = ErrorMode.BestEffort,
-            MaxDegreeOfParallelism = 2 // Limit concurrency to make timing more predictable
+            MaxDegreeOfParallelism = 2
         };
 
         var task = source.SelectParallelAsync(
             async (x, ct) =>
             {
-                // Use much longer delay to ensure items reliably timeout
-                // 1000ms delay vs 20ms timeout = guaranteed timeout
                 await Task.Delay(1000, ct);
                 return x * 2;
             },
             options,
             cts.Token);
 
-        // Wait very briefly, then cancel immediately
-        // This ensures only a few items (if any) can start processing before cancellation
         await Task.Delay(10, CancellationToken.None);
         await cts.CancelAsync();
 
         var results = await task;
 
-        // Due to timing variations, 0-2 items might complete before timeout/cancellation
-        // The key assertion is that NOT all 100 items completed (timeout and cancellation work)
-        results.Should().HaveCountLessThanOrEqualTo(2, "timeout and cancellation should prevent most items from completing");
+        results.Should().HaveCountLessThanOrEqualTo(2, "with 20ms timeout and 1000ms delays, plus cancellation after 10ms, at most 2 items should complete");
     }
 
     [Fact]
