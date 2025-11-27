@@ -84,25 +84,30 @@ public class CancellationAndTimeoutTests
         var source = Enumerable.Range(1, 5);
         var options = new ParallelOptionsRivulet
         {
-            // Increased from 100ms → 500ms to handle Windows CI/CD thread pool contention
-            PerItemTimeout = TimeSpan.FromMilliseconds(500),
-            ErrorMode = ErrorMode.BestEffort
+            // Use longer timeout to prevent false positives on slow CI/CD machines
+            // where even quick operations might exceed timeout due to thread pool starvation
+            PerItemTimeout = TimeSpan.FromMilliseconds(2000),
+            ErrorMode = ErrorMode.BestEffort,
+            MaxDegreeOfParallelism = 2 // Limit concurrency to reduce thread pool contention
         };
 
         var results = await source.SelectParallelAsync(
             async (x, ct) =>
             {
                 if (x == 3)
-                    // Increased from 500ms → 2000ms to ensure this item definitely times out
-                    await Task.Delay(2000, ct);
+                    // Use much longer delay (10s) to ensure this item reliably times out
+                    // Even on slow CI/CD, 10s >> 2s timeout, so no race condition
+                    await Task.Delay(10000, ct);
                 else
-                    await Task.Delay(10, ct);
+                    // Use minimal delay to ensure these items complete quickly
+                    // Even with thread pool delays, 1ms << 2s timeout
+                    await Task.Delay(1, ct);
                 return x * 2;
             },
             options);
 
-        results.Should().HaveCount(4);
-        results.Should().NotContain(6);
+        results.Should().HaveCount(4, "items 1,2,4,5 should complete, item 3 should timeout");
+        results.Should().NotContain(6, "item 3 (value 6) should have timed out");
     }
 
     [Fact]
