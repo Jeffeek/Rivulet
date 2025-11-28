@@ -234,7 +234,7 @@ class RoadmapGenerator(FileGenerator):
             roadmap_path = self.repo_root / 'ROADMAP.md'
 
         if not roadmap_path.exists():
-            self.log("  ⚠️  ROADMAP.md not found - skipping")
+            self.log("  [WARN] ROADMAP.md not found - skipping")
             return ""
 
         with open(roadmap_path, 'r', encoding='utf-8') as f:
@@ -250,7 +250,7 @@ class RoadmapGenerator(FileGenerator):
         if re.search(pattern, content, re.DOTALL):
             new_content = re.sub(pattern, replacement, content, flags=re.DOTALL)
         else:
-            self.log("  ⚠️  Version markers not found in ROADMAP.md")
+            self.log("  [WARN]  Version markers not found in ROADMAP.md")
             return content
 
         return new_content
@@ -295,7 +295,7 @@ class ReleaseWorkflowGenerator(FileGenerator):
 
         workflow_path = self.repo_root / '.github' / 'workflows' / 'release.yml'
         if not workflow_path.exists():
-            self.log("  ⚠️  release.yml not found - skipping")
+            self.log("  [WARN]  release.yml not found - skipping")
             return ""
 
         with open(workflow_path, 'r', encoding='utf-8') as f:
@@ -311,7 +311,7 @@ class ReleaseWorkflowGenerator(FileGenerator):
         if re.search(pattern, content, re.DOTALL):
             new_content = re.sub(pattern, replacement, content, flags=re.DOTALL)
         else:
-            self.log("  ⚠️  Pack command markers not found in release.yml")
+            self.log("  [WARN]  Pack command markers not found in release.yml")
             return content
 
         return new_content
@@ -336,7 +336,7 @@ class NugetActivityMonitorGenerator(FileGenerator):
 
         workflow_path = self.repo_root / '.github' / 'workflows' / 'nuget-activity-monitor.yml'
         if not workflow_path.exists():
-            self.log("  ⚠️  nuget-activity-monitor.yml not found - skipping")
+            self.log("  [WARN]  nuget-activity-monitor.yml not found - skipping")
             return ""
 
         with open(workflow_path, 'r', encoding='utf-8') as f:
@@ -352,7 +352,7 @@ class NugetActivityMonitorGenerator(FileGenerator):
         if re.search(pattern, content, re.DOTALL):
             new_content = re.sub(pattern, replacement, content, flags=re.DOTALL)
         else:
-            self.log("  ⚠️  Package list markers not found in nuget-activity-monitor.yml")
+            self.log("  [WARN]  Package list markers not found in nuget-activity-monitor.yml")
             return content
 
         return new_content
@@ -374,7 +374,7 @@ class DependabotGenerator(FileGenerator):
 
         dependabot_path = self.repo_root / '.github' / 'dependabot.yml'
         if not dependabot_path.exists():
-            self.log("  ⚠️  dependabot.yml not found - skipping")
+            self.log("  [WARN]  dependabot.yml not found - skipping")
             return ""
 
         with open(dependabot_path, 'r', encoding='utf-8') as f:
@@ -390,7 +390,7 @@ class DependabotGenerator(FileGenerator):
         if re.search(pattern, content, re.DOTALL):
             new_content = re.sub(pattern, replacement, content, flags=re.DOTALL)
         else:
-            self.log("  ⚠️  Package directory markers not found in dependabot.yml")
+            self.log("  [WARN]  Package directory markers not found in dependabot.yml")
             return content
 
         return new_content
@@ -459,13 +459,13 @@ def generate_all(check_only: bool = False, verbose: bool = False) -> int:
         # Load registry
         registry = load_registry()
         if verbose:
-            print(f"✅ Loaded {len(registry.packages)} packages")
+            print(f"[OK] Loaded {len(registry.packages)} packages")
             print()
 
         # Validate registry first
         errors = registry.validate(verbose=verbose)
         if errors:
-            print("❌ Package registry validation failed:")
+            print("[ERR] Package registry validation failed:")
             for error in errors:
                 print(f"  - {error}")
             return 1
@@ -514,21 +514,21 @@ def generate_all(check_only: bool = False, verbose: bool = False) -> int:
 
                     if old_content != new_content:
                         if check_only:
-                            print(f"❌ {file_desc} needs regeneration")
+                            print(f"[ERR] {file_desc} needs regeneration")
                             changes_detected = True
                         else:
                             with open(file_path, 'w', encoding='utf-8') as f:
                                 f.write(new_content)
-                            print(f"✅ Updated {file_desc}")
+                            print(f"[OK] Updated {file_desc}")
                     else:
                         if verbose:
-                            print(f"✅ {file_desc} is up to date")
+                            print(f"[OK] {file_desc} is up to date")
                 else:
                     if verbose:
-                        print(f"⚠️  {file_desc} not found")
+                        print(f"[WARN]  {file_desc} not found")
 
             except Exception as e:
-                print(f"❌ Error generating {file_desc}: {e}")
+                print(f"[ERR] Error generating {file_desc}: {e}")
                 if verbose:
                     import traceback
                     traceback.print_exc()
@@ -536,17 +536,17 @@ def generate_all(check_only: bool = False, verbose: bool = False) -> int:
 
         if check_only and changes_detected:
             print()
-            print("❌ Some files need regeneration. Run: ./scripts/update-all.sh")
+            print("[ERR] Some files need regeneration. Run: ./scripts/update-all.sh")
             return 1
 
         if verbose:
             print()
-            print("✅ All files generated successfully!")
+            print("[OK] All files generated successfully!")
 
         return 0
 
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"[ERR] Error: {e}")
         if verbose:
             import traceback
             traceback.print_exc()

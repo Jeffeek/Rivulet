@@ -163,9 +163,9 @@ class PackageRegistry:
 
         if verbose:
             if errors:
-                print(f"❌ Validation failed with {len(errors)} errors")
+                print(f"[ERR] Validation failed with {len(errors)} errors")
             else:
-                print("✅ Validation passed!")
+                print("[OK] Validation passed!")
 
         return errors
 
@@ -247,7 +247,7 @@ if __name__ == '__main__':
     # Test loading and validation
     try:
         registry = load_registry()
-        print(f"✅ Loaded {len(registry.packages)} packages from {registry.registry_path}")
+        print(f"[OK] Loaded {len(registry.packages)} packages from {registry.registry_path}")
         print(f"   Repository root: {registry.repo_root}")
         print()
 
@@ -260,8 +260,8 @@ if __name__ == '__main__':
             sys.exit(1)
         else:
             print()
-            print("✅ All validations passed!")
+            print("[OK] All validations passed!")
 
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"[ERR] Error: {e}")
         sys.exit(1)

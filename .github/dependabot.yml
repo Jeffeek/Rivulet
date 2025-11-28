@@ -178,6 +178,11 @@ updates:
       interval: daily
 
   - package-ecosystem: nuget
+    directory: /tests/Rivulet.Base.Tests
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
     directory: /tests/Rivulet.Benchmarks
     schedule:
       interval: daily
