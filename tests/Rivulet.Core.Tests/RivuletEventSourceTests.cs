@@ -1,8 +1,9 @@
 using System.Diagnostics.Tracing;
 using Rivulet.Core.Observability;
 
-namespace Rivulet.Core.Tests.Observability;
+namespace Rivulet.Core.Tests;
 
+[Collection(TestCollections.EventSourceSequential)]
 public class RivuletEventSourceTests
 {
     [Fact]

@@ -5,13 +5,7 @@ using Rivulet.Core.Observability;
 
 namespace Rivulet.Core.Tests;
 
-/// <summary>
-/// Collection definition for EventSource tests that must run sequentially.
-/// EventSource is a singleton, so tests that verify its counters cannot run in parallel.
-/// </summary>
-[CollectionDefinition("EventSource Sequential Tests", DisableParallelization = true)]
-public class EventSourceTestCollection;
-
+[Collection(TestCollections.EventSourceSequential)]
 [SuppressMessage("ReSharper", "AccessToDisposedClosure")]
 public class MetricsTests
 {
@@ -256,6 +250,7 @@ public class MetricsTests
     {
         var source = AsyncEnumerable.Range(1, 30);
         MetricsSnapshot? capturedSnapshot = null;
+        var callbackInvocationCount = 0;
 
         var options = new ParallelOptionsRivulet
         {
@@ -266,6 +261,7 @@ public class MetricsTests
                 SampleInterval = TimeSpan.FromMilliseconds(50),
                 OnMetricsSample = snapshot =>
                 {
+                    Interlocked.Increment(ref callbackInvocationCount);
                     capturedSnapshot = snapshot;
                     return ValueTask.CompletedTask;
                 }
@@ -280,17 +276,18 @@ public class MetricsTests
             }, options)
             .ToListAsync();
 
-        // Disposal waits 1000ms + takes final sample inside SelectParallelStreamAsync
-        // Poll for the snapshot to be captured with correct value to handle memory visibility
-        // and callback execution timing in CI environments
-        await Extensions.ApplyDeadlineAsync(
-            DateTime.UtcNow.AddMilliseconds(3000),
-            () => Task.Delay(100),
-            () => capturedSnapshot == null || capturedSnapshot.TotalFailures != 10);
+        results.Should().HaveCount(20, "30 items minus 10 failures (every 3rd: 3,6,9,12,15,18,21,24,27,30) equals 20 successful results");
 
-        results.Should().HaveCount(20); // 30 - 10 failures
-        capturedSnapshot.Should().NotBeNull();
-        capturedSnapshot!.TotalFailures.Should().Be(10);
+        await Task.Yield();
+
+        await Extensions.ApplyDeadlineAsync(
+            DateTime.UtcNow.AddMilliseconds(5000),
+            () => Task.Delay(100),
+            () => callbackInvocationCount == 0 || capturedSnapshot == null || capturedSnapshot.TotalFailures != 10);
+
+        callbackInvocationCount.Should().BeGreaterThan(0, "at least one metrics sample should have been captured during operation execution and disposal");
+        capturedSnapshot.Should().NotBeNull("final metrics snapshot should be available after disposal completes");
+        capturedSnapshot!.TotalFailures.Should().Be(10, "items 3,6,9,12,15,18,21,24,27,30 should have failed (10 total failures)");
     }
 
     [Fact]
@@ -458,34 +455,40 @@ public class MetricsTests
         var results1 = await task1;
         var results2 = await task2;
 
-        // MetricsTracker disposal waits 1000ms + takes final sample
-        // Poll for snapshots to be captured with correct values to handle memory visibility
-        // and callback execution timing in CI environments
+        results1.Should().HaveCount(20, "first operation should complete all 20 items");
+        results2.Should().HaveCount(30, "second operation should complete all 30 items");
+
+        await Task.Yield();
+
         await Extensions.ApplyDeadlineAsync(
-            DateTime.UtcNow.AddMilliseconds(3000),
+            DateTime.UtcNow.AddMilliseconds(5000),
             () => Task.Delay(100),
             () =>
             {
                 if (!snapshots1.Any() || !snapshots2.Any())
                     return true;
-                var max1 = snapshots1.Max(s => s.ItemsCompleted);
-                var max2 = snapshots2.Max(s => s.ItemsCompleted);
+
+                var list1 = snapshots1.ToList();
+                var list2 = snapshots2.ToList();
+
+                var max1 = list1.Max(s => s.ItemsCompleted);
+                var max2 = list2.Max(s => s.ItemsCompleted);
                 return max1 != 20 || max2 != 30;
             });
 
-        results1.Should().HaveCount(20);
-        results2.Should().HaveCount(30);
+        await Task.Delay(200);
 
-        snapshots1.Should().NotBeEmpty();
-        snapshots2.Should().NotBeEmpty();
+        snapshots1.Should().NotBeEmpty("first operation should have captured at least one metrics sample");
+        snapshots2.Should().NotBeEmpty("second operation should have captured at least one metrics sample");
 
-        // Use Max() to get the highest completed count across all snapshots
-        // This handles race conditions where timer fires before final item completes
-        var maxCompleted1 = snapshots1.Max(s => s.ItemsCompleted);
-        var maxCompleted2 = snapshots2.Max(s => s.ItemsCompleted);
+        var finalSnapshots1 = snapshots1.ToList();
+        var finalSnapshots2 = snapshots2.ToList();
 
-        maxCompleted1.Should().Be(20);
-        maxCompleted2.Should().Be(30);
+        var maxCompleted1 = finalSnapshots1.Max(s => s.ItemsCompleted);
+        var maxCompleted2 = finalSnapshots2.Max(s => s.ItemsCompleted);
+
+        maxCompleted1.Should().Be(20, "first operation's final metrics snapshot should show all 20 items completed");
+        maxCompleted2.Should().Be(30, "second operation's final metrics snapshot should show all 30 items completed");
     }
 
     [Fact]
@@ -707,13 +710,18 @@ public class MetricsTests
             },
             options);
 
-        await Task.Delay(200);
+        await Task.Yield();
 
-        results.Should().HaveCount(1000);
-        capturedSnapshot.Should().NotBeNull();
-        capturedSnapshot!.ItemsStarted.Should().Be(1000);
-        capturedSnapshot.ItemsCompleted.Should().Be(1000);
-        capturedSnapshot.TotalFailures.Should().Be(0);
+        await Extensions.ApplyDeadlineAsync(
+            DateTime.UtcNow.AddMilliseconds(5000),
+            () => Task.Delay(100),
+            () => capturedSnapshot == null || capturedSnapshot.ItemsStarted != 1000 || capturedSnapshot.ItemsCompleted != 1000);
+
+        results.Should().HaveCount(1000, "all 1000 items should complete successfully");
+        capturedSnapshot.Should().NotBeNull("final metrics snapshot should be captured after disposal");
+        capturedSnapshot!.ItemsStarted.Should().Be(1000, "metrics should show all 1000 items were started");
+        capturedSnapshot.ItemsCompleted.Should().Be(1000, "metrics should show all 1000 items completed successfully");
+        capturedSnapshot.TotalFailures.Should().Be(0, "no items should have failed");
     }
 
 

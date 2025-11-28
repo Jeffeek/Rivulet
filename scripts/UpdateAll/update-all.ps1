@@ -47,7 +47,7 @@ if (Get-Command python -ErrorAction SilentlyContinue) {
 
 # Exit if no Python found
 if (-not $python3Available -and -not $pythonAvailable) {
-    Write-Host "❌ Error: Python 3 is required but not found" -ForegroundColor Red
+    Write-Host "[ERR] Error: Python 3 is required but not found" -ForegroundColor Red
     Write-Host "   Please install Python 3.8 or later" -ForegroundColor Red
     exit 1
 }
@@ -66,14 +66,14 @@ if ($python3HasYaml) {
 # Install PyYAML if needed
 $null = & $pythonCmd -c "import yaml" 2>&1
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "⚠️  PyYAML not found. Installing..." -ForegroundColor Yellow
+    Write-Host "[WARN]  PyYAML not found. Installing..." -ForegroundColor Yellow
     & $pythonCmd -m pip install --user --quiet pyyaml
     if ($LASTEXITCODE -ne 0) {
-        Write-Host "❌ Failed to install PyYAML" -ForegroundColor Red
+        Write-Host "[ERR] Failed to install PyYAML" -ForegroundColor Red
         Write-Host "   Please run: $pythonCmd -m pip install pyyaml" -ForegroundColor Red
         exit 1
     }
-    Write-Host "✅ PyYAML installed" -ForegroundColor Green
+    Write-Host "[OK] PyYAML installed" -ForegroundColor Green
     Write-Host ""
 }
 
@@ -82,7 +82,7 @@ Write-Host "Step 1: Validating package registry..." -ForegroundColor Cyan
 & $pythonCmd scripts/UpdateAll/package_registry.py
 if ($LASTEXITCODE -ne 0) {
     Write-Host ""
-    Write-Host "❌ Package registry validation failed" -ForegroundColor Red
+    Write-Host "[ERR] Package registry validation failed" -ForegroundColor Red
     Write-Host "   Please fix the errors in packages.yml" -ForegroundColor Red
     exit 1
 }
@@ -98,13 +98,13 @@ if ($IsVerbose) {
 & $pythonCmd $generateArgs
 if ($LASTEXITCODE -ne 0) {
     Write-Host ""
-    Write-Host "❌ File generation failed" -ForegroundColor Red
+    Write-Host "[ERR] File generation failed" -ForegroundColor Red
     exit 1
 }
 Write-Host ""
 
 Write-Host "========================================" -ForegroundColor Green
-Write-Host "✅ All files updated successfully!" -ForegroundColor Green
+Write-Host "[OK] All files updated successfully!" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Green
 Write-Host ""
 Write-Host "Generated files:"

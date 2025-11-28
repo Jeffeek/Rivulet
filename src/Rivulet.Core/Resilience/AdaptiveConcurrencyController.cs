@@ -129,7 +129,7 @@ internal sealed class AdaptiveConcurrencyController : IAsyncDisposable
                     AdaptiveConcurrencyStrategy.AIMD => Math.Min(_options.MaxConcurrency, oldConcurrency + 1),
                     AdaptiveConcurrencyStrategy.Aggressive => Math.Min(_options.MaxConcurrency, oldConcurrency + Math.Max(1, oldConcurrency / 10)),
                     AdaptiveConcurrencyStrategy.Gradual => Math.Min(_options.MaxConcurrency, oldConcurrency + 1),
-                    _ => Math.Min(_options.MaxConcurrency, oldConcurrency + 1)
+                    _ => throw new ArgumentOutOfRangeException(nameof(_options.IncreaseStrategy), _options.IncreaseStrategy, "Unknown value")
                 };
             }
 

@@ -115,7 +115,6 @@ public sealed class HttpOptions
             {
                 HttpRequestException { StatusCode: not null } httpEx => RetriableStatusCodes.Contains(httpEx.StatusCode.Value),
                 TaskCanceledException => true,
-                OperationCanceledException => false,
                 _ => false
             };
         }

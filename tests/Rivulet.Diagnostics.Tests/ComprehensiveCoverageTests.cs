@@ -6,7 +6,7 @@ namespace Rivulet.Diagnostics.Tests;
 /// <summary>
 /// Comprehensive tests to achieve 100% code coverage for edge cases.
 /// </summary>
-[Collection("Serial EventSource Tests")]
+[Collection(TestCollections.SerialEventSource)]
 public class ComprehensiveCoverageTests
 {
     [Fact]

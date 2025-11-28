@@ -49,7 +49,7 @@ fi
 
 # Exit if no Python found
 if [ "$PYTHON3_AVAILABLE" = false ] && [ "$PYTHON_AVAILABLE" = false ]; then
-    echo -e "${RED}❌ Error: Python 3 is required but not found${NC}"
+    echo -e "${RED}[ERR] Error: Python 3 is required but not found${NC}"
     echo "   Please install Python 3.8 or later"
     exit 1
 fi
@@ -67,13 +67,13 @@ fi
 
 # Install PyYAML if needed
 if ! $PYTHON_CMD -c "import yaml" &> /dev/null; then
-    echo -e "${YELLOW}⚠️  PyYAML not found. Installing...${NC}"
+    echo -e "${YELLOW}[WARN]  PyYAML not found. Installing...${NC}"
     $PYTHON_CMD -m pip install --user --quiet pyyaml || {
-        echo -e "${RED}❌ Failed to install PyYAML${NC}"
+        echo -e "${RED}[ERR] Failed to install PyYAML${NC}"
         echo "   Please run: $PYTHON_CMD -m pip install pyyaml"
         exit 1
     }
-    echo -e "${GREEN}✅ PyYAML installed${NC}"
+    echo -e "${GREEN}[OK] PyYAML installed${NC}"
     echo ""
 fi
 
@@ -81,7 +81,7 @@ fi
 echo -e "${CYAN}Step 1: Validating package registry...${NC}"
 $PYTHON_CMD scripts/UpdateAll/package_registry.py || {
     echo ""
-    echo -e "${RED}❌ Package registry validation failed${NC}"
+    echo -e "${RED}[ERR] Package registry validation failed${NC}"
     echo "   Please fix the errors in packages.yml"
     exit 1
 }
@@ -91,13 +91,13 @@ echo ""
 echo -e "${CYAN}Step 2: Generating files...${NC}"
 $PYTHON_CMD scripts/UpdateAll/generate-all.py --verbose || {
     echo ""
-    echo -e "${RED}❌ File generation failed${NC}"
+    echo -e "${RED}[ERR] File generation failed${NC}"
     exit 1
 }
 echo ""
 
 echo -e "${GREEN}========================================${NC}"
-echo -e "${GREEN}✅ All files updated successfully!${NC}"
+echo -e "${GREEN}[WARN] All files updated successfully!${NC}"
 echo -e "${GREEN}========================================${NC}"
 echo ""
 echo "Generated files:"

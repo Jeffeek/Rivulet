@@ -588,7 +588,13 @@ public class CircuitBreakerTests
 
         cb.State.Should().Be(CircuitBreakerState.Open);
 
-        await Task.Delay(200); // Wait for callback task
+        // OnStateChange callback is executed via Task.Run in fire-and-forget mode (CircuitBreaker.cs:176)
+        // On slow CI/CD machines, the callback might not execute immediately
+        // Poll for up to 2 seconds to ensure callback has been invoked
+        await Extensions.ApplyDeadlineAsync(
+            DateTime.UtcNow.AddMilliseconds(2000),
+            () => Task.Delay(50),
+            () => callbackInvoked == 0);
 
         callbackInvoked.Should().BeGreaterThan(0);
     }

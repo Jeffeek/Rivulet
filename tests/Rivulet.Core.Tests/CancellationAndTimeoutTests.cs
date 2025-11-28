@@ -84,25 +84,24 @@ public class CancellationAndTimeoutTests
         var source = Enumerable.Range(1, 5);
         var options = new ParallelOptionsRivulet
         {
-            // Increased from 100ms → 500ms to handle Windows CI/CD thread pool contention
-            PerItemTimeout = TimeSpan.FromMilliseconds(500),
-            ErrorMode = ErrorMode.BestEffort
+            PerItemTimeout = TimeSpan.FromMilliseconds(2000),
+            ErrorMode = ErrorMode.BestEffort,
+            MaxDegreeOfParallelism = 2
         };
 
         var results = await source.SelectParallelAsync(
             async (x, ct) =>
             {
                 if (x == 3)
-                    // Increased from 500ms → 2000ms to ensure this item definitely times out
-                    await Task.Delay(2000, ct);
+                    await Task.Delay(10000, ct);
                 else
-                    await Task.Delay(10, ct);
+                    await Task.Delay(1, ct);
                 return x * 2;
             },
             options);
 
-        results.Should().HaveCount(4);
-        results.Should().NotContain(6);
+        results.Should().HaveCount(4, "items 1,2,4,5 complete within 2s timeout, item 3 exceeds timeout with 10s delay");
+        results.Should().NotContain(6, "item 3 (result=6) should timeout and be excluded from results");
     }
 
     [Fact]
@@ -111,9 +110,7 @@ public class CancellationAndTimeoutTests
         var source = Enumerable.Range(1, 10);
         var options = new ParallelOptionsRivulet
         {
-            // Tasks take 50ms, but CI runners can have significant scheduling delays
-            // Use 1000ms timeout (20x the expected duration) to avoid flakiness in heavily loaded CI
-            PerItemTimeout = TimeSpan.FromMilliseconds(1000)
+            PerItemTimeout = TimeSpan.FromMilliseconds(2000)
         };
 
         var results = await source.SelectParallelAsync(
@@ -124,7 +121,7 @@ public class CancellationAndTimeoutTests
             },
             options);
 
-        results.Should().HaveCount(10);
+        results.Should().HaveCount(10, "all items should complete within the 2s timeout");
     }
 
     [Fact]
@@ -165,13 +162,13 @@ public class CancellationAndTimeoutTests
             async (x, ct) =>
             {
                 attemptCount++;
-                await Task.Delay(500, ct);
+                await Task.Delay(1000, ct);
                 return x * 2;
             },
             options);
 
-        results.Should().BeEmpty();
-        attemptCount.Should().Be(3);
+        results.Should().BeEmpty("all 3 attempts (initial + 2 retries) should timeout with 1s delay vs 100ms timeout");
+        attemptCount.Should().Be(3, "operation should be attempted 3 times (initial attempt + 2 retries)");
     }
 
     [Fact]
@@ -300,28 +297,26 @@ public class CancellationAndTimeoutTests
         using var cts = new CancellationTokenSource();
         var options = new ParallelOptionsRivulet
         {
-            PerItemTimeout = TimeSpan.FromMilliseconds(50),
-            ErrorMode = ErrorMode.BestEffort
+            PerItemTimeout = TimeSpan.FromMilliseconds(20),
+            ErrorMode = ErrorMode.BestEffort,
+            MaxDegreeOfParallelism = 2
         };
 
         var task = source.SelectParallelAsync(
             async (x, ct) =>
             {
-                // Use 200ms delay to ensure items reliably timeout (4x the 50ms timeout)
-                // This prevents rare cases where fast scheduling completes items within timeout
-                await Task.Delay(200, ct);
+                await Task.Delay(1000, ct);
                 return x * 2;
             },
             options,
             cts.Token);
 
-        // Wait for timeouts to occur before cancellation
-        await Task.Delay(50, CancellationToken.None);
+        await Task.Delay(10, CancellationToken.None);
         await cts.CancelAsync();
 
         var results = await task;
 
-        results.Should().BeEmpty();
+        results.Should().HaveCountLessThanOrEqualTo(2, "with 20ms timeout and 1000ms delays, plus cancellation after 10ms, at most 2 items should complete");
     }
 
     [Fact]

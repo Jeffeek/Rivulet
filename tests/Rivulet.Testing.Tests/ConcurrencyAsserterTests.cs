@@ -219,7 +219,7 @@ public class ConcurrencyAsserterTests
     [Fact]
     public async Task ExtremeContention_ShouldHandleCompareExchangeRetries()
     {
-        // This test creates extreme contention to force the CompareExchange retry path (line 35)
+        // This test creates extreme contention to force the CompareExchange retry path
         // Using Task.Run to create true thread contention instead of async state machine
         var asserter = new ConcurrencyAsserter();
         var startSignal = new TaskCompletionSource<bool>();

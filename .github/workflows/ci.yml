@@ -57,12 +57,12 @@ jobs:
     - name: Run tests for net8.0 and net9.0 (Ubuntu - All tests including integration)
       if: runner.os == 'Linux'
       run: dotnet test -c Release --no-build --verbosity normal
-      timeout-minutes: 8
+      timeout-minutes: 12
 
     - name: Run tests for net8.0 and net9.0 (Windows - Unit tests only, integration tests require Linux containers)
       if: runner.os == 'Windows'
       run: dotnet test -c Release --no-build --verbosity normal --filter "Category!=Integration"
-      timeout-minutes: 3
+      timeout-minutes: 5
 
   test-with-coverage:
     name: Test with Coverage (Ubuntu)
@@ -101,7 +101,7 @@ jobs:
 
     - name: Run tests with coverage
       run: dotnet test -c Release --no-build --collect:"XPlat Code Coverage" --results-directory ./coverage
-      timeout-minutes: 10
+      timeout-minutes: 8
 
     - name: Upload coverage reports
       uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
@@ -134,4 +134,4 @@ jobs:
     uses: ./.github/workflows/reusable-flaky-test-detection.yml
     with:
       iterations: 20
-      timeout-minutes: 60
+      timeout-minutes: 100

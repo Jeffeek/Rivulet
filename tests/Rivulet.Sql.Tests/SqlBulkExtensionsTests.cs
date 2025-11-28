@@ -564,7 +564,7 @@ public class SqlBulkExtensionsTests
         executeNonQueryCalled.Should().BeTrue();
     }
 
-    // Mock IDbConnection that does NOT extend DbConnection (for lines 219, 225)
+    // Mock IDbConnection that does NOT extend DbConnection
     private class NonDbConnectionMock(Action onOpen, Func<int> executeNonQueryFunc) : IDbConnection
     {
         private ConnectionState _state = ConnectionState.Closed;
@@ -598,7 +598,7 @@ public class SqlBulkExtensionsTests
         }
     }
 
-    // Mock IDbCommand that does NOT extend DbCommand (for lines 231, 236)
+    // Mock IDbCommand that does NOT extend DbCommand
     private class NonDbCommandMock(Func<int> executeNonQueryFunc) : IDbCommand
     {
         [AllowNull]
@@ -653,7 +653,7 @@ public class SqlBulkExtensionsTests
         public void RemoveAt(string parameterName) => throw new NotImplementedException();
     }
 
-    // Mock that uses NonDbCommandMock for testing line 236
+    // Mock that uses NonDbCommandMock for testing
     private class NonDbConnectionWithNonDbCommandMock(Func<int> executeNonQueryFunc) : IDbConnection
     {
         private ConnectionState _state = ConnectionState.Closed;

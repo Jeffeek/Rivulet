@@ -4,7 +4,7 @@ using Rivulet.Core;
 
 namespace Rivulet.Diagnostics.OpenTelemetry.Tests;
 
-[Collection("ActivitySource Tests")]
+[Collection(TestCollections.ActivitySource)]
 [SuppressMessage("ReSharper", "AccessToDisposedClosure")]
 public class ParallelOptionsRivuletExtensionsTests
 {

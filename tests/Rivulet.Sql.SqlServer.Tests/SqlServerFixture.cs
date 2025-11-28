@@ -36,9 +36,9 @@ public class SqlServerFixture : IAsyncLifetime
 
 /// <summary>
 /// Collection definition for SQL Server integration tests.
-/// All test classes marked with [Collection("SqlServer")] will share the same container.
+/// All test classes marked with [Collection(TestCollections.SqlServer)] will share the same container.
 /// </summary>
-[CollectionDefinition("SqlServer")]
+[CollectionDefinition(TestCollections.SqlServer)]
 public class SqlServerCollection : ICollectionFixture<SqlServerFixture>
 {
     // This class is never instantiated - it's just a marker for xUnit

@@ -1,9 +1,11 @@
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
+using Rivulet.Base.Tests;
 using Rivulet.Core.Observability;
 
 namespace Rivulet.Core.Tests;
 
+[Collection(TestCollections.EventSourceSequential)]
 [SuppressMessage("ReSharper", "AccessToDisposedClosure")]
 public class ProgressReportingTests
 {
@@ -119,19 +121,26 @@ public class ProgressReportingTests
             },
             options);
 
-        // Disposal completes inside SelectParallelAsync before it returns
-        // The disposal waits up to 5 seconds for the final progress report to complete
-        // Race condition fixed by 200ms delay before final report in ProgressTracker
+        await Task.Yield();
 
-        results.Should().HaveCount(16); // 20 - 4 errors
+        await Extensions.ApplyDeadlineAsync(
+            DateTime.UtcNow.AddMilliseconds(2000),
+            () => Task.Delay(50),
+            () =>
+            {
+                if (!snapshots.Any()) return true;
+                var currentMaxErrors = snapshots.Max(s => s.ErrorCount);
+                var currentMaxCompleted = snapshots.Max(s => s.ItemsCompleted);
+                return currentMaxErrors != 4 || currentMaxCompleted != 16;
+            });
 
-        // The final sample during disposal should have captured all errors
-        // We take the max across all samples to account for any timing variations
+        results.Should().HaveCount(16, "20 items minus 4 failures (items 5,10,15,20) equals 16 successful results");
+
         var maxErrors = snapshots.Max(s => s.ErrorCount);
         var maxCompleted = snapshots.Max(s => s.ItemsCompleted);
 
-        maxErrors.Should().Be(4); // Should eventually report all 4 errors
-        maxCompleted.Should().Be(16); // Should eventually report all 16 completed
+        maxErrors.Should().Be(4, "items 5,10,15,20 should have failed (4 total errors)");
+        maxCompleted.Should().Be(16, "all 16 non-failing items should have completed successfully");
     }
 
     [Fact]

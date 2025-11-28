@@ -93,7 +93,9 @@ public class RivuletStructuredLogListenerTests : IDisposable
     [Fact]
     public async Task StructuredLogListener_ShouldInvokeAction_WhenUsingCustomAction()
     {
-        var loggedLines = new List<string>();
+        // Use ConcurrentBag to avoid collection modification exceptions on Windows
+        // when EventListeners add items from background threads during enumeration
+        var loggedLines = new System.Collections.Concurrent.ConcurrentBag<string>();
         await using var listener = new RivuletStructuredLogListener(loggedLines.Add);
 
         await Enumerable.Range(1, 10)
@@ -113,9 +115,7 @@ public class RivuletStructuredLogListenerTests : IDisposable
 
         loggedLines.Should().NotBeEmpty();
 
-        // Create a copy to avoid collection modification during enumeration
-        var linesCopy = loggedLines.ToList();
-        foreach (var act in linesCopy.Select(line => (Func<JsonDocument>?)(() => JsonDocument.Parse(line))))
+        foreach (var act in loggedLines.Select(line => (Func<JsonDocument>?)(() => JsonDocument.Parse(line))))
         {
             act.Should().NotThrow();
         }
@@ -124,7 +124,7 @@ public class RivuletStructuredLogListenerTests : IDisposable
     [Fact]
     public async Task StructuredLogListener_ShouldContainRequiredFields_InJsonOutput()
     {
-        var loggedLines = new List<string>();
+        var loggedLines = new System.Collections.Concurrent.ConcurrentBag<string>();
         await using var listener = new RivuletStructuredLogListener(loggedLines.Add);
 
         await Enumerable.Range(1, 5)
@@ -143,7 +143,7 @@ public class RivuletStructuredLogListenerTests : IDisposable
 
         loggedLines.Should().NotBeEmpty();
 
-        var firstLog = JsonDocument.Parse(loggedLines[0]);
+        var firstLog = JsonDocument.Parse(loggedLines.First());
         firstLog.RootElement.TryGetProperty("timestamp", out _).Should().BeTrue();
         firstLog.RootElement.TryGetProperty("source", out _).Should().BeTrue();
         firstLog.RootElement.TryGetProperty("metric", out var metric).Should().BeTrue();
@@ -175,7 +175,7 @@ public class RivuletStructuredLogListenerTests : IDisposable
     [Fact]
     public void StructuredLogListener_WithLogAction_AndSyncDispose_ShouldDisposeCleanly()
     {
-        var loggedLines = new List<string>();
+        var loggedLines = new System.Collections.Concurrent.ConcurrentBag<string>();
         var listener = new RivuletStructuredLogListener(loggedLines.Add);
 
         var task = Enumerable.Range(1, 3)

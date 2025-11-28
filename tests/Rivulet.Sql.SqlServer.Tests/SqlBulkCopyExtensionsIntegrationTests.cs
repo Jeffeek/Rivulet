@@ -7,7 +7,7 @@ namespace Rivulet.Sql.SqlServer.Tests;
 /// <summary>
 /// Integration tests for SqlBulkCopyExtensions using Testcontainers.
 /// Uses per-test-class container for isolation (IAsyncLifetime).
-/// For shared containers across test classes, use [Collection("SqlServer")] with SqlServerFixture.
+/// For shared containers across test classes, use [Collection(TestCollections.SqlServer)] with SqlServerFixture.
 /// </summary>
 [Trait("Category", "Integration")]
 public class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
@@ -91,7 +91,7 @@ public class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
         command.CommandText = "SELECT COUNT(*) FROM TestTable";
         var count = (int)(await command.ExecuteScalarAsync())!;
 
-        count.Should().Be(3);
+        count.Should().Be(3, "all 3 records (Alice, Bob, Charlie) should be inserted successfully");
     }
 
     [Fact]
@@ -117,7 +117,7 @@ public class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
         command.CommandText = "SELECT COUNT(*) FROM TestTable";
         var count = (int)(await command.ExecuteScalarAsync())!;
 
-        count.Should().Be(10);
+        count.Should().Be(10, "all 10 User records should be inserted in 4 batches (3+3+3+1)");
     }
 
     [Fact]
@@ -153,7 +153,7 @@ public class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
         command.CommandText = "SELECT COUNT(*) FROM TestTable WHERE Id >= 100";
         var count = (int)(await command.ExecuteScalarAsync())!;
 
-        count.Should().Be(2);
+        count.Should().Be(2, "Dave and Eve records (IDs 100-101) should be inserted with explicit column mappings");
     }
 
     [Fact]
@@ -166,9 +166,7 @@ public class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
             "TestTable",
             MapToDataTable);
 
-        // ForEachParallelAsync cancels the operation when an exception occurs,
-        // so we expect OperationCanceledException
-        await act.Should().ThrowAsync<OperationCanceledException>();
+        await act.Should().ThrowAsync<OperationCanceledException>("ForEachParallelAsync cancels when connection factory returns null");
     }
 
     [Fact]
@@ -181,8 +179,7 @@ public class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
             "NonExistentTable",
             MapToDataTable);
 
-        // ForEachParallelAsync cancels the operation when an exception occurs
-        await act.Should().ThrowAsync<OperationCanceledException>();
+        await act.Should().ThrowAsync<OperationCanceledException>("ForEachParallelAsync cancels when bulk copy fails due to non-existent table");
     }
 
     [Fact]
@@ -197,8 +194,7 @@ public class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
             MapToDataTable,
             mappings);
 
-        // ForEachParallelAsync cancels the operation when an exception occurs
-        await act.Should().ThrowAsync<OperationCanceledException>();
+        await act.Should().ThrowAsync<OperationCanceledException>("ForEachParallelAsync cancels when connection factory returns null (with column mappings)");
     }
 
     [Fact]
@@ -227,7 +223,7 @@ public class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
         command.CommandText = "SELECT Name FROM TestTable WHERE Id = 200";
         var name = (string)(await command.ExecuteScalarAsync())!;
 
-        name.Should().Be("Frank");
+        name.Should().Be("Frank", "Frank record (ID 200) should be inserted with custom bulk copy options and timeout");
     }
 
     [Fact]
@@ -254,7 +250,7 @@ public class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
         command.CommandText = "SELECT COUNT(*) FROM TestTable WHERE Id >= 300";
         var count = (int)(await command.ExecuteScalarAsync())!;
 
-        count.Should().Be(2);
+        count.Should().Be(2, "Grace and Hank records (IDs 300-301) should be inserted from IDataReader");
     }
 
     [Fact]
@@ -270,8 +266,7 @@ public class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
             () => null!,
             "TestTable");
 
-        // ForEachParallelAsync cancels the operation when an exception occurs
-        await act.Should().ThrowAsync<OperationCanceledException>();
+        await act.Should().ThrowAsync<OperationCanceledException>("ForEachParallelAsync cancels when connection factory returns null (DataReader overload)");
     }
 
     [Fact]
@@ -286,8 +281,6 @@ public class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
             CreateConnection,
             "TestTable");
 
-        // ForEachParallelAsync cancels the operation when an exception occurs
-        // (in this case, NullReferenceException or InvalidOperationException from null reader)
-        await act.Should().ThrowAsync<Exception>();
+        await act.Should().ThrowAsync<Exception>("ForEachParallelAsync should fail when attempting to use null IDataReader");
     }
 }
