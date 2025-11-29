@@ -210,12 +210,12 @@ public class RivuletHealthCheckTests
         var context = new HealthCheckContext();
         var result = await healthCheck.CheckHealthAsync(context);
 
-        result.Data.ContainsKey("error_rate").ShouldBeTrue();
-        var errorRate = (double)result.Data["error_rate"];
+        result.Data.TryGetValue("error_rate", out var errorRateObj).ShouldBeTrue();
+        var errorRate = (double)errorRateObj;
         errorRate.ShouldBeGreaterThan(0.2);
 
-        result.Data.ContainsKey("total_failures").ShouldBeTrue();
-        var failures = (double)result.Data["total_failures"];
+        result.Data.TryGetValue("total_failures", out var failuresObj).ShouldBeTrue();
+        var failures = (double)failuresObj;
         failures.ShouldBeLessThan(10000);
 
         result.Status.ShouldBe(HealthStatus.Degraded);
