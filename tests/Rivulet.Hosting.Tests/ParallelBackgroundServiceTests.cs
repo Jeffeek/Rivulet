@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Rivulet.Base.Tests;
 using Rivulet.Core;
 using System.Collections.Concurrent;
 
@@ -29,21 +30,12 @@ public class ParallelBackgroundServiceTests
         }
     }
 
-    private static async IAsyncEnumerable<int> GenerateItemsAsync(int count, int delayMs = 0)
-    {
-        for (var i = 1; i <= count; i++)
-        {
-            if (delayMs > 0)
-                await Task.Delay(delayMs);
-            yield return i;
-        }
-    }
 
     [Fact]
     public async Task StartAsync_ShouldProcessAllItems()
     {
         var logger = NullLogger<TestBackgroundService>.Instance;
-        var items = GenerateItemsAsync(5);
+        var items = TestDataGenerators.GenerateItemsAsync(5);
         var service = new TestBackgroundService(logger, items);
 
         using var cts = new CancellationTokenSource();
@@ -64,7 +56,7 @@ public class ParallelBackgroundServiceTests
     public async Task StartAsync_WithOptions_ShouldUseProvidedOptions()
     {
         var logger = NullLogger<TestBackgroundService>.Instance;
-        var items = GenerateItemsAsync(10);
+        var items = TestDataGenerators.GenerateItemsAsync(10);
         var options = new ParallelOptionsRivulet { MaxDegreeOfParallelism = 2 };
         var service = new TestBackgroundService(logger, items, options);
 
@@ -84,7 +76,7 @@ public class ParallelBackgroundServiceTests
     [Fact]
     public void Constructor_WithNullLogger_ShouldThrow()
     {
-        var items = GenerateItemsAsync(1);
+        var items = TestDataGenerators.GenerateItemsAsync(1);
 
         var act = () => new TestBackgroundService(null!, items);
 
@@ -96,7 +88,7 @@ public class ParallelBackgroundServiceTests
     public async Task StartAsync_WithNullOptions_ShouldUseDefaults()
     {
         var logger = NullLogger<TestBackgroundService>.Instance;
-        var items = GenerateItemsAsync(3);
+        var items = TestDataGenerators.GenerateItemsAsync(3);
         var service = new TestBackgroundService(logger, items);
 
         using var cts = new CancellationTokenSource();
@@ -115,7 +107,7 @@ public class ParallelBackgroundServiceTests
     public async Task StartAsync_WithEmptySource_ShouldCompleteImmediately()
     {
         var logger = NullLogger<TestBackgroundService>.Instance;
-        var items = GenerateItemsAsync(0);
+        var items = TestDataGenerators.GenerateItemsAsync(0);
         var service = new TestBackgroundService(logger, items);
 
         using var cts = new CancellationTokenSource();
@@ -134,7 +126,7 @@ public class ParallelBackgroundServiceTests
     public async Task ProcessItemAsync_ShouldBeCalledForEachItem()
     {
         var logger = NullLogger<TestBackgroundService>.Instance;
-        var items = GenerateItemsAsync(7);
+        var items = TestDataGenerators.GenerateItemsAsync(7);
         var service = new TestBackgroundService(logger, items);
 
         using var cts = new CancellationTokenSource();
@@ -184,7 +176,7 @@ public class ParallelBackgroundServiceTests
         var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Error));
         var logger = loggerFactory.CreateLogger<ThrowingBackgroundService>();
 
-        var items = GenerateItemsAsync(3);
+        var items = TestDataGenerators.GenerateItemsAsync(3);
         var service = new ThrowingBackgroundService(logger, items);
 
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));

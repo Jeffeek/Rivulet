@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Rivulet.Sql.MySql\Rivulet.Sql.MySql.csproj" />
+    <ProjectReference Include="..\Rivulet.Base.Tests\Rivulet.Base.Tests.csproj" />
   </ItemGroup>
 
   <ItemGroup>

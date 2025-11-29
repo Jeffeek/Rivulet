@@ -1,30 +1,16 @@
+using Rivulet.Base.Tests;
+
 namespace Rivulet.IO.Tests;
 
-public class FileInfoExtensionsTests : IDisposable
+public class FileInfoExtensionsTests : TempDirectoryFixture
 {
-    private readonly string _testDirectory;
-
-    public FileInfoExtensionsTests()
-    {
-        _testDirectory = Path.Join(Path.GetTempPath(), $"RivuletTests_{Guid.NewGuid()}");
-        Directory.CreateDirectory(_testDirectory);
-    }
-
-    public void Dispose()
-    {
-        if (Directory.Exists(_testDirectory))
-        {
-            Directory.Delete(_testDirectory, recursive: true);
-        }
-    }
-
     [Fact]
     public async Task ReadAllTextParallelAsync_WithMultipleFileInfos_ShouldReadCorrectly()
     {
         // Arrange
-        var file1 = new FileInfo(Path.Join(_testDirectory, "file1.txt"));
-        var file2 = new FileInfo(Path.Join(_testDirectory, "file2.txt"));
-        var file3 = new FileInfo(Path.Join(_testDirectory, "file3.txt"));
+        var file1 = new FileInfo(Path.Join(TestDirectory, "file1.txt"));
+        var file2 = new FileInfo(Path.Join(TestDirectory, "file2.txt"));
+        var file3 = new FileInfo(Path.Join(TestDirectory, "file3.txt"));
 
         await File.WriteAllTextAsync(file1.FullName, "Content 1");
         await File.WriteAllTextAsync(file2.FullName, "Content 2");
@@ -50,8 +36,8 @@ public class FileInfoExtensionsTests : IDisposable
     public async Task ReadAllBytesParallelAsync_WithMultipleFileInfos_ShouldReadCorrectly()
     {
         // Arrange
-        var file1 = new FileInfo(Path.Join(_testDirectory, "bytes1.bin"));
-        var file2 = new FileInfo(Path.Join(_testDirectory, "bytes2.bin"));
+        var file1 = new FileInfo(Path.Join(TestDirectory, "bytes1.bin"));
+        var file2 = new FileInfo(Path.Join(TestDirectory, "bytes2.bin"));
 
         var data1 = new byte[] { 1, 2, 3 };
         var data2 = new byte[] { 4, 5, 6 };
@@ -78,7 +64,7 @@ public class FileInfoExtensionsTests : IDisposable
     public async Task ReadAllTextAsync_WithSingleFileInfo_ShouldReadCorrectly()
     {
         // Arrange
-        var file = new FileInfo(Path.Join(_testDirectory, "single.txt"));
+        var file = new FileInfo(Path.Join(TestDirectory, "single.txt"));
         await File.WriteAllTextAsync(file.FullName, "Single file content");
 
         // Act
@@ -92,7 +78,7 @@ public class FileInfoExtensionsTests : IDisposable
     public async Task ReadAllBytesAsync_WithSingleFileInfo_ShouldReadCorrectly()
     {
         // Arrange
-        var file = new FileInfo(Path.Join(_testDirectory, "single.bin"));
+        var file = new FileInfo(Path.Join(TestDirectory, "single.bin"));
         var data = new byte[] { 10, 20, 30, 40 };
         await File.WriteAllBytesAsync(file.FullName, data);
 
@@ -107,7 +93,7 @@ public class FileInfoExtensionsTests : IDisposable
     public async Task WriteAllTextAsync_ShouldWriteCorrectly()
     {
         // Arrange
-        var file = new FileInfo(Path.Join(_testDirectory, "write.txt"));
+        var file = new FileInfo(Path.Join(TestDirectory, "write.txt"));
         const string content = "Written content";
 
         // Act
@@ -122,7 +108,7 @@ public class FileInfoExtensionsTests : IDisposable
     public async Task WriteAllTextAsync_WithExistingFile_ShouldThrowWhenOverwriteFalse()
     {
         // Arrange
-        var file = new FileInfo(Path.Join(_testDirectory, "existing.txt"));
+        var file = new FileInfo(Path.Join(TestDirectory, "existing.txt"));
         await File.WriteAllTextAsync(file.FullName, "Original");
 
         var options = new FileOperationOptions { OverwriteExisting = false };
@@ -138,7 +124,7 @@ public class FileInfoExtensionsTests : IDisposable
     public async Task WriteAllBytesAsync_ShouldWriteCorrectly()
     {
         // Arrange
-        var file = new FileInfo(Path.Join(_testDirectory, "writebytes.bin"));
+        var file = new FileInfo(Path.Join(TestDirectory, "writebytes.bin"));
         var data = "def"u8.ToArray();
 
         // Act
@@ -153,8 +139,8 @@ public class FileInfoExtensionsTests : IDisposable
     public async Task CopyToAsync_ShouldCopyFileCorrectly()
     {
         // Arrange
-        var sourceFile = new FileInfo(Path.Join(_testDirectory, "source.txt"));
-        var destPath = Path.Join(_testDirectory, "dest.txt");
+        var sourceFile = new FileInfo(Path.Join(TestDirectory, "source.txt"));
+        var destPath = Path.Join(TestDirectory, "dest.txt");
 
         await File.WriteAllTextAsync(sourceFile.FullName, "Source content");
 
@@ -171,8 +157,8 @@ public class FileInfoExtensionsTests : IDisposable
     public async Task CopyToAsync_WithExistingDestination_ShouldThrowWhenOverwriteFalse()
     {
         // Arrange
-        var sourceFile = new FileInfo(Path.Join(_testDirectory, "source2.txt"));
-        var destPath = Path.Join(_testDirectory, "dest2.txt");
+        var sourceFile = new FileInfo(Path.Join(TestDirectory, "source2.txt"));
+        var destPath = Path.Join(TestDirectory, "dest2.txt");
 
         await File.WriteAllTextAsync(sourceFile.FullName, "Source");
         await File.WriteAllTextAsync(destPath, "Existing");
@@ -190,7 +176,7 @@ public class FileInfoExtensionsTests : IDisposable
     public async Task DeleteAsync_ShouldDeleteFileCorrectly()
     {
         // Arrange
-        var file = new FileInfo(Path.Join(_testDirectory, "todelete.txt"));
+        var file = new FileInfo(Path.Join(TestDirectory, "todelete.txt"));
         await File.WriteAllTextAsync(file.FullName, "Will be deleted");
 
         // Act
@@ -204,7 +190,7 @@ public class FileInfoExtensionsTests : IDisposable
     public async Task ReadWriteAsync_WithCustomEncoding_ShouldWorkCorrectly()
     {
         // Arrange
-        var file = new FileInfo(Path.Join(_testDirectory, "encoding.txt"));
+        var file = new FileInfo(Path.Join(TestDirectory, "encoding.txt"));
         const string content = "Special chars: ñ, é, ü";
         var options = new FileOperationOptions { Encoding = System.Text.Encoding.Unicode };
 
@@ -220,7 +206,7 @@ public class FileInfoExtensionsTests : IDisposable
     public async Task WriteAllTextAsync_WithCallbacks_ShouldInvokeCallbacks()
     {
         // Arrange
-        var file = new FileInfo(Path.Join(_testDirectory, "callbacks.txt"));
+        var file = new FileInfo(Path.Join(TestDirectory, "callbacks.txt"));
         var startCalled = false;
         var completeCalled = false;
         long bytesProcessed = 0;
@@ -253,7 +239,7 @@ public class FileInfoExtensionsTests : IDisposable
     public async Task ReadAllTextAsync_WithError_ShouldInvokeErrorCallback()
     {
         // Arrange
-        var file = new FileInfo(Path.Join(_testDirectory, "nonexistent.txt"));
+        var file = new FileInfo(Path.Join(TestDirectory, "nonexistent.txt"));
         var errorCalled = false;
         Exception? capturedException = null;
 

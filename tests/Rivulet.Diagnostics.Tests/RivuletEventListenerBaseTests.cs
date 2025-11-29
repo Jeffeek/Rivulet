@@ -33,7 +33,7 @@ public class RivuletEventListenerBaseTests : IDisposable
 
         // EventSource publishes counters every 1 second
         // Increased from 2000ms → 5000ms for Windows CI/CD reliability
-        await Extensions.ApplyDeadlineAsync(
+        await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddMilliseconds(5000),
             () => Task.Delay(100),
             () => _listener.ReceivedCounters.IsEmpty);
@@ -292,7 +292,7 @@ public class RivuletEventListenerBaseTests : IDisposable
             .ToListAsync();
 
         // Wait for counters
-        await Extensions.ApplyDeadlineAsync(
+        await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddMilliseconds(3000),
             () => Task.Delay(100),
             () => listener.ReceivedCounters.IsEmpty);

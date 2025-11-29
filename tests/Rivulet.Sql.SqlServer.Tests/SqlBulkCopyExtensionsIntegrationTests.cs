@@ -1,6 +1,7 @@
 using Microsoft.Data.SqlClient;
 using Testcontainers.MsSql;
 using System.Data;
+using Rivulet.Base.Tests;
 
 namespace Rivulet.Sql.SqlServer.Tests;
 
@@ -235,7 +236,7 @@ public class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
             new() { ["Id"] = 300, ["Name"] = "Grace", ["Email"] = "grace@example.com" },
             new() { ["Id"] = 301, ["Name"] = "Hank", ["Email"] = "hank@example.com" }
         };
-        var readers = new[] { new Rivulet.Sql.Tests.TestDataReader(rows) };
+        var readers = new[] { new TestDataReader(rows) };
 
         // Act
         await readers.BulkInsertUsingSqlBulkCopyAsync(
@@ -260,7 +261,7 @@ public class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
         {
             new() { ["Id"] = 1, ["Name"] = "Test" }
         };
-        var readers = new[] { new Rivulet.Sql.Tests.TestDataReader(rows) };
+        var readers = new[] { new TestDataReader(rows) };
 
         var act = async () => await readers.BulkInsertUsingSqlBulkCopyAsync(
             () => null!,
@@ -273,7 +274,7 @@ public class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
     public async Task BulkInsertUsingSqlBulkCopyAsync_DataReader_WithNullReader_ShouldThrow()
     {
         // Use non-nullable IDataReader collection with OfType to filter nulls at runtime
-        var readers = new IDataReader[] { new Rivulet.Sql.Tests.TestDataReader([]) }
+        var readers = new IDataReader[] { new TestDataReader([]) }
             .Select(_ => (IDataReader?)null!)
             .Where(r => r == null!); // This will fail when enumerated
 

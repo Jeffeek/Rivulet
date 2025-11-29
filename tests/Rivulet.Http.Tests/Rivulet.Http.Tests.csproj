@@ -24,6 +24,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Rivulet.Http\Rivulet.Http.csproj" />
+    <ProjectReference Include="..\Rivulet.Base.Tests\Rivulet.Base.Tests.csproj" />
   </ItemGroup>
 
   <ItemGroup>

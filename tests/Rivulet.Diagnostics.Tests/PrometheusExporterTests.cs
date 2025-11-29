@@ -28,7 +28,7 @@ public class PrometheusExporterTests
         // Increased from 2000ms → 5000ms for Windows CI/CD reliability (2/180 failures)
         // EventCounters have ~1s polling interval but can be delayed under load
         // Must wait for BOTH items_started AND items_completed to be present
-        await Extensions.ApplyDeadlineAsync(
+        await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddMilliseconds(5000),
             () => Task.Delay(100),
             () =>
@@ -66,7 +66,7 @@ public class PrometheusExporterTests
         // Increased from 2000ms → 5000ms for Windows CI/CD reliability (3/180 failures)
         // EventCounters have ~1s polling interval but can be delayed under load
         // Must wait for BOTH items_started AND items_completed keys to be present
-        await Extensions.ApplyDeadlineAsync(
+        await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddMilliseconds(5000),
             () => Task.Delay(100),
             () =>

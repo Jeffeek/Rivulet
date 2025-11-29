@@ -280,7 +280,7 @@ public class MetricsTests
 
         await Task.Yield();
 
-        await Extensions.ApplyDeadlineAsync(
+        await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddMilliseconds(5000),
             () => Task.Delay(100),
             () => callbackInvocationCount == 0 || capturedSnapshot == null || capturedSnapshot.TotalFailures != 10);
@@ -460,7 +460,7 @@ public class MetricsTests
 
         await Task.Yield();
 
-        await Extensions.ApplyDeadlineAsync(
+        await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddMilliseconds(5000),
             () => Task.Delay(100),
             () =>
@@ -712,7 +712,7 @@ public class MetricsTests
 
         await Task.Yield();
 
-        await Extensions.ApplyDeadlineAsync(
+        await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddMilliseconds(5000),
             () => Task.Delay(100),
             () => capturedSnapshot == null || capturedSnapshot.ItemsStarted != 1000 || capturedSnapshot.ItemsCompleted != 1000);
@@ -932,7 +932,7 @@ public class MetricsTests
         await using var tracker = new MetricsTracker(options, CancellationToken.None);
 
         // Poll for the snapshot with a timeout to avoid flakiness
-        await Extensions.ApplyDeadlineAsync(
+        await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddMilliseconds(200),
             () => Task.Delay(5),
             () => capturedSnapshot is null);

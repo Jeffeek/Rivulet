@@ -52,7 +52,7 @@ public class ComprehensiveCoverageTests
 
         // Wait for at least 2x the aggregation window to ensure timer fires and EventSource counters are received
         // Increased from 1100ms to 2100ms to handle CI/CD timing variability and EventSource polling delays
-        await Extensions.ApplyDeadlineAsync(
+        await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddMilliseconds(2100),
             () => Task.Delay(100),
             () => !callbackInvoked);

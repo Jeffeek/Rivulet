@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Rivulet.Sql.PostgreSql\Rivulet.Sql.PostgreSql.csproj" />
+    <ProjectReference Include="..\Rivulet.Base.Tests\Rivulet.Base.Tests.csproj" />
   </ItemGroup>
 
   <ItemGroup>

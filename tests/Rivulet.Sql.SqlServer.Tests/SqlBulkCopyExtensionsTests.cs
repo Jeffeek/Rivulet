@@ -1,6 +1,6 @@
 using Microsoft.Data.SqlClient;
-using Rivulet.Sql.Tests;
 using System.Data;
+using Rivulet.Base.Tests;
 
 namespace Rivulet.Sql.SqlServer.Tests;
 

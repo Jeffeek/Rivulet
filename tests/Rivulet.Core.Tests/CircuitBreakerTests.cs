@@ -591,7 +591,7 @@ public class CircuitBreakerTests
         // OnStateChange callback is executed via Task.Run in fire-and-forget mode (CircuitBreaker.cs:176)
         // On slow CI/CD machines, the callback might not execute immediately
         // Poll for up to 2 seconds to ensure callback has been invoked
-        await Extensions.ApplyDeadlineAsync(
+        await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddMilliseconds(2000),
             () => Task.Delay(50),
             () => callbackInvoked == 0);
@@ -643,7 +643,7 @@ public class CircuitBreakerTests
         await cb.ExecuteAsync(() => ValueTask.FromResult(1), CancellationToken.None);
 
         // Poll for expected transitions to be captured (state changes may be delayed in CI)
-        await Extensions.ApplyDeadlineAsync(
+        await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddMilliseconds(500),
             () => Task.Delay(20),
             () =>

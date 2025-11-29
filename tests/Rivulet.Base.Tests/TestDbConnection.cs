@@ -3,7 +3,7 @@ using System.Data;
 using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
 
-namespace Rivulet.Sql.Tests;
+namespace Rivulet.Base.Tests;
 
 public class TestDbConnection(
     Func<IDbCommand, object?>? executeScalarFunc = null,

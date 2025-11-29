@@ -123,7 +123,7 @@ public class ProgressReportingTests
 
         await Task.Yield();
 
-        await Extensions.ApplyDeadlineAsync(
+        await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddMilliseconds(2000),
             () => Task.Delay(50),
             () =>

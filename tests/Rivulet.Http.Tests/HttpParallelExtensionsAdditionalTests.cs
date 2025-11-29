@@ -1,4 +1,5 @@
 using System.Net;
+using Rivulet.Base.Tests;
 
 namespace Rivulet.Http.Tests;
 
@@ -8,10 +9,7 @@ namespace Rivulet.Http.Tests;
 public class HttpParallelExtensionsAdditionalTests
 {
     private static HttpClient CreateTestClient(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> handler)
-    {
-        var messageHandler = new TestHttpMessageHandler(handler);
-        return new(messageHandler) { BaseAddress = new("http://test.local") };
-    }
+        => TestHttpClientFactory.CreateTestClient(handler);
 
     [Fact]
     public async Task GetParallelAsync_WithRetryAfterHeader_ShouldRespectRetryDelay()
@@ -336,15 +334,6 @@ public class HttpParallelExtensionsAdditionalTests
             {
                 Directory.Delete(tempDir, true);
             }
-        }
-    }
-
-    // Test helper class
-    private class TestHttpMessageHandler(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> handler) : HttpMessageHandler
-    {
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-        {
-            return handler(request, cancellationToken);
         }
     }
 }

@@ -153,7 +153,7 @@ public class BatchingTests
         await Task.Yield();
 
         // Poll for snapshots to capture final progress state
-        await Extensions.ApplyDeadlineAsync(
+        await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddMilliseconds(1000),
             () => Task.Delay(100),
             () => !snapshots.Any() || snapshots.Max(s => s.ItemsCompleted) != 10);

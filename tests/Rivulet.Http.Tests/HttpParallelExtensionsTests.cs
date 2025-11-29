@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text;
+using Rivulet.Base.Tests;
 using Rivulet.Core;
 
 namespace Rivulet.Http.Tests;
@@ -7,10 +8,7 @@ namespace Rivulet.Http.Tests;
 public class HttpParallelExtensionsTests
 {
     private static HttpClient CreateTestClient(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> handler)
-    {
-        var messageHandler = new TestHttpMessageHandler(handler);
-        return new(messageHandler) { BaseAddress = new("http://test.local") };
-    }
+        => TestHttpClientFactory.CreateTestClient(handler);
 
     [Fact]
     public async Task GetParallelAsync_WithValidUris_ShouldReturnResponses()
@@ -361,15 +359,6 @@ public class HttpParallelExtensionsTests
         foreach (var response in results)
         {
             response.Dispose();
-        }
-    }
-
-    // Test helper class
-    private class TestHttpMessageHandler(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> handler) : HttpMessageHandler
-    {
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-        {
-            return handler(request, cancellationToken);
         }
     }
 }

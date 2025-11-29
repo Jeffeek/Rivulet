@@ -1,23 +1,9 @@
+using Rivulet.Base.Tests;
+
 namespace Rivulet.IO.Tests;
 
-public class FileParallelExtensionsTests : IDisposable
+public class FileParallelExtensionsTests : TempDirectoryFixture
 {
-    private readonly string _testDirectory;
-
-    public FileParallelExtensionsTests()
-    {
-        _testDirectory = Path.Join(Path.GetTempPath(), $"RivuletIO_Tests_{Guid.NewGuid()}");
-        Directory.CreateDirectory(_testDirectory);
-    }
-
-    public void Dispose()
-    {
-        if (Directory.Exists(_testDirectory))
-        {
-            Directory.Delete(_testDirectory, recursive: true);
-        }
-    }
-
     [Fact]
     public async Task ReadAllTextParallelAsync_WithMultipleFiles_ShouldReadAllCorrectly()
     {
@@ -25,13 +11,13 @@ public class FileParallelExtensionsTests : IDisposable
         var files = new[] { "file1.txt", "file2.txt", "file3.txt" };
         var expectedContents = new[] { "Content 1", "Content 2", "Content 3" };
 
-        for (int i = 0; i < files.Length; i++)
+        for (var i = 0; i < files.Length; i++)
         {
-            var path = Path.Join(_testDirectory, files[i]);
+            var path = Path.Join(TestDirectory, files[i]);
             await File.WriteAllTextAsync(path, expectedContents[i]);
         }
 
-        var filePaths = files.Select(f => Path.Join(_testDirectory, f));
+        var filePaths = files.Select(f => Path.Join(TestDirectory, f));
 
         // Act
         var results = await filePaths.ReadAllTextParallelAsync();
@@ -58,13 +44,13 @@ public class FileParallelExtensionsTests : IDisposable
         var files = new[] { "byte1.bin", "byte2.bin" };
         var expectedContents = new[] { new byte[] { 1, 2, 3 }, new byte[] { 4, 5, 6 } };
 
-        for (int i = 0; i < files.Length; i++)
+        for (var i = 0; i < files.Length; i++)
         {
-            var path = Path.Join(_testDirectory, files[i]);
+            var path = Path.Join(TestDirectory, files[i]);
             await File.WriteAllBytesAsync(path, expectedContents[i]);
         }
 
-        var filePaths = files.Select(f => Path.Join(_testDirectory, f)).ToList();
+        var filePaths = files.Select(f => Path.Join(TestDirectory, f)).ToList();
 
         // Act
         var results = await filePaths.ReadAllBytesParallelAsync(
@@ -80,8 +66,8 @@ public class FileParallelExtensionsTests : IDisposable
     public async Task ReadAllLinesParallelAsync_WithMultipleFiles_ShouldReadAllLines()
     {
         // Arrange
-        var file1Path = Path.Join(_testDirectory, "lines1.txt");
-        var file2Path = Path.Join(_testDirectory, "lines2.txt");
+        var file1Path = Path.Join(TestDirectory, "lines1.txt");
+        var file2Path = Path.Join(TestDirectory, "lines2.txt");
 
         await File.WriteAllLinesAsync(file1Path, ["Line 1", "Line 2"]);
         await File.WriteAllLinesAsync(file2Path, ["Line A", "Line B", "Line C"]);
@@ -102,8 +88,8 @@ public class FileParallelExtensionsTests : IDisposable
         // Arrange
         var writes = new[]
         {
-            (Path.Join(_testDirectory, "write1.txt"), "Content 1"),
-            (Path.Join(_testDirectory, "write2.txt"), "Content 2")
+            (Path.Join(TestDirectory, "write1.txt"), "Content 1"),
+            (Path.Join(TestDirectory, "write2.txt"), "Content 2")
         };
 
         var options = new FileOperationOptions { OverwriteExisting = true };
@@ -125,7 +111,7 @@ public class FileParallelExtensionsTests : IDisposable
     public async Task WriteAllTextParallelAsync_WithExistingFile_ShouldThrowWhenOverwriteFalse()
     {
         // Arrange
-        var filePath = Path.Join(_testDirectory, "existing.txt");
+        var filePath = Path.Join(TestDirectory, "existing.txt");
         await File.WriteAllTextAsync(filePath, "Existing");
 
         var writes = new[] { (filePath, "New Content") };
@@ -144,8 +130,8 @@ public class FileParallelExtensionsTests : IDisposable
         // Arrange
         var writes = new[]
         {
-            (Path.Join(_testDirectory, "bytes1.bin"), [1, 2, 3]),
-            (Path.Join(_testDirectory, "bytes2.bin"), new byte[] { 4, 5, 6 })
+            (Path.Join(TestDirectory, "bytes1.bin"), [1, 2, 3]),
+            (Path.Join(TestDirectory, "bytes2.bin"), new byte[] { 4, 5, 6 })
         };
 
         var options = new FileOperationOptions { OverwriteExisting = true };
@@ -167,10 +153,10 @@ public class FileParallelExtensionsTests : IDisposable
     public async Task TransformFilesParallelAsync_WithTransformFunction_ShouldTransformCorrectly()
     {
         // Arrange
-        var sourceFile1 = Path.Join(_testDirectory, "source1.txt");
-        var sourceFile2 = Path.Join(_testDirectory, "source2.txt");
-        var destFile1 = Path.Join(_testDirectory, "dest1.txt");
-        var destFile2 = Path.Join(_testDirectory, "dest2.txt");
+        var sourceFile1 = Path.Join(TestDirectory, "source1.txt");
+        var sourceFile2 = Path.Join(TestDirectory, "source2.txt");
+        var destFile1 = Path.Join(TestDirectory, "dest1.txt");
+        var destFile2 = Path.Join(TestDirectory, "dest2.txt");
 
         await File.WriteAllTextAsync(sourceFile1, "hello");
         await File.WriteAllTextAsync(sourceFile2, "world");
@@ -200,10 +186,10 @@ public class FileParallelExtensionsTests : IDisposable
     public async Task CopyFilesParallelAsync_WithMultipleFiles_ShouldCopyAllCorrectly()
     {
         // Arrange
-        var source1 = Path.Join(_testDirectory, "copy_source1.txt");
-        var source2 = Path.Join(_testDirectory, "copy_source2.txt");
-        var dest1 = Path.Join(_testDirectory, "copy_dest1.txt");
-        var dest2 = Path.Join(_testDirectory, "copy_dest2.txt");
+        var source1 = Path.Join(TestDirectory, "copy_source1.txt");
+        var source2 = Path.Join(TestDirectory, "copy_source2.txt");
+        var dest1 = Path.Join(TestDirectory, "copy_dest1.txt");
+        var dest2 = Path.Join(TestDirectory, "copy_dest2.txt");
 
         await File.WriteAllTextAsync(source1, "Copy Content 1");
         await File.WriteAllTextAsync(source2, "Copy Content 2");
@@ -231,8 +217,8 @@ public class FileParallelExtensionsTests : IDisposable
     public async Task DeleteFilesParallelAsync_WithMultipleFiles_ShouldDeleteAllCorrectly()
     {
         // Arrange
-        var file1 = Path.Join(_testDirectory, "delete1.txt");
-        var file2 = Path.Join(_testDirectory, "delete2.txt");
+        var file1 = Path.Join(TestDirectory, "delete1.txt");
+        var file2 = Path.Join(TestDirectory, "delete2.txt");
 
         await File.WriteAllTextAsync(file1, "To delete 1");
         await File.WriteAllTextAsync(file2, "To delete 2");
@@ -250,7 +236,7 @@ public class FileParallelExtensionsTests : IDisposable
     public async Task ReadAllTextParallelAsync_WithCallbacks_ShouldInvokeCallbacks()
     {
         // Arrange
-        var filePath = Path.Join(_testDirectory, "callback.txt");
+        var filePath = Path.Join(TestDirectory, "callback.txt");
         await File.WriteAllTextAsync(filePath, "Callback test");
 
         var startCalled = false;
@@ -282,7 +268,7 @@ public class FileParallelExtensionsTests : IDisposable
     public async Task WriteAllTextParallelAsync_WithCreateDirectoriesOption_ShouldCreateDirectories()
     {
         // Arrange
-        var nestedPath = Path.Join(_testDirectory, "nested", "deep", "file.txt");
+        var nestedPath = Path.Join(TestDirectory, "nested", "deep", "file.txt");
         var writes = new[] { (nestedPath, "Content in nested directory") };
 
         var options = new FileOperationOptions
@@ -304,7 +290,7 @@ public class FileParallelExtensionsTests : IDisposable
     public async Task ReadAllTextParallelAsync_WithCustomEncoding_ShouldUseEncoding()
     {
         // Arrange
-        var filePath = Path.Join(_testDirectory, "encoding.txt");
+        var filePath = Path.Join(TestDirectory, "encoding.txt");
         var content = "Test with encoding: Привет мир";
 
         await File.WriteAllTextAsync(filePath, content, System.Text.Encoding.UTF8);

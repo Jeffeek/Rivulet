@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Rivulet.Base.Tests;
 using Rivulet.Core;
 using System.Collections.Concurrent;
 
@@ -69,21 +70,12 @@ public class ParallelWorkerServiceTests
         }
     }
 
-    private static async IAsyncEnumerable<int> GenerateItemsAsync(int count, int delayMs = 0)
-    {
-        for (var i = 1; i <= count; i++)
-        {
-            if (delayMs > 0)
-                await Task.Delay(delayMs);
-            yield return i;
-        }
-    }
 
     [Fact]
     public async Task StartAsync_ShouldProcessAllItems()
     {
         var logger = NullLogger<TestWorkerService>.Instance;
-        var items = GenerateItemsAsync(5);
+        var items = TestDataGenerators.GenerateItemsAsync(5);
         var service = new TestWorkerService(logger, items);
 
         using var cts = new CancellationTokenSource();
@@ -104,7 +96,7 @@ public class ParallelWorkerServiceTests
     public async Task StartAsync_ShouldCallOnResultForEachResult()
     {
         var logger = NullLogger<TestWorkerService>.Instance;
-        var items = GenerateItemsAsync(3);
+        var items = TestDataGenerators.GenerateItemsAsync(3);
         var service = new TestWorkerService(logger, items);
 
         using var cts = new CancellationTokenSource();
@@ -128,7 +120,7 @@ public class ParallelWorkerServiceTests
     public async Task StartAsync_WithParallelOptions_ShouldProcessInParallel()
     {
         var logger = NullLogger<DelayedWorkerService>.Instance;
-        var items = GenerateItemsAsync(6);
+        var items = TestDataGenerators.GenerateItemsAsync(6);
         var options = new ParallelOptionsRivulet { MaxDegreeOfParallelism = 3 };
         var service = new DelayedWorkerService(logger, items, delayMs: 20, options);
 
@@ -154,7 +146,7 @@ public class ParallelWorkerServiceTests
     public async Task StartAsync_WhenCancelled_ShouldStopGracefully()
     {
         var logger = NullLogger<TestWorkerService>.Instance;
-        var items = GenerateItemsAsync(100, delayMs: 10);
+        var items = TestDataGenerators.GenerateItemsAsync(100, delayMs: 10);
         var service = new TestWorkerService(logger, items);
 
         using var cts = new CancellationTokenSource();
@@ -173,7 +165,7 @@ public class ParallelWorkerServiceTests
     public async Task StartAsync_WithException_ShouldHandleGracefully()
     {
         var logger = NullLogger<ThrowingWorkerService>.Instance;
-        var items = GenerateItemsAsync(3);
+        var items = TestDataGenerators.GenerateItemsAsync(3);
         var service = new ThrowingWorkerService(logger, items);
 
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(500));
@@ -187,7 +179,7 @@ public class ParallelWorkerServiceTests
     [Fact]
     public void Constructor_WithNullLogger_ShouldThrow()
     {
-        var items = GenerateItemsAsync(1);
+        var items = TestDataGenerators.GenerateItemsAsync(1);
 
         var act = () => new TestWorkerService(null!, items);
 
@@ -199,7 +191,7 @@ public class ParallelWorkerServiceTests
     public async Task StartAsync_WithNullOptions_ShouldUseDefaults()
     {
         var logger = NullLogger<TestWorkerService>.Instance;
-        var items = GenerateItemsAsync(3);
+        var items = TestDataGenerators.GenerateItemsAsync(3);
         var service = new TestWorkerService(logger, items);
 
         using var cts = new CancellationTokenSource();
@@ -217,7 +209,7 @@ public class ParallelWorkerServiceTests
     public async Task StartAsync_WithEmptySource_ShouldCompleteImmediately()
     {
         var logger = NullLogger<TestWorkerService>.Instance;
-        var items = GenerateItemsAsync(0);
+        var items = TestDataGenerators.GenerateItemsAsync(0);
         var service = new TestWorkerService(logger, items);
 
         using var cts = new CancellationTokenSource();
@@ -237,7 +229,7 @@ public class ParallelWorkerServiceTests
     public async Task ProcessAsync_ShouldBeCalledForEachItem()
     {
         var logger = NullLogger<TestWorkerService>.Instance;
-        var items = GenerateItemsAsync(7);
+        var items = TestDataGenerators.GenerateItemsAsync(7);
         var service = new TestWorkerService(logger, items);
 
         using var cts = new CancellationTokenSource();
@@ -256,7 +248,7 @@ public class ParallelWorkerServiceTests
     public async Task Constructor_WithCustomOptions_ShouldUseProvidedOptions()
     {
         var logger = NullLogger<TestWorkerService>.Instance;
-        var items = GenerateItemsAsync(3);
+        var items = TestDataGenerators.GenerateItemsAsync(3);
         var options = new ParallelOptionsRivulet { MaxDegreeOfParallelism = 1 };
         var service = new TestWorkerService(logger, items, options);
 
@@ -303,7 +295,7 @@ public class ParallelWorkerServiceTests
         var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Error));
         var logger = loggerFactory.CreateLogger<FatalErrorWorkerService>();
 
-        var items = GenerateItemsAsync(3);
+        var items = TestDataGenerators.GenerateItemsAsync(3);
         var service = new FatalErrorWorkerService(logger, items);
 
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
@@ -338,7 +330,7 @@ public class ParallelWorkerServiceTests
         var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Error));
         var logger = loggerFactory.CreateLogger<FatalErrorWorkerService>();
 
-        var items = GenerateItemsAsync(5);
+        var items = TestDataGenerators.GenerateItemsAsync(5);
         var service = new FatalErrorWorkerService(logger, items);
 
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1));

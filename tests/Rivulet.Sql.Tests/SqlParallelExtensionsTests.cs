@@ -1,5 +1,6 @@
 using System.Data;
 using System.Diagnostics.CodeAnalysis;
+using Rivulet.Base.Tests;
 
 namespace Rivulet.Sql.Tests;
 

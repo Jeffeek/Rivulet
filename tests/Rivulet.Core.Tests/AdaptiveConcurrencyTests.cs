@@ -131,7 +131,7 @@ public class AdaptiveConcurrencyTests
         results.Should().HaveCount(200);
 
         // Poll for callbacks with timeout
-        await Extensions.ApplyDeadlineAsync(
+        await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddSeconds(2),
             () => Task.Delay(50),
             () => concurrencyLevels.Count == 0);
@@ -182,7 +182,7 @@ public class AdaptiveConcurrencyTests
         results.Should().HaveCount(100);
 
         // Poll for callbacks with timeout
-        await Extensions.ApplyDeadlineAsync(
+        await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddSeconds(2),
             () => Task.Delay(50),
             () => concurrencyLevels.Count == 0);
@@ -237,7 +237,7 @@ public class AdaptiveConcurrencyTests
         results.Count.Should().BeLessThan(100);
 
         // Poll for callbacks with timeout
-        await Extensions.ApplyDeadlineAsync(
+        await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddSeconds(2),
             () => Task.Delay(50),
             () => concurrencyLevels.Count == 0);
@@ -332,7 +332,7 @@ public class AdaptiveConcurrencyTests
         count.Should().Be(150);
 
         // Poll for callbacks with timeout
-        await Extensions.ApplyDeadlineAsync(
+        await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddSeconds(2),
             () => Task.Delay(50),
             () => concurrencyLevels.Count == 0);
@@ -473,7 +473,7 @@ public class AdaptiveConcurrencyTests
 
         results.Should().HaveCount(300);
 
-        await Extensions.ApplyDeadlineAsync(
+        await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddSeconds(3),
             () => Task.Delay(50),
             () => concurrencyLevels.Count == 0);
@@ -525,7 +525,7 @@ public class AdaptiveConcurrencyTests
 
         results.Should().HaveCount(150);
 
-        await Extensions.ApplyDeadlineAsync(
+        await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddSeconds(3),
             () => Task.Delay(50),
             () => concurrencyLevels.Count == 0);

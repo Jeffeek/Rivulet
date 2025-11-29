@@ -1,14 +1,12 @@
 using System.Net;
+using Rivulet.Base.Tests;
 
 namespace Rivulet.Http.Tests;
 
 public class HttpStreamingExtensionsTests
 {
     private static HttpClient CreateTestClient(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> handler)
-    {
-        var messageHandler = new TestHttpMessageHandler(handler);
-        return new(messageHandler) { BaseAddress = new("http://test.local") };
-    }
+        => TestHttpClientFactory.CreateTestClient(handler);
 
     [Fact]
     public async Task DownloadToStreamAsync_WithValidUri_ShouldDownloadContent()
@@ -418,15 +416,6 @@ public class HttpStreamingExtensionsTests
             {
                 Directory.Delete(tempDir, true);
             }
-        }
-    }
-
-    // Test helper class
-    private class TestHttpMessageHandler(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> handler) : HttpMessageHandler
-    {
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-        {
-            return handler(request, cancellationToken);
         }
     }
 }

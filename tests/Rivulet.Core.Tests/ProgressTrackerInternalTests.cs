@@ -165,7 +165,7 @@ public class ProgressTrackerInternalTests
             }
 
             // Poll for snapshot to be captured (timer fires every 10ms but may be delayed in CI)
-            await Extensions.ApplyDeadlineAsync(
+            await DeadlineExtensions.ApplyDeadlineAsync(
                 DateTime.UtcNow.AddMilliseconds(500),
                 () => Task.Delay(20, CancellationToken.None),
                 () => lastSnapshot == null);
@@ -225,7 +225,7 @@ public class ProgressTrackerInternalTests
             await Task.Delay(200, CancellationToken.None);
 
             // Poll for snapshot to capture all errors (timer fires every 10ms but may be delayed in CI)
-            await Extensions.ApplyDeadlineAsync(
+            await DeadlineExtensions.ApplyDeadlineAsync(
                 DateTime.UtcNow.AddMilliseconds(1500),
                 () => Task.Delay(20, CancellationToken.None),
                 () => lastSnapshot is not { ErrorCount: 5 });
