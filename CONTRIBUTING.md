@@ -436,14 +436,6 @@ public async ValueTask<T> ProcessAsync() { /* ... */ }
 
 ---
 
-## Getting Help
-
-- **Questions**: Open a [GitHub Discussion](https://github.com/Jeffeek/Rivulet/discussions)
-- **Bugs**: Use [bug report template](.github/ISSUE_TEMPLATE/bug_report.md)
-- **Features**: Use [feature request template](.github/ISSUE_TEMPLATE/feature_request.md)
-
----
-
 ## Recognition
 
 Contributors are recognized in:
@@ -455,16 +447,7 @@ Contributors are recognized in:
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the same [MIT License](LICENSE) that covers the project.
-
----
-
-## Additional Resources
-
-- [README.md](README.md) - Project overview and usage
-- [START_SESSION_AI.md](TestResults/START_SESSION_AI.md) - Comprehensive AI session guide
-- [ROADMAP.md](ROADMAP.md) - Future plans and ecosystem packages
-- [.github/workflows/WORKFLOW_README.md](.github/workflows/WORKFLOW_README.md) - CI/CD documentation
+By contributing, you agree that your contributions will be licensed under MIT License that covers the project.
 
 ---
 
