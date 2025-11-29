@@ -1,29 +1,15 @@
+﻿using Rivulet.Base.Tests;
+
 namespace Rivulet.IO.Tests;
 
-public class DirectoryParallelExtensionsTests : IDisposable
+public class DirectoryParallelExtensionsTests : TempDirectoryFixture
 {
-    private readonly string _testDirectory;
-
-    public DirectoryParallelExtensionsTests()
-    {
-        _testDirectory = Path.Join(Path.GetTempPath(), $"RivuletIO_DirTests_{Guid.NewGuid()}");
-        Directory.CreateDirectory(_testDirectory);
-    }
-
-    public void Dispose()
-    {
-        if (Directory.Exists(_testDirectory))
-        {
-            Directory.Delete(_testDirectory, recursive: true);
-        }
-    }
-
     [Fact]
     public async Task ProcessFilesParallelAsync_WithMultipleFiles_ShouldProcessAll()
     {
         // Arrange
-        var file1 = Path.Join(_testDirectory, "process1.txt");
-        var file2 = Path.Join(_testDirectory, "process2.txt");
+        var file1 = Path.Join(TestDirectory, "process1.txt");
+        var file2 = Path.Join(TestDirectory, "process2.txt");
 
         await File.WriteAllTextAsync(file1, "Content 1");
         await File.WriteAllTextAsync(file2, "Content 2");
@@ -39,9 +25,9 @@ public class DirectoryParallelExtensionsTests : IDisposable
             });
 
         // Assert
-        results.Should().HaveCount(2);
-        results.Should().Contain(9); // "Content 1".Length
-        results.Should().Contain(9); // "Content 2".Length
+        results.Count.ShouldBe(2);
+        results.ShouldContain(9); // "Content 1".Length
+        results.ShouldContain(9); // "Content 2".Length
     }
 
     [Fact]
@@ -54,16 +40,16 @@ public class DirectoryParallelExtensionsTests : IDisposable
         var act = async () => await files.ProcessFilesParallelAsync<int>(null!);
 
         // Assert
-        await act.Should().ThrowAsync<ArgumentNullException>();
+        await act.ShouldThrowAsync<ArgumentNullException>();
     }
 
     [Fact]
     public async Task ProcessDirectoryFilesParallelAsync_WithSearchPattern_ShouldProcessMatchingFiles()
     {
         // Arrange
-        var txtFile1 = Path.Join(_testDirectory, "file1.txt");
-        var txtFile2 = Path.Join(_testDirectory, "file2.txt");
-        var csvFile = Path.Join(_testDirectory, "file3.csv");
+        var txtFile1 = Path.Join(TestDirectory, "file1.txt");
+        var txtFile2 = Path.Join(TestDirectory, "file2.txt");
+        var csvFile = Path.Join(TestDirectory, "file3.csv");
 
         await File.WriteAllTextAsync(txtFile1, "Text 1");
         await File.WriteAllTextAsync(txtFile2, "Text 2");
@@ -71,7 +57,7 @@ public class DirectoryParallelExtensionsTests : IDisposable
 
         // Act
         var results = await DirectoryParallelExtensions.ProcessDirectoryFilesParallelAsync(
-            _testDirectory,
+            TestDirectory,
             "*.txt",
             async (path, ct) =>
             {
@@ -80,17 +66,17 @@ public class DirectoryParallelExtensionsTests : IDisposable
             });
 
         // Assert
-        results.Should().HaveCount(2);
-        results.Should().Contain("Text 1");
-        results.Should().Contain("Text 2");
-        results.Should().NotContain("CSV data");
+        results.Count.ShouldBe(2);
+        results.ShouldContain("Text 1");
+        results.ShouldContain("Text 2");
+        results.ShouldNotContain("CSV data");
     }
 
     [Fact]
     public async Task ProcessDirectoryFilesParallelAsync_WithNonExistentDirectory_ShouldThrow()
     {
         // Arrange
-        var nonExistent = Path.Join(_testDirectory, "nonexistent");
+        var nonExistent = Path.Join(TestDirectory, "nonexistent");
 
         // Act
         var act = async () => await DirectoryParallelExtensions.ProcessDirectoryFilesParallelAsync(
@@ -99,17 +85,17 @@ public class DirectoryParallelExtensionsTests : IDisposable
             (path, _) => ValueTask.FromResult(path));
 
         // Assert
-        await act.Should().ThrowAsync<DirectoryNotFoundException>();
+        await act.ShouldThrowAsync<DirectoryNotFoundException>();
     }
 
     [Fact]
     public async Task ProcessDirectoryFilesParallelAsync_WithSubdirectories_ShouldProcessRecursively()
     {
         // Arrange
-        var subDir = Path.Join(_testDirectory, "subdir");
+        var subDir = Path.Join(TestDirectory, "subdir");
         Directory.CreateDirectory(subDir);
 
-        var file1 = Path.Join(_testDirectory, "root.txt");
+        var file1 = Path.Join(TestDirectory, "root.txt");
         var file2 = Path.Join(subDir, "nested.txt");
 
         await File.WriteAllTextAsync(file1, "Root");
@@ -117,7 +103,7 @@ public class DirectoryParallelExtensionsTests : IDisposable
 
         // Act
         var results = await DirectoryParallelExtensions.ProcessDirectoryFilesParallelAsync(
-            _testDirectory,
+            TestDirectory,
             "*.txt",
             async (path, ct) =>
             {
@@ -127,38 +113,40 @@ public class DirectoryParallelExtensionsTests : IDisposable
             SearchOption.AllDirectories);
 
         // Assert
-        results.Should().HaveCount(2);
-        results.Should().Contain("Root");
-        results.Should().Contain("Nested");
+        results.Count.ShouldBe(2);
+        results.ShouldContain("Root");
+        results.ShouldContain("Nested");
     }
 
     [Fact]
     public async Task ReadDirectoryFilesParallelAsync_WithMultipleFiles_ShouldReturnDictionary()
     {
         // Arrange
-        var file1 = Path.Join(_testDirectory, "read1.txt");
-        var file2 = Path.Join(_testDirectory, "read2.txt");
+        var file1 = Path.Join(TestDirectory, "read1.txt");
+        var file2 = Path.Join(TestDirectory, "read2.txt");
 
         await File.WriteAllTextAsync(file1, "Content 1");
         await File.WriteAllTextAsync(file2, "Content 2");
 
         // Act
         var results = await DirectoryParallelExtensions.ReadDirectoryFilesParallelAsync(
-            _testDirectory,
+            TestDirectory,
             "*.txt");
 
         // Assert
-        results.Should().HaveCount(2);
-        results.Should().ContainKey(file1).WhoseValue.Should().Be("Content 1");
-        results.Should().ContainKey(file2).WhoseValue.Should().Be("Content 2");
+        results.Count.ShouldBe(2);
+        results.ContainsKey(file1).ShouldBeTrue();
+        results[file1].ShouldBe("Content 1");
+        results.TryGetValue(file2, out var value2).ShouldBeTrue();
+        value2.ShouldBe("Content 2");
     }
 
     [Fact]
     public async Task TransformDirectoryFilesParallelAsync_WithTransformation_ShouldTransformAllFiles()
     {
         // Arrange
-        var sourceDir = Path.Join(_testDirectory, "source");
-        var destDir = Path.Join(_testDirectory, "dest");
+        var sourceDir = Path.Join(TestDirectory, "source");
+        var destDir = Path.Join(TestDirectory, "dest");
 
         Directory.CreateDirectory(sourceDir);
         Directory.CreateDirectory(destDir);
@@ -178,27 +166,27 @@ public class DirectoryParallelExtensionsTests : IDisposable
             options: new() { OverwriteExisting = true });
 
         // Assert
-        results.Should().HaveCount(2);
+        results.Count.ShouldBe(2);
 
         var destFile1 = Path.Join(destDir, "file1.txt");
         var destFile2 = Path.Join(destDir, "file2.txt");
 
-        File.Exists(destFile1).Should().BeTrue();
-        File.Exists(destFile2).Should().BeTrue();
+        File.Exists(destFile1).ShouldBeTrue();
+        File.Exists(destFile2).ShouldBeTrue();
 
         var content1 = await File.ReadAllTextAsync(destFile1);
         var content2 = await File.ReadAllTextAsync(destFile2);
 
-        content1.Should().Be("HELLO");
-        content2.Should().Be("WORLD");
+        content1.ShouldBe("HELLO");
+        content2.ShouldBe("WORLD");
     }
 
     [Fact]
     public async Task CopyDirectoryFilesParallelAsync_WithMultipleFiles_ShouldCopyAll()
     {
         // Arrange
-        var sourceDir = Path.Join(_testDirectory, "copy_source");
-        var destDir = Path.Join(_testDirectory, "copy_dest");
+        var sourceDir = Path.Join(TestDirectory, "copy_source");
+        var destDir = Path.Join(TestDirectory, "copy_dest");
 
         Directory.CreateDirectory(sourceDir);
         Directory.CreateDirectory(destDir);
@@ -216,28 +204,28 @@ public class DirectoryParallelExtensionsTests : IDisposable
             options: new() { OverwriteExisting = true });
 
         // Assert
-        results.Should().HaveCount(2);
+        results.Count.ShouldBe(2);
 
         var destFile1 = Path.Join(destDir, "copy1.txt");
         var destFile2 = Path.Join(destDir, "copy2.txt");
 
-        File.Exists(destFile1).Should().BeTrue();
-        File.Exists(destFile2).Should().BeTrue();
+        File.Exists(destFile1).ShouldBeTrue();
+        File.Exists(destFile2).ShouldBeTrue();
 
         var content1 = await File.ReadAllTextAsync(destFile1);
         var content2 = await File.ReadAllTextAsync(destFile2);
 
-        content1.Should().Be("Copy 1");
-        content2.Should().Be("Copy 2");
+        content1.ShouldBe("Copy 1");
+        content2.ShouldBe("Copy 2");
     }
 
     [Fact]
     public async Task DeleteDirectoryFilesParallelAsync_WithMatchingPattern_ShouldDeleteMatchingFiles()
     {
         // Arrange
-        var file1 = Path.Join(_testDirectory, "delete1.txt");
-        var file2 = Path.Join(_testDirectory, "delete2.txt");
-        var file3 = Path.Join(_testDirectory, "keep.csv");
+        var file1 = Path.Join(TestDirectory, "delete1.txt");
+        var file2 = Path.Join(TestDirectory, "delete2.txt");
+        var file3 = Path.Join(TestDirectory, "keep.csv");
 
         await File.WriteAllTextAsync(file1, "Delete 1");
         await File.WriteAllTextAsync(file2, "Delete 2");
@@ -245,23 +233,23 @@ public class DirectoryParallelExtensionsTests : IDisposable
 
         // Act
         var results = await DirectoryParallelExtensions.DeleteDirectoryFilesParallelAsync(
-            _testDirectory,
+            TestDirectory,
             "*.txt");
 
         // Assert
-        results.Should().HaveCount(2);
+        results.Count.ShouldBe(2);
 
-        File.Exists(file1).Should().BeFalse();
-        File.Exists(file2).Should().BeFalse();
-        File.Exists(file3).Should().BeTrue(); // CSV file should not be deleted
+        File.Exists(file1).ShouldBeFalse();
+        File.Exists(file2).ShouldBeFalse();
+        File.Exists(file3).ShouldBeTrue(); // CSV file should not be deleted
     }
 
     [Fact]
     public async Task ProcessMultipleDirectoriesParallelAsync_WithMultipleDirectories_ShouldProcessAllFiles()
     {
         // Arrange
-        var dir1 = Path.Join(_testDirectory, "dir1");
-        var dir2 = Path.Join(_testDirectory, "dir2");
+        var dir1 = Path.Join(TestDirectory, "dir1");
+        var dir2 = Path.Join(TestDirectory, "dir2");
 
         Directory.CreateDirectory(dir1);
         Directory.CreateDirectory(dir2);
@@ -284,17 +272,17 @@ public class DirectoryParallelExtensionsTests : IDisposable
             });
 
         // Assert
-        results.Should().HaveCount(2);
-        results.Should().Contain(12); // "Dir1 Content".Length
-        results.Should().Contain(12); // "Dir2 Content".Length
+        results.Count.ShouldBe(2);
+        results.ShouldContain(12); // "Dir1 Content".Length
+        results.ShouldContain(12); // "Dir2 Content".Length
     }
 
     [Fact]
     public async Task ProcessMultipleDirectoriesParallelAsync_WithNonExistentDirectory_ShouldSkipNonExistent()
     {
         // Arrange
-        var existingDir = Path.Join(_testDirectory, "existing");
-        var nonExistentDir = Path.Join(_testDirectory, "nonexistent");
+        var existingDir = Path.Join(TestDirectory, "existing");
+        var nonExistentDir = Path.Join(TestDirectory, "nonexistent");
 
         Directory.CreateDirectory(existingDir);
 
@@ -313,15 +301,15 @@ public class DirectoryParallelExtensionsTests : IDisposable
             });
 
         // Assert
-        results.Should().HaveCount(1);
-        results.Should().Contain("Content");
+        results.Count.ShouldBe(1);
+        results.ShouldContain("Content");
     }
 
     [Fact]
     public async Task ProcessFilesParallelAsync_WithCallbacks_ShouldInvokeCallbacks()
     {
         // Arrange
-        var file = Path.Join(_testDirectory, "callback.txt");
+        var file = Path.Join(TestDirectory, "callback.txt");
         await File.WriteAllTextAsync(file, "Callback test");
 
         var startCalled = false;
@@ -347,16 +335,16 @@ public class DirectoryParallelExtensionsTests : IDisposable
             options);
 
         // Assert
-        startCalled.Should().BeTrue();
-        completeCalled.Should().BeTrue();
+        startCalled.ShouldBeTrue();
+        completeCalled.ShouldBeTrue();
     }
 
     [Fact]
     public async Task CopyDirectoryFilesParallelAsync_WithSubdirectories_ShouldPreserveStructure()
     {
         // Arrange
-        var sourceDir = Path.Join(_testDirectory, "source_nested");
-        var destDir = Path.Join(_testDirectory, "dest_nested");
+        var sourceDir = Path.Join(TestDirectory, "source_nested");
+        var destDir = Path.Join(TestDirectory, "dest_nested");
         var subDir = Path.Join(sourceDir, "subdir");
 
         Directory.CreateDirectory(sourceDir);
@@ -377,18 +365,18 @@ public class DirectoryParallelExtensionsTests : IDisposable
             options: new() { OverwriteExisting = true });
 
         // Assert
-        results.Should().HaveCount(2);
+        results.Count.ShouldBe(2);
 
         var destRootFile = Path.Join(destDir, "root.txt");
         var destNestedFile = Path.Join(destDir, "subdir", "nested.txt");
 
-        File.Exists(destRootFile).Should().BeTrue();
-        File.Exists(destNestedFile).Should().BeTrue();
+        File.Exists(destRootFile).ShouldBeTrue();
+        File.Exists(destNestedFile).ShouldBeTrue();
 
         var rootContent = await File.ReadAllTextAsync(destRootFile);
         var nestedContent = await File.ReadAllTextAsync(destNestedFile);
 
-        rootContent.Should().Be("Root content");
-        nestedContent.Should().Be("Nested content");
+        rootContent.ShouldBe("Root content");
+        nestedContent.ShouldBe("Nested content");
     }
 }

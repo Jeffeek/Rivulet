@@ -1,6 +1,6 @@
 ﻿namespace Rivulet.Base.Tests;
 
-public static class Extensions
+public static class DeadlineExtensions
 {
     public static void ApplyDeadline(DateTime deadlineUtc, Action action, Func<bool> additionalConditional)
     {

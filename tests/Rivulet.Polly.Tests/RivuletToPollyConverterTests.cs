@@ -1,5 +1,4 @@
-using FluentAssertions;
-using Polly;
+﻿using Polly;
 using Polly.Timeout;
 using Rivulet.Core;
 using Rivulet.Core.Resilience;
@@ -18,7 +17,7 @@ public class RivuletToPollyConverterTests
 
         var pipeline = options.ToPollyRetryPipeline();
 
-        pipeline.Should().BeSameAs(ResiliencePipeline.Empty);
+        pipeline.ShouldBeSameAs(ResiliencePipeline.Empty);
     }
 
     [Fact]
@@ -45,8 +44,8 @@ public class RivuletToPollyConverterTests
             return ValueTask.FromResult(42);
         });
 
-        result.Should().Be(42);
-        attemptCount.Should().Be(3, "should have retried twice and succeeded on 3rd attempt");
+        result.ShouldBe(42);
+        attemptCount.ShouldBe(3, "should have retried twice and succeeded on 3rd attempt");
     }
 
     [Fact]
@@ -69,8 +68,8 @@ public class RivuletToPollyConverterTests
             throw new ArgumentException("Non-transient failure");
         });
 
-        await act.Should().ThrowAsync<ArgumentException>();
-        attemptCount.Should().Be(1, "should not have retried non-transient exception");
+        await act.ShouldThrowAsync<ArgumentException>();
+        attemptCount.ShouldBe(1, "should not have retried non-transient exception");
     }
 
     [Fact]
@@ -97,8 +96,8 @@ public class RivuletToPollyConverterTests
             return ValueTask.FromResult(42);
         });
 
-        result.Should().Be(42);
-        attemptTimes.Should().HaveCount(3);
+        result.ShouldBe(42);
+        attemptTimes.Count.ShouldBe(3);
         // With jitter, delays should vary, but we can verify attempts happened
     }
 
@@ -126,8 +125,8 @@ public class RivuletToPollyConverterTests
             return ValueTask.FromResult(42);
         });
 
-        result.Should().Be(42);
-        attemptCount.Should().Be(3);
+        result.ShouldBe(42);
+        attemptCount.ShouldBe(3);
     }
 
     [Fact]
@@ -154,8 +153,8 @@ public class RivuletToPollyConverterTests
             return ValueTask.FromResult(42);
         });
 
-        result.Should().Be(42);
-        attemptCount.Should().Be(3);
+        result.ShouldBe(42);
+        attemptCount.ShouldBe(3);
     }
 
     [Fact]
@@ -165,8 +164,7 @@ public class RivuletToPollyConverterTests
 
         var act = () => options!.ToPollyRetryPipeline();
 
-        act.Should().Throw<ArgumentNullException>()
-            .WithParameterName("options");
+(        act.ShouldThrow<ArgumentNullException>()).ParamName.ShouldBe("options");
     }
 
     [Fact]
@@ -176,7 +174,7 @@ public class RivuletToPollyConverterTests
 
         var pipeline = timeout.ToPollyTimeoutPipeline();
 
-        pipeline.Should().NotBeNull();
+        pipeline.ShouldNotBeNull();
     }
 
     [Fact]
@@ -191,7 +189,7 @@ public class RivuletToPollyConverterTests
             return 42;
         });
 
-        result.Should().Be(42);
+        result.ShouldBe(42);
     }
 
     [Fact]
@@ -201,8 +199,7 @@ public class RivuletToPollyConverterTests
 
         var act = () => timeout.ToPollyTimeoutPipeline();
 
-        act.Should().Throw<ArgumentOutOfRangeException>()
-            .WithParameterName("timeout");
+(        act.ShouldThrow<ArgumentOutOfRangeException>()).ParamName.ShouldBe("timeout");
     }
 
     [Fact]
@@ -212,8 +209,7 @@ public class RivuletToPollyConverterTests
 
         var act = () => timeout.ToPollyTimeoutPipeline();
 
-        act.Should().Throw<ArgumentOutOfRangeException>()
-            .WithParameterName("timeout");
+(        act.ShouldThrow<ArgumentOutOfRangeException>()).ParamName.ShouldBe("timeout");
     }
 
     [Fact]
@@ -232,7 +228,7 @@ public class RivuletToPollyConverterTests
 
         var pipeline = options.ToPollyCircuitBreakerPipeline();
 
-        pipeline.Should().NotBeNull();
+        pipeline.ShouldNotBeNull();
     }
 
     [Fact]
@@ -242,8 +238,7 @@ public class RivuletToPollyConverterTests
 
         var act = () => options!.ToPollyCircuitBreakerPipeline();
 
-        act.Should().Throw<ArgumentNullException>()
-            .WithParameterName("options");
+(        act.ShouldThrow<ArgumentNullException>()).ParamName.ShouldBe("options");
     }
 
     [Fact]
@@ -256,7 +251,7 @@ public class RivuletToPollyConverterTests
 
         var act = () => options.ToPollyCircuitBreakerPipeline();
 
-        act.Should().Throw<ArgumentException>();
+        act.ShouldThrow<ArgumentException>();
     }
 
     [Fact]
@@ -271,7 +266,7 @@ public class RivuletToPollyConverterTests
 
         var pipeline = options.ToPollyPipeline();
 
-        pipeline.Should().BeSameAs(ResiliencePipeline.Empty);
+        pipeline.ShouldBeSameAs(ResiliencePipeline.Empty);
     }
 
     [Fact]
@@ -297,8 +292,8 @@ public class RivuletToPollyConverterTests
             return ValueTask.FromResult(42);
         });
 
-        result.Should().Be(42);
-        attemptCount.Should().Be(2);
+        result.ShouldBe(42);
+        attemptCount.ShouldBe(2);
     }
 
     [Fact]
@@ -318,7 +313,7 @@ public class RivuletToPollyConverterTests
             return 42;
         });
 
-        result.Should().Be(42);
+        result.ShouldBe(42);
     }
 
     [Fact]
@@ -336,7 +331,7 @@ public class RivuletToPollyConverterTests
 
         var pipeline = options.ToPollyPipeline();
 
-        pipeline.Should().NotBeSameAs(ResiliencePipeline.Empty);
+        pipeline.ShouldNotBeSameAs(ResiliencePipeline.Empty);
     }
 
     [Fact]
@@ -357,7 +352,7 @@ public class RivuletToPollyConverterTests
 
         var pipeline = options.ToPollyPipeline();
 
-        pipeline.Should().NotBeSameAs(ResiliencePipeline.Empty);
+        pipeline.ShouldNotBeSameAs(ResiliencePipeline.Empty);
 
         // Verify it works with a successful operation
         var result = await pipeline.ExecuteAsync(async ct =>
@@ -366,7 +361,7 @@ public class RivuletToPollyConverterTests
             return 42;
         });
 
-        result.Should().Be(42);
+        result.ShouldBe(42);
     }
 
     [Fact]
@@ -376,8 +371,7 @@ public class RivuletToPollyConverterTests
 
         var act = () => options!.ToPollyPipeline();
 
-        act.Should().Throw<ArgumentNullException>()
-            .WithParameterName("options");
+(        act.ShouldThrow<ArgumentNullException>()).ParamName.ShouldBe("options");
     }
 
     [Fact]
@@ -393,7 +387,7 @@ public class RivuletToPollyConverterTests
 
         var act = () => options.ToPollyPipeline();
 
-        act.Should().Throw<ArgumentException>();
+        act.ShouldThrow<ArgumentException>();
     }
 
     [Fact]
@@ -416,8 +410,8 @@ public class RivuletToPollyConverterTests
             throw new InvalidOperationException("Failure");
         });
 
-        await act.Should().ThrowAsync<InvalidOperationException>();
-        attemptCount.Should().Be(1, "should not retry when IsTransient is null");
+        await act.ShouldThrowAsync<InvalidOperationException>();
+        attemptCount.ShouldBe(1, "should not retry when IsTransient is null");
     }
 
     [Fact]
@@ -441,13 +435,13 @@ public class RivuletToPollyConverterTests
             throw new InvalidOperationException("Always fails");
         });
 
-        await act.Should().ThrowAsync<InvalidOperationException>();
-        attemptCount.Should().Be(3, "should attempt 3 times (1 initial + 2 retries)");
+        await act.ShouldThrowAsync<InvalidOperationException>();
+        attemptCount.ShouldBe(3, "should attempt 3 times (1 initial + 2 retries)");
 
         // Run again to ensure previousDelay was reset
         attemptCount = 0;
-        await act.Should().ThrowAsync<InvalidOperationException>();
-        attemptCount.Should().Be(3, "should attempt 3 times again after reset");
+        await act.ShouldThrowAsync<InvalidOperationException>();
+        attemptCount.ShouldBe(3, "should attempt 3 times again after reset");
     }
 
     [Fact]
@@ -469,8 +463,8 @@ public class RivuletToPollyConverterTests
             throw new InvalidOperationException("Failure");
         });
 
-        await act.Should().ThrowAsync<InvalidOperationException>();
-        attemptCount.Should().Be(1, "should not retry when IsTransient is null");
+        await act.ShouldThrowAsync<InvalidOperationException>();
+        attemptCount.ShouldBe(1, "should not retry when IsTransient is null");
     }
 
     [Fact]
@@ -494,13 +488,13 @@ public class RivuletToPollyConverterTests
             throw new InvalidOperationException("Always fails");
         });
 
-        await act.Should().ThrowAsync<InvalidOperationException>();
-        attemptCount.Should().Be(3, "should attempt 3 times (1 initial + 2 retries)");
+        await act.ShouldThrowAsync<InvalidOperationException>();
+        attemptCount.ShouldBe(3, "should attempt 3 times (1 initial + 2 retries)");
 
         // Run again to ensure previousDelay was reset
         attemptCount = 0;
-        await act.Should().ThrowAsync<InvalidOperationException>();
-        attemptCount.Should().Be(3, "should attempt 3 times again after reset");
+        await act.ShouldThrowAsync<InvalidOperationException>();
+        attemptCount.ShouldBe(3, "should attempt 3 times again after reset");
     }
 
     [Fact]
@@ -521,7 +515,7 @@ public class RivuletToPollyConverterTests
 
         // The pipeline is created but state changes won't happen until we actually use it
         // This test verifies the callback structure is set up correctly
-        pipeline.Should().NotBeNull();
+        pipeline.ShouldNotBeNull();
     }
 
     [Fact]
@@ -546,8 +540,8 @@ public class RivuletToPollyConverterTests
 
         // The pipeline is created but state changes won't happen until we actually use it
         // This test verifies the callback structure is set up correctly
-        pipeline.Should().NotBeNull();
-        pipeline.Should().NotBeSameAs(ResiliencePipeline.Empty);
+        pipeline.ShouldNotBeNull();
+        pipeline.ShouldNotBeSameAs(ResiliencePipeline.Empty);
     }
 
     [Fact]
@@ -562,7 +556,7 @@ public class RivuletToPollyConverterTests
             return 42;
         });
 
-        await act.Should().ThrowAsync<TimeoutRejectedException>();
+        await act.ShouldThrowAsync<TimeoutRejectedException>();
     }
 
     [Fact]
@@ -597,18 +591,20 @@ public class RivuletToPollyConverterTests
         }
 
         // Circuit should be open now
-        stateChanges.Should().ContainSingle(sc => sc.From == CircuitBreakerState.Closed && sc.To == CircuitBreakerState.Open);
+        stateChanges.ShouldHaveSingleItem().ShouldSatisfyAllConditions(
+            sc => sc.From.ShouldBe(CircuitBreakerState.Closed),
+            sc => sc.To.ShouldBe(CircuitBreakerState.Open));
 
         // Wait for circuit to transition to HalfOpen
         await Task.Delay(600);
 
         // Next call should trigger HalfOpen -> Closed transition on success
         var result = await pipeline.ExecuteAsync(_ => ValueTask.FromResult(42));
-        result.Should().Be(42);
+        result.ShouldBe(42);
 
         // Verify all state transitions occurred
-        stateChanges.Should().Contain(sc => sc.From == CircuitBreakerState.Open && sc.To == CircuitBreakerState.HalfOpen);
-        stateChanges.Should().Contain(sc => sc.From == CircuitBreakerState.HalfOpen && sc.To == CircuitBreakerState.Closed);
+        stateChanges.ShouldContain(sc => sc.From == CircuitBreakerState.Open && sc.To == CircuitBreakerState.HalfOpen);
+        stateChanges.ShouldContain(sc => sc.From == CircuitBreakerState.HalfOpen && sc.To == CircuitBreakerState.Closed);
     }
 
     [Fact]
@@ -647,18 +643,20 @@ public class RivuletToPollyConverterTests
         }
 
         // Circuit should be open
-        stateChanges.Should().ContainSingle(sc => sc.From == CircuitBreakerState.Closed && sc.To == CircuitBreakerState.Open);
+        stateChanges.ShouldHaveSingleItem().ShouldSatisfyAllConditions(
+            sc => sc.From.ShouldBe(CircuitBreakerState.Closed),
+            sc => sc.To.ShouldBe(CircuitBreakerState.Open));
 
         // Wait for circuit to transition to HalfOpen
         await Task.Delay(600);
 
         // Success should trigger HalfOpen -> Closed
         var result = await pipeline.ExecuteAsync(_ => ValueTask.FromResult(42));
-        result.Should().Be(42);
+        result.ShouldBe(42);
 
         // Verify state transitions
-        stateChanges.Should().Contain(sc => sc.From == CircuitBreakerState.Open && sc.To == CircuitBreakerState.HalfOpen);
-        stateChanges.Should().Contain(sc => sc.From == CircuitBreakerState.HalfOpen && sc.To == CircuitBreakerState.Closed);
+        stateChanges.ShouldContain(sc => sc.From == CircuitBreakerState.Open && sc.To == CircuitBreakerState.HalfOpen);
+        stateChanges.ShouldContain(sc => sc.From == CircuitBreakerState.HalfOpen && sc.To == CircuitBreakerState.Closed);
     }
 
 }

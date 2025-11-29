@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using Rivulet.Core;
 
 namespace Rivulet.Diagnostics.OpenTelemetry.Tests;
@@ -30,7 +30,7 @@ public class EdgeCaseCoverageTests
                 return x;
             }, options);
 
-        result.Should().HaveCount(3);
+        result.Count.ShouldBe(3);
     }
 
     [Fact]
@@ -51,7 +51,7 @@ public class EdgeCaseCoverageTests
                 return x;
             }, options);
 
-        result.Should().HaveCount(2);
+        result.Count.ShouldBe(2);
     }
 
     [Fact]
@@ -78,7 +78,7 @@ public class EdgeCaseCoverageTests
                 return x;
             }, options);
 
-        result.Should().HaveCount(5);
+        result.Count.ShouldBe(5);
 
         var retryEvents = activities
             .Where(a => a?.Events != null)
@@ -86,7 +86,7 @@ public class EdgeCaseCoverageTests
             .Where(e => e.Name == RivuletOpenTelemetryConstants.EventNames.Retry)
             .ToList();
 
-        retryEvents.Should().BeEmpty();
+        retryEvents.ShouldBeEmpty();
     }
 
     [Fact]
@@ -141,9 +141,9 @@ public class EdgeCaseCoverageTests
 
         await Task.Delay(100);
 
-        onStartCalled.Should().BeGreaterThan(0);
-        onCompleteCalled.Should().BeGreaterThan(0);
-        onErrorCalled.Should().BeGreaterThan(0);
+        onStartCalled.ShouldBeGreaterThan(0);
+        onCompleteCalled.ShouldBeGreaterThan(0);
+        onErrorCalled.ShouldBeGreaterThan(0);
     }
 
     [Fact]
@@ -158,7 +158,7 @@ public class EdgeCaseCoverageTests
                 return x;
             }, options);
 
-        result.Should().HaveCount(3);
+        result.Count.ShouldBe(3);
     }
 
     [Fact]
@@ -204,7 +204,7 @@ public class EdgeCaseCoverageTests
                 return x;
             }, options);
 
-        result.Should().HaveCount(100);
+        result.Count.ShouldBe(100);
     }
 
     [Fact]
@@ -248,8 +248,8 @@ public class EdgeCaseCoverageTests
         var successActivities = activities.Where(a => a?.Status == ActivityStatusCode.Ok).ToList();
         var errorActivities = activities.Where(a => a?.Status == ActivityStatusCode.Error).ToList();
 
-        successActivities.Should().NotBeEmpty();
-        errorActivities.Should().NotBeEmpty();
+        successActivities.ShouldNotBeEmpty();
+        errorActivities.ShouldNotBeEmpty();
     }
 
     [Fact]
@@ -294,7 +294,7 @@ public class EdgeCaseCoverageTests
 
         // Filter out null activities (can happen during async callback execution)
         var errorActivities = activities.Where(a => a?.Status == ActivityStatusCode.Error).ToList();
-        errorActivities.Should().NotBeEmpty();
+        errorActivities.ShouldNotBeEmpty();
     }
 
     [Fact]
@@ -309,7 +309,11 @@ public class EdgeCaseCoverageTests
                 return x * 2;
             }, options);
 
-        result.Should().HaveCount(5);
-        result.Should().Contain([2, 4, 6, 8, 10]);
+        result.Count.ShouldBe(5);
+        result.ShouldContain(2);
+        result.ShouldContain(4);
+        result.ShouldContain(6);
+        result.ShouldContain(8);
+        result.ShouldContain(10);
     }
 }

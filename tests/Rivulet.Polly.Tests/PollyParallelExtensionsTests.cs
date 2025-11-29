@@ -1,5 +1,4 @@
-using FluentAssertions;
-using Polly;
+﻿using Polly;
 
 namespace Rivulet.Polly.Tests;
 
@@ -39,9 +38,9 @@ public class PollyParallelExtensionsTests
             retryPolicy,
             new() { MaxDegreeOfParallelism = 2 });
 
-        results.Should().HaveCount(5);
-        results.Should().BeEquivalentTo([2, 4, 6, 8, 10]);
-        attempts[3].Should().Be(3, "item 3 should have been attempted 3 times");
+        results.Count.ShouldBe(5);
+        results.OrderBy(x => x).ShouldBe([2, 4, 6, 8, 10]);
+        attempts[3].ShouldBe(3, "item 3 should have been attempted 3 times");
     }
 
     [Fact]
@@ -84,9 +83,9 @@ public class PollyParallelExtensionsTests
             retryPolicy,
             new() { MaxDegreeOfParallelism = 2 });
 
-        results.Should().HaveCount(5);
-        results.Should().BeEquivalentTo([2, 4, 6, 8, 10]);
-        attempts[3].Should().Be(3, "item 3 should have been attempted 3 times");
+        results.Count.ShouldBe(5);
+        results.OrderBy(x => x).ShouldBe([2, 4, 6, 8, 10]);
+        attempts[3].ShouldBe(3, "item 3 should have been attempted 3 times");
     }
 
     [Fact]
@@ -108,8 +107,8 @@ public class PollyParallelExtensionsTests
             timeoutPolicy,
             new() { MaxDegreeOfParallelism = 2 });
 
-        results.Should().HaveCount(5);
-        results.Should().BeEquivalentTo([2, 4, 6, 8, 10]);
+        results.Count.ShouldBe(5);
+        results.OrderBy(x => x).ShouldBe([2, 4, 6, 8, 10]);
     }
 
     [Fact]
@@ -122,8 +121,7 @@ public class PollyParallelExtensionsTests
             (item, _) => ValueTask.FromResult(item),
             policy);
 
-        await act.Should().ThrowAsync<ArgumentNullException>()
-            .WithParameterName("source");
+        (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("source");
     }
 
     [Fact]
@@ -136,8 +134,7 @@ public class PollyParallelExtensionsTests
             null!,
             policy);
 
-        await act.Should().ThrowAsync<ArgumentNullException>()
-            .WithParameterName("selector");
+        (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("selector");
     }
 
     [Fact]
@@ -149,8 +146,7 @@ public class PollyParallelExtensionsTests
             (item, _) => ValueTask.FromResult(item),
             (ResiliencePipeline)null!);
 
-        await act.Should().ThrowAsync<ArgumentNullException>()
-            .WithParameterName("policy");
+        (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("policy");
     }
 
     [Fact]
@@ -195,9 +191,9 @@ public class PollyParallelExtensionsTests
             retryPolicy,
             new() { MaxDegreeOfParallelism = 4 });
 
-        results.Should().HaveCount(10);
-        results.Should().BeEquivalentTo(items);
-        attempts[5].Should().Be(2, "item 5 should have been attempted twice");
+        results.Count.ShouldBe(10);
+        results.OrderBy(x => x).ShouldBe(items.OrderBy(x => x));
+        attempts[5].ShouldBe(2, "item 5 should have been attempted twice");
     }
 
     [Fact]
@@ -210,8 +206,7 @@ public class PollyParallelExtensionsTests
             (_, _) => ValueTask.CompletedTask,
             policy);
 
-        await act.Should().ThrowAsync<ArgumentNullException>()
-            .WithParameterName("source");
+        (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("source");
     }
 
     [Fact]
@@ -224,8 +219,7 @@ public class PollyParallelExtensionsTests
             null!,
             policy);
 
-        await act.Should().ThrowAsync<ArgumentNullException>()
-            .WithParameterName("action");
+        (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("action");
     }
 
     [Fact]
@@ -237,7 +231,6 @@ public class PollyParallelExtensionsTests
             (_, _) => ValueTask.CompletedTask,
             null!);
 
-        await act.Should().ThrowAsync<ArgumentNullException>()
-            .WithParameterName("policy");
+        (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("policy");
     }
 }

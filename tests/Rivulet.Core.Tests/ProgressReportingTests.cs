@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using Rivulet.Base.Tests;
 using Rivulet.Core.Observability;
@@ -37,15 +37,15 @@ public class ProgressReportingTests
             },
             options);
 
-        results.Should().HaveCount(100);
-        snapshots.Should().NotBeEmpty();
+        results.Count.ShouldBe(100);
+        snapshots.ShouldNotBeEmpty();
 
         var maxCompleted = snapshots.Max(s => s.ItemsCompleted);
-        maxCompleted.Should().BeGreaterThan(50);
+        maxCompleted.ShouldBeGreaterThan(50);
 
-        snapshots.All(s => s.TotalItems == 100).Should().BeTrue();
-        snapshots.Where(s => s.ItemsCompleted > 0).All(s => s.ItemsPerSecond > 0).Should().BeTrue();
-        snapshots.Where(s => s.ItemsCompleted > 0).All(s => s.PercentComplete is >= 0 and <= 100).Should().BeTrue();
+        snapshots.All(s => s.TotalItems == 100).ShouldBeTrue();
+        snapshots.Where(s => s.ItemsCompleted > 0).All(s => s.ItemsPerSecond > 0).ShouldBeTrue();
+        snapshots.Where(s => s.ItemsCompleted > 0).All(s => s.PercentComplete is >= 0 and <= 100).ShouldBeTrue();
     }
 
     [Fact]
@@ -76,15 +76,15 @@ public class ProgressReportingTests
             },
             options).ToListAsync();
 
-        results.Should().HaveCount(50);
-        snapshots.Should().NotBeEmpty();
+        results.Count.ShouldBe(50);
+        snapshots.ShouldNotBeEmpty();
 
         var maxCompleted = snapshots.Max(s => s.ItemsCompleted);
-        maxCompleted.Should().BeGreaterThan(10);
+        maxCompleted.ShouldBeGreaterThan(10);
 
-        snapshots.All(s => s.TotalItems == null).Should().BeTrue();
-        snapshots.All(s => s.PercentComplete == null).Should().BeTrue();
-        snapshots.Where(s => s.ItemsCompleted > 0).All(s => s.ItemsPerSecond > 0).Should().BeTrue();
+        snapshots.All(s => s.TotalItems == null).ShouldBeTrue();
+        snapshots.All(s => s.PercentComplete == null).ShouldBeTrue();
+        snapshots.Where(s => s.ItemsCompleted > 0).All(s => s.ItemsPerSecond > 0).ShouldBeTrue();
     }
 
     [Fact]
@@ -123,7 +123,7 @@ public class ProgressReportingTests
 
         await Task.Yield();
 
-        await Extensions.ApplyDeadlineAsync(
+        await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddMilliseconds(2000),
             () => Task.Delay(50),
             () =>
@@ -134,13 +134,13 @@ public class ProgressReportingTests
                 return currentMaxErrors != 4 || currentMaxCompleted != 16;
             });
 
-        results.Should().HaveCount(16, "20 items minus 4 failures (items 5,10,15,20) equals 16 successful results");
+        results.Count.ShouldBe(16, "20 items minus 4 failures (items 5,10,15,20) equals 16 successful results");
 
         var maxErrors = snapshots.Max(s => s.ErrorCount);
         var maxCompleted = snapshots.Max(s => s.ItemsCompleted);
 
-        maxErrors.Should().Be(4, "items 5,10,15,20 should have failed (4 total errors)");
-        maxCompleted.Should().Be(16, "all 16 non-failing items should have completed successfully");
+        maxErrors.ShouldBe(4, "items 5,10,15,20 should have failed (4 total errors)");
+        maxCompleted.ShouldBe(16, "all 16 non-failing items should have completed successfully");
     }
 
     [Fact]
@@ -171,12 +171,12 @@ public class ProgressReportingTests
             },
             options);
 
-        results.Should().HaveCount(50);
-        snapshots.Should().NotBeEmpty();
+        results.Count.ShouldBe(50);
+        snapshots.ShouldNotBeEmpty();
 
         var progressWithItems = snapshots.Where(s => s.ItemsCompleted > 0).ToList();
-        progressWithItems.Should().NotBeEmpty();
-        progressWithItems.All(s => s.ItemsPerSecond > 0).Should().BeTrue();
+        progressWithItems.ShouldNotBeEmpty();
+        progressWithItems.All(s => s.ItemsPerSecond > 0).ShouldBeTrue();
     }
 
     [Fact]
@@ -208,8 +208,8 @@ public class ProgressReportingTests
             },
             options);
 
-        snapshotsWithEta.Should().NotBeEmpty();
-        snapshotsWithEta.All(s => s.EstimatedTimeRemaining.HasValue).Should().BeTrue();
+        snapshotsWithEta.ShouldNotBeEmpty();
+        snapshotsWithEta.All(s => s.EstimatedTimeRemaining.HasValue).ShouldBeTrue();
     }
 
     [Fact]
@@ -240,10 +240,10 @@ public class ProgressReportingTests
             },
             options);
 
-        snapshots.Should().NotBeEmpty();
+        snapshots.ShouldNotBeEmpty();
         var progressSnapshots = snapshots.Where(s => s.PercentComplete.HasValue).ToList();
-        progressSnapshots.Should().NotBeEmpty();
-        progressSnapshots.All(s => s.PercentComplete is >= 0 and <= 100).Should().BeTrue();
+        progressSnapshots.ShouldNotBeEmpty();
+        progressSnapshots.All(s => s.PercentComplete is >= 0 and <= 100).ShouldBeTrue();
     }
 
     [Fact]
@@ -264,7 +264,7 @@ public class ProgressReportingTests
             },
             options);
 
-        results.Should().HaveCount(10);
+        results.Count.ShouldBe(10);
     }
 
     [Fact]
@@ -295,8 +295,8 @@ public class ProgressReportingTests
             },
             options);
 
-        snapshots.Should().NotBeEmpty();
-        snapshots.All(s => s.ItemsStarted >= s.ItemsCompleted).Should().BeTrue();
+        snapshots.ShouldNotBeEmpty();
+        snapshots.All(s => s.ItemsStarted >= s.ItemsCompleted).ShouldBeTrue();
     }
 
     [Fact]
@@ -328,9 +328,9 @@ public class ProgressReportingTests
             },
             options);
 
-        results.Should().Equal(Enumerable.Range(1, 40).Select(x => x * 2));
-        snapshots.Should().NotBeEmpty();
-        snapshots.Max(s => s.ItemsCompleted).Should().BeGreaterThan(20);
+        results.ShouldBe(Enumerable.Range(1, 40).Select(x => x * 2));
+        snapshots.ShouldNotBeEmpty();
+        snapshots.Max(s => s.ItemsCompleted).ShouldBeGreaterThan(20);
     }
 
     [Fact]
@@ -362,9 +362,9 @@ public class ProgressReportingTests
             },
             options);
 
-        processedCount.Should().Be(30);
-        snapshots.Should().NotBeEmpty();
-        snapshots.Max(s => s.ItemsCompleted).Should().BeGreaterThan(10);
+        processedCount.ShouldBe(30);
+        snapshots.ShouldNotBeEmpty();
+        snapshots.Max(s => s.ItemsCompleted).ShouldBeGreaterThan(10);
     }
 
     [Fact]
@@ -394,8 +394,8 @@ public class ProgressReportingTests
             },
             options);
 
-        results.Should().HaveCount(20);
-        callbackCount.Should().BeGreaterThan(0);
+        results.Count.ShouldBe(20);
+        callbackCount.ShouldBeGreaterThan(0);
     }
 
     [Fact]
@@ -425,11 +425,11 @@ public class ProgressReportingTests
             },
             options);
 
-        snapshots.Should().NotBeEmpty();
+        snapshots.ShouldNotBeEmpty();
         var orderedSnapshots = snapshots.OrderBy(s => s.Elapsed).ToList();
         for (var i = 1; i < orderedSnapshots.Count; i++)
         {
-            orderedSnapshots[i].Elapsed.Should().BeGreaterThanOrEqualTo(orderedSnapshots[i - 1].Elapsed);
+            orderedSnapshots[i].Elapsed.ShouldBeGreaterThanOrEqualTo(orderedSnapshots[i - 1].Elapsed);
         }
     }
 
@@ -462,9 +462,9 @@ public class ProgressReportingTests
             },
             options).ToListAsync();
 
-        results.Should().Equal(Enumerable.Range(1, 30).Select(x => x * 2));
-        snapshots.Should().NotBeEmpty();
-        snapshots.Max(s => s.ItemsCompleted).Should().BeGreaterThan(10);
+        results.ShouldBe(Enumerable.Range(1, 30).Select(x => x * 2));
+        snapshots.ShouldNotBeEmpty();
+        snapshots.Max(s => s.ItemsCompleted).ShouldBeGreaterThan(10);
     }
 
     [Fact]
@@ -498,10 +498,10 @@ public class ProgressReportingTests
             },
             options);
 
-        results.Should().HaveCount(12);
-        snapshots.Should().NotBeEmpty();
+        results.Count.ShouldBe(12);
+        snapshots.ShouldNotBeEmpty();
         var maxErrors = snapshots.Max(s => s.ErrorCount);
-        maxErrors.Should().BeGreaterThanOrEqualTo(1);
+        maxErrors.ShouldBeGreaterThanOrEqualTo(1);
     }
 
     [Fact]
@@ -509,8 +509,8 @@ public class ProgressReportingTests
     {
         var options = new ProgressOptions();
 
-        options.ReportInterval.Should().Be(TimeSpan.FromSeconds(5));
-        options.OnProgress.Should().BeNull();
+        options.ReportInterval.ShouldBe(TimeSpan.FromSeconds(5));
+        options.OnProgress.ShouldBeNull();
         return Task.CompletedTask;
     }
 
@@ -529,14 +529,14 @@ public class ProgressReportingTests
             PercentComplete = 8.0
         };
 
-        snapshot.ItemsStarted.Should().Be(10);
-        snapshot.ItemsCompleted.Should().Be(8);
-        snapshot.TotalItems.Should().Be(100);
-        snapshot.ErrorCount.Should().Be(2);
-        snapshot.Elapsed.Should().Be(TimeSpan.FromSeconds(5));
-        snapshot.ItemsPerSecond.Should().Be(1.6);
-        snapshot.EstimatedTimeRemaining.Should().Be(TimeSpan.FromSeconds(57.5));
-        snapshot.PercentComplete.Should().Be(8.0);
+        snapshot.ItemsStarted.ShouldBe(10);
+        snapshot.ItemsCompleted.ShouldBe(8);
+        snapshot.TotalItems.ShouldBe(100);
+        snapshot.ErrorCount.ShouldBe(2);
+        snapshot.Elapsed.ShouldBe(TimeSpan.FromSeconds(5));
+        snapshot.ItemsPerSecond.ShouldBe(1.6);
+        snapshot.EstimatedTimeRemaining.ShouldBe(TimeSpan.FromSeconds(57.5));
+        snapshot.PercentComplete.ShouldBe(8.0);
 
         return Task.CompletedTask;
     }
@@ -572,8 +572,8 @@ public class ProgressReportingTests
             options,
             cts.Token);
 
-        await act.Should().ThrowAsync<OperationCanceledException>();
-        snapshots.Should().NotBeEmpty();
+        await act.ShouldThrowAsync<OperationCanceledException>();
+        snapshots.ShouldNotBeEmpty();
     }
 
     [Fact]
@@ -598,7 +598,7 @@ public class ProgressReportingTests
             },
             options);
 
-        results.Should().HaveCount(20);
+        results.Count.ShouldBe(20);
     }
 
     [Fact]
@@ -658,7 +658,7 @@ public class ProgressReportingTests
             },
             options);
 
-        results.Should().HaveCount(10);
+        results.Count.ShouldBe(10);
     }
 
     [Fact]
@@ -688,8 +688,8 @@ public class ProgressReportingTests
             },
             options);
 
-        results.Should().HaveCount(10);
-        callbackExecuted.Should().BeTrue();
+        results.Count.ShouldBe(10);
+        callbackExecuted.ShouldBeTrue();
     }
 
     [Fact]
@@ -713,7 +713,7 @@ public class ProgressReportingTests
             },
             options).ToListAsync();
 
-        results.Should().HaveCount(10);
+        results.Count.ShouldBe(10);
     }
 
     [Fact]
@@ -742,7 +742,7 @@ public class ProgressReportingTests
             options,
             cts.Token);
 
-        await act.Should().ThrowAsync<OperationCanceledException>();
+        await act.ShouldThrowAsync<OperationCanceledException>();
     }
 
     [Fact]
@@ -772,8 +772,8 @@ public class ProgressReportingTests
             },
             options);
 
-        results.Should().HaveCount(10);
-        reportCount.Should().BeGreaterThan(0);
+        results.Count.ShouldBe(10);
+        reportCount.ShouldBeGreaterThan(0);
     }
 
     [Fact]
@@ -791,7 +791,7 @@ public class ProgressReportingTests
                 {
                     if (snapshot.Elapsed.TotalMilliseconds < 10)
                     {
-                        snapshot.ItemsPerSecond.Should().BeGreaterThanOrEqualTo(0);
+                        snapshot.ItemsPerSecond.ShouldBeGreaterThanOrEqualTo(0);
                     }
                     return ValueTask.CompletedTask;
                 }
@@ -832,9 +832,9 @@ public class ProgressReportingTests
                 },
                 options);
 
-            results.Should().HaveCount(5);
+            results.Count.ShouldBe(5);
         }
 
-        disposalCount.Should().BeGreaterThan(0);
+        disposalCount.ShouldBeGreaterThan(0);
     }
 }

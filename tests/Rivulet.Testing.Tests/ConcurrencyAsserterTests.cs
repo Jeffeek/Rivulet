@@ -1,4 +1,4 @@
-namespace Rivulet.Testing.Tests;
+﻿namespace Rivulet.Testing.Tests;
 
 public class ConcurrencyAsserterTests
 {
@@ -7,8 +7,8 @@ public class ConcurrencyAsserterTests
     {
         var asserter = new ConcurrencyAsserter();
 
-        asserter.CurrentConcurrency.Should().Be(0);
-        asserter.MaxConcurrency.Should().Be(0);
+        asserter.CurrentConcurrency.ShouldBe(0);
+        asserter.MaxConcurrency.ShouldBe(0);
     }
 
     [Fact]
@@ -18,8 +18,8 @@ public class ConcurrencyAsserterTests
 
         using var scope = asserter.Enter();
 
-        asserter.CurrentConcurrency.Should().Be(1);
-        asserter.MaxConcurrency.Should().Be(1);
+        asserter.CurrentConcurrency.ShouldBe(1);
+        asserter.MaxConcurrency.ShouldBe(1);
     }
 
     [Fact]
@@ -30,8 +30,8 @@ public class ConcurrencyAsserterTests
         var scope = asserter.Enter();
         scope.Dispose();
 
-        asserter.CurrentConcurrency.Should().Be(0);
-        asserter.MaxConcurrency.Should().Be(1);
+        asserter.CurrentConcurrency.ShouldBe(0);
+        asserter.MaxConcurrency.ShouldBe(1);
     }
 
     [Fact]
@@ -43,14 +43,14 @@ public class ConcurrencyAsserterTests
         var scope2 = asserter.Enter();
         var scope3 = asserter.Enter();
 
-        asserter.CurrentConcurrency.Should().Be(3);
-        asserter.MaxConcurrency.Should().Be(3);
+        asserter.CurrentConcurrency.ShouldBe(3);
+        asserter.MaxConcurrency.ShouldBe(3);
 
         scope1.Dispose();
         scope2.Dispose();
 
-        asserter.CurrentConcurrency.Should().Be(1);
-        asserter.MaxConcurrency.Should().Be(3);
+        asserter.CurrentConcurrency.ShouldBe(1);
+        asserter.MaxConcurrency.ShouldBe(3);
 
         scope3.Dispose();
     }
@@ -68,8 +68,8 @@ public class ConcurrencyAsserterTests
 
         await Task.WhenAll(tasks);
 
-        asserter.CurrentConcurrency.Should().Be(0);
-        asserter.MaxConcurrency.Should().BeGreaterThan(1);
+        asserter.CurrentConcurrency.ShouldBe(0);
+        asserter.MaxConcurrency.ShouldBeGreaterThan(1);
     }
 
     [Fact]
@@ -83,8 +83,8 @@ public class ConcurrencyAsserterTests
 
         asserter.Reset();
 
-        asserter.CurrentConcurrency.Should().Be(0);
-        asserter.MaxConcurrency.Should().Be(0);
+        asserter.CurrentConcurrency.ShouldBe(0);
+        asserter.MaxConcurrency.ShouldBe(0);
     }
 
     [Fact]
@@ -100,8 +100,8 @@ public class ConcurrencyAsserterTests
 
         await Task.WhenAll(tasks);
 
-        asserter.CurrentConcurrency.Should().Be(0);
-        asserter.MaxConcurrency.Should().BeGreaterThan(0);
+        asserter.CurrentConcurrency.ShouldBe(0);
+        asserter.MaxConcurrency.ShouldBeGreaterThan(0);
     }
 
     [Fact]
@@ -113,16 +113,16 @@ public class ConcurrencyAsserterTests
         var scope2 = asserter.Enter();
         var scope3 = asserter.Enter();
 
-        asserter.MaxConcurrency.Should().Be(3);
+        asserter.MaxConcurrency.ShouldBe(3);
 
         scope1.Dispose();
         scope2.Dispose();
 
-        asserter.MaxConcurrency.Should().Be(3);
+        asserter.MaxConcurrency.ShouldBe(3);
 
         var scope4 = asserter.Enter();
 
-        asserter.MaxConcurrency.Should().Be(3);
+        asserter.MaxConcurrency.ShouldBe(3);
 
         scope3.Dispose();
         scope4.Dispose();
@@ -138,7 +138,7 @@ public class ConcurrencyAsserterTests
         scope.Dispose();
         scope.Dispose();
 
-        asserter.CurrentConcurrency.Should().Be(0);
+        asserter.CurrentConcurrency.ShouldBe(0);
     }
 
     [Fact]
@@ -170,9 +170,9 @@ public class ConcurrencyAsserterTests
 
         await Task.WhenAll(tasks);
 
-        asserter.CurrentConcurrency.Should().Be(0);
-        asserter.MaxConcurrency.Should().BeGreaterThan(1);
-        asserter.MaxConcurrency.Should().Be(maxObserved);
+        asserter.CurrentConcurrency.ShouldBe(0);
+        asserter.MaxConcurrency.ShouldBeGreaterThan(1);
+        asserter.MaxConcurrency.ShouldBe(maxObserved);
     }
 
     [Fact]
@@ -182,10 +182,10 @@ public class ConcurrencyAsserterTests
 
         using (asserter.Enter())
         {
-            asserter.CurrentConcurrency.Should().Be(1);
+            asserter.CurrentConcurrency.ShouldBe(1);
         }
 
-        asserter.CurrentConcurrency.Should().Be(0);
+        asserter.CurrentConcurrency.ShouldBe(0);
     }
 
     [Fact]
@@ -195,25 +195,25 @@ public class ConcurrencyAsserterTests
 
         using (asserter.Enter())
         {
-            asserter.CurrentConcurrency.Should().Be(1);
+            asserter.CurrentConcurrency.ShouldBe(1);
 
             using (asserter.Enter())
             {
-                asserter.CurrentConcurrency.Should().Be(2);
+                asserter.CurrentConcurrency.ShouldBe(2);
 
                 using (asserter.Enter())
                 {
-                    asserter.CurrentConcurrency.Should().Be(3);
+                    asserter.CurrentConcurrency.ShouldBe(3);
                 }
 
-                asserter.CurrentConcurrency.Should().Be(2);
+                asserter.CurrentConcurrency.ShouldBe(2);
             }
 
-            asserter.CurrentConcurrency.Should().Be(1);
+            asserter.CurrentConcurrency.ShouldBe(1);
         }
 
-        asserter.CurrentConcurrency.Should().Be(0);
-        asserter.MaxConcurrency.Should().Be(3);
+        asserter.CurrentConcurrency.ShouldBe(0);
+        asserter.MaxConcurrency.ShouldBe(3);
     }
 
     [Fact]
@@ -239,8 +239,8 @@ public class ConcurrencyAsserterTests
 
         await Task.WhenAll(tasks);
 
-        asserter.CurrentConcurrency.Should().Be(0);
-        asserter.MaxConcurrency.Should().BeGreaterThan(50); // With 100 threads, expect high concurrency
+        asserter.CurrentConcurrency.ShouldBe(0);
+        asserter.MaxConcurrency.ShouldBeGreaterThan(50); // With 100 threads, expect high concurrency
     }
 
     [Fact]
@@ -249,18 +249,18 @@ public class ConcurrencyAsserterTests
         var asserter = new ConcurrencyAsserter();
 
         // Initial state
-        asserter.MaxConcurrency.Should().Be(0);
-        asserter.CurrentConcurrency.Should().Be(0);
+        asserter.MaxConcurrency.ShouldBe(0);
+        asserter.CurrentConcurrency.ShouldBe(0);
 
         // After entering
         var scope = asserter.Enter();
-        asserter.CurrentConcurrency.Should().Be(1);
-        asserter.MaxConcurrency.Should().Be(1);
+        asserter.CurrentConcurrency.ShouldBe(1);
+        asserter.MaxConcurrency.ShouldBe(1);
 
         // After disposing
         scope.Dispose();
-        asserter.CurrentConcurrency.Should().Be(0);
-        asserter.MaxConcurrency.Should().Be(1);
+        asserter.CurrentConcurrency.ShouldBe(0);
+        asserter.MaxConcurrency.ShouldBe(1);
     }
 
     [Fact]
@@ -274,13 +274,13 @@ public class ConcurrencyAsserterTests
             using (asserter.Enter())
             {
                 await Task.Delay(1);
-                asserter.CurrentConcurrency.Should().Be(1);
-                asserter.MaxConcurrency.Should().Be(1);
+                asserter.CurrentConcurrency.ShouldBe(1);
+                asserter.MaxConcurrency.ShouldBe(1);
             }
         }
 
-        asserter.CurrentConcurrency.Should().Be(0);
-        asserter.MaxConcurrency.Should().Be(1);
+        asserter.CurrentConcurrency.ShouldBe(0);
+        asserter.MaxConcurrency.ShouldBe(1);
     }
 
     [Fact]
@@ -289,18 +289,18 @@ public class ConcurrencyAsserterTests
         var asserter = new ConcurrencyAsserter();
         var scope = asserter.Enter();
 
-        asserter.CurrentConcurrency.Should().Be(1);
-        asserter.MaxConcurrency.Should().Be(1);
+        asserter.CurrentConcurrency.ShouldBe(1);
+        asserter.MaxConcurrency.ShouldBe(1);
 
         // Reset while scope is still active
         asserter.Reset();
 
-        asserter.CurrentConcurrency.Should().Be(0);
-        asserter.MaxConcurrency.Should().Be(0);
+        asserter.CurrentConcurrency.ShouldBe(0);
+        asserter.MaxConcurrency.ShouldBe(0);
 
         // Disposing the scope should still decrement
         scope.Dispose();
-        asserter.CurrentConcurrency.Should().Be(-1); // Will go negative since we reset
+        asserter.CurrentConcurrency.ShouldBe(-1); // Will go negative since we reset
     }
 
     [Fact]
@@ -317,7 +317,7 @@ public class ConcurrencyAsserterTests
 
         await Task.WhenAll(tasks);
 
-        asserter.CurrentConcurrency.Should().Be(0);
-        asserter.MaxConcurrency.Should().BeGreaterThan(0);
+        asserter.CurrentConcurrency.ShouldBe(0);
+        asserter.MaxConcurrency.ShouldBeGreaterThan(0);
     }
 }

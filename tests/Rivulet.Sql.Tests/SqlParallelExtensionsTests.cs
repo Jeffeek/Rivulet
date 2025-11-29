@@ -1,5 +1,6 @@
-using System.Data;
+﻿using System.Data;
 using System.Diagnostics.CodeAnalysis;
+using Rivulet.Base.Tests;
 
 namespace Rivulet.Sql.Tests;
 
@@ -28,8 +29,8 @@ public class SqlParallelExtensionsTests
                 return items;
             });
 
-        results.Should().HaveCount(3);
-        results.Should().AllSatisfy(r => r.Should().ContainSingle());
+        results.Count.ShouldBe(3);
+        results.ShouldAllBe(r => r.Count == 1);
     }
 
     [Fact]
@@ -87,10 +88,10 @@ public class SqlParallelExtensionsTests
                 executeReaderFunc: _ => new TestDataReader([new() { ["Id"] = 1 }])),
             _ => new List<int> { 1 });
 
-        results.Should().HaveCount(2);
-        commandsReceived.Should().HaveCount(2);
-        commandsReceived.Should().Contain("SELECT * FROM Users WHERE Id = @id");
-        commandsReceived.Should().Contain("SELECT * FROM Products WHERE Id = @id");
+        results.Count.ShouldBe(2);
+        commandsReceived.Count.ShouldBe(2);
+        commandsReceived.ShouldContain("SELECT * FROM Users WHERE Id = @id");
+        commandsReceived.ShouldContain("SELECT * FROM Products WHERE Id = @id");
     }
 
     [Fact]
@@ -106,8 +107,8 @@ public class SqlParallelExtensionsTests
         var results = await commands.ExecuteCommandsParallelAsync(
             () => new TestDbConnection(executeNonQueryFunc: _ => 1));
 
-        results.Should().HaveCount(3);
-        results.Should().AllSatisfy(r => r.Should().Be(1));
+        results.Count.ShouldBe(3);
+        results.ShouldAllBe(r => r == 1);
     }
 
     [Fact]
@@ -139,10 +140,10 @@ public class SqlParallelExtensionsTests
         var results = await commandsWithParams.ExecuteCommandsParallelAsync(
             () => new TestDbConnection(executeNonQueryFunc: _ => 1));
 
-        results.Should().HaveCount(2);
-        commandsReceived.Should().HaveCount(2);
-        commandsReceived.Should().Contain("UPDATE Users SET Name = @name WHERE Id = @id");
-        commandsReceived.Should().Contain("DELETE FROM Users WHERE Id = @id");
+        results.Count.ShouldBe(2);
+        commandsReceived.Count.ShouldBe(2);
+        commandsReceived.ShouldContain("UPDATE Users SET Name = @name WHERE Id = @id");
+        commandsReceived.ShouldContain("DELETE FROM Users WHERE Id = @id");
     }
 
     [Fact]
@@ -161,10 +162,10 @@ public class SqlParallelExtensionsTests
         var results = await queries.ExecuteScalarParallelAsync<int>(
             () => new TestDbConnection(executeScalarFunc: _ => values[Interlocked.Increment(ref index) % values.Length]));
 
-        results.Should().HaveCount(3);
-        results.Should().Contain(10);
-        results.Should().Contain(100);
-        results.Should().Contain(1);
+        results.Count.ShouldBe(3);
+        results.ShouldContain(10);
+        results.ShouldContain(100);
+        results.ShouldContain(1);
     }
 
     [Fact]
@@ -184,8 +185,8 @@ public class SqlParallelExtensionsTests
         var results = await queries.ExecuteScalarParallelAsync<int>(
             () => new TestDbConnection(executeScalarFunc: _ => DBNull.Value));
 
-        results.Should().HaveCount(1);
-        results[0].Should().Be(0);
+        results.Count.ShouldBe(1);
+        results[0].ShouldBe(0);
     }
 
     [Fact]
@@ -203,9 +204,9 @@ public class SqlParallelExtensionsTests
         var results = await queriesWithParams.ExecuteScalarParallelAsync<int>(
             () => new TestDbConnection(executeScalarFunc: _ => 42));
 
-        results.Should().HaveCount(1);
-        results[0].Should().Be(42);
-        commandsReceived.Should().ContainSingle();
+        results.Count.ShouldBe(1);
+        results[0].ShouldBe(42);
+        commandsReceived.ShouldHaveSingleItem();
     }
 
     [Fact]
@@ -232,8 +233,8 @@ public class SqlParallelExtensionsTests
             _ => 1,
             options);
 
-        commandTimeout.Should().Be(60);
-        results.Should().HaveCount(1);
+        commandTimeout.ShouldBe(60);
+        results.Count.ShouldBe(1);
     }
 
     [Fact]
@@ -262,9 +263,9 @@ public class SqlParallelExtensionsTests
                 }
             });
 
-        attemptCount.Should().Be(2);
-        results.Should().HaveCount(1);
-        results[0].Should().Be(1);
+        attemptCount.ShouldBe(2);
+        results.Count.ShouldBe(1);
+        results[0].ShouldBe(1);
     }
 
     [Fact]
@@ -295,10 +296,10 @@ public class SqlParallelExtensionsTests
                     }
                 }));
 
-        callbackItem.Should().NotBeNull();
-        callbackException.Should().NotBeNull();
-        callbackException.Should().BeOfType<InvalidOperationException>();
-        callbackRetryAttempt.Should().Be(0);
+        callbackItem.ShouldNotBeNull();
+        callbackException.ShouldNotBeNull();
+        callbackException.ShouldBeOfType<InvalidOperationException>();
+        callbackRetryAttempt.ShouldBe(0);
     }
 
     [Fact]
@@ -337,8 +338,8 @@ public class SqlParallelExtensionsTests
             _ => 1,
             new() { AutoManageConnection = true });
 
-        results.Should().HaveCount(1);
-        capturedConnection.Should().NotBeNull();
+        results.Count.ShouldBe(1);
+        capturedConnection.ShouldNotBeNull();
     }
 
     [Fact]
@@ -375,8 +376,8 @@ public class SqlParallelExtensionsTests
                 }
             });
 
-        results.Should().HaveCount(50);
-        maxConcurrent.Should().BeLessThanOrEqualTo(5);
+        results.Count.ShouldBe(50);
+        maxConcurrent.ShouldBeLessThanOrEqualTo(5);
     }
 
     [Fact]
@@ -397,8 +398,8 @@ public class SqlParallelExtensionsTests
             },
             new() { AutoManageConnection = false });
 
-        results.Should().HaveCount(2);
-        connection.State.Should().Be(ConnectionState.Open); // Should still be open
+        results.Count.ShouldBe(2);
+        connection.State.ShouldBe(ConnectionState.Open); // Should still be open
         connection.Close();
     }
 
@@ -414,8 +415,8 @@ public class SqlParallelExtensionsTests
             () => connection,
             new() { AutoManageConnection = false });
 
-        results.Should().AllSatisfy(r => r.Should().Be(1));
-        connection.State.Should().Be(ConnectionState.Open); // Should still be open
+        results.ShouldAllBe(r => r == 1);
+        connection.State.ShouldBe(ConnectionState.Open); // Should still be open
         connection.Close();
     }
 
@@ -432,8 +433,8 @@ public class SqlParallelExtensionsTests
             () => connection,
             new() { AutoManageConnection = false });
 
-        results.Should().HaveCount(2);
-        connection.State.Should().Be(ConnectionState.Open); // Should still be open
+        results.Count.ShouldBe(2);
+        connection.State.ShouldBe(ConnectionState.Open); // Should still be open
         connection.Close();
     }
 
@@ -460,8 +461,8 @@ public class SqlParallelExtensionsTests
                 reader => reader.GetInt32(0),
                 options));
 
-        capturedQuery.Should().Be("INVALID SQL QUERY");
-        capturedException.Should().NotBeNull();
+        capturedQuery.ShouldBe("INVALID SQL QUERY");
+        capturedException.ShouldNotBeNull();
     }
 
     [Fact]
@@ -486,8 +487,8 @@ public class SqlParallelExtensionsTests
                 () => new TestDbConnection(executeNonQueryFunc: _ => throw new InvalidOperationException("SQL Error")),
                 options));
 
-        capturedCommand.Should().Be("INVALID SQL");
-        capturedException.Should().NotBeNull();
+        capturedCommand.ShouldBe("INVALID SQL");
+        capturedException.ShouldNotBeNull();
     }
 
     [Fact]
@@ -512,8 +513,8 @@ public class SqlParallelExtensionsTests
                 () => new TestDbConnection(executeScalarFunc: _ => throw new InvalidOperationException("SQL Error")),
                 options));
 
-        capturedQuery.Should().Be("INVALID SQL");
-        capturedException.Should().NotBeNull();
+        capturedQuery.ShouldBe("INVALID SQL");
+        capturedException.ShouldNotBeNull();
     }
 
     [Fact]
@@ -526,8 +527,8 @@ public class SqlParallelExtensionsTests
         var results = await queries.ExecuteScalarParallelAsync<string>(
             () => connection);
 
-        results.Should().ContainSingle();
-        results[0].Should().BeNull();
+        results.ShouldHaveSingleItem();
+        results[0].ShouldBeNull();
     }
 
     [Fact]
@@ -540,8 +541,8 @@ public class SqlParallelExtensionsTests
         var results = await queries.ExecuteScalarParallelAsync<int?>(
             () => connection);
 
-        results.Should().ContainSingle();
-        results[0].Should().BeNull();
+        results.ShouldHaveSingleItem();
+        results[0].ShouldBeNull();
     }
 
     [Fact]
@@ -658,8 +659,8 @@ public class SqlParallelExtensionsTests
                 return reader.GetInt32(0);
             });
 
-        results.Should().HaveCount(1);
-        results[0].Should().Be(1);
+        results.Count.ShouldBe(1);
+        results[0].ShouldBe(1);
     }
 
     [Fact]
@@ -671,8 +672,8 @@ public class SqlParallelExtensionsTests
         var results = await commands.ExecuteCommandsParallelAsync(
             () => new NonDbConnection(executeNonQueryFunc: _ => 1));
 
-        results.Should().HaveCount(1);
-        results[0].Should().Be(1);
+        results.Count.ShouldBe(1);
+        results[0].ShouldBe(1);
     }
 
     [Fact]
@@ -684,8 +685,8 @@ public class SqlParallelExtensionsTests
         var results = await queries.ExecuteScalarParallelAsync<int>(
             () => new NonDbConnection(executeScalarFunc: _ => 42));
 
-        results.Should().HaveCount(1);
-        results[0].Should().Be(42);
+        results.Count.ShouldBe(1);
+        results[0].ShouldBe(42);
     }
 
     [Fact]
@@ -703,8 +704,8 @@ public class SqlParallelExtensionsTests
                 }),
             _ => 1);
 
-        results.Should().HaveCount(2);
-        commandTimeouts.Should().AllSatisfy(timeout => timeout.Should().Be(30)); // Default timeout
+        results.Count.ShouldBe(2);
+        commandTimeouts.ShouldAllBe(timeout => timeout == 30); // Default timeout
     }
 
     [Fact]
@@ -720,8 +721,8 @@ public class SqlParallelExtensionsTests
                 return 1;
             }));
 
-        results.Should().HaveCount(2);
-        commandTimeouts.Should().AllSatisfy(timeout => timeout.Should().Be(30)); // Default timeout
+        results.Count.ShouldBe(2);
+        commandTimeouts.ShouldAllBe(timeout => timeout == 30); // Default timeout
     }
 
     [Fact]
@@ -737,7 +738,7 @@ public class SqlParallelExtensionsTests
                 return 42;
             }));
 
-        results.Should().HaveCount(2);
-        commandTimeouts.Should().AllSatisfy(timeout => timeout.Should().Be(30)); // Default timeout
+        results.Count.ShouldBe(2);
+        commandTimeouts.ShouldAllBe(timeout => timeout == 30); // Default timeout
     }
 }

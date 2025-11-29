@@ -1,4 +1,4 @@
-using Npgsql;
+﻿using Npgsql;
 using Testcontainers.PostgreSql;
 
 namespace Rivulet.Sql.PostgreSql.Tests;
@@ -81,7 +81,7 @@ public class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
         command.CommandText = "SELECT COUNT(*) FROM \"TestTable\"";
         var count = Convert.ToInt64(await command.ExecuteScalarAsync());
 
-        count.Should().Be(3);
+        count.ShouldBe(3);
     }
 
     [Fact]
@@ -109,7 +109,7 @@ public class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
         command.CommandText = "SELECT COUNT(*) FROM \"TestTable\"";
         var count = Convert.ToInt64(await command.ExecuteScalarAsync());
 
-        count.Should().Be(10);
+        count.ShouldBe(10);
     }
 
     [Fact]
@@ -125,7 +125,7 @@ public class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
             MapToRow);
 
         // ForEachParallelAsync cancels the operation when an exception occurs
-        await act.Should().ThrowAsync<OperationCanceledException>();
+        await act.ShouldThrowAsync<OperationCanceledException>();
     }
 
     [Fact]
@@ -141,7 +141,7 @@ public class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
             MapToRow);
 
         // ForEachParallelAsync cancels the operation when an exception occurs
-        await act.Should().ThrowAsync<OperationCanceledException>();
+        await act.ShouldThrowAsync<OperationCanceledException>();
     }
 
     [Fact]
@@ -170,7 +170,7 @@ public class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
         command.CommandText = "SELECT COUNT(*) FROM \"TestTable\" WHERE \"Id\" >=100";
         var count = Convert.ToInt64(await command.ExecuteScalarAsync());
 
-        count.Should().Be(2);
+        count.ShouldBe(2);
     }
 
     [Fact]
@@ -197,7 +197,7 @@ public class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
         command.CommandText = "SELECT COUNT(*) FROM \"TestTable\" WHERE \"Id\" >=200";
         var count = Convert.ToInt64(await command.ExecuteScalarAsync());
 
-        count.Should().Be(10);
+        count.ShouldBe(10);
     }
 
     [Fact]
@@ -227,7 +227,7 @@ public class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
         command.CommandText = "SELECT COUNT(*) FROM \"TestTable\" WHERE \"Id\" >=300";
         var count = Convert.ToInt64(await command.ExecuteScalarAsync());
 
-        count.Should().Be(2);
+        count.ShouldBe(2);
     }
 
     [Fact]
@@ -242,7 +242,7 @@ public class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
             columns);
 
         // ForEachParallelAsync cancels the operation when an exception occurs
-        await act.Should().ThrowAsync<OperationCanceledException>();
+        await act.ShouldThrowAsync<OperationCanceledException>();
     }
 
     [Fact]
@@ -271,7 +271,7 @@ public class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
         command.CommandText = "SELECT COUNT(*) FROM \"TestTable\" WHERE \"Id\" >=400";
         var count = Convert.ToInt64(await command.ExecuteScalarAsync());
 
-        count.Should().Be(2);
+        count.ShouldBe(2);
     }
 
     [Fact]
@@ -298,7 +298,7 @@ public class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
         command.CommandText = "SELECT COUNT(*) FROM \"TestTable\" WHERE \"Id\" >=500";
         var count = Convert.ToInt64(await command.ExecuteScalarAsync());
 
-        count.Should().Be(10);
+        count.ShouldBe(10);
     }
 
     [Fact]
@@ -313,6 +313,6 @@ public class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
             columns);
 
         // ForEachParallelAsync cancels the operation when an exception occurs
-        await act.Should().ThrowAsync<OperationCanceledException>();
+        await act.ShouldThrowAsync<OperationCanceledException>();
     }
 }

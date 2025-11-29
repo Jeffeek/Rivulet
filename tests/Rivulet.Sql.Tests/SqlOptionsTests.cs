@@ -1,4 +1,4 @@
-using System.Data;
+﻿using System.Data;
 using System.Reflection;
 using System.Reflection.Emit;
 using Rivulet.Core;
@@ -12,11 +12,11 @@ public class SqlOptionsTests
     {
         var options = new SqlOptions();
 
-        options.CommandTimeout.Should().Be(SqlOptions.DefaultCommandTimeout);
-        options.AutoManageConnection.Should().BeTrue();
-        options.IsolationLevel.Should().Be(IsolationLevel.ReadCommitted);
-        options.ParallelOptions.Should().BeNull();
-        options.OnSqlErrorAsync.Should().BeNull();
+        options.CommandTimeout.ShouldBe(SqlOptions.DefaultCommandTimeout);
+        options.AutoManageConnection.ShouldBeTrue();
+        options.IsolationLevel.ShouldBe(IsolationLevel.ReadCommitted);
+        options.ParallelOptions.ShouldBeNull();
+        options.OnSqlErrorAsync.ShouldBeNull();
     }
 
     [Fact]
@@ -39,15 +39,15 @@ public class SqlOptionsTests
             }
         };
 
-        options.CommandTimeout.Should().Be(60);
-        options.AutoManageConnection.Should().BeFalse();
-        options.IsolationLevel.Should().Be(IsolationLevel.Serializable);
-        options.ParallelOptions.Should().NotBeNull();
-        options.ParallelOptions!.MaxDegreeOfParallelism.Should().Be(10);
-        options.OnSqlErrorAsync.Should().NotBeNull();
+        options.CommandTimeout.ShouldBe(60);
+        options.AutoManageConnection.ShouldBeFalse();
+        options.IsolationLevel.ShouldBe(IsolationLevel.Serializable);
+        options.ParallelOptions.ShouldNotBeNull();
+        options.ParallelOptions!.MaxDegreeOfParallelism.ShouldBe(10);
+        options.OnSqlErrorAsync.ShouldNotBeNull();
 
         options.OnSqlErrorAsync!.Invoke(null, new(), 0);
-        errorCallbackInvoked.Should().BeTrue();
+        errorCallbackInvoked.ShouldBeTrue();
     }
 
     [Fact]
@@ -56,9 +56,9 @@ public class SqlOptionsTests
         var options = new SqlOptions();
         var mergedOptions = options.GetMergedParallelOptions();
 
-        mergedOptions.MaxRetries.Should().Be(SqlOptions.DefaultRetryCount);
-        mergedOptions.PerItemTimeout.Should().Be(TimeSpan.FromSeconds(SqlOptions.DefaultCommandTimeout + 5));
-        mergedOptions.IsTransient.Should().NotBeNull();
+        mergedOptions.MaxRetries.ShouldBe(SqlOptions.DefaultRetryCount);
+        mergedOptions.PerItemTimeout.ShouldBe(TimeSpan.FromSeconds(SqlOptions.DefaultCommandTimeout + 5));
+        mergedOptions.IsTransient.ShouldNotBeNull();
     }
 
     [Fact]
@@ -80,11 +80,11 @@ public class SqlOptionsTests
 
         var mergedOptions = options.GetMergedParallelOptions();
 
-        mergedOptions.MaxDegreeOfParallelism.Should().Be(10);
-        mergedOptions.MaxRetries.Should().Be(5);
-        mergedOptions.BaseDelay.Should().Be(TimeSpan.FromMilliseconds(200));
-        mergedOptions.ErrorMode.Should().Be(ErrorMode.CollectAndContinue);
-        mergedOptions.PerItemTimeout.Should().Be(TimeSpan.FromSeconds(50));
+        mergedOptions.MaxDegreeOfParallelism.ShouldBe(10);
+        mergedOptions.MaxRetries.ShouldBe(5);
+        mergedOptions.BaseDelay.ShouldBe(TimeSpan.FromMilliseconds(200));
+        mergedOptions.ErrorMode.ShouldBe(ErrorMode.CollectAndContinue);
+        mergedOptions.PerItemTimeout.ShouldBe(TimeSpan.FromSeconds(50));
     }
 
     [Fact]
@@ -95,7 +95,7 @@ public class SqlOptionsTests
 
         var timeoutException = new TimeoutException();
 
-        mergedOptions.IsTransient!.Invoke(timeoutException).Should().BeTrue();
+        mergedOptions.IsTransient!.Invoke(timeoutException).ShouldBeTrue();
     }
 
     [Fact]
@@ -106,7 +106,7 @@ public class SqlOptionsTests
 
         var invalidOpException = new InvalidOperationException("Connection timeout occurred");
 
-        mergedOptions.IsTransient!.Invoke(invalidOpException).Should().BeTrue();
+        mergedOptions.IsTransient!.Invoke(invalidOpException).ShouldBeTrue();
     }
 
     [Fact]
@@ -131,8 +131,8 @@ public class SqlOptionsTests
         var customException = new InvalidOperationException();
         var result = mergedOptions.IsTransient!.Invoke(customException);
 
-        result.Should().BeTrue();
-        userProvidedCalled.Should().BeTrue();
+        result.ShouldBeTrue();
+        userProvidedCalled.ShouldBeTrue();
     }
 
     [Fact]
@@ -148,7 +148,7 @@ public class SqlOptionsTests
 
         var mergedOptions = options.GetMergedParallelOptions();
 
-        mergedOptions.MaxRetries.Should().Be(SqlOptions.DefaultRetryCount);
+        mergedOptions.MaxRetries.ShouldBe(SqlOptions.DefaultRetryCount);
     }
 
     [Theory]
@@ -176,7 +176,7 @@ public class SqlOptionsTests
         // Create a mock SqlException using reflection
         var sqlException = CreateMockSqlException(errorNumber);
 
-        mergedOptions.IsTransient!.Invoke(sqlException).Should().Be(expectedTransient);
+        mergedOptions.IsTransient!.Invoke(sqlException).ShouldBe(expectedTransient);
     }
 
     [Theory]
@@ -198,7 +198,7 @@ public class SqlOptionsTests
         // Create a mock NpgsqlException using reflection
         var npgsqlException = CreateMockNpgsqlException(sqlState);
 
-        mergedOptions.IsTransient!.Invoke(npgsqlException).Should().Be(expectedTransient);
+        mergedOptions.IsTransient!.Invoke(npgsqlException).ShouldBe(expectedTransient);
     }
 
     [Theory]
@@ -219,7 +219,7 @@ public class SqlOptionsTests
         // Create a mock MySqlException using reflection
         var mySqlException = CreateMockMySqlException(errorNumber);
 
-        mergedOptions.IsTransient!.Invoke(mySqlException).Should().Be(expectedTransient);
+        mergedOptions.IsTransient!.Invoke(mySqlException).ShouldBe(expectedTransient);
     }
 
     [Fact]
@@ -230,7 +230,7 @@ public class SqlOptionsTests
 
         var nonSqlException = new ArgumentException("Not a SQL exception");
 
-        mergedOptions.IsTransient!.Invoke(nonSqlException).Should().BeFalse();
+        mergedOptions.IsTransient!.Invoke(nonSqlException).ShouldBeFalse();
     }
 
     [Fact]
@@ -242,7 +242,7 @@ public class SqlOptionsTests
         // Create exception with type name containing "SqlException" but no Number property
         var mockException = CreateMockExceptionWithTypeName("MockSqlException", null);
 
-        mergedOptions.IsTransient!.Invoke(mockException).Should().BeFalse();
+        mergedOptions.IsTransient!.Invoke(mockException).ShouldBeFalse();
     }
 
     [Fact]
@@ -269,8 +269,8 @@ public class SqlOptionsTests
         var nonSqlException = new ArgumentException("Test");
         var result = mergedOptions.IsTransient!.Invoke(nonSqlException);
 
-        result.Should().BeTrue();
-        userTransientCalled.Should().BeTrue();
+        result.ShouldBeTrue();
+        userTransientCalled.ShouldBeTrue();
     }
 
     [Fact]
@@ -289,13 +289,13 @@ public class SqlOptionsTests
         var mergedOptions = options.GetMergedParallelOptions();
 
         // User-defined transient exception
-        mergedOptions.IsTransient!.Invoke(new ArgumentException()).Should().BeTrue();
+        mergedOptions.IsTransient!.Invoke(new ArgumentException()).ShouldBeTrue();
 
         // Built-in transient exception (TimeoutException)
-        mergedOptions.IsTransient!.Invoke(new TimeoutException()).Should().BeTrue();
+        mergedOptions.IsTransient!.Invoke(new TimeoutException()).ShouldBeTrue();
 
         // Neither user-defined nor built-in
-        mergedOptions.IsTransient!.Invoke(new DivideByZeroException()).Should().BeFalse();
+        mergedOptions.IsTransient!.Invoke(new DivideByZeroException()).ShouldBeFalse();
     }
 
     [Fact]
@@ -327,19 +327,19 @@ public class SqlOptionsTests
         var options = new SqlOptions { ParallelOptions = baseOptions };
         var merged = options.GetMergedParallelOptions();
 
-        merged.MaxDegreeOfParallelism.Should().Be(42);
-        merged.BaseDelay.Should().Be(TimeSpan.FromSeconds(2));
-        merged.BackoffStrategy.Should().Be(Core.Resilience.BackoffStrategy.LinearJitter);
-        merged.ErrorMode.Should().Be(ErrorMode.BestEffort);
-        merged.OnStartItemAsync.Should().BeSameAs(baseOptions.OnStartItemAsync);
-        merged.OnCompleteItemAsync.Should().BeSameAs(baseOptions.OnCompleteItemAsync);
-        merged.OnErrorAsync.Should().BeSameAs(baseOptions.OnErrorAsync);
-        merged.CircuitBreaker.Should().BeSameAs(circuitBreaker);
-        merged.RateLimit.Should().BeSameAs(rateLimit);
-        merged.Progress.Should().BeSameAs(progress);
-        merged.OrderedOutput.Should().BeTrue();
-        merged.Metrics.Should().BeSameAs(metrics);
-        merged.AdaptiveConcurrency.Should().BeSameAs(adaptiveConcurrency);
+        merged.MaxDegreeOfParallelism.ShouldBe(42);
+        merged.BaseDelay.ShouldBe(TimeSpan.FromSeconds(2));
+        merged.BackoffStrategy.ShouldBe(Core.Resilience.BackoffStrategy.LinearJitter);
+        merged.ErrorMode.ShouldBe(ErrorMode.BestEffort);
+        merged.OnStartItemAsync.ShouldBeSameAs(baseOptions.OnStartItemAsync);
+        merged.OnCompleteItemAsync.ShouldBeSameAs(baseOptions.OnCompleteItemAsync);
+        merged.OnErrorAsync.ShouldBeSameAs(baseOptions.OnErrorAsync);
+        merged.CircuitBreaker.ShouldBeSameAs(circuitBreaker);
+        merged.RateLimit.ShouldBeSameAs(rateLimit);
+        merged.Progress.ShouldBeSameAs(progress);
+        merged.OrderedOutput.ShouldBeTrue();
+        merged.Metrics.ShouldBeSameAs(metrics);
+        merged.AdaptiveConcurrency.ShouldBeSameAs(adaptiveConcurrency);
     }
 
     // Helper methods to create mock exceptions

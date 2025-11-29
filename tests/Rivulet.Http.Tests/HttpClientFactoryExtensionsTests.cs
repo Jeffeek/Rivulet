@@ -1,5 +1,6 @@
-using System.Net;
+﻿using System.Net;
 using Microsoft.Extensions.DependencyInjection;
+using Rivulet.Base.Tests;
 
 namespace Rivulet.Http.Tests;
 
@@ -39,8 +40,8 @@ public class HttpClientFactoryExtensionsTests
 
         var results = await uris.GetParallelAsync(factory, "test");
 
-        results.Should().HaveCount(2);
-        results.Should().OnlyContain(r => r.StatusCode == HttpStatusCode.OK);
+        results.Count.ShouldBe(2);
+        results.ShouldAllBe(r => r.StatusCode == HttpStatusCode.OK);
 
         foreach (var response in results)
         {
@@ -69,8 +70,8 @@ public class HttpClientFactoryExtensionsTests
 
         var results = await uris.GetParallelAsync(factory);
 
-        results.Should().HaveCount(2);
-        results.Should().OnlyContain(r => r.StatusCode == HttpStatusCode.OK);
+        results.Count.ShouldBe(2);
+        results.ShouldAllBe(r => r.StatusCode == HttpStatusCode.OK);
 
         foreach (var response in results)
         {
@@ -107,9 +108,9 @@ public class HttpClientFactoryExtensionsTests
 
         var results = await uris.GetStringParallelAsync(factory, "test");
 
-        results.Should().HaveCount(2);
-        results.Should().Contain("String-/1");
-        results.Should().Contain("String-/2");
+        results.Count.ShouldBe(2);
+        results.ShouldContain("String-/1");
+        results.ShouldContain("String-/2");
     }
 
     [Fact]
@@ -133,9 +134,9 @@ public class HttpClientFactoryExtensionsTests
 
         var results = await uris.GetByteArrayParallelAsync(factory, "test");
 
-        results.Should().HaveCount(2);
-        System.Text.Encoding.UTF8.GetString(results[0]).Should().Contain("Bytes-/");
-        System.Text.Encoding.UTF8.GetString(results[1]).Should().Contain("Bytes-/");
+        results.Count.ShouldBe(2);
+        System.Text.Encoding.UTF8.GetString(results[0]).ShouldContain("Bytes-/");
+        System.Text.Encoding.UTF8.GetString(results[1]).ShouldContain("Bytes-/");
     }
 
     [Fact]
@@ -158,8 +159,8 @@ public class HttpClientFactoryExtensionsTests
 
         var results = await requests.PostParallelAsync(factory, "test");
 
-        results.Should().HaveCount(2);
-        results.Should().OnlyContain(r => r.StatusCode == HttpStatusCode.Created);
+        results.Count.ShouldBe(2);
+        results.ShouldAllBe(r => r.StatusCode == HttpStatusCode.Created);
 
         foreach (var response in results)
         {
@@ -187,8 +188,8 @@ public class HttpClientFactoryExtensionsTests
 
         var results = await requests.PutParallelAsync(factory, "test");
 
-        results.Should().HaveCount(2);
-        results.Should().OnlyContain(r => r.StatusCode == HttpStatusCode.OK);
+        results.Count.ShouldBe(2);
+        results.ShouldAllBe(r => r.StatusCode == HttpStatusCode.OK);
 
         foreach (var response in results)
         {
@@ -213,8 +214,8 @@ public class HttpClientFactoryExtensionsTests
 
         var results = await uris.DeleteParallelAsync(factory, "test");
 
-        results.Should().HaveCount(2);
-        results.Should().OnlyContain(r => r.StatusCode == HttpStatusCode.NoContent);
+        results.Count.ShouldBe(2);
+        results.ShouldAllBe(r => r.StatusCode == HttpStatusCode.NoContent);
 
         foreach (var response in results)
         {
@@ -248,9 +249,9 @@ public class HttpClientFactoryExtensionsTests
 
             var results = await downloads.DownloadParallelAsync(factory, "test");
 
-            results.Should().HaveCount(1);
-            results[0].bytesDownloaded.Should().BeGreaterThan(0);
-            File.Exists(Path.Join(tempDir, "file1.txt")).Should().BeTrue();
+            results.Count.ShouldBe(1);
+            results[0].bytesDownloaded.ShouldBeGreaterThan(0);
+            File.Exists(Path.Join(tempDir, "file1.txt")).ShouldBeTrue();
         }
         finally
         {
@@ -297,22 +298,13 @@ public class HttpClientFactoryExtensionsTests
 
         var results = await uris.GetParallelAsync(factory, "test", options);
 
-        attemptCount.Should().BeGreaterThan(2); // At least initial + retries
-        results.Should().HaveCount(2);
+        attemptCount.ShouldBeGreaterThan(2); // At least initial + retries
+        results.Count.ShouldBe(2);
 
         // Cleanup
         foreach (var response in results)
         {
             response.Dispose();
-        }
-    }
-
-    // Test helper class
-    private class TestHttpMessageHandler(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> handler) : HttpMessageHandler
-    {
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-        {
-            return handler(request, cancellationToken);
         }
     }
 }

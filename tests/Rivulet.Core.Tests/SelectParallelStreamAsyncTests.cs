@@ -1,4 +1,4 @@
-namespace Rivulet.Core.Tests;
+﻿namespace Rivulet.Core.Tests;
 
 public class SelectParallelStreamAsyncTests
 {
@@ -9,7 +9,7 @@ public class SelectParallelStreamAsyncTests
 
         var results = await source.SelectParallelStreamAsync((x, _) => new ValueTask<int>(x * 2)).ToListAsync();
 
-        results.Should().BeEmpty();
+        results.ShouldBeEmpty();
     }
 
     [Fact]
@@ -19,7 +19,7 @@ public class SelectParallelStreamAsyncTests
 
         var results = await source.SelectParallelStreamAsync((x, _) => new ValueTask<int>(x * 2)).ToListAsync();
 
-        results.Should().ContainSingle().Which.Should().Be(10);
+        results.ShouldHaveSingleItem().ShouldBe(10);
     }
 
     [Fact]
@@ -29,8 +29,8 @@ public class SelectParallelStreamAsyncTests
 
         var results = await source.SelectParallelStreamAsync((x, _) => new ValueTask<int>(x * 2)).ToListAsync();
 
-        results.Should().HaveCount(10);
-        results.OrderBy(x => x).Should().BeEquivalentTo([2, 4, 6, 8, 10, 12, 14, 16, 18, 20]);
+        results.Count.ShouldBe(10);
+        results.OrderBy(x => x).ShouldBe(new[] { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20 });
     }
 
     [Fact]
@@ -51,9 +51,12 @@ public class SelectParallelStreamAsyncTests
             timestamps.Add(DateTime.UtcNow);
         }
 
-        results.Should().HaveCount(5);
-        results.Should().Contain([1, 2, 3, 4, 5]);
-        timestamps.Should().HaveCount(5);
+        results.Count.ShouldBe(5);
+        foreach (var expected in new[] { 1, 2, 3, 4, 5 })
+        {
+            results.ShouldContain(expected);
+        }
+        timestamps.Count.ShouldBe(5);
     }
 
     [Fact]
@@ -72,11 +75,11 @@ public class SelectParallelStreamAsyncTests
 
         var duration = DateTime.UtcNow - startTime;
 
-        results.Should().HaveCount(10);
+        results.Count.ShouldBe(10);
         // Increased from 500ms to 1000ms to account for CI environment variability
         // With MaxDegreeOfParallelism=5 and 10 items of 100ms each, ideal time is ~200ms
         // but CI environments can have high scheduling overhead
-        duration.Should().BeLessThan(TimeSpan.FromMilliseconds(1000));
+        duration.ShouldBeLessThan(TimeSpan.FromMilliseconds(1000));
     }
 
     [Fact]
@@ -102,7 +105,7 @@ public class SelectParallelStreamAsyncTests
             await Task.Delay(1);
         }
 
-        results.Should().HaveCount(100);
+        results.Count.ShouldBe(100);
     }
 
     [Fact]
@@ -112,8 +115,8 @@ public class SelectParallelStreamAsyncTests
 
         var results = await source.SelectParallelStreamAsync((x, _) => new ValueTask<int>(x * 2), options: null).ToListAsync();
 
-        results.Should().HaveCount(5);
-        results.Should().BeEquivalentTo([2, 4, 6, 8, 10]);
+        results.Count.ShouldBe(5);
+        results.OrderBy(x => x).ShouldBe(new[] { 2, 4, 6, 8, 10 });
     }
 
     [Fact]
@@ -123,7 +126,7 @@ public class SelectParallelStreamAsyncTests
 
         var count = await source.SelectParallelStreamAsync((x, _) => new ValueTask<int>(x * 2)).CountAsync();
 
-        count.Should().Be(1000);
+        count.ShouldBe(1000);
     }
 
     [Fact]
@@ -138,8 +141,8 @@ public class SelectParallelStreamAsyncTests
             })
             .ToListAsync();
 
-        results.Should().HaveCount(20);
-        results.Count(r => r.Item2).Should().Be(10);
+        results.Count.ShouldBe(20);
+        results.Count(r => r.Item2).ShouldBe(10);
     }
 
     [Fact]
@@ -150,7 +153,7 @@ public class SelectParallelStreamAsyncTests
 
         var results = await source.SelectParallelStreamAsync((x, _) => new ValueTask<int>(x * 2), cancellationToken: cts.Token).ToListAsync(cancellationToken: cts.Token);
 
-        results.Should().HaveCount(10);
+        results.Count.ShouldBe(10);
     }
 
     [Fact]
@@ -167,7 +170,7 @@ public class SelectParallelStreamAsyncTests
 
         var results = await SlowProducer().SelectParallelStreamAsync((x, _) => new ValueTask<int>(x * 2)).ToListAsync();
 
-        results.Should().HaveCount(5);
-        results.Should().BeEquivalentTo([2, 4, 6, 8, 10]);
+        results.Count.ShouldBe(5);
+        results.OrderBy(x => x).ShouldBe(new[] { 2, 4, 6, 8, 10 });
     }
 }

@@ -20,8 +20,8 @@ public class OrderedOutputTests
             },
             options);
 
-        results.Should().HaveCount(100);
-        results.Should().Equal(Enumerable.Range(1, 100).Select(x => x * 2));
+        results.Count.ShouldBe(100);
+        results.ShouldBe(Enumerable.Range(1, 100).Select(x => x * 2));
     }
 
     [Fact]
@@ -51,9 +51,9 @@ public class OrderedOutputTests
                 orderedCount++;
         }
 
-        results.Should().HaveCount(50);
-        orderedCount.Should().Be(0);
-        results.Should().BeEquivalentTo(source, "all items should be present regardless of order");
+        results.Count.ShouldBe(50);
+        orderedCount.ShouldBe(0);
+        results.OrderBy(x => x).ShouldBe(source.OrderBy(x => x), "all items should be present regardless of order");
     }
 
     [Fact]
@@ -74,8 +74,8 @@ public class OrderedOutputTests
             .ToListAsync();
 
 
-        results.Should().HaveCount(100);
-        results.Should().Equal(Enumerable.Range(1, 100).Select(x => x * 2));
+        results.Count.ShouldBe(100);
+        results.ShouldBe(Enumerable.Range(1, 100).Select(x => x * 2));
     }
 
     [Fact]
@@ -98,8 +98,8 @@ public class OrderedOutputTests
             }, options)
             .ToListAsync();
 
-        results.Should().Equal([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "results should be in order");
-        completionOrder.Should().NotEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "completion should be out of order");
+        ((IEnumerable<int>)results).ShouldBe(new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }, "results should be in order");
+        completionOrder.SequenceEqual(new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }).ShouldBeFalse("completion should be out of order");
     }
 
     [Fact]
@@ -127,7 +127,7 @@ public class OrderedOutputTests
             .Select(x => x * 2)
             .ToList();
 
-        results.Should().Equal(expected);
+        results.ShouldBe(expected);
     }
 
     [Fact]
@@ -166,7 +166,7 @@ public class OrderedOutputTests
             // Expected
         }
 
-        results.Take(20).Should().Equal(Enumerable.Range(1, 20).Select(x => x * 2));
+        results.Take(20).ShouldBe(Enumerable.Range(1, 20).Select(x => x * 2));
     }
 
     [Fact]
@@ -183,7 +183,7 @@ public class OrderedOutputTests
             },
             options);
 
-        results.Should().BeEmpty();
+        results.ShouldBeEmpty();
     }
 
     [Fact]
@@ -200,7 +200,7 @@ public class OrderedOutputTests
             },
             options);
 
-        results.Should().Equal(new[] { 84 });
+        results.ShouldBe(new[] { 84 });
     }
 
     [Fact]
@@ -227,8 +227,8 @@ public class OrderedOutputTests
             }, options)
             .ToListAsync();
 
-        results.Should().Equal(Enumerable.Range(1, 20).Select(x => x * 2));
-        attemptCounts.Values.Should().Contain(v => v > 1, "some items should have retried");
+        results.ShouldBe(Enumerable.Range(1, 20).Select(x => x * 2));
+        attemptCounts.Values.ShouldContain(v => v > 1, "some items should have retried");
     }
 
     [Fact]
@@ -249,8 +249,8 @@ public class OrderedOutputTests
             },
             options);
 
-        results.Should().HaveCount(1000);
-        results.Should().Equal(source, "large dataset should maintain order");
+        results.Count.ShouldBe(1000);
+        results.ShouldBe((IEnumerable<int>)source, "large dataset should maintain order");
     }
 
     [Fact]
@@ -283,8 +283,8 @@ public class OrderedOutputTests
             }, options)
             .ToListAsync();
 
-        results.Should().Equal(Enumerable.Range(1, 50).Select(x => x * 2));
-        startedItems.Should().HaveCount(50);
-        completedItems.Should().HaveCount(50);
+        results.ShouldBe(Enumerable.Range(1, 50).Select(x => x * 2));
+        startedItems.Count.ShouldBe(50);
+        completedItems.Count.ShouldBe(50);
     }
 }

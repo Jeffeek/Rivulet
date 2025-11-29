@@ -1,4 +1,4 @@
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 
 namespace Rivulet.Testing.Tests;
 
@@ -10,7 +10,7 @@ public class VirtualTimeProviderTests
     {
         using var timeProvider = new VirtualTimeProvider();
 
-        timeProvider.CurrentTime.Should().Be(TimeSpan.Zero);
+        timeProvider.CurrentTime.ShouldBe(TimeSpan.Zero);
     }
 
     [Fact]
@@ -20,7 +20,7 @@ public class VirtualTimeProviderTests
 
         timeProvider.AdvanceTime(TimeSpan.FromSeconds(5));
 
-        timeProvider.CurrentTime.Should().Be(TimeSpan.FromSeconds(5));
+        timeProvider.CurrentTime.ShouldBe(TimeSpan.FromSeconds(5));
     }
 
     [Fact]
@@ -31,7 +31,7 @@ public class VirtualTimeProviderTests
         timeProvider.AdvanceTime(TimeSpan.FromSeconds(3));
         timeProvider.AdvanceTime(TimeSpan.FromSeconds(2));
 
-        timeProvider.CurrentTime.Should().Be(TimeSpan.FromSeconds(5));
+        timeProvider.CurrentTime.ShouldBe(TimeSpan.FromSeconds(5));
     }
 
     [Fact]
@@ -43,7 +43,7 @@ public class VirtualTimeProviderTests
 
         timeProvider.AdvanceTime(TimeSpan.Zero);
 
-        delayTask.IsCompleted.Should().BeTrue();
+        delayTask.IsCompleted.ShouldBeTrue();
         await delayTask;
     }
 
@@ -56,7 +56,7 @@ public class VirtualTimeProviderTests
 
         timeProvider.AdvanceTime(TimeSpan.Zero);
 
-        delayTask.IsCompleted.Should().BeTrue();
+        delayTask.IsCompleted.ShouldBeTrue();
         await delayTask;
     }
 
@@ -71,23 +71,23 @@ public class VirtualTimeProviderTests
         var delay3 = timeProvider.CreateDelay(TimeSpan.FromSeconds(7));
 
         // All delays should be incomplete
-        delay1.IsCompleted.Should().BeFalse();
-        delay2.IsCompleted.Should().BeFalse();
-        delay3.IsCompleted.Should().BeFalse();
+        delay1.IsCompleted.ShouldBeFalse();
+        delay2.IsCompleted.ShouldBeFalse();
+        delay3.IsCompleted.ShouldBeFalse();
 
         // Advance time past all delays
         timeProvider.AdvanceTime(TimeSpan.FromSeconds(10));
 
         // All delays should now be completed
-        delay1.IsCompleted.Should().BeTrue();
-        delay2.IsCompleted.Should().BeTrue();
-        delay3.IsCompleted.Should().BeTrue();
+        delay1.IsCompleted.ShouldBeTrue();
+        delay2.IsCompleted.ShouldBeTrue();
+        delay3.IsCompleted.ShouldBeTrue();
 
         // Await the delays - they should complete immediately since time was advanced
         await Task.WhenAll(delay1, delay2, delay3);
 
         // Verify the virtual time was advanced correctly
-        timeProvider.CurrentTime.Should().Be(TimeSpan.FromSeconds(10));
+        timeProvider.CurrentTime.ShouldBe(TimeSpan.FromSeconds(10));
     }
 
     [Fact]
@@ -109,7 +109,7 @@ public class VirtualTimeProviderTests
         timeProvider.Dispose();
         var act = () => timeProvider.Dispose();
 
-        act.Should().NotThrow();
+        act.ShouldNotThrow();
     }
 
     [Fact]
@@ -129,7 +129,7 @@ public class VirtualTimeProviderTests
 
         var act = () => timeProvider.AdvanceTime(TimeSpan.FromSeconds(1));
 
-        act.Should().Throw<ObjectDisposedException>();
+        act.ShouldThrow<ObjectDisposedException>();
     }
 
     [Fact]
@@ -141,7 +141,7 @@ public class VirtualTimeProviderTests
 
         timeProvider.AdvanceTime(TimeSpan.FromDays(365));
 
-        delay.IsCompleted.Should().BeTrue();
+        delay.IsCompleted.ShouldBeTrue();
         await delay;
     }
 
@@ -164,8 +164,8 @@ public class VirtualTimeProviderTests
         // Verify all delays completed
         var results = delayTasks.Select(x => x.Index).ToList();
 
-        results.Should().HaveCount(100);
-        results.Should().OnlyContain(i => i >= 1 && i <= 100);
+        results.Count.ShouldBe(100);
+        results.ShouldAllBe(i => i >= 1 && i <= 100);
     }
 
     [Fact]
@@ -186,7 +186,7 @@ public class VirtualTimeProviderTests
             .ToList();
 
         // Wait for all tasks to register their delays
-        countdown.Wait(TimeSpan.FromSeconds(5)).Should().BeTrue("all tasks should register within 5 seconds");
+        countdown.Wait(TimeSpan.FromSeconds(5)).ShouldBeTrue("all tasks should register within 5 seconds");
 
         // Now advance time to complete all delays
         timeProvider.AdvanceTime(TimeSpan.FromSeconds(10));
@@ -194,8 +194,8 @@ public class VirtualTimeProviderTests
         // Wait for all tasks to complete
         var results = await Task.WhenAll(tasks);
 
-        results.Should().HaveCount(100);
-        results.Should().OnlyContain(i => i >= 1 && i <= 100);
+        results.Count().ShouldBe(100);
+        results.ShouldAllBe(i => i >= 1 && i <= 100);
     }
 
     [Fact]
@@ -205,38 +205,38 @@ public class VirtualTimeProviderTests
 
         // Advance time
         timeProvider.AdvanceTime(TimeSpan.FromSeconds(5));
-        timeProvider.CurrentTime.Should().Be(TimeSpan.FromSeconds(5));
+        timeProvider.CurrentTime.ShouldBe(TimeSpan.FromSeconds(5));
 
         // Schedule some tasks that won't complete before reset
         var task1 = timeProvider.CreateDelay(TimeSpan.FromSeconds(10));
         var task2 = timeProvider.CreateDelay(TimeSpan.FromSeconds(20));
 
         // Tasks should not be completed yet
-        task1.IsCompleted.Should().BeFalse();
-        task2.IsCompleted.Should().BeFalse();
+        task1.IsCompleted.ShouldBeFalse();
+        task2.IsCompleted.ShouldBeFalse();
 
         // Reset
         timeProvider.Reset();
 
         // Time should be back to zero
-        timeProvider.CurrentTime.Should().Be(TimeSpan.Zero);
+        timeProvider.CurrentTime.ShouldBe(TimeSpan.Zero);
 
         // Old tasks should be canceled after reset
-        task1.IsCompleted.Should().BeTrue();
-        task2.IsCompleted.Should().BeTrue();
-        task1.IsCanceled.Should().BeTrue();
-        task2.IsCanceled.Should().BeTrue();
+        task1.IsCompleted.ShouldBeTrue();
+        task2.IsCompleted.ShouldBeTrue();
+        task1.IsCanceled.ShouldBeTrue();
+        task2.IsCanceled.ShouldBeTrue();
 
         // Advancing time should not affect canceled tasks
         timeProvider.AdvanceTime(TimeSpan.FromSeconds(30));
 
         // New tasks after reset should work normally
         var task3 = timeProvider.CreateDelay(TimeSpan.FromSeconds(5));
-        task3.IsCompleted.Should().BeFalse();
+        task3.IsCompleted.ShouldBeFalse();
 
         timeProvider.AdvanceTime(TimeSpan.FromSeconds(5));
-        task3.IsCompleted.Should().BeTrue();
-        task3.IsCanceled.Should().BeFalse();
+        task3.IsCompleted.ShouldBeTrue();
+        task3.IsCanceled.ShouldBeFalse();
         await task3;
     }
 
@@ -247,14 +247,14 @@ public class VirtualTimeProviderTests
 
         timeProvider.AdvanceTime(TimeSpan.FromSeconds(10));
         timeProvider.Reset();
-        timeProvider.CurrentTime.Should().Be(TimeSpan.Zero);
+        timeProvider.CurrentTime.ShouldBe(TimeSpan.Zero);
 
         timeProvider.AdvanceTime(TimeSpan.FromSeconds(5));
         timeProvider.Reset();
-        timeProvider.CurrentTime.Should().Be(TimeSpan.Zero);
+        timeProvider.CurrentTime.ShouldBe(TimeSpan.Zero);
 
         var act = () => timeProvider.Reset();
-        act.Should().NotThrow();
+        act.ShouldNotThrow();
     }
 
     [Fact]
@@ -263,8 +263,8 @@ public class VirtualTimeProviderTests
         using var timeProvider = new VirtualTimeProvider();
 
         var act = () => timeProvider.AdvanceTime(TimeSpan.FromSeconds(-1));
-        act.Should().Throw<ArgumentOutOfRangeException>()
-            .WithParameterName("duration")
-            .WithMessage("*Duration cannot be negative*");
+        var ex = act.ShouldThrow<ArgumentOutOfRangeException>();
+        ex.ParamName.ShouldBe("duration");
+        ex.Message.ShouldContain("Duration cannot be negative");
     }
 }

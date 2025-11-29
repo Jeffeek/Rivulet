@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Rivulet.Core.Tests;
@@ -28,8 +28,8 @@ public class RetryPolicyTests
             },
             options);
 
-        results.Should().HaveCount(4);
-        attemptCounts[3].Should().Be(1);
+        results.Count.ShouldBe(4);
+        attemptCounts[3].ShouldBe(1);
     }
 
     [Fact]
@@ -55,8 +55,8 @@ public class RetryPolicyTests
             },
             options);
 
-        results.Should().HaveCount(5);
-        attemptCounts[3].Should().Be(3);
+        results.Count.ShouldBe(5);
+        attemptCounts[3].ShouldBe(3);
     }
 
     [Fact]
@@ -82,8 +82,8 @@ public class RetryPolicyTests
             },
             options);
 
-        results.Should().HaveCount(4);
-        attemptCounts[3].Should().Be(1);
+        results.Count.ShouldBe(4);
+        attemptCounts[3].ShouldBe(1);
     }
 
     [Fact]
@@ -109,15 +109,15 @@ public class RetryPolicyTests
             },
             options);
 
-        attemptTimestamps.Should().HaveCount(4);
+        attemptTimestamps.Count.ShouldBe(4);
 
         var delay1 = (attemptTimestamps[1] - attemptTimestamps[0]).TotalMilliseconds;
         var delay2 = (attemptTimestamps[2] - attemptTimestamps[1]).TotalMilliseconds;
         var delay3 = (attemptTimestamps[3] - attemptTimestamps[2]).TotalMilliseconds;
 
-        delay1.Should().BeGreaterThanOrEqualTo(90);
-        delay2.Should().BeGreaterThanOrEqualTo(180);
-        delay3.Should().BeGreaterThanOrEqualTo(360);
+        delay1.ShouldBeGreaterThanOrEqualTo(90);
+        delay2.ShouldBeGreaterThanOrEqualTo(180);
+        delay3.ShouldBeGreaterThanOrEqualTo(360);
     }
 
     [Fact]
@@ -144,7 +144,7 @@ public class RetryPolicyTests
             }, options);
 
         await Assert.ThrowsAsync<InvalidOperationException>(((Func<Task<List<int>>>?)Act)!);
-        attemptCount.Should().Be(3);
+        attemptCount.ShouldBe(3);
     }
 
     [Fact]
@@ -168,8 +168,8 @@ public class RetryPolicyTests
             }, options)
             .ToListAsync();
 
-        results.Should().HaveCount(5);
-        attemptCounts[3].Should().Be(2);
+        results.Count.ShouldBe(5);
+        attemptCounts[3].ShouldBe(2);
     }
 
     [Fact]
@@ -197,8 +197,8 @@ public class RetryPolicyTests
             },
             options);
 
-        processedItems.Should().HaveCount(5);
-        attemptCounts[3].Should().Be(2);
+        processedItems.Count.ShouldBe(5);
+        attemptCounts[3].ShouldBe(2);
     }
 
     [Fact]
@@ -224,8 +224,8 @@ public class RetryPolicyTests
             },
             options);
 
-        results.Should().BeEmpty();
-        attemptCount.Should().Be(1);
+        results.ShouldBeEmpty();
+        attemptCount.ShouldBe(1);
     }
 
     [Fact]
@@ -284,8 +284,8 @@ public class RetryPolicyTests
             },
             options);
 
-        results.Should().HaveCount(2);
-        attemptCounts[1].Should().Be(3);
-        attemptCounts[2].Should().Be(1);
+        results.Count.ShouldBe(2);
+        attemptCounts[1].ShouldBe(3);
+        attemptCounts[2].ShouldBe(1);
     }
 }

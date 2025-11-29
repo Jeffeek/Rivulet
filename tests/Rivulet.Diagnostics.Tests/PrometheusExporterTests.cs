@@ -1,4 +1,4 @@
-using Rivulet.Base.Tests;
+﻿using Rivulet.Base.Tests;
 using Rivulet.Core;
 using Rivulet.Core.Observability;
 
@@ -28,7 +28,7 @@ public class PrometheusExporterTests
         // Increased from 2000ms → 5000ms for Windows CI/CD reliability (2/180 failures)
         // EventCounters have ~1s polling interval but can be delayed under load
         // Must wait for BOTH items_started AND items_completed to be present
-        await Extensions.ApplyDeadlineAsync(
+        await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddMilliseconds(5000),
             () => Task.Delay(100),
             () =>
@@ -40,11 +40,11 @@ public class PrometheusExporterTests
             });
 
         var prometheusText = exporter.Export();
-        prometheusText.Should().Contain("# Rivulet.Core Metrics");
-        prometheusText.Should().Contain("# HELP rivulet_");
-        prometheusText.Should().Contain("# TYPE rivulet_");
-        prometheusText.Should().Contain("rivulet_items_started");
-        prometheusText.Should().Contain("rivulet_items_completed");
+        prometheusText.ShouldContain("# Rivulet.Core Metrics");
+        prometheusText.ShouldContain("# HELP rivulet_");
+        prometheusText.ShouldContain("# TYPE rivulet_");
+        prometheusText.ShouldContain("rivulet_items_started");
+        prometheusText.ShouldContain("rivulet_items_completed");
     }
 
     [Fact]
@@ -66,7 +66,7 @@ public class PrometheusExporterTests
         // Increased from 2000ms → 5000ms for Windows CI/CD reliability (3/180 failures)
         // EventCounters have ~1s polling interval but can be delayed under load
         // Must wait for BOTH items_started AND items_completed keys to be present
-        await Extensions.ApplyDeadlineAsync(
+        await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddMilliseconds(5000),
             () => Task.Delay(100),
             () =>
@@ -77,11 +77,11 @@ public class PrometheusExporterTests
             });
 
         var metrics = exporter.ExportDictionary();
-        metrics.Should().NotBeEmpty();
-        metrics.Should().ContainKey(RivuletMetricsConstants.CounterNames.ItemsStarted);
-        metrics.Should().ContainKey(RivuletMetricsConstants.CounterNames.ItemsCompleted);
-        metrics[RivuletMetricsConstants.CounterNames.ItemsStarted].Should().BeGreaterThanOrEqualTo(0);
-        metrics[RivuletMetricsConstants.CounterNames.ItemsCompleted].Should().BeGreaterThanOrEqualTo(0);
+        metrics.ShouldNotBeEmpty();
+        metrics.TryGetValue(RivuletMetricsConstants.CounterNames.ItemsStarted, out var itemsStarted).ShouldBeTrue();
+        metrics.TryGetValue(RivuletMetricsConstants.CounterNames.ItemsCompleted, out var itemsCompleted).ShouldBeTrue();
+        itemsStarted.ShouldBeGreaterThanOrEqualTo(0);
+        itemsCompleted.ShouldBeGreaterThanOrEqualTo(0);
     }
 
     [Fact]
@@ -90,9 +90,9 @@ public class PrometheusExporterTests
         using var exporter = new PrometheusExporter();
 
         var prometheusText = exporter.Export();
-        prometheusText.Should().Contain("# Rivulet.Core Metrics");
+        prometheusText.ShouldContain("# Rivulet.Core Metrics");
         
         var metrics = exporter.ExportDictionary();
-        metrics.Should().BeEmpty();
+        metrics.ShouldBeEmpty();
     }
 }

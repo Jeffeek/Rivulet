@@ -1,14 +1,12 @@
-using System.Net;
+﻿using System.Net;
+using Rivulet.Base.Tests;
 
 namespace Rivulet.Http.Tests;
 
 public class HttpStreamingExtensionsTests
 {
     private static HttpClient CreateTestClient(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> handler)
-    {
-        var messageHandler = new TestHttpMessageHandler(handler);
-        return new(messageHandler) { BaseAddress = new("http://test.local") };
-    }
+        => TestHttpClientFactory.CreateTestClient(handler);
 
     [Fact]
     public async Task DownloadToStreamAsync_WithValidUri_ShouldDownloadContent()
@@ -33,11 +31,11 @@ public class HttpStreamingExtensionsTests
             destination,
             httpClient);
 
-        bytesDownloaded.Should().Be(expectedContent.Length);
+        bytesDownloaded.ShouldBe(expectedContent.Length);
         destination.Position = 0;
         using var reader = new StreamReader(destination);
         var downloadedContent = await reader.ReadToEndAsync();
-        downloadedContent.Should().Be(expectedContent);
+        downloadedContent.ShouldBe(expectedContent);
     }
 
     [Fact]
@@ -105,10 +103,10 @@ public class HttpStreamingExtensionsTests
             httpClient,
             options);
 
-        bytesDownloaded.Should().Be(fileSize);
-        progressReports.Should().NotBeEmpty();
-        progressReports.Last().downloaded.Should().Be(fileSize);
-        progressReports.Last().total.Should().Be(fileSize);
+        bytesDownloaded.ShouldBe(fileSize);
+        progressReports.ShouldNotBeEmpty();
+        progressReports.Last().downloaded.ShouldBe(fileSize);
+        progressReports.Last().total.ShouldBe(fileSize);
     }
 
     [Fact]
@@ -142,7 +140,7 @@ public class HttpStreamingExtensionsTests
                 httpClient,
                 options));
 
-        exception.Message.Should().Contain("Content length mismatch");
+        exception.Message.ShouldContain("Content length mismatch");
     }
 
     [Fact]
@@ -172,14 +170,14 @@ public class HttpStreamingExtensionsTests
 
             var results = await downloads.DownloadParallelAsync(httpClient);
 
-            results.Should().HaveCount(2);
-            results.Should().OnlyContain(r => r.bytesDownloaded > 0);
+            results.Count.ShouldBe(2);
+            results.ShouldAllBe(r => r.bytesDownloaded > 0);
 
-            File.Exists(Path.Join(tempDir, "file1.txt")).Should().BeTrue();
-            File.Exists(Path.Join(tempDir, "file2.txt")).Should().BeTrue();
+            File.Exists(Path.Join(tempDir, "file1.txt")).ShouldBeTrue();
+            File.Exists(Path.Join(tempDir, "file2.txt")).ShouldBeTrue();
 
             var content1 = await File.ReadAllTextAsync(Path.Join(tempDir, "file1.txt"));
-            content1.Should().Contain("file1.txt");
+            content1.ShouldContain("file1.txt");
         }
         finally
         {
@@ -292,12 +290,12 @@ public class HttpStreamingExtensionsTests
 
             var results = await downloads.DownloadParallelAsync(httpClient, options);
 
-            results.Should().HaveCount(1);
-            headCalled.Should().BeTrue();
-            getRangeCalled.Should().BeTrue();
+            results.Count.ShouldBe(1);
+            headCalled.ShouldBeTrue();
+            getRangeCalled.ShouldBeTrue();
 
             var downloadedContent = await File.ReadAllTextAsync(filePath);
-            downloadedContent.Should().Be(fullContent);
+            downloadedContent.ShouldBe(fullContent);
         }
         finally
         {
@@ -353,8 +351,8 @@ public class HttpStreamingExtensionsTests
 
             var results = await downloads.DownloadParallelAsync(httpClient, options);
 
-            results.Should().HaveCount(1);
-            results[0].bytesDownloaded.Should().Be(content.Length);
+            results.Count.ShouldBe(1);
+            results[0].bytesDownloaded.ShouldBe(content.Length);
         }
         finally
         {
@@ -409,8 +407,8 @@ public class HttpStreamingExtensionsTests
 
             await downloads.DownloadParallelAsync(httpClient, options);
 
-            progressCalled.Should().BeTrue();
-            completeCalled.Should().BeTrue();
+            progressCalled.ShouldBeTrue();
+            completeCalled.ShouldBeTrue();
         }
         finally
         {
@@ -418,15 +416,6 @@ public class HttpStreamingExtensionsTests
             {
                 Directory.Delete(tempDir, true);
             }
-        }
-    }
-
-    // Test helper class
-    private class TestHttpMessageHandler(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> handler) : HttpMessageHandler
-    {
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-        {
-            return handler(request, cancellationToken);
         }
     }
 }

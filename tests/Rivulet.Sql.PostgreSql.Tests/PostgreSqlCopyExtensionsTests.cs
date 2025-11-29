@@ -1,4 +1,4 @@
-using Npgsql;
+﻿using Npgsql;
 
 namespace Rivulet.Sql.PostgreSql.Tests;
 
@@ -26,8 +26,7 @@ public class PostgreSqlCopyExtensionsTests
             ["id", "name", "email"],
             MapToRow);
 
-        await act.Should().ThrowAsync<ArgumentNullException>()
-            .WithParameterName("source");
+        (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("source");
     }
 
     [Fact]
@@ -41,8 +40,7 @@ public class PostgreSqlCopyExtensionsTests
             ["id", "name", "email"],
             MapToRow);
 
-        await act.Should().ThrowAsync<ArgumentNullException>()
-            .WithParameterName("connectionFactory");
+        (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("connectionFactory");
     }
 
     [Fact]
@@ -56,7 +54,7 @@ public class PostgreSqlCopyExtensionsTests
             ["id", "name", "email"],
             MapToRow);
 
-        await act.Should().ThrowAsync<ArgumentException>();
+        await act.ShouldThrowAsync<ArgumentException>();
     }
 
     [Fact]
@@ -70,7 +68,7 @@ public class PostgreSqlCopyExtensionsTests
             ["id", "name", "email"],
             MapToRow);
 
-        await act.Should().ThrowAsync<ArgumentException>();
+        await act.ShouldThrowAsync<ArgumentException>();
     }
 
     [Fact]
@@ -84,7 +82,7 @@ public class PostgreSqlCopyExtensionsTests
             ["id", "name", "email"],
             MapToRow);
 
-        await act.Should().ThrowAsync<ArgumentException>();
+        await act.ShouldThrowAsync<ArgumentException>();
     }
 
     [Fact]
@@ -98,8 +96,7 @@ public class PostgreSqlCopyExtensionsTests
             null!,
             MapToRow);
 
-        await act.Should().ThrowAsync<ArgumentNullException>()
-            .WithParameterName("columns");
+        (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("columns");
     }
 
     [Fact]
@@ -113,8 +110,7 @@ public class PostgreSqlCopyExtensionsTests
             [],
             MapToRow);
 
-        await act.Should().ThrowAsync<ArgumentException>()
-            .WithParameterName("columns");
+        (await act.ShouldThrowAsync<ArgumentException>()).ParamName.ShouldBe("columns");
     }
 
     [Fact]
@@ -128,8 +124,7 @@ public class PostgreSqlCopyExtensionsTests
             ["id", "name", "email"],
             null!);
 
-        await act.Should().ThrowAsync<ArgumentNullException>()
-            .WithParameterName("mapToRow");
+        (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("mapToRow");
     }
 
     [Fact]
@@ -144,8 +139,7 @@ public class PostgreSqlCopyExtensionsTests
             MapToRow,
             batchSize: 0);
 
-        await act.Should().ThrowAsync<ArgumentOutOfRangeException>()
-            .WithParameterName("batchSize");
+        (await act.ShouldThrowAsync<ArgumentOutOfRangeException>()).ParamName.ShouldBe("batchSize");
     }
 
     [Fact]
@@ -160,8 +154,7 @@ public class PostgreSqlCopyExtensionsTests
             MapToRow,
             batchSize: -1);
 
-        await act.Should().ThrowAsync<ArgumentOutOfRangeException>()
-            .WithParameterName("batchSize");
+        (await act.ShouldThrowAsync<ArgumentOutOfRangeException>()).ParamName.ShouldBe("batchSize");
     }
 
     [Fact]
@@ -187,8 +180,7 @@ public class PostgreSqlCopyExtensionsTests
             "test_table",
             ["id", "name", "email"]);
 
-        await act.Should().ThrowAsync<ArgumentNullException>()
-            .WithParameterName("source");
+        (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("source");
     }
 
     [Fact]
@@ -201,8 +193,7 @@ public class PostgreSqlCopyExtensionsTests
             "test_table",
             ["id", "name", "email"]);
 
-        await act.Should().ThrowAsync<ArgumentNullException>()
-            .WithParameterName("connectionFactory");
+        (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("connectionFactory");
     }
 
     [Fact]
@@ -215,7 +206,7 @@ public class PostgreSqlCopyExtensionsTests
             null!,
             ["id", "name", "email"]);
 
-        await act.Should().ThrowAsync<ArgumentException>();
+        await act.ShouldThrowAsync<ArgumentException>();
     }
 
     [Fact]
@@ -228,7 +219,7 @@ public class PostgreSqlCopyExtensionsTests
             "",
             ["id", "name", "email"]);
 
-        await act.Should().ThrowAsync<ArgumentException>();
+        await act.ShouldThrowAsync<ArgumentException>();
     }
 
     [Fact]
@@ -241,8 +232,7 @@ public class PostgreSqlCopyExtensionsTests
             "test_table",
             null!);
 
-        await act.Should().ThrowAsync<ArgumentNullException>()
-            .WithParameterName("columns");
+        (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("columns");
     }
 
     [Fact]
@@ -255,8 +245,7 @@ public class PostgreSqlCopyExtensionsTests
             "test_table",
             []);
 
-        await act.Should().ThrowAsync<ArgumentException>()
-            .WithParameterName("columns");
+        (await act.ShouldThrowAsync<ArgumentException>()).ParamName.ShouldBe("columns");
     }
 
     [Fact]
@@ -270,8 +259,7 @@ public class PostgreSqlCopyExtensionsTests
             ["id", "name", "email"],
             batchSize: 0);
 
-        await act.Should().ThrowAsync<ArgumentOutOfRangeException>()
-            .WithParameterName("batchSize");
+        (await act.ShouldThrowAsync<ArgumentOutOfRangeException>()).ParamName.ShouldBe("batchSize");
     }
 
     [Fact]
@@ -285,8 +273,7 @@ public class PostgreSqlCopyExtensionsTests
             ["id", "name", "email"],
             batchSize: -1);
 
-        await act.Should().ThrowAsync<ArgumentOutOfRangeException>()
-            .WithParameterName("batchSize");
+        (await act.ShouldThrowAsync<ArgumentOutOfRangeException>()).ParamName.ShouldBe("batchSize");
     }
 
     [Fact]
@@ -311,8 +298,7 @@ public class PostgreSqlCopyExtensionsTests
             "test_table",
             ["id", "name", "email"]);
 
-        await act.Should().ThrowAsync<ArgumentNullException>()
-            .WithParameterName("source");
+        (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("source");
     }
 
     [Fact]
@@ -325,8 +311,7 @@ public class PostgreSqlCopyExtensionsTests
             "test_table",
             ["id", "name", "email"]);
 
-        await act.Should().ThrowAsync<ArgumentNullException>()
-            .WithParameterName("connectionFactory");
+        (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("connectionFactory");
     }
 
     [Fact]
@@ -339,7 +324,7 @@ public class PostgreSqlCopyExtensionsTests
             null!,
             ["id", "name", "email"]);
 
-        await act.Should().ThrowAsync<ArgumentException>();
+        await act.ShouldThrowAsync<ArgumentException>();
     }
 
     [Fact]
@@ -352,7 +337,7 @@ public class PostgreSqlCopyExtensionsTests
             "",
             ["id", "name", "email"]);
 
-        await act.Should().ThrowAsync<ArgumentException>();
+        await act.ShouldThrowAsync<ArgumentException>();
     }
 
     [Fact]
@@ -365,8 +350,7 @@ public class PostgreSqlCopyExtensionsTests
             "test_table",
             null!);
 
-        await act.Should().ThrowAsync<ArgumentNullException>()
-            .WithParameterName("columns");
+        (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("columns");
     }
 
     [Fact]
@@ -379,8 +363,7 @@ public class PostgreSqlCopyExtensionsTests
             "test_table",
             []);
 
-        await act.Should().ThrowAsync<ArgumentException>()
-            .WithParameterName("columns");
+        (await act.ShouldThrowAsync<ArgumentException>()).ParamName.ShouldBe("columns");
     }
 
     [Fact]
@@ -394,8 +377,7 @@ public class PostgreSqlCopyExtensionsTests
             ["id", "name", "email"],
             batchSize: 0);
 
-        await act.Should().ThrowAsync<ArgumentOutOfRangeException>()
-            .WithParameterName("batchSize");
+        (await act.ShouldThrowAsync<ArgumentOutOfRangeException>()).ParamName.ShouldBe("batchSize");
     }
 
     [Fact]
@@ -409,8 +391,7 @@ public class PostgreSqlCopyExtensionsTests
             ["id", "name", "email"],
             batchSize: -1);
 
-        await act.Should().ThrowAsync<ArgumentOutOfRangeException>()
-            .WithParameterName("batchSize");
+        (await act.ShouldThrowAsync<ArgumentOutOfRangeException>()).ParamName.ShouldBe("batchSize");
     }
 
     [Fact]

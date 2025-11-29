@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Rivulet.Core;
 using Rivulet.Hosting.Configuration;
@@ -12,8 +12,7 @@ public class RivuletOptionsSetupTests
     {
         var act = () => new RivuletOptionsSetup(null!);
 
-        act.Should().Throw<ArgumentNullException>()
-            .WithParameterName("configuration");
+(        act.ShouldThrow<ArgumentNullException>()).ParamName.ShouldBe("configuration");
     }
 
     [Fact]
@@ -31,8 +30,8 @@ public class RivuletOptionsSetupTests
         setup.Configure(options);
 
         // Assert - options should remain unchanged
-        options.MaxDegreeOfParallelism.Should().Be(42);
-        options.ErrorMode.Should().Be(ErrorMode.BestEffort);
+        options.MaxDegreeOfParallelism.ShouldBe(42);
+        options.ErrorMode.ShouldBe(ErrorMode.BestEffort);
     }
 
     [Fact]
@@ -56,9 +55,9 @@ public class RivuletOptionsSetupTests
         setup.Configure(options);
 
         // Assert
-        options.MaxDegreeOfParallelism.Should().Be(8);
-        options.ErrorMode.Should().Be(ErrorMode.CollectAndContinue);
-        options.OrderedOutput.Should().BeTrue();
+        options.MaxDegreeOfParallelism.ShouldBe(8);
+        options.ErrorMode.ShouldBe(ErrorMode.CollectAndContinue);
+        options.OrderedOutput.ShouldBeTrue();
     }
 
     [Fact]
@@ -81,8 +80,8 @@ public class RivuletOptionsSetupTests
         setup.Configure(options);
 
         // Assert
-        options.MaxRetries.Should().Be(5);
-        options.BaseDelay.Should().Be(TimeSpan.FromSeconds(2));
+        options.MaxRetries.ShouldBe(5);
+        options.BaseDelay.ShouldBe(TimeSpan.FromSeconds(2));
     }
 
     [Fact]
@@ -108,9 +107,9 @@ public class RivuletOptionsSetupTests
         setup.Configure(options);
 
         // Assert - only MaxDegreeOfParallelism should change
-        options.MaxDegreeOfParallelism.Should().Be(16);
-        options.ErrorMode.Should().Be(ErrorMode.FailFast);
-        options.MaxRetries.Should().Be(3);
+        options.MaxDegreeOfParallelism.ShouldBe(16);
+        options.ErrorMode.ShouldBe(ErrorMode.FailFast);
+        options.MaxRetries.ShouldBe(3);
     }
 
     [Fact]
@@ -135,7 +134,7 @@ public class RivuletOptionsSetupTests
         setup.Configure(options);
 
         // Assert
-        options.MaxDegreeOfParallelism.Should().Be(10);
+        options.MaxDegreeOfParallelism.ShouldBe(10);
     }
 
     [Fact]
@@ -157,7 +156,7 @@ public class RivuletOptionsSetupTests
         setup.Configure(options);
 
         // Assert
-        options.ChannelCapacity.Should().Be(2048);
+        options.ChannelCapacity.ShouldBe(2048);
     }
 
     [Fact]
@@ -179,7 +178,7 @@ public class RivuletOptionsSetupTests
         setup.Configure(options);
 
         // Assert
-        options.PerItemTimeout.Should().Be(TimeSpan.FromSeconds(90));
+        options.PerItemTimeout.ShouldBe(TimeSpan.FromSeconds(90));
     }
 
     [Fact]
@@ -197,7 +196,7 @@ public class RivuletOptionsSetupTests
         var setup = new RivuletOptionsSetup(configuration);
 
         // Assert - verify it implements the interface
-        setup.Should().BeAssignableTo<IConfigureOptions<ParallelOptionsRivulet>>();
+        setup.ShouldBeAssignableTo<IConfigureOptions<ParallelOptionsRivulet>>();
     }
 
     [Fact]
@@ -230,7 +229,7 @@ public class RivuletOptionsSetupTests
         setup2.Configure(options);
 
         // Assert
-        options.MaxDegreeOfParallelism.Should().Be(10);
+        options.MaxDegreeOfParallelism.ShouldBe(10);
     }
 
     [Fact]
@@ -256,9 +255,9 @@ public class RivuletOptionsSetupTests
         setup.Configure(options);
 
         // Assert - invalid value should be ignored, default retained
-        options.MaxDegreeOfParallelism.Should().Be(42);
+        options.MaxDegreeOfParallelism.ShouldBe(42);
         // Valid value should still be set
-        options.ChannelCapacity.Should().Be(500);
+        options.ChannelCapacity.ShouldBe(500);
     }
 
     [Fact]
@@ -284,9 +283,9 @@ public class RivuletOptionsSetupTests
         setup.Configure(options);
 
         // Assert - invalid value should be ignored, default retained
-        options.BaseDelay.Should().Be(TimeSpan.FromSeconds(5));
+        options.BaseDelay.ShouldBe(TimeSpan.FromSeconds(5));
         // Valid value should still be set
-        options.MaxRetries.Should().Be(3);
+        options.MaxRetries.ShouldBe(3);
     }
 
     [Fact]
@@ -312,9 +311,9 @@ public class RivuletOptionsSetupTests
         setup.Configure(options);
 
         // Assert - invalid enum should be ignored, default retained
-        options.ErrorMode.Should().Be(ErrorMode.FailFast);
+        options.ErrorMode.ShouldBe(ErrorMode.FailFast);
         // Valid value should still be set
-        options.MaxDegreeOfParallelism.Should().Be(8);
+        options.MaxDegreeOfParallelism.ShouldBe(8);
     }
 
     [Fact]
@@ -336,7 +335,7 @@ public class RivuletOptionsSetupTests
         setup.Configure(options);
 
         // Assert
-        options.BackoffStrategy.Should().Be(Core.Resilience.BackoffStrategy.Linear);
+        options.BackoffStrategy.ShouldBe(Core.Resilience.BackoffStrategy.Linear);
     }
 
     [Fact]
@@ -365,14 +364,14 @@ public class RivuletOptionsSetupTests
         setup.Configure(options);
 
         // Assert - all properties should be set
-        options.MaxDegreeOfParallelism.Should().Be(16);
-        options.ChannelCapacity.Should().Be(1024);
-        options.MaxRetries.Should().Be(5);
-        options.OrderedOutput.Should().BeTrue();
-        options.PerItemTimeout.Should().Be(TimeSpan.FromMinutes(2));
-        options.BaseDelay.Should().Be(TimeSpan.FromSeconds(1));
-        options.ErrorMode.Should().Be(ErrorMode.BestEffort);
-        options.BackoffStrategy.Should().Be(Core.Resilience.BackoffStrategy.Exponential);
+        options.MaxDegreeOfParallelism.ShouldBe(16);
+        options.ChannelCapacity.ShouldBe(1024);
+        options.MaxRetries.ShouldBe(5);
+        options.OrderedOutput.ShouldBeTrue();
+        options.PerItemTimeout.ShouldBe(TimeSpan.FromMinutes(2));
+        options.BaseDelay.ShouldBe(TimeSpan.FromSeconds(1));
+        options.ErrorMode.ShouldBe(ErrorMode.BestEffort);
+        options.BackoffStrategy.ShouldBe(Core.Resilience.BackoffStrategy.Exponential);
     }
 
     [Fact]
@@ -399,8 +398,8 @@ public class RivuletOptionsSetupTests
         setup.Configure(options);
 
         // Assert - empty strings should be ignored
-        options.MaxDegreeOfParallelism.Should().Be(10);
-        options.ChannelCapacity.Should().Be(200);
+        options.MaxDegreeOfParallelism.ShouldBe(10);
+        options.ChannelCapacity.ShouldBe(200);
     }
 
     [Fact]
@@ -432,11 +431,11 @@ public class RivuletOptionsSetupTests
         setup.Configure(options);
 
         // Assert - only valid values should be set, invalid ones ignored
-        options.MaxDegreeOfParallelism.Should().Be(8); // Invalid, kept default
-        options.ChannelCapacity.Should().Be(512); // Valid, set
-        options.OrderedOutput.Should().BeFalse(); // Invalid, kept default
-        options.MaxRetries.Should().Be(3); // Valid, set
-        options.BaseDelay.Should().Be(TimeSpan.FromSeconds(2)); // Invalid, kept default
-        options.ErrorMode.Should().Be(ErrorMode.FailFast); // Valid, set
+        options.MaxDegreeOfParallelism.ShouldBe(8); // Invalid, kept default
+        options.ChannelCapacity.ShouldBe(512); // Valid, set
+        options.OrderedOutput.ShouldBeFalse(); // Invalid, kept default
+        options.MaxRetries.ShouldBe(3); // Valid, set
+        options.BaseDelay.ShouldBe(TimeSpan.FromSeconds(2)); // Invalid, kept default
+        options.ErrorMode.ShouldBe(ErrorMode.FailFast); // Valid, set
     }
 }

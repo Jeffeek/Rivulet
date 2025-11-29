@@ -1,4 +1,4 @@
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Threading.Channels;
 
 namespace Rivulet.Testing.Tests;
@@ -11,8 +11,8 @@ public class FakeChannelTests
     {
         using var channel = new FakeChannel<int>();
 
-        channel.WriteCount.Should().Be(0);
-        channel.ReadCount.Should().Be(0);
+        channel.WriteCount.ShouldBe(0);
+        channel.ReadCount.ShouldBe(0);
     }
 
     [Fact]
@@ -22,7 +22,7 @@ public class FakeChannelTests
 
         await channel.WriteAsync(42);
 
-        channel.WriteCount.Should().Be(1);
+        channel.WriteCount.ShouldBe(1);
     }
 
     [Fact]
@@ -33,8 +33,8 @@ public class FakeChannelTests
         await channel.WriteAsync(42);
         var result = await channel.ReadAsync();
 
-        channel.ReadCount.Should().Be(1);
-        result.Should().Be(42);
+        channel.ReadCount.ShouldBe(1);
+        result.ShouldBe(42);
     }
 
     [Fact]
@@ -46,7 +46,7 @@ public class FakeChannelTests
         await channel.WriteAsync(2);
         await channel.WriteAsync(3);
 
-        channel.WriteCount.Should().Be(3);
+        channel.WriteCount.ShouldBe(3);
     }
 
     [Fact]
@@ -61,8 +61,8 @@ public class FakeChannelTests
         await channel.ReadAsync();
         await channel.ReadAsync();
 
-        channel.ReadCount.Should().Be(2);
-        channel.WriteCount.Should().Be(3);
+        channel.ReadCount.ShouldBe(2);
+        channel.WriteCount.ShouldBe(3);
     }
 
     [Fact]
@@ -74,7 +74,7 @@ public class FakeChannelTests
 
         var result = await channel.WriteAsync(42);
 
-        result.Should().BeFalse();
+        result.ShouldBeFalse();
     }
 
     [Fact]
@@ -89,9 +89,9 @@ public class FakeChannelTests
         var result1 = await channel.ReadAsync();
         var result2 = await channel.ReadAsync();
 
-        result1.Should().Be(1);
-        result2.Should().Be(2);
-        channel.ReadCount.Should().Be(2);
+        result1.ShouldBe(1);
+        result2.ShouldBe(2);
+        channel.ReadCount.ShouldBe(2);
     }
 
     [Fact]
@@ -106,7 +106,7 @@ public class FakeChannelTests
 
         var canRead = await channel.Reader.WaitToReadAsync();
 
-        canRead.Should().BeFalse();
+        canRead.ShouldBeFalse();
     }
 
     [Fact]
@@ -119,8 +119,8 @@ public class FakeChannelTests
 
         channel.ResetCounters();
 
-        channel.WriteCount.Should().Be(0);
-        channel.ReadCount.Should().Be(0);
+        channel.WriteCount.ShouldBe(0);
+        channel.ReadCount.ShouldBe(0);
     }
 
     [Fact]
@@ -133,8 +133,8 @@ public class FakeChannelTests
 
         var result = await channel.ReadAsync();
 
-        result.Should().Be(42);
-        channel.ReadCount.Should().Be(1);
+        result.ShouldBe(42);
+        channel.ReadCount.ShouldBe(1);
     }
 
     [Fact]
@@ -148,7 +148,7 @@ public class FakeChannelTests
 
         await Task.WhenAll(writeTasks);
 
-        channel.WriteCount.Should().Be(100);
+        channel.WriteCount.ShouldBe(100);
     }
 
     [Fact]
@@ -167,7 +167,7 @@ public class FakeChannelTests
 
         await Task.WhenAll(readTasks);
 
-        channel.ReadCount.Should().Be(100);
+        channel.ReadCount.ShouldBe(100);
     }
 
     [Fact]
@@ -181,13 +181,13 @@ public class FakeChannelTests
         var writeTask = channel.WriteAsync(3);
 
         await Task.Delay(100);
-        writeTask.IsCompleted.Should().BeFalse();
+        writeTask.IsCompleted.ShouldBeFalse();
 
         await channel.ReadAsync();
         await writeTask;
 
-        channel.WriteCount.Should().Be(3);
-        channel.ReadCount.Should().Be(1);
+        channel.WriteCount.ShouldBe(3);
+        channel.ReadCount.ShouldBe(1);
     }
 
     [Fact]
@@ -200,14 +200,14 @@ public class FakeChannelTests
             await channel.WriteAsync(i);
         }
 
-        channel.WriteCount.Should().Be(10000);
+        channel.WriteCount.ShouldBe(10000);
 
         for (var i = 0; i < 10000; i++)
         {
             await channel.ReadAsync();
         }
 
-        channel.ReadCount.Should().Be(10000);
+        channel.ReadCount.ShouldBe(10000);
     }
 
     [Fact]
@@ -220,7 +220,7 @@ public class FakeChannelTests
 
         var act = async () => await channel.ReadAsync();
 
-        await act.Should().ThrowAsync<ChannelClosedException>();
+        await act.ShouldThrowAsync<ChannelClosedException>();
     }
 
     [Fact]
@@ -232,7 +232,7 @@ public class FakeChannelTests
 
         var result = channel.Writer.TryWrite(42);
 
-        result.Should().BeFalse();
+        result.ShouldBeFalse();
     }
 
     [Fact]
@@ -243,7 +243,7 @@ public class FakeChannelTests
         channel.Dispose();
         var act = () => channel.Dispose();
 
-        act.Should().NotThrow();
+        act.ShouldNotThrow();
     }
 
     [Fact]
@@ -262,7 +262,7 @@ public class FakeChannelTests
             results.Add(item);
         }
 
-        results.Should().Equal(1, 2, 3);
+        results.ShouldBe(new[] { 1, 2, 3 });
     }
 
     [Fact]
@@ -273,7 +273,7 @@ public class FakeChannelTests
         channel.Writer.TryWrite(1);
         channel.Writer.TryWrite(2);
 
-        channel.WriteCount.Should().Be(0);
+        channel.WriteCount.ShouldBe(0);
     }
 
     [Fact]
@@ -284,8 +284,8 @@ public class FakeChannelTests
         await channel.WriteAsync(1);
         channel.Reader.TryRead(out _);
 
-        channel.ReadCount.Should().Be(0);
-        channel.WriteCount.Should().Be(1);
+        channel.ReadCount.ShouldBe(0);
+        channel.WriteCount.ShouldBe(1);
     }
 
     [Fact]
@@ -296,7 +296,7 @@ public class FakeChannelTests
 
         var act = async () => await channel.WriteAsync(42);
 
-        await act.Should().ThrowAsync<ObjectDisposedException>();
+        await act.ShouldThrowAsync<ObjectDisposedException>();
     }
 
     [Fact]
@@ -308,6 +308,6 @@ public class FakeChannelTests
 
         var act = async () => await channel.ReadAsync();
 
-        await act.Should().ThrowAsync<ObjectDisposedException>();
+        await act.ShouldThrowAsync<ObjectDisposedException>();
     }
 }

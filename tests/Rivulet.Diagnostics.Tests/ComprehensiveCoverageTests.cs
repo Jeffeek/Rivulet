@@ -1,4 +1,4 @@
-using Rivulet.Base.Tests;
+﻿using Rivulet.Base.Tests;
 using Rivulet.Core;
 
 namespace Rivulet.Diagnostics.Tests;
@@ -20,7 +20,7 @@ public class ComprehensiveCoverageTests
 
         // Should not throw when disposed
         var act = () => listener.Dispose();
-        act.Should().NotThrow();
+        act.ShouldNotThrow();
 
         // Listener should have received metrics callback invocations without errors
         // Note: We don't assert empty because RivuletEventSource is a static singleton
@@ -52,12 +52,12 @@ public class ComprehensiveCoverageTests
 
         // Wait for at least 2x the aggregation window to ensure timer fires and EventSource counters are received
         // Increased from 1100ms to 2100ms to handle CI/CD timing variability and EventSource polling delays
-        await Extensions.ApplyDeadlineAsync(
+        await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddMilliseconds(2100),
             () => Task.Delay(100),
             () => !callbackInvoked);
 
-        callbackInvoked.Should().BeTrue();
+        callbackInvoked.ShouldBeTrue();
     }
 
     [Fact]
@@ -89,7 +89,7 @@ public class ComprehensiveCoverageTests
             // Brief wait for file handle release
             await Task.Delay(100);
 
-            File.Exists(testFile).Should().BeTrue();
+            File.Exists(testFile).ShouldBeTrue();
         }
         finally
         {

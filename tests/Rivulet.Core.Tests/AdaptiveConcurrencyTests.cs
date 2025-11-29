@@ -1,4 +1,4 @@
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using Rivulet.Base.Tests;
 using Rivulet.Core.Resilience;
 
@@ -11,16 +11,14 @@ public class AdaptiveConcurrencyTests
     public void AdaptiveConcurrencyOptions_Validation_ThrowsOnInvalidMinConcurrency()
     {
         var act = () => new AdaptiveConcurrencyOptions { MinConcurrency = 0 }.Validate();
-        act.Should().Throw<ArgumentException>()
-            .WithMessage("*MinConcurrency*");
+        act.ShouldThrow<ArgumentException>().Message.ShouldContain("MinConcurrency");
     }
 
     [Fact]
     public void AdaptiveConcurrencyOptions_Validation_ThrowsWhenMaxLessThanMin()
     {
         var act = () => new AdaptiveConcurrencyOptions { MinConcurrency = 10, MaxConcurrency = 5 }.Validate();
-        act.Should().Throw<ArgumentException>()
-            .WithMessage("*MaxConcurrency*");
+        act.ShouldThrow<ArgumentException>().Message.ShouldContain("MaxConcurrency");
     }
 
     [Fact]
@@ -33,40 +31,35 @@ public class AdaptiveConcurrencyTests
             InitialConcurrency = 15
         }.Validate();
 
-        act.Should().Throw<ArgumentException>()
-            .WithMessage("*InitialConcurrency*");
+        act.ShouldThrow<ArgumentException>().Message.ShouldContain("InitialConcurrency");
     }
 
     [Fact]
     public void AdaptiveConcurrencyOptions_Validation_ThrowsOnInvalidSampleInterval()
     {
         var act = () => new AdaptiveConcurrencyOptions { SampleInterval = TimeSpan.Zero }.Validate();
-        act.Should().Throw<ArgumentException>()
-            .WithMessage("*SampleInterval*");
+        act.ShouldThrow<ArgumentException>().Message.ShouldContain("SampleInterval");
     }
 
     [Fact]
     public void AdaptiveConcurrencyOptions_Validation_ThrowsOnInvalidTargetLatency()
     {
         var act = () => new AdaptiveConcurrencyOptions { TargetLatency = TimeSpan.Zero }.Validate();
-        act.Should().Throw<ArgumentException>()
-            .WithMessage("*TargetLatency*");
+        act.ShouldThrow<ArgumentException>().Message.ShouldContain("TargetLatency");
     }
 
     [Fact]
     public void AdaptiveConcurrencyOptions_Validation_ThrowsOnInvalidMinSuccessRate()
     {
         var act = () => new AdaptiveConcurrencyOptions { MinSuccessRate = 1.5 }.Validate();
-        act.Should().Throw<ArgumentException>()
-            .WithMessage("*MinSuccessRate*");
+        act.ShouldThrow<ArgumentException>().Message.ShouldContain("MinSuccessRate");
     }
 
     [Fact]
     public void AdaptiveConcurrencyController_Constructor_ThrowsOnNullOptions()
     {
         var act = () => new AdaptiveConcurrencyController(null!);
-        act.Should().Throw<ArgumentNullException>()
-            .WithMessage("*options*");
+        act.ShouldThrow<ArgumentNullException>().Message.ShouldContain("options");
     }
 
     [Fact]
@@ -79,7 +72,7 @@ public class AdaptiveConcurrencyTests
             InitialConcurrency = 10
         });
 
-        controller.CurrentConcurrency.Should().Be(10);
+        controller.CurrentConcurrency.ShouldBe(10);
     }
 
     [Fact]
@@ -91,7 +84,7 @@ public class AdaptiveConcurrencyTests
             MaxConcurrency = 20
         });
 
-        controller.CurrentConcurrency.Should().Be(5);
+        controller.CurrentConcurrency.ShouldBe(5);
     }
 
     [Fact]
@@ -128,10 +121,10 @@ public class AdaptiveConcurrencyTests
             },
             options);
 
-        results.Should().HaveCount(200);
+        results.Count.ShouldBe(200);
 
         // Poll for callbacks with timeout
-        await Extensions.ApplyDeadlineAsync(
+        await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddSeconds(2),
             () => Task.Delay(50),
             () => concurrencyLevels.Count == 0);
@@ -139,8 +132,8 @@ public class AdaptiveConcurrencyTests
         // Should have increased concurrency at least once
         lock (concurrencyLevels)
         {
-            concurrencyLevels.Should().NotBeEmpty();
-            concurrencyLevels.Max().Should().BeGreaterThan(1);
+            concurrencyLevels.ShouldNotBeEmpty();
+            concurrencyLevels.Max().ShouldBeGreaterThan(1);
         }
     }
 
@@ -179,10 +172,10 @@ public class AdaptiveConcurrencyTests
             },
             options);
 
-        results.Should().HaveCount(100);
+        results.Count.ShouldBe(100);
 
         // Poll for callbacks with timeout
-        await Extensions.ApplyDeadlineAsync(
+        await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddSeconds(2),
             () => Task.Delay(50),
             () => concurrencyLevels.Count == 0);
@@ -190,8 +183,8 @@ public class AdaptiveConcurrencyTests
         // Should have decreased concurrency
         lock (concurrencyLevels)
         {
-            concurrencyLevels.Should().NotBeEmpty();
-            concurrencyLevels.Min().Should().BeLessThan(8);
+            concurrencyLevels.ShouldNotBeEmpty();
+            concurrencyLevels.Min().ShouldBeLessThan(8);
         }
     }
 
@@ -234,10 +227,10 @@ public class AdaptiveConcurrencyTests
             options);
 
         // Should get only successful results (50% of 100 = 50)
-        results.Count.Should().BeLessThan(100);
+        results.Count.ShouldBeLessThan(100);
 
         // Poll for callbacks with timeout
-        await Extensions.ApplyDeadlineAsync(
+        await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddSeconds(2),
             () => Task.Delay(50),
             () => concurrencyLevels.Count == 0);
@@ -245,8 +238,8 @@ public class AdaptiveConcurrencyTests
         // Should have decreased concurrency due to low success rate
         lock (concurrencyLevels)
         {
-            concurrencyLevels.Should().NotBeEmpty();
-            concurrencyLevels.Min().Should().BeLessThan(6);
+            concurrencyLevels.ShouldNotBeEmpty();
+            concurrencyLevels.Min().ShouldBeLessThan(6);
         }
     }
 
@@ -284,14 +277,14 @@ public class AdaptiveConcurrencyTests
             },
             options);
 
-        results.Should().HaveCount(200);
+        results.Count.ShouldBe(200);
 
         // Poll for callbacks with timeout (may not change if already optimal)
         await Task.Delay(500);
 
         lock (concurrencyLevels)
         {
-            concurrencyLevels.Should().OnlyContain(c => c >= 3 && c <= 5);
+            concurrencyLevels.ShouldAllBe(c => c >= 3 && c <= 5);
         }
     }
 
@@ -329,17 +322,17 @@ public class AdaptiveConcurrencyTests
             },
             options).CountAsync();
 
-        count.Should().Be(150);
+        count.ShouldBe(150);
 
         // Poll for callbacks with timeout
-        await Extensions.ApplyDeadlineAsync(
+        await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddSeconds(2),
             () => Task.Delay(50),
             () => concurrencyLevels.Count == 0);
 
         lock (concurrencyLevels)
         {
-            concurrencyLevels.Should().NotBeEmpty();
+            concurrencyLevels.ShouldNotBeEmpty();
         }
     }
 
@@ -369,9 +362,9 @@ public class AdaptiveConcurrencyTests
             },
             options);
 
-        results.Should().HaveCount(30);
-        results.Should().BeInAscendingOrder();
-        results.Should().Equal(Enumerable.Range(1, 30).Select(x => x * 2));
+        results.Count.ShouldBe(30);
+        results.ShouldBeInOrder();
+        results.ShouldBe(Enumerable.Range(1, 30).Select(x => x * 2));
     }
 
     [Fact]
@@ -416,7 +409,8 @@ public class AdaptiveConcurrencyTests
 
         // With MaxDegreeOfParallelism=4, at most ~14-15 items should be processed
         // (10 to trigger cancel + up to 4 in flight + a few more before cancellation takes effect)
-        processedCount.Should().BeLessThan(25).And.BeGreaterThanOrEqualTo(10);
+        processedCount.ShouldBeLessThan(25);
+        processedCount.ShouldBeGreaterThanOrEqualTo(10);
     }
 
     [Fact]
@@ -432,7 +426,7 @@ public class AdaptiveConcurrencyTests
         await controller.DisposeAsync();
 
         var act = async () => await controller.DisposeAsync();
-        await act.Should().NotThrowAsync();
+        await act.ShouldNotThrowAsync();
     }
 
     [Fact]
@@ -471,18 +465,18 @@ public class AdaptiveConcurrencyTests
             },
             options);
 
-        results.Should().HaveCount(300);
+        results.Count.ShouldBe(300);
 
-        await Extensions.ApplyDeadlineAsync(
+        await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddSeconds(3),
             () => Task.Delay(50),
             () => concurrencyLevels.Count == 0);
 
         lock (concurrencyLevels)
         {
-            concurrencyLevels.Should().NotBeEmpty();
+            concurrencyLevels.ShouldNotBeEmpty();
             // Aggressive should increase faster than AIMD
-            concurrencyLevels.Max().Should().BeGreaterThan(5);
+            concurrencyLevels.Max().ShouldBeGreaterThan(5);
         }
     }
 
@@ -523,18 +517,18 @@ public class AdaptiveConcurrencyTests
             },
             options);
 
-        results.Should().HaveCount(150);
+        results.Count.ShouldBe(150);
 
-        await Extensions.ApplyDeadlineAsync(
+        await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddSeconds(3),
             () => Task.Delay(50),
             () => concurrencyLevels.Count == 0);
 
         lock (concurrencyLevels)
         {
-            concurrencyLevels.Should().NotBeEmpty();
+            concurrencyLevels.ShouldNotBeEmpty();
             // Gradual decreases to 75% each time, slower than AIMD's 50%
-            concurrencyLevels.Min().Should().BeLessThan(12);
+            concurrencyLevels.Min().ShouldBeLessThan(12);
         }
     }
 
@@ -569,10 +563,10 @@ public class AdaptiveConcurrencyTests
             },
             options);
 
-        results.Should().HaveCount(100);
+        results.Count.ShouldBe(100);
         // Operation should complete despite callback exceptions
         await Task.Delay(500);
-        callbackCount.Should().BeGreaterThan(0);
+        callbackCount.ShouldBeGreaterThan(0);
     }
 
     [Fact]

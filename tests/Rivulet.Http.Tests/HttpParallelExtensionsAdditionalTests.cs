@@ -1,4 +1,5 @@
-using System.Net;
+﻿using System.Net;
+using Rivulet.Base.Tests;
 
 namespace Rivulet.Http.Tests;
 
@@ -8,10 +9,7 @@ namespace Rivulet.Http.Tests;
 public class HttpParallelExtensionsAdditionalTests
 {
     private static HttpClient CreateTestClient(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> handler)
-    {
-        var messageHandler = new TestHttpMessageHandler(handler);
-        return new(messageHandler) { BaseAddress = new("http://test.local") };
-    }
+        => TestHttpClientFactory.CreateTestClient(handler);
 
     [Fact]
     public async Task GetParallelAsync_WithRetryAfterHeader_ShouldRespectRetryDelay()
@@ -45,9 +43,9 @@ public class HttpParallelExtensionsAdditionalTests
 
         var results = await uris.GetParallelAsync(httpClient, options);
 
-        attemptCount.Should().Be(2); // Initial + 1 retry
-        results.Should().HaveCount(1);
-        results[0].StatusCode.Should().Be(HttpStatusCode.OK);
+        attemptCount.ShouldBe(2); // Initial + 1 retry
+        results.Count.ShouldBe(1);
+        results[0].StatusCode.ShouldBe(HttpStatusCode.OK);
 
         foreach (var response in results)
         {
@@ -85,8 +83,8 @@ public class HttpParallelExtensionsAdditionalTests
 
         var results = await uris.GetParallelAsync(httpClient, options);
 
-        attemptCount.Should().Be(2);
-        results[0].StatusCode.Should().Be(HttpStatusCode.OK);
+        attemptCount.ShouldBe(2);
+        results[0].StatusCode.ShouldBe(HttpStatusCode.OK);
 
         foreach (var response in results)
         {
@@ -125,8 +123,8 @@ public class HttpParallelExtensionsAdditionalTests
 
         var results = await uris.GetParallelAsync(httpClient, options);
 
-        attemptCount.Should().Be(2);
-        results[0].StatusCode.Should().Be(HttpStatusCode.OK);
+        attemptCount.ShouldBe(2);
+        results[0].StatusCode.ShouldBe(HttpStatusCode.OK);
 
         foreach (var response in results)
         {
@@ -160,8 +158,8 @@ public class HttpParallelExtensionsAdditionalTests
 
         await uris.GetParallelAsync(httpClient, options);
 
-        callbackUri.Should().NotBeNull();
-        callbackStatus.Should().Be(HttpStatusCode.BadGateway);
+        callbackUri.ShouldNotBeNull();
+        callbackStatus.ShouldBe(HttpStatusCode.BadGateway);
     }
 
     [Fact]
@@ -191,7 +189,7 @@ public class HttpParallelExtensionsAdditionalTests
 
         await uris.GetParallelAsync(httpClient, options);
 
-        callbackInvoked.Should().BeTrue();
+        callbackInvoked.ShouldBeTrue();
     }
 
     [Fact]
@@ -224,11 +222,11 @@ public class HttpParallelExtensionsAdditionalTests
             httpClient,
             options);
 
-        bytesDownloaded.Should().Be(expectedContent.Length);
+        bytesDownloaded.ShouldBe(expectedContent.Length);
         destination.Position = 0;
         using var reader = new StreamReader(destination);
         var downloadedContent = await reader.ReadToEndAsync();
-        downloadedContent.Should().Be(expectedContent);
+        downloadedContent.ShouldBe(expectedContent);
     }
 
     [Fact]
@@ -265,9 +263,9 @@ public class HttpParallelExtensionsAdditionalTests
 
             var results = await downloads.DownloadParallelAsync(httpClient, options);
 
-            results.Should().HaveCount(1);
+            results.Count.ShouldBe(1);
             var newContent = await File.ReadAllTextAsync(filePath);
-            newContent.Should().Be("New content");
+            newContent.ShouldBe("New content");
         }
         finally
         {
@@ -325,10 +323,10 @@ public class HttpParallelExtensionsAdditionalTests
 
             var results = await downloads.DownloadParallelAsync(httpClient, options);
 
-            results.Should().HaveCount(1);
-            headCalled.Should().BeTrue();
+            results.Count.ShouldBe(1);
+            headCalled.ShouldBeTrue();
             var downloadedContent = await File.ReadAllTextAsync(filePath);
-            downloadedContent.Should().Be(fullContent);
+            downloadedContent.ShouldBe(fullContent);
         }
         finally
         {
@@ -336,15 +334,6 @@ public class HttpParallelExtensionsAdditionalTests
             {
                 Directory.Delete(tempDir, true);
             }
-        }
-    }
-
-    // Test helper class
-    private class TestHttpMessageHandler(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> handler) : HttpMessageHandler
-    {
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-        {
-            return handler(request, cancellationToken);
         }
     }
 }

@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using Rivulet.Core.Internal;
 
 namespace Rivulet.Core.Tests;
@@ -18,7 +18,7 @@ public class LockHelperTests
 
         LockHelper.Execute(_lock, () => { executed = true; });
 
-        executed.Should().BeTrue();
+        executed.ShouldBeTrue();
     }
 
     [Fact]
@@ -28,7 +28,7 @@ public class LockHelperTests
 
         var result = LockHelper.Execute(_lock, () => expectedValue);
 
-        result.Should().Be(expectedValue);
+        result.ShouldBe(expectedValue);
     }
 
     [Fact]
@@ -38,7 +38,7 @@ public class LockHelperTests
 
         var result = LockHelper.Execute(_lock, () => value * 2 + 3);
 
-        result.Should().Be(23);
+        result.ShouldBe(23);
     }
 
     [Fact]
@@ -50,7 +50,7 @@ public class LockHelperTests
         LockHelper.Execute(_lock, () => { counter++; });
         LockHelper.Execute(_lock, () => { counter++; });
 
-        counter.Should().Be(3);
+        counter.ShouldBe(3);
     }
 
     [Fact]
@@ -63,8 +63,8 @@ public class LockHelperTests
         counter = 100;
         var result2 = LockHelper.Execute(_lock, () => counter);
 
-        result1.Should().Be(42);
-        result2.Should().Be(100);
+        result1.ShouldBe(42);
+        result2.ShouldBe(100);
     }
 
     [Fact]
@@ -73,8 +73,7 @@ public class LockHelperTests
         var expectedException = new InvalidOperationException("Test exception");
 
         var action = () => LockHelper.Execute(_lock, () => throw expectedException);
-        action.Should().Throw<InvalidOperationException>()
-            .WithMessage("Test exception");
+        action.ShouldThrow<InvalidOperationException>().Message.ShouldContain("Test exception");
     }
 
     [Fact]
@@ -90,8 +89,9 @@ public class LockHelperTests
 #pragma warning restore CS0162 // Unreachable code detected
         });
 
-        func.Should().Throw<InvalidOperationException>()
-            .WithMessage("Test exception");
+        Action act = () => func();
+        var ex = act.ShouldThrow<InvalidOperationException>();
+        ex.Message.ShouldContain("Test exception");
     }
 
     [Fact]
@@ -117,7 +117,7 @@ public class LockHelperTests
         Task.WaitAll(tasks);
 #pragma warning restore xUnit1031
 
-        counter.Should().Be(threadCount * incrementsPerThread);
+        counter.ShouldBe(threadCount * incrementsPerThread);
     }
 
     [Fact]
@@ -151,10 +151,10 @@ public class LockHelperTests
         Task.WaitAll(tasks);
 #pragma warning restore xUnit1031
 
-        counter.Should().Be(threadCount / 2);
-        results.Should().NotBeEmpty();
+        counter.ShouldBe(threadCount / 2);
+        results.ShouldNotBeEmpty();
         // All read values should be between 0 and threadCount/2
-        results.Should().AllSatisfy(value => value.Should().BeInRange(0, threadCount / 2));
+        results.ShouldAllBe(value => value >= 0 && value <= threadCount / 2);
     }
 
     [Fact]
@@ -171,8 +171,8 @@ public class LockHelperTests
             innerExecuted = true;
         });
 
-        outerExecuted.Should().BeTrue();
-        innerExecuted.Should().BeTrue();
+        outerExecuted.ShouldBeTrue();
+        innerExecuted.ShouldBeTrue();
     }
 
     [Fact]
@@ -182,9 +182,9 @@ public class LockHelperTests
 
         var result = LockHelper.Execute(_lock, () => expectedPerson);
 
-        result.Should().Be(expectedPerson);
-        result.Name.Should().Be("Alice");
-        result.Age.Should().Be(30);
+        result.ShouldBe(expectedPerson);
+        result.Name.ShouldBe("Alice");
+        result.Age.ShouldBe(30);
     }
 
     [Fact]
@@ -200,8 +200,8 @@ public class LockHelperTests
 
         var sum = LockHelper.Execute(_lock, () => dictionary.Values.Sum());
 
-        sum.Should().Be(300);
-        dictionary.Should().HaveCount(2);
+        sum.ShouldBe(300);
+        dictionary.Count.ShouldBe(2);
     }
 
     [Fact]
@@ -213,8 +213,8 @@ public class LockHelperTests
         var result1 = LockHelper.Execute(_lock, () => nullValue);
         var result2 = LockHelper.Execute(_lock, () => nonNullValue);
 
-        result1.Should().BeNull();
-        result2.Should().Be("test");
+        result1.ShouldBeNull();
+        result2.ShouldBe("test");
     }
 
     [Fact]
@@ -254,8 +254,8 @@ public class LockHelperTests
         Task.WaitAll(tasks);
 #pragma warning restore xUnit1031
 
-        executionOrder.Should().HaveCount(threadCount);
-        maxActiveCount.Should().Be(1, "only one thread should execute the locked section at a time");
+        executionOrder.Count.ShouldBe(threadCount);
+        maxActiveCount.ShouldBe(1, "only one thread should execute the locked section at a time");
     }
 
     [Fact]
@@ -265,7 +265,7 @@ public class LockHelperTests
 
         var result = LockHelper.Execute(_lock, () => condition);
 
-        result.Should().BeTrue();
+        result.ShouldBeTrue();
     }
 
     [Fact]
@@ -289,7 +289,7 @@ public class LockHelperTests
         // Second call should succeed (lock should be released)
         LockHelper.Execute(_lock, () => { counter++; });
 
-        counter.Should().Be(2);
+        counter.ShouldBe(2);
     }
 
     [Fact]
@@ -316,8 +316,8 @@ public class LockHelperTests
         // Second call should succeed (lock should be released)
         var result = LockHelper.Execute(_lock, () => ++counter);
 
-        result.Should().Be(2);
-        counter.Should().Be(2);
+        result.ShouldBe(2);
+        counter.ShouldBe(2);
     }
 
     [Fact]
@@ -330,7 +330,7 @@ public class LockHelperTests
             LockHelper.Execute(_lock, () => { counter++; });
         });
 
-        counter.Should().Be(1);
+        counter.ShouldBe(1);
     }
 
     [Fact]
@@ -340,7 +340,7 @@ public class LockHelperTests
 
         var result = await Task.Run(() => LockHelper.Execute(_lock, () => value * 2));
 
-        result.Should().Be(84);
+        result.ShouldBe(84);
     }
 
     [Fact]
@@ -350,8 +350,8 @@ public class LockHelperTests
 
         var result = LockHelper.Execute(_lock, () => structValue);
 
-        result.X.Should().Be(10);
-        result.Y.Should().Be(20);
+        result.X.ShouldBe(10);
+        result.Y.ShouldBe(20);
     }
 
     [Fact]
@@ -377,7 +377,7 @@ public class LockHelperTests
         Task.WaitAll(tasks);
 #pragma warning restore xUnit1031
 
-        counter.Should().Be(threadCount * incrementsPerThread);
+        counter.ShouldBe(threadCount * incrementsPerThread);
     }
 
     private class Person

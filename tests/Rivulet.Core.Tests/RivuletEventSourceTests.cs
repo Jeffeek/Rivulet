@@ -1,4 +1,4 @@
-using System.Diagnostics.Tracing;
+﻿using System.Diagnostics.Tracing;
 using Rivulet.Core.Observability;
 
 namespace Rivulet.Core.Tests;
@@ -12,7 +12,7 @@ public class RivuletEventSourceTests
         var log1 = RivuletEventSource.Log;
         var log2 = RivuletEventSource.Log;
 
-        log1.Should().BeSameAs(log2);
+        log1.ShouldBeSameAs(log2);
     }
 
     [Fact]
@@ -24,7 +24,7 @@ public class RivuletEventSourceTests
         eventSource.IncrementItemsStarted();
 
         var after = eventSource.GetItemsStarted();
-        after.Should().BeGreaterThan(before);
+        after.ShouldBeGreaterThan(before);
     }
 
     [Fact]
@@ -36,7 +36,7 @@ public class RivuletEventSourceTests
         eventSource.IncrementItemsCompleted();
 
         var after = eventSource.GetItemsCompleted();
-        after.Should().BeGreaterThan(before);
+        after.ShouldBeGreaterThan(before);
     }
 
     [Fact]
@@ -48,7 +48,7 @@ public class RivuletEventSourceTests
         eventSource.IncrementRetries();
 
         var after = eventSource.GetTotalRetries();
-        after.Should().BeGreaterThan(before);
+        after.ShouldBeGreaterThan(before);
     }
 
     [Fact]
@@ -60,7 +60,7 @@ public class RivuletEventSourceTests
         eventSource.IncrementFailures();
 
         var after = eventSource.GetTotalFailures();
-        after.Should().BeGreaterThan(before);
+        after.ShouldBeGreaterThan(before);
     }
 
     [Fact]
@@ -72,7 +72,7 @@ public class RivuletEventSourceTests
         eventSource.IncrementThrottleEvents();
 
         var after = eventSource.GetThrottleEvents();
-        after.Should().BeGreaterThan(before);
+        after.ShouldBeGreaterThan(before);
     }
 
     [Fact]
@@ -84,7 +84,7 @@ public class RivuletEventSourceTests
         eventSource.IncrementDrainEvents();
 
         var after = eventSource.GetDrainEvents();
-        after.Should().BeGreaterThan(before);
+        after.ShouldBeGreaterThan(before);
     }
 
     [Fact]
@@ -95,7 +95,7 @@ public class RivuletEventSourceTests
 
         // Enabling the event source should trigger OnEventCommand with Enable
         // This tests the counter creation branches (??= when null)
-        RivuletEventSource.Log.Should().NotBeNull();
+        RivuletEventSource.Log.ShouldNotBeNull();
     }
 
     [Fact]
@@ -110,7 +110,7 @@ public class RivuletEventSourceTests
         // Second enable - reuses existing counters (hits the "already exists" branch of ??=)
         listener2.EnableEvents(RivuletEventSource.Log, EventLevel.Verbose);
 
-        RivuletEventSource.Log.Should().NotBeNull();
+        RivuletEventSource.Log.ShouldNotBeNull();
     }
 
     [Fact]
@@ -124,7 +124,7 @@ public class RivuletEventSourceTests
         // Disable - should trigger OnEventCommand but with Disable command (early return)
         listener.DisableEvents(RivuletEventSource.Log);
 
-        RivuletEventSource.Log.Should().NotBeNull();
+        RivuletEventSource.Log.ShouldNotBeNull();
     }
 
     [Fact]
@@ -137,7 +137,7 @@ public class RivuletEventSourceTests
         listener.DisableEvents(RivuletEventSource.Log);
         listener.EnableEvents(RivuletEventSource.Log, EventLevel.Warning);
 
-        RivuletEventSource.Log.Should().NotBeNull();
+        RivuletEventSource.Log.ShouldNotBeNull();
     }
 
     [Fact]
@@ -159,7 +159,7 @@ public class RivuletEventSourceTests
         RivuletEventSource.Log.Dispose();
 
         // EventSource should still be accessible (singleton pattern)
-        RivuletEventSource.Log.Should().NotBeNull();
+        RivuletEventSource.Log.ShouldNotBeNull();
     }
 
     private class TestEventListener : EventListener

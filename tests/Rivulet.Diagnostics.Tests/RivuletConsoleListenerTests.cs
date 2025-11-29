@@ -1,4 +1,4 @@
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using Rivulet.Core;
 
 namespace Rivulet.Diagnostics.Tests;
@@ -100,7 +100,7 @@ public class RivuletConsoleListenerTests : IDisposable
                 return;
             }
 
-            output.Should().NotBeNullOrEmpty("console output should be captured when not running under coverage");
+            output.ShouldNotBeNullOrEmpty("console output should be captured when not running under coverage");
         }
         finally
         {
@@ -172,8 +172,8 @@ public class RivuletConsoleListenerTests : IDisposable
             await Task.Delay(100);
 
             var output = _stringWriter.ToString();
-            output.Should().Contain("Items Started");
-            output.Should().Contain("Items Completed");
+            output.ShouldContain("Items Started");
+            output.ShouldContain("Items Completed");
         }
         finally
         {
@@ -190,7 +190,7 @@ public class RivuletConsoleListenerTests : IDisposable
     {
         var listener = new RivuletConsoleListener();
         var act = () => listener.Dispose();
-        act.Should().NotThrow();
+        act.ShouldNotThrow();
     }
 
     [Fact]
@@ -201,9 +201,9 @@ public class RivuletConsoleListenerTests : IDisposable
         using var listener3 = new RivuletConsoleListener(); // Default true
 
         // All three should construct successfully
-        listener1.Should().NotBeNull();
-        listener2.Should().NotBeNull();
-        listener3.Should().NotBeNull();
+        listener1.ShouldNotBeNull();
+        listener2.ShouldNotBeNull();
+        listener3.ShouldNotBeNull();
     }
 
     [Fact]

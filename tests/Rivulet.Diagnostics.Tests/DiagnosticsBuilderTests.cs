@@ -1,4 +1,4 @@
-using Rivulet.Core;
+﻿using Rivulet.Core;
 
 namespace Rivulet.Diagnostics.Tests;
 
@@ -54,11 +54,11 @@ public class DiagnosticsBuilderTests : IDisposable
         // Note: Console output timing is unreliable in parallel tests due to async flushing,
         // so we verify metrics through file output and aggregated metrics instead
 
-        File.Exists(_testFilePath).Should().BeTrue();
+        File.Exists(_testFilePath).ShouldBeTrue();
         var fileContent = await File.ReadAllTextAsync(_testFilePath);
-        fileContent.Should().Contain("Items Started");
+        fileContent.ShouldContain("Items Started");
 
-        aggregatedMetrics.Should().NotBeEmpty();
+        aggregatedMetrics.ShouldNotBeEmpty();
     }
 
     [Fact]
@@ -83,7 +83,7 @@ public class DiagnosticsBuilderTests : IDisposable
         await Task.Delay(1500);
 
         var prometheusText = exporter.Export();
-        prometheusText.Should().Contain("rivulet_items_started");
+        prometheusText.ShouldContain("rivulet_items_started");
     }
 
     [Fact]
@@ -112,7 +112,7 @@ public class DiagnosticsBuilderTests : IDisposable
 
         await Task.Delay(100);
 
-        File.Exists(logFile).Should().BeTrue();
+        File.Exists(logFile).ShouldBeTrue();
         TestCleanupHelper.RetryDeleteFile(logFile);
     }
 
@@ -147,7 +147,7 @@ public class DiagnosticsBuilderTests : IDisposable
         await Task.Delay(3000);
 
         var prometheusText = exporter.Export();
-        prometheusText.Should().Contain("rivulet_items_started");
+        prometheusText.ShouldContain("rivulet_items_started");
     }
 
     [Fact]
@@ -158,7 +158,7 @@ public class DiagnosticsBuilderTests : IDisposable
             .Build();
 
         var act = () => diagnostics.Dispose();
-        act.Should().NotThrow();
+        act.ShouldNotThrow();
     }
 
     [Fact]
@@ -184,7 +184,7 @@ public class DiagnosticsBuilderTests : IDisposable
 
         await Task.Delay(1500);
 
-        loggedLines.Should().NotBeEmpty();
+        loggedLines.ShouldNotBeEmpty();
     }
 
     [Fact]
@@ -272,7 +272,7 @@ public class DiagnosticsBuilderTests : IDisposable
 
         // Second dispose should not throw
         var act = () => diagnostics.Dispose();
-        act.Should().NotThrow();
+        act.ShouldNotThrow();
     }
 
     [Fact]
@@ -288,7 +288,7 @@ public class DiagnosticsBuilderTests : IDisposable
 
         // Second async dispose should not throw
         var act = async () => await diagnostics.DisposeAsync();
-        await act.Should().NotThrowAsync();
+        await act.ShouldNotThrowAsync();
 
         TestCleanupHelper.RetryDeleteFile(logFile);
     }
@@ -305,20 +305,20 @@ public class DiagnosticsBuilderTests : IDisposable
     public void DiagnosticsBuilder_WithEmptyBuilder_ShouldBuildSuccessfully()
     {
         var diagnostics = new DiagnosticsBuilder().Build();
-        diagnostics.Should().NotBeNull();
+        diagnostics.ShouldNotBeNull();
 
         var act = () => diagnostics.Dispose();
-        act.Should().NotThrow();
+        act.ShouldNotThrow();
     }
 
     [Fact]
     public async Task DiagnosticsBuilder_WithEmptyBuilder_ShouldDisposeAsyncSuccessfully()
     {
         var diagnostics = new DiagnosticsBuilder().Build();
-        diagnostics.Should().NotBeNull();
+        diagnostics.ShouldNotBeNull();
 
         var act = async () => await diagnostics.DisposeAsync();
-        await act.Should().NotThrowAsync();
+        await act.ShouldNotThrowAsync();
     }
 
     [Fact]
@@ -338,8 +338,8 @@ public class DiagnosticsBuilderTests : IDisposable
             .AddHealthCheck(exporter)
             .Build();
 
-        diagnostics.Should().NotBeNull();
-        exporter.Should().NotBeNull();
+        diagnostics.ShouldNotBeNull();
+        exporter.ShouldNotBeNull();
 
         diagnostics.Dispose();
         TestCleanupHelper.RetryDeleteFile(logFile);
@@ -353,7 +353,7 @@ public class DiagnosticsBuilderTests : IDisposable
             .AddConsoleListener(useColors: true)
             .Build();
 
-        diagnostics.Should().NotBeNull();
+        diagnostics.ShouldNotBeNull();
         diagnostics.Dispose();
     }
 
@@ -365,7 +365,7 @@ public class DiagnosticsBuilderTests : IDisposable
             .AddFileListener(logFile, maxFileSizeBytes: 5 * 1024 * 1024) // 5 MB
             .Build();
 
-        diagnostics.Should().NotBeNull();
+        diagnostics.ShouldNotBeNull();
         diagnostics.Dispose();
         TestCleanupHelper.RetryDeleteFile(logFile);
     }
@@ -382,7 +382,7 @@ public class DiagnosticsBuilderTests : IDisposable
             })
             .Build();
 
-        diagnostics.Should().NotBeNull();
+        diagnostics.ShouldNotBeNull();
         diagnostics.Dispose();
     }
 
@@ -394,7 +394,7 @@ public class DiagnosticsBuilderTests : IDisposable
             .AddHealthCheck(exporter)
             .Build();
 
-        diagnostics.Should().NotBeNull();
+        diagnostics.ShouldNotBeNull();
         diagnostics.Dispose();
     }
 }

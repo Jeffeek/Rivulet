@@ -1,4 +1,4 @@
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using Rivulet.Base.Tests;
 using Rivulet.Core.Resilience;
 
@@ -11,55 +11,49 @@ public class CircuitBreakerTests
     public void CircuitBreakerOptions_Validation_ThrowsOnInvalidFailureThreshold()
     {
         var act = () => new CircuitBreakerOptions { FailureThreshold = 0 }.Validate();
-        act.Should().Throw<ArgumentException>()
-            .WithMessage("*FailureThreshold*");
+        act.ShouldThrow<ArgumentException>().Message.ShouldContain("FailureThreshold");
     }
 
     [Fact]
     public void CircuitBreakerOptions_Validation_ThrowsOnInvalidSuccessThreshold()
     {
         var act = () => new CircuitBreakerOptions { SuccessThreshold = 0 }.Validate();
-        act.Should().Throw<ArgumentException>()
-            .WithMessage("*SuccessThreshold*");
+        act.ShouldThrow<ArgumentException>().Message.ShouldContain("SuccessThreshold");
     }
 
     [Fact]
     public void CircuitBreakerOptions_Validation_ThrowsOnInvalidOpenTimeout()
     {
         var act = () => new CircuitBreakerOptions { OpenTimeout = TimeSpan.Zero }.Validate();
-        act.Should().Throw<ArgumentException>()
-            .WithMessage("*OpenTimeout*");
+        act.ShouldThrow<ArgumentException>().Message.ShouldContain("OpenTimeout");
     }
 
     [Fact]
     public void CircuitBreakerOptions_Validation_ThrowsOnInvalidSamplingDuration()
     {
         var act = () => new CircuitBreakerOptions { SamplingDuration = TimeSpan.Zero }.Validate();
-        act.Should().Throw<ArgumentException>()
-            .WithMessage("*SamplingDuration*");
+        act.ShouldThrow<ArgumentException>().Message.ShouldContain("SamplingDuration");
     }
 
     [Fact]
     public void CircuitBreaker_Constructor_ThrowsOnNullOptions()
     {
         var act = () => new CircuitBreaker(null!);
-        act.Should().Throw<ArgumentNullException>()
-            .WithMessage("*options*");
+        act.ShouldThrow<ArgumentNullException>().Message.ShouldContain("options");
     }
 
     [Fact]
     public void CircuitBreaker_Constructor_ValidatesOptions()
     {
         var act = () => new CircuitBreaker(new() { FailureThreshold = 0 });
-        act.Should().Throw<ArgumentException>()
-            .WithMessage("*FailureThreshold*");
+        act.ShouldThrow<ArgumentException>().Message.ShouldContain("FailureThreshold");
     }
 
     [Fact]
     public void CircuitBreaker_InitialState_IsClosed()
     {
         var cb = new CircuitBreaker(new());
-        cb.State.Should().Be(CircuitBreakerState.Closed);
+        cb.State.ShouldBe(CircuitBreakerState.Closed);
     }
 
     [Fact]
@@ -94,10 +88,10 @@ public class CircuitBreakerTests
             }
         }
 
-        failureCount.Should().Be(3);
+        failureCount.ShouldBe(3);
 
         // Circuit should now be open
-        cb.State.Should().Be(CircuitBreakerState.Open);
+        cb.State.ShouldBe(CircuitBreakerState.Open);
 
         // Next call should fail fast without executing
         var act = async () => await cb.ExecuteAsync(async () =>
@@ -106,7 +100,7 @@ public class CircuitBreakerTests
             return 1;
         });
 
-        await act.Should().ThrowAsync<CircuitBreakerOpenException>();
+        await act.ShouldThrowAsync<CircuitBreakerOpenException>();
     }
 
     [Fact]
@@ -135,7 +129,7 @@ public class CircuitBreakerTests
             catch (InvalidOperationException) { /* Expected - test intentionally throws */ }
         }
 
-        cb.State.Should().Be(CircuitBreakerState.Open);
+        cb.State.ShouldBe(CircuitBreakerState.Open);
 
         // Wait for timeout
         await Task.Delay(150);
@@ -147,8 +141,8 @@ public class CircuitBreakerTests
             return 42;
         });
 
-        result.Should().Be(42);
-        cb.State.Should().Be(CircuitBreakerState.HalfOpen);
+        result.ShouldBe(42);
+        cb.State.ShouldBe(CircuitBreakerState.HalfOpen);
     }
 
     [Fact]
@@ -170,7 +164,7 @@ public class CircuitBreakerTests
             catch (InvalidOperationException) { /* Expected - test intentionally throws */ }
         }
 
-        cb.State.Should().Be(CircuitBreakerState.Open);
+        cb.State.ShouldBe(CircuitBreakerState.Open);
 
         // Wait and transition to HalfOpen
         await Task.Delay(150);
@@ -183,10 +177,10 @@ public class CircuitBreakerTests
                 await Task.Delay(1);
                 return i;
             });
-            result.Should().Be(i);
+            result.ShouldBe(i);
         }
 
-        cb.State.Should().Be(CircuitBreakerState.Closed);
+        cb.State.ShouldBe(CircuitBreakerState.Closed);
     }
 
     [Fact]
@@ -219,7 +213,7 @@ public class CircuitBreakerTests
             return 1;
         });
 
-        cb.State.Should().Be(CircuitBreakerState.HalfOpen);
+        cb.State.ShouldBe(CircuitBreakerState.HalfOpen);
 
         // Execute one failed operation - should reopen circuit
         try
@@ -231,7 +225,7 @@ public class CircuitBreakerTests
             // Expected - test intentionally throws to trigger circuit breaker
         }
 
-        cb.State.Should().Be(CircuitBreakerState.Open);
+        cb.State.ShouldBe(CircuitBreakerState.Open);
     }
 
     [Fact]
@@ -254,7 +248,7 @@ public class CircuitBreakerTests
             catch (InvalidOperationException) { /* Expected - test intentionally throws */ }
         }
 
-        cb.State.Should().Be(CircuitBreakerState.Closed);
+        cb.State.ShouldBe(CircuitBreakerState.Closed);
 
         // Wait for sampling window to expire
         await Task.Delay(250);
@@ -270,7 +264,7 @@ public class CircuitBreakerTests
             catch (InvalidOperationException) { /* Expected - test intentionally throws */ }
         }
 
-        cb.State.Should().Be(CircuitBreakerState.Closed);
+        cb.State.ShouldBe(CircuitBreakerState.Closed);
 
         // One more failure (3 in window) should open circuit
         try
@@ -282,7 +276,7 @@ public class CircuitBreakerTests
             // Expected - test intentionally throws to trigger circuit breaker
         }
 
-        cb.State.Should().Be(CircuitBreakerState.Open);
+        cb.State.ShouldBe(CircuitBreakerState.Open);
     }
 
     [Fact]
@@ -332,12 +326,12 @@ public class CircuitBreakerTests
         // Callbacks are executed via Task.Run in fire-and-forget mode, which can be delayed under load
         // Increased from 500ms → 2000ms for Windows CI/CD reliability
         var completedTask = await Task.WhenAny(allTransitionsComplete.Task, Task.Delay(2000));
-        (completedTask == allTransitionsComplete.Task).Should().BeTrue("all transitions should complete within 2000ms");
+        (completedTask == allTransitionsComplete.Task).ShouldBeTrue("all transitions should complete within 2000ms");
 
         // Verify state transitions
-        stateChanges.Should().Contain((CircuitBreakerState.Closed, CircuitBreakerState.Open));
-        stateChanges.Should().Contain((CircuitBreakerState.Open, CircuitBreakerState.HalfOpen));
-        stateChanges.Should().Contain((CircuitBreakerState.HalfOpen, CircuitBreakerState.Closed));
+        stateChanges.ShouldContain((CircuitBreakerState.Closed, CircuitBreakerState.Open));
+        stateChanges.ShouldContain((CircuitBreakerState.Open, CircuitBreakerState.HalfOpen));
+        stateChanges.ShouldContain((CircuitBreakerState.HalfOpen, CircuitBreakerState.Closed));
     }
 
     [Fact]
@@ -359,12 +353,12 @@ public class CircuitBreakerTests
             catch (InvalidOperationException) { /* Expected - test intentionally throws */ }
         }
 
-        cb.State.Should().Be(CircuitBreakerState.Open);
+        cb.State.ShouldBe(CircuitBreakerState.Open);
 
         // Reset circuit
         cb.Reset();
 
-        cb.State.Should().Be(CircuitBreakerState.Closed);
+        cb.State.ShouldBe(CircuitBreakerState.Closed);
 
         // Should execute normally
         var result = await cb.ExecuteAsync(async () =>
@@ -373,7 +367,7 @@ public class CircuitBreakerTests
             return 42;
         });
 
-        result.Should().Be(42);
+        result.ShouldBe(42);
     }
 
     [Fact]
@@ -405,7 +399,7 @@ public class CircuitBreakerTests
         // After 3 failures, circuit opens and remaining items fail fast
         // Should get results only for items that were attempted before circuit opened
         // or succeeded before failure threshold
-        results.Count.Should().BeLessThan(10);
+        results.Count.ShouldBeLessThan(10);
     }
 
     [Fact]
@@ -436,8 +430,8 @@ public class CircuitBreakerTests
             .ToListAsync();
 
         // Should have successful results (items 4-20)
-        results.Should().NotBeEmpty();
-        results.Count.Should().BeGreaterThan(10);
+        results.ShouldNotBeEmpty();
+        results.Count.ShouldBeGreaterThan(10);
     }
 
     [Fact]
@@ -474,11 +468,11 @@ public class CircuitBreakerTests
             options);
 
         // Items 1 and 2 should be retried
-        attemptCounts[1].Should().Be(3); // Initial + 2 retries
-        attemptCounts[2].Should().Be(3); // Initial + 2 retries
+        attemptCounts[1].ShouldBe(3); // Initial + 2 retries
+        attemptCounts[2].ShouldBe(3); // Initial + 2 retries
 
         // After items 1 and 2 fail (after retries), circuit should open
-        results.Count.Should().BeLessThan(5);
+        results.Count.ShouldBeLessThan(5);
     }
 
     [Fact]
@@ -514,7 +508,7 @@ public class CircuitBreakerTests
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => await task);
 
-        processedCount.Should().BeLessThan(100);
+        processedCount.ShouldBeLessThan(100);
     }
 
     [Fact]
@@ -540,25 +534,25 @@ public class CircuitBreakerTests
             },
             options);
 
-        results.Should().HaveCount(10);
-        results.Should().BeInAscendingOrder();
-        results.Should().Equal(Enumerable.Range(1, 10).Select(x => x * 2));
+        results.Count.ShouldBe(10);
+        results.ShouldBeInOrder();
+        results.ShouldBe(Enumerable.Range(1, 10).Select(x => x * 2));
     }
 
     [Fact]
     public void CircuitBreakerOpenException_HasCorrectState()
     {
         var ex = new CircuitBreakerOpenException();
-        ex.State.Should().Be(CircuitBreakerState.Open);
-        ex.Message.Should().Contain("open");
+        ex.State.ShouldBe(CircuitBreakerState.Open);
+        ex.Message.ShouldContain("open");
     }
 
     [Fact]
     public void CircuitBreakerOpenException_WithCustomMessage()
     {
         var ex = new CircuitBreakerOpenException("Custom message");
-        ex.Message.Should().Be("Custom message");
-        ex.State.Should().Be(CircuitBreakerState.Open);
+        ex.Message.ShouldBe("Custom message");
+        ex.State.ShouldBe(CircuitBreakerState.Open);
     }
 
     [Fact]
@@ -586,17 +580,17 @@ public class CircuitBreakerTests
             catch (InvalidOperationException) { /* Expected - test intentionally throws */ }
         }
 
-        cb.State.Should().Be(CircuitBreakerState.Open);
+        cb.State.ShouldBe(CircuitBreakerState.Open);
 
         // OnStateChange callback is executed via Task.Run in fire-and-forget mode (CircuitBreaker.cs:176)
         // On slow CI/CD machines, the callback might not execute immediately
         // Poll for up to 2 seconds to ensure callback has been invoked
-        await Extensions.ApplyDeadlineAsync(
+        await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddMilliseconds(2000),
             () => Task.Delay(50),
             () => callbackInvoked == 0);
 
-        callbackInvoked.Should().BeGreaterThan(0);
+        callbackInvoked.ShouldBeGreaterThan(0);
     }
 
     [Fact]
@@ -632,18 +626,18 @@ public class CircuitBreakerTests
         }
 
         await Task.Delay(100);
-        cb.State.Should().Be(CircuitBreakerState.Open);
+        cb.State.ShouldBe(CircuitBreakerState.Open);
 
         // Open -> HalfOpen (after timeout)
         await Task.Delay(100);
-        cb.State.Should().Be(CircuitBreakerState.Open);
+        cb.State.ShouldBe(CircuitBreakerState.Open);
 
         // Trigger HalfOpen by successful execution after timeout
         await Task.Delay(50);
         await cb.ExecuteAsync(() => ValueTask.FromResult(1), CancellationToken.None);
 
         // Poll for expected transitions to be captured (state changes may be delayed in CI)
-        await Extensions.ApplyDeadlineAsync(
+        await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddMilliseconds(500),
             () => Task.Delay(20),
             () =>
@@ -658,8 +652,8 @@ public class CircuitBreakerTests
 
         lock (transitions)
         {
-            transitions.Should().Contain(t => t.Item2 == CircuitBreakerState.Open);
-            transitions.Should().Contain(t => t.Item2 == CircuitBreakerState.HalfOpen || t.Item2 == CircuitBreakerState.Closed);
+            transitions.ShouldContain(t => t.Item2 == CircuitBreakerState.Open);
+            transitions.ShouldContain(t => t.Item2 == CircuitBreakerState.HalfOpen || t.Item2 == CircuitBreakerState.Closed);
         }
     }
 }

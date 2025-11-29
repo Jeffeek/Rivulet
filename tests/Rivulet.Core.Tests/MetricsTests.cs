@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using Rivulet.Base.Tests;
 using Rivulet.Core.Observability;
@@ -39,11 +39,11 @@ public class MetricsTests
 
         await Task.Delay(100);
 
-        results.Should().HaveCount(100);
-        capturedSnapshot.Should().NotBeNull();
-        capturedSnapshot!.ItemsStarted.Should().Be(100);
-        capturedSnapshot.ItemsCompleted.Should().Be(100);
-        capturedSnapshot.ActiveWorkers.Should().Be(4);
+        results.Count.ShouldBe(100);
+        capturedSnapshot.ShouldNotBeNull();
+        capturedSnapshot!.ItemsStarted.ShouldBe(100);
+        capturedSnapshot.ItemsCompleted.ShouldBe(100);
+        capturedSnapshot.ActiveWorkers.ShouldBe(4);
     }
 
     [Fact]
@@ -86,10 +86,10 @@ public class MetricsTests
         await Task.Yield();
         await Task.Delay(500);
 
-        results.Should().HaveCount(40); // 50 - 10 failures
-        capturedSnapshot.Should().NotBeNull();
-        capturedSnapshot!.TotalFailures.Should().Be(10);
-        capturedSnapshot.ErrorRate.Should().BeApproximately(0.2, 0.01); // 10/50 = 0.2
+        results.Count.ShouldBe(40); // 50 - 10 failures
+        capturedSnapshot.ShouldNotBeNull();
+        capturedSnapshot!.TotalFailures.ShouldBe(10);
+        capturedSnapshot.ErrorRate.ShouldBe(0.2, 0.01); // 10/50 = 0.2
     }
 
     [Fact]
@@ -128,9 +128,9 @@ public class MetricsTests
 
         await Task.Delay(100);
 
-        results.Should().HaveCount(20);
-        capturedSnapshot.Should().NotBeNull();
-        capturedSnapshot!.TotalRetries.Should().BeGreaterThan(0);
+        results.Count.ShouldBe(20);
+        capturedSnapshot.ShouldNotBeNull();
+        capturedSnapshot!.TotalRetries.ShouldBeGreaterThan(0);
     }
 
     [Fact]
@@ -169,9 +169,9 @@ public class MetricsTests
 
         await Task.Delay(100);
 
-        results.Should().HaveCount(100);
-        capturedSnapshot.Should().NotBeNull();
-        capturedSnapshot!.ThrottleEvents.Should().Be(throttleCount);
+        results.Count.ShouldBe(100);
+        capturedSnapshot.ShouldNotBeNull();
+        capturedSnapshot!.ThrottleEvents.ShouldBe(throttleCount);
     }
 
     [Fact]
@@ -204,10 +204,10 @@ public class MetricsTests
 
         await Task.Delay(100);
 
-        results.Should().HaveCount(100);
-        capturedSnapshot.Should().NotBeNull();
-        capturedSnapshot!.ItemsPerSecond.Should().BeGreaterThan(0);
-        capturedSnapshot.Elapsed.Should().BeGreaterThan(TimeSpan.Zero);
+        results.Count.ShouldBe(100);
+        capturedSnapshot.ShouldNotBeNull();
+        capturedSnapshot!.ItemsPerSecond.ShouldBeGreaterThan(0);
+        capturedSnapshot.Elapsed.ShouldBeGreaterThan(TimeSpan.Zero);
     }
 
     [Fact]
@@ -239,10 +239,10 @@ public class MetricsTests
 
         await Task.Delay(100);
 
-        results.Should().HaveCount(50);
-        capturedSnapshot.Should().NotBeNull();
-        capturedSnapshot!.ItemsStarted.Should().Be(50);
-        capturedSnapshot.ItemsCompleted.Should().Be(50);
+        results.Count.ShouldBe(50);
+        capturedSnapshot.ShouldNotBeNull();
+        capturedSnapshot!.ItemsStarted.ShouldBe(50);
+        capturedSnapshot.ItemsCompleted.ShouldBe(50);
     }
 
     [Fact]
@@ -276,18 +276,18 @@ public class MetricsTests
             }, options)
             .ToListAsync();
 
-        results.Should().HaveCount(20, "30 items minus 10 failures (every 3rd: 3,6,9,12,15,18,21,24,27,30) equals 20 successful results");
+        results.Count.ShouldBe(20, "30 items minus 10 failures (every 3rd: 3,6,9,12,15,18,21,24,27,30) equals 20 successful results");
 
         await Task.Yield();
 
-        await Extensions.ApplyDeadlineAsync(
+        await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddMilliseconds(5000),
             () => Task.Delay(100),
             () => callbackInvocationCount == 0 || capturedSnapshot == null || capturedSnapshot.TotalFailures != 10);
 
-        callbackInvocationCount.Should().BeGreaterThan(0, "at least one metrics sample should have been captured during operation execution and disposal");
-        capturedSnapshot.Should().NotBeNull("final metrics snapshot should be available after disposal completes");
-        capturedSnapshot!.TotalFailures.Should().Be(10, "items 3,6,9,12,15,18,21,24,27,30 should have failed (10 total failures)");
+        callbackInvocationCount.ShouldBeGreaterThan(0, "at least one metrics sample should have been captured during operation execution and disposal");
+        capturedSnapshot.ShouldNotBeNull("final metrics snapshot should be available after disposal completes");
+        capturedSnapshot!.TotalFailures.ShouldBe(10, "items 3,6,9,12,15,18,21,24,27,30 should have failed (10 total failures)");
     }
 
     [Fact]
@@ -313,7 +313,7 @@ public class MetricsTests
             },
             options);
 
-        await act.Should().NotThrowAsync();
+        await act.ShouldNotThrowAsync();
     }
 
     [Fact]
@@ -339,7 +339,7 @@ public class MetricsTests
             },
             options);
 
-        results.Should().HaveCount(20);
+        results.Count.ShouldBe(20);
     }
 
     [Fact]
@@ -376,8 +376,8 @@ public class MetricsTests
                 cts.Token);
         };
 
-        await act.Should().ThrowAsync<OperationCanceledException>();
-        sampleCount.Should().BeGreaterThan(0);
+        await act.ShouldThrowAsync<OperationCanceledException>();
+        sampleCount.ShouldBeGreaterThan(0);
     }
 
     [Fact]
@@ -411,8 +411,8 @@ public class MetricsTests
             },
             options);
 
-        await act.Should().ThrowAsync<InvalidOperationException>();
-        capturedSnapshot?.ItemsStarted.Should().BeGreaterThan(0);
+        await act.ShouldThrowAsync<InvalidOperationException>();
+        capturedSnapshot?.ItemsStarted.ShouldBeGreaterThan(0);
     }
 
     [Fact]
@@ -455,12 +455,12 @@ public class MetricsTests
         var results1 = await task1;
         var results2 = await task2;
 
-        results1.Should().HaveCount(20, "first operation should complete all 20 items");
-        results2.Should().HaveCount(30, "second operation should complete all 30 items");
+        results1.Count.ShouldBe(20, "first operation should complete all 20 items");
+        results2.Count.ShouldBe(30, "second operation should complete all 30 items");
 
         await Task.Yield();
 
-        await Extensions.ApplyDeadlineAsync(
+        await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddMilliseconds(5000),
             () => Task.Delay(100),
             () =>
@@ -478,8 +478,8 @@ public class MetricsTests
 
         await Task.Delay(200);
 
-        snapshots1.Should().NotBeEmpty("first operation should have captured at least one metrics sample");
-        snapshots2.Should().NotBeEmpty("second operation should have captured at least one metrics sample");
+        snapshots1.ShouldNotBeEmpty("first operation should have captured at least one metrics sample");
+        snapshots2.ShouldNotBeEmpty("second operation should have captured at least one metrics sample");
 
         var finalSnapshots1 = snapshots1.ToList();
         var finalSnapshots2 = snapshots2.ToList();
@@ -487,8 +487,8 @@ public class MetricsTests
         var maxCompleted1 = finalSnapshots1.Max(s => s.ItemsCompleted);
         var maxCompleted2 = finalSnapshots2.Max(s => s.ItemsCompleted);
 
-        maxCompleted1.Should().Be(20, "first operation's final metrics snapshot should show all 20 items completed");
-        maxCompleted2.Should().Be(30, "second operation's final metrics snapshot should show all 30 items completed");
+        maxCompleted1.ShouldBe(20, "first operation's final metrics snapshot should show all 20 items completed");
+        maxCompleted2.ShouldBe(30, "second operation's final metrics snapshot should show all 30 items completed");
     }
 
     [Fact]
@@ -522,10 +522,10 @@ public class MetricsTests
 
         await Task.Delay(100);
 
-        results.Should().HaveCount(50);
-        results.Should().BeInAscendingOrder();
-        capturedSnapshot.Should().NotBeNull();
-        capturedSnapshot!.ItemsCompleted.Should().Be(50);
+        results.Count.ShouldBe(50);
+        results.ShouldBeInOrder();
+        capturedSnapshot.ShouldNotBeNull();
+        capturedSnapshot!.ItemsCompleted.ShouldBe(50);
     }
 
     [Fact]
@@ -533,17 +533,17 @@ public class MetricsTests
     {
         var snapshot = new MetricsSnapshot();
 
-        snapshot.ActiveWorkers.Should().Be(0);
-        snapshot.QueueDepth.Should().Be(0);
-        snapshot.ItemsStarted.Should().Be(0);
-        snapshot.ItemsCompleted.Should().Be(0);
-        snapshot.TotalRetries.Should().Be(0);
-        snapshot.TotalFailures.Should().Be(0);
-        snapshot.ThrottleEvents.Should().Be(0);
-        snapshot.DrainEvents.Should().Be(0);
-        snapshot.Elapsed.Should().Be(TimeSpan.Zero);
-        snapshot.ItemsPerSecond.Should().Be(0);
-        snapshot.ErrorRate.Should().Be(0);
+        snapshot.ActiveWorkers.ShouldBe(0);
+        snapshot.QueueDepth.ShouldBe(0);
+        snapshot.ItemsStarted.ShouldBe(0);
+        snapshot.ItemsCompleted.ShouldBe(0);
+        snapshot.TotalRetries.ShouldBe(0);
+        snapshot.TotalFailures.ShouldBe(0);
+        snapshot.ThrottleEvents.ShouldBe(0);
+        snapshot.DrainEvents.ShouldBe(0);
+        snapshot.Elapsed.ShouldBe(TimeSpan.Zero);
+        snapshot.ItemsPerSecond.ShouldBe(0);
+        snapshot.ErrorRate.ShouldBe(0);
     }
 
     [Fact]
@@ -551,8 +551,8 @@ public class MetricsTests
     {
         var options = new MetricsOptions();
 
-        options.SampleInterval.Should().Be(TimeSpan.FromSeconds(10));
-        options.OnMetricsSample.Should().BeNull();
+        options.SampleInterval.ShouldBe(TimeSpan.FromSeconds(10));
+        options.OnMetricsSample.ShouldBeNull();
     }
 
     [Fact]
@@ -585,8 +585,8 @@ public class MetricsTests
 
         await Task.Delay(100);
 
-        results.Should().HaveCount(100);
-        sampleCount.Should().BeGreaterThan(1);
+        results.Count.ShouldBe(100);
+        sampleCount.ShouldBeGreaterThan(1);
     }
 
     [Fact]
@@ -626,10 +626,10 @@ public class MetricsTests
         // Sample interval is 10ms, wait 50ms (5x interval) for final state + buffer
         await Task.Delay(50 + 500);
 
-        results.Should().HaveCount(1);
-        capturedSnapshot.Should().NotBeNull("metrics timer should fire during 100ms operation");
-        capturedSnapshot!.ItemsStarted.Should().Be(1);
-        capturedSnapshot.ItemsCompleted.Should().Be(1);
+        results.Count.ShouldBe(1);
+        capturedSnapshot.ShouldNotBeNull("metrics timer should fire during 100ms operation");
+        capturedSnapshot!.ItemsStarted.ShouldBe(1);
+        capturedSnapshot.ItemsCompleted.ShouldBe(1);
     }
 
     [Fact]
@@ -675,11 +675,11 @@ public class MetricsTests
         // final state is fully captured in both metrics and progress snapshots
         await Task.Delay(200);
 
-        results.Should().HaveCount(50);
-        metricsSnapshot.Should().NotBeNull();
-        progressSnapshot.Should().NotBeNull();
-        metricsSnapshot!.ItemsCompleted.Should().Be(50);
-        progressSnapshot!.ItemsCompleted.Should().Be(50);
+        results.Count.ShouldBe(50);
+        metricsSnapshot.ShouldNotBeNull();
+        progressSnapshot.ShouldNotBeNull();
+        metricsSnapshot!.ItemsCompleted.ShouldBe(50);
+        progressSnapshot!.ItemsCompleted.ShouldBe(50);
     }
 
     [Fact]
@@ -712,16 +712,16 @@ public class MetricsTests
 
         await Task.Yield();
 
-        await Extensions.ApplyDeadlineAsync(
+        await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddMilliseconds(5000),
             () => Task.Delay(100),
             () => capturedSnapshot == null || capturedSnapshot.ItemsStarted != 1000 || capturedSnapshot.ItemsCompleted != 1000);
 
-        results.Should().HaveCount(1000, "all 1000 items should complete successfully");
-        capturedSnapshot.Should().NotBeNull("final metrics snapshot should be captured after disposal");
-        capturedSnapshot!.ItemsStarted.Should().Be(1000, "metrics should show all 1000 items were started");
-        capturedSnapshot.ItemsCompleted.Should().Be(1000, "metrics should show all 1000 items completed successfully");
-        capturedSnapshot.TotalFailures.Should().Be(0, "no items should have failed");
+        results.Count.ShouldBe(1000, "all 1000 items should complete successfully");
+        capturedSnapshot.ShouldNotBeNull("final metrics snapshot should be captured after disposal");
+        capturedSnapshot!.ItemsStarted.ShouldBe(1000, "metrics should show all 1000 items were started");
+        capturedSnapshot.ItemsCompleted.ShouldBe(1000, "metrics should show all 1000 items completed successfully");
+        capturedSnapshot.TotalFailures.ShouldBe(0, "no items should have failed");
     }
 
 
@@ -769,7 +769,7 @@ public class MetricsTests
                         },
                         options);
 
-                    await act.Should().ThrowAsync<InvalidOperationException>();
+                    await act.ShouldThrowAsync<InvalidOperationException>();
                     break;
                 }
                 case ErrorMode.CollectAndContinue:
@@ -784,7 +784,7 @@ public class MetricsTests
                         },
                         options);
 
-                    await act.Should().ThrowAsync<AggregateException>();
+                    await act.ShouldThrowAsync<AggregateException>();
                     break;
                 }
                 case ErrorMode.BestEffort:
@@ -800,15 +800,15 @@ public class MetricsTests
                         },
                         options);
 
-                    results.Should().HaveCount(16); // 20 - 4 failures
+                    results.Count.ShouldBe(16); // 20 - 4 failures
                     break;
                 }
             }
 
             await Task.Delay(100);
 
-            capturedSnapshot.Should().NotBeNull($"Error mode: {errorMode}");
-            capturedSnapshot!.ItemsStarted.Should().BeGreaterThan(0, $"Error mode: {errorMode}");
+            capturedSnapshot.ShouldNotBeNull($"Error mode: {errorMode}");
+            capturedSnapshot!.ItemsStarted.ShouldBeGreaterThan(0, $"Error mode: {errorMode}");
         }
     }
 
@@ -839,8 +839,8 @@ public class MetricsTests
         // Race condition fixed by 50ms delay before final sample in MetricsTracker
         await Task.Delay(150);
 
-        capturedSnapshot.Should().NotBeNull();
-        capturedSnapshot!.DrainEvents.Should().Be(3);
+        capturedSnapshot.ShouldNotBeNull();
+        capturedSnapshot!.DrainEvents.ShouldBe(3);
     }
 
     [Fact]
@@ -867,8 +867,8 @@ public class MetricsTests
         // Using 200ms (4x interval) for reliability in CI/CD
         await Task.Delay(200);
 
-        capturedSnapshot.Should().NotBeNull();
-        capturedSnapshot!.QueueDepth.Should().Be(42);
+        capturedSnapshot.ShouldNotBeNull();
+        capturedSnapshot!.QueueDepth.ShouldBe(42);
     }
 
     [Fact]
@@ -888,7 +888,7 @@ public class MetricsTests
             await Task.Delay(100);
 
             var act = async () => await tracker.DisposeAsync();
-            await act.Should().NotThrowAsync();
+            await act.ShouldNotThrowAsync();
         }
         finally
         {
@@ -902,7 +902,7 @@ public class MetricsTests
         await using var tracker = MetricsTrackerBase.Create(null, CancellationToken.None);
 
         // Should be NoOpMetricsTracker (lightweight, no allocations)
-        tracker.Should().BeOfType<NoOpMetricsTracker>();
+        tracker.ShouldBeOfType<NoOpMetricsTracker>();
 
         // Should not throw when called
         tracker.IncrementItemsStarted();
@@ -932,13 +932,13 @@ public class MetricsTests
         await using var tracker = new MetricsTracker(options, CancellationToken.None);
 
         // Poll for the snapshot with a timeout to avoid flakiness
-        await Extensions.ApplyDeadlineAsync(
+        await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddMilliseconds(200),
             () => Task.Delay(5),
             () => capturedSnapshot is null);
 
-        capturedSnapshot.Should().NotBeNull();
-        capturedSnapshot!.ItemsPerSecond.Should().BeGreaterThanOrEqualTo(0);
+        capturedSnapshot.ShouldNotBeNull();
+        capturedSnapshot!.ItemsPerSecond.ShouldBeGreaterThanOrEqualTo(0);
     }
 
     [Fact]
@@ -966,7 +966,7 @@ public class MetricsTests
         tcs.SetResult();
 
         var act = async () => await tracker.DisposeAsync();
-        await act.Should().NotThrowAsync();
+        await act.ShouldNotThrowAsync();
     }
 
     [Fact]
@@ -1009,13 +1009,13 @@ public class MetricsTests
 
         await Task.Delay(100);
 
-        capturedSnapshot.Should().NotBeNull();
-        capturedSnapshot!.ItemsStarted.Should().Be(30);
-        capturedSnapshot.ItemsCompleted.Should().Be(30);
-        capturedSnapshot.TotalRetries.Should().BeGreaterThan(0);
-        capturedSnapshot.ActiveWorkers.Should().Be(4);
-        capturedSnapshot.Elapsed.Should().BeGreaterThan(TimeSpan.Zero);
-        capturedSnapshot.ItemsPerSecond.Should().BeGreaterThan(0);
+        capturedSnapshot.ShouldNotBeNull();
+        capturedSnapshot!.ItemsStarted.ShouldBe(30);
+        capturedSnapshot.ItemsCompleted.ShouldBe(30);
+        capturedSnapshot.TotalRetries.ShouldBeGreaterThan(0);
+        capturedSnapshot.ActiveWorkers.ShouldBe(4);
+        capturedSnapshot.Elapsed.ShouldBeGreaterThan(TimeSpan.Zero);
+        capturedSnapshot.ItemsPerSecond.ShouldBeGreaterThan(0);
     }
 
     [Fact]
@@ -1045,8 +1045,8 @@ public class MetricsTests
             },
             options);
 
-        results.Should().HaveCount(20);
-        attempts.Values.Should().Contain(v => v > 1);
+        results.Count.ShouldBe(20);
+        attempts.Values.ShouldContain(v => v > 1);
     }
 
     [Fact]
@@ -1079,7 +1079,7 @@ public class MetricsTests
 
         await disposeTask;
 
-        disposeTask.IsCompleted.Should().BeTrue();
+        disposeTask.IsCompleted.ShouldBeTrue();
     }
 
     [Fact]
@@ -1123,7 +1123,7 @@ public class MetricsTests
             await Task.Delay(500);
 
             // Should not crash despite exception
-            callbackCount.Should().BeGreaterThan(0, "callback should have been invoked at least once after waiting 25x the sample interval");
+            callbackCount.ShouldBeGreaterThan(0, "callback should have been invoked at least once after waiting 25x the sample interval");
         }
         finally
         {
@@ -1144,7 +1144,7 @@ public class MetricsTests
 
         // Should not throw despite callback exception
         var act = async () => await tracker.DisposeAsync();
-        await act.Should().NotThrowAsync();
+        await act.ShouldNotThrowAsync();
     }
 
     [Fact]
@@ -1160,12 +1160,12 @@ public class MetricsTests
         eventSource.IncrementDrainEvents();
 
         // Should not throw and should return valid values
-        eventSource.GetItemsStarted().Should().BeGreaterThanOrEqualTo(0);
-        eventSource.GetItemsCompleted().Should().BeGreaterThanOrEqualTo(0);
-        eventSource.GetTotalRetries().Should().BeGreaterThanOrEqualTo(0);
-        eventSource.GetTotalFailures().Should().BeGreaterThanOrEqualTo(0);
-        eventSource.GetThrottleEvents().Should().BeGreaterThanOrEqualTo(0);
-        eventSource.GetDrainEvents().Should().BeGreaterThanOrEqualTo(0);
+        eventSource.GetItemsStarted().ShouldBeGreaterThanOrEqualTo(0);
+        eventSource.GetItemsCompleted().ShouldBeGreaterThanOrEqualTo(0);
+        eventSource.GetTotalRetries().ShouldBeGreaterThanOrEqualTo(0);
+        eventSource.GetTotalFailures().ShouldBeGreaterThanOrEqualTo(0);
+        eventSource.GetThrottleEvents().ShouldBeGreaterThanOrEqualTo(0);
+        eventSource.GetDrainEvents().ShouldBeGreaterThanOrEqualTo(0);
     }
 
     [Fact]
@@ -1205,8 +1205,8 @@ public class MetricsTests
 
         await Task.Delay(150); // Wait for sampling
 
-        snapshot.Should().NotBeNull();
-        snapshot!.TotalRetries.Should().BeGreaterThan(0);
+        snapshot.ShouldNotBeNull();
+        snapshot!.TotalRetries.ShouldBeGreaterThan(0);
     }
 
     [Fact]
@@ -1215,7 +1215,7 @@ public class MetricsTests
         // Test that all NoOpMetricsTracker methods can be called without throwing
         await using var tracker = MetricsTrackerBase.Create(null, CancellationToken.None);
 
-        tracker.Should().BeOfType<NoOpMetricsTracker>();
+        tracker.ShouldBeOfType<NoOpMetricsTracker>();
 
         // Call all increment methods
         tracker.IncrementItemsStarted();

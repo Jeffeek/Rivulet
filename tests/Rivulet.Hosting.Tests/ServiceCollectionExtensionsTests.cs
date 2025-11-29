@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Rivulet.Core;
@@ -24,8 +24,8 @@ public class ServiceCollectionExtensionsTests
         var serviceProvider = services.BuildServiceProvider();
         var options = serviceProvider.GetRequiredService<IOptions<ParallelOptionsRivulet>>();
 
-        options.Value.MaxDegreeOfParallelism.Should().Be(4);
-        options.Value.ChannelCapacity.Should().Be(100);
+        options.Value.MaxDegreeOfParallelism.ShouldBe(4);
+        options.Value.ChannelCapacity.ShouldBe(100);
     }
 
     [Fact]
@@ -42,7 +42,7 @@ public class ServiceCollectionExtensionsTests
         var options = serviceProvider.GetRequiredService<IOptions<ParallelOptionsRivulet>>();
 
         // Just verify the option is registered with defaults
-        options.Value.MaxDegreeOfParallelism.Should().BeGreaterThan(0);
+        options.Value.MaxDegreeOfParallelism.ShouldBeGreaterThan(0);
     }
 
     [Fact]
@@ -63,8 +63,8 @@ public class ServiceCollectionExtensionsTests
         var options = serviceProvider.GetRequiredService<IOptionsSnapshot<ParallelOptionsRivulet>>();
 
         var workerOptions = options.Get("Worker1");
-        workerOptions.MaxDegreeOfParallelism.Should().Be(2);
-        workerOptions.ChannelCapacity.Should().Be(50);
+        workerOptions.MaxDegreeOfParallelism.ShouldBe(2);
+        workerOptions.ChannelCapacity.ShouldBe(50);
     }
 
     [Fact]
@@ -75,7 +75,7 @@ public class ServiceCollectionExtensionsTests
 
         var result = services.AddRivulet(configuration);
 
-        result.Should().BeSameAs(services);
+        result.ShouldBeSameAs(services);
     }
 
     [Fact]
@@ -85,7 +85,7 @@ public class ServiceCollectionExtensionsTests
 
         var result = services.AddRivulet(_ => { });
 
-        result.Should().BeSameAs(services);
+        result.ShouldBeSameAs(services);
     }
 
     [Fact]
@@ -96,7 +96,7 @@ public class ServiceCollectionExtensionsTests
 
         var result = services.AddRivulet("TestWorker", configuration);
 
-        result.Should().BeSameAs(services);
+        result.ShouldBeSameAs(services);
     }
 
     [Fact]
@@ -109,7 +109,7 @@ public class ServiceCollectionExtensionsTests
         var serviceProvider = services.BuildServiceProvider();
         var options = serviceProvider.GetRequiredService<IOptions<ParallelOptionsRivulet>>();
 
-        options.Value.MaxDegreeOfParallelism.Should().Be(Environment.ProcessorCount);
+        options.Value.MaxDegreeOfParallelism.ShouldBe(Environment.ProcessorCount);
     }
 
     [Fact]
@@ -134,8 +134,8 @@ public class ServiceCollectionExtensionsTests
         var defaultOptions = serviceProvider.GetRequiredService<IOptions<ParallelOptionsRivulet>>();
         var namedOptions = serviceProvider.GetRequiredService<IOptionsSnapshot<ParallelOptionsRivulet>>();
 
-        defaultOptions.Value.MaxDegreeOfParallelism.Should().Be(4);
-        namedOptions.Get("Worker1").MaxDegreeOfParallelism.Should().Be(2);
-        namedOptions.Get("Worker2").MaxDegreeOfParallelism.Should().Be(6);
+        defaultOptions.Value.MaxDegreeOfParallelism.ShouldBe(4);
+        namedOptions.Get("Worker1").MaxDegreeOfParallelism.ShouldBe(2);
+        namedOptions.Get("Worker2").MaxDegreeOfParallelism.ShouldBe(6);
     }
 }

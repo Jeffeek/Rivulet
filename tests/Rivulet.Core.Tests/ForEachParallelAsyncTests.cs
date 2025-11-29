@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 
 namespace Rivulet.Core.Tests;
 
@@ -17,7 +17,7 @@ public class ForEachParallelAsyncTests
                 return ValueTask.CompletedTask;
             });
 
-        processedItems.Should().BeEmpty();
+        processedItems.ShouldBeEmpty();
     }
 
     [Fact]
@@ -33,7 +33,7 @@ public class ForEachParallelAsyncTests
                 return ValueTask.CompletedTask;
             });
 
-        processedItems.Should().ContainSingle().Which.Should().Be(10);
+        processedItems.ShouldHaveSingleItem().ShouldBe(10);
     }
 
     [Fact]
@@ -49,8 +49,8 @@ public class ForEachParallelAsyncTests
                 return ValueTask.CompletedTask;
             });
 
-        processedItems.Should().HaveCount(10);
-        processedItems.Should().BeEquivalentTo(Enumerable.Range(1, 10));
+        processedItems.Count.ShouldBe(10);
+        processedItems.OrderBy(x => x).ShouldBe(Enumerable.Range(1, 10));
     }
 
     [Fact]
@@ -66,9 +66,9 @@ public class ForEachParallelAsyncTests
                 results[x] = x * x;
             });
 
-        results.Should().HaveCount(20);
-        results[5].Should().Be(25);
-        results[10].Should().Be(100);
+        results.Count.ShouldBe(20);
+        results[5].ShouldBe(25);
+        results[10].ShouldBe(100);
     }
 
     [Fact]
@@ -93,11 +93,11 @@ public class ForEachParallelAsyncTests
 
         var duration = DateTime.UtcNow - startTime;
 
-        processedCount.Should().Be(10);
+        processedCount.ShouldBe(10);
         // With parallelism=5 and 100ms tasks, should take ~200ms, but CI runners can be slow
         // Increased from 1000ms to 2500ms to account for extreme CI environment variability,
         // thread pool delays, context switching, CPU contention, and resource starvation
-        duration.Should().BeLessThan(TimeSpan.FromMilliseconds(2500));
+        duration.ShouldBeLessThan(TimeSpan.FromMilliseconds(2500));
     }
 
     [Fact]
@@ -127,7 +127,7 @@ public class ForEachParallelAsyncTests
             },
             options);
 
-        maxConcurrent.Should().BeLessThanOrEqualTo(3);
+        maxConcurrent.ShouldBeLessThanOrEqualTo(3);
     }
 
     [Fact]
@@ -144,7 +144,7 @@ public class ForEachParallelAsyncTests
             },
             options: null);
 
-        processedItems.Should().HaveCount(5);
+        processedItems.Count.ShouldBe(5);
     }
 
     [Fact]
@@ -160,7 +160,7 @@ public class ForEachParallelAsyncTests
                 return ValueTask.CompletedTask;
             });
 
-        processedCount.Should().Be(1000);
+        processedCount.ShouldBe(1000);
     }
 
     [Fact]
@@ -180,8 +180,8 @@ public class ForEachParallelAsyncTests
                     oddNumbers.Add(x);
             });
 
-        evenNumbers.Should().HaveCount(25);
-        oddNumbers.Should().HaveCount(25);
+        evenNumbers.Count.ShouldBe(25);
+        oddNumbers.Count.ShouldBe(25);
     }
 
     [Fact]
@@ -193,7 +193,7 @@ public class ForEachParallelAsyncTests
             (_, _) => ValueTask.CompletedTask);
 
         await task;
-        task.IsCompleted.Should().BeTrue();
+        task.IsCompleted.ShouldBeTrue();
     }
 
     [Fact]
@@ -211,6 +211,6 @@ public class ForEachParallelAsyncTests
             },
             cancellationToken: cts.Token);
 
-        processedCount.Should().Be(10);
+        processedCount.ShouldBe(10);
     }
 }

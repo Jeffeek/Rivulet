@@ -1,4 +1,4 @@
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Rivulet.Core;
 
@@ -16,7 +16,7 @@ public class RivuletHealthCheckTests
     public void HealthCheck_ShouldThrow_WhenExporterIsNull()
     {
         var act = () => new RivuletHealthCheck(null!);
-        act.Should().Throw<ArgumentNullException>().WithParameterName("exporter");
+        act.ShouldThrow<ArgumentNullException>().ParamName.ShouldBe("exporter");
     }
 
     [Fact]
@@ -25,7 +25,7 @@ public class RivuletHealthCheckTests
         using var exporter = new PrometheusExporter();
         // ReSharper disable once RedundantArgumentDefaultValue
         var act = () => new RivuletHealthCheck(exporter, null);
-        act.Should().NotThrow();
+        act.ShouldNotThrow();
     }
 
     [Fact]
@@ -37,8 +37,9 @@ public class RivuletHealthCheckTests
 
         var result = await healthCheck.CheckHealthAsync(context);
 
-        result.Status.Should().Be(HealthStatus.Healthy);
-        result.Description.Should().Contain("No Rivulet operations");
+        result.Status.ShouldBe(HealthStatus.Healthy);
+        result.Description.ShouldNotBeNull();
+        result.Description.ShouldContain("No Rivulet operations");
     }
 
     [Fact]
@@ -68,9 +69,9 @@ public class RivuletHealthCheckTests
         var context = new HealthCheckContext();
         var result = await healthCheck.CheckHealthAsync(context);
 
-        result.Status.Should().Be(HealthStatus.Healthy);
-        result.Data.Should().ContainKey(RivuletDiagnosticsConstants.HealthCheckKeys.ItemsStarted);
-        result.Data.Should().ContainKey(RivuletDiagnosticsConstants.HealthCheckKeys.ItemsCompleted);
+        result.Status.ShouldBe(HealthStatus.Healthy);
+        result.Data.ContainsKey(RivuletDiagnosticsConstants.HealthCheckKeys.ItemsStarted).ShouldBeTrue();
+        result.Data.ContainsKey(RivuletDiagnosticsConstants.HealthCheckKeys.ItemsCompleted).ShouldBeTrue();
     }
 
     [Fact]
@@ -112,12 +113,12 @@ public class RivuletHealthCheckTests
         var result = await healthCheck.CheckHealthAsync(context);
 
         // Verify that we have failures recorded
-        result.Data.Should().ContainKey("total_failures");
+        result.Data.ContainsKey("total_failures").ShouldBeTrue();
         var failures = (double)result.Data["total_failures"];
-        failures.Should().BeGreaterThanOrEqualTo(100, "all operations should have failed");
+        failures.ShouldBeGreaterThanOrEqualTo(100, "all operations should have failed");
 
         // Should be Unhealthy because failure count exceeds threshold
-        result.Status.Should().Be(HealthStatus.Unhealthy);
+        result.Status.ShouldBe(HealthStatus.Unhealthy);
     }
 
     [Fact]
@@ -155,8 +156,9 @@ public class RivuletHealthCheckTests
         var context = new HealthCheckContext();
         var result = await healthCheck.CheckHealthAsync(context);
 
-        result.Status.Should().Be(HealthStatus.Unhealthy);
-        result.Description.Should().Contain("Failure count");
+        result.Status.ShouldBe(HealthStatus.Unhealthy);
+        result.Description.ShouldNotBeNull();
+        result.Description.ShouldContain("Failure count");
     }
 
     [Fact]
@@ -165,7 +167,7 @@ public class RivuletHealthCheckTests
         using var exporter = new PrometheusExporter();
         var healthCheck = new RivuletHealthCheck(exporter);
         var act = () => healthCheck.Dispose();
-        act.Should().NotThrow();
+        act.ShouldNotThrow();
     }
 
     [Fact]
@@ -208,16 +210,17 @@ public class RivuletHealthCheckTests
         var context = new HealthCheckContext();
         var result = await healthCheck.CheckHealthAsync(context);
 
-        result.Data.Should().ContainKey("error_rate");
-        var errorRate = (double)result.Data["error_rate"];
-        errorRate.Should().BeGreaterThan(0.2);
+        result.Data.TryGetValue("error_rate", out var errorRateObj).ShouldBeTrue();
+        var errorRate = (double)errorRateObj;
+        errorRate.ShouldBeGreaterThan(0.2);
 
-        result.Data.Should().ContainKey("total_failures");
-        var failures = (double)result.Data["total_failures"];
-        failures.Should().BeLessThan(10000);
+        result.Data.TryGetValue("total_failures", out var failuresObj).ShouldBeTrue();
+        var failures = (double)failuresObj;
+        failures.ShouldBeLessThan(10000);
 
-        result.Status.Should().Be(HealthStatus.Degraded);
-        result.Description.Should().Contain("Error rate");
+        result.Status.ShouldBe(HealthStatus.Degraded);
+        result.Description.ShouldNotBeNull();
+        result.Description.ShouldContain("Error rate");
     }
 
     [Fact]
@@ -226,15 +229,15 @@ public class RivuletHealthCheckTests
         using var exporter = new PrometheusExporter();
         // ReSharper disable once RedundantArgumentDefaultValue
         var act = () => new RivuletHealthCheck(exporter, null);
-        act.Should().NotThrow();
+        act.ShouldNotThrow();
     }
 
     [Fact]
     public void HealthCheck_ShouldUseDefaultOptionsValues()
     {
         var options = new RivuletHealthCheckOptions();
-        options.ErrorRateThreshold.Should().Be(0.1);
-        options.FailureCountThreshold.Should().Be(1000);
+        options.ErrorRateThreshold.ShouldBe(0.1);
+        options.FailureCountThreshold.ShouldBe(1000);
     }
 
     [Fact]
@@ -245,8 +248,8 @@ public class RivuletHealthCheckTests
             ErrorRateThreshold = 0.5,
             FailureCountThreshold = 100
         };
-        options.ErrorRateThreshold.Should().Be(0.5);
-        options.FailureCountThreshold.Should().Be(100);
+        options.ErrorRateThreshold.ShouldBe(0.5);
+        options.FailureCountThreshold.ShouldBe(100);
     }
 
     [Fact]
@@ -255,7 +258,7 @@ public class RivuletHealthCheckTests
         using var exporter = new PrometheusExporter();
         var healthCheck = new RivuletHealthCheck(exporter);
         var act = () => healthCheck.Dispose();
-        act.Should().NotThrow();
+        act.ShouldNotThrow();
     }
 
     [Fact]
@@ -281,11 +284,11 @@ public class RivuletHealthCheckTests
         var context = new HealthCheckContext();
         var result = await healthCheck.CheckHealthAsync(context);
 
-        result.Data.Should().ContainKey(RivuletDiagnosticsConstants.HealthCheckKeys.ItemsStarted);
-        result.Data.Should().ContainKey(RivuletDiagnosticsConstants.HealthCheckKeys.ItemsCompleted);
-        result.Data.Should().ContainKey(RivuletDiagnosticsConstants.HealthCheckKeys.TotalFailures);
-        result.Data.Should().ContainKey(RivuletDiagnosticsConstants.HealthCheckKeys.TotalRetries);
-        result.Data.Should().ContainKey(RivuletDiagnosticsConstants.HealthCheckKeys.ErrorRate);
+        result.Data.ContainsKey(RivuletDiagnosticsConstants.HealthCheckKeys.ItemsStarted).ShouldBeTrue();
+        result.Data.ContainsKey(RivuletDiagnosticsConstants.HealthCheckKeys.ItemsCompleted).ShouldBeTrue();
+        result.Data.ContainsKey(RivuletDiagnosticsConstants.HealthCheckKeys.TotalFailures).ShouldBeTrue();
+        result.Data.ContainsKey(RivuletDiagnosticsConstants.HealthCheckKeys.TotalRetries).ShouldBeTrue();
+        result.Data.ContainsKey(RivuletDiagnosticsConstants.HealthCheckKeys.ErrorRate).ShouldBeTrue();
     }
 
     [Fact]
@@ -301,6 +304,6 @@ public class RivuletHealthCheckTests
         var result = await healthCheck.CheckHealthAsync(context);
 
         // With 0 items started, error rate should be 0
-        result.Status.Should().Be(HealthStatus.Healthy);
+        result.Status.ShouldBe(HealthStatus.Healthy);
     }
 }

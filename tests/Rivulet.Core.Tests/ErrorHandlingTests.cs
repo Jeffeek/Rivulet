@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 
 namespace Rivulet.Core.Tests;
 
@@ -25,8 +25,8 @@ public class ErrorHandlingTests
             }, options);
 
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(((Func<Task<List<int>>>?)Act)!);
-        exception.Message.Should().Be("Error at 5");
-        processedCount.Should().BeLessThan(100);
+        exception.Message.ShouldBe("Error at 5");
+        processedCount.ShouldBeLessThan(100);
     }
 
     [Fact]
@@ -76,9 +76,9 @@ public class ErrorHandlingTests
             },
             options);
 
-        var exception = await act.Should().ThrowAsync<AggregateException>();
-        exception.Which.InnerExceptions.Should().HaveCount(4);
-        exception.Which.InnerExceptions.Should().AllBeOfType<InvalidOperationException>();
+        var exception = await act.ShouldThrowAsync<AggregateException>();
+        exception.InnerExceptions.Count.ShouldBe(4);
+        exception.InnerExceptions.ShouldAllBe(x => x.GetType() == typeof(InvalidOperationException));
     }
 
     [Fact]
@@ -107,7 +107,7 @@ public class ErrorHandlingTests
         }
         catch (AggregateException ex)
         {
-            ex.InnerExceptions.Should().ContainSingle();
+            ex.InnerExceptions.ShouldHaveSingleItem();
         }
     }
 
@@ -132,8 +132,8 @@ public class ErrorHandlingTests
             },
             options);
 
-        results.Should().HaveCount(16);
-        errorCount.Should().Be(4);
+        results.Count.ShouldBe(16);
+        errorCount.ShouldBe(4);
     }
 
     [Fact]
@@ -153,8 +153,11 @@ public class ErrorHandlingTests
             }, options)
             .ToListAsync();
 
-        results.Should().HaveCount(16);
-        results.Should().NotContain([10, 20, 30, 40]);
+        results.Count.ShouldBe(16);
+        foreach (var value in new[] { 10, 20, 30, 40 })
+        {
+            results.ShouldNotContain(value);
+        }
     }
 
     [Fact]
@@ -181,7 +184,7 @@ public class ErrorHandlingTests
             }, options);
 
         await Assert.ThrowsAnyAsync<Exception>(((Func<Task<List<int>>>?)Act)!);
-        errorHandled.Should().BeTrue();
+        errorHandled.ShouldBeTrue();
     }
 
     [Fact]
@@ -209,8 +212,8 @@ public class ErrorHandlingTests
             },
             options);
 
-        results.Should().HaveCount(16);
-        errorIndices.Should().HaveCount(4);
+        results.Count.ShouldBe(16);
+        errorIndices.Count.ShouldBe(4);
     }
 
     [Fact]
@@ -237,9 +240,9 @@ public class ErrorHandlingTests
             }, options);
 
         await Assert.ThrowsAsync<AggregateException>(((Func<Task<List<int>>>?)Act)!);
-        errorMessages.Should().HaveCount(2);
-        errorMessages.Should().Contain("Error at 5");
-        errorMessages.Should().Contain("Error at 15");
+        errorMessages.Count.ShouldBe(2);
+        errorMessages.ShouldContain("Error at 5");
+        errorMessages.ShouldContain("Error at 15");
     }
 
     [Fact]
@@ -285,8 +288,8 @@ public class ErrorHandlingTests
             }, options)
             .ToListAsync();
 
-        results.Should().HaveCount(9);
-        results.Should().NotContain(10);
+        results.Count.ShouldBe(9);
+        results.ShouldNotContain(10);
     }
 
     [Fact]
@@ -323,8 +326,8 @@ public class ErrorHandlingTests
         }
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(Act);
-        errorCaught.Should().BeTrue();
-        processedCount.Should().BeLessThan(100);
+        errorCaught.ShouldBeTrue();
+        processedCount.ShouldBeLessThan(100);
     }
 
     [Fact]
@@ -361,7 +364,7 @@ public class ErrorHandlingTests
         }
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(Act);
-        errorCaught.Should().BeTrue();
-        processedCount.Should().BeLessThan(100);
+        errorCaught.ShouldBeTrue();
+        processedCount.ShouldBeLessThan(100);
     }
 }

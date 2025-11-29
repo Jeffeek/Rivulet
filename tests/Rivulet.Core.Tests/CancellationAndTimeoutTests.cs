@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Rivulet.Core.Tests;
@@ -26,7 +26,7 @@ public class CancellationAndTimeoutTests
         await cts.CancelAsync();
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => task);
-        processedCount.Should().BeLessThan(100);
+        processedCount.ShouldBeLessThan(100);
     }
 
     [Fact]
@@ -53,7 +53,7 @@ public class CancellationAndTimeoutTests
         await cts.CancelAsync();
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => task);
-        results.Count.Should().BeLessThan(100);
+        results.Count.ShouldBeLessThan(100);
     }
 
     [Fact]
@@ -75,7 +75,7 @@ public class CancellationAndTimeoutTests
         await cts.CancelAsync();
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => task);
-        processedCount.Should().BeLessThan(100);
+        processedCount.ShouldBeLessThan(100);
     }
 
     [Fact]
@@ -100,8 +100,8 @@ public class CancellationAndTimeoutTests
             },
             options);
 
-        results.Should().HaveCount(4, "items 1,2,4,5 complete within 2s timeout, item 3 exceeds timeout with 10s delay");
-        results.Should().NotContain(6, "item 3 (result=6) should timeout and be excluded from results");
+        results.Count.ShouldBe(4, "items 1,2,4,5 complete within 2s timeout, item 3 exceeds timeout with 10s delay");
+        results.ShouldNotContain(6, "item 3 (result=6) should timeout and be excluded from results");
     }
 
     [Fact]
@@ -121,7 +121,7 @@ public class CancellationAndTimeoutTests
             },
             options);
 
-        results.Should().HaveCount(10, "all items should complete within the 2s timeout");
+        results.Count.ShouldBe(10, "all items should complete within the 2s timeout");
     }
 
     [Fact]
@@ -141,7 +141,7 @@ public class CancellationAndTimeoutTests
             },
             options);
 
-        results.Should().HaveCount(3);
+        results.Count.ShouldBe(3);
     }
 
     [Fact]
@@ -167,8 +167,8 @@ public class CancellationAndTimeoutTests
             },
             options);
 
-        results.Should().BeEmpty("all 3 attempts (initial + 2 retries) should timeout with 1s delay vs 100ms timeout");
-        attemptCount.Should().Be(3, "operation should be attempted 3 times (initial attempt + 2 retries)");
+        results.ShouldBeEmpty("all 3 attempts (initial + 2 retries) should timeout with 1s delay vs 100ms timeout");
+        attemptCount.ShouldBe(3, "operation should be attempted 3 times (initial attempt + 2 retries)");
     }
 
     [Fact]
@@ -191,7 +191,7 @@ public class CancellationAndTimeoutTests
             }, options)
             .ToListAsync();
 
-        results.Should().HaveCount(4);
+        results.Count.ShouldBe(4);
     }
 
     [Fact]
@@ -236,8 +236,8 @@ public class CancellationAndTimeoutTests
                 return new ValueTask<int>(x * 2);
             });
 
-        results.Should().HaveCount(5);
-        tokensPassed.Should().OnlyContain(token => token);
+        results.Count.ShouldBe(5);
+        tokensPassed.ShouldAllBe(token => token);
     }
 
     [Fact]
@@ -286,8 +286,8 @@ public class CancellationAndTimeoutTests
             }, options);
 
         var exception = await Assert.ThrowsAsync<AggregateException>(((Func<Task<List<int>>>?)Act)!);
-        exception.InnerExceptions.Count.Should().BeGreaterThanOrEqualTo(1);
-        exception.InnerExceptions.Should().AllBeAssignableTo<OperationCanceledException>();
+        exception.InnerExceptions.Count.ShouldBeGreaterThanOrEqualTo(1);
+        exception.InnerExceptions.ShouldAllBe(x => x is OperationCanceledException);
     }
 
     [Fact]
@@ -316,7 +316,7 @@ public class CancellationAndTimeoutTests
 
         var results = await task;
 
-        results.Should().HaveCountLessThanOrEqualTo(2, "with 20ms timeout and 1000ms delays, plus cancellation after 10ms, at most 2 items should complete");
+        results.Count.ShouldBeLessThanOrEqualTo(2, "with 20ms timeout and 1000ms delays, plus cancellation after 10ms, at most 2 items should complete");
     }
 
     [Fact]
@@ -335,7 +335,7 @@ public class CancellationAndTimeoutTests
             }, cancellationToken: cts.Token);
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>((Func<Task<List<int>>>)Act);
-        processedCount.Should().BeLessThan(1000);
+        processedCount.ShouldBeLessThan(1000);
     }
 
     [Fact]
@@ -356,7 +356,7 @@ public class CancellationAndTimeoutTests
         }
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(Act);
-        consumedCount.Should().BeGreaterThanOrEqualTo(10);
-        consumedCount.Should().BeLessThan(1000);
+        consumedCount.ShouldBeGreaterThanOrEqualTo(10);
+        consumedCount.ShouldBeLessThan(1000);
     }
 }

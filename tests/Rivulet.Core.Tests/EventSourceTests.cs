@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using Rivulet.Core.Observability;
 
 namespace Rivulet.Core.Tests;
@@ -34,10 +34,10 @@ public class EventSourceTests
         var finalStarted = RivuletEventSource.Log.GetItemsStarted();
         var finalCompleted = RivuletEventSource.Log.GetItemsCompleted();
 
-        results.Should().HaveCount(50);
+        results.Count.ShouldBe(50);
         // These tests run sequentially, so we can use exact assertions
-        (finalStarted - initialStarted).Should().Be(50);
-        (finalCompleted - initialCompleted).Should().Be(50);
+        (finalStarted - initialStarted).ShouldBe(50);
+        (finalCompleted - initialCompleted).ShouldBe(50);
     }
 
     [Fact]
@@ -65,9 +65,9 @@ public class EventSourceTests
 
         var finalFailures = RivuletEventSource.Log.GetTotalFailures();
 
-        results.Should().HaveCount(24); // 30 - 6 failures
+        results.Count.ShouldBe(24); // 30 - 6 failures
         // These tests run sequentially, so we can use exact assertions
-        (finalFailures - initialFailures).Should().Be(6);
+        (finalFailures - initialFailures).ShouldBe(6);
     }
 
     [Fact]
@@ -98,9 +98,9 @@ public class EventSourceTests
 
         var finalRetries = RivuletEventSource.Log.GetTotalRetries();
 
-        results.Should().HaveCount(10);
+        results.Count.ShouldBe(10);
         // These tests run sequentially, so we can use exact assertions
-        (finalRetries - initialRetries).Should().Be(10); // Each of 10 items retries exactly once
+        (finalRetries - initialRetries).ShouldBe(10); // Each of 10 items retries exactly once
     }
 
     [Fact]
@@ -117,12 +117,12 @@ public class EventSourceTests
         RivuletEventSource.Log.IncrementThrottleEvents();
         RivuletEventSource.Log.IncrementDrainEvents();
 
-        RivuletEventSource.Log.GetItemsStarted().Should().BeGreaterThan(0);
-        RivuletEventSource.Log.GetItemsCompleted().Should().BeGreaterThan(0);
-        RivuletEventSource.Log.GetTotalRetries().Should().BeGreaterThan(0);
-        RivuletEventSource.Log.GetTotalFailures().Should().BeGreaterThan(0);
-        RivuletEventSource.Log.GetThrottleEvents().Should().BeGreaterThan(0);
-        RivuletEventSource.Log.GetDrainEvents().Should().BeGreaterThan(0);
+        RivuletEventSource.Log.GetItemsStarted().ShouldBeGreaterThan(0);
+        RivuletEventSource.Log.GetItemsCompleted().ShouldBeGreaterThan(0);
+        RivuletEventSource.Log.GetTotalRetries().ShouldBeGreaterThan(0);
+        RivuletEventSource.Log.GetTotalFailures().ShouldBeGreaterThan(0);
+        RivuletEventSource.Log.GetThrottleEvents().ShouldBeGreaterThan(0);
+        RivuletEventSource.Log.GetDrainEvents().ShouldBeGreaterThan(0);
 
         listener.DisableEvents(RivuletEventSource.Log);
     }

@@ -1,4 +1,4 @@
-using Rivulet.Core;
+﻿using Rivulet.Core;
 using System.Text.Json;
 
 namespace Rivulet.Diagnostics.Tests;
@@ -11,14 +11,14 @@ public class RivuletStructuredLogListenerTests : IDisposable
     public void StructuredLogListener_ShouldThrow_WhenFilePathIsNull()
     {
         var act = () => new RivuletStructuredLogListener((string)null!);
-        act.Should().Throw<ArgumentNullException>().WithParameterName("filePath");
+        act.ShouldThrow<ArgumentNullException>().ParamName.ShouldBe("filePath");
     }
 
     [Fact]
     public void StructuredLogListener_ShouldThrow_WhenLogActionIsNull()
     {
         var act = () => new RivuletStructuredLogListener((Action<string>)null!);
-        act.Should().Throw<ArgumentNullException>().WithParameterName("logAction");
+        act.ShouldThrow<ArgumentNullException>().ParamName.ShouldBe("logAction");
     }
 
     [Fact]
@@ -47,8 +47,8 @@ public class RivuletStructuredLogListenerTests : IDisposable
 
         await Task.Delay(200);
 
-        Directory.Exists(directory).Should().BeTrue();
-        File.Exists(filePath).Should().BeTrue();
+        Directory.Exists(directory).ShouldBeTrue();
+        File.Exists(filePath).ShouldBeTrue();
 
         TestCleanupHelper.RetryDeleteDirectory(directory);
     }
@@ -81,13 +81,15 @@ public class RivuletStructuredLogListenerTests : IDisposable
         // Wait for file handle to be fully released
         await Task.Delay(500); // Reduced from 5000ms for faster tests
 
-        File.Exists(_testFilePath).Should().BeTrue();
+        File.Exists(_testFilePath).ShouldBeTrue();
         var lines = await File.ReadAllLinesAsync(_testFilePath);
-        lines.Should().NotBeEmpty();
+        lines.ShouldNotBeEmpty();
 
-        lines.Select(line => (Action)(() => JsonDocument.Parse(line)))
-             .Should()
-             .AllSatisfy(act => act.Should().NotThrow());
+        foreach (var line in lines)
+        {
+            var act = () => JsonDocument.Parse(line);
+            act.ShouldNotThrow();
+        }
     }
 
     [Fact]
@@ -113,11 +115,11 @@ public class RivuletStructuredLogListenerTests : IDisposable
         // Wait for EventCounters to fire - increased for CI/CD reliability
         await Task.Delay(2000);
 
-        loggedLines.Should().NotBeEmpty();
+        loggedLines.ShouldNotBeEmpty();
 
-        foreach (var act in loggedLines.Select(line => (Func<JsonDocument>?)(() => JsonDocument.Parse(line))))
+        foreach (var act in loggedLines.Select<string, Func<JsonDocument>>(line => () => JsonDocument.Parse(line)))
         {
-            act.Should().NotThrow();
+            act.ShouldNotThrow();
         }
     }
 
@@ -141,15 +143,15 @@ public class RivuletStructuredLogListenerTests : IDisposable
 
         await Task.Delay(1500);
 
-        loggedLines.Should().NotBeEmpty();
+        loggedLines.ShouldNotBeEmpty();
 
         var firstLog = JsonDocument.Parse(loggedLines.First());
-        firstLog.RootElement.TryGetProperty("timestamp", out _).Should().BeTrue();
-        firstLog.RootElement.TryGetProperty("source", out _).Should().BeTrue();
-        firstLog.RootElement.TryGetProperty("metric", out var metric).Should().BeTrue();
-        metric.TryGetProperty("name", out _).Should().BeTrue();
-        metric.TryGetProperty("displayName", out _).Should().BeTrue();
-        metric.TryGetProperty("value", out _).Should().BeTrue();
+        firstLog.RootElement.TryGetProperty("timestamp", out _).ShouldBeTrue();
+        firstLog.RootElement.TryGetProperty("source", out _).ShouldBeTrue();
+        firstLog.RootElement.TryGetProperty("metric", out var metric).ShouldBeTrue();
+        metric.TryGetProperty("name", out _).ShouldBeTrue();
+        metric.TryGetProperty("displayName", out _).ShouldBeTrue();
+        metric.TryGetProperty("value", out _).ShouldBeTrue();
     }
 
     [Fact]
@@ -188,7 +190,7 @@ public class RivuletStructuredLogListenerTests : IDisposable
         listener.Dispose();
 
         // Should not throw even though there's no file writer
-        loggedLines.Should().NotBeNull();
+        loggedLines.ShouldNotBeNull();
     }
 
     public void Dispose()
