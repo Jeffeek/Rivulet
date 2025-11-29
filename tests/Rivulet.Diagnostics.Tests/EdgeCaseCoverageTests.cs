@@ -62,8 +62,8 @@ public class EdgeCaseCoverageTests
         var context = new HealthCheckContext();
         var result = await healthCheck.CheckHealthAsync(context);
 
-        result.Data.ContainsKey("total_failures").ShouldBeTrue();
-        var failures = (double)result.Data["total_failures"];
+        result.Data.TryGetValue("total_failures", out var failuresObj).ShouldBeTrue();
+        var failures = (double)failuresObj;
         failures.ShouldBeGreaterThanOrEqualTo(50, "many operations should have failed");
 
         result.Status.ShouldBe(HealthStatus.Unhealthy);
