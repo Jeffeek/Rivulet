@@ -18,7 +18,7 @@ internal sealed class AdaptiveConcurrencyController : IAsyncDisposable
     private readonly object _lock = new();
 #endif
     private readonly Timer _samplingTimer;
-    private readonly List<double> _latencySamples = new();
+    private readonly List<double> _latencySamples = [];
 
     private int _currentConcurrency;
     private int _successCount;

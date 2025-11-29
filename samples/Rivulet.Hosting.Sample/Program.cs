@@ -51,7 +51,7 @@ app.MapControllers();
 app.MapGet("/", () => Results.Ok(new
 {
     application = "Rivulet.Hosting.Sample",
-    version = "1.2.0",
+    version = "1.3.0",
     endpoints = new
     {
         healthReady = "/health/ready",

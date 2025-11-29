@@ -33,7 +33,7 @@ public class SelectParallelAsyncTests
             (x, _) => new ValueTask<int>(x * 2));
 
         results.Count.ShouldBe(10);
-        results.OrderBy(x => x).ShouldBe(new[] { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20 });
+        results.OrderBy(x => x).ShouldBe([2, 4, 6, 8, 10, 12, 14, 16, 18, 20]);
     }
 
     [Fact]
@@ -115,7 +115,7 @@ public class SelectParallelAsyncTests
             options: null);
 
         results.Count.ShouldBe(5);
-        results.OrderBy(x => x).ShouldBe(new[] { 2, 4, 6, 8, 10 });
+        results.OrderBy(x => x).ShouldBe([2, 4, 6, 8, 10]);
     }
 
     [Fact]
@@ -175,7 +175,7 @@ public class SelectParallelAsyncTests
         var results = await source.SelectParallelAsync(
             (s, _) => new ValueTask<string>(s.ToUpper()));
 
-        results.OrderBy(x => x).ShouldBe(new[] { "HELLO", "TEST", "WORLD", "XUNIT" });
+        results.OrderBy(x => x).ShouldBe(["HELLO", "TEST", "WORLD", "XUNIT"]);
     }
 
     [Fact]
@@ -251,7 +251,7 @@ public class SelectParallelAsyncTests
             });
 
         results.Count.ShouldBe(3);
-        results.OrderBy(x => x).ShouldBe(new[] { null, "A", "C" });
+        results.OrderBy(x => x).ShouldBe([null, "A", "C"]);
     }
 
     [Fact]

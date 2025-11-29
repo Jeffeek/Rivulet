@@ -81,8 +81,8 @@ public class FileParallelExtensionsTests : TempDirectoryFixture
 
         // Assert
         results.Count.ShouldBe(2);
-        results[0].ShouldBe(new[] { "Line 1", "Line 2" });
-        results[1].ShouldBe(new[] { "Line A", "Line B", "Line C" });
+        results[0].ShouldBe(["Line 1", "Line 2"]);
+        results[1].ShouldBe(["Line A", "Line B", "Line C"]);
     }
 
     [Fact]
