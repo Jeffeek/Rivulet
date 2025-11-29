@@ -137,8 +137,8 @@ public class DirectoryParallelExtensionsTests : TempDirectoryFixture
         results.Count.ShouldBe(2);
         results.ContainsKey(file1).ShouldBeTrue();
         results[file1].ShouldBe("Content 1");
-        results.ContainsKey(file2).ShouldBeTrue();
-        results[file2].ShouldBe("Content 2");
+        results.TryGetValue(file2, out var value2).ShouldBeTrue();
+        value2.ShouldBe("Content 2");
     }
 
     [Fact]
