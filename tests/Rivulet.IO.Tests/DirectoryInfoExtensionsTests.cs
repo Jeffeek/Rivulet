@@ -45,10 +45,10 @@ public class DirectoryInfoExtensionsTests : TempDirectoryFixture
 
         // Assert
         results.Count.ShouldBe(2);
-        results.ContainsKey(file1).ShouldBeTrue();
-        results[file1].ShouldBe("Content A");
-        results.ContainsKey(file2).ShouldBeTrue();
-        results[file2].ShouldBe("Content B");
+        results.TryGetValue(file1, out var value1).ShouldBeTrue();
+        value1.ShouldBe("Content A");
+        results.TryGetValue(file2, out var value2).ShouldBeTrue();
+        value2.ShouldBe("Content B");
     }
 
     [Fact]
