@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Diagnostics.HealthChecks;
+﻿using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Rivulet.Core;
 
 namespace Rivulet.Diagnostics.Tests;
@@ -20,7 +20,7 @@ public class EdgeCaseCoverageTests
         var context = new HealthCheckContext();
         var result = await healthCheck.CheckHealthAsync(context);
 
-        result.Status.Should().BeOneOf(HealthStatus.Healthy, HealthStatus.Degraded, HealthStatus.Unhealthy);
+        result.Status.ShouldBeOneOf(HealthStatus.Healthy, HealthStatus.Degraded, HealthStatus.Unhealthy);
     }
 
     [Fact]
@@ -62,12 +62,12 @@ public class EdgeCaseCoverageTests
         var context = new HealthCheckContext();
         var result = await healthCheck.CheckHealthAsync(context);
 
-        result.Data.Should().ContainKey("total_failures");
+        result.Data.ContainsKey("total_failures").ShouldBeTrue();
         var failures = (double)result.Data["total_failures"];
-        failures.Should().BeGreaterThanOrEqualTo(50, "many operations should have failed");
+        failures.ShouldBeGreaterThanOrEqualTo(50, "many operations should have failed");
 
-        result.Status.Should().Be(HealthStatus.Unhealthy);
-        result.Data.Should().ContainKey("error_rate");
+        result.Status.ShouldBe(HealthStatus.Unhealthy);
+        result.Data.ContainsKey("error_rate").ShouldBeTrue();
     }
 
     [Fact]
@@ -81,7 +81,7 @@ public class EdgeCaseCoverageTests
         var context = new HealthCheckContext();
         var result = await healthCheck.CheckHealthAsync(context);
 
-        result.Should().NotBeNull();
+        result.Status.ShouldNotBe(default);
     }
 
     [Fact]
@@ -177,9 +177,9 @@ public class EdgeCaseCoverageTests
 
             await Task.Delay(100);
 
-            File.Exists(testFile).Should().BeTrue();
+            File.Exists(testFile).ShouldBeTrue();
             var content = await File.ReadAllTextAsync(testFile);
-            content.Should().NotBeEmpty();
+            content.ShouldNotBeEmpty();
         }
         finally
         {
@@ -215,9 +215,9 @@ public class EdgeCaseCoverageTests
 
             await Task.Delay(100);
 
-            File.Exists(testFile).Should().BeTrue();
+            File.Exists(testFile).ShouldBeTrue();
             var jsonContent = await File.ReadAllTextAsync(testFile);
-            jsonContent.Should().NotBeEmpty();
+            jsonContent.ShouldNotBeEmpty();
         }
         finally
         {
@@ -248,7 +248,7 @@ public class EdgeCaseCoverageTests
             // Increased from 1100ms to 2000ms to handle CI/CD timing variability
             await Task.Delay(2000);
 
-            listener.ReceivedCounters.Should().NotBeEmpty();
+            listener.ReceivedCounters.ShouldNotBeEmpty();
         }
         finally
         {
@@ -315,7 +315,7 @@ public class EdgeCaseCoverageTests
         await Task.Delay(2000);
 
         var finalMetrics = exporter.ExportDictionary();
-        finalMetrics.Should().NotBeEmpty();
+        finalMetrics.ShouldNotBeEmpty();
     }
 
     private sealed class TestEventListener : RivuletEventListenerBase

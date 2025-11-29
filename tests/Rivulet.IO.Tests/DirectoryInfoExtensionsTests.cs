@@ -1,4 +1,4 @@
-using Rivulet.Base.Tests;
+﻿using Rivulet.Base.Tests;
 
 namespace Rivulet.IO.Tests;
 
@@ -24,8 +24,8 @@ public class DirectoryInfoExtensionsTests : TempDirectoryFixture
             "*.txt");
 
         // Assert
-        results.Should().HaveCount(3);
-        results.Should().AllSatisfy(r => r.Should().BeGreaterThan(0));
+        results.Count.ShouldBe(3);
+        results.ShouldAllBe(r => r > 0);
     }
 
     [Fact]
@@ -44,9 +44,11 @@ public class DirectoryInfoExtensionsTests : TempDirectoryFixture
         var results = await directory.ReadAllFilesParallelAsync("*.txt");
 
         // Assert
-        results.Should().HaveCount(2);
-        results.Should().ContainKey(file1).WhoseValue.Should().Be("Content A");
-        results.Should().ContainKey(file2).WhoseValue.Should().Be("Content B");
+        results.Count.ShouldBe(2);
+        results.ContainsKey(file1).ShouldBeTrue();
+        results[file1].ShouldBe("Content A");
+        results.ContainsKey(file2).ShouldBeTrue();
+        results[file2].ShouldBe("Content B");
     }
 
     [Fact]
@@ -63,8 +65,8 @@ public class DirectoryInfoExtensionsTests : TempDirectoryFixture
         var files = directory.GetFilesEnumerable("*.txt").ToList();
 
         // Assert
-        files.Should().HaveCount(2);
-        files.Should().AllSatisfy(f => f.Extension.Should().Be(".txt"));
+        files.Count.ShouldBe(2);
+        files.ShouldAllBe(f => f.Extension == ".txt");
     }
 
     [Fact]
@@ -84,18 +86,18 @@ public class DirectoryInfoExtensionsTests : TempDirectoryFixture
             "*.txt");
 
         // Assert
-        results.Should().HaveCount(2);
+        results.Count.ShouldBe(2);
         var destFile1 = Path.Join(destDirectory, "trans1.txt");
         var destFile2 = Path.Join(destDirectory, "trans2.txt");
 
-        File.Exists(destFile1).Should().BeTrue();
-        File.Exists(destFile2).Should().BeTrue();
+        File.Exists(destFile1).ShouldBeTrue();
+        File.Exists(destFile2).ShouldBeTrue();
 
         var content1 = await File.ReadAllTextAsync(destFile1);
         var content2 = await File.ReadAllTextAsync(destFile2);
 
-        content1.Should().Be("LOWER");
-        content2.Should().Be("CASE");
+        content1.ShouldBe("LOWER");
+        content2.ShouldBe("CASE");
     }
 
     [Fact]
@@ -115,19 +117,19 @@ public class DirectoryInfoExtensionsTests : TempDirectoryFixture
         var results = await sourceDirectory.CopyFilesToParallelAsync(destDirectory, "*.txt");
 
         // Assert
-        results.Should().HaveCount(2);
+        results.Count.ShouldBe(2);
 
         var destFile1 = Path.Join(destDirectory, "copy1.txt");
         var destFile2 = Path.Join(destDirectory, "copy2.txt");
 
-        File.Exists(destFile1).Should().BeTrue();
-        File.Exists(destFile2).Should().BeTrue();
+        File.Exists(destFile1).ShouldBeTrue();
+        File.Exists(destFile2).ShouldBeTrue();
 
         var destContent1 = await File.ReadAllTextAsync(destFile1);
         var destContent2 = await File.ReadAllTextAsync(destFile2);
 
-        destContent1.Should().Be("Copy Content 1");
-        destContent2.Should().Be("Copy Content 2");
+        destContent1.ShouldBe("Copy Content 1");
+        destContent2.ShouldBe("Copy Content 2");
     }
 
     [Fact]
@@ -148,10 +150,10 @@ public class DirectoryInfoExtensionsTests : TempDirectoryFixture
         var results = await directory.DeleteFilesParallelAsync("*.tmp");
 
         // Assert
-        results.Should().HaveCount(2);
-        File.Exists(file1).Should().BeFalse();
-        File.Exists(file2).Should().BeFalse();
-        File.Exists(keepFile).Should().BeTrue();
+        results.Count.ShouldBe(2);
+        File.Exists(file1).ShouldBeFalse();
+        File.Exists(file2).ShouldBeFalse();
+        File.Exists(keepFile).ShouldBeTrue();
     }
 
     [Fact]
@@ -179,8 +181,8 @@ public class DirectoryInfoExtensionsTests : TempDirectoryFixture
             });
 
         // Assert
-        results.Should().HaveCount(2);
-        results.Should().AllSatisfy(r => r.Should().BeGreaterThan(0));
+        results.Count.ShouldBe(2);
+        results.ShouldAllBe(r => r > 0);
     }
 
     [Fact]
@@ -195,7 +197,7 @@ public class DirectoryInfoExtensionsTests : TempDirectoryFixture
             "*.txt");
 
         // Assert
-        await act.Should().ThrowAsync<DirectoryNotFoundException>();
+        await act.ShouldThrowAsync<DirectoryNotFoundException>();
     }
 
     [Fact]
@@ -215,9 +217,9 @@ public class DirectoryInfoExtensionsTests : TempDirectoryFixture
             SearchOption.AllDirectories);
 
         // Assert
-        results.Should().HaveCount(2);
-        results.Values.Should().Contain("Root");
-        results.Values.Should().Contain("Sub");
+        results.Count.ShouldBe(2);
+        results.Values.ShouldContain("Root");
+        results.Values.ShouldContain("Sub");
     }
 
     [Fact]
@@ -255,8 +257,8 @@ public class DirectoryInfoExtensionsTests : TempDirectoryFixture
             options);
 
         // Assert
-        startCalled.Should().BeTrue();
-        completeCalled.Should().BeTrue();
+        startCalled.ShouldBeTrue();
+        completeCalled.ShouldBeTrue();
     }
 
     [Fact]
@@ -280,6 +282,6 @@ public class DirectoryInfoExtensionsTests : TempDirectoryFixture
 
         // Assert
         var content = await File.ReadAllTextAsync(destFile);
-        content.Should().Be("New content");
+        content.ShouldBe("New content");
     }
 }

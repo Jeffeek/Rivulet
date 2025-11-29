@@ -1,4 +1,4 @@
-using MySqlConnector;
+﻿using MySqlConnector;
 
 namespace Rivulet.Sql.MySql.Tests;
 
@@ -21,8 +21,7 @@ public class MySqlBulkExtensionsTests
             "test_table",
             ["id", "name", "email"]);
 
-        await act.Should().ThrowAsync<ArgumentNullException>()
-            .WithParameterName("source");
+        (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("source");
     }
 
     [Fact]
@@ -35,8 +34,7 @@ public class MySqlBulkExtensionsTests
             "test_table",
             ["id", "name", "email"]);
 
-        await act.Should().ThrowAsync<ArgumentNullException>()
-            .WithParameterName("connectionFactory");
+        (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("connectionFactory");
     }
 
     [Fact]
@@ -49,7 +47,7 @@ public class MySqlBulkExtensionsTests
             null!,
             ["id", "name", "email"]);
 
-        await act.Should().ThrowAsync<ArgumentException>();
+        await act.ShouldThrowAsync<ArgumentException>();
     }
 
     [Fact]
@@ -62,7 +60,7 @@ public class MySqlBulkExtensionsTests
             "",
             ["id", "name", "email"]);
 
-        await act.Should().ThrowAsync<ArgumentException>();
+        await act.ShouldThrowAsync<ArgumentException>();
     }
 
     [Fact]
@@ -75,8 +73,7 @@ public class MySqlBulkExtensionsTests
             "test_table",
             null!);
 
-        await act.Should().ThrowAsync<ArgumentNullException>()
-            .WithParameterName("columnNames");
+        (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("columnNames");
     }
 
     [Fact]
@@ -89,8 +86,7 @@ public class MySqlBulkExtensionsTests
             "test_table",
             []);
 
-        await act.Should().ThrowAsync<ArgumentException>()
-            .WithParameterName("columnNames");
+        (await act.ShouldThrowAsync<ArgumentException>()).ParamName.ShouldBe("columnNames");
     }
 
     [Fact]
@@ -104,8 +100,7 @@ public class MySqlBulkExtensionsTests
             ["id", "name", "email"],
             fieldSeparator: null!);
 
-        await act.Should().ThrowAsync<ArgumentNullException>()
-            .WithParameterName("fieldSeparator");
+        (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("fieldSeparator");
     }
 
     [Fact]
@@ -119,8 +114,7 @@ public class MySqlBulkExtensionsTests
             ["id", "name", "email"],
             fieldSeparator: "");
 
-        await act.Should().ThrowAsync<ArgumentException>()
-            .WithParameterName("fieldSeparator");
+        (await act.ShouldThrowAsync<ArgumentException>()).ParamName.ShouldBe("fieldSeparator");
     }
 
     [Fact]
@@ -134,8 +128,7 @@ public class MySqlBulkExtensionsTests
             ["id", "name", "email"],
             lineTerminator: null!);
 
-        await act.Should().ThrowAsync<ArgumentNullException>()
-            .WithParameterName("lineTerminator");
+        (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("lineTerminator");
     }
 
     [Fact]
@@ -149,8 +142,7 @@ public class MySqlBulkExtensionsTests
             ["id", "name", "email"],
             lineTerminator: "");
 
-        await act.Should().ThrowAsync<ArgumentException>()
-            .WithParameterName("lineTerminator");
+        (await act.ShouldThrowAsync<ArgumentException>()).ParamName.ShouldBe("lineTerminator");
     }
 
     [Fact]
@@ -164,8 +156,7 @@ public class MySqlBulkExtensionsTests
             ["id", "name", "email"],
             batchSize: 0);
 
-        await act.Should().ThrowAsync<ArgumentOutOfRangeException>()
-            .WithParameterName("batchSize");
+        (await act.ShouldThrowAsync<ArgumentOutOfRangeException>()).ParamName.ShouldBe("batchSize");
     }
 
     [Fact]
@@ -179,8 +170,7 @@ public class MySqlBulkExtensionsTests
             ["id", "name", "email"],
             batchSize: -1);
 
-        await act.Should().ThrowAsync<ArgumentOutOfRangeException>()
-            .WithParameterName("batchSize");
+        (await act.ShouldThrowAsync<ArgumentOutOfRangeException>()).ParamName.ShouldBe("batchSize");
     }
 
     [Fact]
@@ -205,8 +195,7 @@ public class MySqlBulkExtensionsTests
             "test_table",
             ["id", "name", "email"]);
 
-        await act.Should().ThrowAsync<ArgumentNullException>()
-            .WithParameterName("source");
+        (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("source");
     }
 
     [Fact]
@@ -219,8 +208,7 @@ public class MySqlBulkExtensionsTests
             "test_table",
             ["id", "name", "email"]);
 
-        await act.Should().ThrowAsync<ArgumentNullException>()
-            .WithParameterName("connectionFactory");
+        (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("connectionFactory");
     }
 
     [Fact]
@@ -233,7 +221,7 @@ public class MySqlBulkExtensionsTests
             null!,
             ["id", "name", "email"]);
 
-        await act.Should().ThrowAsync<ArgumentException>();
+        await act.ShouldThrowAsync<ArgumentException>();
     }
 
     [Fact]
@@ -246,7 +234,7 @@ public class MySqlBulkExtensionsTests
             "",
             ["id", "name", "email"]);
 
-        await act.Should().ThrowAsync<ArgumentException>();
+        await act.ShouldThrowAsync<ArgumentException>();
     }
 
     [Fact]
@@ -259,8 +247,7 @@ public class MySqlBulkExtensionsTests
             "test_table",
             null!);
 
-        await act.Should().ThrowAsync<ArgumentNullException>()
-            .WithParameterName("columnNames");
+        (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("columnNames");
     }
 
     [Fact]
@@ -273,8 +260,7 @@ public class MySqlBulkExtensionsTests
             "test_table",
             []);
 
-        await act.Should().ThrowAsync<ArgumentException>()
-            .WithParameterName("columnNames");
+        (await act.ShouldThrowAsync<ArgumentException>()).ParamName.ShouldBe("columnNames");
     }
 
     [Fact]
@@ -288,8 +274,7 @@ public class MySqlBulkExtensionsTests
             ["id", "name", "email"],
             fieldSeparator: null!);
 
-        await act.Should().ThrowAsync<ArgumentNullException>()
-            .WithParameterName("fieldSeparator");
+        (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("fieldSeparator");
     }
 
     [Fact]
@@ -303,8 +288,7 @@ public class MySqlBulkExtensionsTests
             ["id", "name", "email"],
             fieldSeparator: "");
 
-        await act.Should().ThrowAsync<ArgumentException>()
-            .WithParameterName("fieldSeparator");
+        (await act.ShouldThrowAsync<ArgumentException>()).ParamName.ShouldBe("fieldSeparator");
     }
 
     [Fact]
@@ -318,8 +302,7 @@ public class MySqlBulkExtensionsTests
             ["id", "name", "email"],
             lineTerminator: null!);
 
-        await act.Should().ThrowAsync<ArgumentNullException>()
-            .WithParameterName("lineTerminator");
+        (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("lineTerminator");
     }
 
     [Fact]
@@ -333,8 +316,7 @@ public class MySqlBulkExtensionsTests
             ["id", "name", "email"],
             lineTerminator: "");
 
-        await act.Should().ThrowAsync<ArgumentException>()
-            .WithParameterName("lineTerminator");
+        (await act.ShouldThrowAsync<ArgumentException>()).ParamName.ShouldBe("lineTerminator");
     }
 
     [Fact]

@@ -1,4 +1,4 @@
-using Microsoft.Data.SqlClient;
+﻿using Microsoft.Data.SqlClient;
 using System.Data;
 using Rivulet.Base.Tests;
 
@@ -40,8 +40,7 @@ public class SqlBulkCopyExtensionsTests
             "TestTable",
             MapToDataTable);
 
-        await act.Should().ThrowAsync<ArgumentNullException>()
-            .WithParameterName("source");
+        (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("source");
     }
 
     [Fact]
@@ -54,8 +53,7 @@ public class SqlBulkCopyExtensionsTests
             "TestTable",
             MapToDataTable);
 
-        await act.Should().ThrowAsync<ArgumentNullException>()
-            .WithParameterName("connectionFactory");
+        (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("connectionFactory");
     }
 
     [Fact]
@@ -68,7 +66,7 @@ public class SqlBulkCopyExtensionsTests
             null!,
             MapToDataTable);
 
-        await act.Should().ThrowAsync<ArgumentException>();
+        await act.ShouldThrowAsync<ArgumentException>();
     }
 
     [Fact]
@@ -81,7 +79,7 @@ public class SqlBulkCopyExtensionsTests
             "",
             MapToDataTable);
 
-        await act.Should().ThrowAsync<ArgumentException>();
+        await act.ShouldThrowAsync<ArgumentException>();
     }
 
     [Fact]
@@ -94,7 +92,7 @@ public class SqlBulkCopyExtensionsTests
             "   ",
             MapToDataTable);
 
-        await act.Should().ThrowAsync<ArgumentException>();
+        await act.ShouldThrowAsync<ArgumentException>();
     }
 
     [Fact]
@@ -107,8 +105,7 @@ public class SqlBulkCopyExtensionsTests
             "TestTable",
             null!);
 
-        await act.Should().ThrowAsync<ArgumentNullException>()
-            .WithParameterName("mapToDataTable");
+        (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("mapToDataTable");
     }
 
     [Fact]
@@ -122,8 +119,7 @@ public class SqlBulkCopyExtensionsTests
             MapToDataTable,
             batchSize: 0);
 
-        await act.Should().ThrowAsync<ArgumentOutOfRangeException>()
-            .WithParameterName("batchSize");
+        (await act.ShouldThrowAsync<ArgumentOutOfRangeException>()).ParamName.ShouldBe("batchSize");
     }
 
     [Fact]
@@ -137,8 +133,7 @@ public class SqlBulkCopyExtensionsTests
             MapToDataTable,
             batchSize: -1);
 
-        await act.Should().ThrowAsync<ArgumentOutOfRangeException>()
-            .WithParameterName("batchSize");
+        (await act.ShouldThrowAsync<ArgumentOutOfRangeException>()).ParamName.ShouldBe("batchSize");
     }
 
     [Fact]
@@ -152,8 +147,7 @@ public class SqlBulkCopyExtensionsTests
             MapToDataTable,
             bulkCopyTimeout: -1);
 
-        await act.Should().ThrowAsync<ArgumentOutOfRangeException>()
-            .WithParameterName("bulkCopyTimeout");
+        (await act.ShouldThrowAsync<ArgumentOutOfRangeException>()).ParamName.ShouldBe("bulkCopyTimeout");
     }
 
     [Fact]
@@ -179,8 +173,7 @@ public class SqlBulkCopyExtensionsTests
             MapToDataTable,
             columnMappings: null!);
 
-        await act.Should().ThrowAsync<ArgumentNullException>()
-            .WithParameterName("columnMappings");
+        (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("columnMappings");
     }
 
     [Fact]
@@ -210,8 +203,7 @@ public class SqlBulkCopyExtensionsTests
             CreateMockConnection,
             "TestTable");
 
-        await act.Should().ThrowAsync<ArgumentNullException>()
-            .WithParameterName("source");
+        (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("source");
     }
 
     [Fact]
@@ -227,8 +219,7 @@ public class SqlBulkCopyExtensionsTests
             null!,
             "TestTable");
 
-        await act.Should().ThrowAsync<ArgumentNullException>()
-            .WithParameterName("connectionFactory");
+        (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("connectionFactory");
     }
 
     [Fact]
@@ -244,7 +235,7 @@ public class SqlBulkCopyExtensionsTests
             CreateMockConnection,
             null!);
 
-        await act.Should().ThrowAsync<ArgumentException>();
+        await act.ShouldThrowAsync<ArgumentException>();
     }
 
     [Fact]
@@ -260,7 +251,7 @@ public class SqlBulkCopyExtensionsTests
             CreateMockConnection,
             "");
 
-        await act.Should().ThrowAsync<ArgumentException>();
+        await act.ShouldThrowAsync<ArgumentException>();
     }
 
     [Fact]
@@ -277,8 +268,7 @@ public class SqlBulkCopyExtensionsTests
             "TestTable",
             batchSize: 0);
 
-        await act.Should().ThrowAsync<ArgumentOutOfRangeException>()
-            .WithParameterName("batchSize");
+        (await act.ShouldThrowAsync<ArgumentOutOfRangeException>()).ParamName.ShouldBe("batchSize");
     }
 
     [Fact]
@@ -295,8 +285,7 @@ public class SqlBulkCopyExtensionsTests
             "TestTable",
             batchSize: -1);
 
-        await act.Should().ThrowAsync<ArgumentOutOfRangeException>()
-            .WithParameterName("batchSize");
+        (await act.ShouldThrowAsync<ArgumentOutOfRangeException>()).ParamName.ShouldBe("batchSize");
     }
 
     [Fact]
@@ -313,8 +302,7 @@ public class SqlBulkCopyExtensionsTests
             "TestTable",
             bulkCopyTimeout: -1);
 
-        await act.Should().ThrowAsync<ArgumentOutOfRangeException>()
-            .WithParameterName("bulkCopyTimeout");
+        (await act.ShouldThrowAsync<ArgumentOutOfRangeException>()).ParamName.ShouldBe("bulkCopyTimeout");
     }
 
     [Fact]
@@ -339,12 +327,12 @@ public class SqlBulkCopyExtensionsTests
 
         var dataTable = MapToDataTable(records);
 
-        dataTable.Should().NotBeNull();
-        dataTable.Columns.Count.Should().Be(3);
-        dataTable.Rows.Count.Should().Be(2);
-        dataTable.Columns["Id"]!.DataType.Should().Be(typeof(int));
-        dataTable.Columns["Name"]!.DataType.Should().Be(typeof(string));
-        dataTable.Columns["Email"]!.DataType.Should().Be(typeof(string));
+        dataTable.ShouldNotBeNull();
+        dataTable.Columns.Count.ShouldBe(3);
+        dataTable.Rows.Count.ShouldBe(2);
+        dataTable.Columns["Id"]!.DataType.ShouldBe(typeof(int));
+        dataTable.Columns["Name"]!.DataType.ShouldBe(typeof(string));
+        dataTable.Columns["Email"]!.DataType.ShouldBe(typeof(string));
     }
 
     // New tests for fixes
@@ -361,9 +349,9 @@ public class SqlBulkCopyExtensionsTests
             MapToDataTable,
             emptyMappings);
 
-        await act.Should().ThrowAsync<ArgumentException>()
-            .WithMessage("*Column mappings dictionary cannot be empty*")
-            .WithParameterName("columnMappings");
+        var ex = await act.ShouldThrowAsync<ArgumentException>();
+        ex.Message.ShouldContain("Column mappings dictionary cannot be empty");
+        ex.ParamName.ShouldBe("columnMappings");
     }
 
     // Note: Tests for null connection factory return and null DataReader in source

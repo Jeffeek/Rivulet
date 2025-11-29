@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 
 namespace Rivulet.Core.Tests;
 
@@ -20,7 +20,7 @@ public class LifecycleHooksTests
 
         await source.SelectParallelAsync((x, _) => new ValueTask<int>(x * 2), options);
 
-        startedItems.Should().HaveCount(10);
+        startedItems.Count.ShouldBe(10);
     }
 
     [Fact]
@@ -39,7 +39,7 @@ public class LifecycleHooksTests
 
         await source.SelectParallelAsync((x, _) => new ValueTask<int>(x * 2), options);
 
-        completedItems.Should().HaveCount(10);
+        completedItems.Count.ShouldBe(10);
     }
 
     [Fact]
@@ -66,7 +66,7 @@ public class LifecycleHooksTests
             },
             options);
 
-        completedItems.Should().HaveCount(9);
+        completedItems.Count.ShouldBe(9);
     }
 
     [Fact]
@@ -95,9 +95,9 @@ public class LifecycleHooksTests
             },
             options);
 
-        errorIndices.Should().HaveCount(2);
-        errorExceptions.Should().HaveCount(2);
-        errorExceptions.Should().AllBeOfType<InvalidOperationException>();
+        errorIndices.Count.ShouldBe(2);
+        errorExceptions.Count.ShouldBe(2);
+        errorExceptions.ShouldAllBe(x => x.GetType() == typeof(InvalidOperationException));
     }
 
     [Fact]
@@ -123,7 +123,7 @@ public class LifecycleHooksTests
             },
             options);
 
-        throttleCalls.Should().NotBeEmpty();
+        throttleCalls.ShouldNotBeEmpty();
     }
 
     [Fact]
@@ -148,7 +148,7 @@ public class LifecycleHooksTests
 
         await source.SelectParallelAsync((x, _) => new ValueTask<int>(x * 2), options);
 
-        events.Should().HaveCount(10);
+        events.Count.ShouldBe(10);
     }
 
     [Fact]
@@ -185,9 +185,9 @@ public class LifecycleHooksTests
             },
             options);
 
-        events.Should().Contain(e => e.StartsWith("Error-"));
-        events.Where(e => e.StartsWith("Complete-")).Should().HaveCount(9);
-        events.Where(e => e.StartsWith("Start-")).Should().HaveCount(10);
+        events.ShouldContain(e => e.StartsWith("Error-"));
+        events.Where(e => e.StartsWith("Complete-")).Count().ShouldBe(9);
+        events.Where(e => e.StartsWith("Start-")).Count().ShouldBe(10);
     }
 
     [Fact]
@@ -212,9 +212,9 @@ public class LifecycleHooksTests
 
         var results = await source.SelectParallelStreamAsync((x, _) => new ValueTask<int>(x * 2), options).ToListAsync();
 
-        startedItems.Should().HaveCount(10);
-        completedItems.Should().HaveCount(10);
-        results.Should().HaveCount(10);
+        startedItems.Count.ShouldBe(10);
+        completedItems.Count.ShouldBe(10);
+        results.Count.ShouldBe(10);
     }
 
     [Fact]
@@ -241,8 +241,8 @@ public class LifecycleHooksTests
             (_, _) => ValueTask.CompletedTask,
             options);
 
-        startedItems.Should().HaveCount(10);
-        completedItems.Should().HaveCount(10);
+        startedItems.Count.ShouldBe(10);
+        completedItems.Count.ShouldBe(10);
     }
 
     [Fact]
@@ -269,8 +269,8 @@ public class LifecycleHooksTests
             },
             options);
 
-        await act.Should().ThrowAsync<AggregateException>();
-        processedCount.Should().BeLessThan(5000);
+        await act.ShouldThrowAsync<AggregateException>();
+        processedCount.ShouldBeLessThan(5000);
     }
 
     [Fact]
@@ -288,7 +288,7 @@ public class LifecycleHooksTests
 
         var results = await source.SelectParallelAsync((x, _) => new ValueTask<int>(x * 2), options);
 
-        results.Should().HaveCount(10);
+        results.Count.ShouldBe(10);
     }
 
     [Fact]
@@ -312,7 +312,7 @@ public class LifecycleHooksTests
 
         await source.SelectParallelAsync((x, _) => new ValueTask<int>(x * 2), options);
 
-        asyncWorkDone.Should().HaveCount(10);
+        asyncWorkDone.Count.ShouldBe(10);
     }
 
     [Fact]
@@ -326,6 +326,6 @@ public class LifecycleHooksTests
 
         var results = await source.SelectParallelAsync((x, _) => new ValueTask<int>(x * 2), options);
 
-        results.Should().HaveCount(50);
+        results.Count.ShouldBe(50);
     }
 }

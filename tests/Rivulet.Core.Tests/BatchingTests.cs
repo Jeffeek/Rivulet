@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using Rivulet.Base.Tests;
 using Rivulet.Core.Observability;
@@ -23,9 +23,9 @@ public class BatchingTests
                 return batch.Sum();
             });
 
-        results.Should().HaveCount(10);
-        batchSizes.Should().AllSatisfy(size => size.Should().Be(10));
-        results.Sum().Should().Be(5050);
+        results.Count.ShouldBe(10);
+        batchSizes.ShouldAllBe(size => size == 10);
+        results.Sum().ShouldBe(5050);
     }
 
     [Fact]
@@ -43,10 +43,10 @@ public class BatchingTests
                 return batch.Sum();
             });
 
-        results.Should().HaveCount(3);
-        batchSizes.Should().Contain(10);
-        batchSizes.Should().Contain(5);
-        results.Sum().Should().Be(325);
+        results.Count.ShouldBe(3);
+        batchSizes.ShouldContain(10);
+        batchSizes.ShouldContain(5);
+        results.Sum().ShouldBe(325);
     }
 
     [Fact]
@@ -62,7 +62,7 @@ public class BatchingTests
                 return batch.Sum();
             });
 
-        results.Should().BeEmpty();
+        results.ShouldBeEmpty();
     }
 
     [Fact]
@@ -78,8 +78,8 @@ public class BatchingTests
                 return batch.First();
             });
 
-        results.Should().HaveCount(1);
-        results[0].Should().Be(42);
+        results.Count.ShouldBe(1);
+        results[0].ShouldBe(42);
     }
 
     [Fact]
@@ -95,8 +95,8 @@ public class BatchingTests
                 return batch.Sum();
             });
 
-        await act.Should().ThrowAsync<ArgumentException>()
-            .WithMessage("Batch size must be at least 1.*");
+        var ex = await act.ShouldThrowAsync<ArgumentException>();
+        ex.Message.ShouldContain("Batch size must be at least 1.");
     }
 
     [Fact]
@@ -117,8 +117,8 @@ public class BatchingTests
                 OrderedOutput = true
             });
 
-        results.Should().HaveCount(5);
-        results.Should().Equal(1, 11, 21, 31, 41);
+        results.Count.ShouldBe(5);
+        results.ShouldBe(new[] { 1, 11, 21, 31, 41 });
     }
 
     [Fact]
@@ -158,9 +158,9 @@ public class BatchingTests
             () => Task.Delay(100),
             () => !snapshots.Any() || snapshots.Max(s => s.ItemsCompleted) != 10);
 
-        results.Should().HaveCount(10);
-        snapshots.Should().NotBeEmpty();
-        snapshots.Max(s => s.ItemsCompleted).Should().Be(10);
+        results.Count.ShouldBe(10);
+        snapshots.ShouldNotBeEmpty();
+        snapshots.Max(s => s.ItemsCompleted).ShouldBe(10);
     }
 
     [Fact]
@@ -190,8 +190,8 @@ public class BatchingTests
                 ErrorMode = ErrorMode.CollectAndContinue
             });
 
-        results.Should().HaveCount(3);
-        attemptCounts[1].Should().Be(2);
+        results.Count.ShouldBe(3);
+        attemptCounts[1].ShouldBe(2);
     }
 
     [Fact]
@@ -214,7 +214,7 @@ public class BatchingTests
                 ErrorMode = ErrorMode.BestEffort
             });
 
-        results.Should().HaveCount(3);
+        results.Count.ShouldBe(3);
     }
 
     [Fact]
@@ -234,7 +234,7 @@ public class BatchingTests
 
         cts.CancelAfter(100);
 
-        await act.Should().ThrowAsync<OperationCanceledException>();
+        await act.ShouldThrowAsync<OperationCanceledException>();
     }
 
     [Fact]
@@ -252,9 +252,9 @@ public class BatchingTests
                 return batch.Sum();
             }).ToListAsync();
 
-        results.Should().HaveCount(10);
-        batchSizes.Should().AllSatisfy(size => size.Should().Be(10));
-        results.Sum().Should().Be(5050);
+        results.Count.ShouldBe(10);
+        batchSizes.ShouldAllBe(size => size == 10);
+        results.Sum().ShouldBe(5050);
     }
 
     [Fact]
@@ -272,10 +272,10 @@ public class BatchingTests
                 return batch.Sum();
             }).ToListAsync();
 
-        results.Should().HaveCount(3);
-        batchSizes.Should().Contain(10);
-        batchSizes.Should().Contain(5);
-        results.Sum().Should().Be(325);
+        results.Count.ShouldBe(3);
+        batchSizes.ShouldContain(10);
+        batchSizes.ShouldContain(5);
+        results.Sum().ShouldBe(325);
     }
 
     [Fact]
@@ -293,8 +293,8 @@ public class BatchingTests
             },
             batchTimeout: TimeSpan.FromMilliseconds(200)).ToListAsync();
 
-        results.Should().NotBeEmpty();
-        batchSizes.Should().Contain(size => size < 100);
+        results.ShouldNotBeEmpty();
+        batchSizes.ShouldContain(size => size < 100);
     }
 
     [Fact]
@@ -310,7 +310,7 @@ public class BatchingTests
                 return batch.Sum();
             }).ToListAsync();
 
-        results.Should().BeEmpty();
+        results.ShouldBeEmpty();
     }
 
     [Fact]
@@ -332,8 +332,8 @@ public class BatchingTests
             }
         };
 
-        await act.Should().ThrowAsync<ArgumentException>()
-            .WithMessage("Batch size must be at least 1.*");
+        var ex = await act.ShouldThrowAsync<ArgumentException>();
+        ex.Message.ShouldContain("Batch size must be at least 1.");
     }
 
     [Fact]
@@ -354,8 +354,8 @@ public class BatchingTests
                 OrderedOutput = true
             }).ToListAsync();
 
-        results.Should().HaveCount(5);
-        results.Should().Equal(1, 11, 21, 31, 41);
+        results.Count.ShouldBe(5);
+        results.ShouldBe(new[] { 1, 11, 21, 31, 41 });
     }
 
     [Fact]
@@ -381,7 +381,7 @@ public class BatchingTests
 
         cts.CancelAfter(100);
 
-        await act.Should().ThrowAsync<OperationCanceledException>();
+        await act.ShouldThrowAsync<OperationCanceledException>();
     }
 
     [Fact]
@@ -401,8 +401,8 @@ public class BatchingTests
                 MaxDegreeOfParallelism = 4
             });
 
-        results.Should().HaveCount(10);
-        results.Should().AllSatisfy(count => count.Should().Be(1000));
+        results.Count.ShouldBe(10);
+        results.ShouldAllBe(count => count == 1000);
     }
 
     [Fact]
@@ -431,8 +431,8 @@ public class BatchingTests
                 }
             }).ToListAsync();
 
-        results.Should().HaveCount(6);
-        snapshots.Should().NotBeEmpty();
+        results.Count.ShouldBe(6);
+        snapshots.ShouldNotBeEmpty();
     }
 
     [Fact]
@@ -449,8 +449,8 @@ public class BatchingTests
             },
             new() { OrderedOutput = true });
 
-        results.Should().HaveCount(10);
-        results.Should().Equal(Enumerable.Range(1, 10));
+        results.Count.ShouldBe(10);
+        results.ShouldBe(Enumerable.Range(1, 10));
     }
 
     [Fact]
@@ -467,8 +467,8 @@ public class BatchingTests
             },
             new() { OrderedOutput = true }).ToListAsync();
 
-        results.Should().HaveCount(10);
-        results.Should().Equal(Enumerable.Range(1, 10));
+        results.Count.ShouldBe(10);
+        results.ShouldBe(Enumerable.Range(1, 10));
     }
 
     [Fact]
@@ -510,10 +510,10 @@ public class BatchingTests
                 }
             });
 
-        results.Should().HaveCount(5);
-        results.Should().Equal(55, 155, 255, 355, 455);
-        snapshots.Should().NotBeEmpty();
-        attemptCounts[21].Should().Be(2);
+        results.Count.ShouldBe(5);
+        results.ShouldBe(new[] { 55, 155, 255, 355, 455 });
+        snapshots.ShouldNotBeEmpty();
+        attemptCounts[21].ShouldBe(2);
     }
 
     [Fact]
@@ -529,8 +529,8 @@ public class BatchingTests
             },
             batchTimeout: TimeSpan.FromMilliseconds(300)).ToListAsync();
 
-        results.Should().NotBeEmpty();
-        results.Should().Contain(count => count < 20);
+        results.ShouldNotBeEmpty();
+        results.ShouldContain(count => count < 20);
     }
 
     [Fact]
@@ -548,10 +548,10 @@ public class BatchingTests
             batchTimeout: null
         ).ToListAsync();
 
-        results.Should().HaveCount(3);
-        results.Should().Contain(10);
-        results.Should().Contain(5);
-        results.Sum().Should().Be(25);
+        results.Count.ShouldBe(3);
+        results.ShouldContain(10);
+        results.ShouldContain(5);
+        results.Sum().ShouldBe(25);
     }
 
     private static async IAsyncEnumerable<int> SlowAsyncEnumerable(int count, int delayMs)
@@ -578,8 +578,8 @@ public class BatchingTests
             },
             batchTimeout: TimeSpan.FromMilliseconds(300)).ToListAsync();
 
-        results.Should().NotBeEmpty();
-        batchSizes.Should().AllSatisfy(size => size.Should().BeLessThan(100));
+        results.ShouldNotBeEmpty();
+        batchSizes.ShouldAllBe(size => size < 100);
     }
 
     [Fact]
@@ -599,7 +599,7 @@ public class BatchingTests
                 PerItemTimeout = TimeSpan.FromSeconds(1)
             });
 
-        results.Should().HaveCount(2);
+        results.Count.ShouldBe(2);
     }
 
     [Fact]
@@ -614,8 +614,8 @@ public class BatchingTests
                 return batch.Count;
             });
 
-        results.Should().HaveCount(1);
-        results[0].Should().Be(100);
+        results.Count.ShouldBe(1);
+        results[0].ShouldBe(100);
     }
 
     [Fact]
@@ -631,8 +631,8 @@ public class BatchingTests
                 return batch.Count;
             }).ToListAsync();
 
-        results.Should().HaveCount(1);
-        results[0].Should().Be(50);
+        results.Count.ShouldBe(1);
+        results[0].ShouldBe(50);
     }
 
     [Fact]
@@ -659,7 +659,7 @@ public class BatchingTests
             }
         };
 
-        await act.Should().ThrowAsync<OperationCanceledException>();
+        await act.ShouldThrowAsync<OperationCanceledException>();
     }
 
     [Fact]
@@ -685,7 +685,7 @@ public class BatchingTests
         };
 
         cts.CancelAfter(200);
-        await act.Should().ThrowAsync<OperationCanceledException>();
+        await act.ShouldThrowAsync<OperationCanceledException>();
     }
 
     [Fact]
@@ -704,8 +704,8 @@ public class BatchingTests
                 return batch.Count;
             });
 
-        emptyBatchCount.Should().Be(0);
-        results.Should().AllSatisfy(count => count.Should().BeGreaterThan(0));
+        emptyBatchCount.ShouldBe(0);
+        results.ShouldAllBe(count => count > 0);
     }
 
     [Fact]
@@ -724,8 +724,8 @@ public class BatchingTests
                 return batch.Count;
             }).ToListAsync();
 
-        emptyBatchCount.Should().Be(0);
-        results.Should().AllSatisfy(count => count.Should().BeGreaterThan(0));
+        emptyBatchCount.ShouldBe(0);
+        results.ShouldAllBe(count => count > 0);
     }
 
     [Fact]
@@ -742,11 +742,11 @@ public class BatchingTests
         }, batchTimeout: null)
         .ToListAsync();
 
-        results.Should().HaveCount(3);
-        results.Should().Contain(10);
-        results.Should().Contain(3);
-        results.Sum().Should().Be(23);
-        batchContents.Should().HaveCount(3);
+        results.Count.ShouldBe(3);
+        results.ShouldContain(10);
+        results.ShouldContain(3);
+        results.Sum().ShouldBe(23);
+        batchContents.Count.ShouldBe(3);
     }
 
     [Fact]
@@ -760,8 +760,8 @@ public class BatchingTests
         })
         .ToListAsync();
 
-        yieldedResults.Should().HaveCount(4);
-        yieldedResults.Sum().Should().Be(153);
+        yieldedResults.Count.ShouldBe(4);
+        yieldedResults.Sum().ShouldBe(153);
     }
 
     [Fact]
@@ -785,9 +785,9 @@ public class BatchingTests
         }, batchTimeout: null)
         .ToListAsync();
 
-        results.Should().HaveCount(5);
-        results.Sum().Should().Be(30);
-        processedIndices.Should().HaveCount(5);
+        results.Count.ShouldBe(5);
+        results.Sum().ShouldBe(30);
+        processedIndices.Count.ShouldBe(5);
     }
 
     [Fact]
@@ -810,7 +810,7 @@ public class BatchingTests
                 break;
         }
 
-        yieldedCount.Should().Be(3);
+        yieldedCount.ShouldBe(3);
     }
 
     [Fact]
@@ -838,8 +838,8 @@ public class BatchingTests
             }
         };
 
-        await act.Should().ThrowAsync<OperationCanceledException>();
-        yieldedCount.Should().BeGreaterThanOrEqualTo(2);
+        await act.ShouldThrowAsync<OperationCanceledException>();
+        yieldedCount.ShouldBeGreaterThanOrEqualTo(2);
     }
 
     [Fact]
@@ -859,8 +859,8 @@ public class BatchingTests
             .CountAsync();
         };
 
-        await act.Should().ThrowAsync<Exception>();
-        yieldedCount.Should().BeLessThan(5);
+        await act.ShouldThrowAsync<Exception>();
+        yieldedCount.ShouldBeLessThan(5);
     }
 
     [Fact]
@@ -875,8 +875,8 @@ public class BatchingTests
         }, batchTimeout: null)
         .ToListAsync();
 
-        results.Should().HaveCount(1);
-        results[0].Should().Be(7);
+        results.Count.ShouldBe(1);
+        results[0].ShouldBe(7);
     }
 
     [Fact]
@@ -906,8 +906,8 @@ public class BatchingTests
             await enumerator.DisposeAsync();
         }
 
-        consumedResults.Should().HaveCount(3);
-        consumedResults.Sum().Should().Be(23);
+        consumedResults.Count.ShouldBe(3);
+        consumedResults.Sum().ShouldBe(23);
     }
 
     [Fact]
@@ -926,9 +926,9 @@ public class BatchingTests
                 return batch.Sum();
             });
 
-        results.Should().HaveCount(10);
-        results.Sum().Should().Be(5050); // Sum of 1..100
-        processedBatches.All(count => count == batchSize).Should().BeTrue();
+        results.Count.ShouldBe(10);
+        results.Sum().ShouldBe(5050); // Sum of 1..100
+        processedBatches.All(count => count == batchSize).ShouldBeTrue();
     }
 
     [Fact]
@@ -947,8 +947,9 @@ public class BatchingTests
                 return batch.Count;
             });
 
-        results.Should().HaveCount(3);
-        batchSizes.Should().Contain([10, 10, 5]);
+        results.Count.ShouldBe(3);
+        batchSizes.ShouldContain(10);
+        batchSizes.ShouldContain(5);
     }
 
     [Fact]
@@ -963,8 +964,8 @@ public class BatchingTests
             })
             .ToListAsync();
 
-        results.Should().HaveCount(5);
-        results.Sum().Should().Be(1275); // Sum of 1..50
+        results.Count.ShouldBe(5);
+        results.Sum().ShouldBe(1275); // Sum of 1..50
     }
 
     [Fact]
@@ -980,7 +981,7 @@ public class BatchingTests
             }, batchTimeout: timeout)
             .ToListAsync();
 
-        results.Should().HaveCount(3);
+        results.Count.ShouldBe(3);
     }
 
     [Fact]
@@ -1014,7 +1015,7 @@ public class BatchingTests
             },
             options);
 
-        results.Should().HaveCount(10);
+        results.Count.ShouldBe(10);
     }
 
     [Fact]
@@ -1043,7 +1044,7 @@ public class BatchingTests
         }
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(Act);
-        processedBatches.Should().BeLessThan(100);
+        processedBatches.ShouldBeLessThan(100);
     }
 
     [Fact]
@@ -1052,7 +1053,7 @@ public class BatchingTests
         var source = AsyncEnumerable.Empty<int>();
         var results = await source.BatchParallelStreamAsync(10, (batch, _) => new ValueTask<int>(batch.Count)).ToListAsync();
 
-        results.Should().BeEmpty();
+        results.ShouldBeEmpty();
     }
 
     [Fact]
@@ -1068,8 +1069,8 @@ public class BatchingTests
                 return batch.Count;
             });
 
-        results.Should().ContainSingle();
-        results[0].Should().Be(5);
+        results.ShouldHaveSingleItem();
+        results[0].ShouldBe(5);
     }
 
     [Fact]
@@ -1098,7 +1099,7 @@ public class BatchingTests
             }, options)
             .ToListAsync();
 
-        results.Should().HaveCount(3);
-        attemptCounts[55].Should().Be(2); // First batch retried once
+        results.Count.ShouldBe(3);
+        attemptCounts[55].ShouldBe(2); // First batch retried once
     }
 }

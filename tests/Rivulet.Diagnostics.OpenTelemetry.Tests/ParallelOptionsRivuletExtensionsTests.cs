@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Rivulet.Core;
 
@@ -48,9 +48,9 @@ public class ParallelOptionsRivuletExtensionsTests
         allActivitiesStarted.Wait(TimeSpan.FromSeconds(2));
         await Task.Delay(50); // Extra buffer
 
-        results.Should().HaveCount(5);
-        activities.Should().HaveCount(5, "should have one activity per item");
-        activities.All(a => a.OperationName == "Rivulet.TestOperation.Item").Should().BeTrue();
+        results.Count.ShouldBe(5);
+        activities.Count.ShouldBe(5, "should have one activity per item");
+        activities.All(a => a.OperationName == "Rivulet.TestOperation.Item").ShouldBeTrue();
     }
 
     [Fact]
@@ -89,12 +89,12 @@ public class ParallelOptionsRivuletExtensionsTests
         allActivitiesStopped.Wait(TimeSpan.FromSeconds(2));
         await Task.Delay(50); // Extra buffer
 
-        results.Should().HaveCount(3);
+        results.Count.ShouldBe(3);
 
         var successActivities = activities.Where(a => a.OperationName == "Rivulet.SuccessOperation.Item").ToList();
-        successActivities.Should().HaveCount(3);
-        successActivities.All(a => a.Status == ActivityStatusCode.Ok).Should().BeTrue();
-        successActivities.All(a => (int)a.GetTagItem("rivulet.items_processed")! == 1).Should().BeTrue();
+        successActivities.Count.ShouldBe(3);
+        successActivities.All(a => a.Status == ActivityStatusCode.Ok).ShouldBeTrue();
+        successActivities.All(a => (int)a.GetTagItem("rivulet.items_processed")! == 1).ShouldBeTrue();
     }
 
 
@@ -145,8 +145,8 @@ public class ParallelOptionsRivuletExtensionsTests
         await Task.Delay(50); // Extra buffer
 
         var errorActivities = activities.Where(a => a.OperationName == "Rivulet.ErrorOperation.Item").ToList();
-        errorActivities.Should().HaveCount(3);
-        errorActivities.All(a => a.Status == ActivityStatusCode.Error).Should().BeTrue();
+        errorActivities.Count.ShouldBe(3);
+        errorActivities.All(a => a.Status == ActivityStatusCode.Error).ShouldBeTrue();
     }
 
 
@@ -181,17 +181,17 @@ public class ParallelOptionsRivuletExtensionsTests
             },
             options);
 
-        results.Should().HaveCount(1);
+        results.Count.ShouldBe(1);
         
         var retryActivities = activities.Where(a => a.OperationName == "Rivulet.RetryOperation.Item").ToList();
-        retryActivities.Should().HaveCount(1);
+        retryActivities.Count.ShouldBe(1);
 
         var activity = retryActivities[0];
-        activity.Status.Should().Be(ActivityStatusCode.Ok);
+        activity.Status.ShouldBe(ActivityStatusCode.Ok);
 
         // Should have 2 retry events (attempt 1 and 2, then success on attempt 3)
         var retryEvents = activity.Events.Where(e => e.Name == "retry").ToList();
-        retryEvents.Should().HaveCountGreaterThanOrEqualTo(1);
+        retryEvents.Count.ShouldBeGreaterThanOrEqualTo(1);
     }
 
     [Fact]
@@ -235,10 +235,10 @@ public class ParallelOptionsRivuletExtensionsTests
             },
             options);
 
-        results.Should().HaveCount(3);
-        onStartCalled.Should().Be(3);
-        onCompleteCalled.Should().Be(3);
-        onErrorCalled.Should().Be(0);
+        results.Count.ShouldBe(3);
+        onStartCalled.ShouldBe(3);
+        onCompleteCalled.ShouldBe(3);
+        onErrorCalled.ShouldBe(0);
     }
 
     [Fact]
@@ -297,7 +297,7 @@ public class ParallelOptionsRivuletExtensionsTests
 
         // Wait for circuit breaker state change to be recorded
         var stateChangedSuccessfully = stateChanged.Wait(TimeSpan.FromSeconds(30));
-        stateChangedSuccessfully.Should().BeTrue("circuit breaker should change state");
+        stateChangedSuccessfully.ShouldBeTrue("circuit breaker should change state");
 
         // Give time for event to be recorded on activity and for activities to complete
         // Need to wait for the in-flight activities to complete so they're captured
@@ -310,7 +310,7 @@ public class ParallelOptionsRivuletExtensionsTests
             .Where(a => a?.Events.Any(e => e.Name == "circuit_breaker_state_change") ?? false)
             .ToList();
 
-        activitiesWithCbEvents.Should().NotBeEmpty("circuit breaker state changed and should be recorded on activities");
+        activitiesWithCbEvents.ShouldNotBeEmpty("circuit breaker state changed and should be recorded on activities");
     }
 
     [Fact]
@@ -352,7 +352,7 @@ public class ParallelOptionsRivuletExtensionsTests
             },
             options);
 
-        results.Should().HaveCount(50);
+        results.Count.ShouldBe(50);
 
         // Wait for all activities to be stopped and events to be recorded
         // Activities are stopped asynchronously after the operation completes
@@ -360,7 +360,7 @@ public class ParallelOptionsRivuletExtensionsTests
 
         // Adaptive concurrency integration is verified:
         // 1. Activities are created and tracked
-        activities.Should().NotBeEmpty();
+        activities.ShouldNotBeEmpty();
 
         // 2. If concurrency changes occur (timing-dependent), they are recorded on activities
         if (concurrencyChanged)
@@ -369,7 +369,7 @@ public class ParallelOptionsRivuletExtensionsTests
                 a.Events.Any(e => e.Name == "adaptive_concurrency_change")).ToList();
 
             // When changes DO occur, verify they're properly recorded
-            activitiesWithConcurrencyEvents.Should().NotBeEmpty(
+            activitiesWithConcurrencyEvents.ShouldNotBeEmpty(
                 "concurrency changes occurred and should be recorded on activities");
         }
 
@@ -415,11 +415,11 @@ public class ParallelOptionsRivuletExtensionsTests
         await Task.Delay(50); // Extra buffer for activity processing
 
         var indexActivities = activities.Where(a => a.OperationName == "Rivulet.IndexTagsOperation.Item").ToList();
-        indexActivities.Should().HaveCount(3, "should have one activity per item");
+        indexActivities.Count.ShouldBe(3, "should have one activity per item");
 
         // Each activity should have its item index
         var indices = indexActivities.Select(a => (int)a.GetTagItem("rivulet.item_index")!).OrderBy(i => i).ToList();
-        indices.Should().BeEquivalentTo([0, 1, 2], "each item should have its sequential index");
+        indices.ShouldBe([0, 1, 2], "each item should have its sequential index");
     }
 
     [Fact]
@@ -436,6 +436,6 @@ public class ParallelOptionsRivuletExtensionsTests
             },
             options);
 
-        act.Should().NotThrowAsync();
+        act.ShouldNotThrowAsync();
     }
 }

@@ -1,6 +1,4 @@
-using FluentAssertions;
-
-namespace Rivulet.Polly.Tests;
+﻿namespace Rivulet.Polly.Tests;
 
 public class PollyAdvancedExtensionsTests
 {
@@ -27,8 +25,8 @@ public class PollyAdvancedExtensionsTests
             hedgingDelay: TimeSpan.FromMilliseconds(50),
             new() { MaxDegreeOfParallelism = 2 });
 
-        results.Should().HaveCount(5);
-        results.Should().BeEquivalentTo([2, 4, 6, 8, 10]);
+        results.Count.ShouldBe(5);
+        results.OrderBy(x => x).ShouldBe([2, 4, 6, 8, 10]);
     }
 
     [Fact]
@@ -38,7 +36,8 @@ public class PollyAdvancedExtensionsTests
 
         var act = async () => await source!.SelectParallelWithHedgingAsync((item, _) => ValueTask.FromResult(item));
 
-        await act.Should().ThrowAsync<ArgumentNullException>().WithParameterName("source");
+        var ex = await act.ShouldThrowAsync<ArgumentNullException>();
+        ex.ParamName.ShouldBe("source");
     }
 
     [Fact]
@@ -49,8 +48,7 @@ public class PollyAdvancedExtensionsTests
         var act = async () => await source.SelectParallelWithHedgingAsync<int, int>(
             null!);
 
-        await act.Should().ThrowAsync<ArgumentNullException>()
-            .WithParameterName("selector");
+        (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("selector");
     }
 
     [Fact]
@@ -60,8 +58,7 @@ public class PollyAdvancedExtensionsTests
 
         var act = async () => await source.SelectParallelWithHedgingAsync((item, _) => ValueTask.FromResult(item), maxHedgedAttempts: 0);
 
-        await act.Should().ThrowAsync<ArgumentOutOfRangeException>()
-            .WithParameterName("maxHedgedAttempts");
+        (await act.ShouldThrowAsync<ArgumentOutOfRangeException>()).ParamName.ShouldBe("maxHedgedAttempts");
     }
 
     [Fact]
@@ -94,9 +91,9 @@ public class PollyAdvancedExtensionsTests
             delayBetweenRetries: TimeSpan.FromMilliseconds(10),
             new() { MaxDegreeOfParallelism = 2 });
 
-        results.Should().HaveCount(5);
-        results.Should().BeEquivalentTo([2, 4, 6, 8, 10]);
-        attempts[3].Should().Be(3, "item 3 should have been retried");
+        results.Count.ShouldBe(5);
+        results.OrderBy(x => x).ShouldBe([2, 4, 6, 8, 10]);
+        attempts[3].ShouldBe(3, "item 3 should have been retried");
     }
 
     [Fact]
@@ -114,8 +111,8 @@ public class PollyAdvancedExtensionsTests
             maxRetries: 2,
             delayBetweenRetries: TimeSpan.FromMilliseconds(10));
 
-        results.Should().HaveCount(1);
-        results[0].Should().Be(-1, "should return undesired result after exceeding max retries");
+        results.Count.ShouldBe(1);
+        results[0].ShouldBe(-1, "should return undesired result after exceeding max retries");
     }
 
     [Fact]
@@ -126,8 +123,7 @@ public class PollyAdvancedExtensionsTests
         var act = async () => await source!.SelectParallelWithResultRetryAsync((item, _) => ValueTask.FromResult(item),
             shouldRetry: result => result == -1);
 
-        await act.Should().ThrowAsync<ArgumentNullException>()
-            .WithParameterName("source");
+        (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("source");
     }
 
     [Fact]
@@ -139,8 +135,7 @@ public class PollyAdvancedExtensionsTests
             null!,
             shouldRetry: result => result == -1);
 
-        await act.Should().ThrowAsync<ArgumentNullException>()
-            .WithParameterName("selector");
+        (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("selector");
     }
 
     [Fact]
@@ -152,8 +147,7 @@ public class PollyAdvancedExtensionsTests
             (item, _) => ValueTask.FromResult(item),
             shouldRetry: null!);
 
-        await act.Should().ThrowAsync<ArgumentNullException>()
-            .WithParameterName("shouldRetry");
+        (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("shouldRetry");
     }
 
     [Fact]
@@ -166,8 +160,7 @@ public class PollyAdvancedExtensionsTests
             shouldRetry: result => result == -1,
             maxRetries: -1);
 
-        await act.Should().ThrowAsync<ArgumentOutOfRangeException>()
-            .WithParameterName("maxRetries");
+        (await act.ShouldThrowAsync<ArgumentOutOfRangeException>()).ParamName.ShouldBe("maxRetries");
     }
 
     [Fact]
@@ -198,13 +191,13 @@ public class PollyAdvancedExtensionsTests
             maxRetries: 3,
             baseDelay: TimeSpan.FromMilliseconds(50));
 
-        results.Should().HaveCount(1);
-        results[0].Should().Be(2);
-        attempts.Should().HaveCount(3, "should have made 3 attempts");
+        results.Count.ShouldBe(1);
+        results[0].ShouldBe(2);
+        attempts.Count.ShouldBe(3, "should have made 3 attempts");
 
         // Verify exponential backoff (with jitter, delays should generally increase)
         // Note: With jitter, we can't verify exact delays, but we can verify attempts happened
-        attempts.Select(a => a.attempt).Should().Equal(1, 2, 3);
+        attempts.Select(a => a.attempt).ShouldBe(new[] { 1, 2, 3 });
     }
 
     [Fact]
@@ -216,8 +209,7 @@ public class PollyAdvancedExtensionsTests
             (item, _) => ValueTask.FromResult(item),
             shouldRetry: result => result == -1);
 
-        await act.Should().ThrowAsync<ArgumentNullException>()
-            .WithParameterName("source");
+        (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("source");
     }
 
     [Fact]
@@ -229,8 +221,7 @@ public class PollyAdvancedExtensionsTests
             null!,
             shouldRetry: result => result == -1);
 
-        await act.Should().ThrowAsync<ArgumentNullException>()
-            .WithParameterName("selector");
+        (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("selector");
     }
 
     [Fact]
@@ -242,8 +233,7 @@ public class PollyAdvancedExtensionsTests
             (item, _) => ValueTask.FromResult(item),
             shouldRetry: null!);
 
-        await act.Should().ThrowAsync<ArgumentNullException>()
-            .WithParameterName("shouldRetry");
+        (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("shouldRetry");
     }
 
     [Fact]
@@ -256,7 +246,6 @@ public class PollyAdvancedExtensionsTests
             shouldRetry: result => result == -1,
             maxRetries: -1);
 
-        await act.Should().ThrowAsync<ArgumentOutOfRangeException>()
-            .WithParameterName("maxRetries");
+        (await act.ShouldThrowAsync<ArgumentOutOfRangeException>()).ParamName.ShouldBe("maxRetries");
     }
 }

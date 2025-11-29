@@ -1,4 +1,4 @@
-using Microsoft.Data.SqlClient;
+﻿using Microsoft.Data.SqlClient;
 using Testcontainers.MsSql;
 using System.Data;
 using Rivulet.Base.Tests;
@@ -92,7 +92,7 @@ public class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
         command.CommandText = "SELECT COUNT(*) FROM TestTable";
         var count = (int)(await command.ExecuteScalarAsync())!;
 
-        count.Should().Be(3, "all 3 records (Alice, Bob, Charlie) should be inserted successfully");
+        count.ShouldBe(3, "all 3 records (Alice, Bob, Charlie) should be inserted successfully");
     }
 
     [Fact]
@@ -118,7 +118,7 @@ public class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
         command.CommandText = "SELECT COUNT(*) FROM TestTable";
         var count = (int)(await command.ExecuteScalarAsync())!;
 
-        count.Should().Be(10, "all 10 User records should be inserted in 4 batches (3+3+3+1)");
+        count.ShouldBe(10, "all 10 User records should be inserted in 4 batches (3+3+3+1)");
     }
 
     [Fact]
@@ -154,7 +154,7 @@ public class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
         command.CommandText = "SELECT COUNT(*) FROM TestTable WHERE Id >= 100";
         var count = (int)(await command.ExecuteScalarAsync())!;
 
-        count.Should().Be(2, "Dave and Eve records (IDs 100-101) should be inserted with explicit column mappings");
+        count.ShouldBe(2, "Dave and Eve records (IDs 100-101) should be inserted with explicit column mappings");
     }
 
     [Fact]
@@ -167,7 +167,7 @@ public class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
             "TestTable",
             MapToDataTable);
 
-        await act.Should().ThrowAsync<OperationCanceledException>("ForEachParallelAsync cancels when connection factory returns null");
+        await Should.ThrowAsync<OperationCanceledException>(act);
     }
 
     [Fact]
@@ -180,7 +180,7 @@ public class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
             "NonExistentTable",
             MapToDataTable);
 
-        await act.Should().ThrowAsync<OperationCanceledException>("ForEachParallelAsync cancels when bulk copy fails due to non-existent table");
+        await Should.ThrowAsync<OperationCanceledException>(act);
     }
 
     [Fact]
@@ -195,7 +195,7 @@ public class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
             MapToDataTable,
             mappings);
 
-        await act.Should().ThrowAsync<OperationCanceledException>("ForEachParallelAsync cancels when connection factory returns null (with column mappings)");
+        await Should.ThrowAsync<OperationCanceledException>(act);
     }
 
     [Fact]
@@ -224,7 +224,7 @@ public class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
         command.CommandText = "SELECT Name FROM TestTable WHERE Id = 200";
         var name = (string)(await command.ExecuteScalarAsync())!;
 
-        name.Should().Be("Frank", "Frank record (ID 200) should be inserted with custom bulk copy options and timeout");
+        name.ShouldBe("Frank", "Frank record (ID 200) should be inserted with custom bulk copy options and timeout");
     }
 
     [Fact]
@@ -251,7 +251,7 @@ public class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
         command.CommandText = "SELECT COUNT(*) FROM TestTable WHERE Id >= 300";
         var count = (int)(await command.ExecuteScalarAsync())!;
 
-        count.Should().Be(2, "Grace and Hank records (IDs 300-301) should be inserted from IDataReader");
+        count.ShouldBe(2, "Grace and Hank records (IDs 300-301) should be inserted from IDataReader");
     }
 
     [Fact]
@@ -267,7 +267,7 @@ public class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
             () => null!,
             "TestTable");
 
-        await act.Should().ThrowAsync<OperationCanceledException>("ForEachParallelAsync cancels when connection factory returns null (DataReader overload)");
+        await Should.ThrowAsync<OperationCanceledException>(act);
     }
 
     [Fact]
@@ -282,6 +282,6 @@ public class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
             CreateConnection,
             "TestTable");
 
-        await act.Should().ThrowAsync<Exception>("ForEachParallelAsync should fail when attempting to use null IDataReader");
+        await Should.ThrowAsync<Exception>(act);
     }
 }

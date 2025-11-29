@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Rivulet.Base.Tests;
 using Rivulet.Core;
@@ -48,8 +48,8 @@ public class ParallelBackgroundServiceTests
 
         await service.StopAsync(CancellationToken.None);
 
-        service.ProcessedItems.Should().HaveCount(5);
-        service.ProcessedItems.Should().BeEquivalentTo([1, 2, 3, 4, 5]);
+        service.ProcessedItems.Count.ShouldBe(5);
+        service.ProcessedItems.OrderBy(x => x).ShouldBe([1, 2, 3, 4, 5]);
     }
 
     [Fact]
@@ -69,7 +69,7 @@ public class ParallelBackgroundServiceTests
 
         await service.StopAsync(CancellationToken.None);
 
-        service.ProcessedItems.Should().HaveCount(10);
+        service.ProcessedItems.Count.ShouldBe(10);
     }
 
 
@@ -80,8 +80,8 @@ public class ParallelBackgroundServiceTests
 
         var act = () => new TestBackgroundService(null!, items);
 
-        act.Should().Throw<ArgumentNullException>()
-            .WithParameterName("logger");
+        var ex = act.ShouldThrow<ArgumentNullException>();
+        ex.ParamName.ShouldBe("logger");
     }
 
     [Fact]
@@ -100,7 +100,7 @@ public class ParallelBackgroundServiceTests
 
         await service.StopAsync(CancellationToken.None);
 
-        service.ProcessedItems.Should().HaveCount(3);
+        service.ProcessedItems.Count.ShouldBe(3);
     }
 
     [Fact]
@@ -118,8 +118,8 @@ public class ParallelBackgroundServiceTests
 
         await service.StopAsync(CancellationToken.None);
 
-        service.ProcessedItems.Should().BeEmpty();
-        service.ProcessCallCount.Should().Be(0);
+        service.ProcessedItems.ShouldBeEmpty();
+        service.ProcessCallCount.ShouldBe(0);
     }
 
     [Fact]
@@ -138,7 +138,7 @@ public class ParallelBackgroundServiceTests
 
         await service.StopAsync(CancellationToken.None);
 
-        service.ProcessCallCount.Should().Be(7);
+        service.ProcessCallCount.ShouldBe(7);
     }
 
     [Fact]
@@ -167,7 +167,7 @@ public class ParallelBackgroundServiceTests
         await service.StopAsync(CancellationToken.None);
 
         // Assert - should exit gracefully without throwing
-        service.ProcessedItems.Count.Should().BeLessThan(100);
+        service.ProcessedItems.Count.ShouldBeLessThan(100);
     }
 
     [Fact]

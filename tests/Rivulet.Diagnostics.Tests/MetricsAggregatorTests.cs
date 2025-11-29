@@ -1,4 +1,4 @@
-using Rivulet.Core;
+﻿using Rivulet.Core;
 using Rivulet.Core.Observability;
 
 namespace Rivulet.Diagnostics.Tests
@@ -31,17 +31,17 @@ namespace Rivulet.Diagnostics.Tests
             // Wait for EventCounters to poll and write metrics, then for aggregation window to fire
             await Task.Delay(5000);
 
-            aggregatedMetrics.Should().NotBeEmpty();
+            aggregatedMetrics.ShouldNotBeEmpty();
             var lastAggregation = aggregatedMetrics.Last();
-            lastAggregation.Should().NotBeEmpty();
+            lastAggregation.ShouldNotBeEmpty();
 
             var itemsStartedMetric = lastAggregation.FirstOrDefault(m => m.Name == RivuletMetricsConstants.CounterNames.ItemsStarted);
-            itemsStartedMetric.Should().NotBeNull();
-            itemsStartedMetric.Min.Should().BeGreaterThanOrEqualTo(0);
-            itemsStartedMetric.Max.Should().BeGreaterThanOrEqualTo(itemsStartedMetric.Min);
-            itemsStartedMetric.Average.Should().BeGreaterThanOrEqualTo(0);
-            itemsStartedMetric.SampleCount.Should().BeGreaterThan(0);
-            itemsStartedMetric.Timestamp.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
+            itemsStartedMetric.ShouldNotBeNull();
+            itemsStartedMetric.Min.ShouldBeGreaterThanOrEqualTo(0);
+            itemsStartedMetric.Max.ShouldBeGreaterThanOrEqualTo(itemsStartedMetric.Min);
+            itemsStartedMetric.Average.ShouldBeGreaterThanOrEqualTo(0);
+            itemsStartedMetric.SampleCount.ShouldBeGreaterThan(0);
+            itemsStartedMetric.Timestamp.ShouldBe(DateTime.UtcNow, TimeSpan.FromSeconds(5));
         }
 
         [Fact]
@@ -71,7 +71,7 @@ namespace Rivulet.Diagnostics.Tests
             // Increased from 3000ms to 4000ms for better CI/CD reliability
             await Task.Delay(4000); // Fixed delay for timer-based aggregation
 
-            aggregatedMetrics.Should().NotBeEmpty();
+            aggregatedMetrics.ShouldNotBeEmpty();
 
             // Take a snapshot of the list to avoid "Collection was modified" exception
             // The aggregator timer may still be running and adding items during iteration
@@ -80,14 +80,14 @@ namespace Rivulet.Diagnostics.Tests
             // Check all aggregations, not just the last one, to avoid timing issues
             foreach (var aggregation in snapshot)
             {
-                aggregation.Should().NotBeEmpty();
+                aggregation.ShouldNotBeEmpty();
 
                 foreach (var metric in aggregation)
                 {
-                    metric.Min.Should().BeLessThanOrEqualTo(metric.Max);
-                    metric.Average.Should().BeInRange(metric.Min, metric.Max);
-                    metric.Current.Should().BeInRange(metric.Min, metric.Max);
-                    metric.SampleCount.Should().BeGreaterThan(0);
+                    metric.Min.ShouldBeLessThanOrEqualTo(metric.Max);
+                    metric.Average.ShouldBeInRange(metric.Min, metric.Max);
+                    metric.Current.ShouldBeInRange(metric.Min, metric.Max);
+                    metric.SampleCount.ShouldBeGreaterThan(0);
                 }
             }
         }
@@ -120,9 +120,9 @@ namespace Rivulet.Diagnostics.Tests
             // Increased from 2000ms to 3000ms for better CI/CD reliability
             await Task.Delay(3000); // Fixed delay for timer-based aggregation
 
-            aggregatedMetrics.Should().NotBeEmpty("aggregation should have captured metrics after sufficient wait time");
+            aggregatedMetrics.ShouldNotBeEmpty("aggregation should have captured metrics after sufficient wait time");
             var firstAggregation = aggregatedMetrics.First();
-            firstAggregation.Should().NotBeEmpty();
+            firstAggregation.ShouldNotBeEmpty();
 
             // Wait for another aggregation window to potentially expire samples
             // This verifies that the aggregator handles sample expiration gracefully
@@ -130,16 +130,16 @@ namespace Rivulet.Diagnostics.Tests
             await Task.Delay(2500);
 
             var totalAggregations = aggregatedMetrics.Count;
-            totalAggregations.Should().BeGreaterThanOrEqualTo(1);
+            totalAggregations.ShouldBeGreaterThanOrEqualTo(1);
 
             // Verify all captured aggregations have valid data
             foreach (var aggregation in aggregatedMetrics)
             {
-                aggregation.Should().NotBeEmpty();
+                aggregation.ShouldNotBeEmpty();
                 foreach (var metric in aggregation)
                 {
-                    metric.SampleCount.Should().BeGreaterThan(0);
-                    metric.Min.Should().BeLessThanOrEqualTo(metric.Max);
+                    metric.SampleCount.ShouldBeGreaterThan(0);
+                    metric.Min.ShouldBeLessThanOrEqualTo(metric.Max);
                 }
             }
         }
@@ -149,7 +149,7 @@ namespace Rivulet.Diagnostics.Tests
         {
             var aggregator = new MetricsAggregator();
             var act = () => aggregator.Dispose();
-            act.Should().NotThrow();
+            act.ShouldNotThrow();
         }
 
         [Fact]
@@ -160,7 +160,7 @@ namespace Rivulet.Diagnostics.Tests
 
             // Second dispose should not throw (tests disposal guard at line 137)
             var act = () => aggregator.Dispose();
-            act.Should().NotThrow();
+            act.ShouldNotThrow();
         }
 
         [Fact]
@@ -171,7 +171,7 @@ namespace Rivulet.Diagnostics.Tests
 
             // Second dispose should not throw (tests disposal guard at line 155)
             var act = async () => await aggregator.DisposeAsync();
-            await act.Should().NotThrowAsync();
+            await act.ShouldNotThrowAsync();
         }
     }
 }

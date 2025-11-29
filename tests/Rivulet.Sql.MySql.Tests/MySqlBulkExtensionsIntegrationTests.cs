@@ -1,4 +1,4 @@
-using MySqlConnector;
+﻿using MySqlConnector;
 using Testcontainers.MySql;
 
 namespace Rivulet.Sql.MySql.Tests;
@@ -78,7 +78,7 @@ public class MySqlBulkExtensionsIntegrationTests : IAsyncLifetime
         command.CommandText = "SELECT COUNT(*) FROM TestTable";
         var count = Convert.ToInt64(await command.ExecuteScalarAsync());
 
-        count.Should().Be(3);
+        count.ShouldBe(3);
     }
 
     [Fact]
@@ -105,7 +105,7 @@ public class MySqlBulkExtensionsIntegrationTests : IAsyncLifetime
         command.CommandText = "SELECT COUNT(*) FROM TestTable";
         var count = Convert.ToInt64(await command.ExecuteScalarAsync());
 
-        count.Should().Be(10);
+        count.ShouldBe(10);
     }
 
     [Fact]
@@ -135,7 +135,7 @@ public class MySqlBulkExtensionsIntegrationTests : IAsyncLifetime
         command.CommandText = "SELECT COUNT(*) FROM TestTable WHERE Id >= 100";
         var count = Convert.ToInt64(await command.ExecuteScalarAsync());
 
-        count.Should().Be(2);
+        count.ShouldBe(2);
     }
 
     [Fact]
@@ -150,7 +150,7 @@ public class MySqlBulkExtensionsIntegrationTests : IAsyncLifetime
             columnNames);
 
         // ForEachParallelAsync cancels the operation when an exception occurs
-        await act.Should().ThrowAsync<OperationCanceledException>();
+        await act.ShouldThrowAsync<OperationCanceledException>();
     }
 
     [Fact]
@@ -165,7 +165,7 @@ public class MySqlBulkExtensionsIntegrationTests : IAsyncLifetime
             columnNames);
 
         // ForEachParallelAsync cancels the operation when an exception occurs
-        await act.Should().ThrowAsync<OperationCanceledException>();
+        await act.ShouldThrowAsync<OperationCanceledException>();
     }
 
     [Fact]
@@ -201,7 +201,7 @@ public class MySqlBulkExtensionsIntegrationTests : IAsyncLifetime
             command.CommandText = "SELECT COUNT(*) FROM TestTable WHERE Id >= 200";
             var count = Convert.ToInt64(await command.ExecuteScalarAsync());
 
-            count.Should().Be(3);
+            count.ShouldBe(3);
         }
         finally
         {
@@ -226,7 +226,7 @@ public class MySqlBulkExtensionsIntegrationTests : IAsyncLifetime
                 columnNames);
 
             // ForEachParallelAsync cancels the operation when an exception occurs
-            await act.Should().ThrowAsync<OperationCanceledException>();
+            await act.ShouldThrowAsync<OperationCanceledException>();
         }
         finally
         {
@@ -246,6 +246,6 @@ public class MySqlBulkExtensionsIntegrationTests : IAsyncLifetime
             columnNames);
 
         // ForEachParallelAsync cancels the operation when an exception occurs
-        await act.Should().ThrowAsync<Exception>();
+        await act.ShouldThrowAsync<Exception>();
     }
 }

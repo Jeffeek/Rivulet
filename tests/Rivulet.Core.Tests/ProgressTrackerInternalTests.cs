@@ -1,4 +1,4 @@
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using Rivulet.Base.Tests;
 using Rivulet.Core.Observability;
 
@@ -29,7 +29,7 @@ public class ProgressTrackerInternalTests
             tracker.IncrementCompleted();
 
             var act = async () => await tracker.DisposeAsync();
-            await act.Should().NotThrowAsync();
+            await act.ShouldNotThrowAsync();
         }
         finally
         {
@@ -55,7 +55,7 @@ public class ProgressTrackerInternalTests
         await Task.Delay(50, CancellationToken.None);
 
         var act = async () => await tracker.DisposeAsync();
-        await act.Should().NotThrowAsync();
+        await act.ShouldNotThrowAsync();
     }
 
     [Fact]
@@ -75,7 +75,7 @@ public class ProgressTrackerInternalTests
         await cts.CancelAsync();
 
         var act = async () => await tracker.DisposeAsync();
-        await act.Should().NotThrowAsync();
+        await act.ShouldNotThrowAsync();
     }
 
     [Fact]
@@ -102,12 +102,12 @@ public class ProgressTrackerInternalTests
 
         // Wait for callback to actually fire (with timeout for safety)
         var completedInTime = await Task.WhenAny(callbackFired.Task, Task.Delay(500, CancellationToken.None)) == callbackFired.Task;
-        completedInTime.Should().BeTrue("callback should fire within 500ms");
+        completedInTime.ShouldBeTrue("callback should fire within 500ms");
 
         var act = async () => await tracker.DisposeAsync();
-        await act.Should().NotThrowAsync();
+        await act.ShouldNotThrowAsync();
 
-        callbackCount.Should().BeGreaterThan(0);
+        callbackCount.ShouldBeGreaterThan(0);
     }
 
     [Fact]
@@ -134,9 +134,9 @@ public class ProgressTrackerInternalTests
 
         await cts.CancelAsync();
         var act = async () => await tracker.DisposeAsync();
-        await act.Should().NotThrowAsync();
+        await act.ShouldNotThrowAsync();
 
-        reportCount.Should().BeGreaterThan(0);
+        reportCount.ShouldBeGreaterThan(0);
     }
 
     [Fact]
@@ -170,11 +170,11 @@ public class ProgressTrackerInternalTests
                 () => Task.Delay(20, CancellationToken.None),
                 () => lastSnapshot == null);
 
-            lastSnapshot.Should().NotBeNull();
-            lastSnapshot!.TotalItems.Should().BeNull();
-            lastSnapshot.PercentComplete.Should().BeNull();
-            lastSnapshot.EstimatedTimeRemaining.Should().BeNull();
-            lastSnapshot.ItemsCompleted.Should().Be(10);
+            lastSnapshot.ShouldNotBeNull();
+            lastSnapshot!.TotalItems.ShouldBeNull();
+            lastSnapshot.PercentComplete.ShouldBeNull();
+            lastSnapshot.EstimatedTimeRemaining.ShouldBeNull();
+            lastSnapshot.ItemsCompleted.ShouldBe(10);
         }
         finally
         {
@@ -230,10 +230,10 @@ public class ProgressTrackerInternalTests
                 () => Task.Delay(20, CancellationToken.None),
                 () => lastSnapshot is not { ErrorCount: 5 });
 
-            lastSnapshot.Should().NotBeNull();
-            lastSnapshot!.ErrorCount.Should().Be(5);
-            lastSnapshot.ItemsCompleted.Should().Be(10);
-            lastSnapshot.ItemsStarted.Should().Be(15);
+            lastSnapshot.ShouldNotBeNull();
+            lastSnapshot!.ErrorCount.ShouldBe(5);
+            lastSnapshot.ItemsCompleted.ShouldBe(10);
+            lastSnapshot.ItemsStarted.ShouldBe(15);
         }
         finally
         {

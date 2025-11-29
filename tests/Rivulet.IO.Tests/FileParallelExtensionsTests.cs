@@ -1,4 +1,4 @@
-using Rivulet.Base.Tests;
+﻿using Rivulet.Base.Tests;
 
 namespace Rivulet.IO.Tests;
 
@@ -23,8 +23,11 @@ public class FileParallelExtensionsTests : TempDirectoryFixture
         var results = await filePaths.ReadAllTextParallelAsync();
 
         // Assert
-        results.Should().HaveCount(3);
-        results.Should().Contain(expectedContents);
+        results.Count.ShouldBe(3);
+        foreach (var expected in expectedContents)
+        {
+            results.ShouldContain(expected);
+        }
     }
 
     [Fact]
@@ -34,7 +37,7 @@ public class FileParallelExtensionsTests : TempDirectoryFixture
         var act = async () => await ((IEnumerable<string>)null!).ReadAllTextParallelAsync();
 
         // Assert
-        await act.Should().ThrowAsync<ArgumentNullException>();
+        await act.ShouldThrowAsync<ArgumentNullException>();
     }
 
     [Fact]
@@ -57,9 +60,9 @@ public class FileParallelExtensionsTests : TempDirectoryFixture
             new() { ParallelOptions = new() { OrderedOutput = true } });
 
         // Assert
-        results.Should().HaveCount(2);
-        results[0].Should().Equal(expectedContents[0]);
-        results[1].Should().Equal(expectedContents[1]);
+        results.Count.ShouldBe(2);
+        results[0].ShouldBe(expectedContents[0]);
+        results[1].ShouldBe(expectedContents[1]);
     }
 
     [Fact]
@@ -77,9 +80,9 @@ public class FileParallelExtensionsTests : TempDirectoryFixture
             new() { ParallelOptions = new() { OrderedOutput = true } });
 
         // Assert
-        results.Should().HaveCount(2);
-        results[0].Should().Equal("Line 1", "Line 2");
-        results[1].Should().Equal("Line A", "Line B", "Line C");
+        results.Count.ShouldBe(2);
+        results[0].ShouldBe(new[] { "Line 1", "Line 2" });
+        results[1].ShouldBe(new[] { "Line A", "Line B", "Line C" });
     }
 
     [Fact]
@@ -98,13 +101,13 @@ public class FileParallelExtensionsTests : TempDirectoryFixture
         var results = await writes.WriteAllTextParallelAsync(options);
 
         // Assert
-        results.Should().HaveCount(2);
+        results.Count.ShouldBe(2);
 
         var content1 = await File.ReadAllTextAsync(writes[0].Item1);
         var content2 = await File.ReadAllTextAsync(writes[1].Item1);
 
-        content1.Should().Be("Content 1");
-        content2.Should().Be("Content 2");
+        content1.ShouldBe("Content 1");
+        content2.ShouldBe("Content 2");
     }
 
     [Fact]
@@ -121,7 +124,7 @@ public class FileParallelExtensionsTests : TempDirectoryFixture
         var act = async () => await writes.WriteAllTextParallelAsync(options);
 
         // Assert
-        await act.Should().ThrowAsync<IOException>();
+        await act.ShouldThrowAsync<IOException>();
     }
 
     [Fact]
@@ -140,13 +143,13 @@ public class FileParallelExtensionsTests : TempDirectoryFixture
         var results = await writes.WriteAllBytesParallelAsync(options);
 
         // Assert
-        results.Should().HaveCount(2);
+        results.Count.ShouldBe(2);
 
         var bytes1 = await File.ReadAllBytesAsync(writes[0].Item1);
         var bytes2 = await File.ReadAllBytesAsync(writes[1].Item1);
 
-        bytes1.Should().Equal(1, 2, 3);
-        bytes2.Should().Equal(4, 5, 6);
+        ((IEnumerable<byte>)bytes1).ShouldBe(new byte[] { 1, 2, 3 });
+        ((IEnumerable<byte>)bytes2).ShouldBe(new byte[] { 4, 5, 6 });
     }
 
     [Fact]
@@ -173,13 +176,13 @@ public class FileParallelExtensionsTests : TempDirectoryFixture
             new() { OverwriteExisting = true });
 
         // Assert
-        results.Should().HaveCount(2);
+        results.Count.ShouldBe(2);
 
         var dest1Content = await File.ReadAllTextAsync(destFile1);
         var dest2Content = await File.ReadAllTextAsync(destFile2);
 
-        dest1Content.Should().Be("HELLO");
-        dest2Content.Should().Be("WORLD");
+        dest1Content.ShouldBe("HELLO");
+        dest2Content.ShouldBe("WORLD");
     }
 
     [Fact]
@@ -201,16 +204,16 @@ public class FileParallelExtensionsTests : TempDirectoryFixture
             new() { OverwriteExisting = true });
 
         // Assert
-        results.Should().HaveCount(2);
+        results.Count.ShouldBe(2);
 
-        File.Exists(dest1).Should().BeTrue();
-        File.Exists(dest2).Should().BeTrue();
+        File.Exists(dest1).ShouldBeTrue();
+        File.Exists(dest2).ShouldBeTrue();
 
         var dest1Content = await File.ReadAllTextAsync(dest1);
         var dest2Content = await File.ReadAllTextAsync(dest2);
 
-        dest1Content.Should().Be("Copy Content 1");
-        dest2Content.Should().Be("Copy Content 2");
+        dest1Content.ShouldBe("Copy Content 1");
+        dest2Content.ShouldBe("Copy Content 2");
     }
 
     [Fact]
@@ -227,9 +230,9 @@ public class FileParallelExtensionsTests : TempDirectoryFixture
         var results = await new[] { file1, file2 }.DeleteFilesParallelAsync();
 
         // Assert
-        results.Should().HaveCount(2);
-        File.Exists(file1).Should().BeFalse();
-        File.Exists(file2).Should().BeFalse();
+        results.Count.ShouldBe(2);
+        File.Exists(file1).ShouldBeFalse();
+        File.Exists(file2).ShouldBeFalse();
     }
 
     [Fact]
@@ -260,8 +263,8 @@ public class FileParallelExtensionsTests : TempDirectoryFixture
         await new[] { filePath }.ReadAllTextParallelAsync(options);
 
         // Assert
-        startCalled.Should().BeTrue();
-        completeCalled.Should().BeTrue();
+        startCalled.ShouldBeTrue();
+        completeCalled.ShouldBeTrue();
     }
 
     [Fact]
@@ -281,9 +284,9 @@ public class FileParallelExtensionsTests : TempDirectoryFixture
         await writes.WriteAllTextParallelAsync(options);
 
         // Assert
-        File.Exists(nestedPath).Should().BeTrue();
+        File.Exists(nestedPath).ShouldBeTrue();
         var content = await File.ReadAllTextAsync(nestedPath);
-        content.Should().Be("Content in nested directory");
+        content.ShouldBe("Content in nested directory");
     }
 
     [Fact]
@@ -304,6 +307,6 @@ public class FileParallelExtensionsTests : TempDirectoryFixture
         var results = await new[] { filePath }.ReadAllTextParallelAsync(options);
 
         // Assert
-        results[0].Should().Be(content);
+        results[0].ShouldBe(content);
     }
 }

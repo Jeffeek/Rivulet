@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Rivulet.Core.Resilience;
 
@@ -35,11 +35,11 @@ public class RateLimitingTests
 
         sw.Stop();
 
-        results.Should().HaveCount(150);
+        results.Count.ShouldBe(150);
         // First 50 burst immediately, remaining 100 at 100/sec = 1 second minimum
         // Total should be at least 1 second
-        sw.Elapsed.Should().BeGreaterThan(TimeSpan.FromMilliseconds(900));
-        sw.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(3)); // Upper bound for sanity
+        sw.Elapsed.ShouldBeGreaterThan(TimeSpan.FromMilliseconds(900));
+        sw.Elapsed.ShouldBeLessThan(TimeSpan.FromSeconds(3)); // Upper bound for sanity
     }
 
     [Fact]
@@ -68,10 +68,10 @@ public class RateLimitingTests
 
         sw.Stop();
 
-        results.Should().HaveCount(20);
+        results.Count.ShouldBe(20);
         // First 20 items should process quickly due to burst capacity
         // Should complete faster than if rate-limited from start
-        sw.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(1));
+        sw.Elapsed.ShouldBeLessThan(TimeSpan.FromSeconds(1));
     }
 
     [Fact]
@@ -104,10 +104,10 @@ public class RateLimitingTests
 
         sw.Stop();
 
-        results.Should().HaveCount(20);
+        results.Count.ShouldBe(20);
         // Should take at least 1.4 seconds (allowing for CI/CD variance)
-        sw.Elapsed.Should().BeGreaterThan(TimeSpan.FromMilliseconds(1400));
-        sw.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(10));
+        sw.Elapsed.ShouldBeGreaterThan(TimeSpan.FromMilliseconds(1400));
+        sw.Elapsed.ShouldBeLessThan(TimeSpan.FromSeconds(10));
     }
 
     [Fact]
@@ -137,9 +137,9 @@ public class RateLimitingTests
 
         sw.Stop();
 
-        count.Should().Be(80);
-        sw.Elapsed.Should().BeGreaterThan(TimeSpan.FromMilliseconds(450));
-        sw.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(2));
+        count.ShouldBe(80);
+        sw.Elapsed.ShouldBeGreaterThan(TimeSpan.FromMilliseconds(450));
+        sw.Elapsed.ShouldBeLessThan(TimeSpan.FromSeconds(2));
     }
 
     [Fact]
@@ -164,49 +164,44 @@ public class RateLimitingTests
 
         sw.Stop();
 
-        results.Should().HaveCount(50);
+        results.Count.ShouldBe(50);
         // Without rate limiting, should complete very quickly
-        sw.Elapsed.Should().BeLessThan(TimeSpan.FromMilliseconds(500));
+        sw.Elapsed.ShouldBeLessThan(TimeSpan.FromMilliseconds(500));
     }
 
     [Fact]
     public void TokenBucket_Constructor_ThrowsOnNullOptions()
     {
         var act = () => new TokenBucket(null!);
-        act.Should().Throw<ArgumentNullException>()
-            .WithMessage("*options*");
+        act.ShouldThrow<ArgumentNullException>().Message.ShouldContain("options");
     }
 
     [Fact]
     public void TokenBucket_Constructor_ValidatesOptions()
     {
         var act = () => new TokenBucket(new() { TokensPerSecond = 0 });
-        act.Should().Throw<ArgumentException>()
-            .WithMessage("*TokensPerSecond*");
+        act.ShouldThrow<ArgumentException>().Message.ShouldContain("TokensPerSecond");
     }
 
     [Fact]
     public void RateLimitOptions_Validation_ThrowsOnInvalidTokensPerSecond()
     {
         var act = () => new RateLimitOptions { TokensPerSecond = 0 }.Validate();
-        act.Should().Throw<ArgumentException>()
-            .WithMessage("*TokensPerSecond*");
+        act.ShouldThrow<ArgumentException>().Message.ShouldContain("TokensPerSecond");
     }
 
     [Fact]
     public void RateLimitOptions_Validation_ThrowsOnInvalidBurstCapacity()
     {
         var act = () => new RateLimitOptions { BurstCapacity = 0 }.Validate();
-        act.Should().Throw<ArgumentException>()
-            .WithMessage("*BurstCapacity*");
+        act.ShouldThrow<ArgumentException>().Message.ShouldContain("BurstCapacity");
     }
 
     [Fact]
     public void RateLimitOptions_Validation_ThrowsOnInvalidTokensPerOperation()
     {
         var act = () => new RateLimitOptions { TokensPerOperation = 0 }.Validate();
-        act.Should().Throw<ArgumentException>()
-            .WithMessage("*TokensPerOperation*");
+        act.ShouldThrow<ArgumentException>().Message.ShouldContain("TokensPerOperation");
     }
 
     [Fact]
@@ -218,8 +213,7 @@ public class RateLimitingTests
             TokensPerOperation = 10
         }.Validate();
 
-        act.Should().Throw<ArgumentException>()
-            .WithMessage("*BurstCapacity*");
+        act.ShouldThrow<ArgumentException>().Message.ShouldContain("BurstCapacity");
     }
 
     [Fact]
@@ -255,7 +249,7 @@ public class RateLimitingTests
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => await task);
 
-        processedCount.Should().BeLessThan(100);
+        processedCount.ShouldBeLessThan(100);
     }
 
     [Fact]
@@ -295,10 +289,10 @@ public class RateLimitingTests
 
         sw.Stop();
 
-        results.Should().HaveCount(15);
+        results.Count.ShouldBe(15);
         // Should take at least 0.1 seconds for the rate-limited portion (with tolerance for timing)
-        sw.Elapsed.Should().BeGreaterThan(TimeSpan.FromMilliseconds(100));
-        sw.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(2));
+        sw.Elapsed.ShouldBeGreaterThan(TimeSpan.FromMilliseconds(100));
+        sw.Elapsed.ShouldBeLessThan(TimeSpan.FromSeconds(2));
     }
 
     [Fact]
@@ -325,9 +319,9 @@ public class RateLimitingTests
             },
             options);
 
-        results.Should().HaveCount(20);
-        results.Should().BeInAscendingOrder();
-        results.Should().Equal(Enumerable.Range(1, 20).Select(x => x * 2));
+        results.Count.ShouldBe(20);
+        results.ShouldBeInOrder();
+        results.ShouldBe(Enumerable.Range(1, 20).Select(x => x * 2));
     }
 
     [Fact]
@@ -358,10 +352,10 @@ public class RateLimitingTests
 
         sw.Stop();
 
-        results.Should().HaveCount(1200);
+        results.Count.ShouldBe(1200);
         // Should take at least 0.6 seconds
-        sw.Elapsed.Should().BeGreaterThan(TimeSpan.FromMilliseconds(600));
-        sw.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(3));
+        sw.Elapsed.ShouldBeGreaterThan(TimeSpan.FromMilliseconds(600));
+        sw.Elapsed.ShouldBeLessThan(TimeSpan.FromSeconds(3));
     }
 
     [Fact]
@@ -392,10 +386,10 @@ public class RateLimitingTests
 
         sw.Stop();
 
-        results.Should().HaveCount(12);
+        results.Count.ShouldBe(12);
         // Should take at least 1.7 seconds
-        sw.Elapsed.Should().BeGreaterThan(TimeSpan.FromMilliseconds(1700));
-        sw.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(4));
+        sw.Elapsed.ShouldBeGreaterThan(TimeSpan.FromMilliseconds(1700));
+        sw.Elapsed.ShouldBeLessThan(TimeSpan.FromSeconds(4));
     }
 
     [Fact]
@@ -425,7 +419,7 @@ public class RateLimitingTests
             options);
 
         // Should get 16 results (20 - 4 failures)
-        results.Should().HaveCount(16);
+        results.Count.ShouldBe(16);
     }
 
     [Fact]
@@ -439,7 +433,7 @@ public class RateLimitingTests
         });
 
         var result = bucket.TryAcquire();
-        result.Should().BeTrue();
+        result.ShouldBeTrue();
     }
 
     [Fact]
@@ -452,11 +446,11 @@ public class RateLimitingTests
             TokensPerOperation = 1
         });
 
-        bucket.TryAcquire().Should().BeTrue();
-        bucket.TryAcquire().Should().BeTrue();
+        bucket.TryAcquire().ShouldBeTrue();
+        bucket.TryAcquire().ShouldBeTrue();
 
         var result = bucket.TryAcquire();
-        result.Should().BeFalse();
+        result.ShouldBeFalse();
     }
 
     [Fact]
@@ -470,7 +464,7 @@ public class RateLimitingTests
         });
 
         var tokens = bucket.GetAvailableTokens();
-        tokens.Should().Be(50);
+        tokens.ShouldBe(50);
     }
 
     [Fact]
@@ -485,16 +479,16 @@ public class RateLimitingTests
 
         // Exhaust bucket
         for (var i = 0; i < 10; i++)
-            bucket.TryAcquire().Should().BeTrue();
+            bucket.TryAcquire().ShouldBeTrue();
 
-        bucket.GetAvailableTokens().Should().BeLessThan(1);
+        bucket.GetAvailableTokens().ShouldBeLessThan(1);
 
         // Wait for refill
         await Task.Delay(200); // 200ms should add ~20 tokens (100 tokens/sec = 0.1 tokens/ms)
 
         var tokens = bucket.GetAvailableTokens();
-        tokens.Should().BeGreaterThan(5);
-        tokens.Should().BeLessThanOrEqualTo(10);
+        tokens.ShouldBeGreaterThan(5);
+        tokens.ShouldBeLessThanOrEqualTo(10);
     }
 
     [Fact]
@@ -508,13 +502,13 @@ public class RateLimitingTests
         });
 
         // Should succeed with 10 tokens available and 5 needed
-        bucket.TryAcquire().Should().BeTrue();
+        bucket.TryAcquire().ShouldBeTrue();
 
         // Should succeed again (10 - 5 = 5 remaining)
-        bucket.TryAcquire().Should().BeTrue();
+        bucket.TryAcquire().ShouldBeTrue();
 
         // Should fail now (0 tokens remaining)
-        bucket.TryAcquire().Should().BeFalse();
+        bucket.TryAcquire().ShouldBeFalse();
     }
 
     [Fact]
@@ -535,7 +529,7 @@ public class RateLimitingTests
         }
 
         // Should not crash and should maintain valid state
-        bucket.GetAvailableTokens().Should().BeLessThanOrEqualTo(100);
-        bucket.GetAvailableTokens().Should().BeGreaterThanOrEqualTo(0);
+        bucket.GetAvailableTokens().ShouldBeLessThanOrEqualTo(100);
+        bucket.GetAvailableTokens().ShouldBeGreaterThanOrEqualTo(0);
     }
 }

@@ -1,4 +1,4 @@
-namespace Rivulet.Core.Tests;
+﻿namespace Rivulet.Core.Tests;
 
 public class SelectParallelAsyncTests
 {
@@ -10,7 +10,7 @@ public class SelectParallelAsyncTests
         var results = await source.SelectParallelAsync(
             (x, _) => new ValueTask<int>(x * 2));
 
-        results.Should().BeEmpty();
+        results.ShouldBeEmpty();
     }
 
     [Fact]
@@ -21,7 +21,7 @@ public class SelectParallelAsyncTests
         var results = await source.SelectParallelAsync(
             (x, _) => new ValueTask<int>(x * 2));
 
-        results.Should().ContainSingle().Which.Should().Be(10);
+        results.ShouldHaveSingleItem().ShouldBe(10);
     }
 
     [Fact]
@@ -32,8 +32,8 @@ public class SelectParallelAsyncTests
         var results = await source.SelectParallelAsync(
             (x, _) => new ValueTask<int>(x * 2));
 
-        results.Should().HaveCount(10);
-        results.OrderBy(x => x).Should().BeEquivalentTo([2, 4, 6, 8, 10, 12, 14, 16, 18, 20]);
+        results.Count.ShouldBe(10);
+        results.OrderBy(x => x).ShouldBe(new[] { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20 });
     }
 
     [Fact]
@@ -44,8 +44,8 @@ public class SelectParallelAsyncTests
         var results = await source.SelectParallelAsync(
             (x, _) => new ValueTask<int>(x * 2));
 
-        results.Should().HaveCount(1000);
-        results.Sum().Should().Be(1001000);
+        results.Count.ShouldBe(1000);
+        results.Sum().ShouldBe(1001000);
     }
 
     [Fact]
@@ -65,11 +65,11 @@ public class SelectParallelAsyncTests
 
         var duration = DateTime.UtcNow - startTime;
 
-        results.Should().HaveCount(10);
+        results.Count.ShouldBe(10);
         // Increased from 500ms to 1000ms to account for CI environment variability
         // With MaxDegreeOfParallelism=5 and 10 items of 100ms each, ideal time is ~200ms
         // but CI environments can have high scheduling overhead
-        duration.Should().BeLessThan(TimeSpan.FromMilliseconds(1000));
+        duration.ShouldBeLessThan(TimeSpan.FromMilliseconds(1000));
     }
 
     [Fact]
@@ -101,8 +101,8 @@ public class SelectParallelAsyncTests
             },
             options);
 
-        results.Should().HaveCount(20);
-        maxConcurrent.Should().BeLessThanOrEqualTo(3);
+        results.Count.ShouldBe(20);
+        maxConcurrent.ShouldBeLessThanOrEqualTo(3);
     }
 
     [Fact]
@@ -114,8 +114,8 @@ public class SelectParallelAsyncTests
             (x, _) => new ValueTask<int>(x * 2),
             options: null);
 
-        results.Should().HaveCount(5);
-        results.Should().BeEquivalentTo([2, 4, 6, 8, 10]);
+        results.Count.ShouldBe(5);
+        results.OrderBy(x => x).ShouldBe(new[] { 2, 4, 6, 8, 10 });
     }
 
     [Fact]
@@ -136,7 +136,7 @@ public class SelectParallelAsyncTests
             },
             options);
 
-        results.Should().HaveCount(100);
+        results.Count.ShouldBe(100);
     }
 
     [Fact]
@@ -151,9 +151,9 @@ public class SelectParallelAsyncTests
                 return new { Original = x, Squared = x * x, IsEven = x % 2 == 0 };
             });
 
-        results.Should().HaveCount(50);
-        results.Where(r => r.IsEven).Should().HaveCount(25);
-        results.First(r => r.Original == 5).Squared.Should().Be(25);
+        results.Count.ShouldBe(50);
+        results.Where(r => r.IsEven).Count().ShouldBe(25);
+        results.First(r => r.Original == 5).Squared.ShouldBe(25);
     }
 
     [Fact]
@@ -164,7 +164,7 @@ public class SelectParallelAsyncTests
         var results = await source.SelectParallelAsync(
             (x, _) => new ValueTask<int>(x * 2));
 
-        results.Should().HaveCount(10);
+        results.Count.ShouldBe(10);
     }
 
     [Fact]
@@ -175,7 +175,7 @@ public class SelectParallelAsyncTests
         var results = await source.SelectParallelAsync(
             (s, _) => new ValueTask<string>(s.ToUpper()));
 
-        results.Should().BeEquivalentTo("HELLO", "WORLD", "TEST", "XUNIT");
+        results.OrderBy(x => x).ShouldBe(new[] { "HELLO", "TEST", "WORLD", "XUNIT" });
     }
 
     [Fact]
@@ -196,8 +196,11 @@ public class SelectParallelAsyncTests
                 OnFallback = (_, _) => -1
             });
 
-        results.Should().HaveCount(10);
-        results.Should().Contain([2, 4, -1, 8, 10, 12, -1, 16, 18, 20]);
+        results.Count.ShouldBe(10);
+        foreach (var expected in new[] { 2, 4, -1, 8, 10, 12, -1, 16, 18, 20 })
+        {
+            results.ShouldContain(expected);
+        }
     }
 
     [Fact]
@@ -222,9 +225,12 @@ public class SelectParallelAsyncTests
                 OnFallback = (_, _) => 999
             });
 
-        results.Should().HaveCount(5);
-        results.Should().Contain([10, 20, 999, 40, 50]);
-        attemptCounts[3].Should().Be(3); // Initial + 2 retries
+        results.Count.ShouldBe(5);
+        foreach (var expected in new[] { 10, 20, 999, 40, 50 })
+        {
+            results.ShouldContain(expected);
+        }
+        attemptCounts[3].ShouldBe(3); // Initial + 2 retries
     }
 
     [Fact]
@@ -244,8 +250,8 @@ public class SelectParallelAsyncTests
                 OnFallback = (_, _) => null
             });
 
-        results.Should().HaveCount(3);
-        results.Should().BeEquivalentTo("A", null, "C");
+        results.Count.ShouldBe(3);
+        results.OrderBy(x => x).ShouldBe(new[] { null, "A", "C" });
     }
 
     [Fact]
@@ -267,8 +273,11 @@ public class SelectParallelAsyncTests
                 OnFallback = (_, ex) => ex is TimeoutException ? -1 : -2
             });
 
-        results.Should().HaveCount(5);
-        results.Should().Contain([10, -1, 30, -2, 50]);
+        results.Count.ShouldBe(5);
+        foreach (var expected in new[] { 10, -1, 30, -2, 50 })
+        {
+            results.ShouldContain(expected);
+        }
     }
 
     [Fact]
@@ -288,9 +297,12 @@ public class SelectParallelAsyncTests
                 OnFallback = (index, _) => index * 1000
             });
 
-        results.Should().HaveCount(4);
+        results.Count.ShouldBe(4);
         // Index 0 -> 10, Index 1 -> 1000, Index 2 -> 30, Index 3 -> 3000
-        results.Should().Contain([10, 1000, 30, 3000]);
+        foreach (var expected in new[] { 10, 1000, 30, 3000 })
+        {
+            results.ShouldContain(expected);
+        }
     }
 
     [Fact]
@@ -327,7 +339,10 @@ public class SelectParallelAsyncTests
                 OnFallback = (_, _) => (0, "FAILED")
             });
 
-        results.Should().HaveCount(4);
-        results.Should().Contain([(1, "OK"), (0, "FAILED"), (3, "OK"), (4, "OK")]);
+        results.Count.ShouldBe(4);
+        foreach (var expected in new[] { (1, "OK"), (0, "FAILED"), (3, "OK"), (4, "OK") })
+        {
+            results.ShouldContain(expected);
+        }
     }
 }

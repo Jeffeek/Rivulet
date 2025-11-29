@@ -1,4 +1,4 @@
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 
 namespace Rivulet.Testing.Tests;
 
@@ -13,7 +13,7 @@ public class ChaosInjectorTests
         for (var i = 0; i < 100; i++)
         {
             var result = await injector.ExecuteAsync(() => Task.FromResult(42));
-            result.Should().Be(42);
+            result.ShouldBe(42);
         }
     }
 
@@ -24,7 +24,7 @@ public class ChaosInjectorTests
 
         var act = async () => await injector.ExecuteAsync(() => Task.FromResult(42));
 
-        await act.Should().ThrowAsync<ChaosException>();
+        await act.ShouldThrowAsync<ChaosException>();
     }
 
     [Fact]
@@ -36,7 +36,7 @@ public class ChaosInjectorTests
         await injector.ExecuteAsync(() => Task.FromResult(42));
         sw.Stop();
 
-        sw.ElapsedMilliseconds.Should().BeGreaterThanOrEqualTo(90);
+        sw.ElapsedMilliseconds.ShouldBeGreaterThanOrEqualTo(90);
     }
 
     [Fact]
@@ -47,7 +47,7 @@ public class ChaosInjectorTests
 
         var act = async () => await injector.ExecuteAsync(() => Task.FromResult(42), cts.Token);
 
-        await act.Should().ThrowAsync<TaskCanceledException>();
+        await act.ShouldThrowAsync<TaskCanceledException>();
     }
 
     [Fact]
@@ -57,7 +57,7 @@ public class ChaosInjectorTests
 
         var result = await injector.ExecuteAsync(() => Task.FromResult("test result"));
 
-        result.Should().Be("test result");
+        result.ShouldBe("test result");
     }
 
     [Fact]
@@ -67,8 +67,8 @@ public class ChaosInjectorTests
 
         var act = async () => await injector.ExecuteAsync<int>(() => throw new ArgumentException("Action error"));
 
-        await act.Should().ThrowAsync<ArgumentException>()
-            .WithMessage("Action error");
+        var ex = await act.ShouldThrowAsync<ArgumentException>();
+        ex.Message.ShouldContain("Action error");
     }
 
     [Fact]
@@ -93,7 +93,7 @@ public class ChaosInjectorTests
         }
 
         var actualRate = (double)failures / iterations;
-        actualRate.Should().BeApproximately(failureRate, 0.1);
+        actualRate.ShouldBe(failureRate, 0.1);
     }
 
     [Fact]
@@ -105,7 +105,7 @@ public class ChaosInjectorTests
         await injector.ExecuteAsync(() => Task.FromResult(42));
         sw.Stop();
 
-        sw.ElapsedMilliseconds.Should().BeLessThan(50);
+        sw.ElapsedMilliseconds.ShouldBeLessThan(50);
     }
 
     [Fact]
@@ -113,7 +113,7 @@ public class ChaosInjectorTests
     {
         var act = () => new ChaosInjector(failureRate: -0.1);
 
-        act.Should().Throw<ArgumentOutOfRangeException>();
+        act.ShouldThrow<ArgumentOutOfRangeException>();
     }
 
     [Fact]
@@ -121,7 +121,7 @@ public class ChaosInjectorTests
     {
         var act = () => new ChaosInjector(failureRate: 1.1);
 
-        act.Should().Throw<ArgumentOutOfRangeException>();
+        act.ShouldThrow<ArgumentOutOfRangeException>();
     }
 
     [Fact]
@@ -145,9 +145,9 @@ public class ChaosInjectorTests
 
         var results = await Task.WhenAll(tasks);
 
-        results.Should().HaveCount(100);
-        results.Where(r => r > 0).Should().NotBeEmpty();
-        results.Where(r => r == -1).Should().NotBeEmpty();
+        results.Count().ShouldBe(100);
+        results.Where(r => r > 0).ShouldNotBeEmpty();
+        results.Where(r => r == -1).ShouldNotBeEmpty();
     }
 
     [Fact]
@@ -157,7 +157,7 @@ public class ChaosInjectorTests
 
         for (var i = 0; i < 100; i++)
         {
-            injector.ShouldFail().Should().BeFalse();
+            injector.ShouldFail().ShouldBeFalse();
         }
 
         await Task.CompletedTask;
@@ -170,7 +170,7 @@ public class ChaosInjectorTests
 
         for (var i = 0; i < 100; i++)
         {
-            injector.ShouldFail().Should().BeTrue();
+            injector.ShouldFail().ShouldBeTrue();
         }
 
         await Task.CompletedTask;
@@ -188,10 +188,10 @@ public class ChaosInjectorTests
         var trueCount = results.Count(r => r);
         var falseCount = results.Count(r => !r);
 
-        trueCount.Should().BeGreaterThan(0);
-        falseCount.Should().BeGreaterThan(0);
+        trueCount.ShouldBeGreaterThan(0);
+        falseCount.ShouldBeGreaterThan(0);
         var actualRate = (double)trueCount / results.Count;
-        actualRate.Should().BeApproximately(0.5, 0.1);
+        actualRate.ShouldBe(0.5, 0.1);
 
         await Task.CompletedTask;
     }
@@ -208,7 +208,7 @@ public class ChaosInjectorTests
         }
         catch (ChaosException ex)
         {
-            ex.Message.Should().Be("Chaos injected failure");
+            ex.Message.ShouldBe("Chaos injected failure");
         }
     }
 
@@ -219,9 +219,9 @@ public class ChaosInjectorTests
         var injector2 = new ChaosInjector(failureRate: 1.0);
 
         var result1 = await injector1.ExecuteAsync(() => Task.FromResult(1));
-        result1.Should().Be(1);
+        result1.ShouldBe(1);
 
         var act2 = async () => await injector2.ExecuteAsync(() => Task.FromResult(2));
-        await act2.Should().ThrowAsync<ChaosException>();
+        await act2.ShouldThrowAsync<ChaosException>();
     }
 }

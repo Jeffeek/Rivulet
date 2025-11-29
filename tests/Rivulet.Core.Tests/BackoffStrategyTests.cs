@@ -1,6 +1,6 @@
+﻿using Rivulet.Core.Resilience;
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
-using Rivulet.Core.Resilience;
 
 namespace Rivulet.Core.Tests;
 
@@ -30,8 +30,8 @@ public class BackoffStrategyTests
                 return new ValueTask<int>(x * 2);
             },
             options);
-        results.Should().HaveCount(3);
-        attemptCounts[2].Should().Be(3);
+        results.Count.ShouldBe(3);
+        attemptCounts[2].ShouldBe(3);
     }
 
     [Fact]
@@ -56,8 +56,8 @@ public class BackoffStrategyTests
                 return new ValueTask<int>(x * 2);
             },
             options);
-        results.Should().HaveCount(3);
-        attemptCounts[2].Should().Be(3);
+        results.Count.ShouldBe(3);
+        attemptCounts[2].ShouldBe(3);
     }
 
     [Fact]
@@ -83,8 +83,8 @@ public class BackoffStrategyTests
             },
             options);
 
-        results.Should().HaveCount(3);
-        attemptCounts[2].Should().Be(3);
+        results.Count.ShouldBe(3);
+        attemptCounts[2].ShouldBe(3);
     }
 
     [Fact]
@@ -110,8 +110,8 @@ public class BackoffStrategyTests
             },
             options);
 
-        results.Should().HaveCount(3);
-        attemptCounts[2].Should().Be(3);
+        results.Count.ShouldBe(3);
+        attemptCounts[2].ShouldBe(3);
     }
 
     [Fact]
@@ -137,15 +137,15 @@ public class BackoffStrategyTests
             },
             options);
 
-        results.Should().HaveCount(3);
-        attemptCounts[2].Should().Be(3);
+        results.Count.ShouldBe(3);
+        attemptCounts[2].ShouldBe(3);
     }
 
     [Fact]
     public void BackoffStrategy_DefaultIsExponential()
     {
         var options = new ParallelOptionsRivulet();
-        options.BackoffStrategy.Should().Be(BackoffStrategy.Exponential);
+        options.BackoffStrategy.ShouldBe(BackoffStrategy.Exponential);
     }
 
     [Fact]
@@ -173,8 +173,8 @@ public class BackoffStrategyTests
             },
             options).ToListAsync();
 
-        results.Should().HaveCount(10);
-        attemptCounts[5].Should().Be(3);
+        results.Count.ShouldBe(10);
+        attemptCounts[5].ShouldBe(3);
     }
 
     [Fact]
@@ -207,8 +207,8 @@ public class BackoffStrategyTests
             options,
             cts.Token);
 
-        await act.Should().ThrowAsync<OperationCanceledException>();
-        attemptCount.Should().BeGreaterThan(0);
+        await act.ShouldThrowAsync<OperationCanceledException>();
+        attemptCount.ShouldBeGreaterThan(0);
     }
 
     [Fact]
@@ -236,8 +236,8 @@ public class BackoffStrategyTests
             },
             options);
 
-        results.Should().HaveCount(5);
-        attemptCounts.Values.Should().AllSatisfy(count => count.Should().Be(3));
+        results.Count.ShouldBe(5);
+        attemptCounts.Values.ShouldAllBe(count => count == 3);
     }
 
     [Fact]
@@ -265,14 +265,14 @@ public class BackoffStrategyTests
             },
             options);
 
-        await act.Should().ThrowAsync<AggregateException>();
-        attemptCounts[2].Should().Be(3);
+        await act.ShouldThrowAsync<AggregateException>();
+        attemptCounts[2].ShouldBe(3);
     }
 
     [Fact]
     public void BackoffStrategy_AllEnumValuesDefined()
     {
-        Enum.GetValues<BackoffStrategy>().Should().Contain([
+        Enum.GetValues<BackoffStrategy>().ShouldBe([
             BackoffStrategy.Exponential,
             BackoffStrategy.ExponentialJitter,
             BackoffStrategy.DecorrelatedJitter,
@@ -309,8 +309,8 @@ public class BackoffStrategyTests
             },
             options);
 
-        processedCount.Should().Be(10);
-        attemptCounts[5].Should().Be(3);
+        processedCount.ShouldBe(10);
+        attemptCounts[5].ShouldBe(3);
     }
 
     [Fact]
@@ -335,9 +335,9 @@ public class BackoffStrategyTests
             },
             options);
 
-        results.Should().HaveCount(1);
-        results[0].Should().Be(1);
-        attemptCounts[1].Should().Be(3);
+        results.Count.ShouldBe(1);
+        results[0].ShouldBe(1);
+        attemptCounts[1].ShouldBe(3);
     }
 
     [Fact]
@@ -374,8 +374,8 @@ public class BackoffStrategyTests
                 },
                 options);
 
-            results.Should().HaveCount(1);
-            attemptCounts[1].Should().Be(3, $"strategy {strategy} should retry correctly");
+            results.Count.ShouldBe(1);
+            attemptCounts[1].ShouldBe(3, $"strategy {strategy} should retry correctly");
         }
     }
 
@@ -403,8 +403,8 @@ public class BackoffStrategyTests
             },
             options);
 
-        results.Should().Equal(2, 4, 6, 8, 10);
-        attemptCounts[3].Should().Be(3);
+        results.ShouldBe([2, 4, 6, 8, 10]);
+        attemptCounts[3].ShouldBe(3);
     }
 
     [Fact]
@@ -430,9 +430,9 @@ public class BackoffStrategyTests
             },
             options);
 
-        results.Should().HaveCount(1);
-        results[0].Should().Be(1);
-        attemptCounts[1].Should().Be(3);
+        results.Count.ShouldBe(1);
+        results[0].ShouldBe(1);
+        attemptCounts[1].ShouldBe(3);
     }
 
     [Fact]
@@ -470,7 +470,7 @@ public class BackoffStrategyTests
                 },
                 options);
 
-            results.Should().HaveCount(1, $"strategy {strategy} should complete successfully");
+            results.Count.ShouldBe(1, $"strategy {strategy} should complete successfully");
         }
     }
 }

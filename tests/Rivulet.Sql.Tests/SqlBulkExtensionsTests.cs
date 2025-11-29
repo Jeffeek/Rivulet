@@ -1,4 +1,4 @@
-using System.Data;
+﻿using System.Data;
 using System.Diagnostics.CodeAnalysis;
 using Rivulet.Base.Tests;
 
@@ -30,8 +30,8 @@ public class SqlBulkExtensionsTests
                 BatchSize = 1000
             });
 
-        result.Should().BeGreaterThan(0);
-        totalAffectedRows.Should().BeGreaterThan(0);
+        result.ShouldBeGreaterThan(0);
+        totalAffectedRows.ShouldBeGreaterThan(0);
     }
 
     [Fact]
@@ -90,8 +90,8 @@ public class SqlBulkExtensionsTests
                 BatchSize = 500
             });
 
-        result.Should().Be(1500);
-        batchesExecuted.Should().Be(3);
+        result.ShouldBe(1500);
+        batchesExecuted.ShouldBe(3);
     }
 
     [Fact]
@@ -110,7 +110,7 @@ public class SqlBulkExtensionsTests
                 BatchSize = 1000
             });
 
-        result.Should().Be(2000);
+        result.ShouldBe(2000);
     }
 
     [Fact]
@@ -140,9 +140,9 @@ public class SqlBulkExtensionsTests
                 BatchSize = 100
             });
 
-        result.Should().Be(100);
-        capturedTransaction.Should().NotBeNull();
-        capturedTransaction!.IsCommitted.Should().BeTrue();
+        result.ShouldBe(100);
+        capturedTransaction.ShouldNotBeNull();
+        capturedTransaction!.IsCommitted.ShouldBeTrue();
     }
 
     [Fact]
@@ -180,8 +180,8 @@ public class SqlBulkExtensionsTests
                     }
                 }));
 
-        capturedTransaction.Should().NotBeNull();
-        capturedTransaction!.IsRolledBack.Should().BeTrue();
+        capturedTransaction.ShouldNotBeNull();
+        capturedTransaction!.IsRolledBack.ShouldBeTrue();
     }
 
     [Fact]
@@ -214,11 +214,15 @@ public class SqlBulkExtensionsTests
                 }
             });
 
-        result.Should().Be(300);
-        batchStarted.Should().HaveCount(3);
-        batchCompleted.Should().HaveCount(3);
-        batchStarted.Should().Contain([0, 1, 2]);
-        batchCompleted.Should().Contain([0, 1, 2]);
+        result.ShouldBe(300);
+        batchStarted.Count.ShouldBe(3);
+        batchCompleted.Count.ShouldBe(3);
+        batchStarted.ShouldContain(0);
+        batchStarted.ShouldContain(1);
+        batchStarted.ShouldContain(2);
+        batchCompleted.ShouldContain(0);
+        batchCompleted.ShouldContain(1);
+        batchCompleted.ShouldContain(2);
     }
 
     [Fact]
@@ -254,9 +258,9 @@ public class SqlBulkExtensionsTests
                     }
                 }));
 
-        errorBatchNumber.Should().Be(0);
-        errorException.Should().NotBeNull();
-        errorException.Should().BeOfType<InvalidOperationException>();
+        errorBatchNumber.ShouldBe(0);
+        errorException.ShouldNotBeNull();
+        errorException.ShouldBeOfType<InvalidOperationException>();
     }
 
     [Fact]
@@ -281,8 +285,8 @@ public class SqlBulkExtensionsTests
                 BatchSize = 250
             });
 
-        result.Should().BeGreaterThan(0);
-        batchesExecuted.Should().Be(10);
+        result.ShouldBeGreaterThan(0);
+        batchesExecuted.ShouldBe(10);
     }
 
     [Fact]
@@ -328,8 +332,8 @@ public class SqlBulkExtensionsTests
                 }
             });
 
-        result.Should().BeGreaterThan(0);
-        maxConcurrent.Should().BeLessThanOrEqualTo(3);
+        result.ShouldBeGreaterThan(0);
+        maxConcurrent.ShouldBeLessThanOrEqualTo(3);
     }
 
     [Fact]
@@ -363,8 +367,8 @@ public class SqlBulkExtensionsTests
                 }
             });
 
-        result.Should().Be(100);
-        capturedIsolationLevel.Should().Be(IsolationLevel.Serializable);
+        result.ShouldBe(100);
+        capturedIsolationLevel.ShouldBe(IsolationLevel.Serializable);
     }
 
     [Fact]
@@ -402,8 +406,8 @@ public class SqlBulkExtensionsTests
                 }
             });
 
-        attemptCount.Should().Be(2);
-        result.Should().Be(100);
+        attemptCount.ShouldBe(2);
+        result.ShouldBe(100);
     }
 
     [Fact]
@@ -448,7 +452,7 @@ public class SqlBulkExtensionsTests
             },
             options: null);
 
-        result.Should().Be(10);
+        result.ShouldBe(10);
     }
 
     [Fact]
@@ -465,7 +469,7 @@ public class SqlBulkExtensionsTests
             },
             options: null);
 
-        result.Should().Be(10);
+        result.ShouldBe(10);
     }
 
     [Fact]
@@ -482,7 +486,7 @@ public class SqlBulkExtensionsTests
             },
             options: null);
 
-        result.Should().Be(10);
+        result.ShouldBe(10);
     }
 
     [Fact]
@@ -512,9 +516,9 @@ public class SqlBulkExtensionsTests
                 }
             });
 
-        result.Should().Be(10);
-        capturedConnection.Should().NotBeNull();
-        capturedConnection!.State.Should().Be(ConnectionState.Closed);
+        result.ShouldBe(10);
+        capturedConnection.ShouldNotBeNull();
+        capturedConnection!.State.ShouldBe(ConnectionState.Closed);
     }
 
     [Fact]
@@ -535,8 +539,8 @@ public class SqlBulkExtensionsTests
                 BatchSize = 10
             });
 
-        result.Should().Be(10);
-        openCalled.Should().BeTrue();
+        result.ShouldBe(10);
+        openCalled.ShouldBeTrue();
     }
 
     [Fact]
@@ -561,8 +565,8 @@ public class SqlBulkExtensionsTests
                 BatchSize = 10
             });
 
-        result.Should().Be(10);
-        executeNonQueryCalled.Should().BeTrue();
+        result.ShouldBe(10);
+        executeNonQueryCalled.ShouldBeTrue();
     }
 
     // Mock IDbConnection that does NOT extend DbConnection

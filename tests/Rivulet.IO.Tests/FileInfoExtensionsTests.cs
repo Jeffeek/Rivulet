@@ -1,4 +1,4 @@
-using Rivulet.Base.Tests;
+﻿using Rivulet.Base.Tests;
 
 namespace Rivulet.IO.Tests;
 
@@ -26,10 +26,10 @@ public class FileInfoExtensionsTests : TempDirectoryFixture
             });
 
         // Assert
-        results.Should().HaveCount(3);
-        results[0].Should().Be("Content 1");
-        results[1].Should().Be("Content 2");
-        results[2].Should().Be("Content 3");
+        results.Count.ShouldBe(3);
+        results[0].ShouldBe("Content 1");
+        results[1].ShouldBe("Content 2");
+        results[2].ShouldBe("Content 3");
     }
 
     [Fact]
@@ -55,9 +55,9 @@ public class FileInfoExtensionsTests : TempDirectoryFixture
             });
 
         // Assert
-        results.Should().HaveCount(2);
-        results[0].Should().BeEquivalentTo(data1);
-        results[1].Should().BeEquivalentTo(data2);
+        results.Count.ShouldBe(2);
+        results[0].ShouldBe(data1);
+        results[1].ShouldBe(data2);
     }
 
     [Fact]
@@ -71,7 +71,7 @@ public class FileInfoExtensionsTests : TempDirectoryFixture
         var result = await file.ReadAllTextAsync();
 
         // Assert
-        result.Should().Be("Single file content");
+        result.ShouldBe("Single file content");
     }
 
     [Fact]
@@ -86,7 +86,7 @@ public class FileInfoExtensionsTests : TempDirectoryFixture
         var result = await file.ReadAllBytesAsync();
 
         // Assert
-        result.Should().BeEquivalentTo(data);
+        result.ShouldBe(data);
     }
 
     [Fact]
@@ -101,7 +101,7 @@ public class FileInfoExtensionsTests : TempDirectoryFixture
 
         // Assert
         var readContent = await File.ReadAllTextAsync(file.FullName);
-        readContent.Should().Be(content);
+        readContent.ShouldBe(content);
     }
 
     [Fact]
@@ -117,7 +117,7 @@ public class FileInfoExtensionsTests : TempDirectoryFixture
         var act = async () => await file.WriteAllTextAsync("New content", options);
 
         // Assert
-        await act.Should().ThrowAsync<IOException>();
+        await act.ShouldThrowAsync<IOException>();
     }
 
     [Fact]
@@ -132,7 +132,7 @@ public class FileInfoExtensionsTests : TempDirectoryFixture
 
         // Assert
         var readData = await File.ReadAllBytesAsync(file.FullName);
-        readData.Should().BeEquivalentTo(data);
+        readData.ShouldBe(data);
     }
 
     [Fact]
@@ -148,9 +148,9 @@ public class FileInfoExtensionsTests : TempDirectoryFixture
         await sourceFile.CopyToAsync(destPath);
 
         // Assert
-        File.Exists(destPath).Should().BeTrue();
+        File.Exists(destPath).ShouldBeTrue();
         var destContent = await File.ReadAllTextAsync(destPath);
-        destContent.Should().Be("Source content");
+        destContent.ShouldBe("Source content");
     }
 
     [Fact]
@@ -169,7 +169,7 @@ public class FileInfoExtensionsTests : TempDirectoryFixture
         var act = async () => await sourceFile.CopyToAsync(destPath, options);
 
         // Assert
-        await act.Should().ThrowAsync<IOException>();
+        await act.ShouldThrowAsync<IOException>();
     }
 
     [Fact]
@@ -183,7 +183,7 @@ public class FileInfoExtensionsTests : TempDirectoryFixture
         await file.DeleteAsync();
 
         // Assert
-        File.Exists(file.FullName).Should().BeFalse();
+        File.Exists(file.FullName).ShouldBeFalse();
     }
 
     [Fact]
@@ -199,7 +199,7 @@ public class FileInfoExtensionsTests : TempDirectoryFixture
         var readContent = await file.ReadAllTextAsync(options);
 
         // Assert
-        readContent.Should().Be(content);
+        readContent.ShouldBe(content);
     }
 
     [Fact]
@@ -230,9 +230,9 @@ public class FileInfoExtensionsTests : TempDirectoryFixture
         await file.WriteAllTextAsync("Test content", options);
 
         // Assert
-        startCalled.Should().BeTrue();
-        completeCalled.Should().BeTrue();
-        bytesProcessed.Should().BeGreaterThan(0);
+        startCalled.ShouldBeTrue();
+        completeCalled.ShouldBeTrue();
+        bytesProcessed.ShouldBeGreaterThan(0);
     }
 
     [Fact]
@@ -257,8 +257,8 @@ public class FileInfoExtensionsTests : TempDirectoryFixture
         var act = async () => await file.ReadAllTextAsync(options);
 
         // Assert
-        await act.Should().ThrowAsync<FileNotFoundException>();
-        errorCalled.Should().BeTrue();
-        capturedException.Should().NotBeNull();
+        await act.ShouldThrowAsync<FileNotFoundException>();
+        errorCalled.ShouldBeTrue();
+        capturedException.ShouldNotBeNull();
     }
 }

@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Text;
 using Rivulet.Base.Tests;
 using Rivulet.Core;
@@ -31,8 +31,8 @@ public class HttpParallelExtensionsTests
 
         var results = await uris.GetParallelAsync(httpClient);
 
-        results.Should().HaveCount(3);
-        results.Should().OnlyContain(r => r.StatusCode == HttpStatusCode.OK);
+        results.Count.ShouldBe(3);
+        results.ShouldAllBe(r => r.StatusCode == HttpStatusCode.OK);
 
         foreach (var response in results)
         {
@@ -79,9 +79,9 @@ public class HttpParallelExtensionsTests
 
         var results = await uris.GetStringParallelAsync(httpClient);
 
-        results.Should().HaveCount(2);
-        results.Should().Contain("Content-/1");
-        results.Should().Contain("Content-/2");
+        results.Count.ShouldBe(2);
+        results.ShouldContain("Content-/1");
+        results.ShouldContain("Content-/2");
     }
 
     [Fact]
@@ -105,9 +105,9 @@ public class HttpParallelExtensionsTests
 
         var results = await uris.GetByteArrayParallelAsync(httpClient);
 
-        results.Should().HaveCount(2);
-        Encoding.UTF8.GetString(results[0]).Should().Contain("Binary-/");
-        Encoding.UTF8.GetString(results[1]).Should().Contain("Binary-/");
+        results.Count.ShouldBe(2);
+        Encoding.UTF8.GetString(results[0]).ShouldContain("Binary-/");
+        Encoding.UTF8.GetString(results[1]).ShouldContain("Binary-/");
     }
 
     [Fact]
@@ -131,8 +131,8 @@ public class HttpParallelExtensionsTests
 
         var results = await requests.PostParallelAsync(httpClient);
 
-        results.Should().HaveCount(2);
-        results.Should().OnlyContain(r => r.StatusCode == HttpStatusCode.Created);
+        results.Count.ShouldBe(2);
+        results.ShouldAllBe(r => r.StatusCode == HttpStatusCode.Created);
 
         foreach (var response in results)
         {
@@ -160,8 +160,8 @@ public class HttpParallelExtensionsTests
 
         var results = await requests.PutParallelAsync(httpClient);
 
-        results.Should().HaveCount(2);
-        results.Should().OnlyContain(r => r.StatusCode == HttpStatusCode.OK);
+        results.Count.ShouldBe(2);
+        results.ShouldAllBe(r => r.StatusCode == HttpStatusCode.OK);
 
         foreach (var response in results)
         {
@@ -186,8 +186,8 @@ public class HttpParallelExtensionsTests
 
         var results = await uris.DeleteParallelAsync(httpClient);
 
-        results.Should().HaveCount(2);
-        results.Should().OnlyContain(r => r.StatusCode == HttpStatusCode.NoContent);
+        results.Count.ShouldBe(2);
+        results.ShouldAllBe(r => r.StatusCode == HttpStatusCode.NoContent);
 
         foreach (var response in results)
         {
@@ -226,9 +226,9 @@ public class HttpParallelExtensionsTests
 
         var results = await uris.GetParallelAsync(httpClient, options);
 
-        attemptCount.Should().Be(2); // Initial attempt + 1 retry
-        results.Should().HaveCount(1);
-        results[0].StatusCode.Should().Be(HttpStatusCode.OK);
+        attemptCount.ShouldBe(2); // Initial attempt + 1 retry
+        results.Count.ShouldBe(1);
+        results[0].StatusCode.ShouldBe(HttpStatusCode.OK);
 
         // Cleanup
         foreach (var response in results)
@@ -260,7 +260,7 @@ public class HttpParallelExtensionsTests
 
         await uris.GetParallelAsync(httpClient, options);
 
-        attemptCount.Should().Be(1); // Only initial attempt, no retries
+        attemptCount.ShouldBe(1); // Only initial attempt, no retries
     }
 
     [Fact]
@@ -289,9 +289,9 @@ public class HttpParallelExtensionsTests
 
         await uris.GetParallelAsync(httpClient, options);
 
-        callbackUri.Should().NotBeNull();
-        callbackUri!.ToString().Should().Contain("/error");
-        callbackStatus.Should().Be(HttpStatusCode.InternalServerError);
+        callbackUri.ShouldNotBeNull();
+        callbackUri!.ToString().ShouldContain("/error");
+        callbackStatus.ShouldBe(HttpStatusCode.InternalServerError);
     }
 
     [Fact]
@@ -353,8 +353,8 @@ public class HttpParallelExtensionsTests
 
         var results = await uris.GetParallelAsync(httpClient, options);
 
-        results.Should().HaveCount(20);
-        maxConcurrent.Should().BeLessThanOrEqualTo(5);
+        results.Count.ShouldBe(20);
+        maxConcurrent.ShouldBeLessThanOrEqualTo(5);
 
         foreach (var response in results)
         {

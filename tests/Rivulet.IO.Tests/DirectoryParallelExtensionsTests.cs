@@ -1,4 +1,4 @@
-using Rivulet.Base.Tests;
+﻿using Rivulet.Base.Tests;
 
 namespace Rivulet.IO.Tests;
 
@@ -25,9 +25,9 @@ public class DirectoryParallelExtensionsTests : TempDirectoryFixture
             });
 
         // Assert
-        results.Should().HaveCount(2);
-        results.Should().Contain(9); // "Content 1".Length
-        results.Should().Contain(9); // "Content 2".Length
+        results.Count.ShouldBe(2);
+        results.ShouldContain(9); // "Content 1".Length
+        results.ShouldContain(9); // "Content 2".Length
     }
 
     [Fact]
@@ -40,7 +40,7 @@ public class DirectoryParallelExtensionsTests : TempDirectoryFixture
         var act = async () => await files.ProcessFilesParallelAsync<int>(null!);
 
         // Assert
-        await act.Should().ThrowAsync<ArgumentNullException>();
+        await act.ShouldThrowAsync<ArgumentNullException>();
     }
 
     [Fact]
@@ -66,10 +66,10 @@ public class DirectoryParallelExtensionsTests : TempDirectoryFixture
             });
 
         // Assert
-        results.Should().HaveCount(2);
-        results.Should().Contain("Text 1");
-        results.Should().Contain("Text 2");
-        results.Should().NotContain("CSV data");
+        results.Count.ShouldBe(2);
+        results.ShouldContain("Text 1");
+        results.ShouldContain("Text 2");
+        results.ShouldNotContain("CSV data");
     }
 
     [Fact]
@@ -85,7 +85,7 @@ public class DirectoryParallelExtensionsTests : TempDirectoryFixture
             (path, _) => ValueTask.FromResult(path));
 
         // Assert
-        await act.Should().ThrowAsync<DirectoryNotFoundException>();
+        await act.ShouldThrowAsync<DirectoryNotFoundException>();
     }
 
     [Fact]
@@ -113,9 +113,9 @@ public class DirectoryParallelExtensionsTests : TempDirectoryFixture
             SearchOption.AllDirectories);
 
         // Assert
-        results.Should().HaveCount(2);
-        results.Should().Contain("Root");
-        results.Should().Contain("Nested");
+        results.Count.ShouldBe(2);
+        results.ShouldContain("Root");
+        results.ShouldContain("Nested");
     }
 
     [Fact]
@@ -134,9 +134,11 @@ public class DirectoryParallelExtensionsTests : TempDirectoryFixture
             "*.txt");
 
         // Assert
-        results.Should().HaveCount(2);
-        results.Should().ContainKey(file1).WhoseValue.Should().Be("Content 1");
-        results.Should().ContainKey(file2).WhoseValue.Should().Be("Content 2");
+        results.Count.ShouldBe(2);
+        results.ContainsKey(file1).ShouldBeTrue();
+        results[file1].ShouldBe("Content 1");
+        results.ContainsKey(file2).ShouldBeTrue();
+        results[file2].ShouldBe("Content 2");
     }
 
     [Fact]
@@ -164,19 +166,19 @@ public class DirectoryParallelExtensionsTests : TempDirectoryFixture
             options: new() { OverwriteExisting = true });
 
         // Assert
-        results.Should().HaveCount(2);
+        results.Count.ShouldBe(2);
 
         var destFile1 = Path.Join(destDir, "file1.txt");
         var destFile2 = Path.Join(destDir, "file2.txt");
 
-        File.Exists(destFile1).Should().BeTrue();
-        File.Exists(destFile2).Should().BeTrue();
+        File.Exists(destFile1).ShouldBeTrue();
+        File.Exists(destFile2).ShouldBeTrue();
 
         var content1 = await File.ReadAllTextAsync(destFile1);
         var content2 = await File.ReadAllTextAsync(destFile2);
 
-        content1.Should().Be("HELLO");
-        content2.Should().Be("WORLD");
+        content1.ShouldBe("HELLO");
+        content2.ShouldBe("WORLD");
     }
 
     [Fact]
@@ -202,19 +204,19 @@ public class DirectoryParallelExtensionsTests : TempDirectoryFixture
             options: new() { OverwriteExisting = true });
 
         // Assert
-        results.Should().HaveCount(2);
+        results.Count.ShouldBe(2);
 
         var destFile1 = Path.Join(destDir, "copy1.txt");
         var destFile2 = Path.Join(destDir, "copy2.txt");
 
-        File.Exists(destFile1).Should().BeTrue();
-        File.Exists(destFile2).Should().BeTrue();
+        File.Exists(destFile1).ShouldBeTrue();
+        File.Exists(destFile2).ShouldBeTrue();
 
         var content1 = await File.ReadAllTextAsync(destFile1);
         var content2 = await File.ReadAllTextAsync(destFile2);
 
-        content1.Should().Be("Copy 1");
-        content2.Should().Be("Copy 2");
+        content1.ShouldBe("Copy 1");
+        content2.ShouldBe("Copy 2");
     }
 
     [Fact]
@@ -235,11 +237,11 @@ public class DirectoryParallelExtensionsTests : TempDirectoryFixture
             "*.txt");
 
         // Assert
-        results.Should().HaveCount(2);
+        results.Count.ShouldBe(2);
 
-        File.Exists(file1).Should().BeFalse();
-        File.Exists(file2).Should().BeFalse();
-        File.Exists(file3).Should().BeTrue(); // CSV file should not be deleted
+        File.Exists(file1).ShouldBeFalse();
+        File.Exists(file2).ShouldBeFalse();
+        File.Exists(file3).ShouldBeTrue(); // CSV file should not be deleted
     }
 
     [Fact]
@@ -270,9 +272,9 @@ public class DirectoryParallelExtensionsTests : TempDirectoryFixture
             });
 
         // Assert
-        results.Should().HaveCount(2);
-        results.Should().Contain(12); // "Dir1 Content".Length
-        results.Should().Contain(12); // "Dir2 Content".Length
+        results.Count.ShouldBe(2);
+        results.ShouldContain(12); // "Dir1 Content".Length
+        results.ShouldContain(12); // "Dir2 Content".Length
     }
 
     [Fact]
@@ -299,8 +301,8 @@ public class DirectoryParallelExtensionsTests : TempDirectoryFixture
             });
 
         // Assert
-        results.Should().HaveCount(1);
-        results.Should().Contain("Content");
+        results.Count.ShouldBe(1);
+        results.ShouldContain("Content");
     }
 
     [Fact]
@@ -333,8 +335,8 @@ public class DirectoryParallelExtensionsTests : TempDirectoryFixture
             options);
 
         // Assert
-        startCalled.Should().BeTrue();
-        completeCalled.Should().BeTrue();
+        startCalled.ShouldBeTrue();
+        completeCalled.ShouldBeTrue();
     }
 
     [Fact]
@@ -363,18 +365,18 @@ public class DirectoryParallelExtensionsTests : TempDirectoryFixture
             options: new() { OverwriteExisting = true });
 
         // Assert
-        results.Should().HaveCount(2);
+        results.Count.ShouldBe(2);
 
         var destRootFile = Path.Join(destDir, "root.txt");
         var destNestedFile = Path.Join(destDir, "subdir", "nested.txt");
 
-        File.Exists(destRootFile).Should().BeTrue();
-        File.Exists(destNestedFile).Should().BeTrue();
+        File.Exists(destRootFile).ShouldBeTrue();
+        File.Exists(destNestedFile).ShouldBeTrue();
 
         var rootContent = await File.ReadAllTextAsync(destRootFile);
         var nestedContent = await File.ReadAllTextAsync(destNestedFile);
 
-        rootContent.Should().Be("Root content");
-        nestedContent.Should().Be("Nested content");
+        rootContent.ShouldBe("Root content");
+        nestedContent.ShouldBe("Nested content");
     }
 }

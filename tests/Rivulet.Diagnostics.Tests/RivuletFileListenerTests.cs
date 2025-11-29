@@ -1,4 +1,4 @@
-using Rivulet.Core;
+﻿using Rivulet.Core;
 
 namespace Rivulet.Diagnostics.Tests;
 
@@ -34,10 +34,10 @@ public class RivuletFileListenerTests : IDisposable
         // Wait for file handle to be fully released
         await Task.Delay(800);
 
-        File.Exists(_testFilePath).Should().BeTrue();
+        File.Exists(_testFilePath).ShouldBeTrue();
         var content = await File.ReadAllTextAsync(_testFilePath);
-        content.Should().Contain("Items Started");
-        content.Should().Contain("Items Completed");
+        content.ShouldContain("Items Started");
+        content.ShouldContain("Items Completed");
     }
 
     [Fact]
@@ -73,14 +73,14 @@ public class RivuletFileListenerTests : IDisposable
         var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(_testFilePath);
         var rotatedFiles = Directory.GetFiles(directory, $"{fileNameWithoutExtension}-*");
 
-        rotatedFiles.Should().NotBeEmpty();
+        rotatedFiles.ShouldNotBeEmpty();
     }
 
     [Fact]
     public void FileListener_ShouldThrow_WhenFilePathIsNull()
     {
         var act = () => new RivuletFileListener(null!);
-        act.Should().Throw<ArgumentNullException>().WithParameterName("filePath");
+        act.ShouldThrow<ArgumentNullException>().ParamName.ShouldBe("filePath");
     }
 
     [Fact]
@@ -91,7 +91,7 @@ public class RivuletFileListenerTests : IDisposable
 
         using var listener = new RivuletFileListener(filePath);
 
-        Directory.Exists(directory).Should().BeTrue();
+        Directory.Exists(directory).ShouldBeTrue();
 
         TestCleanupHelper.RetryDeleteDirectory(directory);
     }

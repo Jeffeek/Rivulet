@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using Rivulet.Core.Resilience;
 
@@ -12,19 +12,19 @@ public class EdgeCasesAndCoverageTests
     {
         var options = new ParallelOptionsRivulet();
 
-        options.MaxDegreeOfParallelism.Should().Be(Math.Max(1, Environment.ProcessorCount));
-        options.PerItemTimeout.Should().BeNull();
-        options.ErrorMode.Should().Be(ErrorMode.FailFast);
-        options.OnErrorAsync.Should().BeNull();
-        options.OnStartItemAsync.Should().BeNull();
-        options.OnCompleteItemAsync.Should().BeNull();
-        options.OnThrottleAsync.Should().BeNull();
-        options.OnDrainAsync.Should().BeNull();
-        options.IsTransient.Should().BeNull();
-        options.MaxRetries.Should().Be(0);
-        options.BaseDelay.Should().Be(TimeSpan.FromMilliseconds(100));
-        options.BackoffStrategy.Should().Be(BackoffStrategy.Exponential);
-        options.ChannelCapacity.Should().Be(1024);
+        options.MaxDegreeOfParallelism.ShouldBe(Math.Max(1, Environment.ProcessorCount));
+        options.PerItemTimeout.ShouldBeNull();
+        options.ErrorMode.ShouldBe(ErrorMode.FailFast);
+        options.OnErrorAsync.ShouldBeNull();
+        options.OnStartItemAsync.ShouldBeNull();
+        options.OnCompleteItemAsync.ShouldBeNull();
+        options.OnThrottleAsync.ShouldBeNull();
+        options.OnDrainAsync.ShouldBeNull();
+        options.IsTransient.ShouldBeNull();
+        options.MaxRetries.ShouldBe(0);
+        options.BaseDelay.ShouldBe(TimeSpan.FromMilliseconds(100));
+        options.BackoffStrategy.ShouldBe(BackoffStrategy.Exponential);
+        options.ChannelCapacity.ShouldBe(1024);
     }
 
     [Fact]
@@ -47,29 +47,28 @@ public class EdgeCasesAndCoverageTests
             ChannelCapacity = 500
         };
 
-        options.MaxDegreeOfParallelism.Should().Be(10);
-        options.PerItemTimeout.Should().Be(TimeSpan.FromSeconds(5));
-        options.ErrorMode.Should().Be(ErrorMode.BestEffort);
-        options.OnErrorAsync.Should().NotBeNull();
-        options.OnStartItemAsync.Should().NotBeNull();
-        options.OnCompleteItemAsync.Should().NotBeNull();
-        options.OnThrottleAsync.Should().NotBeNull();
-        options.OnDrainAsync.Should().NotBeNull();
-        options.IsTransient.Should().NotBeNull();
-        options.MaxRetries.Should().Be(5);
-        options.BaseDelay.Should().Be(TimeSpan.FromMilliseconds(200));
-        options.BackoffStrategy.Should().Be(BackoffStrategy.ExponentialJitter);
-        options.ChannelCapacity.Should().Be(500);
+        options.MaxDegreeOfParallelism.ShouldBe(10);
+        options.PerItemTimeout.ShouldBe(TimeSpan.FromSeconds(5));
+        options.ErrorMode.ShouldBe(ErrorMode.BestEffort);
+        options.OnErrorAsync.ShouldNotBeNull();
+        options.OnStartItemAsync.ShouldNotBeNull();
+        options.OnCompleteItemAsync.ShouldNotBeNull();
+        options.OnThrottleAsync.ShouldNotBeNull();
+        options.OnDrainAsync.ShouldNotBeNull();
+        options.IsTransient.ShouldNotBeNull();
+        options.MaxRetries.ShouldBe(5);
+        options.BaseDelay.ShouldBe(TimeSpan.FromMilliseconds(200));
+        options.BackoffStrategy.ShouldBe(BackoffStrategy.ExponentialJitter);
+        options.ChannelCapacity.ShouldBe(500);
     }
 
     [Fact]
     public void ErrorMode_AllValues_AreDefined()
     {
-        Enum.GetValues<ErrorMode>().Should().Contain([
-            ErrorMode.FailFast,
-            ErrorMode.CollectAndContinue,
-            ErrorMode.BestEffort
-        ]);
+        var values = Enum.GetValues<ErrorMode>();
+        values.ShouldContain(ErrorMode.FailFast);
+        values.ShouldContain(ErrorMode.CollectAndContinue);
+        values.ShouldContain(ErrorMode.BestEffort);
     }
 
     [Fact]
@@ -90,7 +89,7 @@ public class EdgeCasesAndCoverageTests
             },
             options);
 
-        results.Should().HaveCount(100);
+        results.Count.ShouldBe(100);
     }
 
     [Fact]
@@ -125,8 +124,8 @@ public class EdgeCasesAndCoverageTests
             },
             options);
 
-        results.Should().HaveCount(10);
-        maxConcurrent.Should().Be(1);
+        results.Count.ShouldBe(10);
+        maxConcurrent.ShouldBe(1);
     }
 
     [Fact]
@@ -144,7 +143,7 @@ public class EdgeCasesAndCoverageTests
 
         var results = await Source().SelectParallelStreamAsync((x, _) => new ValueTask<int>(x * 2)).ToListAsync();
 
-        results.Should().HaveCount(5);
+        results.Count.ShouldBe(5);
     }
 
     [Fact]
@@ -160,7 +159,7 @@ public class EdgeCasesAndCoverageTests
         async Task<List<int>> Act() => await FaultySource().SelectParallelAsync((x, _) => new ValueTask<int>(x * 2));
 
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(((Func<Task<List<int>>>?)Act)!);
-        exception.Message.Should().Be("Source enumeration error");
+        exception.Message.ShouldBe("Source enumeration error");
     }
 
     [Fact]
@@ -192,7 +191,7 @@ public class EdgeCasesAndCoverageTests
                 return ValueTask.CompletedTask;
             });
 
-        processedCount.Should().Be(50);
+        processedCount.ShouldBe(50);
     }
 
     [Fact]
@@ -213,7 +212,7 @@ public class EdgeCasesAndCoverageTests
             },
             options);
 
-        await act.Should().ThrowAsync<AggregateException>();
+        await act.ShouldThrowAsync<AggregateException>();
     }
 
     [Fact]
@@ -232,7 +231,7 @@ public class EdgeCasesAndCoverageTests
             }, options)
             .ToListAsync();
 
-        results.Should().HaveCount(20);
+        results.Count.ShouldBe(20);
     }
 
     [Fact]
@@ -261,8 +260,8 @@ public class EdgeCasesAndCoverageTests
             },
             options);
 
-        errorCount.Should().BeGreaterThanOrEqualTo(1);
-        results.Count.Should().BeLessThan(100);
+        errorCount.ShouldBeGreaterThanOrEqualTo(1);
+        results.Count.ShouldBeLessThan(100);
     }
 
     [Fact]
@@ -282,8 +281,8 @@ public class EdgeCasesAndCoverageTests
 
         var results = await source.SelectParallelStreamAsync((x, _) => new ValueTask<int>(x * 2), options).ToListAsync();
 
-        results.Should().HaveCount(30);
-        workerIndices.Should().HaveCount(30);
+        results.Count.ShouldBe(30);
+        workerIndices.Count.ShouldBe(30);
     }
 
     [Fact]
@@ -318,7 +317,7 @@ public class EdgeCasesAndCoverageTests
             }, options)
             .ToListAsync();
 
-        results.Should().HaveCount(10);
+        results.Count.ShouldBe(10);
     }
 
     [Fact]
@@ -340,7 +339,7 @@ public class EdgeCasesAndCoverageTests
             (x, _) => new ValueTask<int>(x * 2),
             options);
 
-        processedIndices.Should().HaveCount(50);
+        processedIndices.Count.ShouldBe(50);
     }
 
     [Fact]
@@ -386,9 +385,9 @@ public class EdgeCasesAndCoverageTests
             },
             options);
 
-        var exception = await act.Should().ThrowAsync<AggregateException>();
-        exception.Which.InnerExceptions.Should().HaveCount(2);
-        exception.Which.InnerExceptions.Should().ContainItemsAssignableTo<Exception>();
+        var exception = await act.ShouldThrowAsync<AggregateException>();
+        exception.InnerExceptions.Count.ShouldBe(2);
+        exception.InnerExceptions.ShouldAllBe(x => x != null!);
     }
 
     [Fact]
@@ -415,7 +414,7 @@ public class EdgeCasesAndCoverageTests
             }
         };
 
-        await act.Should().ThrowAsync<InvalidOperationException>();
+        await act.ShouldThrowAsync<InvalidOperationException>();
     }
 
     private static async IAsyncEnumerable<int> GetSourceWithDelayedError()
@@ -460,8 +459,9 @@ public class EdgeCasesAndCoverageTests
             }
         };
 
-        await act.Should().ThrowAsync<OperationCanceledException>();
-        results.Count.Should().BeGreaterThan(0).And.BeLessThan(100);
+        await act.ShouldThrowAsync<OperationCanceledException>();
+        results.Count.ShouldBeGreaterThan(0);
+        results.Count.ShouldBeLessThan(100);
     }
 
     [Fact]
@@ -496,8 +496,9 @@ public class EdgeCasesAndCoverageTests
             }
         };
 
-        await act.Should().ThrowAsync<OperationCanceledException>();
-        results.Count.Should().BeGreaterThan(0).And.BeLessThan(100);
+        await act.ShouldThrowAsync<OperationCanceledException>();
+        results.Count.ShouldBeGreaterThan(0);
+        results.Count.ShouldBeLessThan(100);
     }
 
     [Fact]
@@ -518,8 +519,8 @@ public class EdgeCasesAndCoverageTests
             },
             options).ToListAsync();
 
-        results.Should().HaveCount(50);
-        results.Should().BeEquivalentTo(Enumerable.Range(1, 50).Select(x => x * 2));
+        results.Count.ShouldBe(50);
+        results.OrderBy(x => x).ShouldBe(Enumerable.Range(1, 50).Select(x => x * 2));
     }
 
     [Fact]
@@ -540,8 +541,8 @@ public class EdgeCasesAndCoverageTests
             },
             options).ToListAsync();
 
-        results.Should().HaveCount(50);
-        results.Should().Equal(Enumerable.Range(1, 50).Select(x => x * 2));
+        results.Count.ShouldBe(50);
+        results.ShouldBe(Enumerable.Range(1, 50).Select(x => x * 2));
     }
 
     [Fact]
@@ -561,7 +562,7 @@ public class EdgeCasesAndCoverageTests
             }, options)
             .CountAsync();
 
-        count.Should().Be(25);
+        count.ShouldBe(25);
     }
 
     [Fact]
@@ -581,6 +582,6 @@ public class EdgeCasesAndCoverageTests
             }, options)
             .CountAsync();
 
-        count.Should().Be(25);
+        count.ShouldBe(25);
     }
 }

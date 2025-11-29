@@ -1,4 +1,4 @@
-using Rivulet.Core.Resilience;
+﻿using Rivulet.Core.Resilience;
 
 namespace Rivulet.Core.Tests;
 
@@ -18,7 +18,7 @@ public class EdgeCaseCoverageTests
         var result = await Enumerable.Range(1, 3)
             .SelectParallelAsync((x, _) => ValueTask.FromResult(x), options);
 
-        result.Should().HaveCount(3);
+        result.Count.ShouldBe(3);
     }
 
     [Fact]
@@ -43,8 +43,8 @@ public class EdgeCaseCoverageTests
                 return x;
             }, options);
 
-        result.Should().HaveCount(1);
-        attemptCount.Should().Be(2);
+        result.Count.ShouldBe(1);
+        attemptCount.ShouldBe(2);
     }
 
     [Fact]
@@ -58,7 +58,7 @@ public class EdgeCaseCoverageTests
         var result = await Enumerable.Range(1, 10)
             .SelectParallelAsync((x, _) => ValueTask.FromResult(x), options);
 
-        result.Should().HaveCount(10);
+        result.Count.ShouldBe(10);
     }
 
     [Fact]
@@ -100,7 +100,7 @@ public class EdgeCaseCoverageTests
                 throw new InvalidOperationException("Still failing");
             }, options);
 
-        stateChanges.Should().Contain(CircuitBreakerState.Open);
+        stateChanges.ShouldContain(CircuitBreakerState.Open);
     }
 
     [Fact]
@@ -114,7 +114,7 @@ public class EdgeCaseCoverageTests
         var result = await Enumerable.Range(1, 20)
             .SelectParallelAsync((x, _) => ValueTask.FromResult(x * 2), options);
 
-        result.Should().HaveCount(20);
+        result.Count.ShouldBe(20);
     }
 
     [Fact]
@@ -145,7 +145,7 @@ public class EdgeCaseCoverageTests
                 return x;
             }, options);
 
-        result.Should().HaveCount(50);
+        result.Count.ShouldBe(50);
     }
 
     [Fact]
@@ -161,7 +161,7 @@ public class EdgeCaseCoverageTests
             },
             new() { MaxDegreeOfParallelism = 2 });
 
-        result.Should().BeEmpty();
+        result.ShouldBeEmpty();
     }
 
     [Fact]
@@ -177,7 +177,8 @@ public class EdgeCaseCoverageTests
             },
             new() { MaxDegreeOfParallelism = 10 });
 
-        result.Should().HaveCount(1).And.Contain(2);
+        result.Count.ShouldBe(1);
+        result.ShouldContain(2);
     }
 
     [Fact]
@@ -198,8 +199,8 @@ public class EdgeCaseCoverageTests
                 return x;
             }, options);
 
-        result.Should().NotContain(x => x % 3 == 0);
-        result.Count().Should().BeLessThan(10);
+        result.ShouldNotContain(x => x % 3 == 0);
+        result.Count().ShouldBeLessThan(10);
     }
 
     [Fact]
@@ -234,7 +235,7 @@ public class EdgeCaseCoverageTests
             // ignored
         }
 
-        attemptCount.Should().BeGreaterThan(1);
+        attemptCount.ShouldBeGreaterThan(1);
     }
 
     [Fact]
@@ -257,7 +258,7 @@ public class EdgeCaseCoverageTests
                 return x * 2;
             }, options);
 
-        result.Should().HaveCount(5);
+        result.Count.ShouldBe(5);
     }
 
     [Fact]
@@ -289,7 +290,7 @@ public class EdgeCaseCoverageTests
 
         var result = await task;
 
-        result.Should().NotBeEmpty();
-        sampledCount.Should().BeGreaterThan(0);
+        result.ShouldNotBeEmpty();
+        sampledCount.ShouldBeGreaterThan(0);
     }
 }

@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Rivulet.Base.Tests;
 using Rivulet.Core;
@@ -87,9 +87,9 @@ public class ParallelWorkerServiceTests
         await cts.CancelAsync();
         await service.StopAsync(CancellationToken.None);
 
-        service.ProcessedItems.Should().HaveCount(5);
-        service.Results.Should().HaveCount(5);
-        service.ProcessedItems.Should().BeEquivalentTo([1, 2, 3, 4, 5]);
+        service.ProcessedItems.Count.ShouldBe(5);
+        service.Results.Count.ShouldBe(5);
+        service.ProcessedItems.OrderBy(x => x).ShouldBe([1, 2, 3, 4, 5]);
     }
 
     [Fact]
@@ -110,10 +110,10 @@ public class ParallelWorkerServiceTests
 
         await service.StopAsync(CancellationToken.None);
 
-        service.Results.Should().HaveCount(3);
-        service.Results.Should().Contain("Processed-1");
-        service.Results.Should().Contain("Processed-2");
-        service.Results.Should().Contain("Processed-3");
+        service.Results.Count.ShouldBe(3);
+        service.Results.ShouldContain("Processed-1");
+        service.Results.ShouldContain("Processed-2");
+        service.Results.ShouldContain("Processed-3");
     }
 
     [Fact]
@@ -139,7 +139,7 @@ public class ParallelWorkerServiceTests
         // With 6 items, 3 parallel, 20ms each: expected ~40-50ms ideally
         // But on constrained Windows CI: thread pool delays + BackgroundService overhead = 200-500ms typical
         // Sequential would be 120ms minimum, so 3s allows parallelism validation while handling Windows delays
-        elapsed.Should().BeLessThan(TimeSpan.FromSeconds(3));
+        elapsed.ShouldBeLessThan(TimeSpan.FromSeconds(3));
     }
 
     [Fact]
@@ -158,7 +158,7 @@ public class ParallelWorkerServiceTests
 
         await service.StopAsync(CancellationToken.None);
 
-        service.ProcessedItems.Count.Should().BeLessThan(100);
+        service.ProcessedItems.Count.ShouldBeLessThan(100);
     }
 
     [Fact]
@@ -183,8 +183,8 @@ public class ParallelWorkerServiceTests
 
         var act = () => new TestWorkerService(null!, items);
 
-        act.Should().Throw<ArgumentNullException>()
-            .WithParameterName("logger");
+        var ex = act.ShouldThrow<ArgumentNullException>();
+        ex.ParamName.ShouldBe("logger");
     }
 
     [Fact]
@@ -202,7 +202,7 @@ public class ParallelWorkerServiceTests
 
         await service.StopAsync(CancellationToken.None);
 
-        service.ProcessedItems.Should().HaveCount(3);
+        service.ProcessedItems.Count.ShouldBe(3);
     }
 
     [Fact]
@@ -220,9 +220,9 @@ public class ParallelWorkerServiceTests
 
         await service.StopAsync(CancellationToken.None);
 
-        service.ProcessedItems.Should().BeEmpty();
-        service.Results.Should().BeEmpty();
-        service.ProcessCallCount.Should().Be(0);
+        service.ProcessedItems.ShouldBeEmpty();
+        service.Results.ShouldBeEmpty();
+        service.ProcessCallCount.ShouldBe(0);
     }
 
     [Fact]
@@ -241,7 +241,7 @@ public class ParallelWorkerServiceTests
 
         await service.StopAsync(CancellationToken.None);
 
-        service.ProcessCallCount.Should().Be(7);
+        service.ProcessCallCount.ShouldBe(7);
     }
 
     [Fact]
@@ -259,7 +259,7 @@ public class ParallelWorkerServiceTests
         await cts.CancelAsync();
         await service.StopAsync(CancellationToken.None);
 
-        service.ProcessedItems.Should().HaveCount(3);
+        service.ProcessedItems.Count.ShouldBe(3);
     }
 
     [Fact]
@@ -286,7 +286,7 @@ public class ParallelWorkerServiceTests
         await cts.CancelAsync(); // Cancel it
         await service.StopAsync(CancellationToken.None);
 
-        service.ProcessedItems.Count.Should().BeLessThan(100);
+        service.ProcessedItems.Count.ShouldBeLessThan(100);
     }
 
     [Fact]
@@ -341,7 +341,7 @@ public class ParallelWorkerServiceTests
 
         // Assert - no crash, error was logged
         // The test passes if we reach here without unhandled exception
-        true.Should().BeTrue();
+        true.ShouldBeTrue();
     }
 
     [Fact]

@@ -1,4 +1,4 @@
-using Rivulet.Base.Tests;
+﻿using Rivulet.Base.Tests;
 using Rivulet.Core;
 using Rivulet.Core.Observability;
 
@@ -40,11 +40,11 @@ public class PrometheusExporterTests
             });
 
         var prometheusText = exporter.Export();
-        prometheusText.Should().Contain("# Rivulet.Core Metrics");
-        prometheusText.Should().Contain("# HELP rivulet_");
-        prometheusText.Should().Contain("# TYPE rivulet_");
-        prometheusText.Should().Contain("rivulet_items_started");
-        prometheusText.Should().Contain("rivulet_items_completed");
+        prometheusText.ShouldContain("# Rivulet.Core Metrics");
+        prometheusText.ShouldContain("# HELP rivulet_");
+        prometheusText.ShouldContain("# TYPE rivulet_");
+        prometheusText.ShouldContain("rivulet_items_started");
+        prometheusText.ShouldContain("rivulet_items_completed");
     }
 
     [Fact]
@@ -77,11 +77,11 @@ public class PrometheusExporterTests
             });
 
         var metrics = exporter.ExportDictionary();
-        metrics.Should().NotBeEmpty();
-        metrics.Should().ContainKey(RivuletMetricsConstants.CounterNames.ItemsStarted);
-        metrics.Should().ContainKey(RivuletMetricsConstants.CounterNames.ItemsCompleted);
-        metrics[RivuletMetricsConstants.CounterNames.ItemsStarted].Should().BeGreaterThanOrEqualTo(0);
-        metrics[RivuletMetricsConstants.CounterNames.ItemsCompleted].Should().BeGreaterThanOrEqualTo(0);
+        metrics.ShouldNotBeEmpty();
+        metrics.ContainsKey(RivuletMetricsConstants.CounterNames.ItemsStarted).ShouldBeTrue();
+        metrics.ContainsKey(RivuletMetricsConstants.CounterNames.ItemsCompleted).ShouldBeTrue();
+        metrics[RivuletMetricsConstants.CounterNames.ItemsStarted].ShouldBeGreaterThanOrEqualTo(0);
+        metrics[RivuletMetricsConstants.CounterNames.ItemsCompleted].ShouldBeGreaterThanOrEqualTo(0);
     }
 
     [Fact]
@@ -90,9 +90,9 @@ public class PrometheusExporterTests
         using var exporter = new PrometheusExporter();
 
         var prometheusText = exporter.Export();
-        prometheusText.Should().Contain("# Rivulet.Core Metrics");
+        prometheusText.ShouldContain("# Rivulet.Core Metrics");
         
         var metrics = exporter.ExportDictionary();
-        metrics.Should().BeEmpty();
+        metrics.ShouldBeEmpty();
     }
 }

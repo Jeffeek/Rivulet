@@ -1,4 +1,4 @@
-using System.Data;
+﻿using System.Data;
 
 namespace Rivulet.Sql.Tests;
 
@@ -9,12 +9,12 @@ public class BulkOperationOptionsTests
     {
         var options = new BulkOperationOptions();
 
-        options.BatchSize.Should().Be(1000);
-        options.UseTransaction.Should().BeTrue();
-        options.SqlOptions.Should().BeNull();
-        options.OnBatchStartAsync.Should().BeNull();
-        options.OnBatchCompleteAsync.Should().BeNull();
-        options.OnBatchErrorAsync.Should().BeNull();
+        options.BatchSize.ShouldBe(1000);
+        options.UseTransaction.ShouldBeTrue();
+        options.SqlOptions.ShouldBeNull();
+        options.OnBatchStartAsync.ShouldBeNull();
+        options.OnBatchCompleteAsync.ShouldBeNull();
+        options.OnBatchErrorAsync.ShouldBeNull();
     }
 
     [Fact]
@@ -49,21 +49,21 @@ public class BulkOperationOptionsTests
             }
         };
 
-        options.BatchSize.Should().Be(500);
-        options.UseTransaction.Should().BeFalse();
-        options.SqlOptions.Should().NotBeNull();
-        options.SqlOptions!.CommandTimeout.Should().Be(60);
-        options.OnBatchStartAsync.Should().NotBeNull();
-        options.OnBatchCompleteAsync.Should().NotBeNull();
-        options.OnBatchErrorAsync.Should().NotBeNull();
+        options.BatchSize.ShouldBe(500);
+        options.UseTransaction.ShouldBeFalse();
+        options.SqlOptions.ShouldNotBeNull();
+        options.SqlOptions!.CommandTimeout.ShouldBe(60);
+        options.OnBatchStartAsync.ShouldNotBeNull();
+        options.OnBatchCompleteAsync.ShouldNotBeNull();
+        options.OnBatchErrorAsync.ShouldNotBeNull();
 
         options.OnBatchStartAsync!.Invoke(new List<object>(), 0);
         options.OnBatchCompleteAsync!.Invoke(new List<object>(), 0, 100);
         options.OnBatchErrorAsync!.Invoke(new List<object>(), 0, new());
 
-        batchStartCalled.Should().BeTrue();
-        batchCompleteCalled.Should().BeTrue();
-        batchErrorCalled.Should().BeTrue();
+        batchStartCalled.ShouldBeTrue();
+        batchCompleteCalled.ShouldBeTrue();
+        batchErrorCalled.ShouldBeTrue();
     }
 
     [Fact]
@@ -79,9 +79,9 @@ public class BulkOperationOptionsTests
             }
         };
 
-        options.SqlOptions.Should().NotBeNull();
-        options.SqlOptions!.CommandTimeout.Should().Be(90);
-        options.SqlOptions.IsolationLevel.Should().Be(IsolationLevel.Serializable);
-        options.SqlOptions.AutoManageConnection.Should().BeFalse();
+        options.SqlOptions.ShouldNotBeNull();
+        options.SqlOptions!.CommandTimeout.ShouldBe(90);
+        options.SqlOptions.IsolationLevel.ShouldBe(IsolationLevel.Serializable);
+        options.SqlOptions.AutoManageConnection.ShouldBeFalse();
     }
 }

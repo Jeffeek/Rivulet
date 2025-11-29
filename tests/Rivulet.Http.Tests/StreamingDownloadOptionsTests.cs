@@ -1,4 +1,4 @@
-namespace Rivulet.Http.Tests;
+﻿namespace Rivulet.Http.Tests;
 
 public class StreamingDownloadOptionsTests
 {
@@ -7,15 +7,15 @@ public class StreamingDownloadOptionsTests
     {
         var options = new StreamingDownloadOptions();
 
-        options.BufferSize.Should().Be(81920);
-        options.EnableResume.Should().BeTrue();
-        options.ValidateContentLength.Should().BeTrue();
-        options.OverwriteExisting.Should().BeFalse();
-        options.ProgressInterval.Should().Be(TimeSpan.FromSeconds(1));
-        options.HttpOptions.Should().BeNull();
-        options.OnProgressAsync.Should().BeNull();
-        options.OnResumeAsync.Should().BeNull();
-        options.OnCompleteAsync.Should().BeNull();
+        options.BufferSize.ShouldBe(81920);
+        options.EnableResume.ShouldBeTrue();
+        options.ValidateContentLength.ShouldBeTrue();
+        options.OverwriteExisting.ShouldBeFalse();
+        options.ProgressInterval.ShouldBe(TimeSpan.FromSeconds(1));
+        options.HttpOptions.ShouldBeNull();
+        options.OnProgressAsync.ShouldBeNull();
+        options.OnResumeAsync.ShouldBeNull();
+        options.OnCompleteAsync.ShouldBeNull();
     }
 
     [Fact]
@@ -51,22 +51,22 @@ public class StreamingDownloadOptionsTests
             }
         };
 
-        options.HttpOptions.Should().BeSameAs(httpOptions);
-        options.BufferSize.Should().Be(16384);
-        options.EnableResume.Should().BeFalse();
-        options.ValidateContentLength.Should().BeFalse();
-        options.OverwriteExisting.Should().BeTrue();
-        options.ProgressInterval.Should().Be(TimeSpan.FromMilliseconds(500));
-        options.OnProgressAsync.Should().NotBeNull();
-        options.OnResumeAsync.Should().NotBeNull();
-        options.OnCompleteAsync.Should().NotBeNull();
+        options.HttpOptions.ShouldBeSameAs(httpOptions);
+        options.BufferSize.ShouldBe(16384);
+        options.EnableResume.ShouldBeFalse();
+        options.ValidateContentLength.ShouldBeFalse();
+        options.OverwriteExisting.ShouldBeTrue();
+        options.ProgressInterval.ShouldBe(TimeSpan.FromMilliseconds(500));
+        options.OnProgressAsync.ShouldNotBeNull();
+        options.OnResumeAsync.ShouldNotBeNull();
+        options.OnCompleteAsync.ShouldNotBeNull();
         options.OnProgressAsync!.Invoke(new("http://test.local"), 100, 200);
         options.OnResumeAsync!.Invoke(new("http://test.local"), 50);
         options.OnCompleteAsync!.Invoke(new("http://test.local"), "/path/file.txt", 200);
 
-        progressCalled.Should().BeTrue();
-        resumeCalled.Should().BeTrue();
-        completeCalled.Should().BeTrue();
+        progressCalled.ShouldBeTrue();
+        resumeCalled.ShouldBeTrue();
+        completeCalled.ShouldBeTrue();
     }
 
     [Fact]
@@ -80,7 +80,7 @@ public class StreamingDownloadOptionsTests
 
         // Act & Assert - This should not compile if properties are not init-only
         // options.BufferSize = 32768; // Compile error expected
-        options.BufferSize.Should().Be(16384);
+        options.BufferSize.ShouldBe(16384);
     }
 
     [Fact]
@@ -89,8 +89,8 @@ public class StreamingDownloadOptionsTests
         var smallBuffer = new StreamingDownloadOptions { BufferSize = 4096 };
         var largeBuffer = new StreamingDownloadOptions { BufferSize = 1048576 };
 
-        smallBuffer.BufferSize.Should().Be(4096);
-        largeBuffer.BufferSize.Should().Be(1048576);
+        smallBuffer.BufferSize.ShouldBe(4096);
+        largeBuffer.BufferSize.ShouldBe(1048576);
     }
 
     [Fact]
@@ -99,8 +99,8 @@ public class StreamingDownloadOptionsTests
         var fastProgress = new StreamingDownloadOptions { ProgressInterval = TimeSpan.FromMilliseconds(100) };
         var slowProgress = new StreamingDownloadOptions { ProgressInterval = TimeSpan.FromSeconds(5) };
 
-        fastProgress.ProgressInterval.Should().Be(TimeSpan.FromMilliseconds(100));
-        slowProgress.ProgressInterval.Should().Be(TimeSpan.FromSeconds(5));
+        fastProgress.ProgressInterval.ShouldBe(TimeSpan.FromMilliseconds(100));
+        slowProgress.ProgressInterval.ShouldBe(TimeSpan.FromSeconds(5));
     }
 
     [Fact]
@@ -117,9 +117,9 @@ public class StreamingDownloadOptionsTests
             HttpOptions = httpOptions
         };
 
-        options.HttpOptions.Should().BeSameAs(httpOptions);
-        options.HttpOptions.RequestTimeout.Should().Be(TimeSpan.FromSeconds(120));
-        options.HttpOptions.RespectRetryAfterHeader.Should().BeFalse();
+        options.HttpOptions.ShouldBeSameAs(httpOptions);
+        options.HttpOptions.RequestTimeout.ShouldBe(TimeSpan.FromSeconds(120));
+        options.HttpOptions.RespectRetryAfterHeader.ShouldBeFalse();
     }
 
     [Fact]
@@ -153,8 +153,8 @@ public class StreamingDownloadOptionsTests
         await options.OnResumeAsync!.Invoke(new("http://test.local"), 50);
         await options.OnCompleteAsync!.Invoke(new("http://test.local"), "/path", 100);
 
-        progressCount.Should().Be(2);
-        resumeCount.Should().Be(1);
-        completeCount.Should().Be(1);
+        progressCount.ShouldBe(2);
+        resumeCount.ShouldBe(1);
+        completeCount.ShouldBe(1);
     }
 }

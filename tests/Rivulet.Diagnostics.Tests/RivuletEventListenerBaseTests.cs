@@ -1,4 +1,4 @@
-using Rivulet.Base.Tests;
+﻿using Rivulet.Base.Tests;
 using Rivulet.Core;
 using System.Collections.Concurrent;
 using Rivulet.Core.Observability;
@@ -38,8 +38,8 @@ public class RivuletEventListenerBaseTests : IDisposable
             () => Task.Delay(100),
             () => _listener.ReceivedCounters.IsEmpty);
 
-        _listener.ReceivedCounters.Should().NotBeEmpty();
-        _listener.ReceivedCounters.Keys.Should().Contain(RivuletMetricsConstants.CounterNames.ItemsStarted);
+        _listener.ReceivedCounters.ShouldNotBeEmpty();
+        _listener.ReceivedCounters.Keys.ShouldContain(RivuletMetricsConstants.CounterNames.ItemsStarted);
     }
 
     [Fact]
@@ -67,10 +67,10 @@ public class RivuletEventListenerBaseTests : IDisposable
             await Task.Delay(100);
         }
 
-        _listener.ReceivedCounters.Should().NotBeEmpty();
+        _listener.ReceivedCounters.ShouldNotBeEmpty();
         foreach (var counter in _listener.ReceivedCounters)
         {
-            counter.Value.DisplayName.Should().NotBeNullOrEmpty();
+            counter.Value.DisplayName.ShouldNotBeNullOrEmpty();
         }
     }
 
@@ -99,10 +99,10 @@ public class RivuletEventListenerBaseTests : IDisposable
             await Task.Delay(100);
         }
 
-        _listener.ReceivedCounters.Should().NotBeEmpty();
+        _listener.ReceivedCounters.ShouldNotBeEmpty();
         foreach (var counter in _listener.ReceivedCounters)
         {
-            counter.Value.DisplayUnits.Should().NotBeNull();
+            counter.Value.DisplayUnits.ShouldNotBeNull();
         }
     }
 
@@ -123,7 +123,7 @@ public class RivuletEventListenerBaseTests : IDisposable
         listener.Dispose();
 
         // Should not throw and should complete cleanly
-        listener.ReceivedCounters.Should().NotBeNull();
+        listener.ReceivedCounters.ShouldNotBeNull();
     }
 
     public void Dispose()
@@ -153,7 +153,7 @@ public class RivuletEventListenerBaseTests : IDisposable
         customSource.WriteEvent(1, "test");
 
         // Should not receive any counters because event source name doesn't match
-        listener.ReceivedCounters.Should().BeEmpty();
+        listener.ReceivedCounters.ShouldBeEmpty();
 
         listener.Dispose();
     }
@@ -253,7 +253,7 @@ public class RivuletEventListenerBaseTests : IDisposable
         Thread.Sleep(100);
 
         // Should not crash and should not add any counters for empty payload
-        listener.ReceivedCounters.Should().NotBeNull();
+        listener.ReceivedCounters.ShouldNotBeNull();
 
         listener.Dispose();
     }
@@ -270,7 +270,7 @@ public class RivuletEventListenerBaseTests : IDisposable
         Thread.Sleep(100);
 
         // Should handle gracefully
-        listener.ReceivedCounters.Should().NotBeNull();
+        listener.ReceivedCounters.ShouldNotBeNull();
 
         listener.Dispose();
     }
@@ -298,7 +298,7 @@ public class RivuletEventListenerBaseTests : IDisposable
             () => listener.ReceivedCounters.IsEmpty);
 
         // Listener should have received counters, proving IsEnabled was set to true
-        listener.ReceivedCounters.Should().NotBeEmpty();
+        listener.ReceivedCounters.ShouldNotBeEmpty();
 
         listener.Dispose();
     }
@@ -313,7 +313,7 @@ public class RivuletEventListenerBaseTests : IDisposable
         listener.Dispose();
         listener.Dispose();
 
-        listener.ReceivedCounters.Should().NotBeNull();
+        listener.ReceivedCounters.ShouldNotBeNull();
     }
 
     [Fact]
@@ -329,7 +329,7 @@ public class RivuletEventListenerBaseTests : IDisposable
         Thread.Sleep(100);
 
         // Should handle gracefully and not crash
-        listener.ReceivedCounters.Should().NotBeNull();
+        listener.ReceivedCounters.ShouldNotBeNull();
 
         listener.Dispose();
     }
@@ -346,7 +346,7 @@ public class RivuletEventListenerBaseTests : IDisposable
         Thread.Sleep(100);
 
         // Should handle gracefully
-        listener.ReceivedCounters.Should().NotBeNull();
+        listener.ReceivedCounters.ShouldNotBeNull();
 
         listener.Dispose();
     }
@@ -363,7 +363,7 @@ public class RivuletEventListenerBaseTests : IDisposable
 
         Thread.Sleep(100);
 
-        listener.ReceivedCounters.Should().NotBeNull();
+        listener.ReceivedCounters.ShouldNotBeNull();
 
         listener.Dispose();
     }
@@ -405,7 +405,7 @@ public class RivuletEventListenerBaseTests : IDisposable
             await Task.Delay(100);
         }
 
-        listener.ReceivedCounters.Should().NotBeEmpty();
+        listener.ReceivedCounters.ShouldNotBeEmpty();
 
         listener.Dispose();
     }
