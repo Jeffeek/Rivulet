@@ -78,10 +78,10 @@ public class PrometheusExporterTests
 
         var metrics = exporter.ExportDictionary();
         metrics.ShouldNotBeEmpty();
-        metrics.ContainsKey(RivuletMetricsConstants.CounterNames.ItemsStarted).ShouldBeTrue();
-        metrics.ContainsKey(RivuletMetricsConstants.CounterNames.ItemsCompleted).ShouldBeTrue();
-        metrics[RivuletMetricsConstants.CounterNames.ItemsStarted].ShouldBeGreaterThanOrEqualTo(0);
-        metrics[RivuletMetricsConstants.CounterNames.ItemsCompleted].ShouldBeGreaterThanOrEqualTo(0);
+        metrics.TryGetValue(RivuletMetricsConstants.CounterNames.ItemsStarted, out var itemsStarted).ShouldBeTrue();
+        metrics.TryGetValue(RivuletMetricsConstants.CounterNames.ItemsCompleted, out var itemsCompleted).ShouldBeTrue();
+        itemsStarted.ShouldBeGreaterThanOrEqualTo(0);
+        itemsCompleted.ShouldBeGreaterThanOrEqualTo(0);
     }
 
     [Fact]
