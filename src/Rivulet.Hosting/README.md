@@ -1,4 +1,4 @@
-# Rivulet.Hosting
+﻿# Rivulet.Hosting
 
 Integration package for using Rivulet with Microsoft.Extensions.Hosting, ASP.NET Core, and the .NET Generic Host.
 
@@ -502,16 +502,14 @@ Configure appropriate parallelism based on workload:
 - Automatically monitors Rivulet operations via EventCounters
 - Requires PrometheusExporter dependency for metric collection
 
-## License
-
-MIT License - see LICENSE file for details.
-
 ## Contributing
 
 Contributions are welcome! Please see the main Rivulet repository for guidelines.
 
-## Links
+## License
 
-- [GitHub Repository](https://github.com/Jeffeek/Rivulet)
-- [Documentation](https://github.com/Jeffeek/Rivulet/wiki)
-- [NuGet Package](https://www.nuget.org/packages/Rivulet.Hosting)
+MIT License - see LICENSE file for details
+
+---
+
+**Made with ❤️ by Jeffeek** | [NuGet](https://www.nuget.org/packages/Rivulet.Hosting/) | [GitHub](https://github.com/Jeffeek/Rivulet)

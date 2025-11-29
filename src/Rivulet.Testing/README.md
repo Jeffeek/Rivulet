@@ -1,4 +1,4 @@
-# Rivulet.Testing
+﻿# Rivulet.Testing
 
 Testing utilities for Rivulet parallel operations including deterministic schedulers, virtual time, fake channels, and chaos injection.
 
@@ -345,8 +345,8 @@ public async Task TestParallelOperationsWithTestingTools()
 
 ## License
 
-MIT License - see LICENSE file for details.
+MIT License - see LICENSE file for details
 
-## Contributing
+---
 
-Contributions are welcome! Please see the main Rivulet repository for contribution guidelines.
+**Made with ❤️ by Jeffeek** | [NuGet](https://www.nuget.org/packages/Rivulet.Testing/) | [GitHub](https://github.com/Jeffeek/Rivulet)

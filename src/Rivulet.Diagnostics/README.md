@@ -1,4 +1,4 @@
-# Rivulet.Diagnostics
+﻿# Rivulet.Diagnostics
 
 Enterprise observability for Rivulet.Core with EventListener wrappers, metric aggregators, and health check integration.
 
@@ -239,3 +239,7 @@ app.MapGet("/metrics", () => exporter.Export());
 ## License
 
 MIT License - see LICENSE file for details
+
+---
+
+**Made with ❤️ by Jeffeek** | [NuGet](https://www.nuget.org/packages/Rivulet.Diagnostics/) | [GitHub](https://github.com/Jeffeek/Rivulet)

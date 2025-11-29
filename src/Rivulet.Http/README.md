@@ -1,4 +1,4 @@
-# Rivulet.Http
+﻿# Rivulet.Http
 
 **Parallel HTTP operations with automatic retries, resilient downloads, and HttpClientFactory integration.**
 
@@ -418,12 +418,8 @@ See the [samples directory](../../samples) for complete working examples includi
 
 ## License
 
-MIT License - see [LICENSE](../../LICENSE.txt) for details.
+MIT License - see LICENSE file for details
 
-## Related Packages
+---
 
-- **Rivulet.Core** - Core parallel operators
-- **Rivulet.Diagnostics** - EventSource-based metrics
-- **Rivulet.Diagnostics.OpenTelemetry** - OpenTelemetry integration
-- **Rivulet.Hosting** - IHostedService integration
-- **Rivulet.Testing** - Testing utilities for parallel code
+**Made with ❤️ by Jeffeek** | [NuGet](https://www.nuget.org/packages/Rivulet.Http/) | [GitHub](https://github.com/Jeffeek/Rivulet)

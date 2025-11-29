@@ -1,4 +1,4 @@
-# Rivulet.IO
+﻿# Rivulet.IO
 
 **Parallel file and directory operations with bounded concurrency, resilience, and streaming support for efficient I/O processing.**
 
@@ -587,10 +587,8 @@ This layered architecture provides flexibility while maintaining a single source
 
 ## License
 
-MIT License - see [LICENSE](../../LICENSE.txt) for details.
+MIT License - see LICENSE file for details
 
-## Links
+---
 
-- [GitHub Repository](https://github.com/Jeffeek/Rivulet)
-- [Documentation](https://github.com/Jeffeek/Rivulet/tree/master/docs)
-- [NuGet Package](https://www.nuget.org/packages/Rivulet.IO/)
+**Made with ❤️ by Jeffeek** | [NuGet](https://www.nuget.org/packages/Rivulet.IO/) | [GitHub](https://github.com/Jeffeek/Rivulet)

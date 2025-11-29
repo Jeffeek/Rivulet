@@ -1,4 +1,4 @@
-# Rivulet.Sql
+﻿# Rivulet.Sql
 
 **Safe parallel SQL operations with connection pooling awareness and bulk operations.**
 
@@ -503,4 +503,8 @@ Works seamlessly with:
 
 ## License
 
-MIT License - see [LICENSE](../../LICENSE.txt) for details.
+MIT License - see LICENSE file for details
+
+---
+
+**Made with ❤️ by Jeffeek** | [NuGet](https://www.nuget.org/packages/Rivulet.Sql/) | [GitHub](https://github.com/Jeffeek/Rivulet)

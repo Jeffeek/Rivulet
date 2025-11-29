@@ -1,4 +1,4 @@
-# Rivulet.Polly
+﻿# Rivulet.Polly
 
 Integration between Rivulet parallel processing and [Polly](https://github.com/App-vNext/Polly) resilience policies.
 
@@ -80,10 +80,10 @@ var results = await urls.SelectParallelWithResultRetryAsync(
     maxRetries: 3);
 ```
 
-## Documentation
-
-For full documentation, visit [Rivulet Documentation](https://github.com/Jeffeek/Rivulet).
-
 ## License
 
-MIT License - see [LICENSE](../../LICENSE) for details.
+MIT License - see LICENSE file for details
+
+---
+
+**Made with ❤️ by Jeffeek** | [NuGet](https://www.nuget.org/packages/Rivulet.IO/) | [GitHub](https://github.com/Jeffeek/Rivulet)
