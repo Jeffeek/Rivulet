@@ -21,12 +21,12 @@ internal sealed class RivuletEventSource : EventSource
     /// </summary>
     public static readonly RivuletEventSource Log = new();
 
-    private PollingCounter? _itemsStartedCounter;
-    private PollingCounter? _itemsCompletedCounter;
-    private PollingCounter? _totalRetriesCounter;
-    private PollingCounter? _totalFailuresCounter;
-    private PollingCounter? _throttleEventsCounter;
-    private PollingCounter? _drainEventsCounter;
+    private readonly PollingCounter _itemsStartedCounter;
+    private readonly PollingCounter _itemsCompletedCounter;
+    private readonly PollingCounter _totalRetriesCounter;
+    private readonly PollingCounter _totalFailuresCounter;
+    private readonly PollingCounter _throttleEventsCounter;
+    private readonly PollingCounter _drainEventsCounter;
 
     private long _itemsStarted;
     private long _itemsCompleted;
@@ -37,6 +37,61 @@ internal sealed class RivuletEventSource : EventSource
 
     private RivuletEventSource()
     {
+        // Create counters in constructor so they exist before EnableEvents is called.
+        // This ensures they are registered and will be polled when a listener enables the EventSource.
+        _itemsStartedCounter = new(
+            RivuletMetricsConstants.CounterNames.ItemsStarted,
+            this,
+            () => GetItemsStarted())
+        {
+            DisplayName = RivuletMetricsConstants.DisplayNames.ItemsStarted,
+            DisplayUnits = RivuletMetricsConstants.DisplayUnits.Items
+        };
+
+        _itemsCompletedCounter = new(
+            RivuletMetricsConstants.CounterNames.ItemsCompleted,
+            this,
+            () => GetItemsCompleted())
+        {
+            DisplayName = RivuletMetricsConstants.DisplayNames.ItemsCompleted,
+            DisplayUnits = RivuletMetricsConstants.DisplayUnits.Items
+        };
+
+        _totalRetriesCounter = new(
+            RivuletMetricsConstants.CounterNames.TotalRetries,
+            this,
+            () => GetTotalRetries())
+        {
+            DisplayName = RivuletMetricsConstants.DisplayNames.TotalRetries,
+            DisplayUnits = RivuletMetricsConstants.DisplayUnits.Retries
+        };
+
+        _totalFailuresCounter = new(
+            RivuletMetricsConstants.CounterNames.TotalFailures,
+            this,
+            () => GetTotalFailures())
+        {
+            DisplayName = RivuletMetricsConstants.DisplayNames.TotalFailures,
+            DisplayUnits = RivuletMetricsConstants.DisplayUnits.Failures
+        };
+
+        _throttleEventsCounter = new(
+            RivuletMetricsConstants.CounterNames.ThrottleEvents,
+            this,
+            () => GetThrottleEvents())
+        {
+            DisplayName = RivuletMetricsConstants.DisplayNames.ThrottleEvents,
+            DisplayUnits = RivuletMetricsConstants.DisplayUnits.Events
+        };
+
+        _drainEventsCounter = new(
+            RivuletMetricsConstants.CounterNames.DrainEvents,
+            this,
+            () => GetDrainEvents())
+        {
+            DisplayName = RivuletMetricsConstants.DisplayNames.DrainEvents,
+            DisplayUnits = RivuletMetricsConstants.DisplayUnits.Events
+        };
     }
 
     /// <summary>
@@ -75,9 +130,12 @@ internal sealed class RivuletEventSource : EventSource
     /// <param name="callbackName">Name of the callback that failed.</param>
     /// <param name="exceptionType">Type of the exception.</param>
     /// <param name="message">Exception message.</param>
-    [Event(1, Level = EventLevel.Warning, Message = "Callback '{0}' failed with {1}: {2}")]
+    /// <remarks>
+    /// Event ID 100 is used to avoid conflicts with internal EventCounter event IDs (0-3).
+    /// </remarks>
+    [Event(100, Level = EventLevel.Warning, Message = "Callback '{0}' failed with {1}: {2}")]
     public void CallbackFailed(string callbackName, string exceptionType, string message) =>
-        WriteEvent(1, callbackName, exceptionType, message);
+        WriteEvent(100, callbackName, exceptionType, message);
 
 
     /// <summary>
@@ -110,76 +168,14 @@ internal sealed class RivuletEventSource : EventSource
     /// </summary>
     public long GetDrainEvents() => Interlocked.Read(ref _drainEvents);
 
-    /// <summary>
-    /// Called when EventSource is enabled. Creates EventCounters for monitoring.
-    /// </summary>
-    protected override void OnEventCommand(EventCommandEventArgs command)
-    {
-        if (command.Command != EventCommand.Enable) return;
-
-        _itemsStartedCounter ??= new(
-            RivuletMetricsConstants.CounterNames.ItemsStarted,
-            this,
-            () => GetItemsStarted())
-        {
-            DisplayName = RivuletMetricsConstants.DisplayNames.ItemsStarted,
-            DisplayUnits = RivuletMetricsConstants.DisplayUnits.Items
-        };
-
-        _itemsCompletedCounter ??= new(
-            RivuletMetricsConstants.CounterNames.ItemsCompleted,
-            this,
-            () => GetItemsCompleted())
-        {
-            DisplayName = RivuletMetricsConstants.DisplayNames.ItemsCompleted,
-            DisplayUnits = RivuletMetricsConstants.DisplayUnits.Items
-        };
-
-        _totalRetriesCounter ??= new(
-            RivuletMetricsConstants.CounterNames.TotalRetries,
-            this,
-            () => GetTotalRetries())
-        {
-            DisplayName = RivuletMetricsConstants.DisplayNames.TotalRetries,
-            DisplayUnits = RivuletMetricsConstants.DisplayUnits.Retries
-        };
-
-        _totalFailuresCounter ??= new(
-            RivuletMetricsConstants.CounterNames.TotalFailures,
-            this,
-            () => GetTotalFailures())
-        {
-            DisplayName = RivuletMetricsConstants.DisplayNames.TotalFailures,
-            DisplayUnits = RivuletMetricsConstants.DisplayUnits.Failures
-        };
-
-        _throttleEventsCounter ??= new(
-            RivuletMetricsConstants.CounterNames.ThrottleEvents,
-            this,
-            () => GetThrottleEvents())
-        {
-            DisplayName = RivuletMetricsConstants.DisplayNames.ThrottleEvents,
-            DisplayUnits = RivuletMetricsConstants.DisplayUnits.Events
-        };
-
-        _drainEventsCounter ??= new(
-            RivuletMetricsConstants.CounterNames.DrainEvents,
-            this,
-            () => GetDrainEvents())
-        {
-            DisplayName = RivuletMetricsConstants.DisplayNames.DrainEvents,
-            DisplayUnits = RivuletMetricsConstants.DisplayUnits.Events
-        };
-    }
-
     protected override void Dispose(bool disposing)
     {
-        _itemsStartedCounter?.Dispose();
-        _itemsCompletedCounter?.Dispose();
-        _totalRetriesCounter?.Dispose();
-        _totalFailuresCounter?.Dispose();
-        _throttleEventsCounter?.Dispose();
-        _drainEventsCounter?.Dispose();
+        _itemsStartedCounter.Dispose();
+        _itemsCompletedCounter.Dispose();
+        _totalRetriesCounter.Dispose();
+        _totalFailuresCounter.Dispose();
+        _throttleEventsCounter.Dispose();
+        _drainEventsCounter.Dispose();
         base.Dispose(disposing);
     }
 }

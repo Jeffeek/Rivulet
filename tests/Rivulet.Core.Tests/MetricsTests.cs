@@ -281,9 +281,9 @@ public class MetricsTests
         await Task.Yield();
 
         await DeadlineExtensions.ApplyDeadlineAsync(
-            DateTime.UtcNow.AddMilliseconds(5000),
+            DateTime.UtcNow.AddMilliseconds(4000),
             () => Task.Delay(100),
-            () => callbackInvocationCount == 0 || capturedSnapshot == null || capturedSnapshot.TotalFailures != 10);
+            () => callbackInvocationCount == 0 || capturedSnapshot is not { TotalFailures: 10 });
 
         callbackInvocationCount.ShouldBeGreaterThan(0, "at least one metrics sample should have been captured during operation execution and disposal");
         capturedSnapshot.ShouldNotBeNull("final metrics snapshot should be available after disposal completes");
@@ -461,7 +461,7 @@ public class MetricsTests
         await Task.Yield();
 
         await DeadlineExtensions.ApplyDeadlineAsync(
-            DateTime.UtcNow.AddMilliseconds(5000),
+            DateTime.UtcNow.AddMilliseconds(4000),
             () => Task.Delay(100),
             () =>
             {
@@ -713,9 +713,9 @@ public class MetricsTests
         await Task.Yield();
 
         await DeadlineExtensions.ApplyDeadlineAsync(
-            DateTime.UtcNow.AddMilliseconds(5000),
+            DateTime.UtcNow.AddMilliseconds(4000),
             () => Task.Delay(100),
-            () => capturedSnapshot == null || capturedSnapshot.ItemsStarted != 1000 || capturedSnapshot.ItemsCompleted != 1000);
+            () => capturedSnapshot is not { ItemsStarted: 1000 } || capturedSnapshot.ItemsCompleted != 1000);
 
         results.Count.ShouldBe(1000, "all 1000 items should complete successfully");
         capturedSnapshot.ShouldNotBeNull("final metrics snapshot should be captured after disposal");

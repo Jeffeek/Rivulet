@@ -3,6 +3,7 @@ using System.Text.Json;
 
 namespace Rivulet.Diagnostics.Tests;
 
+[Collection(TestCollections.SerialEventSource)]
 public class RivuletStructuredLogListenerTests : IDisposable
 {
     private readonly string _testFilePath = Path.Join(Path.GetTempPath(), $"rivulet-test-{Guid.NewGuid()}.json");
@@ -30,12 +31,12 @@ public class RivuletStructuredLogListenerTests : IDisposable
         await using (new RivuletStructuredLogListener(filePath))
         {
             // Operations must run long enough for EventCounter polling (1 second interval)
-            // 5 items * 400ms / 2 parallelism = 1000ms (1 second) minimum operation time
-            await Enumerable.Range(1, 5)
+            // 10 items * 300ms / 2 parallelism = 1500ms of operation time
+            await Enumerable.Range(1, 10)
                 .ToAsyncEnumerable()
                 .SelectParallelStreamAsync(async (x, ct) =>
                 {
-                    await Task.Delay(400, ct);
+                    await Task.Delay(300, ct);
                     return x;
                 }, new()
                 {
@@ -44,7 +45,7 @@ public class RivuletStructuredLogListenerTests : IDisposable
                 .ToListAsync();
 
             // Wait for EventCounters to fire - increased for CI/CD reliability
-            await Task.Delay(2000);
+            await Task.Delay(3000);
         }
 
         await Task.Delay(200);
@@ -60,14 +61,14 @@ public class RivuletStructuredLogListenerTests : IDisposable
     {
         await using (new RivuletStructuredLogListener(_testFilePath))
         {
-            // Use longer operation (200ms per item) to ensure EventCounters poll DURING execution
-            // EventCounters have ~1 second polling interval, so operation needs to run for 1-2+ seconds
-            // 10 items * 200ms / 2 parallelism = 1000ms (1 second) of operation time
+            // Use longer operation (300ms per item) to ensure EventCounters poll DURING execution
+            // EventCounters have ~1 second polling interval, so operation needs to run for 2+ seconds
+            // 10 items * 300ms / 2 parallelism = 1500ms of operation time
             await Enumerable.Range(1, 10)
                 .ToAsyncEnumerable()
                 .SelectParallelStreamAsync(async (x, ct) =>
                 {
-                    await Task.Delay(200, ct);
+                    await Task.Delay(300, ct);
                     return x * 2;
                 }, new()
                 {
@@ -76,12 +77,12 @@ public class RivuletStructuredLogListenerTests : IDisposable
                 .ToListAsync();
 
             // Wait for EventCounters to poll and write metrics after operation completes
-            // Polling interval is ~1 second but can be delayed under load
-            await Task.Delay(2000); // Reduced from 5000ms for faster tests
+            // Polling interval is ~1 second, wait 3 seconds for CI/CD reliability
+            await Task.Delay(3000);
         } // Dispose listener to flush and close file
 
         // Wait for file handle to be fully released
-        await Task.Delay(500); // Reduced from 5000ms for faster tests
+        await Task.Delay(500);
 
         File.Exists(_testFilePath).ShouldBeTrue();
         var lines = await File.ReadAllLinesAsync(_testFilePath);
@@ -103,12 +104,12 @@ public class RivuletStructuredLogListenerTests : IDisposable
         await using var listener = new RivuletStructuredLogListener(loggedLines.Add);
 
         // Operations must run long enough for EventCounter polling (1 second interval)
-        // 10 items * 200ms / 2 parallelism = 1000ms (1 second) minimum operation time
+        // 10 items * 300ms / 2 parallelism = 1500ms of operation time
         await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
             .SelectParallelStreamAsync(async (x, ct) =>
             {
-                await Task.Delay(200, ct);
+                await Task.Delay(300, ct);
                 return x * 2;
             }, new()
             {
@@ -117,7 +118,7 @@ public class RivuletStructuredLogListenerTests : IDisposable
             .ToListAsync();
 
         // Wait for EventCounters to fire - increased for CI/CD reliability
-        await Task.Delay(2000);
+        await Task.Delay(3000);
 
         loggedLines.ShouldNotBeEmpty();
 
@@ -134,12 +135,12 @@ public class RivuletStructuredLogListenerTests : IDisposable
         await using var listener = new RivuletStructuredLogListener(loggedLines.Add);
 
         // Operations must run long enough for EventCounter polling (1 second interval)
-        // 5 items * 400ms / 2 parallelism = 1000ms (1 second) minimum operation time
-        await Enumerable.Range(1, 5)
+        // 10 items * 300ms / 2 parallelism = 1500ms of operation time
+        await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
             .SelectParallelStreamAsync(async (x, ct) =>
             {
-                await Task.Delay(400, ct);
+                await Task.Delay(300, ct);
                 return x;
             }, new()
             {
@@ -147,7 +148,8 @@ public class RivuletStructuredLogListenerTests : IDisposable
             })
             .ToListAsync();
 
-        await Task.Delay(2000);
+        // Wait for EventCounters to fire - increased for CI/CD reliability
+        await Task.Delay(3000);
 
         loggedLines.ShouldNotBeEmpty();
 

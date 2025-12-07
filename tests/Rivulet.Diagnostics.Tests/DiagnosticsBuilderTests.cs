@@ -3,11 +3,10 @@
 namespace Rivulet.Diagnostics.Tests;
 
 /// <summary>
-/// Tests that manipulate Console.Out must run serially to avoid interference on Windows.
-/// Parallel execution can cause ObjectDisposedException in FluentAssertions when one test
-/// disposes the console TextWriter while another test is using it.
+/// Tests that use EventSource and manipulate Console.Out must run serially.
+/// EventSource is a process-wide singleton, so parallel tests interfere with each other.
 /// </summary>
-[Collection(TestCollections.SerialConsole)]
+[Collection(TestCollections.SerialEventSource)]
 public class DiagnosticsBuilderTests : IDisposable
 {
     private readonly string _testFilePath;
@@ -34,11 +33,11 @@ public class DiagnosticsBuilderTests : IDisposable
                          .Build())
         {
             // Operations must run long enough for EventCounter polling (1 second interval)
-            // 10 items * 200ms / 2 parallelism = 1000ms (1 second) minimum operation time
+            // 10 items * 300ms / 2 parallelism = 1500ms of operation time
             await Enumerable.Range(1, 10)
                 .SelectParallelAsync(async (x, ct) =>
                 {
-                    await Task.Delay(200, ct);
+                    await Task.Delay(300, ct);
                     return x * 2;
                 }, new()
                 {
@@ -46,11 +45,11 @@ public class DiagnosticsBuilderTests : IDisposable
                 });
 
             // Wait for at least 2x the aggregation interval to ensure timer fires reliably
-            await Task.Delay(4000);
+            await Task.Delay(5000);
         } // Dispose to flush all listeners
 
         // Wait for file handle to be released and final aggregations to complete
-        await Task.Delay(200);
+        await Task.Delay(500);
 
         // Note: Console output timing is unreliable in parallel tests due to async flushing,
         // so we verify metrics through file output and aggregated metrics instead
@@ -70,12 +69,12 @@ public class DiagnosticsBuilderTests : IDisposable
             .Build();
 
         // Operations must run long enough for EventCounter polling (1 second interval)
-        // 10 items * 200ms / 2 parallelism = 1000ms (1 second) minimum operation time
+        // 10 items * 300ms / 2 parallelism = 1500ms of operation time
         await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
             .SelectParallelStreamAsync(async (x, ct) =>
             {
-                await Task.Delay(200, ct);
+                await Task.Delay(300, ct);
                 return x * 2;
             }, new()
             {
@@ -83,7 +82,8 @@ public class DiagnosticsBuilderTests : IDisposable
             })
             .ToListAsync();
 
-        await Task.Delay(2000);
+        // Wait for EventCounters to fire - increased for CI/CD reliability
+        await Task.Delay(3000);
 
         var prometheusText = exporter.Export();
         prometheusText.ShouldContain("rivulet_items_started");
@@ -99,12 +99,12 @@ public class DiagnosticsBuilderTests : IDisposable
                          .Build())
         {
             // Operations must run long enough for EventCounter polling (1 second interval)
-            // 5 items * 400ms / 2 parallelism = 1000ms (1 second) minimum operation time
-            await Enumerable.Range(1, 5)
+            // 10 items * 300ms / 2 parallelism = 1500ms of operation time
+            await Enumerable.Range(1, 10)
                 .ToAsyncEnumerable()
                 .SelectParallelStreamAsync(async (x, ct) =>
                 {
-                    await Task.Delay(400, ct);
+                    await Task.Delay(300, ct);
                     return x;
                 }, new()
                 {
@@ -112,10 +112,11 @@ public class DiagnosticsBuilderTests : IDisposable
                 })
                 .ToListAsync();
 
-            await Task.Delay(2000);
+            // Wait for EventCounters to fire - increased for CI/CD reliability
+            await Task.Delay(3000);
         }
 
-        await Task.Delay(100);
+        await Task.Delay(200);
 
         File.Exists(logFile).ShouldBeTrue();
         TestCleanupHelper.RetryDeleteFile(logFile);
@@ -134,12 +135,12 @@ public class DiagnosticsBuilderTests : IDisposable
             .Build();
 
         // Operations must run long enough for EventCounter polling (1 second interval)
-        // 5 items * 400ms / 2 parallelism = 1000ms (1 second) minimum operation time
-        await Enumerable.Range(1, 5)
+        // 10 items * 300ms / 2 parallelism = 1500ms of operation time
+        await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
             .SelectParallelStreamAsync(async (x, ct) =>
             {
-                await Task.Delay(400, ct);
+                await Task.Delay(300, ct);
                 return x;
             }, new()
             {
@@ -147,8 +148,8 @@ public class DiagnosticsBuilderTests : IDisposable
             })
             .ToListAsync();
 
-        // Wait for EventCounters to be polled and metrics to be available
-        await Task.Delay(3000);
+        // Wait for EventCounters to be polled and metrics to be available - increased for CI/CD reliability
+        await Task.Delay(4000);
 
         var prometheusText = exporter.Export();
         prometheusText.ShouldContain("rivulet_items_started");
@@ -175,12 +176,12 @@ public class DiagnosticsBuilderTests : IDisposable
             .Build();
 
         // Operations must run long enough for EventCounter polling (1 second interval)
-        // 5 items * 400ms / 2 parallelism = 1000ms (1 second) minimum operation time
-        await Enumerable.Range(1, 5)
+        // 10 items * 300ms / 2 parallelism = 1500ms of operation time
+        await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
             .SelectParallelStreamAsync(async (x, ct) =>
             {
-                await Task.Delay(400, ct);
+                await Task.Delay(300, ct);
                 return x;
             }, new()
             {
@@ -188,7 +189,8 @@ public class DiagnosticsBuilderTests : IDisposable
             })
             .ToListAsync();
 
-        await Task.Delay(2000);
+        // Wait for EventCounters to fire - increased for CI/CD reliability
+        await Task.Delay(3000);
 
         loggedLines.ShouldNotBeEmpty();
     }

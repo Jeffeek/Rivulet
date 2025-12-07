@@ -54,7 +54,7 @@ public class ComprehensiveCoverageTests
 
         // Wait for at least 2x the aggregation window to ensure timer fires and EventSource counters are received
         await DeadlineExtensions.ApplyDeadlineAsync(
-            DateTime.UtcNow.AddMilliseconds(3000),
+            DateTime.UtcNow.AddMilliseconds(2000),
             () => Task.Delay(100),
             () => !callbackInvoked);
 

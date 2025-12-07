@@ -31,7 +31,7 @@ public class PrometheusExporterTests
         // EventCounters have ~1s polling interval but can be delayed under load
         // Must wait for BOTH items_started AND items_completed to be present
         await DeadlineExtensions.ApplyDeadlineAsync(
-            DateTime.UtcNow.AddMilliseconds(5000),
+            DateTime.UtcNow.AddMilliseconds(4000),
             () => Task.Delay(100),
             () =>
             {
@@ -71,7 +71,7 @@ public class PrometheusExporterTests
         // EventCounters have ~1s polling interval but can be delayed under load
         // Must wait for BOTH items_started AND items_completed keys to be present
         await DeadlineExtensions.ApplyDeadlineAsync(
-            DateTime.UtcNow.AddMilliseconds(5000),
+            DateTime.UtcNow.AddMilliseconds(4000),
             () => Task.Delay(100),
             () =>
             {

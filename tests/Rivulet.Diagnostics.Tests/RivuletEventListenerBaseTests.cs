@@ -8,7 +8,7 @@ namespace Rivulet.Diagnostics.Tests;
 
 // EventSource and EventListener are process-wide singletons by design.
 // These tests must run sequentially to avoid cross-test pollution.
-[Collection(TestCollections.EventSource)]
+[Collection(TestCollections.SerialEventSource)]
 public class RivuletEventListenerBaseTests : IDisposable
 {
     private readonly TestEventListener _listener = new();
@@ -16,14 +16,14 @@ public class RivuletEventListenerBaseTests : IDisposable
     [Fact]
     public async Task EventListenerBase_ShouldReceiveCounters_WhenOperationsRun()
     {
-        // Use longer operation (200ms per item) to ensure EventCounters poll DURING execution
-        // EventCounters have ~1 second polling interval, so operation needs to run for 1-2+ seconds
-        // 10 items * 200ms / 2 parallelism = 1000ms (1 second) of operation time
+        // Use longer operation (300ms per item) to ensure EventCounters poll DURING execution
+        // EventCounters have ~1 second polling interval, so operation needs to run for 2+ seconds
+        // 10 items * 300ms / 2 parallelism = 1500ms of operation time
         await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
             .SelectParallelStreamAsync(async (x, ct) =>
             {
-                await Task.Delay(200, ct);
+                await Task.Delay(300, ct);
                 return x * 2;
             }, new()
             {
@@ -32,9 +32,9 @@ public class RivuletEventListenerBaseTests : IDisposable
             .ToListAsync();
 
         // EventSource publishes counters every 1 second
-        // Increased from 2000ms → 5000ms for Windows CI/CD reliability
+        // Increased to 8000ms for Windows CI/CD reliability
         await DeadlineExtensions.ApplyDeadlineAsync(
-            DateTime.UtcNow.AddMilliseconds(5000),
+            DateTime.UtcNow.AddMilliseconds(6000),
             () => Task.Delay(100),
             () => _listener.ReceivedCounters.IsEmpty);
 
@@ -45,13 +45,13 @@ public class RivuletEventListenerBaseTests : IDisposable
     [Fact]
     public async Task EventListenerBase_ShouldHandleMissingDisplayName()
     {
-        // Use longer operation (200ms per item) to ensure EventCounters poll DURING execution
-        // 5 items * 200ms / 2 parallelism = 500ms of operation time
-        await Enumerable.Range(1, 5)
+        // Use longer operation (300ms per item) to ensure EventCounters poll DURING execution
+        // 10 items * 300ms / 2 parallelism = 1500ms of operation time
+        await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
             .SelectParallelStreamAsync(async (x, ct) =>
             {
-                await Task.Delay(200, ct);
+                await Task.Delay(300, ct);
                 return x;
             }, new()
             {
@@ -60,8 +60,8 @@ public class RivuletEventListenerBaseTests : IDisposable
             .ToListAsync();
 
         // EventSource publishes counters every 1 second - poll with timeout
-        // Increased from 2000ms → 5000ms for Windows CI/CD reliability (1/180 failures)
-        var deadline = DateTime.UtcNow.AddMilliseconds(5000);
+        // Increased to 8000ms for Windows CI/CD reliability
+        var deadline = DateTime.UtcNow.AddMilliseconds(8000);
         while (_listener.ReceivedCounters.IsEmpty && DateTime.UtcNow < deadline)
         {
             await Task.Delay(100);
@@ -77,13 +77,13 @@ public class RivuletEventListenerBaseTests : IDisposable
     [Fact]
     public async Task EventListenerBase_ShouldHandleMissingDisplayUnits()
     {
-        // Use longer operation (200ms per item) to ensure EventCounters poll DURING execution
-        // 5 items * 200ms / 2 parallelism = 500ms of operation time
-        await Enumerable.Range(1, 5)
+        // Use longer operation (300ms per item) to ensure EventCounters poll DURING execution
+        // 10 items * 300ms / 2 parallelism = 1500ms of operation time
+        await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
             .SelectParallelStreamAsync(async (x, ct) =>
             {
-                await Task.Delay(200, ct);
+                await Task.Delay(300, ct);
                 return x;
             }, new()
             {
@@ -92,8 +92,8 @@ public class RivuletEventListenerBaseTests : IDisposable
             .ToListAsync();
 
         // EventSource publishes counters every 1 second - poll with timeout
-        // Increased from 2000ms → 5000ms for Windows CI/CD reliability (2/180 failures)
-        var deadline = DateTime.UtcNow.AddMilliseconds(5000);
+        // Increased to 8000ms for Windows CI/CD reliability
+        var deadline = DateTime.UtcNow.AddMilliseconds(8000);
         while (_listener.ReceivedCounters.IsEmpty && DateTime.UtcNow < deadline)
         {
             await Task.Delay(100);
@@ -281,19 +281,23 @@ public class RivuletEventListenerBaseTests : IDisposable
         // Test that listener enables events when Rivulet.Core EventSource is created
         var listener = new TestEventListener();
 
-        // Trigger some operations to ensure EventSource is active
-        await Enumerable.Range(1, 5)
+        // Trigger operations with long enough duration for EventCounters to poll
+        // 10 items * 300ms / 2 parallelism = 1500ms of operation time
+        await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
             .SelectParallelStreamAsync(async (x, ct) =>
             {
-                await Task.Delay(100, ct);
+                await Task.Delay(300, ct);
                 return x;
-            }, new())
+            }, new()
+            {
+                MaxDegreeOfParallelism = 2
+            })
             .ToListAsync();
 
-        // Wait for counters
+        // Wait for counters - increased to 8000ms for CI/CD reliability
         await DeadlineExtensions.ApplyDeadlineAsync(
-            DateTime.UtcNow.AddMilliseconds(3000),
+            DateTime.UtcNow.AddMilliseconds(6000),
             () => Task.Delay(100),
             () => listener.ReceivedCounters.IsEmpty);
 
@@ -390,16 +394,21 @@ public class RivuletEventListenerBaseTests : IDisposable
         var listener = new TestEventListener();
 
         // Run operations to generate counters
-        await Enumerable.Range(1, 5)
+        // 10 items * 300ms / 2 parallelism = 1500ms of operation time
+        await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
             .SelectParallelStreamAsync(async (x, ct) =>
             {
-                await Task.Delay(100, ct);
+                await Task.Delay(300, ct);
                 return x;
-            }, new())
+            }, new()
+            {
+                MaxDegreeOfParallelism = 2
+            })
             .ToListAsync();
 
-        var deadline = DateTime.UtcNow.AddMilliseconds(3000);
+        // Increased to 8000ms for CI/CD reliability
+        var deadline = DateTime.UtcNow.AddMilliseconds(8000);
         while (listener.ReceivedCounters.IsEmpty && DateTime.UtcNow < deadline)
         {
             await Task.Delay(100);
