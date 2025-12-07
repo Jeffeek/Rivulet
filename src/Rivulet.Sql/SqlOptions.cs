@@ -35,8 +35,9 @@ public sealed class SqlOptions
     public IsolationLevel IsolationLevel { get; init; } = IsolationLevel.ReadCommitted;
 
     /// <summary>
-    /// Callback invoked when a SQL error occurs (before retry logic).
-    /// Provides the item, exception, and current retry attempt.
+    /// Callback invoked when a SQL error occurs.
+    /// Parameters: (sql command/query, exception, always 0).
+    /// Note: The third parameter is always 0 because retries are handled internally by Rivulet.Core's retry mechanism.
     /// </summary>
     public Func<object?, Exception, int, ValueTask>? OnSqlErrorAsync { get; init; }
 

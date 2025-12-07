@@ -105,7 +105,20 @@ public sealed class MetricsAggregator : RivuletEventListenerBase, IAsyncDisposab
                 if (samples.Count == 0)
                     continue;
 
-                var values = samples.Select(s => s.Value).ToList();
+                // Compute all stats in a single pass to avoid multiple LINQ iterations
+                var min = double.MaxValue;
+                var max = double.MinValue;
+                var sum = 0.0;
+                var count = samples.Count;
+                var last = samples[count - 1].Value;
+
+                foreach (var (value, _) in samples)
+                {
+                    if (value < min) min = value;
+                    if (value > max) max = value;
+                    sum += value;
+                }
+
                 var metadata = _metricMetadata.GetValueOrDefault(name, (name, string.Empty));
 
                 aggregatedMetrics.Add(new()
@@ -113,11 +126,11 @@ public sealed class MetricsAggregator : RivuletEventListenerBase, IAsyncDisposab
                     Name = name,
                     DisplayName = metadata.Item1,
                     DisplayUnits = metadata.Item2,
-                    Min = values.Min(),
-                    Max = values.Max(),
-                    Average = values.Average(),
-                    Current = values.Last(),
-                    SampleCount = values.Count,
+                    Min = min,
+                    Max = max,
+                    Average = sum / count,
+                    Current = last,
+                    SampleCount = count,
                     Timestamp = DateTime.UtcNow
                 });
             }
