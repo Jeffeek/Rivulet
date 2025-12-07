@@ -152,11 +152,13 @@ public class RivuletConsoleListenerTests : IDisposable
         {
             using var listener = new RivuletConsoleListener(useColors: false);
 
+            // Operations must run long enough for EventCounter polling (1 second interval)
+            // 10 items * 200ms / 2 parallelism = 1000ms (1 second) minimum operation time
             await Enumerable.Range(1, 10)
                 .ToAsyncEnumerable()
                 .SelectParallelStreamAsync(async (x, ct) =>
                 {
-                    await Task.Delay(10, ct);
+                    await Task.Delay(200, ct);
                     return x * 2;
                 }, new()
                 {

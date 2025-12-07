@@ -136,11 +136,13 @@ public class EdgeCaseCoverageTests
         {
             await using (new RivuletFileListener(testFile))
             {
+                // Operations must run long enough for EventCounter polling (1 second interval)
+                // 10 items * 200ms / 2 parallelism = 1000ms (1 second) minimum operation time
                 await Enumerable.Range(1, 10)
                     .ToAsyncEnumerable()
                     .SelectParallelStreamAsync(async (x, ct) =>
                     {
-                        await Task.Delay(1, ct);
+                        await Task.Delay(200, ct);
                         return x;
                     }, new()
                     {
@@ -154,7 +156,7 @@ public class EdgeCaseCoverageTests
                         .ToAsyncEnumerable()
                         .SelectParallelStreamAsync(async (x, ct) =>
                         {
-                            await Task.Delay(1, ct);
+                            await Task.Delay(200, ct);
                             if (x % 2 == 0)
                                 throw new InvalidOperationException();
                             return x;
@@ -170,8 +172,7 @@ public class EdgeCaseCoverageTests
                     // Expected
                 }
 
-                // Wait for EventSource counters to fire (1s default interval)
-                // Increased from 1100ms to 2000ms to handle CI/CD timing variability
+                // Wait for EventSource counters to fire
                 await Task.Delay(2000);
             }
 
@@ -196,11 +197,13 @@ public class EdgeCaseCoverageTests
         {
             await using (new RivuletStructuredLogListener(testFile))
             {
+                // Operations must run long enough for EventCounter polling (1 second interval)
+                // 5 items * 400ms / 2 parallelism = 1000ms (1 second) minimum operation time
                 await Enumerable.Range(1, 5)
                     .ToAsyncEnumerable()
                     .SelectParallelStreamAsync(async (x, ct) =>
                     {
-                        await Task.Delay(1, ct);
+                        await Task.Delay(400, ct);
                         return x;
                     }, new()
                     {
@@ -232,11 +235,13 @@ public class EdgeCaseCoverageTests
 
         try
         {
+            // Operations must run long enough for EventCounter polling (1 second interval)
+            // 5 items * 400ms / 2 parallelism = 1000ms (1 second) minimum operation time
             await Enumerable.Range(1, 5)
                 .ToAsyncEnumerable()
                 .SelectParallelStreamAsync(async (x, ct) =>
                 {
-                    await Task.Delay(1, ct);
+                    await Task.Delay(400, ct);
                     return x;
                 }, new()
                 {
@@ -261,11 +266,13 @@ public class EdgeCaseCoverageTests
     {
         await using var aggregator = new MetricsAggregator(TimeSpan.FromSeconds(1));
 
+        // Operations must run long enough for EventCounter polling (1 second interval)
+        // 5 items * 400ms / 2 parallelism = 1000ms (1 second) minimum operation time
         await Enumerable.Range(1, 5)
             .ToAsyncEnumerable()
             .SelectParallelStreamAsync(async (x, ct) =>
             {
-                await Task.Delay(1, ct);
+                await Task.Delay(400, ct);
                 return x;
             }, new()
             {
@@ -301,13 +308,18 @@ public class EdgeCaseCoverageTests
             await Task.Delay(10);
         }
 
-        await Enumerable.Range(1, 3)
+        // Operations must run long enough for EventCounter polling (1 second interval)
+        // 5 items * 400ms / 2 parallelism = 1000ms (1 second) minimum operation time
+        await Enumerable.Range(1, 5)
             .ToAsyncEnumerable()
             .SelectParallelStreamAsync(async (x, ct) =>
             {
-                await Task.Delay(1, ct);
+                await Task.Delay(400, ct);
                 return x;
-            }, new())
+            }, new()
+            {
+                MaxDegreeOfParallelism = 2
+            })
             .ToListAsync();
 
         // Wait for EventSource counters to fire (1s default interval)

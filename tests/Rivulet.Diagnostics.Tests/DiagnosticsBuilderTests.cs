@@ -33,10 +33,12 @@ public class DiagnosticsBuilderTests : IDisposable
                          .AddMetricsAggregator(TimeSpan.FromSeconds(2), metrics => aggregatedMetrics.Add(metrics))
                          .Build())
         {
+            // Operations must run long enough for EventCounter polling (1 second interval)
+            // 10 items * 200ms / 2 parallelism = 1000ms (1 second) minimum operation time
             await Enumerable.Range(1, 10)
                 .SelectParallelAsync(async (x, ct) =>
                 {
-                    await Task.Delay(10, ct);
+                    await Task.Delay(200, ct);
                     return x * 2;
                 }, new()
                 {
@@ -44,7 +46,6 @@ public class DiagnosticsBuilderTests : IDisposable
                 });
 
             // Wait for at least 2x the aggregation interval to ensure timer fires reliably
-            // Increased from 2500ms to 4000ms to handle CI/CD timing variability
             await Task.Delay(4000);
         } // Dispose to flush all listeners
 
@@ -68,11 +69,13 @@ public class DiagnosticsBuilderTests : IDisposable
             .AddPrometheusExporter(out var exporter)
             .Build();
 
+        // Operations must run long enough for EventCounter polling (1 second interval)
+        // 10 items * 200ms / 2 parallelism = 1000ms (1 second) minimum operation time
         await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
             .SelectParallelStreamAsync(async (x, ct) =>
             {
-                await Task.Delay(10, ct);
+                await Task.Delay(200, ct);
                 return x * 2;
             }, new()
             {
@@ -80,7 +83,7 @@ public class DiagnosticsBuilderTests : IDisposable
             })
             .ToListAsync();
 
-        await Task.Delay(1500);
+        await Task.Delay(2000);
 
         var prometheusText = exporter.Export();
         prometheusText.ShouldContain("rivulet_items_started");
@@ -95,11 +98,13 @@ public class DiagnosticsBuilderTests : IDisposable
                          .AddStructuredLogListener(logFile)
                          .Build())
         {
+            // Operations must run long enough for EventCounter polling (1 second interval)
+            // 5 items * 400ms / 2 parallelism = 1000ms (1 second) minimum operation time
             await Enumerable.Range(1, 5)
                 .ToAsyncEnumerable()
                 .SelectParallelStreamAsync(async (x, ct) =>
                 {
-                    await Task.Delay(10, ct);
+                    await Task.Delay(400, ct);
                     return x;
                 }, new()
                 {
@@ -107,7 +112,7 @@ public class DiagnosticsBuilderTests : IDisposable
                 })
                 .ToListAsync();
 
-            await Task.Delay(1500);
+            await Task.Delay(2000);
         }
 
         await Task.Delay(100);
@@ -128,11 +133,13 @@ public class DiagnosticsBuilderTests : IDisposable
             })
             .Build();
 
+        // Operations must run long enough for EventCounter polling (1 second interval)
+        // 5 items * 400ms / 2 parallelism = 1000ms (1 second) minimum operation time
         await Enumerable.Range(1, 5)
             .ToAsyncEnumerable()
             .SelectParallelStreamAsync(async (x, ct) =>
             {
-                await Task.Delay(10, ct);
+                await Task.Delay(400, ct);
                 return x;
             }, new()
             {
@@ -141,9 +148,6 @@ public class DiagnosticsBuilderTests : IDisposable
             .ToListAsync();
 
         // Wait for EventCounters to be polled and metrics to be available
-        // EventCounters have a default polling interval of ~1 second
-        // Wait 3000ms to ensure at least 2-3 polling cycles have occurred
-        // This ensures metrics are captured and available for export
         await Task.Delay(3000);
 
         var prometheusText = exporter.Export();
@@ -170,11 +174,13 @@ public class DiagnosticsBuilderTests : IDisposable
             .AddStructuredLogListener(loggedLines.Add)
             .Build();
 
+        // Operations must run long enough for EventCounter polling (1 second interval)
+        // 5 items * 400ms / 2 parallelism = 1000ms (1 second) minimum operation time
         await Enumerable.Range(1, 5)
             .ToAsyncEnumerable()
             .SelectParallelStreamAsync(async (x, ct) =>
             {
-                await Task.Delay(10, ct);
+                await Task.Delay(400, ct);
                 return x;
             }, new()
             {
@@ -182,7 +188,7 @@ public class DiagnosticsBuilderTests : IDisposable
             })
             .ToListAsync();
 
-        await Task.Delay(1500);
+        await Task.Delay(2000);
 
         loggedLines.ShouldNotBeEmpty();
     }

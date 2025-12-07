@@ -29,11 +29,13 @@ public class RivuletStructuredLogListenerTests : IDisposable
 
         await using (new RivuletStructuredLogListener(filePath))
         {
+            // Operations must run long enough for EventCounter polling (1 second interval)
+            // 5 items * 400ms / 2 parallelism = 1000ms (1 second) minimum operation time
             await Enumerable.Range(1, 5)
                 .ToAsyncEnumerable()
                 .SelectParallelStreamAsync(async (x, ct) =>
                 {
-                    await Task.Delay(10, ct);
+                    await Task.Delay(400, ct);
                     return x;
                 }, new()
                 {
@@ -100,11 +102,13 @@ public class RivuletStructuredLogListenerTests : IDisposable
         var loggedLines = new System.Collections.Concurrent.ConcurrentBag<string>();
         await using var listener = new RivuletStructuredLogListener(loggedLines.Add);
 
+        // Operations must run long enough for EventCounter polling (1 second interval)
+        // 10 items * 200ms / 2 parallelism = 1000ms (1 second) minimum operation time
         await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
             .SelectParallelStreamAsync(async (x, ct) =>
             {
-                await Task.Delay(10, ct);
+                await Task.Delay(200, ct);
                 return x * 2;
             }, new()
             {
@@ -129,11 +133,13 @@ public class RivuletStructuredLogListenerTests : IDisposable
         var loggedLines = new System.Collections.Concurrent.ConcurrentBag<string>();
         await using var listener = new RivuletStructuredLogListener(loggedLines.Add);
 
+        // Operations must run long enough for EventCounter polling (1 second interval)
+        // 5 items * 400ms / 2 parallelism = 1000ms (1 second) minimum operation time
         await Enumerable.Range(1, 5)
             .ToAsyncEnumerable()
             .SelectParallelStreamAsync(async (x, ct) =>
             {
-                await Task.Delay(10, ct);
+                await Task.Delay(400, ct);
                 return x;
             }, new()
             {
@@ -141,7 +147,7 @@ public class RivuletStructuredLogListenerTests : IDisposable
             })
             .ToListAsync();
 
-        await Task.Delay(1500);
+        await Task.Delay(2000);
 
         loggedLines.ShouldNotBeEmpty();
 
