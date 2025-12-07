@@ -43,11 +43,7 @@ internal sealed class ProgressTracker : IAsyncDisposable
         }
         catch (OperationCanceledException)
         {
-            // Wait to ensure all in-flight counter increments complete
-            // before taking the final progress report. This prevents race conditions where
-            // the last items are still calling Increment*() methods.
-            // Increased from 100ms → 200ms → 500ms for Windows CI/CD reliability (0.5% "off by 1" failures at 200ms)
-            await Task.Delay(500).ConfigureAwait(false);
+            await Task.Delay(100).ConfigureAwait(false);
             await ReportProgress().ConfigureAwait(false);
         }
     }
@@ -57,14 +53,12 @@ internal sealed class ProgressTracker : IAsyncDisposable
         if (_options.OnProgress is null)
             return;
 
-        // Force a memory barrier to ensure all writes from worker threads are visible
-        // This is critical for final reports where workers just finished processing
         Thread.MemoryBarrier();
 
         var elapsed = _stopwatch.Elapsed;
-        var completed = _itemsCompleted;
-        var started = _itemsStarted;
-        var errors = _errorCount;
+        var completed = Volatile.Read(ref _itemsCompleted);
+        var started = Volatile.Read(ref _itemsStarted);
+        var errors = Volatile.Read(ref _errorCount);
 
         var itemsPerSecond = elapsed.TotalSeconds > 0 ? completed / elapsed.TotalSeconds : 0;
 
@@ -98,12 +92,11 @@ internal sealed class ProgressTracker : IAsyncDisposable
         {
             await _options.OnProgress(snapshot).ConfigureAwait(false);
         }
-        catch
+        catch (Exception ex)
         {
-            // Swallow exceptions from user callback to prevent breaking the operation
+            RivuletEventSource.Log.CallbackFailed(nameof(ProgressOptions.OnProgress), ex.GetType().Name, ex.Message);
         }
 
-        // Memory barrier after callback ensures callback writes are globally visible
         Thread.MemoryBarrier();
     }
 

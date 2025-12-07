@@ -1,4 +1,4 @@
-﻿using Rivulet.Core.Observability;
+using Rivulet.Core.Observability;
 
 namespace Rivulet.Core.Resilience;
 
@@ -41,9 +41,13 @@ internal static class RetryPolicy
             }
             catch (Exception ex) when (options.OnFallback is not null)
             {
-                // All retries exhausted or non-transient error - use fallback if provided
                 var fallbackValue = options.OnFallback(itemIndex, ex);
-                return fallbackValue is TResult result ? result : default!;
+                return fallbackValue switch
+                {
+                    TResult result => result,
+                    null when !typeof(TResult).IsValueType => default!,
+                    _ => throw new InvalidOperationException($"Fallback returned {fallbackValue?.GetType().Name ?? "null"}, expected {typeof(TResult).Name}")
+                };
             }
         }
     }

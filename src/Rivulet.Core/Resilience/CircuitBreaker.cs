@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using Rivulet.Core.Internal;
+using Rivulet.Core.Observability;
 
 namespace Rivulet.Core.Resilience;
 
@@ -12,7 +13,7 @@ namespace Rivulet.Core.Resilience;
 internal sealed class CircuitBreaker
 {
     private readonly CircuitBreakerOptions _options;
-    private readonly ConcurrentQueue<DateTime> _failureTimestamps;
+    private readonly ConcurrentQueue<long> _failureTimestamps;
 #if NET9_0_OR_GREATER
     private readonly Lock _lock = new();
 #else
@@ -22,7 +23,7 @@ internal sealed class CircuitBreaker
     private CircuitBreakerState _state;
     private int _consecutiveFailures;
     private int _consecutiveSuccesses;
-    private DateTime _openedAt;
+    private long _openedAtTicks;
 
     /// <summary>
     /// Gets the current state of the circuit breaker.
@@ -42,7 +43,7 @@ internal sealed class CircuitBreaker
         _failureTimestamps = new();
         _consecutiveFailures = 0;
         _consecutiveSuccesses = 0;
-        _openedAt = DateTime.MinValue;
+        _openedAtTicks = 0;
     }
 
     /// <summary>
@@ -70,16 +71,14 @@ internal sealed class CircuitBreaker
         }
     }
 
-    /// <summary>
-    /// Checks circuit state before executing operation.
-    /// </summary>
     private ValueTask BeforeExecuteAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
         LockHelper.Execute(_lock, () =>
         {
-            if (_state == CircuitBreakerState.Open && DateTime.UtcNow >= _openedAt.Add(_options.OpenTimeout))
+            if (_state == CircuitBreakerState.Open &&
+                Environment.TickCount64 - _openedAtTicks >= (long)_options.OpenTimeout.TotalMilliseconds)
             {
                 TransitionToHalfOpen();
             }
@@ -93,9 +92,6 @@ internal sealed class CircuitBreaker
         return ValueTask.CompletedTask;
     }
 
-    /// <summary>
-    /// Records a successful operation.
-    /// </summary>
     private void OnSuccess()
     {
         LockHelper.Execute(_lock, () =>
@@ -113,9 +109,6 @@ internal sealed class CircuitBreaker
         });
     }
 
-    /// <summary>
-    /// Records a failed operation.
-    /// </summary>
     private void OnFailure()
     {
         LockHelper.Execute(_lock, () =>
@@ -133,11 +126,11 @@ internal sealed class CircuitBreaker
 
                     if (_options.SamplingDuration.HasValue)
                     {
-                        var now = DateTime.UtcNow;
+                        var now = Environment.TickCount64;
                         _failureTimestamps.Enqueue(now);
 
-                        var cutoff = now.Subtract(_options.SamplingDuration.Value);
-                        while (_failureTimestamps.TryPeek(out var timestamp) && timestamp < cutoff)
+                        var cutoffMs = (long)_options.SamplingDuration.Value.TotalMilliseconds;
+                        while (_failureTimestamps.TryPeek(out var timestamp) && now - timestamp > cutoffMs)
                         {
                             _failureTimestamps.TryDequeue(out _);
                         }
@@ -161,9 +154,6 @@ internal sealed class CircuitBreaker
         });
     }
 
-    /// <summary>
-    /// Transitions to the Closed state.
-    /// </summary>
     private void TransitionToClosed()
     {
         var oldState = _state;
@@ -180,22 +170,19 @@ internal sealed class CircuitBreaker
                 {
                     await _options.OnStateChange(oldState, CircuitBreakerState.Closed).ConfigureAwait(false);
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // ignored
+                    RivuletEventSource.Log.CallbackFailed(nameof(CircuitBreakerOptions.OnStateChange), ex.GetType().Name, ex.Message);
                 }
             }, CancellationToken.None);
         }
     }
 
-    /// <summary>
-    /// Transitions to the Open state.
-    /// </summary>
     private void TransitionToOpen()
     {
         var oldState = _state;
         _state = CircuitBreakerState.Open;
-        _openedAt = DateTime.UtcNow;
+        _openedAtTicks = Environment.TickCount64;
         _consecutiveSuccesses = 0;
 
         if (_options.OnStateChange is not null && oldState != CircuitBreakerState.Open)
@@ -206,17 +193,14 @@ internal sealed class CircuitBreaker
                 {
                     await _options.OnStateChange(oldState, CircuitBreakerState.Open).ConfigureAwait(false);
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // ignored
+                    RivuletEventSource.Log.CallbackFailed(nameof(CircuitBreakerOptions.OnStateChange), ex.GetType().Name, ex.Message);
                 }
             }, CancellationToken.None);
         }
     }
 
-    /// <summary>
-    /// Transitions to the HalfOpen state.
-    /// </summary>
     private void TransitionToHalfOpen()
     {
         var oldState = _state;
@@ -232,9 +216,9 @@ internal sealed class CircuitBreaker
                 {
                     await _options.OnStateChange(oldState, CircuitBreakerState.HalfOpen).ConfigureAwait(false);
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // ignored
+                    RivuletEventSource.Log.CallbackFailed(nameof(CircuitBreakerOptions.OnStateChange), ex.GetType().Name, ex.Message);
                 }
             }, CancellationToken.None);
         }

@@ -69,6 +69,16 @@ internal sealed class RivuletEventSource : EventSource
     /// </summary>
     public void IncrementDrainEvents() => Interlocked.Increment(ref _drainEvents);
 
+    /// <summary>
+    /// Logs a callback failure for diagnostics.
+    /// </summary>
+    /// <param name="callbackName">Name of the callback that failed.</param>
+    /// <param name="exceptionType">Type of the exception.</param>
+    /// <param name="message">Exception message.</param>
+    [Event(1, Level = EventLevel.Warning, Message = "Callback '{0}' failed with {1}: {2}")]
+    public void CallbackFailed(string callbackName, string exceptionType, string message) =>
+        WriteEvent(1, callbackName, exceptionType, message);
+
 
     /// <summary>
     /// Gets the current count of items started.
