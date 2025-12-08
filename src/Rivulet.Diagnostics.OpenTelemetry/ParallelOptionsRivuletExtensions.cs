@@ -95,36 +95,30 @@ public static class ParallelOptionsRivuletExtensions
             {
                 var activity = asyncLocalActivity.Value ?? itemActivities.GetValueOrDefault(index);
 
-                if (activity is not null)
+                if (activity is null)
+                    return options.OnErrorAsync is null || await options.OnErrorAsync(index, exception).ConfigureAwait(false);
+
+                var previousActivity = Activity.Current;
+                try
                 {
-                    var previousActivity = Activity.Current;
-                    try
-                    {
-                        Activity.Current = activity;
+                    Activity.Current = activity;
 
-                        var isTransient = options.IsTransient?.Invoke(exception) ?? false;
-                        RivuletActivitySource.RecordError(activity, exception, isTransient);
+                    var isTransient = options.IsTransient?.Invoke(exception) ?? false;
+                    RivuletActivitySource.RecordError(activity, exception, isTransient);
 
-                        var willRetry = isTransient && options.MaxRetries > 0;
-                        if (!willRetry && itemActivities.TryRemove(index, out _))
-                        {
-                            try { activity.Stop(); }
-                            finally { asyncLocalActivity.Value = null; }
-                        }
+                    var willRetry = isTransient && options.MaxRetries > 0;
+                    if (willRetry || !itemActivities.TryRemove(index, out _))
+                        return options.OnErrorAsync is null || await options.OnErrorAsync(index, exception).ConfigureAwait(false);
 
-                        return options.OnErrorAsync is not null
-                            ? await options.OnErrorAsync(index, exception).ConfigureAwait(false)
-                            : true;
-                    }
-                    finally
-                    {
-                        Activity.Current = previousActivity;
-                    }
+                    try { activity.Stop(); }
+                    finally { asyncLocalActivity.Value = null; }
+
+                    return options.OnErrorAsync is null || await options.OnErrorAsync(index, exception).ConfigureAwait(false);
                 }
-
-                return options.OnErrorAsync is not null
-                    ? await options.OnErrorAsync(index, exception).ConfigureAwait(false)
-                    : true;
+                finally
+                {
+                    Activity.Current = previousActivity;
+                }
             },
             CircuitBreaker = CreateCircuitBreakerOptions(options.CircuitBreaker, itemActivities, asyncLocalActivity),
             AdaptiveConcurrency = CreateAdaptiveConcurrencyOptions(options.AdaptiveConcurrency, itemActivities, asyncLocalActivity)
