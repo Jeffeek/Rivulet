@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Rivulet.Core.Internal;
+using Rivulet.Core.Observability;
 
 namespace Rivulet.Core.Resilience;
 
@@ -18,7 +19,7 @@ internal sealed class AdaptiveConcurrencyController : IAsyncDisposable
     private readonly object _lock = new();
 #endif
     private readonly Timer _samplingTimer;
-    private readonly List<double> _latencySamples = new();
+    private readonly List<double> _latencySamples = [];
 
     private int _currentConcurrency;
     private int _successCount;
@@ -144,9 +145,6 @@ internal sealed class AdaptiveConcurrencyController : IAsyncDisposable
         });
     }
 
-    /// <summary>
-    /// Adjusts the semaphore capacity to the new concurrency level.
-    /// </summary>
     private void AdjustConcurrency(int oldConcurrency, int newConcurrency)
     {
         var delta = newConcurrency - oldConcurrency;
@@ -166,9 +164,9 @@ internal sealed class AdaptiveConcurrencyController : IAsyncDisposable
                             await _semaphore.WaitAsync().ConfigureAwait(false);
                         }
                     }
-                    catch
+                    catch (Exception ex)
                     {
-                        // ignored
+                        RivuletEventSource.Log.CallbackFailed("SemaphoreReduction", ex.GetType().Name, ex.Message);
                     }
                 }, CancellationToken.None);
                 break;
@@ -184,9 +182,9 @@ internal sealed class AdaptiveConcurrencyController : IAsyncDisposable
                 {
                     await _options.OnConcurrencyChange(oldConcurrency, newConcurrency).ConfigureAwait(false);
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // ignored
+                    RivuletEventSource.Log.CallbackFailed(nameof(AdaptiveConcurrencyOptions.OnConcurrencyChange), ex.GetType().Name, ex.Message);
                 }
             }, CancellationToken.None);
         }

@@ -11,7 +11,7 @@ public class RivuletActivitySourceTests
     public void ActivitySource_ShouldHaveCorrectNameAndVersion()
     {
         RivuletActivitySource.Source.Name.ShouldBe(RivuletSharedConstants.RivuletCore);
-        RivuletActivitySource.Source.Version.ShouldBe("1.2.0");
+        RivuletActivitySource.Source.Version.ShouldBe("1.3.0");
     }
 
     [Fact]

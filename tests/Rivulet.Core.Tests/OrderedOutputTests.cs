@@ -98,8 +98,8 @@ public class OrderedOutputTests
             }, options)
             .ToListAsync();
 
-        ((IEnumerable<int>)results).ShouldBe(new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }, "results should be in order");
-        completionOrder.SequenceEqual(new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }).ShouldBeFalse("completion should be out of order");
+        ((IEnumerable<int>)results).ShouldBe([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "results should be in order");
+        completionOrder.SequenceEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]).ShouldBeFalse("completion should be out of order");
     }
 
     [Fact]

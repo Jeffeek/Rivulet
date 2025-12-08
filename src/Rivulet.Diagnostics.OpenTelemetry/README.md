@@ -318,10 +318,8 @@ var tracerProvider = Sdk.CreateTracerProviderBuilder()
 
 ## License
 
-MIT - See LICENSE file for details
+MIT License - see LICENSE file for details
 
-## Links
+---
 
-- **GitHub**: [https://github.com/Jeffeek/Rivulet](https://github.com/Jeffeek/Rivulet)
-- **NuGet**: [https://www.nuget.org/packages/Rivulet.Diagnostics.OpenTelemetry/](https://www.nuget.org/packages/Rivulet.Diagnostics.OpenTelemetry/)
-- **OpenTelemetry .NET**: [https://opentelemetry.io/docs/languages/net/](https://opentelemetry.io/docs/languages/net/)
+**Made with ❤️ by Jeffeek** | [NuGet](https://www.nuget.org/packages/Rivulet.Diagnostics.OpenTelemetry/) | [GitHub](https://github.com/Jeffeek/Rivulet)

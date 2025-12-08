@@ -216,6 +216,10 @@ new ParallelOptionsRivulet
 4. **Configure backpressure** - Adjust `ChannelCapacity` based on memory constraints
 5. **Handle transient errors** - Use `IsTransient` and `MaxRetries` for flaky APIs
 
+## License
+
+MIT License - see LICENSE file for details
+
 ---
 
 **Made with ❤️ by Jeffeek** | [NuGet](https://www.nuget.org/packages/Rivulet.Core/) | [GitHub](https://github.com/Jeffeek/Rivulet)

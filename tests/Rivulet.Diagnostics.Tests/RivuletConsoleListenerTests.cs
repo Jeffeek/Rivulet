@@ -4,12 +4,11 @@ using Rivulet.Core;
 namespace Rivulet.Diagnostics.Tests;
 
 /// <summary>
-/// Tests for RivuletConsoleListener that manipulate Console.Out must run serially on Windows.
-/// Parallel execution causes ObjectDisposedException in FluentAssertions when one test
-/// disposes the console TextWriter while another test (or FluentAssertions) is using it.
+/// Tests for RivuletConsoleListener that use EventSource and manipulate Console.Out must run serially.
+/// EventSource is a process-wide singleton, so parallel tests interfere with each other.
 /// Note: Console redirection tests may not work reliably when running under code coverage tools.
 /// </summary>
-[Collection(TestCollections.SerialConsole)]
+[Collection(TestCollections.SerialEventSource)]
 public class RivuletConsoleListenerTests : IDisposable
 {
     private StringWriter? _stringWriter;
@@ -27,11 +26,12 @@ public class RivuletConsoleListenerTests : IDisposable
             using var listener = new RivuletConsoleListener(useColors: false);
 
             // Run many operations to generate large metric values
-            await Enumerable.Range(1, 2000)
+            // Total time: 1000 * 5ms / 10 parallelism = 500ms
+            await Enumerable.Range(1, 1000)
                 .ToAsyncEnumerable()
                 .SelectParallelStreamAsync(async (x, ct) =>
                 {
-                    await Task.Delay(1, ct);
+                    await Task.Delay(5, ct);
                     return x;
                 }, new()
                 {
@@ -39,7 +39,8 @@ public class RivuletConsoleListenerTests : IDisposable
                 })
                 .ToListAsync();
 
-            await Task.Delay(1100);
+            // Wait for EventCounters to fire
+            await Task.Delay(1500);
         }
         finally
         {
@@ -60,11 +61,13 @@ public class RivuletConsoleListenerTests : IDisposable
 
             try
             {
+                // Operations must run long enough for EventCounter polling (1 second interval)
+                // 10 items * 100ms / 2 parallelism = 500ms of operation time
                 await Enumerable.Range(1, 10)
                     .ToAsyncEnumerable()
                     .SelectParallelStreamAsync<int, int>(async (_, ct) =>
                     {
-                        await Task.Delay(1, ct);
+                        await Task.Delay(100, ct);
                         throw new InvalidOperationException("Test");
                     }, new()
                     {
@@ -78,7 +81,8 @@ public class RivuletConsoleListenerTests : IDisposable
                 // Expected
             }
 
-            await Task.Delay(1100);
+            // Wait for EventCounters to fire - increased for CI/CD reliability
+            await Task.Delay(2000);
 
             // Dispose listener before reading output to prevent race condition
             // where background EventSource writes conflict with ToString()
@@ -119,12 +123,13 @@ public class RivuletConsoleListenerTests : IDisposable
         {
             using var consoleListener = new RivuletConsoleListener(useColors: false);
 
-            // Run operations to trigger metrics
-            await Enumerable.Range(1, 5)
+            // Operations must run long enough for EventCounter polling (1 second interval)
+            // 10 items * 100ms / 2 parallelism = 500ms of operation time
+            await Enumerable.Range(1, 10)
                 .ToAsyncEnumerable()
                 .SelectParallelStreamAsync(async (x, ct) =>
                 {
-                    await Task.Delay(1, ct);
+                    await Task.Delay(100, ct);
                     return x;
                 }, new()
                 {
@@ -132,7 +137,8 @@ public class RivuletConsoleListenerTests : IDisposable
                 })
                 .ToListAsync();
 
-            await Task.Delay(1100);
+            // Wait for EventCounters to fire - increased for CI/CD reliability
+            await Task.Delay(2000);
         }
         finally
         {
@@ -152,11 +158,13 @@ public class RivuletConsoleListenerTests : IDisposable
         {
             using var listener = new RivuletConsoleListener(useColors: false);
 
-            await Enumerable.Range(1, 10)
+            // Operations must run long enough for EventCounter polling (1 second interval)
+            // 5 items * 200ms / 2 parallelism = 500ms of operation time
+            await Enumerable.Range(1, 5)
                 .ToAsyncEnumerable()
                 .SelectParallelStreamAsync(async (x, ct) =>
                 {
-                    await Task.Delay(10, ct);
+                    await Task.Delay(200, ct);
                     return x * 2;
                 }, new()
                 {
@@ -164,9 +172,8 @@ public class RivuletConsoleListenerTests : IDisposable
                 })
                 .ToListAsync();
 
-            // EventCounters fire every 1 second. Wait for at least 2 intervals
-            // to ensure metrics are published.
-            await Task.Delay(2500);
+            // EventCounters fire every 1 second. Wait for at least 1.5 intervals
+            await Task.Delay(1500);
 
             // Give a brief moment for console output to be written
             await Task.Delay(100);

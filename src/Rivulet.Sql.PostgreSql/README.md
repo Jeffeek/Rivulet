@@ -136,4 +136,8 @@ await products.BulkInsertUsingCopyAsync(
 
 ## License
 
-MIT License - see [LICENSE](../../LICENSE) for details.
+MIT License - see LICENSE file for details
+
+---
+
+**Made with ❤️ by Jeffeek** | [NuGet](https://www.nuget.org/packages/Sql.PostgreSql/) | [GitHub](https://github.com/Jeffeek/Rivulet)

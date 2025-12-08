@@ -97,8 +97,6 @@ internal sealed class MetricsTracker : MetricsTrackerBase
 
     private async Task SampleMetrics()
     {
-        // Force a memory barrier to ensure all writes from worker threads are visible
-        // This is critical for final samples where workers just finished processing
         Thread.MemoryBarrier();
 
         var elapsed = _stopwatch.Elapsed;
@@ -108,12 +106,11 @@ internal sealed class MetricsTracker : MetricsTrackerBase
         var failures = Interlocked.Read(ref _totalFailures);
         var throttles = Interlocked.Read(ref _throttleEvents);
         var drains = Interlocked.Read(ref _drainEvents);
-        var activeWorkers = Interlocked.CompareExchange(ref _activeWorkers, 0, 0);
-        var queueDepth = Interlocked.CompareExchange(ref _queueDepth, 0, 0);
+        var activeWorkers = Volatile.Read(ref _activeWorkers);
+        var queueDepth = Volatile.Read(ref _queueDepth);
 
         var itemsPerSecond = elapsed.TotalSeconds > 0 ? completed / elapsed.TotalSeconds : 0;
         var errorRate = started > 0 ? (double)failures / started : 0.0;
-
 
         try
         {
@@ -133,12 +130,11 @@ internal sealed class MetricsTracker : MetricsTrackerBase
                     ErrorRate = errorRate
                 }).ConfigureAwait(false);
         }
-        catch
+        catch (Exception ex)
         {
-            // ignored
+            RivuletEventSource.Log.CallbackFailed(nameof(MetricsOptions.OnMetricsSample), ex.GetType().Name, ex.Message);
         }
 
-        // Memory barrier after callback ensures callback writes are globally visible
         Thread.MemoryBarrier();
     }
 
@@ -167,14 +163,7 @@ internal sealed class MetricsTracker : MetricsTrackerBase
             // The final sample will still be taken below
         }
 
-        // Take the final sample synchronously in the disposal context
-        // This guarantees the final sample completes regardless of background task state
-        // Wait to ensure all in-flight metric increments complete before sampling
-        // The 1000ms delay accounts for:
-        // - CPU cache coherency delays on multi-core systems (~500ms worst case)
-        // - Memory barrier propagation across NUMA nodes
-        // - Async state machine cleanup and thread pool scheduling delays
-        await Task.Delay(1000).ConfigureAwait(false);
+        await Task.Delay(100).ConfigureAwait(false);
 
         // Take final sample - this will always complete because it's in our disposal context
         await SampleMetrics().ConfigureAwait(false);

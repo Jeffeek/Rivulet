@@ -30,7 +30,7 @@ public class SelectParallelStreamAsyncTests
         var results = await source.SelectParallelStreamAsync((x, _) => new ValueTask<int>(x * 2)).ToListAsync();
 
         results.Count.ShouldBe(10);
-        results.OrderBy(x => x).ShouldBe(new[] { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20 });
+        results.OrderBy(x => x).ShouldBe([2, 4, 6, 8, 10, 12, 14, 16, 18, 20]);
     }
 
     [Fact]
@@ -116,7 +116,7 @@ public class SelectParallelStreamAsyncTests
         var results = await source.SelectParallelStreamAsync((x, _) => new ValueTask<int>(x * 2), options: null).ToListAsync();
 
         results.Count.ShouldBe(5);
-        results.OrderBy(x => x).ShouldBe(new[] { 2, 4, 6, 8, 10 });
+        results.OrderBy(x => x).ShouldBe([2, 4, 6, 8, 10]);
     }
 
     [Fact]
@@ -171,6 +171,6 @@ public class SelectParallelStreamAsyncTests
         var results = await SlowProducer().SelectParallelStreamAsync((x, _) => new ValueTask<int>(x * 2)).ToListAsync();
 
         results.Count.ShouldBe(5);
-        results.OrderBy(x => x).ShouldBe(new[] { 2, 4, 6, 8, 10 });
+        results.OrderBy(x => x).ShouldBe([2, 4, 6, 8, 10]);
     }
 }

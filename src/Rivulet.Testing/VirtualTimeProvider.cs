@@ -12,7 +12,7 @@ public sealed class VirtualTimeProvider : IDisposable
 #else
     private readonly object _lock = new();
 #endif
-    private readonly List<ScheduledTask> _scheduledTasks = new();
+    private readonly PriorityQueue<TaskCompletionSource, TimeSpan> _scheduledTasks = new();
     private TimeSpan _currentTime = TimeSpan.Zero;
     private bool _disposed;
 
@@ -36,17 +36,16 @@ public sealed class VirtualTimeProvider : IDisposable
         var tasksToExecute = LockHelper.Execute(_lock, () =>
         {
             var targetTime = _currentTime + duration;
-            var tasks = new List<ScheduledTask>();
+            var tasks = new List<TaskCompletionSource>();
 
-            while (_scheduledTasks.Count > 0)
+            while (_scheduledTasks.TryPeek(out var tcs, out var executionTime))
             {
-                var nextTask = _scheduledTasks.MinBy(t => t.ExecutionTime);
-                if (nextTask is null || nextTask.ExecutionTime > targetTime)
+                if (executionTime > targetTime)
                     break;
 
-                _scheduledTasks.Remove(nextTask);
-                _currentTime = nextTask.ExecutionTime;
-                tasks.Add(nextTask);
+                _scheduledTasks.Dequeue();
+                _currentTime = executionTime;
+                tasks.Add(tcs);
             }
 
             _currentTime = targetTime;
@@ -54,9 +53,9 @@ public sealed class VirtualTimeProvider : IDisposable
         });
 
         // Complete tasks outside the lock to avoid blocking continuations
-        foreach (var task in tasksToExecute)
+        foreach (var tcs in tasksToExecute)
         {
-            task.TaskCompletionSource.SetResult();
+            tcs.SetResult();
         }
     }
 
@@ -79,7 +78,7 @@ public sealed class VirtualTimeProvider : IDisposable
         LockHelper.Execute(_lock, () =>
         {
             var executionTime = _currentTime + delay;
-            _scheduledTasks.Add(new(executionTime, tcs));
+            _scheduledTasks.Enqueue(tcs, executionTime);
         });
 
         return tcs.Task;
@@ -93,16 +92,19 @@ public sealed class VirtualTimeProvider : IDisposable
     {
         var tasksToCancel = LockHelper.Execute(_lock, () =>
         {
-            var tasks = _scheduledTasks.ToList();
-            _scheduledTasks.Clear();
+            var tasks = new List<TaskCompletionSource>();
+            while (_scheduledTasks.TryDequeue(out var tcs, out _))
+            {
+                tasks.Add(tcs);
+            }
             _currentTime = TimeSpan.Zero;
             return tasks;
         });
 
         // Cancel all pending tasks outside the lock
-        foreach (var task in tasksToCancel)
+        foreach (var tcs in tasksToCancel)
         {
-            task.TaskCompletionSource.TrySetCanceled();
+            tcs.TrySetCanceled();
         }
     }
 
@@ -114,6 +116,4 @@ public sealed class VirtualTimeProvider : IDisposable
         if (_disposed) return;
         _disposed = true;
     }
-
-    private sealed record ScheduledTask(TimeSpan ExecutionTime, TaskCompletionSource TaskCompletionSource);
 }

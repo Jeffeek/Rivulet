@@ -12,11 +12,13 @@ public class PrometheusExporterTests
     {
         using var exporter = new PrometheusExporter();
 
+        // Operations must run long enough for EventCounter polling (1 second interval)
+        // 10 items * 200ms / 2 parallelism = 1000ms (1 second) minimum operation time
         await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
             .SelectParallelStreamAsync(async (x, ct) =>
             {
-                await Task.Delay(10, ct);
+                await Task.Delay(200, ct);
                 return x * 2;
             }, new()
             {
@@ -29,7 +31,7 @@ public class PrometheusExporterTests
         // EventCounters have ~1s polling interval but can be delayed under load
         // Must wait for BOTH items_started AND items_completed to be present
         await DeadlineExtensions.ApplyDeadlineAsync(
-            DateTime.UtcNow.AddMilliseconds(5000),
+            DateTime.UtcNow.AddMilliseconds(4000),
             () => Task.Delay(100),
             () =>
             {
@@ -52,11 +54,13 @@ public class PrometheusExporterTests
     {
         using var exporter = new PrometheusExporter();
 
+        // Operations must run long enough for EventCounter polling (1 second interval)
+        // 10 items * 200ms / 2 parallelism = 1000ms (1 second) minimum operation time
         await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
             .ForEachParallelAsync(async (_, ct) =>
             {
-                await Task.Delay(10, ct);
+                await Task.Delay(200, ct);
             }, new()
             {
                 MaxDegreeOfParallelism = 2
@@ -67,7 +71,7 @@ public class PrometheusExporterTests
         // EventCounters have ~1s polling interval but can be delayed under load
         // Must wait for BOTH items_started AND items_completed keys to be present
         await DeadlineExtensions.ApplyDeadlineAsync(
-            DateTime.UtcNow.AddMilliseconds(5000),
+            DateTime.UtcNow.AddMilliseconds(4000),
             () => Task.Delay(100),
             () =>
             {

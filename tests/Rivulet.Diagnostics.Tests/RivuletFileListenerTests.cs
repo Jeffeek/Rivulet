@@ -2,6 +2,7 @@
 
 namespace Rivulet.Diagnostics.Tests;
 
+[Collection(TestCollections.SerialEventSource)]
 public class RivuletFileListenerTests : IDisposable
 {
     private readonly string _testFilePath = Path.Join(Path.GetTempPath(), $"rivulet-test-{Guid.NewGuid()}.log");
@@ -11,14 +12,14 @@ public class RivuletFileListenerTests : IDisposable
     {
         await using (new RivuletFileListener(_testFilePath))
         {
-            // Use longer operation (200ms per item) to ensure EventCounters poll DURING execution
-            // EventCounters have ~1 second polling interval, so operation needs to run for 1-2+ seconds
-            // 10 items * 200ms / 2 parallelism = 1000ms (1 second) of operation time
+            // Use longer operation (300ms per item) to ensure EventCounters poll DURING execution
+            // EventCounters have ~1 second polling interval, so operation needs to run for 2+ seconds
+            // 10 items * 300ms / 2 parallelism = 1500ms of operation time
             await Enumerable.Range(1, 10)
                 .ToAsyncEnumerable()
                 .SelectParallelStreamAsync(async (x, ct) =>
                 {
-                    await Task.Delay(200, ct);
+                    await Task.Delay(300, ct);
                     return x * 2;
                 }, new()
                 {
@@ -27,12 +28,12 @@ public class RivuletFileListenerTests : IDisposable
                 .ToListAsync();
 
             // Wait for EventCounters to poll and write metrics after operation completes
-            // Polling interval is ~1 second, wait 2 seconds to ensure at least 2 polls occur
+            // Polling interval is ~1 second, wait 2 seconds for CI/CD reliability
             await Task.Delay(2000);
         } // Dispose listener to flush and close file
 
         // Wait for file handle to be fully released
-        await Task.Delay(800);
+        await Task.Delay(500);
 
         File.Exists(_testFilePath).ShouldBeTrue();
         var content = await File.ReadAllTextAsync(_testFilePath);
@@ -47,27 +48,29 @@ public class RivuletFileListenerTests : IDisposable
         await using var listener = new RivuletFileListener(_testFilePath, maxSize);
 
         // Generate enough operations to trigger file rotation
-        // Use fewer iterations with more items each to reduce total time
-        for (var i = 0; i < 20; i++)
+        // Each iteration must run long enough for EventCounter to poll (1 second)
+        // Run 3 iterations with operations that last 1.5 seconds each
+        for (var i = 0; i < 3; i++)
         {
+            // 10 items * 300ms / 2 parallelism = 1500ms of operation time per iteration
             await Enumerable.Range(1, 10)
                 .ToAsyncEnumerable()
                 .SelectParallelStreamAsync(async (x, ct) =>
                 {
-                    await Task.Delay(1, ct);
+                    await Task.Delay(300, ct);
                     return x;
                 }, new()
                 {
-                    MaxDegreeOfParallelism = 4
+                    MaxDegreeOfParallelism = 2
                 })
                 .ToListAsync();
 
             // Wait for EventCounters to fire and write to file
-            await Task.Delay(100);
+            await Task.Delay(1500);
         }
 
         // Wait for final flush and rotation to complete
-        await Task.Delay(1200);
+        await Task.Delay(1000);
 
         var directory = Path.GetDirectoryName(_testFilePath) ?? string.Empty;
         var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(_testFilePath);

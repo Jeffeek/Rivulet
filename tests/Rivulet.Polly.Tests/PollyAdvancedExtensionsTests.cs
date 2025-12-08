@@ -197,7 +197,7 @@ public class PollyAdvancedExtensionsTests
 
         // Verify exponential backoff (with jitter, delays should generally increase)
         // Note: With jitter, we can't verify exact delays, but we can verify attempts happened
-        attempts.Select(a => a.attempt).ShouldBe(new[] { 1, 2, 3 });
+        attempts.Select(a => a.attempt).ShouldBe([1, 2, 3]);
     }
 
     [Fact]

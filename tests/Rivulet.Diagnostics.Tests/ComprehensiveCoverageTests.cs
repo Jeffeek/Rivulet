@@ -38,11 +38,13 @@ public class ComprehensiveCoverageTests
                 callbackInvoked = true;
         };
 
+        // Operations must run long enough for EventCounter polling (1 second interval)
+        // 10 items * 200ms / 2 parallelism = 1000ms (1 second) minimum operation time
         await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
             .SelectParallelStreamAsync(async (x, ct) =>
             {
-                await Task.Delay(1, ct);
+                await Task.Delay(200, ct);
                 return x;
             }, new()
             {
@@ -51,9 +53,8 @@ public class ComprehensiveCoverageTests
             .ToListAsync();
 
         // Wait for at least 2x the aggregation window to ensure timer fires and EventSource counters are received
-        // Increased from 1100ms to 2100ms to handle CI/CD timing variability and EventSource polling delays
         await DeadlineExtensions.ApplyDeadlineAsync(
-            DateTime.UtcNow.AddMilliseconds(2100),
+            DateTime.UtcNow.AddMilliseconds(2000),
             () => Task.Delay(100),
             () => !callbackInvoked);
 
@@ -69,11 +70,13 @@ public class ComprehensiveCoverageTests
         {
             await using (new RivuletFileListener(testFile))
             {
+                // Operations must run long enough for EventCounter polling (1 second interval)
+                // 5 items * 400ms / 2 parallelism = 1000ms (1 second) minimum operation time
                 await Enumerable.Range(1, 5)
                     .ToAsyncEnumerable()
                     .SelectParallelStreamAsync(async (x, ct) =>
                     {
-                        await Task.Delay(1, ct);
+                        await Task.Delay(400, ct);
                         return x;
                     }, new()
                     {
@@ -82,7 +85,6 @@ public class ComprehensiveCoverageTests
                     .ToListAsync();
 
                 // Wait for EventSource counters to fire and be written to file
-                // Increased from 1100ms to 2000ms to handle CI/CD timing variability
                 await Task.Delay(2000);
             }
 

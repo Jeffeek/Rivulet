@@ -187,9 +187,17 @@ public static class AsyncParallelLinq
         if (options.ErrorMode == ErrorMode.CollectAndContinue && errors.Count > 0)
             throw new AggregateException(errors);
 
-        return options.OrderedOutput
-            ? orderedResults!.OrderBy(kvp => kvp.Key).Select(kvp => kvp.Value).ToList()
-            : results!.ToList();
+        if (!options.OrderedOutput) return [.. results!];
+
+        var result = new List<TResult>(totalItems);
+
+        for (var i = 0; i < totalItems; i++)
+        {
+            if (orderedResults!.TryGetValue(i, out var value))
+                result.Add(value);
+        }
+
+        return result;
     }
 
     /// <summary>
@@ -352,7 +360,7 @@ public static class AsyncParallelLinq
 
         if (options.OrderedOutput)
         {
-            var buffer = new Dictionary<int, TResult>();
+            var buffer = new Dictionary<int, TResult>(options.ChannelCapacity);
             var nextIndex = 0;
 
             await foreach (var (idx, result) in output.Reader.ReadAllAsync(token).ConfigureAwait(false))
