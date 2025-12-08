@@ -3,7 +3,7 @@ param(
     [string]$Version = "1.0.0-local-test",
 
     [Parameter(Mandatory=$false)]
-    [ValidateSet("Core", "Diagnostics", "DiagnosticsOpenTelemetry", "Testing", "Hosting", "Http", "Polly" "All")]
+    [ValidateSet("Core", "Diagnostics", "DiagnosticsOpenTelemetry", "Testing", "Hosting", "Http", "Polly", "All")]
     [string]$Project = "All"
 )
 
