@@ -160,15 +160,11 @@ packages:
       - net8.0
       - net9.0
 
-  # ============================================================================
-  # INTEGRATION PACKAGES (v1.3.0 - In Development)
-  # ============================================================================
-
   - name: Rivulet.Http
     id: http
-    category: integration
+    category: core
     version: 1.3.0
-    status: in_development
+    status: released
     nuget_id: Rivulet.Http
     description: Parallel HTTP operations with HttpClientFactory integration and connection pooling awareness
     path: src/Rivulet.Http
@@ -193,9 +189,9 @@ packages:
 
   - name: Rivulet.IO
     id: io
-    category: integration
+    category: core
     version: 1.3.0
-    status: in_development
+    status: released
     nuget_id: Rivulet.IO
     description: Parallel file operations with safe directory processing and file transformations
     path: src/Rivulet.IO
@@ -221,9 +217,9 @@ packages:
 
   - name: Rivulet.Sql
     id: sql
-    category: integration
+    category: core
     version: 1.3.0
-    status: in_development
+    status: released
     nuget_id: Rivulet.Sql
     description: Provider-agnostic parallel SQL operations with connection pooling awareness
     path: src/Rivulet.Sql
@@ -248,9 +244,9 @@ packages:
 
   - name: Rivulet.Sql.SqlServer
     id: sql-sqlserver
-    category: integration
+    category: core
     version: 1.3.0
-    status: in_development
+    status: released
     nuget_id: Rivulet.Sql.SqlServer
     description: SQL Server optimizations with SqlBulkCopy integration (10-100x faster bulk inserts)
     path: src/Rivulet.Sql.SqlServer
@@ -275,9 +271,9 @@ packages:
 
   - name: Rivulet.Sql.PostgreSql
     id: sql-postgresql
-    category: integration
+    category: core
     version: 1.3.0
-    status: in_development
+    status: released
     nuget_id: Rivulet.Sql.PostgreSql
     description: PostgreSQL optimizations with COPY command integration (10-100x faster bulk operations)
     path: src/Rivulet.Sql.PostgreSql
@@ -300,9 +296,9 @@ packages:
 
   - name: Rivulet.Sql.MySql
     id: sql-mysql
-    category: integration
+    category: core
     version: 1.3.0
-    status: in_development
+    status: released
     nuget_id: Rivulet.Sql.MySql
     description: MySQL optimizations with LOAD DATA INFILE integration using MySqlBulkLoader
     path: src/Rivulet.Sql.MySql
@@ -325,9 +321,9 @@ packages:
 
   - name: Rivulet.Polly
     id: polly
-    category: integration
+    category: core
     version: 1.3.0
-    status: in_development
+    status: released
     nuget_id: Rivulet.Polly
     description: Polly v8 integration with hedging, result-based retry, and resilience pipeline composition
     path: src/Rivulet.Polly
@@ -349,6 +345,10 @@ packages:
     targets:
       - net8.0
       - net9.0
+
+# ============================================================================
+# INTEGRATION PACKAGES (v1.5.0 - In Development)
+# ============================================================================
 
 # ============================================================================
 # GENERATION RULES

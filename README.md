@@ -91,9 +91,7 @@ Testing utilities for deterministic tests with time control, chaos injection, an
 - No actual delays needed
 - Integration with xUnit/NUnit/MSTest
 
-### Integration Packages (v1.3.0 🚧)
-
-#### 🚧 [Rivulet.Http](https://www.nuget.org/packages/Rivulet.Http)
+#### ✅ [Rivulet.Http](https://www.nuget.org/packages/Rivulet.Http)
 [![NuGet](https://img.shields.io/nuget/v/Rivulet.Http.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Http) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Http.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Http)
 
 Parallel HTTP operations with HttpClientFactory integration and connection pooling awareness
@@ -105,7 +103,7 @@ Parallel HTTP operations with HttpClientFactory integration and connection pooli
 - Bounded concurrency to avoid overwhelming servers
 - Progress reporting for downloads
 
-#### 🚧 [Rivulet.IO](https://www.nuget.org/packages/Rivulet.IO)
+#### ✅ [Rivulet.IO](https://www.nuget.org/packages/Rivulet.IO)
 [![NuGet](https://img.shields.io/nuget/v/Rivulet.IO.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.IO) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.IO.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.IO)
 
 Parallel file operations with safe directory processing and file transformations
@@ -117,7 +115,7 @@ Parallel file operations with safe directory processing and file transformations
 - Progress reporting
 - Atomic write operations
 
-#### 🚧 [Rivulet.Sql](https://www.nuget.org/packages/Rivulet.Sql)
+#### ✅ [Rivulet.Sql](https://www.nuget.org/packages/Rivulet.Sql)
 [![NuGet](https://img.shields.io/nuget/v/Rivulet.Sql.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Sql) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Sql.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Sql)
 
 Provider-agnostic parallel SQL operations with connection pooling awareness
@@ -129,7 +127,7 @@ Provider-agnostic parallel SQL operations with connection pooling awareness
 - Parameterized queries
 - Respects database connection pool limits
 
-#### 🚧 [Rivulet.Sql.SqlServer](https://www.nuget.org/packages/Rivulet.Sql.SqlServer)
+#### ✅ [Rivulet.Sql.SqlServer](https://www.nuget.org/packages/Rivulet.Sql.SqlServer)
 [![NuGet](https://img.shields.io/nuget/v/Rivulet.Sql.SqlServer.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Sql.SqlServer) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Sql.SqlServer.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Sql.SqlServer)
 
 SQL Server optimizations with SqlBulkCopy integration (10-100x faster bulk inserts)
@@ -141,7 +139,7 @@ SQL Server optimizations with SqlBulkCopy integration (10-100x faster bulk inser
 - Progress reporting
 - Automatic table creation
 
-#### 🚧 [Rivulet.Sql.PostgreSql](https://www.nuget.org/packages/Rivulet.Sql.PostgreSql)
+#### ✅ [Rivulet.Sql.PostgreSql](https://www.nuget.org/packages/Rivulet.Sql.PostgreSql)
 [![NuGet](https://img.shields.io/nuget/v/Rivulet.Sql.PostgreSql.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Sql.PostgreSql) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Sql.PostgreSql.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Sql.PostgreSql)
 
 PostgreSQL optimizations with COPY command integration (10-100x faster bulk operations)
@@ -152,7 +150,7 @@ PostgreSQL optimizations with COPY command integration (10-100x faster bulk oper
 - Progress reporting
 - Automatic table creation
 
-#### 🚧 [Rivulet.Sql.MySql](https://www.nuget.org/packages/Rivulet.Sql.MySql)
+#### ✅ [Rivulet.Sql.MySql](https://www.nuget.org/packages/Rivulet.Sql.MySql)
 [![NuGet](https://img.shields.io/nuget/v/Rivulet.Sql.MySql.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Sql.MySql) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Sql.MySql.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Sql.MySql)
 
 MySQL optimizations with LOAD DATA INFILE integration using MySqlBulkLoader
@@ -163,7 +161,7 @@ MySQL optimizations with LOAD DATA INFILE integration using MySqlBulkLoader
 - Progress reporting
 - Automatic table creation
 
-#### 🚧 [Rivulet.Polly](https://www.nuget.org/packages/Rivulet.Polly)
+#### ✅ [Rivulet.Polly](https://www.nuget.org/packages/Rivulet.Polly)
 [![NuGet](https://img.shields.io/nuget/v/Rivulet.Polly.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Polly) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Polly.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Polly)
 
 Polly v8 integration with hedging, result-based retry, and resilience pipeline composition
@@ -174,6 +172,8 @@ Polly v8 integration with hedging, result-based retry, and resilience pipeline c
 - Result-based retry policies
 - Policy composition
 - Fallback strategies
+
+### Integration Packages (v1.4.0 🚧)
 <!-- PACKAGES_END -->
 
 ---
