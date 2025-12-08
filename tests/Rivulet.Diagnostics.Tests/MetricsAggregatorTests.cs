@@ -70,8 +70,7 @@ namespace Rivulet.Diagnostics.Tests
                 .ToListAsync();
 
             // Wait for at least 2x the aggregation window to ensure timer fires reliably
-            // Increased from 3000ms to 4000ms for better CI/CD reliability
-            await Task.Delay(4000); // Fixed delay for timer-based aggregation
+            await Task.Delay(3000); // Fixed delay for timer-based aggregation
 
             aggregatedMetrics.ShouldNotBeEmpty();
 
@@ -119,8 +118,7 @@ namespace Rivulet.Diagnostics.Tests
                 .ToListAsync();
 
             // Wait for EventCounters to poll (~1s interval) + aggregation timer to fire
-            // Increased from 2000ms to 3000ms for better CI/CD reliability
-            await Task.Delay(3000); // Fixed delay for timer-based aggregation
+            await Task.Delay(2000); // Fixed delay for timer-based aggregation
 
             aggregatedMetrics.ShouldNotBeEmpty("aggregation should have captured metrics after sufficient wait time");
             var firstAggregation = aggregatedMetrics.First();
@@ -128,8 +126,7 @@ namespace Rivulet.Diagnostics.Tests
 
             // Wait for another aggregation window to potentially expire samples
             // This verifies that the aggregator handles sample expiration gracefully
-            // Increased from 2000ms to 2500ms for better CI/CD reliability
-            await Task.Delay(2500);
+            await Task.Delay(2000);
 
             var totalAggregations = aggregatedMetrics.Count;
             totalAggregations.ShouldBeGreaterThanOrEqualTo(1);

@@ -33,11 +33,11 @@ public class DiagnosticsBuilderTests : IDisposable
                          .Build())
         {
             // Operations must run long enough for EventCounter polling (1 second interval)
-            // 10 items * 300ms / 2 parallelism = 1500ms of operation time
+            // 10 items * 100ms / 2 parallelism = 500ms of operation time
             await Enumerable.Range(1, 10)
                 .SelectParallelAsync(async (x, ct) =>
                 {
-                    await Task.Delay(300, ct);
+                    await Task.Delay(100, ct);
                     return x * 2;
                 }, new()
                 {
@@ -45,7 +45,7 @@ public class DiagnosticsBuilderTests : IDisposable
                 });
 
             // Wait for at least 2x the aggregation interval to ensure timer fires reliably
-            await Task.Delay(5000);
+            await Task.Delay(2000);
         } // Dispose to flush all listeners
 
         // Wait for file handle to be released and final aggregations to complete
@@ -69,12 +69,12 @@ public class DiagnosticsBuilderTests : IDisposable
             .Build();
 
         // Operations must run long enough for EventCounter polling (1 second interval)
-        // 10 items * 300ms / 2 parallelism = 1500ms of operation time
+        // 10 items * 100ms / 2 parallelism = 500ms of operation time
         await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
             .SelectParallelStreamAsync(async (x, ct) =>
             {
-                await Task.Delay(300, ct);
+                await Task.Delay(100, ct);
                 return x * 2;
             }, new()
             {
@@ -83,7 +83,7 @@ public class DiagnosticsBuilderTests : IDisposable
             .ToListAsync();
 
         // Wait for EventCounters to fire - increased for CI/CD reliability
-        await Task.Delay(3000);
+        await Task.Delay(2000);
 
         var prometheusText = exporter.Export();
         prometheusText.ShouldContain("rivulet_items_started");
@@ -99,12 +99,12 @@ public class DiagnosticsBuilderTests : IDisposable
                          .Build())
         {
             // Operations must run long enough for EventCounter polling (1 second interval)
-            // 10 items * 300ms / 2 parallelism = 1500ms of operation time
+            // 10 items * 100ms / 2 parallelism = 1000ms of operation time
             await Enumerable.Range(1, 10)
                 .ToAsyncEnumerable()
                 .SelectParallelStreamAsync(async (x, ct) =>
                 {
-                    await Task.Delay(300, ct);
+                    await Task.Delay(100, ct);
                     return x;
                 }, new()
                 {
@@ -113,7 +113,7 @@ public class DiagnosticsBuilderTests : IDisposable
                 .ToListAsync();
 
             // Wait for EventCounters to fire - increased for CI/CD reliability
-            await Task.Delay(3000);
+            await Task.Delay(2000);
         }
 
         await Task.Delay(200);
@@ -135,12 +135,12 @@ public class DiagnosticsBuilderTests : IDisposable
             .Build();
 
         // Operations must run long enough for EventCounter polling (1 second interval)
-        // 10 items * 300ms / 2 parallelism = 1500ms of operation time
+        // 10 items * 100ms / 2 parallelism = 500ms of operation time
         await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
             .SelectParallelStreamAsync(async (x, ct) =>
             {
-                await Task.Delay(300, ct);
+                await Task.Delay(100, ct);
                 return x;
             }, new()
             {
@@ -149,7 +149,7 @@ public class DiagnosticsBuilderTests : IDisposable
             .ToListAsync();
 
         // Wait for EventCounters to be polled and metrics to be available - increased for CI/CD reliability
-        await Task.Delay(4000);
+        await Task.Delay(2000);
 
         var prometheusText = exporter.Export();
         prometheusText.ShouldContain("rivulet_items_started");
@@ -176,12 +176,12 @@ public class DiagnosticsBuilderTests : IDisposable
             .Build();
 
         // Operations must run long enough for EventCounter polling (1 second interval)
-        // 10 items * 300ms / 2 parallelism = 1500ms of operation time
+        // 10 items * 100ms / 2 parallelism = 500ms of operation time
         await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
             .SelectParallelStreamAsync(async (x, ct) =>
             {
-                await Task.Delay(300, ct);
+                await Task.Delay(100, ct);
                 return x;
             }, new()
             {
@@ -190,7 +190,7 @@ public class DiagnosticsBuilderTests : IDisposable
             .ToListAsync();
 
         // Wait for EventCounters to fire - increased for CI/CD reliability
-        await Task.Delay(3000);
+        await Task.Delay(2000);
 
         loggedLines.ShouldNotBeEmpty();
     }

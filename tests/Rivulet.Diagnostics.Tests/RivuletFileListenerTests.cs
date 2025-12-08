@@ -28,8 +28,8 @@ public class RivuletFileListenerTests : IDisposable
                 .ToListAsync();
 
             // Wait for EventCounters to poll and write metrics after operation completes
-            // Polling interval is ~1 second, wait 3 seconds for CI/CD reliability
-            await Task.Delay(3000);
+            // Polling interval is ~1 second, wait 2 seconds for CI/CD reliability
+            await Task.Delay(2000);
         } // Dispose listener to flush and close file
 
         // Wait for file handle to be fully released

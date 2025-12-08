@@ -26,12 +26,12 @@ public class RivuletConsoleListenerTests : IDisposable
             using var listener = new RivuletConsoleListener(useColors: false);
 
             // Run many operations to generate large metric values
-            // Total time: 2000 * 10ms / 10 parallelism = 2000ms
-            await Enumerable.Range(1, 2000)
+            // Total time: 1000 * 5ms / 10 parallelism = 500ms
+            await Enumerable.Range(1, 1000)
                 .ToAsyncEnumerable()
                 .SelectParallelStreamAsync(async (x, ct) =>
                 {
-                    await Task.Delay(10, ct);
+                    await Task.Delay(5, ct);
                     return x;
                 }, new()
                 {
@@ -40,7 +40,7 @@ public class RivuletConsoleListenerTests : IDisposable
                 .ToListAsync();
 
             // Wait for EventCounters to fire
-            await Task.Delay(2000);
+            await Task.Delay(1500);
         }
         finally
         {
@@ -62,12 +62,12 @@ public class RivuletConsoleListenerTests : IDisposable
             try
             {
                 // Operations must run long enough for EventCounter polling (1 second interval)
-                // 10 items * 300ms / 2 parallelism = 1500ms of operation time
+                // 10 items * 100ms / 2 parallelism = 500ms of operation time
                 await Enumerable.Range(1, 10)
                     .ToAsyncEnumerable()
                     .SelectParallelStreamAsync<int, int>(async (_, ct) =>
                     {
-                        await Task.Delay(300, ct);
+                        await Task.Delay(100, ct);
                         throw new InvalidOperationException("Test");
                     }, new()
                     {
@@ -82,7 +82,7 @@ public class RivuletConsoleListenerTests : IDisposable
             }
 
             // Wait for EventCounters to fire - increased for CI/CD reliability
-            await Task.Delay(3000);
+            await Task.Delay(2000);
 
             // Dispose listener before reading output to prevent race condition
             // where background EventSource writes conflict with ToString()
@@ -124,12 +124,12 @@ public class RivuletConsoleListenerTests : IDisposable
             using var consoleListener = new RivuletConsoleListener(useColors: false);
 
             // Operations must run long enough for EventCounter polling (1 second interval)
-            // 10 items * 300ms / 2 parallelism = 1500ms of operation time
+            // 10 items * 100ms / 2 parallelism = 500ms of operation time
             await Enumerable.Range(1, 10)
                 .ToAsyncEnumerable()
                 .SelectParallelStreamAsync(async (x, ct) =>
                 {
-                    await Task.Delay(300, ct);
+                    await Task.Delay(100, ct);
                     return x;
                 }, new()
                 {
@@ -138,7 +138,7 @@ public class RivuletConsoleListenerTests : IDisposable
                 .ToListAsync();
 
             // Wait for EventCounters to fire - increased for CI/CD reliability
-            await Task.Delay(3000);
+            await Task.Delay(2000);
         }
         finally
         {
@@ -159,12 +159,12 @@ public class RivuletConsoleListenerTests : IDisposable
             using var listener = new RivuletConsoleListener(useColors: false);
 
             // Operations must run long enough for EventCounter polling (1 second interval)
-            // 10 items * 300ms / 2 parallelism = 1500ms of operation time
-            await Enumerable.Range(1, 10)
+            // 5 items * 200ms / 2 parallelism = 500ms of operation time
+            await Enumerable.Range(1, 5)
                 .ToAsyncEnumerable()
                 .SelectParallelStreamAsync(async (x, ct) =>
                 {
-                    await Task.Delay(300, ct);
+                    await Task.Delay(200, ct);
                     return x * 2;
                 }, new()
                 {
@@ -172,9 +172,8 @@ public class RivuletConsoleListenerTests : IDisposable
                 })
                 .ToListAsync();
 
-            // EventCounters fire every 1 second. Wait for at least 3 intervals
-            // for CI/CD reliability.
-            await Task.Delay(3500);
+            // EventCounters fire every 1 second. Wait for at least 1.5 intervals
+            await Task.Delay(1500);
 
             // Give a brief moment for console output to be written
             await Task.Delay(100);

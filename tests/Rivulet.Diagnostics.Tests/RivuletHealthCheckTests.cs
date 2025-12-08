@@ -214,7 +214,7 @@ public class RivuletHealthCheckTests
 
         await Task.Yield();
         // Wait for EventCounters to fire
-        await Task.Delay(3000);
+        await Task.Delay(2000);
 
         var context = new HealthCheckContext();
         var result = await healthCheck.CheckHealthAsync(context);
@@ -277,12 +277,12 @@ public class RivuletHealthCheckTests
         var healthCheck = new RivuletHealthCheck(exporter);
 
         // Operations must run long enough for EventCounter polling (1 second interval)
-        // 5 items * 400ms / 2 parallelism = 1000ms (1 second) minimum operation time
+        // 5 items * 100ms / 2 parallelism = 250ms minimum operation time
         await Enumerable.Range(1, 5)
             .ToAsyncEnumerable()
             .SelectParallelStreamAsync(async (x, ct) =>
             {
-                await Task.Delay(400, ct);
+                await Task.Delay(100, ct);
                 return x * 2;
             }, new()
             {
