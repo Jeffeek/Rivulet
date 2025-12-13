@@ -29,7 +29,7 @@ Target branches: `master` and `release/**`
 3. **Runs InspectCode Analysis**
    - Analyzes all C# code in the solution
    - Reports issues with severity WARNING and above
-   - Excludes build artifacts (obj, bin, TestResults, .invisible)
+   - Excludes build artifacts, test projects, and sample projects
 
 4. **Generates Report**
    - Creates XML report with detailed findings

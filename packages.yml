@@ -435,8 +435,8 @@ versions:
       - testing
 
   - version: "1.3.0"
-    release_date: "2026-03-15"
-    status: in_development
+    release_date: "2025-12-08"
+    status: released
     packages:
       - http
       - io
