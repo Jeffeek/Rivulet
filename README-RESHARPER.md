@@ -18,9 +18,9 @@ Target branches: `master` and `release/**`
 
 ## What It Does
 
-1. **Installs ReSharper Command Line Tools** (2024.3.6)
-   - Cached for fast subsequent runs
-   - Uses the official JetBrains CLI tools
+1. **Installs ReSharper Command Line Tools** (2025.3.0.4)
+   - Installed via dotnet tool install
+   - Uses the official JetBrains.ReSharper.GlobalTools package
 
 2. **Builds the solution**
    - Restores NuGet packages
@@ -83,7 +83,7 @@ When the workflow completes, it posts a comment like this:
   - Using directive is not required by the code
 
 ---
-📊 **Analysis Tool**: JetBrains ReSharper 2024.3.6
+📊 **Analysis Tool**: JetBrains ReSharper 2025.3.0.4
 🔍 **Severity Level**: WARNING and above
 ```
 
@@ -125,7 +125,7 @@ All workflows must pass for the PR to be merged.
 
 - **Does NOT fail the build** - Issues are reported as warnings
 - **Comments are updated** - Re-running updates the existing comment
-- **Caching enabled** - ReSharper tools and NuGet packages are cached
+- **NuGet caching enabled** - NuGet packages are cached for faster runs
 - **Timeout: 15 minutes** - Prevents hanging builds
 
 ## Manual Trigger
@@ -134,15 +134,19 @@ To run ReSharper analysis manually:
 
 ```bash
 # Install ReSharper Command Line Tools
-wget https://download.jetbrains.com/resharper/dotUltimate.2024.3.6/JetBrains.ReSharper.CommandLineTools.Unix.2024.3.6.tar.gz
-tar -xzf JetBrains.ReSharper.CommandLineTools.Unix.2024.3.6.tar.gz
-chmod +x inspectcode
+dotnet new tool-manifest --force
+dotnet tool install JetBrains.ReSharper.GlobalTools --version 2025.3.0.4
+dotnet tool restore
+
+# Build the solution first
+dotnet restore
+dotnet build -c Release --no-restore
 
 # Run analysis
-./inspectcode Rivulet.sln \
+dotnet jb inspectcode Rivulet.sln \
   --output=resharper-report.xml \
   --format=Xml \
-  --build \
+  --no-build \
   --properties:Configuration=Release \
   --severity=WARNING \
   --exclude=**/obj/**;**/bin/**;**/TestResults/**;**/samples/**;**/tests/** \
@@ -170,17 +174,16 @@ Edit the `--exclude` parameter:
 ### Changing ReSharper Version
 
 Update the version in these places:
-1. Cache key: `resharper-cli-2024.3.6`
-2. Download URL: `JetBrains.ReSharper.CommandLineTools.Unix.2024.3.6.tar.gz`
-3. Summary message: `JetBrains ReSharper 2024.3.6`
+1. Tool install command: `--version 2025.3.0.4`
+2. Summary message: `JetBrains ReSharper 2025.3.0.4`
 
 ## Troubleshooting
 
-### Workflow Fails to Download ReSharper
+### Workflow Fails to Install ReSharper
 
-- Check if the download URL is still valid
+- Check if the version exists: https://www.nuget.org/packages/JetBrains.ReSharper.GlobalTools
 - Verify network connectivity in the runner
-- Try clearing the cache and re-running
+- Check dotnet tool install output for errors
 
 ### No Report Generated
 
@@ -209,5 +212,5 @@ Update the version in these places:
 ---
 
 **Last Updated**: 2025-12-13
-**ReSharper Version**: 2024.3.6
+**ReSharper Version**: 2025.3.0.4
 **Workflow File**: `.github/workflows/resharper-analysis.yml`

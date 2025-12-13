@@ -46,22 +46,11 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-nuget-
 
-    - name: Cache ReSharper CLI Tools
-      id: cache-resharper
-      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
-      with:
-        path: ~/resharper
-        key: ${{ runner.os }}-resharper-cli-2024.3.6
-
-    - name: Install ReSharper Command Line Tools
-      if: steps.cache-resharper.outputs.cache-hit != 'true'
+    - name: Install ReSharper CLI Tools
       run: |
-        mkdir -p ~/resharper
-        cd ~/resharper
-        wget -q https://download.jetbrains.com/resharper/dotUltimate.2024.3.6/JetBrains.ReSharper.CommandLineTools.Unix.2024.3.6.tar.gz
-        tar -xzf JetBrains.ReSharper.CommandLineTools.Unix.2024.3.6.tar.gz
-        rm JetBrains.ReSharper.CommandLineTools.Unix.2024.3.6.tar.gz
-        chmod +x inspectcode
+        dotnet new tool-manifest --force
+        dotnet tool install JetBrains.ReSharper.GlobalTools --version 2025.3.0.4
+        dotnet tool restore
 
     - name: Restore dependencies
       run: dotnet restore
@@ -71,11 +60,10 @@ jobs:
 
     - name: Run ReSharper InspectCode
       run: |
-        ~/resharper/inspectcode \
-          Rivulet.sln \
+        dotnet jb inspectcode Rivulet.sln \
           --output=resharper-report.xml \
           --format=Xml \
-          --build \
+          --no-build \
           --properties:Configuration=Release \
           --severity=WARNING \
           --exclude=**/obj/**;**/bin/**;**/TestResults/**;**/samples/**;**/tests/** \
