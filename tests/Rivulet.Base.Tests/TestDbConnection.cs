@@ -20,24 +20,16 @@ public class TestDbConnection(
     public override string ServerVersion => "1.0.0";
     public override ConnectionState State => _state;
 
-    protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel)
-    {
-        return new TestDbTransaction(this, isolationLevel);
-    }
+    protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel) =>
+        new TestDbTransaction(this, isolationLevel);
 
     public override void ChangeDatabase(string databaseName)
     {
     }
 
-    public override void Close()
-    {
-        _state = ConnectionState.Closed;
-    }
+    public override void Close() => _state = ConnectionState.Closed;
 
-    public override void Open()
-    {
-        _state = ConnectionState.Open;
-    }
+    public override void Open() => _state = ConnectionState.Open;
 
     public override Task OpenAsync(CancellationToken cancellationToken)
     {
@@ -45,10 +37,7 @@ public class TestDbConnection(
         return Task.CompletedTask;
     }
 
-    protected override DbCommand CreateDbCommand()
-    {
-        return new TestDbCommand(executeScalarFunc, executeNonQueryFunc, executeReaderFunc);
-    }
+    protected override DbCommand CreateDbCommand() => new TestDbCommand(executeScalarFunc, executeNonQueryFunc, executeReaderFunc);
 }
 
 public class TestDbCommand(
@@ -71,34 +60,19 @@ public class TestDbCommand(
     {
     }
 
-    public override int ExecuteNonQuery()
-    {
-        return executeNonQueryFunc?.Invoke(this) ?? 0;
-    }
+    public override int ExecuteNonQuery() => executeNonQueryFunc?.Invoke(this) ?? 0;
 
-    public override Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken)
-    {
-        return Task.FromResult(ExecuteNonQuery());
-    }
+    public override Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken) => Task.FromResult(ExecuteNonQuery());
 
-    public override object? ExecuteScalar()
-    {
-        return executeScalarFunc?.Invoke(this);
-    }
+    public override object? ExecuteScalar() => executeScalarFunc?.Invoke(this);
 
-    public override Task<object?> ExecuteScalarAsync(CancellationToken cancellationToken)
-    {
-        return Task.FromResult(ExecuteScalar());
-    }
+    public override Task<object?> ExecuteScalarAsync(CancellationToken cancellationToken) => Task.FromResult(ExecuteScalar());
 
     public override void Prepare()
     {
     }
 
-    protected override DbParameter CreateDbParameter()
-    {
-        return new TestDbParameter();
-    }
+    protected override DbParameter CreateDbParameter() => new TestDbParameter();
 
     protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
     {
@@ -106,10 +80,7 @@ public class TestDbCommand(
         return (DbDataReader)reader;
     }
 
-    protected override Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
-    {
-        return Task.FromResult(ExecuteDbDataReader(behavior));
-    }
+    protected override Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken) => Task.FromResult(ExecuteDbDataReader(behavior));
 }
 
 public class TestDbTransaction(TestDbConnection connection, IsolationLevel isolationLevel) : DbTransaction
@@ -119,15 +90,9 @@ public class TestDbTransaction(TestDbConnection connection, IsolationLevel isola
     public bool IsCommitted { get; private set; }
     public bool IsRolledBack { get; private set; }
 
-    public override void Commit()
-    {
-        IsCommitted = true;
-    }
+    public override void Commit() => IsCommitted = true;
 
-    public override void Rollback()
-    {
-        IsRolledBack = true;
-    }
+    public override void Rollback() => IsRolledBack = true;
 }
 
 public class TestDbParameterCollection : DbParameterCollection
@@ -151,74 +116,35 @@ public class TestDbParameterCollection : DbParameterCollection
         }
     }
 
-    public override void Clear()
-    {
-        _parameters.Clear();
-    }
+    public override void Clear() => _parameters.Clear();
 
-    public override bool Contains(object value)
-    {
-        return _parameters.Contains(value);
-    }
+    public override bool Contains(object value) => _parameters.Contains(value);
 
-    public override bool Contains(string value)
-    {
-        return false;
-    }
+    public override bool Contains(string value) => false;
 
-    public override void CopyTo(Array array, int index)
-    {
-        _parameters.CopyTo((object[])array, index);
-    }
+    public override void CopyTo(Array array, int index) => _parameters.CopyTo((object[])array, index);
 
-    public override IEnumerator GetEnumerator()
-    {
-        return _parameters.GetEnumerator();
-    }
+    public override IEnumerator GetEnumerator() => _parameters.GetEnumerator();
 
-    public override int IndexOf(object value)
-    {
-        return _parameters.IndexOf(value);
-    }
+    public override int IndexOf(object value) => _parameters.IndexOf(value);
 
-    public override int IndexOf(string parameterName)
-    {
-        return -1;
-    }
+    public override int IndexOf(string parameterName) => -1;
 
-    public override void Insert(int index, object value)
-    {
-        _parameters.Insert(index, value);
-    }
+    public override void Insert(int index, object value) => _parameters.Insert(index, value);
 
-    public override void Remove(object value)
-    {
-        _parameters.Remove(value);
-    }
+    public override void Remove(object value) => _parameters.Remove(value);
 
-    public override void RemoveAt(int index)
-    {
-        _parameters.RemoveAt(index);
-    }
+    public override void RemoveAt(int index) => _parameters.RemoveAt(index);
 
     public override void RemoveAt(string parameterName)
     {
     }
 
-    protected override DbParameter GetParameter(int index)
-    {
-        return (DbParameter)_parameters[index];
-    }
+    protected override DbParameter GetParameter(int index) => (DbParameter)_parameters[index];
 
-    protected override DbParameter GetParameter(string parameterName)
-    {
-        return new TestDbParameter();
-    }
+    protected override DbParameter GetParameter(string parameterName) => new TestDbParameter();
 
-    protected override void SetParameter(int index, DbParameter value)
-    {
-        _parameters[index] = value;
-    }
+    protected override void SetParameter(int index, DbParameter value) => _parameters[index] = value;
 
     protected override void SetParameter(string parameterName, DbParameter value)
     {
@@ -331,10 +257,7 @@ public class TestDataReader(List<Dictionary<string, object>> rows) : DbDataReade
 
     public override IEnumerator GetEnumerator() => rows.GetEnumerator();
 
-    public override void Close()
-    {
-        _isClosed = true;
-    }
+    public override void Close() => _isClosed = true;
 
     public override DataTable? GetSchemaTable()
     {
@@ -384,25 +307,13 @@ public class NonDbConnection(
     public IDbTransaction BeginTransaction(IsolationLevel il) => new TestDbTransaction(new(), il);
     public void ChangeDatabase(string databaseName) { }
 
-    public void Close()
-    {
-        _state = ConnectionState.Closed;
-    }
+    public void Close() => _state = ConnectionState.Closed;
 
-    public void Open()
-    {
-        _state = ConnectionState.Open;
-    }
+    public void Open() => _state = ConnectionState.Open;
 
-    public IDbCommand CreateCommand()
-    {
-        return new NonDbCommand(executeScalarFunc, executeNonQueryFunc, executeReaderFunc);
-    }
+    public IDbCommand CreateCommand() => new NonDbCommand(executeScalarFunc, executeNonQueryFunc, executeReaderFunc);
 
-    public void Dispose()
-    {
-        _state = ConnectionState.Closed;
-    }
+    public void Dispose() => _state = ConnectionState.Closed;
 }
 
 /// <summary>
@@ -428,25 +339,13 @@ public class NonDbCommand(
 
     public IDbDataParameter CreateParameter() => new TestDbParameter();
 
-    public int ExecuteNonQuery()
-    {
-        return executeNonQueryFunc?.Invoke(this) ?? 0;
-    }
+    public int ExecuteNonQuery() => executeNonQueryFunc?.Invoke(this) ?? 0;
 
-    public IDataReader ExecuteReader()
-    {
-        return executeReaderFunc?.Invoke(this) ?? new TestDataReader([]);
-    }
+    public IDataReader ExecuteReader() => executeReaderFunc?.Invoke(this) ?? new TestDataReader([]);
 
-    public IDataReader ExecuteReader(CommandBehavior behavior)
-    {
-        return ExecuteReader();
-    }
+    public IDataReader ExecuteReader(CommandBehavior behavior) => ExecuteReader();
 
-    public object? ExecuteScalar()
-    {
-        return executeScalarFunc?.Invoke(this);
-    }
+    public object? ExecuteScalar() => executeScalarFunc?.Invoke(this);
 
     public void Prepare() { }
 

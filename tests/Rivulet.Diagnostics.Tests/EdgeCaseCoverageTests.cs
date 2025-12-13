@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Rivulet.Core;
 
 namespace Rivulet.Diagnostics.Tests;
@@ -330,9 +330,7 @@ public class EdgeCaseCoverageTests
     {
         public List<string> ReceivedCounters { get; } = new();
 
-        protected override void OnCounterReceived(string name, string displayName, double value, string displayUnits)
-        {
+        protected override void OnCounterReceived(string name, string displayName, double value, string displayUnits) =>
             ReceivedCounters.Add(name);
-        }
     }
 }

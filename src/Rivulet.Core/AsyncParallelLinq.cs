@@ -1,6 +1,5 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Threading.Channels;
 using Rivulet.Core.Observability;
 using Rivulet.Core.Resilience;
@@ -10,7 +9,6 @@ namespace Rivulet.Core;
 /// <summary>
 /// Provides async-first parallel LINQ operators with bounded concurrency, retries, and backpressure for I/O-heavy workloads.
 /// </summary>
-[SuppressMessage("ReSharper", "AccessToDisposedClosure")]
 public static class AsyncParallelLinq
 {
     /// <summary>

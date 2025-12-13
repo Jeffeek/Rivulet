@@ -47,10 +47,8 @@ public class QueueProcessingWorker : ParallelBackgroundService<string>
         }
     }
 
-    protected override IAsyncEnumerable<string> GetItemsAsync(CancellationToken cancellationToken)
-    {
-        return _queue.Reader.ReadAllAsync(cancellationToken);
-    }
+    protected override IAsyncEnumerable<string> GetItemsAsync(CancellationToken cancellationToken) =>
+        _queue.Reader.ReadAllAsync(cancellationToken);
 
     protected override async ValueTask ProcessItemAsync(string item, CancellationToken cancellationToken)
     {

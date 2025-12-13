@@ -94,7 +94,7 @@ class ReadmeGenerator(FileGenerator):
             lines.append("")
 
         # Integration packages
-        lines.append("### Integration Packages (v1.3.0 🚧)")
+        lines.append("### Integration Packages (v1.4.0 🚧)")
         lines.append("")
         for pkg in self.registry.get_integration_packages():
             lines.append(self._format_package(pkg))

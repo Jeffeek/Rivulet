@@ -1,4 +1,4 @@
-﻿using Rivulet.Core;
+using Rivulet.Core;
 using System.Text.Json;
 
 namespace Rivulet.Diagnostics.Tests;
@@ -200,8 +200,5 @@ public class RivuletStructuredLogListenerTests : IDisposable
         loggedLines.ShouldNotBeNull();
     }
 
-    public void Dispose()
-    {
-        TestCleanupHelper.RetryDeleteFile(_testFilePath);
-    }
+    public void Dispose() => TestCleanupHelper.RetryDeleteFile(_testFilePath);
 }

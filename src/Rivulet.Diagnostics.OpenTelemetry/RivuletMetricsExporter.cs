@@ -28,7 +28,7 @@ namespace Rivulet.Diagnostics.OpenTelemetry;
 /// </example>
 public sealed class RivuletMetricsExporter : IDisposable
 {
-    private static readonly Meter Meter = new(RivuletSharedConstants.RivuletCore, RivuletOpenTelemetryConstants.InstrumentationVersion);
+    private static readonly Meter _meter = new(RivuletSharedConstants.RivuletCore, RivuletOpenTelemetryConstants.InstrumentationVersion);
 
     /// <summary>
     /// <see cref="Dispose"/>
@@ -50,43 +50,43 @@ public sealed class RivuletMetricsExporter : IDisposable
     {
         var eventSource = RivuletEventSource.Log;
 
-        _itemsStartedGauge = Meter.CreateObservableGauge(
+        _itemsStartedGauge = _meter.CreateObservableGauge(
             RivuletOpenTelemetryConstants.MetricNames.ItemsStarted,
             () => eventSource.GetItemsStarted(),
             unit: RivuletOpenTelemetryConstants.MetricUnits.Items,
             description: RivuletOpenTelemetryConstants.MetricDescriptions.ItemsStarted);
 
-        _itemsCompletedGauge = Meter.CreateObservableGauge(
+        _itemsCompletedGauge = _meter.CreateObservableGauge(
             RivuletOpenTelemetryConstants.MetricNames.ItemsCompleted,
             () => eventSource.GetItemsCompleted(),
             unit: RivuletOpenTelemetryConstants.MetricUnits.Items,
             description: RivuletOpenTelemetryConstants.MetricDescriptions.ItemsCompleted);
 
-        _totalRetriesGauge = Meter.CreateObservableGauge(
+        _totalRetriesGauge = _meter.CreateObservableGauge(
             RivuletOpenTelemetryConstants.MetricNames.RetriesTotal,
             () => eventSource.GetTotalRetries(),
             unit: RivuletOpenTelemetryConstants.MetricUnits.Retries,
             description: RivuletOpenTelemetryConstants.MetricDescriptions.RetriesTotal);
 
-        _totalFailuresGauge = Meter.CreateObservableGauge(
+        _totalFailuresGauge = _meter.CreateObservableGauge(
             RivuletOpenTelemetryConstants.MetricNames.FailuresTotal,
             () => eventSource.GetTotalFailures(),
             unit: RivuletOpenTelemetryConstants.MetricUnits.Failures,
             description: RivuletOpenTelemetryConstants.MetricDescriptions.FailuresTotal);
 
-        _throttleEventsGauge = Meter.CreateObservableGauge(
+        _throttleEventsGauge = _meter.CreateObservableGauge(
             RivuletOpenTelemetryConstants.MetricNames.ThrottleEvents,
             () => eventSource.GetThrottleEvents(),
             unit: RivuletOpenTelemetryConstants.MetricUnits.Events,
             description: RivuletOpenTelemetryConstants.MetricDescriptions.ThrottleEvents);
 
-        _drainEventsGauge = Meter.CreateObservableGauge(
+        _drainEventsGauge = _meter.CreateObservableGauge(
             RivuletOpenTelemetryConstants.MetricNames.DrainEvents,
             () => eventSource.GetDrainEvents(),
             unit: RivuletOpenTelemetryConstants.MetricUnits.Events,
             description: RivuletOpenTelemetryConstants.MetricDescriptions.DrainEvents);
 
-        _errorRateGauge = Meter.CreateObservableGauge(
+        _errorRateGauge = _meter.CreateObservableGauge(
             RivuletOpenTelemetryConstants.MetricNames.ErrorRate,
             () =>
             {
