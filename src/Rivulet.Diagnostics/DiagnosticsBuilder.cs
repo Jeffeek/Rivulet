@@ -127,10 +127,7 @@ public sealed class DiagnosticsBuilder : IDisposable, IAsyncDisposable
     /// Builds and returns the diagnostics configuration.
     /// </summary>
     /// <returns>The builder instance for disposal.</returns>
-    public DiagnosticsBuilder Build()
-    {
-        return this;
-    }
+    public DiagnosticsBuilder Build() => this;
 
     /// <summary>
     /// Disposes all registered listeners synchronously.

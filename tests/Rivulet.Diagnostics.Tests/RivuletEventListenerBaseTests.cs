@@ -1,4 +1,4 @@
-﻿using Rivulet.Base.Tests;
+using Rivulet.Base.Tests;
 using Rivulet.Core;
 using System.Collections.Concurrent;
 using Rivulet.Core.Observability;
@@ -126,19 +126,14 @@ public class RivuletEventListenerBaseTests : IDisposable
         listener.ReceivedCounters.ShouldNotBeNull();
     }
 
-    public void Dispose()
-    {
-        _listener.Dispose();
-    }
+    public void Dispose() => _listener.Dispose();
 
     private sealed class TestEventListener : RivuletEventListenerBase
     {
         public ConcurrentDictionary<string, CounterData> ReceivedCounters { get; } = new();
 
-        protected override void OnCounterReceived(string name, string displayName, double value, string displayUnits)
-        {
+        protected override void OnCounterReceived(string name, string displayName, double value, string displayUnits) =>
             ReceivedCounters[name] = new(displayName, displayUnits);
-        }
     }
 
     private sealed record CounterData(string DisplayName, string DisplayUnits);
@@ -196,10 +191,7 @@ public class RivuletEventListenerBaseTests : IDisposable
     private sealed class CustomEventSource(string name) : EventSource(name)
     {
         [Event(1)]
-        public new void WriteEvent(int id, string message)
-        {
-            base.WriteEvent(id, message);
-        }
+        public new void WriteEvent(int id, string message) => base.WriteEvent(id, message);
     }
 
     [EventSource(Name = "Rivulet.Core")]
@@ -212,27 +204,15 @@ public class RivuletEventListenerBaseTests : IDisposable
             _testCounter = new("test-counter", this);
         }
 
-        public void EmitCounterWithoutDisplayName()
-        {
-            _testCounter?.WriteMetric(1.0);
-        }
+        public void EmitCounterWithoutDisplayName() => _testCounter?.WriteMetric(1.0);
 
-        public void EmitCounterWithoutDisplayUnits()
-        {
-            _testCounter?.WriteMetric(2.0);
-        }
+        public void EmitCounterWithoutDisplayUnits() => _testCounter?.WriteMetric(2.0);
 
         [Event(10)]
-        public void WriteEmptyEvent()
-        {
-            WriteEvent(10);
-        }
+        public void WriteEmptyEvent() => WriteEvent(10);
 
         [Event(11, Level = EventLevel.Informational)]
-        public void WriteInformationalEvent(string message)
-        {
-            WriteEvent(11, message);
-        }
+        public void WriteInformationalEvent(string message) => WriteEvent(11, message);
 
         protected override void Dispose(bool disposing)
         {

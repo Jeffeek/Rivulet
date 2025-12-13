@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using Rivulet.Core.Internal;
 using Rivulet.Core.Observability;
 
@@ -8,7 +7,6 @@ namespace Rivulet.Core.Resilience;
 /// Thread-safe controller for adaptive concurrency management.
 /// Monitors performance and dynamically adjusts parallelism.
 /// </summary>
-[SuppressMessage("ReSharper", "InconsistentlySynchronizedField")]
 internal sealed class AdaptiveConcurrencyController : IAsyncDisposable
 {
     private readonly AdaptiveConcurrencyOptions _options;
@@ -54,10 +52,8 @@ internal sealed class AdaptiveConcurrencyController : IAsyncDisposable
     /// Acquires a slot to execute an operation.
     /// Blocks until a slot is available based on current concurrency limit.
     /// </summary>
-    internal async ValueTask AcquireAsync(CancellationToken cancellationToken = default)
-    {
+    internal async ValueTask AcquireAsync(CancellationToken cancellationToken = default) =>
         await _semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
-    }
 
     /// <summary>
     /// Releases a slot after operation completion.

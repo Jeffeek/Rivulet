@@ -17,10 +17,7 @@ public class BatchingBenchmarks
     [Params([100, 500, 1000])] public int BatchSize;
 
     [GlobalSetup]
-    public void Setup()
-    {
-        _source = Enumerable.Range(1, ItemCount);
-    }
+    public void Setup() => _source = Enumerable.Range(1, ItemCount);
 
     [Benchmark(Description = "BatchParallelAsync")]
     public async Task<List<int>> BatchParallel()

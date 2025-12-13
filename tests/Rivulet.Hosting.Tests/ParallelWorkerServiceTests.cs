@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Rivulet.Base.Tests;
 using Rivulet.Core;
@@ -19,10 +19,8 @@ public class ParallelWorkerServiceTests
         public int ProcessCallCount => _processCallCount;
         private int _processCallCount;
 
-        protected override IAsyncEnumerable<int> GetSourceItems(CancellationToken cancellationToken)
-        {
-            return sourceItems;
-        }
+        protected override IAsyncEnumerable<int> GetSourceItems(CancellationToken cancellationToken) =>
+            sourceItems;
 
         protected override Task<string> ProcessAsync(int item, CancellationToken cancellationToken)
         {
@@ -45,10 +43,7 @@ public class ParallelWorkerServiceTests
         ParallelOptionsRivulet? options = null)
         : ParallelWorkerService<int, int>(logger, options)
     {
-        protected override IAsyncEnumerable<int> GetSourceItems(CancellationToken cancellationToken)
-        {
-            return sourceItems;
-        }
+        protected override IAsyncEnumerable<int> GetSourceItems(CancellationToken cancellationToken) => sourceItems;
 
         protected override async Task<int> ProcessAsync(int item, CancellationToken cancellationToken)
         {
@@ -59,15 +54,9 @@ public class ParallelWorkerServiceTests
 
     private class ThrowingWorkerService(ILogger<ThrowingWorkerService> logger, IAsyncEnumerable<int> sourceItems) : ParallelWorkerService<int, int>(logger)
     {
-        protected override IAsyncEnumerable<int> GetSourceItems(CancellationToken cancellationToken)
-        {
-            return sourceItems;
-        }
+        protected override IAsyncEnumerable<int> GetSourceItems(CancellationToken cancellationToken) => sourceItems;
 
-        protected override Task<int> ProcessAsync(int item, CancellationToken cancellationToken)
-        {
-            throw new InvalidOperationException("Test exception");
-        }
+        protected override Task<int> ProcessAsync(int item, CancellationToken cancellationToken) => throw new InvalidOperationException("Test exception");
     }
 
 
@@ -312,10 +301,7 @@ public class ParallelWorkerServiceTests
         IAsyncEnumerable<int> sourceItems)
         : ParallelWorkerService<int, int>(logger)
     {
-        protected override IAsyncEnumerable<int> GetSourceItems(CancellationToken cancellationToken)
-        {
-            return sourceItems;
-        }
+        protected override IAsyncEnumerable<int> GetSourceItems(CancellationToken cancellationToken) => sourceItems;
 
         protected override Task<int> ProcessAsync(int item, CancellationToken cancellationToken)
         {
@@ -375,9 +361,6 @@ public class ParallelWorkerServiceTests
             throw new InvalidOperationException("Fatal error in GetSourceItems");
         }
 
-        protected override Task<int> ProcessAsync(int item, CancellationToken cancellationToken)
-        {
-            return Task.FromResult(item);
-        }
+        protected override Task<int> ProcessAsync(int item, CancellationToken cancellationToken) => Task.FromResult(item);
     }
 }

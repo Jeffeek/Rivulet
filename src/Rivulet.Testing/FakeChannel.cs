@@ -73,10 +73,8 @@ public sealed class FakeChannel<T> : IDisposable
     /// <summary>
     /// Completes the channel writer.
     /// </summary>
-    public void Complete(Exception? exception = null)
-    {
+    public void Complete(Exception? exception = null) =>
         Writer.Complete(exception);
-    }
 
     /// <summary>
     /// Resets the read and write counters using thread-safe operations.

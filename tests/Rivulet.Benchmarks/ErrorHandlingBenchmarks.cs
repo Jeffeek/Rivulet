@@ -15,10 +15,7 @@ public class ErrorHandlingBenchmarks
     private IEnumerable<int> _source = null!;
 
     [GlobalSetup]
-    public void Setup()
-    {
-        _source = Enumerable.Range(1, ItemCount);
-    }
+    public void Setup() => _source = Enumerable.Range(1, ItemCount);
 
     [Benchmark(Baseline = true, Description = "No retries - Success path")]
     public async Task<List<int>> NoRetries_SuccessPath()

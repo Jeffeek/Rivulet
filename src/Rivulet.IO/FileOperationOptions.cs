@@ -69,8 +69,6 @@ public class FileOperationOptions
     /// <summary>
     /// Creates a merged ParallelOptionsRivulet by combining FileOperationOptions.ParallelOptions with defaults.
     /// </summary>
-    internal ParallelOptionsRivulet GetMergedParallelOptions()
-    {
-        return ParallelOptions ?? new ParallelOptionsRivulet();
-    }
+    internal ParallelOptionsRivulet GetMergedParallelOptions() =>
+        ParallelOptions ?? new ParallelOptionsRivulet();
 }

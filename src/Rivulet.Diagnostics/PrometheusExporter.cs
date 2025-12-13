@@ -34,10 +34,8 @@ public sealed class PrometheusExporter : RivuletEventListenerBase
     /// <summary>
     /// Called when a counter value is received.
     /// </summary>
-    protected override void OnCounterReceived(string name, string displayName, double value, string displayUnits)
-    {
+    protected override void OnCounterReceived(string name, string displayName, double value, string displayUnits) =>
         LockHelper.Execute(_lock, () => _latestValues[name] = (displayName, value, displayUnits));
-    }
 
     /// <summary>
     /// Exports current metrics in Prometheus text format.
