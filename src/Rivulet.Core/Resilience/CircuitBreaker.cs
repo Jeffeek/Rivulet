@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using System.Diagnostics.CodeAnalysis;
 using Rivulet.Core.Internal;
 using Rivulet.Core.Observability;
 
@@ -9,7 +8,6 @@ namespace Rivulet.Core.Resilience;
 /// Thread-safe implementation of the circuit breaker pattern.
 /// Prevents cascading failures by failing fast when a threshold of failures is reached.
 /// </summary>
-[SuppressMessage("ReSharper", "InconsistentlySynchronizedField")]
 internal sealed class CircuitBreaker
 {
     private readonly CircuitBreakerOptions _options;
@@ -228,8 +226,6 @@ internal sealed class CircuitBreaker
     /// Resets the circuit breaker to the Closed state.
     /// Useful for testing or manual intervention.
     /// </summary>
-    internal void Reset()
-    {
+    internal void Reset() =>
         LockHelper.Execute(_lock, TransitionToClosed);
-    }
 }

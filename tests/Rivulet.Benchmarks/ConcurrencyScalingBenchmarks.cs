@@ -17,10 +17,7 @@ public class ConcurrencyScalingBenchmarks
     [Params([1, 2, 4, 8, 16, 32, 64, 128])] public int MaxDegreeOfParallelism;
 
     [GlobalSetup]
-    public void Setup()
-    {
-        _source = Enumerable.Range(1, ItemCount);
-    }
+    public void Setup() => _source = Enumerable.Range(1, ItemCount);
 
     [Benchmark(Description = "MaxDegreeOfParallelism")]
     public async Task<List<int>> Parallelism()

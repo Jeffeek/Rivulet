@@ -18,50 +18,38 @@ internal sealed class NoOpMetricsTracker : MetricsTrackerBase
     /// <summary>
     /// Fires EventSource event only (no tracking).
     /// </summary>
-    public override void IncrementItemsStarted()
-    {
+    public override void IncrementItemsStarted() =>
         RivuletEventSource.Log.IncrementItemsStarted();
-    }
 
     /// <summary>
     /// Fires EventSource event only (no tracking).
     /// </summary>
-    public override void IncrementItemsCompleted()
-    {
+    public override void IncrementItemsCompleted() =>
         RivuletEventSource.Log.IncrementItemsCompleted();
-    }
 
     /// <summary>
     /// Fires EventSource event only (no tracking).
     /// </summary>
-    public override void IncrementRetries()
-    {
+    public override void IncrementRetries() =>
         RivuletEventSource.Log.IncrementRetries();
-    }
 
     /// <summary>
     /// Fires EventSource event only (no tracking).
     /// </summary>
-    public override void IncrementFailures()
-    {
+    public override void IncrementFailures() =>
         RivuletEventSource.Log.IncrementFailures();
-    }
 
     /// <summary>
     /// Fires EventSource event only (no tracking).
     /// </summary>
-    public override void IncrementThrottleEvents()
-    {
+    public override void IncrementThrottleEvents() =>
         RivuletEventSource.Log.IncrementThrottleEvents();
-    }
 
     /// <summary>
     /// Fires EventSource event only (no tracking).
     /// </summary>
-    public override void IncrementDrainEvents()
-    {
+    public override void IncrementDrainEvents() =>
         RivuletEventSource.Log.IncrementDrainEvents();
-    }
 
     /// <summary>
     /// No-op (no tracking needed).

@@ -68,15 +68,11 @@ internal sealed class MetricsTracker : MetricsTrackerBase
         RivuletEventSource.Log.IncrementDrainEvents();
     }
 
-    public override void SetActiveWorkers(int count)
-    {
+    public override void SetActiveWorkers(int count) =>
         Interlocked.Exchange(ref _activeWorkers, count);
-    }
 
-    public override void SetQueueDepth(int depth)
-    {
+    public override void SetQueueDepth(int depth) =>
         Interlocked.Exchange(ref _queueDepth, depth);
-    }
 
     private async Task SampleMetricsPeriodically()
     {

@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Rivulet.Base.Tests;
 using Rivulet.Core;
@@ -17,10 +17,8 @@ public class ParallelBackgroundServiceTests
         public int ProcessCallCount => _processCallCount;
         private int _processCallCount;
 
-        protected override IAsyncEnumerable<int> GetItemsAsync(CancellationToken cancellationToken)
-        {
-            return items;
-        }
+        protected override IAsyncEnumerable<int> GetItemsAsync(CancellationToken cancellationToken) =>
+            items;
 
         protected override ValueTask ProcessItemAsync(int item, CancellationToken cancellationToken)
         {
@@ -218,10 +216,7 @@ public class ParallelBackgroundServiceTests
         ILogger<ThrowingBackgroundService> logger,
         IAsyncEnumerable<int> items) : ParallelBackgroundService<int>(logger)
     {
-        protected override IAsyncEnumerable<int> GetItemsAsync(CancellationToken cancellationToken)
-        {
-            return items;
-        }
+        protected override IAsyncEnumerable<int> GetItemsAsync(CancellationToken cancellationToken) => items;
 
         protected override ValueTask ProcessItemAsync(int item, CancellationToken cancellationToken)
         {
@@ -239,9 +234,6 @@ public class ParallelBackgroundServiceTests
             throw new InvalidOperationException("Fatal error in GetItemsAsync");
         }
 
-        protected override ValueTask ProcessItemAsync(int item, CancellationToken cancellationToken)
-        {
-            return ValueTask.CompletedTask;
-        }
+        protected override ValueTask ProcessItemAsync(int item, CancellationToken cancellationToken) => ValueTask.CompletedTask;
     }
 }

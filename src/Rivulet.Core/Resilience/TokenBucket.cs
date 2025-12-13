@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using Rivulet.Core.Internal;
 
 namespace Rivulet.Core.Resilience;
@@ -8,7 +7,6 @@ namespace Rivulet.Core.Resilience;
 /// Thread-safe implementation of the token bucket algorithm for rate limiting.
 /// Tokens are added to the bucket at a fixed rate, and operations consume tokens.
 /// </summary>
-[SuppressMessage("ReSharper", "InconsistentlySynchronizedField")]
 internal sealed class TokenBucket
 {
     private readonly RateLimitOptions _options;

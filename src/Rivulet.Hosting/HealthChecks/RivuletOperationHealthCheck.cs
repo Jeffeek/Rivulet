@@ -33,10 +33,8 @@ public sealed class RivuletOperationHealthCheck : IHealthCheck
     /// <summary>
     /// Records a failed operation.
     /// </summary>
-    public void RecordFailure()
-    {
+    public void RecordFailure() =>
         Interlocked.Increment(ref _consecutiveFailures);
-    }
 
     /// <summary>
     /// Checks the health status based on recent operation successes and failures.
@@ -90,10 +88,10 @@ public sealed class RivuletOperationHealthCheckOptions
     /// <summary>
     /// Time without successful operations before health is degraded. Default: 5 minutes.
     /// </summary>
-    public TimeSpan StalledThreshold { get; set; } = TimeSpan.FromMinutes(5);
+    public TimeSpan StalledThreshold { get; init; } = TimeSpan.FromMinutes(5);
 
     /// <summary>
     /// Number of consecutive failures before health is unhealthy. Default: 10.
     /// </summary>
-    public int UnhealthyFailureThreshold { get; set; } = 10;
+    public int UnhealthyFailureThreshold { get; init; } = 10;
 }

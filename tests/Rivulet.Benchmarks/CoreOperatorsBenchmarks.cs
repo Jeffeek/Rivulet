@@ -14,10 +14,7 @@ public class CoreOperatorsBenchmarks
     private IEnumerable<int> _source = null!;
 
     [GlobalSetup]
-    public void Setup()
-    {
-        _source = Enumerable.Range(1, ItemCount);
-    }
+    public void Setup() => _source = Enumerable.Range(1, ItemCount);
 
     [Benchmark(Description = "SelectParallelAsync - CPU-bound (light)")]
     public async Task<List<int>> SelectParallel_CpuBound_Light()
@@ -56,10 +53,11 @@ public class CoreOperatorsBenchmarks
     }
 
     [Benchmark(Description = "SelectParallelStreamAsync - Streaming results")]
-    public async Task<int> SelectParallelStream_Streaming()
-    {
-        return await _source.ToAsyncEnumerable().SelectParallelStreamAsync((x, _) => new ValueTask<int>(x * 2), new() { MaxDegreeOfParallelism = 8 }).CountAsync();
-    }
+    public async Task<int> SelectParallelStream_Streaming() =>
+        await _source
+              .ToAsyncEnumerable()
+              .SelectParallelStreamAsync((x, _) => new ValueTask<int>(x * 2), new() { MaxDegreeOfParallelism = 8 })
+              .CountAsync();
 
     [Benchmark(Description = "ForEachParallelAsync - Side effects")]
     public async Task ForEachParallel_SideEffects()

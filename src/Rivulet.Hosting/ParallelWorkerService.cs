@@ -79,8 +79,6 @@ public abstract class ParallelWorkerService<TSource, TResult> : BackgroundServic
     /// <summary>
     /// Called when a result is available. Override to handle results (e.g., save to database, send to queue).
     /// </summary>
-    protected virtual Task OnResultAsync(TResult result, CancellationToken cancellationToken)
-    {
-        return Task.CompletedTask;
-    }
+    protected virtual Task OnResultAsync(TResult result, CancellationToken cancellationToken) =>
+        Task.CompletedTask;
 }

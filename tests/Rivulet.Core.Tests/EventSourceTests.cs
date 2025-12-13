@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using Rivulet.Core.Observability;
 
 namespace Rivulet.Core.Tests;
@@ -130,10 +130,8 @@ public class EventSourceTests
     private class TestEventListener : System.Diagnostics.Tracing.EventListener
     {
         // ReSharper disable once RedundantOverriddenMember
-        protected override void OnEventSourceCreated(System.Diagnostics.Tracing.EventSource eventSource)
-        {
+        protected override void OnEventSourceCreated(System.Diagnostics.Tracing.EventSource eventSource) =>
             base.OnEventSourceCreated(eventSource);
-        }
 
         protected override void OnEventWritten(System.Diagnostics.Tracing.EventWrittenEventArgs eventData)
         {

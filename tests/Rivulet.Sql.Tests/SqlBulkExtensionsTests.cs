@@ -1,4 +1,4 @@
-﻿using System.Data;
+using System.Data;
 using System.Diagnostics.CodeAnalysis;
 using Rivulet.Base.Tests;
 
@@ -586,10 +586,7 @@ public class SqlBulkExtensionsTests
             onOpen();
         }
 
-        public void Close()
-        {
-            _state = ConnectionState.Closed;
-        }
+        public void Close() => _state = ConnectionState.Closed;
 
         public IDbTransaction BeginTransaction() => new NonDbTransactionMock();
         public IDbTransaction BeginTransaction(IsolationLevel il) => new NonDbTransactionMock();
@@ -597,10 +594,7 @@ public class SqlBulkExtensionsTests
 
         public IDbCommand CreateCommand() => new NonDbCommandMock(executeNonQueryFunc);
 
-        public void Dispose()
-        {
-            _state = ConnectionState.Closed;
-        }
+        public void Dispose() => _state = ConnectionState.Closed;
     }
 
     // Mock IDbCommand that does NOT extend DbCommand
@@ -661,20 +655,18 @@ public class SqlBulkExtensionsTests
     // Mock that uses NonDbCommandMock for testing
     private class NonDbConnectionWithNonDbCommandMock(Func<int> executeNonQueryFunc) : IDbConnection
     {
-        private ConnectionState _state = ConnectionState.Closed;
-
         [AllowNull]
         public string ConnectionString { get; set; } = string.Empty;
         public int ConnectionTimeout => 30;
         public string Database => "TestDB";
-        public ConnectionState State => _state;
+        public ConnectionState State { get; private set; } = ConnectionState.Closed;
 
-        public void Open() => _state = ConnectionState.Open;
-        public void Close() => _state = ConnectionState.Closed;
+        public void Open() => State = ConnectionState.Open;
+        public void Close() => State = ConnectionState.Closed;
         public IDbTransaction BeginTransaction() => new NonDbTransactionMock();
         public IDbTransaction BeginTransaction(IsolationLevel il) => new NonDbTransactionMock();
         public void ChangeDatabase(string databaseName) { }
         public IDbCommand CreateCommand() => new NonDbCommandMock(executeNonQueryFunc);
-        public void Dispose() => _state = ConnectionState.Closed;
+        public void Dispose() => State = ConnectionState.Closed;
     }
 }
