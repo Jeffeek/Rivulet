@@ -23,7 +23,7 @@
 - **Rivulet.Hosting** - ASP.NET Core integration with background services, dependency injection, and configuration binding
 - **Rivulet.Testing** - Testing utilities for deterministic tests with time control, chaos injection, and concurrency verification
 
-### 🚧 1.3.0 - Released
+### ✅ 1.3.0 - Released
 
 - **Rivulet.Http** - Parallel HTTP operations with HttpClientFactory integration and connection pooling awareness
 - **Rivulet.IO** - Parallel file operations with safe directory processing and file transformations
