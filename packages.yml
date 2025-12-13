@@ -347,7 +347,7 @@ packages:
       - net9.0
 
 # ============================================================================
-# INTEGRATION PACKAGES (v1.5.0 - In Development)
+# INTEGRATION PACKAGES (v1.4.0 - In Development)
 # ============================================================================
 
 # ============================================================================
@@ -376,10 +376,6 @@ generation:
     - type: mkdocs_nav
       template: templates/mkdocs-nav.yml.mustache
       output: mkdocs.yml
-
-    - type: start_session_ai
-      template: templates/START_SESSION_AI.md.mustache
-      output: .invisible/START_SESSION_AI.md
 
   # Validation rules
   validation:
@@ -439,8 +435,8 @@ versions:
       - testing
 
   - version: "1.3.0"
-    release_date: "2026-03-15"
-    status: in_development
+    release_date: "2025-12-08"
+    status: released
     packages:
       - http
       - io

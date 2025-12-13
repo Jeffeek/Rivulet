@@ -1,0 +1,91 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# SAMPLES DIRECTORY - RELAXED CODE ANALYSIS
+# ═══════════════════════════════════════════════════════════════════════════
+# This file relaxes code analysis rules for sample projects.
+# Samples prioritize readability and demonstration over strict adherence.
+root = false
+
+[*.cs]
+
+# ═══════════════════════════════════════════════════════════════════════════
+# RELAXED RULES FOR SAMPLE CODE
+# ═══════════════════════════════════════════════════════════════════════════
+
+# ───────────────────────────────────────────────────────────────────────────
+# ASYNC/AWAIT - ConfigureAwait(false) not required in samples
+# ───────────────────────────────────────────────────────────────────────────
+# CA2007: Consider calling ConfigureAwait on awaited task
+# Samples are console/web apps where SynchronizationContext is not an issue
+dotnet_diagnostic.CA2007.severity = silent
+
+# ───────────────────────────────────────────────────────────────────────────
+# DISPOSE PATTERN - Relaxed for sample code
+# ───────────────────────────────────────────────────────────────────────────
+# CA1063: Implement IDisposable correctly
+dotnet_diagnostic.CA1063.severity = suggestion
+
+# CA2000: Dispose objects before losing scope
+dotnet_diagnostic.CA2000.severity = suggestion
+
+# CA1816: Call GC.SuppressFinalize correctly
+dotnet_diagnostic.CA1816.severity = suggestion
+
+# CA1001: Types that own disposable fields should be disposable
+dotnet_diagnostic.CA1001.severity = suggestion
+
+# ───────────────────────────────────────────────────────────────────────────
+# DOCUMENTATION - Not required for sample code
+# ───────────────────────────────────────────────────────────────────────────
+# CS1591: Missing XML comment for publicly visible type or member
+dotnet_diagnostic.CS1591.severity = silent
+
+# ───────────────────────────────────────────────────────────────────────────
+# DESIGN - Relaxed for demonstration code
+# ───────────────────────────────────────────────────────────────────────────
+# CA1822: Mark members as static
+dotnet_diagnostic.CA1822.severity = silent
+
+# CA1062: Validate arguments of public methods
+dotnet_diagnostic.CA1062.severity = silent
+
+# CA1031: Do not catch general exception types
+dotnet_diagnostic.CA1031.severity = silent
+
+# CA1303: Do not pass literals as localized parameters
+dotnet_diagnostic.CA1303.severity = silent
+
+# CA1305: Specify IFormatProvider
+dotnet_diagnostic.CA1305.severity = silent
+
+# CA1054: URI parameters should not be strings
+dotnet_diagnostic.CA1054.severity = silent
+
+# CA1055: URI return values should not be strings
+dotnet_diagnostic.CA1055.severity = silent
+
+# CA1056: URI properties should not be strings
+dotnet_diagnostic.CA1056.severity = silent
+
+# CA1848: Use LoggerMessage delegates
+dotnet_diagnostic.CA1848.severity = silent
+
+# ───────────────────────────────────────────────────────────────────────────
+# PERFORMANCE - Suggestions only in samples
+# ───────────────────────────────────────────────────────────────────────────
+# CA1825: Avoid zero-length array allocations
+dotnet_diagnostic.CA1825.severity = suggestion
+
+# CA1827: Do not use Count()/LongCount() when Any() can be used
+dotnet_diagnostic.CA1827.severity = suggestion
+
+# CA1829: Use Length/Count property instead of Enumerable.Count method
+dotnet_diagnostic.CA1829.severity = suggestion
+
+# ───────────────────────────────────────────────────────────────────────────
+# NAMING - File-scoped namespace still required
+# ───────────────────────────────────────────────────────────────────────────
+# Keep file-scoped namespace requirement
+csharp_style_namespace_declarations = file_scoped:warning
+
+# Keep using directive placement requirement
+csharp_using_directive_placement = outside_namespace:warning

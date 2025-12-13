@@ -12,7 +12,6 @@ When adding a new package to Rivulet, you previously had to update information i
 - ✏️ `docs/ROADMAP.md` - Version timeline
 - ✏️ `.github/workflows/ci.yml` - Build matrices
 - ✏️ `mkdocs.yml` - Documentation navigation
-- ✏️ `.invisible/START_SESSION_AI.md` - AI context
 - ✏️ And potentially more...
 
 This was error-prone, tedious, and easy to forget.
@@ -82,7 +81,7 @@ git diff
 4. **Commit the changes:**
 
 ```bash
-git add packages.yml README.md samples/README.md docs/ROADMAP.md .invisible/START_SESSION_AI.md
+git add packages.yml README.md samples/README.md docs/ROADMAP.md
 git commit -m "Add Rivulet.Example package"
 ```
 
@@ -105,8 +104,7 @@ Rivulet/
 │
 ├── README.md                       # ✅ GENERATED (package list)
 ├── samples/README.md               # ✅ GENERATED (sample listings)
-├── docs/ROADMAP.md                 # ✅ GENERATED (version sections)
-└── .invisible/START_SESSION_AI.md  # ✅ GENERATED (AI context)
+└── docs/ROADMAP.md                 # ✅ GENERATED (version sections)
 ```
 
 ---
@@ -201,24 +199,6 @@ Every package **must** have these fields:
 - Version sections with packages
 - Status indicators
 - Package descriptions
-
----
-
-### .invisible/START_SESSION_AI.md
-
-**Generated Section:** Package list for AI context
-
-**Markers:**
-```markdown
-<!-- PACKAGES_START -->
-...generated content...
-<!-- PACKAGES_END -->
-```
-
-**What's Generated:**
-- Numbered package list
-- Organized by category
-- Short descriptions
 
 ---
 
@@ -348,7 +328,7 @@ Edit `packages.yml` and add your package entry (see schema above).
 **Step 4:** Review and commit
 ```bash
 git diff
-git add packages.yml README.md samples/README.md docs/ROADMAP.md .invisible/START_SESSION_AI.md
+git add packages.yml README.md samples/README.md docs/ROADMAP.md
 git commit -m "Add Rivulet.Example package"
 ```
 
@@ -368,7 +348,7 @@ Update the package entry (e.g., add features, change description).
 **Step 3:** Review and commit
 ```bash
 git diff
-git add packages.yml README.md samples/README.md docs/ROADMAP.md .invisible/START_SESSION_AI.md
+git add packages.yml README.md samples/README.md docs/ROADMAP.md
 git commit -m "Update Rivulet.Example package info"
 ```
 
@@ -458,7 +438,7 @@ git diff
 ### 2. Commit packages.yml and Generated Files Together
 
 ```bash
-git add packages.yml README.md samples/README.md docs/ROADMAP.md .invisible/START_SESSION_AI.md
+git add packages.yml README.md samples/README.md docs/ROADMAP.md
 git commit -m "Update package information"
 ```
 
@@ -535,7 +515,7 @@ python: command not found
 **Solution:**
 ```bash
 ./scripts/UpdateAll/update-all.sh
-git add README.md samples/README.md docs/ROADMAP.md .invisible/START_SESSION_AI.md
+git add README.md samples/README.md docs/ROADMAP.md
 git commit -m "Update generated files"
 git push
 ```
