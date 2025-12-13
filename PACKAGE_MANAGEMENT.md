@@ -328,7 +328,7 @@ Edit `packages.yml` and add your package entry (see schema above).
 **Step 4:** Review and commit
 ```bash
 git diff
-git add packages.yml README.md samples/README.md docs/ROADMAP.md .invisible/START_SESSION_AI.md
+git add packages.yml README.md samples/README.md docs/ROADMAP.md
 git commit -m "Add Rivulet.Example package"
 ```
 

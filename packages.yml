@@ -377,10 +377,6 @@ generation:
       template: templates/mkdocs-nav.yml.mustache
       output: mkdocs.yml
 
-    - type: start_session_ai
-      template: templates/START_SESSION_AI.md.mustache
-      output: .invisible/START_SESSION_AI.md
-
   # Validation rules
   validation:
     # Ensure all paths exist
