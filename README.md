@@ -27,6 +27,8 @@
 
 </div>
 
+---
+
 ## 📦 Packages
 
 <!-- PACKAGES_START -->
@@ -187,7 +189,10 @@ Polly v8 integration with hedging, result-based retry, and resilience pipeline c
 - Flexible error modes: FailFast, CollectAndContinue, BestEffort
 - Ordered output mode for sequence-sensitive operations
 
-## Quick Start
+---
+
+## 🚦 Quick Start
+
 ```csharp
 var results = await urls.SelectParallelAsync(
     async (url, ct) =>
@@ -204,7 +209,11 @@ var results = await urls.SelectParallelAsync(
     });
 ```
 
-### Streaming
+---
+
+## 📖 Core Features
+
+### Streaming Results
 
 ```csharp
 await foreach (var r in source.SelectParallelStreamAsync(
@@ -277,7 +286,7 @@ var results = await items.SelectParallelAsync(
     });
 ```
 
-Available strategies:
+**Available strategies:**
 - **Exponential** *(default)*: `BaseDelay * 2^(attempt-1)` - Predictable exponential growth
 - **ExponentialJitter**: `Random(0, BaseDelay * 2^(attempt-1))` - Reduces thundering herd
 - **DecorrelatedJitter**: `Random(BaseDelay, PreviousDelay * 3)` - Prevents client synchronization
@@ -331,7 +340,7 @@ await foreach (var result in stream.SelectParallelStreamAsync(
 }
 ```
 
-Progress metrics:
+**Progress metrics:**
 - **ItemsStarted**: Total items that began processing
 - **ItemsCompleted**: Successfully completed items
 - **TotalItems**: Total count (known for arrays/lists, null for streams)
@@ -490,292 +499,9 @@ dotnet-counters monitor --process-id <PID> --counters Rivulet.Core
 - SLA compliance verification
 - Auto-scaling triggers
 
-## Rivulet.Diagnostics - Enterprise Observability
+---
 
-`Rivulet.Diagnostics` extends the core library with production-ready observability features for comprehensive monitoring and health checks.
-
-### Features
-- **EventListener Wrappers**: Console, File, and Structured JSON logging
-- **Metrics Aggregation**: Time-window statistics with min/max/avg/current values
-- **Prometheus Export**: Export metrics in Prometheus text format
-- **Health Check Integration**: Microsoft.Extensions.Diagnostics.HealthChecks support
-- **Fluent Builder API**: Easy configuration with DiagnosticsBuilder
-
-### Quick Examples
-
-**Console Listener** - Development and debugging
-```csharp
-using var listener = new RivuletConsoleListener();
-
-await urls.SelectParallelAsync(ProcessAsync, options);
-// Console output:
-// [2025-01-15 10:30:45] Items Started: 100.00
-// [2025-01-15 10:30:46] Items Completed: 100.00
-```
-
-**File Listener with Rotation** - Production logging
-```csharp
-using var listener = new RivuletFileListener(
-    "metrics.log",
-    maxFileSizeBytes: 10 * 1024 * 1024 // 10MB
-);
-```
-
-**Structured JSON Logging** - Log aggregation (ELK, Splunk, Azure Monitor)
-```csharp
-using var listener = new RivuletStructuredLogListener("metrics.json");
-// Or custom action for your logging system
-using var listener = new RivuletStructuredLogListener(json =>
-{
-    logger.LogInformation(json);
-});
-```
-
-**Metrics Aggregation** - Time-window statistics
-```csharp
-using var aggregator = new MetricsAggregator(TimeSpan.FromSeconds(10));
-aggregator.OnAggregation += metrics =>
-{
-    foreach (var metric in metrics)
-    {
-        Console.WriteLine($"{metric.DisplayName}:");
-        Console.WriteLine($"  Min: {metric.Min:F2}, Max: {metric.Max:F2}");
-        Console.WriteLine($"  Avg: {metric.Average:F2}, Current: {metric.Current:F2}");
-    }
-};
-```
-
-**Prometheus Export** - Scraping endpoint
-```csharp
-using var exporter = new PrometheusExporter();
-
-// In your ASP.NET Core app
-app.MapGet("/metrics", () => exporter.Export());
-
-// Output:
-// # HELP rivulet_items_started Total number of items started
-// # TYPE rivulet_items_started gauge
-// rivulet_items_started 1000.00
-```
-
-**Health Check Integration** - ASP.NET Core health checks
-```csharp
-// Startup/Program.cs
-builder.Services.AddHealthChecks()
-    .AddCheck<RivuletHealthCheck>("rivulet", tags: new[] { "ready" });
-
-builder.Services.Configure<RivuletHealthCheckOptions>(options =>
-{
-    options.ErrorRateThreshold = 0.1;  // 10% error rate
-    options.FailureCountThreshold = 100;
-});
-
-app.MapHealthChecks("/health");
-```
-
-**Fluent Builder** - Configure multiple listeners
-```csharp
-using var diagnostics = new DiagnosticsBuilder()
-    .AddConsoleListener()
-    .AddFileListener("metrics.log")
-    .AddStructuredLogListener("metrics.json")
-    .AddMetricsAggregator(TimeSpan.FromSeconds(10), metrics =>
-    {
-        // Handle aggregated metrics
-    })
-    .AddPrometheusExporter(out var exporter)
-    .Build();
-
-// All listeners capture metrics simultaneously
-await urls.SelectParallelAsync(ProcessAsync, options);
-
-// Export Prometheus metrics
-var prometheusText = exporter.Export();
-```
-
-See the [Rivulet.Diagnostics README](src/Rivulet.Diagnostics/README.md) for complete documentation.
-
-## Rivulet.Diagnostics.OpenTelemetry - Distributed Tracing & Metrics
-
-`Rivulet.Diagnostics.OpenTelemetry` provides industry-standard observability through OpenTelemetry integration with distributed tracing, metrics export, and comprehensive telemetry.
-
-### Features
-- **Distributed Tracing**: Automatic activity creation with parent-child relationships
-- **Metrics Export**: Bridge EventCounters to OpenTelemetry Meters
-- **Retry Tracking**: Record retry attempts as activity events
-- **Circuit Breaker Events**: Track circuit state changes in traces
-- **Adaptive Concurrency**: Monitor concurrency adjustments
-- **Multi-Platform Support**: Export to Jaeger, Zipkin, Azure Monitor, DataDog, and more
-
-### Quick Start
-
-**1. Configure OpenTelemetry**
-```csharp
-using OpenTelemetry;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
-using OpenTelemetry.Metrics;
-using Rivulet.Diagnostics.OpenTelemetry;
-
-// At application startup
-using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("MyService"))
-    .AddSource(RivuletActivitySource.SourceName)
-    .AddJaegerExporter()
-    .Build();
-
-using var meterProvider = Sdk.CreateMeterProviderBuilder()
-    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("MyService"))
-    .AddMeter(RivuletMetricsExporter.MeterName)
-    .AddPrometheusExporter()
-    .Build();
-
-// Create metrics exporter
-using var metricsExporter = new RivuletMetricsExporter();
-```
-
-**2. Use with Rivulet Operations**
-```csharp
-var options = new ParallelOptionsRivulet
-{
-    MaxDegreeOfParallelism = 32,
-    MaxRetries = 3,
-    IsTransient = ex => ex is HttpRequestException
-}.WithOpenTelemetryTracing("FetchUrls");
-
-var results = await urls.SelectParallelAsync(
-    async (url, ct) => await httpClient.GetAsync(url, ct),
-    options);
-```
-
-**Activity Hierarchy**
-```
-Rivulet.FetchUrls                    [Root Activity]
-├── Rivulet.FetchUrls.Item          [Item 0] - Status: Ok
-├── Rivulet.FetchUrls.Item          [Item 1] - Retry attempt 1 - Status: Ok
-└── Rivulet.FetchUrls.Item          [Item 2] - Error - Status: Error
-```
-
-**Export to Azure Monitor**
-```csharp
-using Azure.Monitor.OpenTelemetry.Exporter;
-
-var tracerProvider = Sdk.CreateTracerProviderBuilder()
-    .AddSource(RivuletActivitySource.SourceName)
-    .AddAzureMonitorTraceExporter(options =>
-    {
-        options.ConnectionString = "InstrumentationKey=...";
-    })
-    .Build();
-```
-
-See the [Rivulet.Diagnostics.OpenTelemetry README](src/Rivulet.Diagnostics.OpenTelemetry/README.md) for complete documentation.
-
-## Development Scripts
-
-The repository includes PowerShell scripts to streamline development and release workflows:
-
-### Build.ps1
-Build, restore, and test the solution locally.
-
-```powershell
-# Debug build with tests (default)
-.\Build.ps1
-
-# Release build with tests
-.\Build.ps1 -Configuration Release
-
-# Skip tests
-.\Build.ps1 -SkipTests
-```
-
-### NugetPackage.ps1
-Build and inspect NuGet packages locally before releasing.
-
-```powershell
-# Build all packages with test version
-.\NugetPackage.ps1
-
-# Build specific package
-.\NugetPackage.ps1 -Project Core
-.\NugetPackage.ps1 -Project Diagnostics
-
-# Build with specific version
-.\NugetPackage.ps1 -Version "1.2.3" -Project All
-```
-
-Creates packages in `./test-packages` and extracts contents to `./test-extract` for verification.
-
-### SmartCommit.ps1
-Generate high-quality commit messages using AI (Claude, Gemini, or OpenAI).
-
-```powershell
-# Quick setup - set API key for your preferred provider
-$env:ANTHROPIC_API_KEY = "your-key"  # For Claude
-$env:GOOGLE_API_KEY = "your-key"      # For Gemini
-$env:OPENAI_API_KEY = "your-key"      # For OpenAI
-
-# Auto-detect provider from environment
-.\SmartCommit.ps1
-
-# Or specify provider explicitly
-.\SmartCommit.ps1 -Provider Claude
-.\SmartCommit.ps1 -Provider Gemini
-.\SmartCommit.ps1 -Provider OpenAI
-```
-
-**Advanced**: Create `.smartcommit.config.json` (see `.smartcommit.config.example.json`) to configure:
-- Default provider
-- API keys (alternative to environment variables)
-- Model versions (claude-3-5-sonnet, gemini-2.0-flash, gpt-4o, etc.)
-
-This script:
-- Analyzes your staged changes using git diff
-- Calls your chosen AI provider to generate a meaningful commit message
-- Shows the suggested message and allows you to:
-  - **[y]** Accept and commit
-  - **[r]** Request revision with feedback (e.g., "make it shorter", "add more detail")
-  - **[n]** Cancel
-- Iteratively refines the message based on your feedback
-- Commits changes when you accept
-
-**Get API keys**:
-- Claude: [console.anthropic.com](https://console.anthropic.com/)
-- Gemini: [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
-- OpenAI: [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
-
-### Release.ps1
-Create release branch, tag, and trigger automated publishing.
-
-```powershell
-# Create release for version 1.0.0 (creates branch release/1.0.x, tag v1.0.0)
-.\Release.ps1 -Version "1.0.0"
-
-# Create patch release 1.0.1 (uses existing branch release/1.0.x, tag v1.0.1)
-.\Release.ps1 -Version "1.0.1"
-
-# Create pre-release (creates branch release/2.0.x, tag v2.0.0-beta)
-.\Release.ps1 -Version "2.0.0-beta"
-```
-
-**Branching Strategy**:
-- Branches: `release/{major}.{minor}.x` (e.g., `release/1.0.x` for all 1.0.* versions)
-- Tags: `v{full.version}` (e.g., `v1.0.0`, `v1.0.1`, `v1.0.2`)
-- Master branch for active development
-- Patch releases reuse the same release branch
-
-This script:
-- Creates/switches to `release/{major}.{minor}.x` branch
-- Displays release information (commit details, author, version, repository)
-- **Asks for confirmation (y/Y) before proceeding**
-- Creates git tag `v{version}` and pushes to GitHub
-- Triggers the release workflow that builds, tests, and publishes to NuGet.org
-
-The confirmation step shows:
-- Version and tag information
-- Current commit hash, author, date, and message
-- List of actions that will be performed
-- Allows you to cancel before any changes are pushed
+## 🔧 Advanced Features
 
 ### Rate Limiting with Token Bucket
 
@@ -947,7 +673,194 @@ Uses AIMD (Additive Increase Multiplicative Decrease) algorithm similar to TCP c
 - Maximizing throughput without manual tuning
 - Handling unpredictable workload patterns
 
-## Performance Benchmarks
+---
+
+## 📦 Package Guides
+
+### Rivulet.Diagnostics - Enterprise Observability
+
+`Rivulet.Diagnostics` extends the core library with production-ready observability features for comprehensive monitoring and health checks.
+
+#### Features
+- **EventListener Wrappers**: Console, File, and Structured JSON logging
+- **Metrics Aggregation**: Time-window statistics with min/max/avg/current values
+- **Prometheus Export**: Export metrics in Prometheus text format
+- **Health Check Integration**: Microsoft.Extensions.Diagnostics.HealthChecks support
+- **Fluent Builder API**: Easy configuration with DiagnosticsBuilder
+
+#### Quick Examples
+
+**Console Listener** - Development and debugging
+```csharp
+using var listener = new RivuletConsoleListener();
+
+await urls.SelectParallelAsync(ProcessAsync, options);
+// Console output:
+// [2025-01-15 10:30:45] Items Started: 100.00
+// [2025-01-15 10:30:46] Items Completed: 100.00
+```
+
+**File Listener with Rotation** - Production logging
+```csharp
+using var listener = new RivuletFileListener(
+    "metrics.log",
+    maxFileSizeBytes: 10 * 1024 * 1024 // 10MB
+);
+```
+
+**Structured JSON Logging** - Log aggregation (ELK, Splunk, Azure Monitor)
+```csharp
+using var listener = new RivuletStructuredLogListener("metrics.json");
+// Or custom action for your logging system
+using var listener = new RivuletStructuredLogListener(json =>
+{
+    logger.LogInformation(json);
+});
+```
+
+**Metrics Aggregation** - Time-window statistics
+```csharp
+using var aggregator = new MetricsAggregator(TimeSpan.FromSeconds(10));
+aggregator.OnAggregation += metrics =>
+{
+    foreach (var metric in metrics)
+    {
+        Console.WriteLine($"{metric.DisplayName}:");
+        Console.WriteLine($"  Min: {metric.Min:F2}, Max: {metric.Max:F2}");
+        Console.WriteLine($"  Avg: {metric.Average:F2}, Current: {metric.Current:F2}");
+    }
+};
+```
+
+**Prometheus Export** - Scraping endpoint
+```csharp
+using var exporter = new PrometheusExporter();
+
+// In your ASP.NET Core app
+app.MapGet("/metrics", () => exporter.Export());
+
+// Output:
+// # HELP rivulet_items_started Total number of items started
+// # TYPE rivulet_items_started gauge
+// rivulet_items_started 1000.00
+```
+
+**Health Check Integration** - ASP.NET Core health checks
+```csharp
+// Startup/Program.cs
+builder.Services.AddHealthChecks()
+    .AddCheck<RivuletHealthCheck>("rivulet", tags: new[] { "ready" });
+
+builder.Services.Configure<RivuletHealthCheckOptions>(options =>
+{
+    options.ErrorRateThreshold = 0.1;  // 10% error rate
+    options.FailureCountThreshold = 100;
+});
+
+app.MapHealthChecks("/health");
+```
+
+**Fluent Builder** - Configure multiple listeners
+```csharp
+using var diagnostics = new DiagnosticsBuilder()
+    .AddConsoleListener()
+    .AddFileListener("metrics.log")
+    .AddStructuredLogListener("metrics.json")
+    .AddMetricsAggregator(TimeSpan.FromSeconds(10), metrics =>
+    {
+        // Handle aggregated metrics
+    })
+    .AddPrometheusExporter(out var exporter)
+    .Build();
+
+// All listeners capture metrics simultaneously
+await urls.SelectParallelAsync(ProcessAsync, options);
+
+// Export Prometheus metrics
+var prometheusText = exporter.Export();
+```
+
+See the [Rivulet.Diagnostics README](src/Rivulet.Diagnostics/README.md) for complete documentation.
+
+### Rivulet.Diagnostics.OpenTelemetry - Distributed Tracing & Metrics
+
+`Rivulet.Diagnostics.OpenTelemetry` provides industry-standard observability through OpenTelemetry integration with distributed tracing, metrics export, and comprehensive telemetry.
+
+#### Features
+- **Distributed Tracing**: Automatic activity creation with parent-child relationships
+- **Metrics Export**: Bridge EventCounters to OpenTelemetry Meters
+- **Retry Tracking**: Record retry attempts as activity events
+- **Circuit Breaker Events**: Track circuit state changes in traces
+- **Adaptive Concurrency**: Monitor concurrency adjustments
+- **Multi-Platform Support**: Export to Jaeger, Zipkin, Azure Monitor, DataDog, and more
+
+#### Quick Start
+
+**1. Configure OpenTelemetry**
+```csharp
+using OpenTelemetry;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Metrics;
+using Rivulet.Diagnostics.OpenTelemetry;
+
+// At application startup
+using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("MyService"))
+    .AddSource(RivuletActivitySource.SourceName)
+    .AddJaegerExporter()
+    .Build();
+
+using var meterProvider = Sdk.CreateMeterProviderBuilder()
+    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("MyService"))
+    .AddMeter(RivuletMetricsExporter.MeterName)
+    .AddPrometheusExporter()
+    .Build();
+
+// Create metrics exporter
+using var metricsExporter = new RivuletMetricsExporter();
+```
+
+**2. Use with Rivulet Operations**
+```csharp
+var options = new ParallelOptionsRivulet
+{
+    MaxDegreeOfParallelism = 32,
+    MaxRetries = 3,
+    IsTransient = ex => ex is HttpRequestException
+}.WithOpenTelemetryTracing("FetchUrls");
+
+var results = await urls.SelectParallelAsync(
+    async (url, ct) => await httpClient.GetAsync(url, ct),
+    options);
+```
+
+**Activity Hierarchy**
+```
+Rivulet.FetchUrls                    [Root Activity]
+├── Rivulet.FetchUrls.Item          [Item 0] - Status: Ok
+├── Rivulet.FetchUrls.Item          [Item 1] - Retry attempt 1 - Status: Ok
+└── Rivulet.FetchUrls.Item          [Item 2] - Error - Status: Error
+```
+
+**Export to Azure Monitor**
+```csharp
+using Azure.Monitor.OpenTelemetry.Exporter;
+
+var tracerProvider = Sdk.CreateTracerProviderBuilder()
+    .AddSource(RivuletActivitySource.SourceName)
+    .AddAzureMonitorTraceExporter(options =>
+    {
+        options.ConnectionString = "InstrumentationKey=...";
+    })
+    .Build();
+```
+
+See the [Rivulet.Diagnostics.OpenTelemetry README](src/Rivulet.Diagnostics.OpenTelemetry/README.md) for complete documentation.
+
+---
+
+## ⚡ Performance Benchmarks
 
 Rivulet.Core includes comprehensive benchmarks using BenchmarkDotNet to measure performance across .NET 8.0 and .NET 9.0. The benchmarks help validate performance characteristics, identify regressions, and guide optimization efforts.
 
@@ -1091,10 +1004,121 @@ See the full [Roadmap](ROADMAP.md) for detailed plans.
 
 ---
 
+## 🛠️ Development
+
+The repository includes PowerShell scripts to streamline development and release workflows.
+
+### Build Script
+
+Build, restore, and test the solution locally.
+
+```powershell
+# Debug build with tests (default)
+.\Build.ps1
+
+# Release build with tests
+.\Build.ps1 -Configuration Release
+
+# Skip tests
+.\Build.ps1 -SkipTests
+```
+
+### Package Script
+
+Build and inspect NuGet packages locally before releasing.
+
+```powershell
+# Build all packages with test version
+.\NugetPackage.ps1
+
+# Build specific package
+.\NugetPackage.ps1 -Project Core
+.\NugetPackage.ps1 -Project Diagnostics
+
+# Build with specific version
+.\NugetPackage.ps1 -Version "1.2.3" -Project All
+```
+
+Creates packages in `./test-packages` and extracts contents to `./test-extract` for verification.
+
+### Commit Script
+
+Generate high-quality commit messages using AI (Claude, Gemini, or OpenAI).
+
+```powershell
+# Quick setup - set API key for your preferred provider
+$env:ANTHROPIC_API_KEY = "your-key"  # For Claude
+$env:GOOGLE_API_KEY = "your-key"      # For Gemini
+$env:OPENAI_API_KEY = "your-key"      # For OpenAI
+
+# Auto-detect provider from environment
+.\SmartCommit.ps1
+
+# Or specify provider explicitly
+.\SmartCommit.ps1 -Provider Claude
+.\SmartCommit.ps1 -Provider Gemini
+.\SmartCommit.ps1 -Provider OpenAI
+```
+
+**Advanced**: Create `.smartcommit.config.json` (see `.smartcommit.config.example.json`) to configure:
+- Default provider
+- API keys (alternative to environment variables)
+- Model versions (claude-3-5-sonnet, gemini-2.0-flash, gpt-4o, etc.)
+
+This script:
+- Analyzes your staged changes using git diff
+- Calls your chosen AI provider to generate a meaningful commit message
+- Shows the suggested message and allows you to:
+  - **[y]** Accept and commit
+  - **[r]** Request revision with feedback (e.g., "make it shorter", "add more detail")
+  - **[n]** Cancel
+- Iteratively refines the message based on your feedback
+- Commits changes when you accept
+
+**Get API keys**:
+- Claude: [console.anthropic.com](https://console.anthropic.com/)
+- Gemini: [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
+- OpenAI: [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+
+### Release Script
+
+Create release branch, tag, and trigger automated publishing.
+
+```powershell
+# Create release for version 1.0.0 (creates branch release/1.0.x, tag v1.0.0)
+.\Release.ps1 -Version "1.0.0"
+
+# Create patch release 1.0.1 (uses existing branch release/1.0.x, tag v1.0.1)
+.\Release.ps1 -Version "1.0.1"
+
+# Create pre-release (creates branch release/2.0.x, tag v2.0.0-beta)
+.\Release.ps1 -Version "2.0.0-beta"
+```
+
+**Branching Strategy**:
+- Branches: `release/{major}.{minor}.x` (e.g., `release/1.0.x` for all 1.0.* versions)
+- Tags: `v{full.version}` (e.g., `v1.0.0`, `v1.0.1`, `v1.0.2`)
+- Master branch for active development
+- Patch releases reuse the same release branch
+
+This script:
+- Creates/switches to `release/{major}.{minor}.x` branch
+- Displays release information (commit details, author, version, repository)
+- **Asks for confirmation (y/Y) before proceeding**
+- Creates git tag `v{version}` and pushes to GitHub
+- Triggers the release workflow that builds, tests, and publishes to NuGet.org
+
+The confirmation step shows:
+- Version and tag information
+- Current commit hash, author, date, and message
+- List of actions that will be performed
+- Allows you to cancel before any changes are pushed
+
+---
+
 ## 📚 Documentation
 
 - [Contributing Guide](CONTRIBUTING.md)
-- [Release Guide](docs/RELEASE_GUIDE.md) - For maintainers
 - [Roadmap](ROADMAP.md) - Future plans
 - [Security Policy](SECURITY.md) - Vulnerability reporting
 - [Code of Conduct](CODE_OF_CONDUCT.md)
@@ -1103,7 +1127,7 @@ See the full [Roadmap](ROADMAP.md) for detailed plans.
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE.txt) file for details.
 
 ---
 
