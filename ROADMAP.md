@@ -1,6 +1,6 @@
 # Rivulet Roadmap & Packages
 
-## Current Status (v1.3.0 - In Development)
+## Current Status (v1.3.0 - Released)
 
 ### ✅ Implemented in Rivulet.Core v1.1.x
 - EventCounters + Metrics
@@ -256,7 +256,7 @@ Rivulet.Core + Rivulet.Sql (provider-agnostic)
 
 ## Success Metrics
 
-### v1.3.0 (In Development)
+### v1.3.0 (Released)
 - 🚧 95%+ test coverage target across all packages
 - 🚧 Comprehensive integration with HTTP, SQL, and Polly
 

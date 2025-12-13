@@ -39,6 +39,7 @@ def build_sync_files():
     sync_files[REPO_ROOT / "SECURITY.md"] = (DOCS_DIR / "SECURITY.md", False)
     sync_files[REPO_ROOT / "CODE_OF_CONDUCT.md"] = (DOCS_DIR / "CODE_OF_CONDUCT.md", False)
     sync_files[REPO_ROOT / "ROADMAP.md"] = (DOCS_DIR / "ROADMAP.md", False)
+    sync_files[REPO_ROOT / "README-RESHARPER.md"] = (DOCS_DIR / "README-RESHARPER.md", False)
 
     # Additional documentation
     sync_files[REPO_ROOT / "tests/Rivulet.Benchmarks/README.md"] = (DOCS_DIR / "benchmarks.md", False)

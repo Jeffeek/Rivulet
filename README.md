@@ -981,14 +981,14 @@ See [tests/Rivulet.Benchmarks/README.md](tests/Rivulet.Benchmarks/README.md) for
 
 See the full [Roadmap](ROADMAP.md) for detailed plans.
 
-### v1.3.0 - 🚧 In Development
-- **Rivulet.Http** 🚧 - Parallel HTTP operations with HttpClientFactory integration
-- **Rivulet.IO** 🚧 - Parallel file operations, directory processing
-- **Rivulet.Sql** 🚧 - Provider-agnostic parallel SQL operations
-- **Rivulet.Sql.SqlServer** 🚧 - SqlBulkCopy integration (10-100x faster bulk inserts)
-- **Rivulet.Sql.PostgreSql** 🚧 - COPY command integration (10-100x faster)
-- **Rivulet.Sql.MySql** 🚧 - LOAD DATA INFILE with MySqlBulkLoader (10-100x faster)
-- **Rivulet.Polly** 🚧 - Polly v8 integration, hedging, result-based retry
+### v1.3.0 - ✅ Released
+- **Rivulet.Http** ✅ - Parallel HTTP operations with HttpClientFactory integration
+- **Rivulet.IO** ✅ - Parallel file operations, directory processing
+- **Rivulet.Sql** ✅ - Provider-agnostic parallel SQL operations
+- **Rivulet.Sql.SqlServer** ✅ - SqlBulkCopy integration (10-100x faster bulk inserts)
+- **Rivulet.Sql.PostgreSql** ✅ - COPY command integration (10-100x faster)
+- **Rivulet.Sql.MySql** ✅ - LOAD DATA INFILE with MySqlBulkLoader (10-100x faster)
+- **Rivulet.Polly** ✅ - Polly v8 integration, hedging, result-based retry
 
 ### v1.4.0 (Q1-Q2 2026) - JSON + Cloud Storage
 - **Rivulet.Json** 🆕 - Parallel JSON processing, deserialization, JsonPath queries
