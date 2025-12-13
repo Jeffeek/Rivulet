@@ -23,7 +23,7 @@
 - **Rivulet.Hosting** - ASP.NET Core integration with background services, dependency injection, and configuration binding
 - **Rivulet.Testing** - Testing utilities for deterministic tests with time control, chaos injection, and concurrency verification
 
-### 🚧 1.3.0 - In Development
+### ✅ 1.3.0 - Released
 
 - **Rivulet.Http** - Parallel HTTP operations with HttpClientFactory integration and connection pooling awareness
 - **Rivulet.IO** - Parallel file operations with safe directory processing and file transformations
@@ -41,14 +41,14 @@
 ```
          Impact
            ^
-   Very    |  [Diagnostics]✅    [Http]🚧     [Sql.SqlServer]🚧
+   Very    |  [Diagnostics]✅    [Http]✅     [Sql.SqlServer]✅
    High  5 |  [Diagnostics.OpenTelemetry]✅           [EntityFramework]
-           |  [Json]🆕  [IO]🚧
+           |  [Json]🆕  [IO]✅
            |
-   High  4 |  [Testing]✅   [Polly]🚧  [Csv]🆕
-           |  [Hosting]✅   [Sql]🚧    [Azure.Storage]
+   High  4 |  [Testing]✅   [Polly]✅  [Csv]🆕
+           |  [Hosting]✅   [Sql]✅    [Azure.Storage]
            |
-  Medium 3 |  [Aws.S3]  [Sql.PostgreSql]🚧  [Sql.MySql]🚧
+  Medium 3 |  [Aws.S3]  [Sql.PostgreSql]✅  [Sql.MySql]✅
            |  [Pipeline v2.0]
            |
    Low   2 |  [Batching?]  [Generators?]
@@ -335,6 +335,6 @@ await users.BulkInsertUsingSqlBulkCopyAsync(
 
 ---
 
-**Last Updated**: 2025-11-24
+**Last Updated**: 2025-12-13
 **Version**: 1.3.0
-**Status**: v1.3.0 In Development (Http, IO, Sql, Polly) - Planning v1.4.0 (Q1-Q2 2026)
+**Status**: v1.3.0 Done (Http, IO, Sql, Polly) - Planning v1.4.0 (Q1-Q2 2026)
