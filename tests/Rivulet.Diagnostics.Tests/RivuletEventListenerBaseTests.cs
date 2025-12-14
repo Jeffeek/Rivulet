@@ -139,13 +139,20 @@ public class RivuletEventListenerBaseTests : IDisposable
     private sealed record CounterData(string DisplayName, string DisplayUnits);
 
     [Fact]
-    public void EventListenerBase_ShouldIgnoreEvents_WhenEventSourceNameIsWrong()
+    public async Task EventListenerBase_ShouldIgnoreEvents_WhenEventSourceNameIsWrong()
     {
         var listener = new TestEventListener();
+
+        // Clear any pre-existing events from the process-wide Rivulet.Core EventSource
+        // that may have been triggered by previous tests
+        listener.ReceivedCounters.Clear();
 
         // Create a custom EventSource with a different name
         using var customSource = new CustomEventSource("NotRivuletCore");
         customSource.WriteEvent(1, "test");
+
+        // Give it a moment for any events to be processed
+        await Task.Delay(100);
 
         // Should not receive any counters because event source name doesn't match
         listener.ReceivedCounters.ShouldBeEmpty();
@@ -190,7 +197,7 @@ public class RivuletEventListenerBaseTests : IDisposable
     [EventSource(Name = "CustomEventSource")]
     private sealed class CustomEventSource(string name) : EventSource(name)
     {
-        [Event(1)]
+        [Event(100)]
         public new void WriteEvent(int id, string message) => base.WriteEvent(id, message);
     }
 
