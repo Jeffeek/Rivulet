@@ -1,3 +1,6 @@
+// HttpClient instances from IHttpClientFactory should NOT be disposed - the factory manages their lifecycle
+#pragma warning disable CA2000 // Do not dispose objects before losing scope
+
 namespace Rivulet.Http;
 
 /// <summary>

@@ -45,13 +45,14 @@ public abstract class ParallelWorkerService<TSource, TResult> : BackgroundServic
             await source.SelectParallelStreamAsync(
                 async (item, ct) =>
                 {
-                    var result = await ProcessAsync(item, ct);
-                    await OnResultAsync(result, ct);
+                    var result = await ProcessAsync(item, ct).ConfigureAwait(false);
+                    await OnResultAsync(result, ct).ConfigureAwait(false);
                     return result;
                 },
                 Options,
                 stoppingToken)
-                .CountAsync(stoppingToken);
+                .CountAsync(stoppingToken)
+                .ConfigureAwait(false);
 
             _logger.LogInformation("Worker service {ServiceName} completed", GetType().Name);
         }

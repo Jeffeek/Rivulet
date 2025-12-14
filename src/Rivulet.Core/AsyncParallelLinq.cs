@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Channels;
 using Rivulet.Core.Observability;
 using Rivulet.Core.Resilience;
@@ -24,6 +25,7 @@ public static class AsyncParallelLinq
     /// <returns>A task representing the asynchronous operation, containing a list of all transformed results.</returns>
     /// <exception cref="AggregateException">Thrown when <see cref="ErrorMode.CollectAndContinue"/> is enabled and one or more errors occurred during processing.</exception>
     /// <exception cref="OperationCanceledException">Thrown when the operation is cancelled via the cancellation token.</exception>
+    [SuppressMessage("ReSharper", "AccessToDisposedClosure")]
     public static async Task<List<TResult>> SelectParallelAsync<TSource, TResult>(
         this IEnumerable<TSource> source,
         Func<TSource, CancellationToken, ValueTask<TResult>> taskSelector,
@@ -45,6 +47,7 @@ public static class AsyncParallelLinq
         var sourceList = source as ICollection<TSource> ?? source.ToList();
         var totalItems = sourceList.Count;
 
+#pragma warning disable CA2007 // ConfigureAwait not applicable to await using declarations
         await using var progressTracker = options.Progress is not null
             ? new ProgressTracker(totalItems, options.Progress, token)
             : null;
@@ -62,6 +65,7 @@ public static class AsyncParallelLinq
         await using var adaptiveController = options.AdaptiveConcurrency is not null
             ? new AdaptiveConcurrencyController(options.AdaptiveConcurrency)
             : null;
+#pragma warning restore CA2007
 
         var effectiveMaxWorkers = options.AdaptiveConcurrency?.MaxConcurrency ?? options.MaxDegreeOfParallelism;
         metricsTracker.SetActiveWorkers(effectiveMaxWorkers);
@@ -211,6 +215,7 @@ public static class AsyncParallelLinq
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>An async enumerable that yields transformed results as they complete.</returns>
     /// <exception cref="OperationCanceledException">Thrown when the operation is cancelled via the cancellation token.</exception>
+    [SuppressMessage("ReSharper", "AccessToDisposedClosure")]
     public static async IAsyncEnumerable<TResult> SelectParallelStreamAsync<TSource, TResult>(
         this IAsyncEnumerable<TSource> source,
         Func<TSource, CancellationToken, ValueTask<TResult>> taskSelector,
@@ -221,6 +226,7 @@ public static class AsyncParallelLinq
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         var token = cts.Token;
 
+#pragma warning disable CA2007 // ConfigureAwait not applicable to await using declarations
         await using var progressTracker = options.Progress is not null
             ? new ProgressTracker(null, options.Progress, token)
             : null;
@@ -238,6 +244,7 @@ public static class AsyncParallelLinq
         await using var adaptiveController = options.AdaptiveConcurrency is not null
             ? new AdaptiveConcurrencyController(options.AdaptiveConcurrency)
             : null;
+#pragma warning restore CA2007
 
         var effectiveMaxWorkers = options.AdaptiveConcurrency?.MaxConcurrency ?? options.MaxDegreeOfParallelism;
         metricsTracker.SetActiveWorkers(effectiveMaxWorkers);
@@ -330,7 +337,7 @@ public static class AsyncParallelLinq
                             await cts.CancelAsync().ConfigureAwait(false);
                             throw;
                         case ErrorMode.CollectAndContinue or ErrorMode.BestEffort:
-                            break;
+                        break;
                     }
                 }
                 finally
@@ -409,10 +416,10 @@ public static class AsyncParallelLinq
         CancellationToken cancellationToken = default) =>
         await SelectParallelStreamAsync(
             source,
-            async (item, ct) => { await action(item, ct); return true; },
+            async (item, ct) => { await action(item, ct).ConfigureAwait(false); return true; },
             options,
             cancellationToken
-        ).CollectAsync(cancellationToken);
+        ).CollectAsync(cancellationToken).ConfigureAwait(false);
 
     /// <summary>
     /// Executes an async action on each element in an enumerable in parallel with bounded concurrency.
@@ -430,7 +437,7 @@ public static class AsyncParallelLinq
         Func<TSource, CancellationToken, ValueTask> action,
         ParallelOptionsRivulet? options = null,
         CancellationToken cancellationToken = default) =>
-        await source.ToAsyncEnumerable().ForEachParallelAsync(action, options, cancellationToken);
+        await source.ToAsyncEnumerable().ForEachParallelAsync(action, options, cancellationToken).ConfigureAwait(false);
 
     private static async Task CollectAsync<T>(this IAsyncEnumerable<T> source, CancellationToken ct)
     {
@@ -494,9 +501,7 @@ public static class AsyncParallelLinq
 
         var batches = CreateBatchesAsync(source, batchSize, batchTimeout, cancellationToken);
         await foreach (var result in batches.SelectParallelStreamAsync(batchSelector, options, cancellationToken).ConfigureAwait(false))
-        {
             yield return result;
-        }
     }
 
     private static IEnumerable<IReadOnlyList<TSource>> CreateBatches<TSource>(IEnumerable<TSource> source, int batchSize)
@@ -512,9 +517,7 @@ public static class AsyncParallelLinq
         }
 
         if (batch.Count > 0)
-        {
             yield return batch;
-        }
     }
 
     private static async IAsyncEnumerable<IReadOnlyList<TSource>> CreateBatchesAsync<TSource>(
@@ -548,18 +551,12 @@ public static class AsyncParallelLinq
                     {
                         batch.Add(item);
 
-                        if (batch.Count >= batchSize)
-                        {
-                            await channel.Writer.WriteAsync(batch, token).ConfigureAwait(false);
-                            batch = new(batchSize);
-                            flushTimer = Task.Delay(timeout, token);
-                        }
-                        else if (flushTimer.IsCompleted && batch.Count > 0)
-                        {
-                            await channel.Writer.WriteAsync(batch, token).ConfigureAwait(false);
-                            batch = new(batchSize);
-                            flushTimer = Task.Delay(timeout, token);
-                        }
+                        if (batch.Count < batchSize && (!flushTimer.IsCompleted || batch.Count <= 0))
+                            continue;
+
+                        await channel.Writer.WriteAsync(batch, token).ConfigureAwait(false);
+                        batch = new(batchSize);
+                        flushTimer = Task.Delay(timeout, token);
                     }
 
                     if (batch.Count > 0)
@@ -574,9 +571,7 @@ public static class AsyncParallelLinq
             }, token);
 
             await foreach (var batchResult in channel.Reader.ReadAllAsync(token).ConfigureAwait(false))
-            {
                 yield return batchResult;
-            }
 
             await producer.ConfigureAwait(false);
         }
@@ -585,16 +580,15 @@ public static class AsyncParallelLinq
             await foreach (var item in source.WithCancellation(cancellationToken).ConfigureAwait(false))
             {
                 batch.Add(item);
-                if (batch.Count < batchSize) continue;
+                if (batch.Count < batchSize)
+                    continue;
 
                 yield return batch;
                 batch = new(batchSize);
             }
 
             if (batch.Count > 0)
-            {
                 yield return batch;
-            }
         }
     }
 }
