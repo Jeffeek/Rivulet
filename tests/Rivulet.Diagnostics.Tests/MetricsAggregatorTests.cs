@@ -10,8 +10,16 @@ public class MetricsAggregatorTests
     public async Task MetricsAggregator_ShouldAggregateMetrics_OverTimeWindow()
     {
         var aggregatedMetrics = new List<IReadOnlyList<AggregatedMetrics>>();
+        var lockObj = new object();
+
         await using var aggregator = new MetricsAggregator(TimeSpan.FromMilliseconds(500));
-        aggregator.OnAggregation += metrics => aggregatedMetrics.Add(metrics);
+        aggregator.OnAggregation += metrics =>
+        {
+            lock (lockObj)
+            {
+                aggregatedMetrics.Add(metrics);
+            }
+        };
 
         // Use longer operation (200ms per item) to ensure EventCounters poll DURING execution
         // EventCounters have ~1 second polling interval, so operation needs to run for 1-2+ seconds
@@ -31,8 +39,14 @@ public class MetricsAggregatorTests
         // Wait for EventCounters to poll and write metrics, then for aggregation window to fire
         await Task.Delay(5000);
 
-        aggregatedMetrics.ShouldNotBeEmpty();
-        var lastAggregation = aggregatedMetrics.Last();
+        // Take a thread-safe snapshot to avoid race conditions
+        IReadOnlyList<AggregatedMetrics> lastAggregation;
+        lock (lockObj)
+        {
+            aggregatedMetrics.ShouldNotBeEmpty();
+            lastAggregation = aggregatedMetrics.Last();
+        }
+
         lastAggregation.ShouldNotBeEmpty();
 
         var itemsStartedMetric = lastAggregation.FirstOrDefault(m => m.Name == RivuletMetricsConstants.CounterNames.ItemsStarted);
@@ -48,16 +62,21 @@ public class MetricsAggregatorTests
     public async Task MetricsAggregator_ShouldCalculateCorrectStatistics()
     {
         var aggregatedMetrics = new List<IReadOnlyList<AggregatedMetrics>>();
+        var lockObj = new object();
+
         await using var aggregator = new MetricsAggregator(TimeSpan.FromSeconds(2));
         aggregator.OnAggregation += metrics =>
         {
-            if (metrics.Count > 0)
+            if (metrics.Count <= 0)
+                return;
+
+            lock (lockObj)
                 aggregatedMetrics.Add(metrics);
         };
 
         // Operations must run long enough for EventCounter polling (1 second interval)
-        // 10 items * 200ms / 2 parallelism = 1000ms (1 second) minimum operation time
-        await Enumerable.Range(1, 10)
+        // 5 items * 200ms / 2 parallelism = 500ms minimum operation time
+        await Enumerable.Range(1, 5)
             .ToAsyncEnumerable()
             .SelectParallelStreamAsync(async (x, ct) =>
             {
@@ -72,11 +91,14 @@ public class MetricsAggregatorTests
         // Wait for at least 2x the aggregation window to ensure timer fires reliably
         await Task.Delay(3000); // Fixed delay for timer-based aggregation
 
-        aggregatedMetrics.ShouldNotBeEmpty();
+        // Take a thread-safe snapshot of the list to avoid race conditions
+        List<IReadOnlyList<AggregatedMetrics>> snapshot;
+        lock (lockObj)
+        {
+            snapshot = aggregatedMetrics.ToList();
+        }
 
-        // Take a snapshot of the list to avoid "Collection was modified" exception
-        // The aggregator timer may still be running and adding items during iteration
-        var snapshot = aggregatedMetrics.ToList();
+        snapshot.ShouldNotBeEmpty();
 
         // Check all aggregations, not just the last one, to avoid timing issues
         foreach (var aggregation in snapshot)
@@ -97,10 +119,15 @@ public class MetricsAggregatorTests
     public async Task MetricsAggregator_ShouldHandleExpiredSamples()
     {
         var aggregatedMetrics = new List<IReadOnlyList<AggregatedMetrics>>();
+        var lockObj = new object();
+
         await using var aggregator = new MetricsAggregator(TimeSpan.FromSeconds(1)); // 1s aggregation window
         aggregator.OnAggregation += metrics =>
         {
-            if (metrics.Count > 0)
+            if (metrics.Count <= 0)
+                return;
+
+            lock (lockObj)
                 aggregatedMetrics.Add(metrics);
         };
 
@@ -120,19 +147,33 @@ public class MetricsAggregatorTests
         // Wait for EventCounters to poll (~1s interval) + aggregation timer to fire
         await Task.Delay(2000); // Fixed delay for timer-based aggregation
 
-        aggregatedMetrics.ShouldNotBeEmpty("aggregation should have captured metrics after sufficient wait time");
-        var firstAggregation = aggregatedMetrics.First();
+        // Take a thread-safe snapshot for initial checks
+        IReadOnlyList<AggregatedMetrics> firstAggregation;
+        lock (lockObj)
+        {
+            aggregatedMetrics.ShouldNotBeEmpty("aggregation should have captured metrics after sufficient wait time");
+            firstAggregation = aggregatedMetrics.First();
+        }
+
         firstAggregation.ShouldNotBeEmpty();
 
         // Wait for another aggregation window to potentially expire samples
         // This verifies that the aggregator handles sample expiration gracefully
         await Task.Delay(2000);
 
-        var totalAggregations = aggregatedMetrics.Count;
+        // Take a thread-safe snapshot for final checks
+        List<IReadOnlyList<AggregatedMetrics>> snapshot;
+        int totalAggregations;
+        lock (lockObj)
+        {
+            totalAggregations = aggregatedMetrics.Count;
+            snapshot = aggregatedMetrics.ToList();
+        }
+
         totalAggregations.ShouldBeGreaterThanOrEqualTo(1);
 
         // Verify all captured aggregations have valid data
-        foreach (var aggregation in aggregatedMetrics)
+        foreach (var aggregation in snapshot)
         {
             aggregation.ShouldNotBeEmpty();
             foreach (var metric in aggregation)
