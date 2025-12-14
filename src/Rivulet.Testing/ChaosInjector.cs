@@ -29,7 +29,7 @@ public sealed class ChaosInjector
     {
         if (_artificialDelay.HasValue)
         {
-            await Task.Delay(_artificialDelay.Value, cancellationToken);
+            await Task.Delay(_artificialDelay.Value, cancellationToken).ConfigureAwait(false);
         }
 
         if (ShouldFail())
@@ -37,7 +37,7 @@ public sealed class ChaosInjector
             throw new ChaosException("Chaos injected failure");
         }
 
-        return await action();
+        return await action().ConfigureAwait(false);
     }
 
     /// <summary>

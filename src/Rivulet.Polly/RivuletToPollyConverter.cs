@@ -25,7 +25,9 @@ public static class RivuletToPollyConverter
         if (options.MaxRetries == 0)
             return ResiliencePipeline.Empty;
 
+#pragma warning disable CA2000 // ThreadLocal is intentionally not disposed - its lifetime is tied to the pipeline
         var previousDelayLocal = new ThreadLocal<TimeSpan>(() => TimeSpan.Zero);
+#pragma warning restore CA2000
 
         return new ResiliencePipelineBuilder()
             .AddRetry(new()
@@ -120,7 +122,9 @@ public static class RivuletToPollyConverter
 
         if (options.MaxRetries > 0)
         {
+#pragma warning disable CA2000 // ThreadLocal is intentionally not disposed - its lifetime is tied to the pipeline
             var previousDelayLocal = new ThreadLocal<TimeSpan>(() => TimeSpan.Zero);
+#pragma warning restore CA2000
 
             builder.AddRetry(new()
             {
@@ -159,18 +163,18 @@ public static class RivuletToPollyConverter
             ShouldHandle = new PredicateBuilder().Handle<Exception>(),
             OnOpened = _ =>
             {
-                options.OnStateChange?.Invoke(CircuitBreakerState.Closed, CircuitBreakerState.Open);
-                return default;
+                var unused = options.OnStateChange?.Invoke(CircuitBreakerState.Closed, CircuitBreakerState.Open);
+                return ValueTask.CompletedTask;
             },
             OnClosed = _ =>
             {
-                options.OnStateChange?.Invoke(CircuitBreakerState.HalfOpen, CircuitBreakerState.Closed);
-                return default;
+                var unused = options.OnStateChange?.Invoke(CircuitBreakerState.HalfOpen, CircuitBreakerState.Closed);
+                return ValueTask.CompletedTask;
             },
             OnHalfOpened = _ =>
             {
-                options.OnStateChange?.Invoke(CircuitBreakerState.Open, CircuitBreakerState.HalfOpen);
-                return default;
+                var unused = options.OnStateChange?.Invoke(CircuitBreakerState.Open, CircuitBreakerState.HalfOpen);
+                return ValueTask.CompletedTask;
             }
         };
 }

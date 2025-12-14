@@ -163,7 +163,11 @@ public sealed class DiagnosticsBuilder : IDisposable, IAsyncDisposable
             {
                 try
                 {
-                    listener.DisposeAsync().GetAwaiter().GetResult();
+                    var valueTask = listener.DisposeAsync();
+                    if (!valueTask.IsCompleted)
+                    {
+                        valueTask.AsTask().GetAwaiter().GetResult();
+                    }
                 }
                 catch
                 {

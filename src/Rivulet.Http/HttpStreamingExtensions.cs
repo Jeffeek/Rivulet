@@ -84,7 +84,9 @@ public static class HttpStreamingExtensions
 
         var totalBytes = response.Content.Headers.ContentLength;
 
+#pragma warning disable CA2007 // ConfigureAwait not applicable to await using declarations
         await using var contentStream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+#pragma warning restore CA2007
 
         var bytesDownloaded = 0L;
         var buffer = new byte[options.BufferSize];
@@ -204,6 +206,7 @@ public static class HttpStreamingExtensions
 
         var totalBytes = existingFileSize + (response.Content.Headers.ContentLength ?? 0);
 
+#pragma warning disable CA2007 // ConfigureAwait not applicable to await using declarations
         await using var fileStream = new FileStream(
             destinationPath,
             fileMode,
@@ -213,6 +216,7 @@ public static class HttpStreamingExtensions
             useAsync: true);
 
         await using var contentStream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+#pragma warning restore CA2007
 
         var bytesDownloaded = existingFileSize;
         var buffer = new byte[options.BufferSize];

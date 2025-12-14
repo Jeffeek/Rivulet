@@ -40,7 +40,7 @@ public static class DirectoryParallelExtensions
 
                 try
                 {
-                    var result = await processFunc(filePath, ct);
+                    var result = await processFunc(filePath, ct).ConfigureAwait(false);
 
                     if (options.OnFileCompleteAsync == null)
                         return result;

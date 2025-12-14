@@ -49,12 +49,12 @@ public sealed class FakeChannel<T> : IDisposable
     {
         ObjectDisposedException.ThrowIf(_disposed, nameof(FakeChannel<T>));
 
-        var result = await Writer.WaitToWriteAsync(cancellationToken);
-        if (result)
-        {
-            await Writer.WriteAsync(item, cancellationToken);
-            Interlocked.Increment(ref _writeCount);
-        }
+        var result = await Writer.WaitToWriteAsync(cancellationToken).ConfigureAwait(false);
+        if (!result)
+            return result;
+
+        await Writer.WriteAsync(item, cancellationToken).ConfigureAwait(false);
+        Interlocked.Increment(ref _writeCount);
         return result;
     }
 
@@ -65,7 +65,7 @@ public sealed class FakeChannel<T> : IDisposable
     {
         ObjectDisposedException.ThrowIf(_disposed, nameof(FakeChannel<T>));
 
-        var item = await Reader.ReadAsync(cancellationToken);
+        var item = await Reader.ReadAsync(cancellationToken).ConfigureAwait(false);
         Interlocked.Increment(ref _readCount);
         return item;
     }

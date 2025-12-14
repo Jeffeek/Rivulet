@@ -691,8 +691,8 @@ resharper_csharp_prefer_explicit_discard_declaration = true
 # Use explicit type when obvious
 resharper_csharp_use_indent_from_vs = false
 
-# Prefer separate deconstructed variables
-resharper_csharp_prefer_separate_deconstructed_variables_declaration = true
+# Prefer unified var for deconstructed variables (var (x, y) instead of (var x, var y))
+resharper_csharp_prefer_separate_deconstructed_variables_declaration = false
 
 # ═══════════════════════════════════════════════════════════════════════════
 # PROJECT FILES - INDENTATION

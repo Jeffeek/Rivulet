@@ -28,10 +28,12 @@ public static class FileParallelExtensions
         options ??= new();
         var parallelOptions = options.GetMergedParallelOptions();
 
+#pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements in ReadFileTextAsync
         return await filePaths.SelectParallelAsync(
             async (filePath, ct) => await ReadFileTextAsync(filePath, options, ct),
             parallelOptions,
             cancellationToken).ConfigureAwait(false);
+#pragma warning restore CA2007
     }
 
     /// <summary>
@@ -52,10 +54,12 @@ public static class FileParallelExtensions
         options ??= new();
         var parallelOptions = options.GetMergedParallelOptions();
 
+#pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements in ReadFileBytesAsync
         return await filePaths.SelectParallelAsync(
             async (filePath, ct) => await ReadFileBytesAsync(filePath, options, ct),
             parallelOptions,
             cancellationToken).ConfigureAwait(false);
+#pragma warning restore CA2007
     }
 
     /// <summary>
@@ -76,10 +80,12 @@ public static class FileParallelExtensions
         options ??= new();
         var parallelOptions = options.GetMergedParallelOptions();
 
+#pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements in ReadFileLinesAsync
         return await filePaths.SelectParallelAsync(
             async (filePath, ct) => await ReadFileLinesAsync(filePath, options, ct),
             parallelOptions,
             cancellationToken).ConfigureAwait(false);
+#pragma warning restore CA2007
     }
 
     /// <summary>
@@ -101,6 +107,7 @@ public static class FileParallelExtensions
         options ??= new();
         var parallelOptions = options.GetMergedParallelOptions();
 
+#pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements in WriteFileTextAsync
         return await fileWrites.SelectParallelAsync(
             async (write, ct) =>
             {
@@ -109,6 +116,7 @@ public static class FileParallelExtensions
             },
             parallelOptions,
             cancellationToken).ConfigureAwait(false);
+#pragma warning restore CA2007
     }
 
     /// <summary>
@@ -129,6 +137,7 @@ public static class FileParallelExtensions
         options ??= new();
         var parallelOptions = options.GetMergedParallelOptions();
 
+#pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements in WriteFileBytesAsync
         return await fileWrites.SelectParallelAsync(
             async (write, ct) =>
             {
@@ -137,6 +146,7 @@ public static class FileParallelExtensions
             },
             parallelOptions,
             cancellationToken).ConfigureAwait(false);
+#pragma warning restore CA2007
     }
 
     /// <summary>
@@ -160,6 +170,7 @@ public static class FileParallelExtensions
         options ??= new();
         var parallelOptions = options.GetMergedParallelOptions();
 
+#pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements in ReadFileTextAsync and WriteFileTextAsync
         return await files.SelectParallelAsync(
             async (file, ct) =>
             {
@@ -170,6 +181,7 @@ public static class FileParallelExtensions
             },
             parallelOptions,
             cancellationToken).ConfigureAwait(false);
+#pragma warning restore CA2007
     }
 
     /// <summary>
@@ -190,6 +202,7 @@ public static class FileParallelExtensions
         options ??= new();
         var parallelOptions = options.GetMergedParallelOptions();
 
+#pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements in CopyFileAsync
         return await files.SelectParallelAsync(
             async (file, ct) =>
             {
@@ -198,6 +211,7 @@ public static class FileParallelExtensions
             },
             parallelOptions,
             cancellationToken).ConfigureAwait(false);
+#pragma warning restore CA2007
     }
 
     /// <summary>
@@ -218,6 +232,7 @@ public static class FileParallelExtensions
         options ??= new();
         var parallelOptions = options.GetMergedParallelOptions();
 
+#pragma warning disable CA2007 // DeleteFileAsync uses Task.Run
         return await filePaths.SelectParallelAsync(
             async (filePath, ct) =>
             {
@@ -226,6 +241,7 @@ public static class FileParallelExtensions
             },
             parallelOptions,
             cancellationToken).ConfigureAwait(false);
+#pragma warning restore CA2007
     }
 
     // Private helper methods
@@ -235,6 +251,7 @@ public static class FileParallelExtensions
         FileOperationOptions options,
         CancellationToken cancellationToken)
     {
+#pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements
         return await FileOperationHelper.ExecuteFileOperationAsync(
             filePath,
             async () =>
@@ -252,6 +269,7 @@ public static class FileParallelExtensions
             },
             options,
             content => content.Length);
+#pragma warning restore CA2007
     }
 
     private static async ValueTask<byte[]> ReadFileBytesAsync(
@@ -259,6 +277,7 @@ public static class FileParallelExtensions
         FileOperationOptions options,
         CancellationToken cancellationToken)
     {
+#pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements
         return await FileOperationHelper.ExecuteFileOperationAsync(
             filePath,
             async () =>
@@ -277,6 +296,7 @@ public static class FileParallelExtensions
             },
             options,
             bytes => bytes.Length);
+#pragma warning restore CA2007
     }
 
     private static async ValueTask<string[]> ReadFileLinesAsync(
@@ -284,6 +304,7 @@ public static class FileParallelExtensions
         FileOperationOptions options,
         CancellationToken cancellationToken)
     {
+#pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements
         return await FileOperationHelper.ExecuteFileOperationAsync(
             filePath,
             async () =>
@@ -312,6 +333,7 @@ public static class FileParallelExtensions
             },
             options,
             lines => lines.Length);
+#pragma warning restore CA2007
     }
 
     private static async ValueTask WriteFileTextAsync(
@@ -320,6 +342,7 @@ public static class FileParallelExtensions
         FileOperationOptions options,
         CancellationToken cancellationToken)
     {
+#pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements
         await FileOperationHelper.ExecuteFileOperationAsync(
             filePath,
             async () =>
@@ -343,6 +366,7 @@ public static class FileParallelExtensions
             },
             options,
             length => length);
+#pragma warning restore CA2007
     }
 
     private static async ValueTask WriteFileBytesAsync(
@@ -351,6 +375,7 @@ public static class FileParallelExtensions
         FileOperationOptions options,
         CancellationToken cancellationToken)
     {
+#pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements
         await FileOperationHelper.ExecuteFileOperationAsync(
             filePath,
             async () =>
@@ -373,6 +398,7 @@ public static class FileParallelExtensions
             },
             options,
             length => length);
+#pragma warning restore CA2007
     }
 
     private static async ValueTask CopyFileAsync(
@@ -381,6 +407,7 @@ public static class FileParallelExtensions
         FileOperationOptions options,
         CancellationToken cancellationToken)
     {
+#pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements
         await FileOperationHelper.ExecuteFileOperationAsync(
             sourcePath,
             async () =>
@@ -411,6 +438,7 @@ public static class FileParallelExtensions
             },
             options,
             length => length);
+#pragma warning restore CA2007
     }
 
     private static async ValueTask DeleteFileAsync(
@@ -425,6 +453,6 @@ public static class FileParallelExtensions
                 await Task.Run(() => File.Delete(filePath), cancellationToken).ConfigureAwait(false);
                 return 0;
             },
-            options);
+            options).ConfigureAwait(false);
     }
 }

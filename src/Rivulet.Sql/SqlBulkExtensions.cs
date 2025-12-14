@@ -119,6 +119,7 @@ public static class SqlBulkExtensions
             .Select(IReadOnlyList<T> (g) => g.Select(x => x.item).ToList())
             .ToList();
 
+#pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements in ExecuteBatchAsync
         var batchResults = await batches
             .Select((batch, index) => (batch, index))
             .SelectParallelAsync(
@@ -131,6 +132,7 @@ public static class SqlBulkExtensions
                     ct),
                 parallelOptions,
                 cancellationToken).ConfigureAwait(false);
+#pragma warning restore CA2007
 
         return batchResults.Sum();
     }

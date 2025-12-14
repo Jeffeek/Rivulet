@@ -34,10 +34,12 @@ public static class SqlParallelExtensions
         options ??= new();
         var parallelOptions = options.GetMergedParallelOptions();
 
+#pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements in ExecuteQueryAsync
         return await queries.SelectParallelAsync(
             async (query, ct) => await ExecuteQueryAsync(query, connectionFactory, readerMapper, options, ct),
             parallelOptions,
             cancellationToken).ConfigureAwait(false);
+#pragma warning restore CA2007
     }
 
     /// <summary>
@@ -64,10 +66,12 @@ public static class SqlParallelExtensions
         options ??= new();
         var parallelOptions = options.GetMergedParallelOptions();
 
+#pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements in ExecuteQueryAsync
         return await queriesWithParams.SelectParallelAsync(
             async (item, ct) => await ExecuteQueryAsync(item.query, connectionFactory, readerMapper, options, ct, item.configureParams),
             parallelOptions,
             cancellationToken).ConfigureAwait(false);
+#pragma warning restore CA2007
     }
 
     /// <summary>
@@ -90,10 +94,12 @@ public static class SqlParallelExtensions
         options ??= new();
         var parallelOptions = options.GetMergedParallelOptions();
 
+#pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements in ExecuteCommandAsync
         return await commands.SelectParallelAsync(
             async (command, ct) => await ExecuteCommandAsync(command, connectionFactory, options, ct),
             parallelOptions,
             cancellationToken).ConfigureAwait(false);
+#pragma warning restore CA2007
     }
 
     /// <summary>
@@ -116,10 +122,12 @@ public static class SqlParallelExtensions
         options ??= new();
         var parallelOptions = options.GetMergedParallelOptions();
 
+#pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements in ExecuteCommandAsync
         return await commandsWithParams.SelectParallelAsync(
             async (item, ct) => await ExecuteCommandAsync(item.command, connectionFactory, options, ct, item.configureParams),
             parallelOptions,
             cancellationToken).ConfigureAwait(false);
+#pragma warning restore CA2007
     }
 
     /// <summary>
@@ -143,10 +151,12 @@ public static class SqlParallelExtensions
         options ??= new();
         var parallelOptions = options.GetMergedParallelOptions();
 
+#pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements in ExecuteScalarAsync
         return await queries.SelectParallelAsync(
             async (query, ct) => await ExecuteScalarAsync<TResult>(query, connectionFactory, options, ct),
             parallelOptions,
             cancellationToken).ConfigureAwait(false);
+#pragma warning restore CA2007
     }
 
     /// <summary>
@@ -170,10 +180,12 @@ public static class SqlParallelExtensions
         options ??= new();
         var parallelOptions = options.GetMergedParallelOptions();
 
+#pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements in ExecuteScalarAsync
         return await queriesWithParams.SelectParallelAsync(
             async (item, ct) => await ExecuteScalarAsync<TResult>(item.query, connectionFactory, options, ct, item.configureParams),
             parallelOptions,
             cancellationToken).ConfigureAwait(false);
+#pragma warning restore CA2007
     }
 
     private static async ValueTask<TResult> ExecuteQueryAsync<TResult>(

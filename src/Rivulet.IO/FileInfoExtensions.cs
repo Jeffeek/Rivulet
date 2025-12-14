@@ -22,9 +22,11 @@ public static class FileInfoExtensions
     {
         ArgumentNullException.ThrowIfNull(files);
 
+#pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements in ReadAllTextParallelAsync
         return await files.Select(f => f.FullName)
             .ReadAllTextParallelAsync(options, cancellationToken)
             .ConfigureAwait(false);
+#pragma warning restore CA2007
     }
 
     /// <summary>
@@ -42,9 +44,11 @@ public static class FileInfoExtensions
     {
         ArgumentNullException.ThrowIfNull(files);
 
+#pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements in ReadAllBytesParallelAsync
         return await files.Select(f => f.FullName)
             .ReadAllBytesParallelAsync(options, cancellationToken)
             .ConfigureAwait(false);
+#pragma warning restore CA2007
     }
 
     /// <summary>
@@ -64,6 +68,7 @@ public static class FileInfoExtensions
 
         options ??= new();
 
+#pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements
         return await FileOperationHelper.ExecuteFileOperationAsync(
             file.FullName,
             async () =>
@@ -81,6 +86,7 @@ public static class FileInfoExtensions
             },
             options,
             content => content.Length);
+#pragma warning restore CA2007
     }
 
     /// <summary>
@@ -100,6 +106,7 @@ public static class FileInfoExtensions
 
         options ??= new();
 
+#pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements
         return await FileOperationHelper.ExecuteFileOperationAsync(
             file.FullName,
             async () =>
@@ -118,6 +125,7 @@ public static class FileInfoExtensions
             },
             options,
             bytes => bytes.Length);
+#pragma warning restore CA2007
     }
 
     /// <summary>
@@ -139,6 +147,7 @@ public static class FileInfoExtensions
 
         options ??= new();
 
+#pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements
         await FileOperationHelper.ExecuteFileOperationAsync(
             file.FullName,
             async () =>
@@ -162,6 +171,7 @@ public static class FileInfoExtensions
             },
             options,
             length => length);
+#pragma warning restore CA2007
     }
 
     /// <summary>
@@ -183,6 +193,7 @@ public static class FileInfoExtensions
 
         options ??= new();
 
+#pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements
         await FileOperationHelper.ExecuteFileOperationAsync(
             file.FullName,
             async () =>
@@ -205,6 +216,7 @@ public static class FileInfoExtensions
             },
             options,
             length => length);
+#pragma warning restore CA2007
     }
 
     /// <summary>
@@ -226,6 +238,7 @@ public static class FileInfoExtensions
 
         options ??= new();
 
+#pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements
         await FileOperationHelper.ExecuteFileOperationAsync(
             file.FullName,
             async () =>
@@ -256,6 +269,7 @@ public static class FileInfoExtensions
             },
             options,
             length => length);
+#pragma warning restore CA2007
     }
 
     /// <summary>
@@ -281,6 +295,6 @@ public static class FileInfoExtensions
                 await Task.Run(() => File.Delete(file.FullName), cancellationToken).ConfigureAwait(false);
                 return 0;
             },
-            options);
+            options).ConfigureAwait(false);
     }
 }
