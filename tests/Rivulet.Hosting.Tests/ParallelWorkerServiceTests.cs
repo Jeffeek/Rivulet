@@ -1,65 +1,13 @@
+using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Rivulet.Base.Tests;
 using Rivulet.Core;
-using System.Collections.Concurrent;
 
 namespace Rivulet.Hosting.Tests;
 
 public class ParallelWorkerServiceTests
 {
-    private class TestWorkerService(
-        ILogger<TestWorkerService> logger,
-        IAsyncEnumerable<int> sourceItems,
-        ParallelOptionsRivulet? options = null)
-        : ParallelWorkerService<int, string>(logger, options)
-    {
-        public ConcurrentBag<int> ProcessedItems { get; } = [];
-        public ConcurrentBag<string> Results { get; } = [];
-        public int ProcessCallCount => _processCallCount;
-        private int _processCallCount;
-
-        protected override IAsyncEnumerable<int> GetSourceItems(CancellationToken cancellationToken) =>
-            sourceItems;
-
-        protected override Task<string> ProcessAsync(int item, CancellationToken cancellationToken)
-        {
-            Interlocked.Increment(ref _processCallCount);
-            ProcessedItems.Add(item);
-            return Task.FromResult($"Processed-{item}");
-        }
-
-        protected override Task OnResultAsync(string result, CancellationToken cancellationToken)
-        {
-            Results.Add(result);
-            return Task.CompletedTask;
-        }
-    }
-
-    private class DelayedWorkerService(
-        ILogger<DelayedWorkerService> logger,
-        IAsyncEnumerable<int> sourceItems,
-        int delayMs,
-        ParallelOptionsRivulet? options = null)
-        : ParallelWorkerService<int, int>(logger, options)
-    {
-        protected override IAsyncEnumerable<int> GetSourceItems(CancellationToken cancellationToken) => sourceItems;
-
-        protected override async Task<int> ProcessAsync(int item, CancellationToken cancellationToken)
-        {
-            await Task.Delay(delayMs, cancellationToken);
-            return item * 2;
-        }
-    }
-
-    private class ThrowingWorkerService(ILogger<ThrowingWorkerService> logger, IAsyncEnumerable<int> sourceItems) : ParallelWorkerService<int, int>(logger)
-    {
-        protected override IAsyncEnumerable<int> GetSourceItems(CancellationToken cancellationToken) => sourceItems;
-
-        protected override Task<int> ProcessAsync(int item, CancellationToken cancellationToken) => throw new InvalidOperationException("Test exception");
-    }
-
-
     [Fact]
     public async Task StartAsync_ShouldProcessAllItems()
     {
@@ -78,7 +26,7 @@ public class ParallelWorkerServiceTests
 
         service.ProcessedItems.Count.ShouldBe(5);
         service.Results.Count.ShouldBe(5);
-        service.ProcessedItems.OrderBy(x => x).ShouldBe([1, 2, 3, 4, 5]);
+        service.ProcessedItems.OrderBy(static x => x).ShouldBe([1, 2, 3, 4, 5]);
     }
 
     [Fact]
@@ -111,7 +59,7 @@ public class ParallelWorkerServiceTests
         var logger = NullLogger<DelayedWorkerService>.Instance;
         var items = TestDataGenerators.GenerateItemsAsync(6);
         var options = new ParallelOptionsRivulet { MaxDegreeOfParallelism = 3 };
-        var service = new DelayedWorkerService(logger, items, delayMs: 20, options);
+        var service = new DelayedWorkerService(logger, items, 20, options);
 
         using var cts = new CancellationTokenSource();
         var startTime = DateTime.UtcNow;
@@ -135,7 +83,7 @@ public class ParallelWorkerServiceTests
     public async Task StartAsync_WhenCancelled_ShouldStopGracefully()
     {
         var logger = NullLogger<TestWorkerService>.Instance;
-        var items = TestDataGenerators.GenerateItemsAsync(100, delayMs: 10);
+        var items = TestDataGenerators.GenerateItemsAsync(100, 10);
         var service = new TestWorkerService(logger, items);
 
         using var cts = new CancellationTokenSource();
@@ -272,7 +220,7 @@ public class ParallelWorkerServiceTests
 
         await service.StartAsync(cts.Token);
         await Task.Delay(20, cts.Token); // Let it start
-        await cts.CancelAsync(); // Cancel it
+        await cts.CancelAsync();         // Cancel it
         await service.StopAsync(CancellationToken.None);
 
         service.ProcessedItems.Count.ShouldBeLessThan(100);
@@ -294,20 +242,6 @@ public class ParallelWorkerServiceTests
 
         // The service should have logged the fatal error
         await service.StopAsync(CancellationToken.None);
-    }
-
-    private class FatalErrorWorkerService(
-        ILogger<FatalErrorWorkerService> logger,
-        IAsyncEnumerable<int> sourceItems)
-        : ParallelWorkerService<int, int>(logger)
-    {
-        protected override IAsyncEnumerable<int> GetSourceItems(CancellationToken cancellationToken) => sourceItems;
-
-        protected override Task<int> ProcessAsync(int item, CancellationToken cancellationToken)
-        {
-            // Simulate a fatal error that should be logged and re-thrown
-            throw new InvalidOperationException($"Fatal error processing item {item}");
-        }
     }
 
     [Fact]
@@ -352,14 +286,77 @@ public class ParallelWorkerServiceTests
         // No unhandled exception should crash the test
     }
 
+    private class TestWorkerService(
+        ILogger<TestWorkerService> logger,
+        IAsyncEnumerable<int> sourceItems,
+        ParallelOptionsRivulet? options = null)
+        : ParallelWorkerService<int, string>(logger, options)
+    {
+        private int _processCallCount;
+        public ConcurrentBag<int> ProcessedItems { get; } = [];
+        public ConcurrentBag<string> Results { get; } = [];
+        public int ProcessCallCount => _processCallCount;
+
+        protected override IAsyncEnumerable<int> GetSourceItems(CancellationToken cancellationToken) =>
+            sourceItems;
+
+        protected override Task<string> ProcessAsync(int item, CancellationToken cancellationToken)
+        {
+            Interlocked.Increment(ref _processCallCount);
+            ProcessedItems.Add(item);
+            return Task.FromResult($"Processed-{item}");
+        }
+
+        protected override Task OnResultAsync(string result, CancellationToken cancellationToken)
+        {
+            Results.Add(result);
+            return Task.CompletedTask;
+        }
+    }
+
+    private class DelayedWorkerService(
+        ILogger<DelayedWorkerService> logger,
+        IAsyncEnumerable<int> sourceItems,
+        int delayMs,
+        ParallelOptionsRivulet? options = null)
+        : ParallelWorkerService<int, int>(logger, options)
+    {
+        protected override IAsyncEnumerable<int> GetSourceItems(CancellationToken cancellationToken) => sourceItems;
+
+        protected override async Task<int> ProcessAsync(int item, CancellationToken cancellationToken)
+        {
+            await Task.Delay(delayMs, cancellationToken);
+            return item * 2;
+        }
+    }
+
+    private class ThrowingWorkerService(ILogger<ThrowingWorkerService> logger, IAsyncEnumerable<int> sourceItems)
+        : ParallelWorkerService<int, int>(logger)
+    {
+        protected override IAsyncEnumerable<int> GetSourceItems(CancellationToken cancellationToken) => sourceItems;
+
+        protected override Task<int> ProcessAsync(int item, CancellationToken cancellationToken) =>
+            throw new InvalidOperationException("Test exception");
+    }
+
+    private class FatalErrorWorkerService(
+        ILogger<FatalErrorWorkerService> logger,
+        IAsyncEnumerable<int> sourceItems)
+        : ParallelWorkerService<int, int>(logger)
+    {
+        protected override IAsyncEnumerable<int> GetSourceItems(CancellationToken cancellationToken) => sourceItems;
+
+        protected override Task<int> ProcessAsync(int item, CancellationToken cancellationToken) => throw
+            // Simulate a fatal error that should be logged and re-thrown
+            new InvalidOperationException($"Fatal error processing item {item}");
+    }
+
     private class FatalGetSourceItemsWorkerService(ILogger<FatalGetSourceItemsWorkerService> logger)
         : ParallelWorkerService<int, int>(logger)
     {
-        protected override IAsyncEnumerable<int> GetSourceItems(CancellationToken cancellationToken)
-        {
+        protected override IAsyncEnumerable<int> GetSourceItems(CancellationToken cancellationToken) => throw
             // Throw from GetSourceItems to hit the exception path in ExecuteAsync
-            throw new InvalidOperationException("Fatal error in GetSourceItems");
-        }
+            new InvalidOperationException("Fatal error in GetSourceItems");
 
         protected override Task<int> ProcessAsync(int item, CancellationToken cancellationToken) => Task.FromResult(item);
     }

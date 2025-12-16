@@ -6,6 +6,9 @@ using OpenTelemetry.Trace;
 using Rivulet.Core;
 using Rivulet.Diagnostics.OpenTelemetry;
 
+// ReSharper disable ArrangeObjectCreationWhenTypeNotEvident
+// ReSharper disable ArgumentsStyleLiteral
+
 Console.WriteLine("=== Rivulet.Diagnostics.OpenTelemetry Sample ===\n");
 
 // Configure OpenTelemetry with both tracing and metrics
@@ -32,8 +35,7 @@ using (var activity = RivuletActivitySource.StartOperation("BasicProcessing", to
 {
     var numbers = Enumerable.Range(1, 20);
 
-    var results = await numbers.SelectParallelAsync(
-        async (num, ct) =>
+    var results = await numbers.SelectParallelAsync(static async (num, ct) =>
         {
             using var itemActivity = RivuletActivitySource.StartItemActivity("ProcessNumber", num);
 
@@ -71,13 +73,12 @@ using (var activity = RivuletActivitySource.StartOperation("ProcessingWithRetrie
             var ex = new InvalidOperationException($"Transient error on item {item}");
             RivuletActivitySource.RecordRetry(itemActivity, attempt, ex);
             throw ex;
-
         },
         new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 4,
             MaxRetries = 3,
-            IsTransient = ex => ex is InvalidOperationException,
+            IsTransient = static ex => ex is InvalidOperationException,
             ErrorMode = ErrorMode.CollectAndContinue
         });
 
@@ -93,8 +94,7 @@ using (var activity = RivuletActivitySource.StartOperation("ProcessingWithErrors
 
     try
     {
-        await items.SelectParallelAsync(
-            async (item, ct) =>
+        await items.SelectParallelAsync(static async (item, ct) =>
             {
                 using var itemActivity = RivuletActivitySource.StartItemActivity("ProcessItem", item);
 
@@ -127,8 +127,7 @@ using (var activity = RivuletActivitySource.StartOperation("CustomTracking", tot
     activity?.SetTag("batch_id", Guid.NewGuid().ToString());
 
     var items = Enumerable.Range(1, 12);
-    var results = await items.SelectParallelAsync(
-        async (item, ct) =>
+    var results = await items.SelectParallelAsync(static async (item, ct) =>
         {
             using var itemActivity = RivuletActivitySource.StartItemActivity("ProcessItem", item);
 
@@ -161,8 +160,7 @@ using (var activity = RivuletActivitySource.StartOperation("AdaptiveProcessing",
     // Simulate concurrency adjustment
     RivuletActivitySource.RecordConcurrencyChange(activity, oldConcurrency: 10, newConcurrency: 5);
 
-    var results = await items.SelectParallelAsync(
-        async (item, ct) =>
+    var results = await items.SelectParallelAsync(static async (item, ct) =>
         {
             await Task.Delay(30, ct);
             return item;

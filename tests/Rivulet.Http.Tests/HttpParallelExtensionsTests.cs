@@ -13,19 +13,11 @@ public class HttpParallelExtensionsTests
     [Fact]
     public async Task GetParallelAsync_WithValidUris_ShouldReturnResponses()
     {
-        var uris = new[]
-        {
-            new Uri("http://test.local/1"),
-            new Uri("http://test.local/2"),
-            new Uri("http://test.local/3")
-        };
+        var uris = new[] { new Uri("http://test.local/1"), new Uri("http://test.local/2"), new Uri("http://test.local/3") };
 
         using var httpClient = CreateTestClient((request, _) =>
         {
-            var response = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent($"Response for {request.RequestUri}")
-            };
+            var response = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent($"Response for {request.RequestUri}") };
             return Task.FromResult(response);
         });
 
@@ -34,10 +26,7 @@ public class HttpParallelExtensionsTests
         results.Count.ShouldBe(3);
         results.ShouldAllBe(r => r.StatusCode == HttpStatusCode.OK);
 
-        foreach (var response in results)
-        {
-            response.Dispose();
-        }
+        foreach (var response in results) response.Dispose();
     }
 
     [Fact]
@@ -46,8 +35,7 @@ public class HttpParallelExtensionsTests
         IEnumerable<Uri> uris = null!;
         using var httpClient = new HttpClient();
 
-        await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await uris.GetParallelAsync(httpClient));
+        await Assert.ThrowsAsync<ArgumentNullException>(async () => await uris.GetParallelAsync(httpClient));
     }
 
     [Fact]
@@ -55,18 +43,13 @@ public class HttpParallelExtensionsTests
     {
         var uris = new[] { new Uri("http://test.local") };
 
-        await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await uris.GetParallelAsync((HttpClient)null!));
+        await Assert.ThrowsAsync<ArgumentNullException>(async () => await uris.GetParallelAsync((HttpClient)null!));
     }
 
     [Fact]
     public async Task GetStringParallelAsync_WithValidUris_ShouldReturnStrings()
     {
-        var uris = new[]
-        {
-            new Uri("http://test.local/1"),
-            new Uri("http://test.local/2")
-        };
+        var uris = new[] { new Uri("http://test.local/1"), new Uri("http://test.local/2") };
 
         using var httpClient = CreateTestClient((request, _) =>
         {
@@ -87,19 +70,12 @@ public class HttpParallelExtensionsTests
     [Fact]
     public async Task GetByteArrayParallelAsync_WithValidUris_ShouldReturnByteArrays()
     {
-        var uris = new[]
-        {
-            new Uri("http://test.local/1"),
-            new Uri("http://test.local/2")
-        };
+        var uris = new[] { new Uri("http://test.local/1"), new Uri("http://test.local/2") };
 
         using var httpClient = CreateTestClient((request, _) =>
         {
             var content = Encoding.UTF8.GetBytes($"Binary-{request.RequestUri!.AbsolutePath}");
-            var response = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new ByteArrayContent(content)
-            };
+            var response = new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(content) };
             return Task.FromResult(response);
         });
 
@@ -122,10 +98,7 @@ public class HttpParallelExtensionsTests
         using var httpClient = CreateTestClient(async (request, ct) =>
         {
             var requestBody = await request.Content!.ReadAsStringAsync(ct);
-            var response = new HttpResponseMessage(HttpStatusCode.Created)
-            {
-                Content = new StringContent($"Created with {requestBody}")
-            };
+            var response = new HttpResponseMessage(HttpStatusCode.Created) { Content = new StringContent($"Created with {requestBody}") };
             return response;
         });
 
@@ -134,10 +107,7 @@ public class HttpParallelExtensionsTests
         results.Count.ShouldBe(2);
         results.ShouldAllBe(r => r.StatusCode == HttpStatusCode.Created);
 
-        foreach (var response in results)
-        {
-            response.Dispose();
-        }
+        foreach (var response in results) response.Dispose();
     }
 
     [Fact]
@@ -151,10 +121,7 @@ public class HttpParallelExtensionsTests
 
         using var httpClient = CreateTestClient((_, _) =>
         {
-            var response = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent("Updated")
-            };
+            var response = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("Updated") };
             return Task.FromResult(response);
         });
 
@@ -163,22 +130,15 @@ public class HttpParallelExtensionsTests
         results.Count.ShouldBe(2);
         results.ShouldAllBe(r => r.StatusCode == HttpStatusCode.OK);
 
-        foreach (var response in results)
-        {
-            response.Dispose();
-        }
+        foreach (var response in results) response.Dispose();
     }
 
     [Fact]
     public async Task DeleteParallelAsync_WithValidUris_ShouldReturnResponses()
     {
-        var uris = new[]
-        {
-            new Uri("http://test.local/delete1"),
-            new Uri("http://test.local/delete2")
-        };
+        var uris = new[] { new Uri("http://test.local/delete1"), new Uri("http://test.local/delete2") };
 
-        using var httpClient = CreateTestClient((_, _) =>
+        using var httpClient = CreateTestClient(static (_, _) =>
         {
             var response = new HttpResponseMessage(HttpStatusCode.NoContent);
             return Task.FromResult(response);
@@ -187,12 +147,9 @@ public class HttpParallelExtensionsTests
         var results = await uris.DeleteParallelAsync(httpClient);
 
         results.Count.ShouldBe(2);
-        results.ShouldAllBe(r => r.StatusCode == HttpStatusCode.NoContent);
+        results.ShouldAllBe(static r => r.StatusCode == HttpStatusCode.NoContent);
 
-        foreach (var response in results)
-        {
-            response.Dispose();
-        }
+        foreach (var response in results) response.Dispose();
     }
 
     [Fact]
@@ -204,25 +161,12 @@ public class HttpParallelExtensionsTests
         using var httpClient = CreateTestClient((_, _) =>
         {
             attemptCount++;
-            if (attemptCount < 2)
-            {
-                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.ServiceUnavailable));
-            }
+            if (attemptCount < 2) return Task.FromResult(new HttpResponseMessage(HttpStatusCode.ServiceUnavailable));
 
-            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent("Success")
-            });
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("Success") });
         });
 
-        var options = new HttpOptions
-        {
-            ParallelOptions = new()
-            {
-                MaxRetries = 3,
-                BaseDelay = TimeSpan.FromMilliseconds(10)
-            }
-        };
+        var options = new HttpOptions { ParallelOptions = new() { MaxRetries = 3, BaseDelay = TimeSpan.FromMilliseconds(10) } };
 
         var results = await uris.GetParallelAsync(httpClient, options);
 
@@ -231,10 +175,7 @@ public class HttpParallelExtensionsTests
         results[0].StatusCode.ShouldBe(HttpStatusCode.OK);
 
         // Cleanup
-        foreach (var response in results)
-        {
-            response.Dispose();
-        }
+        foreach (var response in results) response.Dispose();
     }
 
     [Fact]
@@ -249,14 +190,7 @@ public class HttpParallelExtensionsTests
             return Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound));
         });
 
-        var options = new HttpOptions
-        {
-            ParallelOptions = new()
-            {
-                MaxRetries = 3,
-                ErrorMode = ErrorMode.BestEffort
-            }
-        };
+        var options = new HttpOptions { ParallelOptions = new() { MaxRetries = 3, ErrorMode = ErrorMode.BestEffort } };
 
         await uris.GetParallelAsync(httpClient, options);
 
@@ -280,11 +214,7 @@ public class HttpParallelExtensionsTests
                 callbackStatus = status;
                 return ValueTask.CompletedTask;
             },
-            ParallelOptions = new()
-            {
-                ErrorMode = ErrorMode.BestEffort,
-                MaxRetries = 0
-            }
+            ParallelOptions = new() { ErrorMode = ErrorMode.BestEffort, MaxRetries = 0 }
         };
 
         await uris.GetParallelAsync(httpClient, options);
@@ -297,7 +227,7 @@ public class HttpParallelExtensionsTests
     [Fact]
     public async Task GetParallelAsync_WithCancellation_ShouldThrowOperationCanceledException()
     {
-        var uris = Enumerable.Range(1, 10).Select(i => new Uri($"http://test.local/{i}"));
+        var uris = Enumerable.Range(1, 10).Select(static i => new Uri($"http://test.local/{i}"));
         using var cts = new CancellationTokenSource();
 
         using var httpClient = CreateTestClient(async (_, ct) =>
@@ -310,14 +240,14 @@ public class HttpParallelExtensionsTests
         // Cancel after a short delay
         cts.CancelAfter(50);
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(
-            async () => await uris.GetParallelAsync(httpClient, cancellationToken: cts.Token));
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () =>
+            await uris.GetParallelAsync(httpClient, cancellationToken: cts.Token));
     }
 
     [Fact]
     public async Task GetParallelAsync_WithCustomParallelism_ShouldRespectConcurrencyLimit()
     {
-        var uris = Enumerable.Range(1, 20).Select(i => new Uri($"http://test.local/{i}")).ToList();
+        var uris = Enumerable.Range(1, 20).Select(static i => new Uri($"http://test.local/{i}")).ToList();
         var maxConcurrent = 0;
         var currentConcurrent = 0;
         var lockObj = new object();
@@ -332,33 +262,18 @@ public class HttpParallelExtensionsTests
 
             await Task.Delay(50, CancellationToken.None);
 
-            lock (lockObj)
-            {
-                currentConcurrent--;
-            }
+            lock (lockObj) currentConcurrent--;
 
-            return new(HttpStatusCode.OK)
-            {
-                Content = new StringContent("OK")
-            };
+            return new(HttpStatusCode.OK) { Content = new StringContent("OK") };
         });
 
-        var options = new HttpOptions
-        {
-            ParallelOptions = new()
-            {
-                MaxDegreeOfParallelism = 5
-            }
-        };
+        var options = new HttpOptions { ParallelOptions = new() { MaxDegreeOfParallelism = 5 } };
 
         var results = await uris.GetParallelAsync(httpClient, options);
 
         results.Count.ShouldBe(20);
         maxConcurrent.ShouldBeLessThanOrEqualTo(5);
 
-        foreach (var response in results)
-        {
-            response.Dispose();
-        }
+        foreach (var response in results) response.Dispose();
     }
 }

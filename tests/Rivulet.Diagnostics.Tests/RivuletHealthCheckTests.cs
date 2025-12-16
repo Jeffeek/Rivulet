@@ -5,8 +5,8 @@ using Rivulet.Core;
 namespace Rivulet.Diagnostics.Tests;
 
 /// <summary>
-/// These tests use RivuletEventSource which is a static singleton shared across all test assemblies.
-/// Some tests are added to a serial collection to prevent parallel execution issues with metrics.
+///     These tests use RivuletEventSource which is a static singleton shared across all test assemblies.
+///     Some tests are added to a serial collection to prevent parallel execution issues with metrics.
 /// </summary>
 [Collection(TestCollections.SerialEventSource)]
 [SuppressMessage("ReSharper", "AccessToDisposedClosure")]
@@ -46,24 +46,23 @@ public class RivuletHealthCheckTests
     public async Task HealthCheck_ShouldReturnHealthy_WhenOperationsSucceed()
     {
         using var exporter = new PrometheusExporter();
-        var healthCheck = new RivuletHealthCheck(exporter, new()
-        {
-            ErrorRateThreshold = 1.0, // 100% - should always pass for successful operations
-            FailureCountThreshold = 10000 // Very high threshold to avoid failures from previous tests
-        });
+        var healthCheck = new RivuletHealthCheck(exporter,
+            new()
+            {
+                ErrorRateThreshold = 1.0,     // 100% - should always pass for successful operations
+                FailureCountThreshold = 10000 // Very high threshold to avoid failures from previous tests
+            });
 
         // Operations must run long enough for EventCounter polling (1 second interval)
         // 10 items * 200ms / 2 parallelism = 1000ms (1 second) minimum operation time
         await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
             .SelectParallelStreamAsync(async (x, ct) =>
-            {
-                await Task.Delay(200, ct);
-                return x * 2;
-            }, new()
-            {
-                MaxDegreeOfParallelism = 2
-            })
+                {
+                    await Task.Delay(200, ct);
+                    return x * 2;
+                },
+                new() { MaxDegreeOfParallelism = 2 })
             .ToListAsync();
 
         await Task.Delay(2000);
@@ -82,11 +81,12 @@ public class RivuletHealthCheckTests
         using var exporter = new PrometheusExporter();
 
         // Use failure count threshold instead of error rate to avoid issues with shared static counters
-        var healthCheck = new RivuletHealthCheck(exporter, new()
-        {
-            ErrorRateThreshold = 1.0, // Set high to not trigger on rate
-            FailureCountThreshold = 50 // Trigger on absolute failure count
-        });
+        var healthCheck = new RivuletHealthCheck(exporter,
+            new()
+            {
+                ErrorRateThreshold = 1.0,  // Set high to not trigger on rate
+                FailureCountThreshold = 50 // Trigger on absolute failure count
+            });
 
         try
         {
@@ -95,14 +95,11 @@ public class RivuletHealthCheckTests
             await Enumerable.Range(1, 100)
                 .ToAsyncEnumerable()
                 .SelectParallelStreamAsync<int, int>(async (_, ct) =>
-                {
-                    await Task.Delay(20, ct);
-                    throw new InvalidOperationException("Test error");
-                }, new()
-                {
-                    MaxDegreeOfParallelism = 8,
-                    ErrorMode = ErrorMode.CollectAndContinue
-                })
+                    {
+                        await Task.Delay(20, ct);
+                        throw new InvalidOperationException("Test error");
+                    },
+                    new() { MaxDegreeOfParallelism = 8, ErrorMode = ErrorMode.CollectAndContinue })
                 .ToListAsync();
         }
         catch
@@ -128,11 +125,7 @@ public class RivuletHealthCheckTests
     public async Task HealthCheck_ShouldReturnUnhealthy_WhenFailureCountExceedsThreshold()
     {
         using var exporter = new PrometheusExporter();
-        var healthCheck = new RivuletHealthCheck(exporter, new()
-        {
-            ErrorRateThreshold = 1.0,
-            FailureCountThreshold = 5
-        });
+        var healthCheck = new RivuletHealthCheck(exporter, new() { ErrorRateThreshold = 1.0, FailureCountThreshold = 5 });
 
         try
         {
@@ -141,14 +134,11 @@ public class RivuletHealthCheckTests
             await Enumerable.Range(1, 10)
                 .ToAsyncEnumerable()
                 .SelectParallelStreamAsync<int, int>(async (_, ct) =>
-                {
-                    await Task.Delay(200, ct);
-                    throw new InvalidOperationException("Test error");
-                }, new()
-                {
-                    MaxDegreeOfParallelism = 2,
-                    ErrorMode = ErrorMode.CollectAndContinue
-                })
+                    {
+                        await Task.Delay(200, ct);
+                        throw new InvalidOperationException("Test error");
+                    },
+                    new() { MaxDegreeOfParallelism = 2, ErrorMode = ErrorMode.CollectAndContinue })
                 .ToListAsync();
         }
         catch
@@ -179,11 +169,7 @@ public class RivuletHealthCheckTests
     public async Task HealthCheck_ShouldReturnDegraded_WhenErrorRateExceedsThresholdButNotFailureCount()
     {
         using var exporter = new PrometheusExporter();
-        var healthCheck = new RivuletHealthCheck(exporter, new()
-        {
-            ErrorRateThreshold = 0.2,
-            FailureCountThreshold = 10000
-        });
+        var healthCheck = new RivuletHealthCheck(exporter, new() { ErrorRateThreshold = 0.2, FailureCountThreshold = 10000 });
 
         try
         {
@@ -193,18 +179,13 @@ public class RivuletHealthCheckTests
             await Enumerable.Range(1, 5000)
                 .ToAsyncEnumerable()
                 .SelectParallelStreamAsync(async (x, ct) =>
-                {
-                    await Task.Delay(1, ct);
-                    if (x <= 4000)
                     {
-                        throw new InvalidOperationException("Test error");
-                    }
-                    return x * 2;
-                }, new()
-                {
-                    MaxDegreeOfParallelism = 20,
-                    ErrorMode = ErrorMode.CollectAndContinue
-                })
+                        await Task.Delay(1, ct);
+                        if (x <= 4000) throw new InvalidOperationException("Test error");
+
+                        return x * 2;
+                    },
+                    new() { MaxDegreeOfParallelism = 20, ErrorMode = ErrorMode.CollectAndContinue })
                 .ToListAsync();
         }
         catch
@@ -252,11 +233,7 @@ public class RivuletHealthCheckTests
     [Fact]
     public void HealthCheck_ShouldAllowCustomOptionsValues()
     {
-        var options = new RivuletHealthCheckOptions
-        {
-            ErrorRateThreshold = 0.5,
-            FailureCountThreshold = 100
-        };
+        var options = new RivuletHealthCheckOptions { ErrorRateThreshold = 0.5, FailureCountThreshold = 100 };
         options.ErrorRateThreshold.ShouldBe(0.5);
         options.FailureCountThreshold.ShouldBe(100);
     }
@@ -281,13 +258,11 @@ public class RivuletHealthCheckTests
         await Enumerable.Range(1, 5)
             .ToAsyncEnumerable()
             .SelectParallelStreamAsync(async (x, ct) =>
-            {
-                await Task.Delay(100, ct);
-                return x * 2;
-            }, new()
-            {
-                MaxDegreeOfParallelism = 2
-            })
+                {
+                    await Task.Delay(100, ct);
+                    return x * 2;
+                },
+                new() { MaxDegreeOfParallelism = 2 })
             .ToListAsync();
 
         await Task.Delay(2000);

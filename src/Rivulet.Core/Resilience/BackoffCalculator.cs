@@ -1,12 +1,12 @@
 namespace Rivulet.Core.Resilience;
 
 /// <summary>
-/// Provides backoff delay calculations for retry strategies.
+///     Provides backoff delay calculations for retry strategies.
 /// </summary>
 public static class BackoffCalculator
 {
     /// <summary>
-    /// Calculates the delay for a retry attempt based on the specified backoff strategy.
+    ///     Calculates the delay for a retry attempt based on the specified backoff strategy.
     /// </summary>
     /// <param name="strategy">The backoff strategy to use.</param>
     /// <param name="baseDelay">The base delay for calculations.</param>
@@ -33,7 +33,7 @@ public static class BackoffCalculator
     }
 
     /// <summary>
-    /// Calculates exponential backoff delay: BaseDelay * 2^(attempt - 1).
+    ///     Calculates exponential backoff delay: BaseDelay * 2^(attempt - 1).
     /// </summary>
     private static TimeSpan CalculateExponential(double baseDelayMs, int attempt)
     {
@@ -42,7 +42,7 @@ public static class BackoffCalculator
     }
 
     /// <summary>
-    /// Calculates exponential backoff with full jitter: Random(0, BaseDelay * 2^(attempt - 1)).
+    ///     Calculates exponential backoff with full jitter: Random(0, BaseDelay * 2^(attempt - 1)).
     /// </summary>
     private static TimeSpan CalculateExponentialJitter(double baseDelayMs, int attempt)
     {
@@ -52,7 +52,7 @@ public static class BackoffCalculator
     }
 
     /// <summary>
-    /// Calculates decorrelated jitter delay: Random(BaseDelay, PreviousDelay * 3).
+    ///     Calculates decorrelated jitter delay: Random(BaseDelay, PreviousDelay * 3).
     /// </summary>
     private static TimeSpan CalculateDecorrelatedJitter(double baseDelayMs, int attempt, ref TimeSpan previousDelay)
     {
@@ -71,7 +71,7 @@ public static class BackoffCalculator
     }
 
     /// <summary>
-    /// Calculates linear backoff delay: BaseDelay * attempt.
+    ///     Calculates linear backoff delay: BaseDelay * attempt.
     /// </summary>
     private static TimeSpan CalculateLinear(double baseDelayMs, int attempt)
     {
@@ -80,7 +80,7 @@ public static class BackoffCalculator
     }
 
     /// <summary>
-    /// Calculates linear backoff with jitter: Random(0, BaseDelay * attempt).
+    ///     Calculates linear backoff with jitter: Random(0, BaseDelay * attempt).
     /// </summary>
     private static TimeSpan CalculateLinearJitter(double baseDelayMs, int attempt)
     {

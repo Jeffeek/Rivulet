@@ -19,7 +19,7 @@ public class StreamingDownloadOptionsTests
     }
 
     [Fact]
-    public void StreamingDownloadOptions_WithInitProperties_ShouldSetCorrectly()
+    public async Task StreamingDownloadOptions_WithInitProperties_ShouldSetCorrectly()
     {
         var httpOptions = new HttpOptions();
         var progressCalled = false;
@@ -60,9 +60,9 @@ public class StreamingDownloadOptionsTests
         options.OnProgressAsync.ShouldNotBeNull();
         options.OnResumeAsync.ShouldNotBeNull();
         options.OnCompleteAsync.ShouldNotBeNull();
-        options.OnProgressAsync!.Invoke(new("http://test.local"), 100, 200);
-        options.OnResumeAsync!.Invoke(new("http://test.local"), 50);
-        options.OnCompleteAsync!.Invoke(new("http://test.local"), "/path/file.txt", 200);
+        await options.OnProgressAsync!.Invoke(new("http://test.local"), 100, 200);
+        await options.OnResumeAsync!.Invoke(new("http://test.local"), 50);
+        await options.OnCompleteAsync!.Invoke(new("http://test.local"), "/path/file.txt", 200);
 
         progressCalled.ShouldBeTrue();
         resumeCalled.ShouldBeTrue();
@@ -72,11 +72,7 @@ public class StreamingDownloadOptionsTests
     [Fact]
     public void StreamingDownloadOptions_Immutability_ShouldBeEnforced()
     {
-        var options = new StreamingDownloadOptions
-        {
-            BufferSize = 16384,
-            EnableResume = false
-        };
+        var options = new StreamingDownloadOptions { BufferSize = 16384, EnableResume = false };
 
         // Act & Assert - This should not compile if properties are not init-only
         // options.BufferSize = 32768; // Compile error expected
@@ -106,16 +102,9 @@ public class StreamingDownloadOptionsTests
     [Fact]
     public void StreamingDownloadOptions_WithHttpOptions_ShouldPassThrough()
     {
-        var httpOptions = new HttpOptions
-        {
-            RequestTimeout = TimeSpan.FromSeconds(120),
-            RespectRetryAfterHeader = false
-        };
+        var httpOptions = new HttpOptions { RequestTimeout = TimeSpan.FromSeconds(120), RespectRetryAfterHeader = false };
 
-        var options = new StreamingDownloadOptions
-        {
-            HttpOptions = httpOptions
-        };
+        var options = new StreamingDownloadOptions { HttpOptions = httpOptions };
 
         options.HttpOptions.ShouldBeSameAs(httpOptions);
         options.HttpOptions.RequestTimeout.ShouldBe(TimeSpan.FromSeconds(120));

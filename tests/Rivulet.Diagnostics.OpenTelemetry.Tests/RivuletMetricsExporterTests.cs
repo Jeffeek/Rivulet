@@ -9,8 +9,8 @@ namespace Rivulet.Diagnostics.OpenTelemetry.Tests;
 public class RivuletMetricsExporterTests : IDisposable
 {
     private readonly List<Metric> _exportedMetrics = new();
-    private readonly MeterProvider _meterProvider;
     private readonly RivuletMetricsExporter _exporter;
+    private readonly MeterProvider _meterProvider;
 
     public RivuletMetricsExporterTests()
     {
@@ -32,11 +32,8 @@ public class RivuletMetricsExporterTests : IDisposable
     public void Exporter_ShouldExportItemsStartedMetric()
     {
         var initialValue = RivuletEventSource.Log.GetItemsStarted();
-        
-        for (var i = 0; i < 10; i++)
-        {
-            RivuletEventSource.Log.IncrementItemsStarted();
-        }
+
+        for (var i = 0; i < 10; i++) RivuletEventSource.Log.IncrementItemsStarted();
 
         _meterProvider.ForceFlush();
 
@@ -50,11 +47,8 @@ public class RivuletMetricsExporterTests : IDisposable
     public void Exporter_ShouldExportItemsCompletedMetric()
     {
         var initialValue = RivuletEventSource.Log.GetItemsCompleted();
-        
-        for (var i = 0; i < 5; i++)
-        {
-            RivuletEventSource.Log.IncrementItemsCompleted();
-        }
+
+        for (var i = 0; i < 5; i++) RivuletEventSource.Log.IncrementItemsCompleted();
 
         _meterProvider.ForceFlush();
 
@@ -68,11 +62,8 @@ public class RivuletMetricsExporterTests : IDisposable
     public void Exporter_ShouldExportRetriesMetric()
     {
         var initialValue = RivuletEventSource.Log.GetTotalRetries();
-        
-        for (var i = 0; i < 3; i++)
-        {
-            RivuletEventSource.Log.IncrementRetries();
-        }
+
+        for (var i = 0; i < 3; i++) RivuletEventSource.Log.IncrementRetries();
 
         _meterProvider.ForceFlush();
 
@@ -86,11 +77,8 @@ public class RivuletMetricsExporterTests : IDisposable
     public void Exporter_ShouldExportFailuresMetric()
     {
         var initialValue = RivuletEventSource.Log.GetTotalFailures();
-        
-        for (var i = 0; i < 2; i++)
-        {
-            RivuletEventSource.Log.IncrementFailures();
-        }
+
+        for (var i = 0; i < 2; i++) RivuletEventSource.Log.IncrementFailures();
 
         _meterProvider.ForceFlush();
 
@@ -105,24 +93,19 @@ public class RivuletMetricsExporterTests : IDisposable
     {
         var initialStarted = RivuletEventSource.Log.GetItemsStarted();
         var initialFailures = RivuletEventSource.Log.GetTotalFailures();
-        
-        for (var i = 0; i < 10; i++)
-        {
-            RivuletEventSource.Log.IncrementItemsStarted();
-        }
-        for (var i = 0; i < 2; i++)
-        {
-            RivuletEventSource.Log.IncrementFailures();
-        }
+
+        for (var i = 0; i < 10; i++) RivuletEventSource.Log.IncrementItemsStarted();
+
+        for (var i = 0; i < 2; i++) RivuletEventSource.Log.IncrementFailures();
 
         _meterProvider.ForceFlush();
 
         _exportedMetrics.ShouldContain(m => m.Name == "rivulet.error.rate");
         var errorRate = _exportedMetrics.First(m => m.Name == "rivulet.error.rate");
         var value = GetMetricValue(errorRate);
-        
-        var expectedErrorRate = initialStarted + 10 > 0 
-            ? (double)(initialFailures + 2) / (initialStarted + 10) 
+
+        var expectedErrorRate = initialStarted + 10 > 0
+            ? (double)(initialFailures + 2) / (initialStarted + 10)
             : 0.0;
         value.ShouldBe(expectedErrorRate, 0.001);
     }
@@ -131,11 +114,8 @@ public class RivuletMetricsExporterTests : IDisposable
     public void Exporter_ShouldExportThrottleEventsMetric()
     {
         var initialValue = RivuletEventSource.Log.GetThrottleEvents();
-        
-        for (var i = 0; i < 4; i++)
-        {
-            RivuletEventSource.Log.IncrementThrottleEvents();
-        }
+
+        for (var i = 0; i < 4; i++) RivuletEventSource.Log.IncrementThrottleEvents();
 
         _meterProvider.ForceFlush();
 
@@ -149,11 +129,8 @@ public class RivuletMetricsExporterTests : IDisposable
     public void Exporter_ShouldExportDrainEventsMetric()
     {
         var initialValue = RivuletEventSource.Log.GetDrainEvents();
-        
-        for (var i = 0; i < 3; i++)
-        {
-            RivuletEventSource.Log.IncrementDrainEvents();
-        }
+
+        for (var i = 0; i < 3; i++) RivuletEventSource.Log.IncrementDrainEvents();
 
         _meterProvider.ForceFlush();
 
@@ -181,10 +158,7 @@ public class RivuletMetricsExporterTests : IDisposable
                 await Task.Delay(1, ct);
                 return x * 2;
             },
-            new()
-            {
-                MaxDegreeOfParallelism = 4
-            });
+            new() { MaxDegreeOfParallelism = 4 });
 
         // Force flush to get latest metrics
         _meterProvider.ForceFlush();

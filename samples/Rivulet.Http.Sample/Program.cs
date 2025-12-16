@@ -1,5 +1,7 @@
 using Rivulet.Core;
 
+// ReSharper disable ArrangeObjectCreationWhenTypeNotEvident
+
 Console.WriteLine("=== Rivulet.Http Sample ===\n");
 
 using var httpClient = new HttpClient();
@@ -26,21 +28,19 @@ var responses = await urls.SelectParallelAsync(
     {
         MaxDegreeOfParallelism = 4,
         MaxRetries = 3,
-        IsTransient = ex => ex is HttpRequestException
+        IsTransient = static ex => ex is HttpRequestException
     });
 
 Console.WriteLine($"✓ Fetched {responses.Count} URLs successfully");
-foreach (var (url, status, length) in responses)
-{
-    Console.WriteLine($"  {url}: {status} ({length} bytes)");
-}
+foreach (var (url, status, length) in responses) Console.WriteLine($"  {url}: {status} ({length} bytes)");
+
 Console.WriteLine();
 
 // Sample 2: POST requests with JSON payload
 Console.WriteLine("2. POST requests with JSON - Send data to API");
 
 var postData = Enumerable.Range(1, 3)
-    .Select(i => new { id = i, title = $"Post {i}", body = $"Content {i}" })
+    .Select(static i => new { id = i, title = $"Post {i}", body = $"Content {i}" })
     .ToList();
 
 var postResults = await postData.SelectParallelAsync(
@@ -57,10 +57,8 @@ var postResults = await postData.SelectParallelAsync(
     });
 
 Console.WriteLine($"✓ Posted {postResults.Count} items");
-foreach (var (id, status) in postResults)
-{
-    Console.WriteLine($"  Post {id}: HTTP {status}");
-}
+foreach (var (id, status) in postResults) Console.WriteLine($"  Post {id}: HTTP {status}");
+
 Console.WriteLine();
 
 // Sample 3: Download files
@@ -88,10 +86,8 @@ var downloadResults = await fileUrls.SelectParallelAsync(
     });
 
 Console.WriteLine($"✓ Downloaded {downloadResults.Count} files");
-foreach (var (_, path, size) in downloadResults)
-{
-    Console.WriteLine($"  {Path.GetFileName(path)}: {size} bytes");
-}
+foreach (var (_, path, size) in downloadResults) Console.WriteLine($"  {Path.GetFileName(path)}: {size} bytes");
+
 Console.WriteLine();
 
 // Cleanup
@@ -126,10 +122,8 @@ var retryResults = await unreliableUrls.SelectParallelAsync(
     });
 
 Console.WriteLine($"✓ Processed {retryResults.Count} requests with retry");
-foreach (var (url, status, success) in retryResults)
-{
-    Console.WriteLine($"  {url}: HTTP {status} {(success ? "✓" : "✗")}");
-}
+foreach (var (url, status, success) in retryResults) Console.WriteLine($"  {url}: HTTP {status} {(success ? "✓" : "✗")}");
+
 Console.WriteLine();
 
 Console.WriteLine("=== Sample Complete ===");

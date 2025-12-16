@@ -1,4 +1,5 @@
-﻿using Rivulet.Base.Tests;
+﻿using System.Text;
+using Rivulet.Base.Tests;
 
 namespace Rivulet.IO.Tests;
 
@@ -24,10 +25,7 @@ public class FileParallelExtensionsTests : TempDirectoryFixture
 
         // Assert
         results.Count.ShouldBe(3);
-        foreach (var expected in expectedContents)
-        {
-            results.ShouldContain(expected);
-        }
+        foreach (var expected in expectedContents) results.ShouldContain(expected);
     }
 
     [Fact]
@@ -89,11 +87,7 @@ public class FileParallelExtensionsTests : TempDirectoryFixture
     public async Task WriteAllTextParallelAsync_WithMultipleFiles_ShouldWriteAllCorrectly()
     {
         // Arrange
-        var writes = new[]
-        {
-            (Path.Join(TestDirectory, "write1.txt"), "Content 1"),
-            (Path.Join(TestDirectory, "write2.txt"), "Content 2")
-        };
+        var writes = new[] { (Path.Join(TestDirectory, "write1.txt"), "Content 1"), (Path.Join(TestDirectory, "write2.txt"), "Content 2") };
 
         var options = new FileOperationOptions { OverwriteExisting = true };
 
@@ -133,8 +127,7 @@ public class FileParallelExtensionsTests : TempDirectoryFixture
         // Arrange
         var writes = new[]
         {
-            (Path.Join(TestDirectory, "bytes1.bin"), [1, 2, 3]),
-            (Path.Join(TestDirectory, "bytes2.bin"), new byte[] { 4, 5, 6 })
+            (Path.Join(TestDirectory, "bytes1.bin"), [1, 2, 3]), (Path.Join(TestDirectory, "bytes2.bin"), new byte[] { 4, 5, 6 })
         };
 
         var options = new FileOperationOptions { OverwriteExisting = true };
@@ -164,15 +157,10 @@ public class FileParallelExtensionsTests : TempDirectoryFixture
         await File.WriteAllTextAsync(sourceFile1, "hello");
         await File.WriteAllTextAsync(sourceFile2, "world");
 
-        var files = new[]
-        {
-            (sourceFile1, destFile1),
-            (sourceFile2, destFile2)
-        };
+        var files = new[] { (sourceFile1, destFile1), (sourceFile2, destFile2) };
 
         // Act
-        var results = await files.TransformFilesParallelAsync(
-            (_, content) => ValueTask.FromResult(content.ToUpper()),
+        var results = await files.TransformFilesParallelAsync(static (_, content) => ValueTask.FromResult(content.ToUpper()),
             new() { OverwriteExisting = true });
 
         // Assert
@@ -274,11 +262,7 @@ public class FileParallelExtensionsTests : TempDirectoryFixture
         var nestedPath = Path.Join(TestDirectory, "nested", "deep", "file.txt");
         var writes = new[] { (nestedPath, "Content in nested directory") };
 
-        var options = new FileOperationOptions
-        {
-            CreateDirectoriesIfNotExist = true,
-            OverwriteExisting = true
-        };
+        var options = new FileOperationOptions { CreateDirectoriesIfNotExist = true, OverwriteExisting = true };
 
         // Act
         await writes.WriteAllTextParallelAsync(options);
@@ -296,12 +280,9 @@ public class FileParallelExtensionsTests : TempDirectoryFixture
         var filePath = Path.Join(TestDirectory, "encoding.txt");
         var content = "Test with encoding: Привет мир";
 
-        await File.WriteAllTextAsync(filePath, content, System.Text.Encoding.UTF8);
+        await File.WriteAllTextAsync(filePath, content, Encoding.UTF8);
 
-        var options = new FileOperationOptions
-        {
-            Encoding = System.Text.Encoding.UTF8
-        };
+        var options = new FileOperationOptions { Encoding = Encoding.UTF8 };
 
         // Act
         var results = await new[] { filePath }.ReadAllTextParallelAsync(options);

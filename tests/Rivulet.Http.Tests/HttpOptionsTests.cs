@@ -66,11 +66,7 @@ public class HttpOptionsTests
             ErrorMode = ErrorMode.CollectAndContinue
         };
 
-        var options = new HttpOptions
-        {
-            ParallelOptions = customParallelOptions,
-            RequestTimeout = TimeSpan.FromSeconds(45)
-        };
+        var options = new HttpOptions { ParallelOptions = customParallelOptions, RequestTimeout = TimeSpan.FromSeconds(45) };
 
         var mergedOptions = options.GetMergedParallelOptions();
 
@@ -84,10 +80,7 @@ public class HttpOptionsTests
     [Fact]
     public void GetMergedParallelOptions_IsTransient_ShouldHandleHttpRequestException()
     {
-        var options = new HttpOptions
-        {
-            RetriableStatusCodes = [HttpStatusCode.ServiceUnavailable]
-        };
+        var options = new HttpOptions { RetriableStatusCodes = [HttpStatusCode.ServiceUnavailable] };
 
         var mergedOptions = options.GetMergedParallelOptions();
 
@@ -115,10 +108,7 @@ public class HttpOptionsTests
             }
         };
 
-        var options = new HttpOptions
-        {
-            ParallelOptions = customParallelOptions
-        };
+        var options = new HttpOptions { ParallelOptions = customParallelOptions };
 
         var mergedOptions = options.GetMergedParallelOptions();
         var customException = new InvalidOperationException();
@@ -131,13 +121,7 @@ public class HttpOptionsTests
     [Fact]
     public void GetMergedParallelOptions_WithZeroMaxRetries_ShouldDefaultToThree()
     {
-        var options = new HttpOptions
-        {
-            ParallelOptions = new()
-            {
-                MaxRetries = 0
-            }
-        };
+        var options = new HttpOptions { ParallelOptions = new() { MaxRetries = 0 } };
 
         var mergedOptions = options.GetMergedParallelOptions();
 
@@ -145,7 +129,7 @@ public class HttpOptionsTests
     }
 
     [Fact]
-    public void HttpOptions_WithCallbacks_ShouldSetCorrectly()
+    public async Task HttpOptions_WithCallbacks_ShouldSetCorrectly()
     {
         var httpErrorCalled = false;
         var redirectCalled = false;
@@ -168,8 +152,8 @@ public class HttpOptionsTests
         options.OnRedirectAsync.ShouldNotBeNull();
 
         // Verify callbacks can be invoked
-        options.OnHttpErrorAsync!.Invoke(new("http://example.com"), HttpStatusCode.NotFound, new());
-        options.OnRedirectAsync!.Invoke(new("http://example.com"), new("http://redirected.com"));
+        await options.OnHttpErrorAsync!.Invoke(new("http://example.com"), HttpStatusCode.NotFound, new());
+        await options.OnRedirectAsync!.Invoke(new("http://example.com"), new("http://redirected.com"));
 
         httpErrorCalled.ShouldBeTrue();
         redirectCalled.ShouldBeTrue();

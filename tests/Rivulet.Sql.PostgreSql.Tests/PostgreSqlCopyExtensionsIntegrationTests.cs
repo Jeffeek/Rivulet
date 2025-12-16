@@ -4,17 +4,15 @@ using Testcontainers.PostgreSql;
 namespace Rivulet.Sql.PostgreSql.Tests;
 
 /// <summary>
-/// Integration tests for PostgreSqlCopyExtensions using Testcontainers.
-/// Uses per-test-class container for isolation (IAsyncLifetime).
-/// Requires Docker Desktop to be running.
+///     Integration tests for PostgreSqlCopyExtensions using Testcontainers.
+///     Uses per-test-class container for isolation (IAsyncLifetime).
+///     Requires Docker Desktop to be running.
 /// </summary>
 [Trait("Category", "Integration")]
 public class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
 {
-    private PostgreSqlContainer? _container;
     private string? _connectionString;
-
-    private record TestRecord(int Id, string Name, string Email);
+    private PostgreSqlContainer? _container;
 
     public async Task InitializeAsync()
     {
@@ -41,10 +39,7 @@ public class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
 
     public async Task DisposeAsync()
     {
-        if (_container != null)
-        {
-            await _container.DisposeAsync();
-        }
+        if (_container != null) await _container.DisposeAsync();
     }
 
     private NpgsqlConnection CreateConnection() => new(_connectionString!);
@@ -71,7 +66,7 @@ public class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
             columns,
             MapToRow,
             new() { MaxDegreeOfParallelism = 1 },
-            batchSize: 2);
+            2);
 
         // Assert
         await using var connection = new NpgsqlConnection(_connectionString);
@@ -89,7 +84,7 @@ public class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
     {
         // Arrange
         var records = Enumerable.Range(1, 10)
-            .Select(i => new TestRecord(i, $"User{i}", $"user{i}@example.com"))
+            .Select(static i => new TestRecord(i, $"User{i}", $"user{i}@example.com"))
             .ToArray();
         var columns = new[] { "Id", "Name", "Email" };
 
@@ -148,11 +143,7 @@ public class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
     public async Task BulkInsertUsingCopyCsvAsync_WithValidData_ShouldInsertRecords()
     {
         // Arrange
-        var csvLines = new[]
-        {
-            "100,Dave,dave@example.com",
-            "101,Eve,eve@example.com"
-        };
+        var csvLines = new[] { "100,Dave,dave@example.com", "101,Eve,eve@example.com" };
         var columns = new[] { "Id", "Name", "Email" };
 
         // Act
@@ -178,7 +169,7 @@ public class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
     {
         // Arrange
         var csvLines = Enumerable.Range(200, 10)
-            .Select(i => $"{i},User{i},user{i}@example.com")
+            .Select(static i => $"{i},User{i},user{i}@example.com")
             .ToArray();
         var columns = new[] { "Id", "Name", "Email" };
 
@@ -204,11 +195,7 @@ public class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
     public async Task BulkInsertUsingCopyCsvAsync_WithCustomDelimiter_ShouldWork()
     {
         // Arrange
-        var csvLines = new[]
-        {
-            "300|Frank|frank@example.com",
-            "301|Grace|grace@example.com"
-        };
+        var csvLines = new[] { "300|Frank|frank@example.com", "301|Grace|grace@example.com" };
         var columns = new[] { "Id", "Name", "Email" };
 
         // Act
@@ -249,11 +236,7 @@ public class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
     public async Task BulkInsertUsingCopyTextAsync_WithValidData_ShouldInsertRecords()
     {
         // Arrange - PostgreSQL text format is tab-delimited by default
-        var textLines = new[]
-        {
-            "400\tHank\thank@example.com",
-            "401\tIvy\tivy@example.com"
-        };
+        var textLines = new[] { "400\tHank\thank@example.com", "401\tIvy\tivy@example.com" };
         var columns = new[] { "Id", "Name", "Email" };
 
         // Act
@@ -279,7 +262,7 @@ public class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
     {
         // Arrange
         var textLines = Enumerable.Range(500, 10)
-            .Select(i => $"{i}\tUser{i}\tuser{i}@example.com")
+            .Select(static i => $"{i}\tUser{i}\tuser{i}@example.com")
             .ToArray();
         var columns = new[] { "Id", "Name", "Email" };
 
@@ -315,4 +298,6 @@ public class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
         // ForEachParallelAsync cancels the operation when an exception occurs
         await act.ShouldThrowAsync<OperationCanceledException>();
     }
+
+    private record TestRecord(int Id, string Name, string Email);
 }

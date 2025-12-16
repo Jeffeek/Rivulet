@@ -5,8 +5,8 @@ using Rivulet.Core.Observability;
 namespace Rivulet.Core.Tests;
 
 /// <summary>
-/// Tests for internal ProgressTracker behavior that requires direct access.
-/// These tests access internal members via InternalsVisibleTo.
+///     Tests for internal ProgressTracker behavior that requires direct access.
+///     These tests access internal members via InternalsVisibleTo.
 /// </summary>
 [SuppressMessage("ReSharper", "AccessToDisposedClosure")]
 public class ProgressTrackerInternalTests
@@ -14,11 +14,7 @@ public class ProgressTrackerInternalTests
     [Fact]
     public async Task ProgressTracker_DoubleDispose_DoesNotThrow()
     {
-        var options = new ProgressOptions
-        {
-            ReportInterval = TimeSpan.FromMilliseconds(50),
-            OnProgress = _ => ValueTask.CompletedTask
-        };
+        var options = new ProgressOptions { ReportInterval = TimeSpan.FromMilliseconds(50), OnProgress = _ => ValueTask.CompletedTask };
 
         using var cts = new CancellationTokenSource();
         var tracker = new ProgressTracker(100, options, cts.Token);
@@ -40,11 +36,7 @@ public class ProgressTrackerInternalTests
     [Fact]
     public async Task ProgressTracker_WithNullCallback_DoesNotReport()
     {
-        var options = new ProgressOptions
-        {
-            ReportInterval = TimeSpan.FromMilliseconds(10),
-            OnProgress = null
-        };
+        var options = new ProgressOptions { ReportInterval = TimeSpan.FromMilliseconds(10), OnProgress = null };
 
         using var cts = new CancellationTokenSource();
         var tracker = new ProgressTracker(50, options, cts.Token);
@@ -61,11 +53,7 @@ public class ProgressTrackerInternalTests
     [Fact]
     public async Task ProgressTracker_RapidCancellation_DisposesCleanly()
     {
-        var options = new ProgressOptions
-        {
-            ReportInterval = TimeSpan.FromMilliseconds(10),
-            OnProgress = _ => ValueTask.CompletedTask
-        };
+        var options = new ProgressOptions { ReportInterval = TimeSpan.FromMilliseconds(10), OnProgress = _ => ValueTask.CompletedTask };
 
         using var cts = new CancellationTokenSource();
         var tracker = new ProgressTracker(100, options, cts.Token);

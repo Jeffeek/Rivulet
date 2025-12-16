@@ -2,6 +2,9 @@ using Npgsql;
 using Rivulet.Core;
 using Rivulet.Sql.PostgreSql;
 
+// ReSharper disable ArgumentsStyleLiteral
+// ReSharper disable ArrangeObjectCreationWhenTypeNotEvident
+
 Console.WriteLine("=== Rivulet.Sql.PostgreSql Sample ===\n");
 Console.WriteLine("NOTE: Configure connection string before running!\n");
 
@@ -15,7 +18,7 @@ try
 
     // Create sample data
     var users = Enumerable.Range(1, 10000)
-        .Select(i => new
+        .Select(static i => new
         {
             Id = i,
             Name = $"User{i}",
@@ -27,10 +30,10 @@ try
     var startTime = DateTime.UtcNow;
 
     await users.BulkInsertUsingCopyAsync(
-        () => new NpgsqlConnection(connectionString),
+        static () => new NpgsqlConnection(connectionString),
         "users",
         ["id", "name", "email", "created_at"],
-        user => [user.Id, user.Name, user.Email, user.CreatedAt],
+        static user => [user.Id, user.Name, user.Email, user.CreatedAt],
         new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 4,
@@ -46,7 +49,7 @@ try
     Console.WriteLine("2. BulkInsert with custom object mapping");
 
     var customUsers = Enumerable.Range(1, 1000)
-        .Select(i => new
+        .Select(static i => new
         {
             UserId = i + 10000,
             FullName = $"CustomUser{i}",
@@ -56,22 +59,22 @@ try
         .ToList();
 
     await customUsers.BulkInsertUsingCopyAsync(
-        () => new NpgsqlConnection(connectionString),
+        static () => new NpgsqlConnection(connectionString),
         "alternate_users",
         ["user_id", "full_name", "email_address", "is_active"],
-        u => [u.UserId, u.FullName, u.EmailAddress, u.IsActive],
+        static u => [u.UserId, u.FullName, u.EmailAddress, u.IsActive],
         new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 2
         });
 
-    Console.WriteLine($"✓ Inserted 1,000 records with custom mappings\n");
+    Console.WriteLine("✓ Inserted 1,000 records with custom mappings\n");
 
     // Sample 3: Parallel bulk inserts with batching
     Console.WriteLine("3. Parallel bulk inserts - Processing multiple batches");
 
     var transactions = Enumerable.Range(1, 10000)
-        .Select(i => new
+        .Select(static i => new
         {
             Id = i,
             Name = $"Transaction_{i}",
@@ -82,10 +85,10 @@ try
     startTime = DateTime.UtcNow;
 
     await transactions.BulkInsertUsingCopyAsync(
-        () => new NpgsqlConnection(connectionString),
+        static () => new NpgsqlConnection(connectionString),
         "transactions",
         ["id", "name", "value"],
-        t => [t.Id, t.Name, t.Value],
+        static t => [t.Id, t.Name, t.Value],
         new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 4,
@@ -101,11 +104,11 @@ try
     Console.WriteLine("4. BulkInsertUsingCopyCsvAsync - CSV format import");
 
     var csvLines = Enumerable.Range(1, 1000)
-        .Select(i => $"{i},Product_{i},{i * 9.99:F2}")
+        .Select(static i => $"{i},Product_{i},{i * 9.99:F2}")
         .ToList();
 
     await csvLines.BulkInsertUsingCopyCsvAsync(
-        () => new NpgsqlConnection(connectionString),
+        static () => new NpgsqlConnection(connectionString),
         "products",
         ["id", "product_name", "price"],
         new ParallelOptionsRivulet
@@ -116,17 +119,17 @@ try
         hasHeader: false,
         delimiter: ',');
 
-    Console.WriteLine($"✓ Inserted 1,000 products using CSV format\n");
+    Console.WriteLine("✓ Inserted 1,000 products using CSV format\n");
 
     // Sample 5: COPY with text format (tab-delimited)
     Console.WriteLine("5. BulkInsertUsingCopyTextAsync - Text format (tab-delimited)");
 
     var textLines = Enumerable.Range(1, 500)
-        .Select(i => $"{i}\tOrder-{i:D6}\t{i * 49.99:F2}\t{DateTime.UtcNow:yyyy-MM-dd}")
+        .Select(static i => $"{i}\tOrder-{i:D6}\t{i * 49.99:F2}\t{DateTime.UtcNow:yyyy-MM-dd}")
         .ToList();
 
     await textLines.BulkInsertUsingCopyTextAsync(
-        () => new NpgsqlConnection(connectionString),
+        static () => new NpgsqlConnection(connectionString),
         "orders",
         ["id", "order_number", "total_amount", "order_date"],
         new ParallelOptionsRivulet
@@ -135,13 +138,13 @@ try
         },
         batchSize: 500);
 
-    Console.WriteLine($"✓ Inserted 500 orders using text format\n");
+    Console.WriteLine("✓ Inserted 500 orders using text format\n");
 
     // Sample 6: Complex object mapping with nulls
     Console.WriteLine("6. Bulk insert with nullable fields");
 
     var inventory = Enumerable.Range(1, 1000)
-        .Select(i => new
+        .Select(static i => new
         {
             Id = i,
             ItemName = $"Item_{i}",
@@ -151,10 +154,10 @@ try
         .ToList();
 
     await inventory.BulkInsertUsingCopyAsync(
-        () => new NpgsqlConnection(connectionString),
+        static () => new NpgsqlConnection(connectionString),
         "inventory",
         ["id", "item_name", "quantity", "last_restocked"],
-        item => [item.Id, item.ItemName, item.Quantity, item.LastRestocked],
+        static item => [item.Id, item.ItemName, item.Quantity, item.LastRestocked],
         new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 3
@@ -167,7 +170,7 @@ try
     Console.WriteLine("7. Bulk insert with PostgreSQL arrays");
 
     var documents = Enumerable.Range(1, 100)
-        .Select(i => new
+        .Select(static i => new
         {
             Id = i,
             Title = $"Document_{i}",
@@ -177,10 +180,10 @@ try
         .ToList();
 
     await documents.BulkInsertUsingCopyAsync(
-        () => new NpgsqlConnection(connectionString),
+        static () => new NpgsqlConnection(connectionString),
         "documents",
         ["id", "title", "tags", "scores"],
-        doc => [doc.Id, doc.Title, doc.Tags, doc.Scores],
+        static doc => [doc.Id, doc.Title, doc.Tags, doc.Scores],
         new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 2

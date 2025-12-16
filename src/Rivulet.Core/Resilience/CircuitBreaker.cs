@@ -5,8 +5,8 @@ using Rivulet.Core.Observability;
 namespace Rivulet.Core.Resilience;
 
 /// <summary>
-/// Thread-safe implementation of the circuit breaker pattern.
-/// Prevents cascading failures by failing fast when a threshold of failures is reached.
+///     Thread-safe implementation of the circuit breaker pattern.
+///     Prevents cascading failures by failing fast when a threshold of failures is reached.
 /// </summary>
 internal sealed class CircuitBreaker
 {
@@ -24,12 +24,12 @@ internal sealed class CircuitBreaker
     private long _openedAtTicks;
 
     /// <summary>
-    /// Gets the current state of the circuit breaker.
+    ///     Gets the current state of the circuit breaker.
     /// </summary>
     public CircuitBreakerState State => LockHelper.Execute(_lock, () => _state);
 
     /// <summary>
-    /// Initializes a new instance of the CircuitBreaker class.
+    ///     Initializes a new instance of the CircuitBreaker class.
     /// </summary>
     /// <param name="options">Circuit breaker configuration options.</param>
     public CircuitBreaker(CircuitBreakerOptions options)
@@ -45,7 +45,7 @@ internal sealed class CircuitBreaker
     }
 
     /// <summary>
-    /// Executes an operation with circuit breaker protection.
+    ///     Executes an operation with circuit breaker protection.
     /// </summary>
     /// <typeparam name="T">The result type.</typeparam>
     /// <param name="operation">The operation to execute.</param>
@@ -73,84 +73,67 @@ internal sealed class CircuitBreaker
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        LockHelper.Execute(_lock, () =>
-        {
-            if (_state == CircuitBreakerState.Open &&
-                Environment.TickCount64 - _openedAtTicks >= (long)_options.OpenTimeout.TotalMilliseconds)
+        LockHelper.Execute(_lock,
+            () =>
             {
-                TransitionToHalfOpen();
-            }
+                if (_state == CircuitBreakerState.Open &&
+                    Environment.TickCount64 - _openedAtTicks >= (long)_options.OpenTimeout.TotalMilliseconds)
+                    TransitionToHalfOpen();
 
-            if (_state == CircuitBreakerState.Open)
-            {
-                throw new CircuitBreakerOpenException(_state);
-            }
-        });
+                if (_state == CircuitBreakerState.Open) throw new CircuitBreakerOpenException(_state);
+            });
 
         return ValueTask.CompletedTask;
     }
 
-    private void OnSuccess()
-    {
-        LockHelper.Execute(_lock, () =>
-        {
-            _consecutiveFailures = 0;
-
-            if (_state != CircuitBreakerState.HalfOpen) return;
-
-            _consecutiveSuccesses++;
-
-            if (_consecutiveSuccesses >= _options.SuccessThreshold)
+    private void OnSuccess() =>
+        LockHelper.Execute(_lock,
+            () =>
             {
-                TransitionToClosed();
-            }
-        });
-    }
+                _consecutiveFailures = 0;
 
-    private void OnFailure()
-    {
-        LockHelper.Execute(_lock, () =>
-        {
-            _consecutiveSuccesses = 0;
+                if (_state != CircuitBreakerState.HalfOpen) return;
 
-            switch (_state)
+                _consecutiveSuccesses++;
+
+                if (_consecutiveSuccesses >= _options.SuccessThreshold) TransitionToClosed();
+            });
+
+    private void OnFailure() =>
+        LockHelper.Execute(_lock,
+            () =>
             {
-                case CircuitBreakerState.HalfOpen:
-                    TransitionToOpen();
-                    return;
-                case CircuitBreakerState.Closed:
+                _consecutiveSuccesses = 0;
+
+                // ReSharper disable once SwitchStatementMissingSomeEnumCasesNoDefault
+                switch (_state)
                 {
-                    _consecutiveFailures++;
-
-                    if (_options.SamplingDuration.HasValue)
+                    case CircuitBreakerState.HalfOpen:
+                        TransitionToOpen();
+                        return;
+                    case CircuitBreakerState.Closed:
                     {
-                        var now = Environment.TickCount64;
-                        _failureTimestamps.Enqueue(now);
+                        _consecutiveFailures++;
 
-                        var cutoffMs = (long)_options.SamplingDuration.Value.TotalMilliseconds;
-                        while (_failureTimestamps.TryPeek(out var timestamp) && now - timestamp > cutoffMs)
+                        if (_options.SamplingDuration.HasValue)
                         {
-                            _failureTimestamps.TryDequeue(out _);
+                            var now = Environment.TickCount64;
+                            _failureTimestamps.Enqueue(now);
+
+                            var cutoffMs = (long)_options.SamplingDuration.Value.TotalMilliseconds;
+                            while (_failureTimestamps.TryPeek(out var timestamp) && now - timestamp > cutoffMs) _failureTimestamps.TryDequeue(out _);
+
+                            if (_failureTimestamps.Count >= _options.FailureThreshold) TransitionToOpen();
+                        }
+                        else
+                        {
+                            if (_consecutiveFailures >= _options.FailureThreshold) TransitionToOpen();
                         }
 
-                        if (_failureTimestamps.Count >= _options.FailureThreshold)
-                        {
-                            TransitionToOpen();
-                        }
+                        break;
                     }
-                    else
-                    {
-                        if (_consecutiveFailures >= _options.FailureThreshold)
-                        {
-                            TransitionToOpen();
-                        }
-                    }
-
-                    break;
                 }
-            }
-        });
-    }
+            });
 
     private void TransitionToClosed()
     {
@@ -163,16 +146,17 @@ internal sealed class CircuitBreaker
         if (_options.OnStateChange is not null && oldState != CircuitBreakerState.Closed)
         {
             _ = Task.Run(async () =>
-            {
-                try
                 {
-                    await _options.OnStateChange(oldState, CircuitBreakerState.Closed).ConfigureAwait(false);
-                }
-                catch (Exception ex)
-                {
-                    RivuletEventSource.Log.CallbackFailed(nameof(CircuitBreakerOptions.OnStateChange), ex.GetType().Name, ex.Message);
-                }
-            }, CancellationToken.None);
+                    try
+                    {
+                        await _options.OnStateChange(oldState, CircuitBreakerState.Closed).ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        RivuletEventSource.Log.CallbackFailed(nameof(CircuitBreakerOptions.OnStateChange), ex.GetType().Name, ex.Message);
+                    }
+                },
+                CancellationToken.None);
         }
     }
 
@@ -186,16 +170,17 @@ internal sealed class CircuitBreaker
         if (_options.OnStateChange is not null && oldState != CircuitBreakerState.Open)
         {
             _ = Task.Run(async () =>
-            {
-                try
                 {
-                    await _options.OnStateChange(oldState, CircuitBreakerState.Open).ConfigureAwait(false);
-                }
-                catch (Exception ex)
-                {
-                    RivuletEventSource.Log.CallbackFailed(nameof(CircuitBreakerOptions.OnStateChange), ex.GetType().Name, ex.Message);
-                }
-            }, CancellationToken.None);
+                    try
+                    {
+                        await _options.OnStateChange(oldState, CircuitBreakerState.Open).ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        RivuletEventSource.Log.CallbackFailed(nameof(CircuitBreakerOptions.OnStateChange), ex.GetType().Name, ex.Message);
+                    }
+                },
+                CancellationToken.None);
         }
     }
 
@@ -209,22 +194,23 @@ internal sealed class CircuitBreaker
         if (_options.OnStateChange is not null && oldState != CircuitBreakerState.HalfOpen)
         {
             _ = Task.Run(async () =>
-            {
-                try
                 {
-                    await _options.OnStateChange(oldState, CircuitBreakerState.HalfOpen).ConfigureAwait(false);
-                }
-                catch (Exception ex)
-                {
-                    RivuletEventSource.Log.CallbackFailed(nameof(CircuitBreakerOptions.OnStateChange), ex.GetType().Name, ex.Message);
-                }
-            }, CancellationToken.None);
+                    try
+                    {
+                        await _options.OnStateChange(oldState, CircuitBreakerState.HalfOpen).ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        RivuletEventSource.Log.CallbackFailed(nameof(CircuitBreakerOptions.OnStateChange), ex.GetType().Name, ex.Message);
+                    }
+                },
+                CancellationToken.None);
         }
     }
 
     /// <summary>
-    /// Resets the circuit breaker to the Closed state.
-    /// Useful for testing or manual intervention.
+    ///     Resets the circuit breaker to the Closed state.
+    ///     Useful for testing or manual intervention.
     /// </summary>
     internal void Reset() =>
         LockHelper.Execute(_lock, TransitionToClosed);

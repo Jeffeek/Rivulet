@@ -71,8 +71,8 @@ public class MetricsTests
             async (x, ct) =>
             {
                 await Task.Delay(5, ct);
-                if (x % 5 == 0)
-                    throw new InvalidOperationException("Error");
+                if (x % 5 == 0) throw new InvalidOperationException("Error");
+
                 return x * 2;
             },
             options);
@@ -120,8 +120,8 @@ public class MetricsTests
             {
                 await Task.Delay(5, ct);
                 var attemptCount = attempts.AddOrUpdate(x, 1, (_, count) => count + 1);
-                if (attemptCount < 3)
-                    throw new InvalidOperationException("Transient error");
+                if (attemptCount < 3) throw new InvalidOperationException("Transient error");
+
                 return x * 2;
             },
             options);
@@ -231,10 +231,11 @@ public class MetricsTests
         };
 
         var results = await source.SelectParallelStreamAsync(async (x, ct) =>
-            {
-                await Task.Delay(10, ct);
-                return x * 2;
-            }, options)
+                {
+                    await Task.Delay(10, ct);
+                    return x * 2;
+                },
+                options)
             .ToListAsync();
 
         await Task.Delay(100);
@@ -269,11 +270,13 @@ public class MetricsTests
         };
 
         var results = await source.SelectParallelStreamAsync(async (x, ct) =>
-            {
-                await Task.Delay(5, ct);
-                if (x % 3 == 0) throw new InvalidOperationException("Error");
-                return x * 2;
-            }, options)
+                {
+                    await Task.Delay(5, ct);
+                    if (x % 3 == 0) throw new InvalidOperationException("Error");
+
+                    return x * 2;
+                },
+                options)
             .ToListAsync();
 
         results.Count.ShouldBe(20, "30 items minus 10 failures (every 3rd: 3,6,9,12,15,18,21,24,27,30) equals 20 successful results");
@@ -285,27 +288,23 @@ public class MetricsTests
             () => Task.Delay(100),
             () => callbackInvocationCount == 0 || capturedSnapshot is not { TotalFailures: 10 });
 
-        callbackInvocationCount.ShouldBeGreaterThan(0, "at least one metrics sample should have been captured during operation execution and disposal");
+        callbackInvocationCount.ShouldBeGreaterThan(0,
+            "at least one metrics sample should have been captured during operation execution and disposal");
         capturedSnapshot.ShouldNotBeNull("final metrics snapshot should be available after disposal completes");
         capturedSnapshot!.TotalFailures.ShouldBe(10, "items 3,6,9,12,15,18,21,24,27,30 should have failed (10 total failures)");
     }
 
     [Fact]
-    public async Task Metrics_WithoutCallback_DoesNotThrow()
+    public Task Metrics_WithoutCallback_DoesNotThrow()
     {
         var source = Enumerable.Range(1, 50);
 
         var options = new ParallelOptionsRivulet
         {
-            MaxDegreeOfParallelism = 4,
-            Metrics = new()
-            {
-                SampleInterval = TimeSpan.FromMilliseconds(50),
-                OnMetricsSample = null
-            }
+            MaxDegreeOfParallelism = 4, Metrics = new() { SampleInterval = TimeSpan.FromMilliseconds(50), OnMetricsSample = null }
         };
 
-        var act = async () => await source.SelectParallelAsync(
+        var act = () => source.SelectParallelAsync(
             async (x, ct) =>
             {
                 await Task.Delay(5, ct);
@@ -313,7 +312,7 @@ public class MetricsTests
             },
             options);
 
-        await act.ShouldNotThrowAsync();
+        return act.ShouldNotThrowAsync();
     }
 
     [Fact]
@@ -327,7 +326,7 @@ public class MetricsTests
             Metrics = new()
             {
                 SampleInterval = TimeSpan.FromMilliseconds(50),
-                OnMetricsSample = _ => throw new InvalidOperationException("Callback error")
+                OnMetricsSample = static _ => throw new InvalidOperationException("Callback error")
             }
         };
 
@@ -401,12 +400,12 @@ public class MetricsTests
             }
         };
 
-        var act = async () => await source.SelectParallelAsync(
+        var act = () => source.SelectParallelAsync(
             async (x, ct) =>
             {
                 await Task.Delay(5, ct);
-                if (x == 10)
-                    throw new InvalidOperationException("Error");
+                if (x == 10) throw new InvalidOperationException("Error");
+
                 return x * 2;
             },
             options);
@@ -430,7 +429,11 @@ public class MetricsTests
             Metrics = new()
             {
                 SampleInterval = TimeSpan.FromMilliseconds(10),
-                OnMetricsSample = snapshot => { snapshots1.Add(snapshot); return ValueTask.CompletedTask; }
+                OnMetricsSample = snapshot =>
+                {
+                    snapshots1.Add(snapshot);
+                    return ValueTask.CompletedTask;
+                }
             }
         };
 
@@ -440,7 +443,11 @@ public class MetricsTests
             Metrics = new()
             {
                 SampleInterval = TimeSpan.FromMilliseconds(10),
-                OnMetricsSample = snapshot => { snapshots2.Add(snapshot); return ValueTask.CompletedTask; }
+                OnMetricsSample = snapshot =>
+                {
+                    snapshots2.Add(snapshot);
+                    return ValueTask.CompletedTask;
+                }
             }
         };
 
@@ -449,8 +456,18 @@ public class MetricsTests
         // Operation 2: 30 items / 4 parallelism * 50ms = 375ms (37.5 sample intervals)
         // This ensures metrics timers fire frequently enough to reliably capture final state
         // even if last item completes between timer ticks
-        var task1 = source1.SelectParallelAsync(async (x, ct) => { await Task.Delay(50, ct); return x * 2; }, options1);
-        var task2 = source2.SelectParallelAsync(async (x, ct) => { await Task.Delay(50, ct); return x * 3; }, options2);
+        var task1 = source1.SelectParallelAsync(async (x, ct) =>
+            {
+                await Task.Delay(50, ct);
+                return x * 2;
+            },
+            options1);
+        var task2 = source2.SelectParallelAsync(async (x, ct) =>
+            {
+                await Task.Delay(50, ct);
+                return x * 3;
+            },
+            options2);
 
         var results1 = await task1;
         var results2 = await task2;
@@ -465,8 +482,7 @@ public class MetricsTests
             () => Task.Delay(100),
             () =>
             {
-                if (!snapshots1.Any() || !snapshots2.Any())
-                    return true;
+                if (!snapshots1.Any() || !snapshots2.Any()) return true;
 
                 var list1 = snapshots1.ToList();
                 var list2 = snapshots2.ToList();
@@ -728,12 +744,7 @@ public class MetricsTests
     [Fact]
     public async Task Metrics_WithAllErrorModes_TracksCorrectly()
     {
-        var testCases = new[]
-        {
-            ErrorMode.FailFast,
-            ErrorMode.CollectAndContinue,
-            ErrorMode.BestEffort
-        };
+        var testCases = new[] { ErrorMode.FailFast, ErrorMode.CollectAndContinue, ErrorMode.BestEffort };
 
         foreach (var errorMode in testCases)
         {
@@ -759,12 +770,12 @@ public class MetricsTests
             {
                 case ErrorMode.FailFast:
                 {
-                    var act = async () => await source.SelectParallelAsync(
+                    var act = () => source.SelectParallelAsync(
                         async (x, ct) =>
                         {
                             await Task.Delay(5, ct);
-                            if (x == 10)
-                                throw new InvalidOperationException("Error");
+                            if (x == 10) throw new InvalidOperationException("Error");
+
                             return x * 2;
                         },
                         options);
@@ -774,12 +785,12 @@ public class MetricsTests
                 }
                 case ErrorMode.CollectAndContinue:
                 {
-                    var act = async () => await source.SelectParallelAsync(
+                    var act = () => source.SelectParallelAsync(
                         async (x, ct) =>
                         {
                             await Task.Delay(5, ct);
-                            if (x % 5 == 0)
-                                throw new InvalidOperationException("Error");
+                            if (x % 5 == 0) throw new InvalidOperationException("Error");
+
                             return x * 2;
                         },
                         options);
@@ -794,8 +805,8 @@ public class MetricsTests
                         async (x, ct) =>
                         {
                             await Task.Delay(5, ct);
-                            if (x % 5 == 0)
-                                throw new InvalidOperationException("Error");
+                            if (x % 5 == 0) throw new InvalidOperationException("Error");
+
                             return x * 2;
                         },
                         options);
@@ -874,11 +885,7 @@ public class MetricsTests
     [Fact]
     public async Task MetricsTracker_DoubleDispose_DoesNotThrow()
     {
-        var options = new MetricsOptions
-        {
-            SampleInterval = TimeSpan.FromMilliseconds(50),
-            OnMetricsSample = _ => ValueTask.CompletedTask
-        };
+        var options = new MetricsOptions { SampleInterval = TimeSpan.FromMilliseconds(50), OnMetricsSample = _ => ValueTask.CompletedTask };
 
         var tracker = new MetricsTracker(options, CancellationToken.None);
 
@@ -1000,8 +1007,7 @@ public class MetricsTests
                 await Task.Delay(10, ct);
                 var attempt = attempts.AddOrUpdate(x, 1, (_, count) => count + 1);
 
-                if (x % 5 == 0 && attempt <= 1)
-                    throw new InvalidOperationException("Transient error");
+                if (x % 5 == 0 && attempt <= 1) throw new InvalidOperationException("Transient error");
 
                 return x * 2;
             },
@@ -1038,8 +1044,7 @@ public class MetricsTests
                 await Task.Delay(5, ct);
                 var attempt = attempts.AddOrUpdate(x, 1, (_, count) => count + 1);
 
-                if (x % 5 == 0 && attempt <= 1)
-                    throw new InvalidOperationException("Transient error");
+                if (x % 5 == 0 && attempt <= 1) throw new InvalidOperationException("Transient error");
 
                 return x * 2;
             },
@@ -1103,14 +1108,15 @@ public class MetricsTests
     {
         var callbackCount = 0;
         var tracker = new MetricsTracker(new()
-        {
-            SampleInterval = TimeSpan.FromMilliseconds(20),
-            OnMetricsSample = _ =>
             {
-                Interlocked.Increment(ref callbackCount);
-                throw new InvalidOperationException("Metrics callback error!");
-            }
-        }, CancellationToken.None);
+                SampleInterval = TimeSpan.FromMilliseconds(20),
+                OnMetricsSample = _ =>
+                {
+                    Interlocked.Increment(ref callbackCount);
+                    throw new InvalidOperationException("Metrics callback error!");
+                }
+            },
+            CancellationToken.None);
 
         try
         {
@@ -1132,19 +1138,20 @@ public class MetricsTests
     }
 
     [Fact]
-    public async Task MetricsTracker_Dispose_WithCallbackThrows_HandlesGracefully()
+    public Task MetricsTracker_Dispose_WithCallbackThrows_HandlesGracefully()
     {
         var tracker = new MetricsTracker(new()
-        {
-            SampleInterval = TimeSpan.FromMilliseconds(100),
-            OnMetricsSample = _ => throw new InvalidOperationException("Error!")
-        }, CancellationToken.None);
+            {
+                SampleInterval = TimeSpan.FromMilliseconds(100),
+                OnMetricsSample = static _ => throw new InvalidOperationException("Error!")
+            },
+            CancellationToken.None);
 
         tracker.IncrementItemsCompleted();
 
         // Should not throw despite callback exception
         var act = async () => await tracker.DisposeAsync();
-        await act.ShouldNotThrowAsync();
+        return act.ShouldNotThrowAsync();
     }
 
     [Fact]
@@ -1196,9 +1203,11 @@ public class MetricsTests
             (x, _) =>
             {
                 if (x != 5) return new(x * 2);
+
                 var attempt = Interlocked.Increment(ref attemptCount);
                 if (attempt <= 2) // Fail first 2 attempts
                     throw new InvalidOperationException("Transient");
+
                 return new ValueTask<int>(x * 2);
             },
             options);
@@ -1233,5 +1242,4 @@ public class MetricsTests
         // ReSharper disable once DisposeOnUsingVariable
         await tracker.DisposeAsync();
     }
-
 }

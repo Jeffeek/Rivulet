@@ -66,7 +66,7 @@ public class DirectoryInfoExtensionsTests : TempDirectoryFixture
 
         // Assert
         files.Count.ShouldBe(2);
-        files.ShouldAllBe(f => f.Extension == ".txt");
+        files.ShouldAllBe(static f => f.Extension == ".txt");
     }
 
     [Fact]
@@ -82,7 +82,7 @@ public class DirectoryInfoExtensionsTests : TempDirectoryFixture
         // Act
         var results = await sourceDirectory.TransformFilesParallelAsync(
             destDirectory,
-            async (_, content) => await ValueTask.FromResult(content.ToUpperInvariant()),
+            static (_, content) => ValueTask.FromResult(content.ToUpperInvariant()),
             "*.txt");
 
         // Assert
@@ -192,8 +192,7 @@ public class DirectoryInfoExtensionsTests : TempDirectoryFixture
         var directory = new DirectoryInfo(Path.Join(TestDirectory, "nonexistent"));
 
         // Act
-        var act = async () => await directory.ProcessFilesParallelAsync(
-            async (filePath, _) => await ValueTask.FromResult(filePath),
+        var act = () => directory.ProcessFilesParallelAsync((filePath, _) => ValueTask.FromResult(filePath),
             "*.txt");
 
         // Assert
@@ -251,7 +250,7 @@ public class DirectoryInfoExtensionsTests : TempDirectoryFixture
         // Act
         await sourceDirectory.TransformFilesParallelAsync(
             destDirectory,
-            async (_, content) => await ValueTask.FromResult(content),
+            (_, content) => ValueTask.FromResult(content),
             "*.txt",
             SearchOption.TopDirectoryOnly,
             options);

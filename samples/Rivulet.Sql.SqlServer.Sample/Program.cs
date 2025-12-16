@@ -3,6 +3,11 @@ using Microsoft.Data.SqlClient;
 using Rivulet.Core;
 using Rivulet.Sql.SqlServer;
 
+// ReSharper disable ArgumentsStyleOther
+// ReSharper disable ArgumentsStyleLiteral
+
+// ReSharper disable ArrangeObjectCreationWhenTypeNotEvident
+
 Console.WriteLine("=== Rivulet.Sql.SqlServer Sample ===\n");
 Console.WriteLine("NOTE: Configure connection string before running!\n");
 
@@ -16,7 +21,7 @@ try
 
     // Create sample data - 10,000 user records
     var users = Enumerable.Range(1, 10000)
-        .Select(i => new
+        .Select(static i => new
         {
             Id = i,
             Name = $"User{i}",
@@ -28,9 +33,9 @@ try
     var startTime = DateTime.UtcNow;
 
     await users.BulkInsertUsingSqlBulkCopyAsync(
-        () => new SqlConnection(connectionString),
+        static () => new SqlConnection(connectionString),
         "Users",
-        batch =>
+        static batch =>
         {
             var dataTable = new DataTable();
             dataTable.Columns.Add("Id", typeof(int));
@@ -38,10 +43,7 @@ try
             dataTable.Columns.Add("Email", typeof(string));
             dataTable.Columns.Add("CreatedAt", typeof(DateTime));
 
-            foreach (var user in batch)
-            {
-                dataTable.Rows.Add(user.Id, user.Name, user.Email, user.CreatedAt);
-            }
+            foreach (var user in batch) dataTable.Rows.Add(user.Id, user.Name, user.Email, user.CreatedAt);
 
             return dataTable;
         },
@@ -67,7 +69,7 @@ try
     };
 
     var customUsers = Enumerable.Range(1, 1000)
-        .Select(i => new
+        .Select(static i => new
         {
             Id = i + 10000,
             Name = $"CustomUser{i}",
@@ -76,19 +78,16 @@ try
         .ToList();
 
     await customUsers.BulkInsertUsingSqlBulkCopyAsync(
-        () => new SqlConnection(connectionString),
+        static () => new SqlConnection(connectionString),
         "AlternateUsers",
-        batch =>
+        static batch =>
         {
             var dt = new DataTable();
             dt.Columns.Add("Id", typeof(int));
             dt.Columns.Add("Name", typeof(string));
             dt.Columns.Add("Email", typeof(string));
 
-            foreach (var user in batch)
-            {
-                dt.Rows.Add(user.Id, user.Name, user.Email);
-            }
+            foreach (var user in batch) dt.Rows.Add(user.Id, user.Name, user.Email);
 
             return dt;
         },
@@ -98,13 +97,13 @@ try
             MaxDegreeOfParallelism = 2
         });
 
-    Console.WriteLine($"✓ Inserted 1,000 records with custom mappings\n");
+    Console.WriteLine("✓ Inserted 1,000 records with custom mappings\n");
 
     // Sample 3: Parallel bulk inserts with batching
     Console.WriteLine("3. Parallel bulk inserts - Processing multiple batches");
 
     var transactions = Enumerable.Range(1, 10000)
-        .Select(i => new
+        .Select(static i => new
         {
             Id = i,
             Name = $"Transaction_{i}",
@@ -115,19 +114,16 @@ try
     startTime = DateTime.UtcNow;
 
     await transactions.BulkInsertUsingSqlBulkCopyAsync(
-        () => new SqlConnection(connectionString),
+        static () => new SqlConnection(connectionString),
         "Transactions",
-        batch =>
+        static batch =>
         {
             var dt = new DataTable();
             dt.Columns.Add("Id", typeof(int));
             dt.Columns.Add("Name", typeof(string));
             dt.Columns.Add("Value", typeof(decimal));
 
-            foreach (var txn in batch)
-            {
-                dt.Rows.Add(txn.Id, txn.Name, txn.Value);
-            }
+            foreach (var txn in batch) dt.Rows.Add(txn.Id, txn.Name, txn.Value);
 
             return dt;
         },
@@ -147,7 +143,7 @@ try
     Console.WriteLine("4. SqlBulkCopy with advanced options (KeepIdentity, CheckConstraints)");
 
     var products = Enumerable.Range(1, 500)
-        .Select(i => new
+        .Select(static i => new
         {
             Id = i,
             ProductName = $"Product_{i}"
@@ -155,18 +151,15 @@ try
         .ToList();
 
     await products.BulkInsertUsingSqlBulkCopyAsync(
-        () => new SqlConnection(connectionString),
+        static () => new SqlConnection(connectionString),
         "Products",
-        batch =>
+        static batch =>
         {
             var dt = new DataTable();
             dt.Columns.Add("Id", typeof(int));
             dt.Columns.Add("ProductName", typeof(string));
 
-            foreach (var product in batch)
-            {
-                dt.Rows.Add(product.Id, product.ProductName);
-            }
+            foreach (var product in batch) dt.Rows.Add(product.Id, product.ProductName);
 
             return dt;
         },
@@ -175,7 +168,7 @@ try
         batchSize: 500,
         bulkCopyTimeout: 60);
 
-    Console.WriteLine($"✓ Inserted 500 products with advanced options\n");
+    Console.WriteLine("✓ Inserted 500 products with advanced options\n");
 
     // Sample 5: Bulk insert from IDataReader
     Console.WriteLine("5. Bulk insert using IDataReader (when you have large result sets)");

@@ -2,7 +2,7 @@
 
 namespace Rivulet.Core.Tests;
 
-public class ForEachParallelAsyncTests
+public sealed class ForEachParallelAsyncTests
 {
     [Fact]
     public async Task ForEachParallelAsync_EmptyCollection_CompletesWithoutError()
@@ -10,12 +10,11 @@ public class ForEachParallelAsyncTests
         var source = AsyncEnumerable.Empty<int>();
         var processedItems = new ConcurrentBag<int>();
 
-        await source.ForEachParallelAsync(
-            (x, _) =>
-            {
-                processedItems.Add(x);
-                return ValueTask.CompletedTask;
-            });
+        await source.ForEachParallelAsync((x, _) =>
+        {
+            processedItems.Add(x);
+            return ValueTask.CompletedTask;
+        });
 
         processedItems.ShouldBeEmpty();
     }
@@ -26,12 +25,11 @@ public class ForEachParallelAsyncTests
         var source = new[] { 5 }.ToAsyncEnumerable();
         var processedItems = new ConcurrentBag<int>();
 
-        await source.ForEachParallelAsync(
-            (x, _) =>
-            {
-                processedItems.Add(x * 2);
-                return ValueTask.CompletedTask;
-            });
+        await source.ForEachParallelAsync((x, _) =>
+        {
+            processedItems.Add(x * 2);
+            return ValueTask.CompletedTask;
+        });
 
         processedItems.ShouldHaveSingleItem().ShouldBe(10);
     }
@@ -42,15 +40,14 @@ public class ForEachParallelAsyncTests
         var source = Enumerable.Range(1, 10).ToAsyncEnumerable();
         var processedItems = new ConcurrentBag<int>();
 
-        await source.ForEachParallelAsync(
-            (x, _) =>
-            {
-                processedItems.Add(x);
-                return ValueTask.CompletedTask;
-            });
+        await source.ForEachParallelAsync((x, _) =>
+        {
+            processedItems.Add(x);
+            return ValueTask.CompletedTask;
+        });
 
         processedItems.Count.ShouldBe(10);
-        processedItems.OrderBy(x => x).ShouldBe(Enumerable.Range(1, 10));
+        processedItems.OrderBy(static x => x).ShouldBe(Enumerable.Range(1, 10));
     }
 
     [Fact]
@@ -59,12 +56,11 @@ public class ForEachParallelAsyncTests
         var source = Enumerable.Range(1, 20).ToAsyncEnumerable();
         var results = new ConcurrentDictionary<int, int>();
 
-        await source.ForEachParallelAsync(
-            async (x, ct) =>
-            {
-                await Task.Delay(10, ct);
-                results[x] = x * x;
-            });
+        await source.ForEachParallelAsync(async (x, ct) =>
+        {
+            await Task.Delay(10, ct);
+            results[x] = x * x;
+        });
 
         results.Count.ShouldBe(20);
         results[5].ShouldBe(25);
@@ -84,10 +80,7 @@ public class ForEachParallelAsyncTests
             async (_, ct) =>
             {
                 await Task.Delay(100, ct);
-                lock (lockObj)
-                {
-                    processedCount++;
-                }
+                lock (lockObj) processedCount++;
             },
             options);
 
@@ -120,10 +113,7 @@ public class ForEachParallelAsyncTests
 
                 await Task.Delay(50, ct);
 
-                lock (lockObj)
-                {
-                    concurrentCount--;
-                }
+                lock (lockObj) concurrentCount--;
             },
             options);
 
@@ -136,13 +126,11 @@ public class ForEachParallelAsyncTests
         var source = Enumerable.Range(1, 5).ToAsyncEnumerable();
         var processedItems = new ConcurrentBag<int>();
 
-        await source.ForEachParallelAsync(
-            (x, _) =>
-            {
-                processedItems.Add(x);
-                return ValueTask.CompletedTask;
-            },
-            options: null);
+        await source.ForEachParallelAsync((x, _) =>
+        {
+            processedItems.Add(x);
+            return ValueTask.CompletedTask;
+        });
 
         processedItems.Count.ShouldBe(5);
     }
@@ -153,12 +141,11 @@ public class ForEachParallelAsyncTests
         var source = Enumerable.Range(1, 1000).ToAsyncEnumerable();
         var processedCount = 0;
 
-        await source.ForEachParallelAsync(
-            (_, _) =>
-            {
-                Interlocked.Increment(ref processedCount);
-                return ValueTask.CompletedTask;
-            });
+        await source.ForEachParallelAsync((_, _) =>
+        {
+            Interlocked.Increment(ref processedCount);
+            return ValueTask.CompletedTask;
+        });
 
         processedCount.ShouldBe(1000);
     }
@@ -170,15 +157,14 @@ public class ForEachParallelAsyncTests
         var evenNumbers = new ConcurrentBag<int>();
         var oddNumbers = new ConcurrentBag<int>();
 
-        await source.ForEachParallelAsync(
-            async (x, ct) =>
-            {
-                await Task.Delay(1, ct);
-                if (x % 2 == 0)
-                    evenNumbers.Add(x);
-                else
-                    oddNumbers.Add(x);
-            });
+        await source.ForEachParallelAsync(async (x, ct) =>
+        {
+            await Task.Delay(1, ct);
+            if (x % 2 == 0)
+                evenNumbers.Add(x);
+            else
+                oddNumbers.Add(x);
+        });
 
         evenNumbers.Count.ShouldBe(25);
         oddNumbers.Count.ShouldBe(25);
@@ -189,8 +175,7 @@ public class ForEachParallelAsyncTests
     {
         var source = Enumerable.Range(1, 5).ToAsyncEnumerable();
 
-        var task = source.ForEachParallelAsync(
-            (_, _) => ValueTask.CompletedTask);
+        var task = source.ForEachParallelAsync((_, _) => ValueTask.CompletedTask);
 
         await task;
         task.IsCompleted.ShouldBeTrue();

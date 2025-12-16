@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Rivulet.Core;
 
@@ -8,11 +9,10 @@ namespace Rivulet.Diagnostics.OpenTelemetry.Tests;
 [SuppressMessage("ReSharper", "AccessToDisposedClosure")]
 public class ParallelOptionsRivuletExtensionsTests
 {
-
     [Fact]
     public async Task WithOpenTelemetryTracing_ShouldCreateActivitiesForEachItem()
     {
-        var activities = new System.Collections.Concurrent.ConcurrentBag<Activity>();
+        var activities = new ConcurrentBag<Activity>();
         var activityCount = 0;
         var expectedCount = 5;
         using var allActivitiesStarted = new ManualResetEventSlim(false);
@@ -23,18 +23,12 @@ public class ParallelOptionsRivuletExtensionsTests
         listener.ActivityStarted = activity =>
         {
             activities.Add(activity);
-            if (Interlocked.Increment(ref activityCount) >= expectedCount)
-            {
-                allActivitiesStarted.Set();
-            }
+            if (Interlocked.Increment(ref activityCount) >= expectedCount) allActivitiesStarted.Set();
         };
         ActivitySource.AddActivityListener(listener);
 
         var items = Enumerable.Range(1, 5);
-        var options = new ParallelOptionsRivulet
-        {
-            MaxDegreeOfParallelism = 2
-        }.WithOpenTelemetryTracing("TestOperation");
+        var options = new ParallelOptionsRivulet { MaxDegreeOfParallelism = 2 }.WithOpenTelemetryTracing("TestOperation");
 
         var results = await items.SelectParallelAsync(
             async (x, ct) =>
@@ -56,7 +50,7 @@ public class ParallelOptionsRivuletExtensionsTests
     [Fact]
     public async Task WithOpenTelemetryTracing_ShouldRecordSuccess()
     {
-        var activities = new System.Collections.Concurrent.ConcurrentBag<Activity>();
+        var activities = new ConcurrentBag<Activity>();
         var activityCount = 0;
         const int expectedCount = 3;
         using var allActivitiesStopped = new ManualResetEventSlim(false);
@@ -67,10 +61,7 @@ public class ParallelOptionsRivuletExtensionsTests
         listener.ActivityStopped = activity =>
         {
             activities.Add(activity);
-            if (Interlocked.Increment(ref activityCount) >= expectedCount)
-            {
-                allActivitiesStopped.Set();
-            }
+            if (Interlocked.Increment(ref activityCount) >= expectedCount) allActivitiesStopped.Set();
         };
         ActivitySource.AddActivityListener(listener);
 
@@ -101,7 +92,7 @@ public class ParallelOptionsRivuletExtensionsTests
     [Fact]
     public async Task WithOpenTelemetryTracing_ShouldRecordErrors()
     {
-        var activities = new System.Collections.Concurrent.ConcurrentBag<Activity>();
+        var activities = new ConcurrentBag<Activity>();
         var activityCount = 0;
         var expectedCount = 3;
         using var allActivitiesStopped = new ManualResetEventSlim(false);
@@ -112,18 +103,12 @@ public class ParallelOptionsRivuletExtensionsTests
         listener.ActivityStopped = activity =>
         {
             activities.Add(activity);
-            if (Interlocked.Increment(ref activityCount) >= expectedCount)
-            {
-                allActivitiesStopped.Set();
-            }
+            if (Interlocked.Increment(ref activityCount) >= expectedCount) allActivitiesStopped.Set();
         };
         ActivitySource.AddActivityListener(listener);
 
         var items = Enumerable.Range(1, 3);
-        var options = new ParallelOptionsRivulet
-        {
-            ErrorMode = ErrorMode.CollectAndContinue
-        }.WithOpenTelemetryTracing("ErrorOperation");
+        var options = new ParallelOptionsRivulet { ErrorMode = ErrorMode.CollectAndContinue }.WithOpenTelemetryTracing("ErrorOperation");
 
         try
         {
@@ -164,25 +149,21 @@ public class ParallelOptionsRivuletExtensionsTests
         var items = new[] { 1 };
         var options = new ParallelOptionsRivulet
         {
-            MaxRetries = 3,
-            BaseDelay = TimeSpan.FromMilliseconds(1),
-            IsTransient = _ => true
-        }.WithOpenTelemetryTracingAndRetries("RetryOperation", trackRetries: true);
+            MaxRetries = 3, BaseDelay = TimeSpan.FromMilliseconds(1), IsTransient = static _ => true
+        }.WithOpenTelemetryTracingAndRetries("RetryOperation");
 
         var results = await items.SelectParallelAsync(
             async (x, ct) =>
             {
                 await Task.Delay(1, ct);
-                if (++attemptCount < 3)
-                {
-                    throw new InvalidOperationException("Transient error");
-                }
+                if (++attemptCount < 3) throw new InvalidOperationException("Transient error");
+
                 return x * 2;
             },
             options);
 
         results.Count.ShouldBe(1);
-        
+
         var retryActivities = activities.Where(a => a.OperationName == "Rivulet.RetryOperation.Item").ToList();
         retryActivities.Count.ShouldBe(1);
 
@@ -244,7 +225,7 @@ public class ParallelOptionsRivuletExtensionsTests
     [Fact]
     public async Task WithOpenTelemetryTracing_ShouldRecordCircuitBreakerStateChanges()
     {
-        var activities = new System.Collections.Concurrent.ConcurrentBag<Activity?>();
+        var activities = new ConcurrentBag<Activity?>();
         using var stateChanged = new ManualResetEventSlim(false);
         using var firstFailureProcessing = new ManualResetEventSlim(false);
         var failureCount = 0;
@@ -366,7 +347,8 @@ public class ParallelOptionsRivuletExtensionsTests
         if (concurrencyChanged)
         {
             var activitiesWithConcurrencyEvents = activities.Where(a =>
-                a.Events.Any(e => e.Name == "adaptive_concurrency_change")).ToList();
+                    a.Events.Any(e => e.Name == "adaptive_concurrency_change"))
+                .ToList();
 
             // When changes DO occur, verify they're properly recorded
             activitiesWithConcurrencyEvents.ShouldNotBeEmpty(
@@ -381,7 +363,7 @@ public class ParallelOptionsRivuletExtensionsTests
     [Fact]
     public async Task WithOpenTelemetryTracing_ShouldSetItemIndexTags()
     {
-        var activities = new System.Collections.Concurrent.ConcurrentBag<Activity>();
+        var activities = new ConcurrentBag<Activity>();
         var activityCount = 0;
         var expectedCount = 3;
         using var allActivitiesStopped = new ManualResetEventSlim(false);
@@ -392,10 +374,7 @@ public class ParallelOptionsRivuletExtensionsTests
         listener.ActivityStopped = activity =>
         {
             activities.Add(activity);
-            if (Interlocked.Increment(ref activityCount) >= expectedCount)
-            {
-                allActivitiesStopped.Set();
-            }
+            if (Interlocked.Increment(ref activityCount) >= expectedCount) allActivitiesStopped.Set();
         };
         ActivitySource.AddActivityListener(listener);
 

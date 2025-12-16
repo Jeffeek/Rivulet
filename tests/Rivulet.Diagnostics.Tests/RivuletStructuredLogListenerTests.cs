@@ -1,5 +1,6 @@
-using Rivulet.Core;
+using System.Collections.Concurrent;
 using System.Text.Json;
+using Rivulet.Core;
 
 namespace Rivulet.Diagnostics.Tests;
 
@@ -7,6 +8,8 @@ namespace Rivulet.Diagnostics.Tests;
 public class RivuletStructuredLogListenerTests : IDisposable
 {
     private readonly string _testFilePath = Path.Join(Path.GetTempPath(), $"rivulet-test-{Guid.NewGuid()}.json");
+
+    public void Dispose() => TestCleanupHelper.RetryDeleteFile(_testFilePath);
 
     [Fact]
     public void StructuredLogListener_ShouldThrow_WhenFilePathIsNull()
@@ -35,13 +38,11 @@ public class RivuletStructuredLogListenerTests : IDisposable
             await Enumerable.Range(1, 5)
                 .ToAsyncEnumerable()
                 .SelectParallelStreamAsync(async (x, ct) =>
-                {
-                    await Task.Delay(200, ct);
-                    return x;
-                }, new()
-                {
-                    MaxDegreeOfParallelism = 2
-                })
+                    {
+                        await Task.Delay(200, ct);
+                        return x;
+                    },
+                    new() { MaxDegreeOfParallelism = 2 })
                 .ToListAsync();
 
             // Wait for EventCounters to fire - increased for CI/CD reliability
@@ -67,13 +68,11 @@ public class RivuletStructuredLogListenerTests : IDisposable
             await Enumerable.Range(1, 5)
                 .ToAsyncEnumerable()
                 .SelectParallelStreamAsync(async (x, ct) =>
-                {
-                    await Task.Delay(200, ct);
-                    return x * 2;
-                }, new()
-                {
-                    MaxDegreeOfParallelism = 2
-                })
+                    {
+                        await Task.Delay(200, ct);
+                        return x * 2;
+                    },
+                    new() { MaxDegreeOfParallelism = 2 })
                 .ToListAsync();
 
             // Wait for EventCounters to poll and write metrics after operation completes
@@ -99,7 +98,7 @@ public class RivuletStructuredLogListenerTests : IDisposable
     {
         // Use ConcurrentBag to avoid collection modification exceptions on Windows
         // when EventListeners add items from background threads during enumeration
-        var loggedLines = new System.Collections.Concurrent.ConcurrentBag<string>();
+        var loggedLines = new ConcurrentBag<string>();
         await using var listener = new RivuletStructuredLogListener(loggedLines.Add);
 
         // Operations must run long enough for EventCounter polling (1 second interval)
@@ -107,13 +106,11 @@ public class RivuletStructuredLogListenerTests : IDisposable
         await Enumerable.Range(1, 5)
             .ToAsyncEnumerable()
             .SelectParallelStreamAsync(async (x, ct) =>
-            {
-                await Task.Delay(200, ct);
-                return x * 2;
-            }, new()
-            {
-                MaxDegreeOfParallelism = 2
-            })
+                {
+                    await Task.Delay(200, ct);
+                    return x * 2;
+                },
+                new() { MaxDegreeOfParallelism = 2 })
             .ToListAsync();
 
         // Wait for EventCounters to fire - increased for CI/CD reliability
@@ -121,16 +118,13 @@ public class RivuletStructuredLogListenerTests : IDisposable
 
         loggedLines.ShouldNotBeEmpty();
 
-        foreach (var act in loggedLines.Select<string, Func<JsonDocument>>(line => () => JsonDocument.Parse(line)))
-        {
-            act.ShouldNotThrow();
-        }
+        foreach (var act in loggedLines.Select<string, Func<JsonDocument>>(line => () => JsonDocument.Parse(line))) act.ShouldNotThrow();
     }
 
     [Fact]
     public async Task StructuredLogListener_ShouldContainRequiredFields_InJsonOutput()
     {
-        var loggedLines = new System.Collections.Concurrent.ConcurrentBag<string>();
+        var loggedLines = new ConcurrentBag<string>();
         await using var listener = new RivuletStructuredLogListener(loggedLines.Add);
 
         // Operations must run long enough for EventCounter polling (1 second interval)
@@ -138,13 +132,11 @@ public class RivuletStructuredLogListenerTests : IDisposable
         await Enumerable.Range(1, 5)
             .ToAsyncEnumerable()
             .SelectParallelStreamAsync(async (x, ct) =>
-            {
-                await Task.Delay(200, ct);
-                return x;
-            }, new()
-            {
-                MaxDegreeOfParallelism = 2
-            })
+                {
+                    await Task.Delay(200, ct);
+                    return x;
+                },
+                new() { MaxDegreeOfParallelism = 2 })
             .ToListAsync();
 
         // Wait for EventCounters to fire - increased for CI/CD reliability
@@ -184,7 +176,7 @@ public class RivuletStructuredLogListenerTests : IDisposable
     [Fact]
     public void StructuredLogListener_WithLogAction_AndSyncDispose_ShouldDisposeCleanly()
     {
-        var loggedLines = new System.Collections.Concurrent.ConcurrentBag<string>();
+        var loggedLines = new ConcurrentBag<string>();
         var listener = new RivuletStructuredLogListener(loggedLines.Add);
 
         var task = Enumerable.Range(1, 3)
@@ -199,6 +191,4 @@ public class RivuletStructuredLogListenerTests : IDisposable
         // Should not throw even though there's no file writer
         loggedLines.ShouldNotBeNull();
     }
-
-    public void Dispose() => TestCleanupHelper.RetryDeleteFile(_testFilePath);
 }

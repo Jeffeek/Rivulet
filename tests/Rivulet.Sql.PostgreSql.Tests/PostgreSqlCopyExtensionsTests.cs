@@ -4,14 +4,10 @@ namespace Rivulet.Sql.PostgreSql.Tests;
 
 public class PostgreSqlCopyExtensionsTests
 {
-    private record TestRecord(int Id, string Name, string Email);
-
-    private static NpgsqlConnection CreateMockConnection()
-    {
-        // Note: This creates a real NpgsqlConnection object but we won't actually use it
+    private static NpgsqlConnection CreateMockConnection() =>
+        // Note: This creates a real NpgsqlConnection object, but we won't actually use it
         // In real tests, the connection would be mocked or replaced
-        return new("Host=localhost;Database=testdb;Username=test;Password=test");
-    }
+        new("Host=localhost;Database=testdb;Username=test;Password=test");
 
     private static object?[] MapToRow(TestRecord record) => [record.Id, record.Name, record.Email];
 
@@ -20,7 +16,7 @@ public class PostgreSqlCopyExtensionsTests
     {
         IEnumerable<TestRecord>? source = null;
 
-        var act = async () => await source!.BulkInsertUsingCopyAsync(
+        var act = () => source!.BulkInsertUsingCopyAsync(
             CreateMockConnection,
             "test_table",
             ["id", "name", "email"],
@@ -34,7 +30,7 @@ public class PostgreSqlCopyExtensionsTests
     {
         var source = new[] { new TestRecord(1, "Test", "test@example.com") };
 
-        var act = async () => await source.BulkInsertUsingCopyAsync(
+        var act = () => source.BulkInsertUsingCopyAsync(
             null!,
             "test_table",
             ["id", "name", "email"],
@@ -48,7 +44,7 @@ public class PostgreSqlCopyExtensionsTests
     {
         var source = new[] { new TestRecord(1, "Test", "test@example.com") };
 
-        var act = async () => await source.BulkInsertUsingCopyAsync(
+        var act = () => source.BulkInsertUsingCopyAsync(
             CreateMockConnection,
             null!,
             ["id", "name", "email"],
@@ -62,7 +58,7 @@ public class PostgreSqlCopyExtensionsTests
     {
         var source = new[] { new TestRecord(1, "Test", "test@example.com") };
 
-        var act = async () => await source.BulkInsertUsingCopyAsync(
+        var act = () => source.BulkInsertUsingCopyAsync(
             CreateMockConnection,
             "",
             ["id", "name", "email"],
@@ -76,7 +72,7 @@ public class PostgreSqlCopyExtensionsTests
     {
         var source = new[] { new TestRecord(1, "Test", "test@example.com") };
 
-        var act = async () => await source.BulkInsertUsingCopyAsync(
+        var act = () => source.BulkInsertUsingCopyAsync(
             CreateMockConnection,
             "   ",
             ["id", "name", "email"],
@@ -90,7 +86,7 @@ public class PostgreSqlCopyExtensionsTests
     {
         var source = new[] { new TestRecord(1, "Test", "test@example.com") };
 
-        var act = async () => await source.BulkInsertUsingCopyAsync(
+        var act = () => source.BulkInsertUsingCopyAsync(
             CreateMockConnection,
             "test_table",
             null!,
@@ -104,7 +100,7 @@ public class PostgreSqlCopyExtensionsTests
     {
         var source = new[] { new TestRecord(1, "Test", "test@example.com") };
 
-        var act = async () => await source.BulkInsertUsingCopyAsync(
+        var act = () => source.BulkInsertUsingCopyAsync(
             CreateMockConnection,
             "test_table",
             [],
@@ -118,7 +114,7 @@ public class PostgreSqlCopyExtensionsTests
     {
         var source = new[] { new TestRecord(1, "Test", "test@example.com") };
 
-        var act = async () => await source.BulkInsertUsingCopyAsync(
+        var act = () => source.BulkInsertUsingCopyAsync(
             CreateMockConnection,
             "test_table",
             ["id", "name", "email"],
@@ -132,7 +128,7 @@ public class PostgreSqlCopyExtensionsTests
     {
         var source = new[] { new TestRecord(1, "Test", "test@example.com") };
 
-        var act = async () => await source.BulkInsertUsingCopyAsync(
+        var act = () => source.BulkInsertUsingCopyAsync(
             CreateMockConnection,
             "test_table",
             ["id", "name", "email"],
@@ -147,7 +143,7 @@ public class PostgreSqlCopyExtensionsTests
     {
         var source = new[] { new TestRecord(1, "Test", "test@example.com") };
 
-        var act = async () => await source.BulkInsertUsingCopyAsync(
+        var act = () => source.BulkInsertUsingCopyAsync(
             CreateMockConnection,
             "test_table",
             ["id", "name", "email"],
@@ -158,12 +154,12 @@ public class PostgreSqlCopyExtensionsTests
     }
 
     [Fact]
-    public async Task BulkInsertUsingCopyAsync_WithEmptySource_ShouldComplete()
+    public Task BulkInsertUsingCopyAsync_WithEmptySource_ShouldComplete()
     {
         var source = Array.Empty<TestRecord>();
 
         // Should not throw, just complete quickly
-        await source.BulkInsertUsingCopyAsync(
+        return source.BulkInsertUsingCopyAsync(
             CreateMockConnection,
             "test_table",
             ["id", "name", "email"],
@@ -175,7 +171,7 @@ public class PostgreSqlCopyExtensionsTests
     {
         IEnumerable<string>? source = null;
 
-        var act = async () => await source!.BulkInsertUsingCopyCsvAsync(
+        var act = () => source!.BulkInsertUsingCopyCsvAsync(
             CreateMockConnection,
             "test_table",
             ["id", "name", "email"]);
@@ -188,7 +184,7 @@ public class PostgreSqlCopyExtensionsTests
     {
         var source = new[] { "1,Test,test@example.com" };
 
-        var act = async () => await source.BulkInsertUsingCopyCsvAsync(
+        var act = () => source.BulkInsertUsingCopyCsvAsync(
             null!,
             "test_table",
             ["id", "name", "email"]);
@@ -201,7 +197,7 @@ public class PostgreSqlCopyExtensionsTests
     {
         var source = new[] { "1,Test,test@example.com" };
 
-        var act = async () => await source.BulkInsertUsingCopyCsvAsync(
+        var act = () => source.BulkInsertUsingCopyCsvAsync(
             CreateMockConnection,
             null!,
             ["id", "name", "email"]);
@@ -214,7 +210,7 @@ public class PostgreSqlCopyExtensionsTests
     {
         var source = new[] { "1,Test,test@example.com" };
 
-        var act = async () => await source.BulkInsertUsingCopyCsvAsync(
+        var act = () => source.BulkInsertUsingCopyCsvAsync(
             CreateMockConnection,
             "",
             ["id", "name", "email"]);
@@ -227,7 +223,7 @@ public class PostgreSqlCopyExtensionsTests
     {
         var source = new[] { "1,Test,test@example.com" };
 
-        var act = async () => await source.BulkInsertUsingCopyCsvAsync(
+        var act = () => source.BulkInsertUsingCopyCsvAsync(
             CreateMockConnection,
             "test_table",
             null!);
@@ -240,7 +236,7 @@ public class PostgreSqlCopyExtensionsTests
     {
         var source = new[] { "1,Test,test@example.com" };
 
-        var act = async () => await source.BulkInsertUsingCopyCsvAsync(
+        var act = () => source.BulkInsertUsingCopyCsvAsync(
             CreateMockConnection,
             "test_table",
             []);
@@ -253,7 +249,7 @@ public class PostgreSqlCopyExtensionsTests
     {
         var source = new[] { "1,Test,test@example.com" };
 
-        var act = async () => await source.BulkInsertUsingCopyCsvAsync(
+        var act = () => source.BulkInsertUsingCopyCsvAsync(
             CreateMockConnection,
             "test_table",
             ["id", "name", "email"],
@@ -267,7 +263,7 @@ public class PostgreSqlCopyExtensionsTests
     {
         var source = new[] { "1,Test,test@example.com" };
 
-        var act = async () => await source.BulkInsertUsingCopyCsvAsync(
+        var act = () => source.BulkInsertUsingCopyCsvAsync(
             CreateMockConnection,
             "test_table",
             ["id", "name", "email"],
@@ -277,12 +273,12 @@ public class PostgreSqlCopyExtensionsTests
     }
 
     [Fact]
-    public async Task BulkInsertUsingCopyCsvAsync_WithEmptySource_ShouldComplete()
+    public Task BulkInsertUsingCopyCsvAsync_WithEmptySource_ShouldComplete()
     {
         var source = Array.Empty<string>();
 
         // Should not throw, just complete quickly
-        await source.BulkInsertUsingCopyCsvAsync(
+        return source.BulkInsertUsingCopyCsvAsync(
             CreateMockConnection,
             "test_table",
             ["id", "name", "email"]);
@@ -293,7 +289,7 @@ public class PostgreSqlCopyExtensionsTests
     {
         IEnumerable<string>? source = null;
 
-        var act = async () => await source!.BulkInsertUsingCopyTextAsync(
+        var act = () => source!.BulkInsertUsingCopyTextAsync(
             CreateMockConnection,
             "test_table",
             ["id", "name", "email"]);
@@ -306,7 +302,7 @@ public class PostgreSqlCopyExtensionsTests
     {
         var source = new[] { "1\tTest\ttest@example.com" };
 
-        var act = async () => await source.BulkInsertUsingCopyTextAsync(
+        var act = () => source.BulkInsertUsingCopyTextAsync(
             null!,
             "test_table",
             ["id", "name", "email"]);
@@ -319,7 +315,7 @@ public class PostgreSqlCopyExtensionsTests
     {
         var source = new[] { "1\tTest\ttest@example.com" };
 
-        var act = async () => await source.BulkInsertUsingCopyTextAsync(
+        var act = () => source.BulkInsertUsingCopyTextAsync(
             CreateMockConnection,
             null!,
             ["id", "name", "email"]);
@@ -332,7 +328,7 @@ public class PostgreSqlCopyExtensionsTests
     {
         var source = new[] { "1\tTest\ttest@example.com" };
 
-        var act = async () => await source.BulkInsertUsingCopyTextAsync(
+        var act = () => source.BulkInsertUsingCopyTextAsync(
             CreateMockConnection,
             "",
             ["id", "name", "email"]);
@@ -345,7 +341,7 @@ public class PostgreSqlCopyExtensionsTests
     {
         var source = new[] { "1\tTest\ttest@example.com" };
 
-        var act = async () => await source.BulkInsertUsingCopyTextAsync(
+        var act = () => source.BulkInsertUsingCopyTextAsync(
             CreateMockConnection,
             "test_table",
             null!);
@@ -358,7 +354,7 @@ public class PostgreSqlCopyExtensionsTests
     {
         var source = new[] { "1\tTest\ttest@example.com" };
 
-        var act = async () => await source.BulkInsertUsingCopyTextAsync(
+        var act = () => source.BulkInsertUsingCopyTextAsync(
             CreateMockConnection,
             "test_table",
             []);
@@ -371,7 +367,7 @@ public class PostgreSqlCopyExtensionsTests
     {
         var source = new[] { "1\tTest\ttest@example.com" };
 
-        var act = async () => await source.BulkInsertUsingCopyTextAsync(
+        var act = () => source.BulkInsertUsingCopyTextAsync(
             CreateMockConnection,
             "test_table",
             ["id", "name", "email"],
@@ -385,7 +381,7 @@ public class PostgreSqlCopyExtensionsTests
     {
         var source = new[] { "1\tTest\ttest@example.com" };
 
-        var act = async () => await source.BulkInsertUsingCopyTextAsync(
+        var act = () => source.BulkInsertUsingCopyTextAsync(
             CreateMockConnection,
             "test_table",
             ["id", "name", "email"],
@@ -395,16 +391,18 @@ public class PostgreSqlCopyExtensionsTests
     }
 
     [Fact]
-    public async Task BulkInsertUsingCopyTextAsync_WithEmptySource_ShouldComplete()
+    public Task BulkInsertUsingCopyTextAsync_WithEmptySource_ShouldComplete()
     {
         var source = Array.Empty<string>();
 
         // Should not throw, just complete quickly
-        await source.BulkInsertUsingCopyTextAsync(
+        return source.BulkInsertUsingCopyTextAsync(
             CreateMockConnection,
             "test_table",
             ["id", "name", "email"]);
     }
+
+    private record TestRecord(int Id, string Name, string Email);
 
     // New tests for fixes
     // Note: Tests for SQL injection prevention and null connection factory return

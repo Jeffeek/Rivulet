@@ -4,8 +4,8 @@ using Testcontainers.MsSql;
 namespace Rivulet.Sql.SqlServer.Tests;
 
 /// <summary>
-/// Shared SQL Server container fixture for all integration tests.
-/// Reuses the same container across test classes to improve performance.
+///     Shared SQL Server container fixture for all integration tests.
+///     Reuses the same container across test classes to improve performance.
 /// </summary>
 public class SqlServerFixture : IAsyncLifetime
 {
@@ -25,18 +25,15 @@ public class SqlServerFixture : IAsyncLifetime
 
     public async Task DisposeAsync()
     {
-        if (_container != null)
-        {
-            await _container.DisposeAsync();
-        }
+        if (_container != null) await _container.DisposeAsync();
     }
 
     public SqlConnection CreateConnection() => new(ConnectionString);
 }
 
 /// <summary>
-/// Collection definition for SQL Server integration tests.
-/// All test classes marked with [Collection(TestCollections.SqlServer)] will share the same container.
+///     Collection definition for SQL Server integration tests.
+///     All test classes marked with [Collection(TestCollections.SqlServer)] will share the same container.
 /// </summary>
 [CollectionDefinition(TestCollections.SqlServer)]
 public class SqlServerCollection : ICollectionFixture<SqlServerFixture>

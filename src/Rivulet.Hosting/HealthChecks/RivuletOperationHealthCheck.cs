@@ -3,41 +3,23 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 namespace Rivulet.Hosting.HealthChecks;
 
 /// <summary>
-/// Health check for monitoring long-running Rivulet operations.
+///     Health check for monitoring long-running Rivulet operations.
 /// </summary>
 public sealed class RivuletOperationHealthCheck : IHealthCheck
 {
+    private readonly RivuletOperationHealthCheckOptions _options;
+    private int _consecutiveFailures;
     // Store DateTime as ticks (long) for thread-safe access with Interlocked
     private long _lastSuccessTimeTicks = DateTime.UtcNow.Ticks;
-    private int _consecutiveFailures;
-    private readonly RivuletOperationHealthCheckOptions _options;
 
     /// <summary>
-    /// Initializes a new instance of the RivuletOperationHealthCheck class.
+    ///     Initializes a new instance of the RivuletOperationHealthCheck class.
     /// </summary>
     /// <param name="options">Optional configuration options.</param>
-    public RivuletOperationHealthCheck(RivuletOperationHealthCheckOptions? options = null)
-    {
-        _options = options ?? new RivuletOperationHealthCheckOptions();
-    }
+    public RivuletOperationHealthCheck(RivuletOperationHealthCheckOptions? options = null) => _options = options ?? new RivuletOperationHealthCheckOptions();
 
     /// <summary>
-    /// Records a successful operation.
-    /// </summary>
-    public void RecordSuccess()
-    {
-        Interlocked.Exchange(ref _lastSuccessTimeTicks, DateTime.UtcNow.Ticks);
-        Interlocked.Exchange(ref _consecutiveFailures, 0);
-    }
-
-    /// <summary>
-    /// Records a failed operation.
-    /// </summary>
-    public void RecordFailure() =>
-        Interlocked.Increment(ref _consecutiveFailures);
-
-    /// <summary>
-    /// Checks the health status based on recent operation successes and failures.
+    ///     Checks the health status based on recent operation successes and failures.
     /// </summary>
     /// <param name="context">The health check context.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
@@ -54,8 +36,7 @@ public sealed class RivuletOperationHealthCheck : IHealthCheck
                 $"Operation has failed {failures} consecutive times",
                 data: new Dictionary<string, object>
                 {
-                    ["consecutive_failures"] = failures,
-                    ["time_since_last_success"] = timeSinceLastSuccess
+                    ["consecutive_failures"] = failures, ["time_since_last_success"] = timeSinceLastSuccess
                 }));
         }
 
@@ -65,33 +46,43 @@ public sealed class RivuletOperationHealthCheck : IHealthCheck
                 $"No successful operations in {timeSinceLastSuccess.TotalSeconds:F0} seconds",
                 data: new Dictionary<string, object>
                 {
-                    ["time_since_last_success"] = timeSinceLastSuccess,
-                    ["consecutive_failures"] = failures
+                    ["time_since_last_success"] = timeSinceLastSuccess, ["consecutive_failures"] = failures
                 }));
         }
 
         return Task.FromResult(HealthCheckResult.Healthy(
             $"Operation healthy, {failures} recent failures",
-            data: new Dictionary<string, object>
-            {
-                ["consecutive_failures"] = failures,
-                ["time_since_last_success"] = timeSinceLastSuccess
-            }));
+            new Dictionary<string, object> { ["consecutive_failures"] = failures, ["time_since_last_success"] = timeSinceLastSuccess }));
     }
+
+    /// <summary>
+    ///     Records a successful operation.
+    /// </summary>
+    public void RecordSuccess()
+    {
+        Interlocked.Exchange(ref _lastSuccessTimeTicks, DateTime.UtcNow.Ticks);
+        Interlocked.Exchange(ref _consecutiveFailures, 0);
+    }
+
+    /// <summary>
+    ///     Records a failed operation.
+    /// </summary>
+    public void RecordFailure() =>
+        Interlocked.Increment(ref _consecutiveFailures);
 }
 
 /// <summary>
-/// Options for configuring RivuletOperationHealthCheck.
+///     Options for configuring RivuletOperationHealthCheck.
 /// </summary>
 public sealed class RivuletOperationHealthCheckOptions
 {
     /// <summary>
-    /// Time without successful operations before health is degraded. Default: 5 minutes.
+    ///     Time without successful operations before health is degraded. Default: 5 minutes.
     /// </summary>
     public TimeSpan StalledThreshold { get; init; } = TimeSpan.FromMinutes(5);
 
     /// <summary>
-    /// Number of consecutive failures before health is unhealthy. Default: 10.
+    ///     Number of consecutive failures before health is unhealthy. Default: 10.
     /// </summary>
     public int UnhealthyFailureThreshold { get; init; } = 10;
 }

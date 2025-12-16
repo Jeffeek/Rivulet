@@ -17,13 +17,11 @@ public class PrometheusExporterTests
         await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
             .SelectParallelStreamAsync(async (x, ct) =>
-            {
-                await Task.Delay(200, ct);
-                return x * 2;
-            }, new()
-            {
-                MaxDegreeOfParallelism = 2
-            })
+                {
+                    await Task.Delay(200, ct);
+                    return x * 2;
+                },
+                new() { MaxDegreeOfParallelism = 2 })
             .ToListAsync();
 
         // Wait for EventCounters to fire
@@ -37,8 +35,8 @@ public class PrometheusExporterTests
             {
                 var export = exporter.Export();
                 return string.IsNullOrEmpty(export) ||
-                       !export.Contains("rivulet_items_started") ||
-                       !export.Contains("rivulet_items_completed");
+                    !export.Contains("rivulet_items_started") ||
+                    !export.Contains("rivulet_items_completed");
             });
 
         var prometheusText = exporter.Export();
@@ -59,12 +57,10 @@ public class PrometheusExporterTests
         await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
             .ForEachParallelAsync(async (_, ct) =>
-            {
-                await Task.Delay(200, ct);
-            }, new()
-            {
-                MaxDegreeOfParallelism = 2
-            });
+                {
+                    await Task.Delay(200, ct);
+                },
+                new() { MaxDegreeOfParallelism = 2 });
 
         // Wait for EventCounters to fire
         // Increased from 2000ms → 5000ms for Windows CI/CD reliability (3/180 failures)
@@ -77,7 +73,7 @@ public class PrometheusExporterTests
             {
                 var dict = exporter.ExportDictionary();
                 return !dict.ContainsKey(RivuletMetricsConstants.CounterNames.ItemsStarted) ||
-                       !dict.ContainsKey(RivuletMetricsConstants.CounterNames.ItemsCompleted);
+                    !dict.ContainsKey(RivuletMetricsConstants.CounterNames.ItemsCompleted);
             });
 
         var metrics = exporter.ExportDictionary();
@@ -95,7 +91,7 @@ public class PrometheusExporterTests
 
         var prometheusText = exporter.Export();
         prometheusText.ShouldContain("# Rivulet.Core Metrics");
-        
+
         var metrics = exporter.ExportDictionary();
         metrics.ShouldBeEmpty();
     }

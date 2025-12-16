@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Rivulet.Testing.Tests;
 
@@ -8,7 +9,7 @@ public class ChaosInjectorTests
     [Fact]
     public async Task ExecuteAsync_WithZeroFailureRate_ShouldNeverFail()
     {
-        var injector = new ChaosInjector(failureRate: 0.0);
+        var injector = new ChaosInjector(0.0);
 
         for (var i = 0; i < 100; i++)
         {
@@ -20,7 +21,7 @@ public class ChaosInjectorTests
     [Fact]
     public async Task ExecuteAsync_WithFullFailureRate_ShouldAlwaysThrow()
     {
-        var injector = new ChaosInjector(failureRate: 1.0);
+        var injector = new ChaosInjector(1.0);
 
         var act = async () => await injector.ExecuteAsync(() => Task.FromResult(42));
 
@@ -30,9 +31,9 @@ public class ChaosInjectorTests
     [Fact]
     public async Task ExecuteAsync_WithArtificialDelay_ShouldDelay()
     {
-        var injector = new ChaosInjector(failureRate: 0.0, artificialDelay: TimeSpan.FromMilliseconds(100));
+        var injector = new ChaosInjector(0.0, TimeSpan.FromMilliseconds(100));
 
-        var sw = System.Diagnostics.Stopwatch.StartNew();
+        var sw = Stopwatch.StartNew();
         await injector.ExecuteAsync(() => Task.FromResult(42));
         sw.Stop();
 
@@ -42,7 +43,7 @@ public class ChaosInjectorTests
     [Fact]
     public async Task ExecuteAsync_WithDelay_ShouldRespectCancellation()
     {
-        var injector = new ChaosInjector(failureRate: 0.0, artificialDelay: TimeSpan.FromSeconds(10));
+        var injector = new ChaosInjector(0.0, TimeSpan.FromSeconds(10));
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(50));
 
         var act = async () => await injector.ExecuteAsync(() => Task.FromResult(42), cts.Token);
@@ -53,7 +54,7 @@ public class ChaosInjectorTests
     [Fact]
     public async Task ExecuteAsync_ShouldPassThroughActionResult()
     {
-        var injector = new ChaosInjector(failureRate: 0.0);
+        var injector = new ChaosInjector(0.0);
 
         var result = await injector.ExecuteAsync(() => Task.FromResult("test result"));
 
@@ -63,7 +64,7 @@ public class ChaosInjectorTests
     [Fact]
     public async Task ExecuteAsync_WithActionThatThrows_ShouldPropagateException()
     {
-        var injector = new ChaosInjector(failureRate: 0.0);
+        var injector = new ChaosInjector(0.0);
 
         var act = async () => await injector.ExecuteAsync<int>(() => throw new ArgumentException("Action error"));
 
@@ -76,7 +77,7 @@ public class ChaosInjectorTests
     {
         const double failureRate = 0.3;
         const int iterations = 1000;
-        var injector = new ChaosInjector(failureRate: failureRate);
+        var injector = new ChaosInjector(failureRate);
 
         var failures = 0;
 
@@ -99,9 +100,9 @@ public class ChaosInjectorTests
     [Fact]
     public async Task ExecuteAsync_WithZeroDelay_ShouldExecuteImmediately()
     {
-        var injector = new ChaosInjector(failureRate: 0.0, artificialDelay: TimeSpan.Zero);
+        var injector = new ChaosInjector(0.0, TimeSpan.Zero);
 
-        var sw = System.Diagnostics.Stopwatch.StartNew();
+        var sw = Stopwatch.StartNew();
         await injector.ExecuteAsync(() => Task.FromResult(42));
         sw.Stop();
 
@@ -111,7 +112,7 @@ public class ChaosInjectorTests
     [Fact]
     public void Constructor_WithInvalidFailureRate_ShouldThrow()
     {
-        var act = () => new ChaosInjector(failureRate: -0.1);
+        var act = () => new ChaosInjector(-0.1);
 
         act.ShouldThrow<ArgumentOutOfRangeException>();
     }
@@ -119,7 +120,7 @@ public class ChaosInjectorTests
     [Fact]
     public void Constructor_WithFailureRateGreaterThanOne_ShouldThrow()
     {
-        var act = () => new ChaosInjector(failureRate: 1.1);
+        var act = () => new ChaosInjector(1.1);
 
         act.ShouldThrow<ArgumentOutOfRangeException>();
     }
@@ -127,7 +128,7 @@ public class ChaosInjectorTests
     [Fact]
     public async Task ConcurrentCalls_ShouldAllWork()
     {
-        var injector = new ChaosInjector(failureRate: 0.1);
+        var injector = new ChaosInjector();
 
         var tasks = Enumerable.Range(1, 100)
             .Select(async i =>
@@ -145,7 +146,7 @@ public class ChaosInjectorTests
 
         var results = await Task.WhenAll(tasks);
 
-        results.Count().ShouldBe(100);
+        results.Length.ShouldBe(100);
         results.Where(r => r > 0).ShouldNotBeEmpty();
         results.Where(r => r == -1).ShouldNotBeEmpty();
     }
@@ -153,12 +154,9 @@ public class ChaosInjectorTests
     [Fact]
     public async Task ShouldFail_WithZeroRate_ShouldAlwaysReturnFalse()
     {
-        var injector = new ChaosInjector(failureRate: 0.0);
+        var injector = new ChaosInjector(0.0);
 
-        for (var i = 0; i < 100; i++)
-        {
-            injector.ShouldFail().ShouldBeFalse();
-        }
+        for (var i = 0; i < 100; i++) injector.ShouldFail().ShouldBeFalse();
 
         await Task.CompletedTask;
     }
@@ -166,12 +164,9 @@ public class ChaosInjectorTests
     [Fact]
     public async Task ShouldFail_WithFullRate_ShouldAlwaysReturnTrue()
     {
-        var injector = new ChaosInjector(failureRate: 1.0);
+        var injector = new ChaosInjector(1.0);
 
-        for (var i = 0; i < 100; i++)
-        {
-            injector.ShouldFail().ShouldBeTrue();
-        }
+        for (var i = 0; i < 100; i++) injector.ShouldFail().ShouldBeTrue();
 
         await Task.CompletedTask;
     }
@@ -179,7 +174,7 @@ public class ChaosInjectorTests
     [Fact]
     public async Task ShouldFail_WithMidRate_ShouldReturnMixedResults()
     {
-        var injector = new ChaosInjector(failureRate: 0.5);
+        var injector = new ChaosInjector(0.5);
 
         var results = Enumerable.Range(0, 1000)
             .Select(_ => injector.ShouldFail())
@@ -199,7 +194,7 @@ public class ChaosInjectorTests
     [Fact]
     public async Task ChaosException_ShouldHaveCorrectMessage()
     {
-        var injector = new ChaosInjector(failureRate: 1.0);
+        var injector = new ChaosInjector(1.0);
 
         try
         {
@@ -215,8 +210,8 @@ public class ChaosInjectorTests
     [Fact]
     public async Task MultipleInjectors_ShouldBeIndependent()
     {
-        var injector1 = new ChaosInjector(failureRate: 0.0);
-        var injector2 = new ChaosInjector(failureRate: 1.0);
+        var injector1 = new ChaosInjector(0.0);
+        var injector2 = new ChaosInjector(1.0);
 
         var result1 = await injector1.ExecuteAsync(() => Task.FromResult(1));
         result1.ShouldBe(1);

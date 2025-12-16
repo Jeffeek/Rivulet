@@ -1,8 +1,8 @@
+using System.Collections.Concurrent;
+using System.Diagnostics.Tracing;
 using Rivulet.Base.Tests;
 using Rivulet.Core;
-using System.Collections.Concurrent;
 using Rivulet.Core.Observability;
-using System.Diagnostics.Tracing;
 
 namespace Rivulet.Diagnostics.Tests;
 
@@ -13,6 +13,8 @@ public class RivuletEventListenerBaseTests : IDisposable
 {
     private readonly TestEventListener _listener = new();
 
+    public void Dispose() => _listener.Dispose();
+
     [Fact]
     public async Task EventListenerBase_ShouldReceiveCounters_WhenOperationsRun()
     {
@@ -22,13 +24,11 @@ public class RivuletEventListenerBaseTests : IDisposable
         await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
             .SelectParallelStreamAsync(async (x, ct) =>
-            {
-                await Task.Delay(300, ct);
-                return x * 2;
-            }, new()
-            {
-                MaxDegreeOfParallelism = 2
-            })
+                {
+                    await Task.Delay(300, ct);
+                    return x * 2;
+                },
+                new() { MaxDegreeOfParallelism = 2 })
             .ToListAsync();
 
         // EventSource publishes counters every 1 second
@@ -50,28 +50,20 @@ public class RivuletEventListenerBaseTests : IDisposable
         await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
             .SelectParallelStreamAsync(async (x, ct) =>
-            {
-                await Task.Delay(300, ct);
-                return x;
-            }, new()
-            {
-                MaxDegreeOfParallelism = 2
-            })
+                {
+                    await Task.Delay(300, ct);
+                    return x;
+                },
+                new() { MaxDegreeOfParallelism = 2 })
             .ToListAsync();
 
         // EventSource publishes counters every 1 second - poll with timeout
         // Increased to 8000ms for Windows CI/CD reliability
         var deadline = DateTime.UtcNow.AddMilliseconds(8000);
-        while (_listener.ReceivedCounters.IsEmpty && DateTime.UtcNow < deadline)
-        {
-            await Task.Delay(100);
-        }
+        while (_listener.ReceivedCounters.IsEmpty && DateTime.UtcNow < deadline) await Task.Delay(100);
 
         _listener.ReceivedCounters.ShouldNotBeEmpty();
-        foreach (var counter in _listener.ReceivedCounters)
-        {
-            counter.Value.DisplayName.ShouldNotBeNullOrEmpty();
-        }
+        foreach (var counter in _listener.ReceivedCounters) counter.Value.DisplayName.ShouldNotBeNullOrEmpty();
     }
 
     [Fact]
@@ -82,28 +74,20 @@ public class RivuletEventListenerBaseTests : IDisposable
         await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
             .SelectParallelStreamAsync(async (x, ct) =>
-            {
-                await Task.Delay(300, ct);
-                return x;
-            }, new()
-            {
-                MaxDegreeOfParallelism = 2
-            })
+                {
+                    await Task.Delay(300, ct);
+                    return x;
+                },
+                new() { MaxDegreeOfParallelism = 2 })
             .ToListAsync();
 
         // EventSource publishes counters every 1 second - poll with timeout
         // Increased to 8000ms for Windows CI/CD reliability
         var deadline = DateTime.UtcNow.AddMilliseconds(8000);
-        while (_listener.ReceivedCounters.IsEmpty && DateTime.UtcNow < deadline)
-        {
-            await Task.Delay(100);
-        }
+        while (_listener.ReceivedCounters.IsEmpty && DateTime.UtcNow < deadline) await Task.Delay(100);
 
         _listener.ReceivedCounters.ShouldNotBeEmpty();
-        foreach (var counter in _listener.ReceivedCounters)
-        {
-            counter.Value.DisplayUnits.ShouldNotBeNull();
-        }
+        foreach (var counter in _listener.ReceivedCounters) counter.Value.DisplayUnits.ShouldNotBeNull();
     }
 
     [Fact]
@@ -125,18 +109,6 @@ public class RivuletEventListenerBaseTests : IDisposable
         // Should not throw and should complete cleanly
         listener.ReceivedCounters.ShouldNotBeNull();
     }
-
-    public void Dispose() => _listener.Dispose();
-
-    private sealed class TestEventListener : RivuletEventListenerBase
-    {
-        public ConcurrentDictionary<string, CounterData> ReceivedCounters { get; } = new();
-
-        protected override void OnCounterReceived(string name, string displayName, double value, string displayUnits) =>
-            ReceivedCounters[name] = new(displayName, displayUnits);
-    }
-
-    private sealed record CounterData(string DisplayName, string DisplayUnits);
 
     [Fact]
     public async Task EventListenerBase_ShouldIgnoreEvents_WhenEventSourceNameIsWrong()
@@ -194,40 +166,6 @@ public class RivuletEventListenerBaseTests : IDisposable
         listener.Dispose();
     }
 
-    [EventSource(Name = "CustomEventSource")]
-    private sealed class CustomEventSource(string name) : EventSource(name)
-    {
-        [Event(100)]
-        public new void WriteEvent(int id, string message) => base.WriteEvent(id, message);
-    }
-
-    [EventSource(Name = "Rivulet.Core")]
-    private sealed class RivuletTestEventSource : EventSource
-    {
-        private readonly EventCounter? _testCounter;
-
-        public RivuletTestEventSource()
-        {
-            _testCounter = new("test-counter", this);
-        }
-
-        public void EmitCounterWithoutDisplayName() => _testCounter?.WriteMetric(1.0);
-
-        public void EmitCounterWithoutDisplayUnits() => _testCounter?.WriteMetric(2.0);
-
-        [Event(10)]
-        public void WriteEmptyEvent() => WriteEvent(10);
-
-        [Event(11, Level = EventLevel.Informational)]
-        public void WriteInformationalEvent(string message) => WriteEvent(11, message);
-
-        protected override void Dispose(bool disposing)
-        {
-            _testCounter?.Dispose();
-            base.Dispose(disposing);
-        }
-    }
-
     [Fact]
     public void EventListenerBase_ShouldHandleEventWithNullPayload()
     {
@@ -273,13 +211,11 @@ public class RivuletEventListenerBaseTests : IDisposable
         await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
             .SelectParallelStreamAsync(async (x, ct) =>
-            {
-                await Task.Delay(300, ct);
-                return x;
-            }, new()
-            {
-                MaxDegreeOfParallelism = 2
-            })
+                {
+                    await Task.Delay(300, ct);
+                    return x;
+                },
+                new() { MaxDegreeOfParallelism = 2 })
             .ToListAsync();
 
         // Wait for counters - increased to 8000ms for CI/CD reliability
@@ -385,25 +321,64 @@ public class RivuletEventListenerBaseTests : IDisposable
         await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
             .SelectParallelStreamAsync(async (x, ct) =>
-            {
-                await Task.Delay(300, ct);
-                return x;
-            }, new()
-            {
-                MaxDegreeOfParallelism = 2
-            })
+                {
+                    await Task.Delay(300, ct);
+                    return x;
+                },
+                new() { MaxDegreeOfParallelism = 2 })
             .ToListAsync();
 
         // Increased to 8000ms for CI/CD reliability
         var deadline = DateTime.UtcNow.AddMilliseconds(8000);
-        while (listener.ReceivedCounters.IsEmpty && DateTime.UtcNow < deadline)
-        {
-            await Task.Delay(100);
-        }
+        while (listener.ReceivedCounters.IsEmpty && DateTime.UtcNow < deadline) await Task.Delay(100);
 
         listener.ReceivedCounters.ShouldNotBeEmpty();
 
         listener.Dispose();
+    }
+
+    private sealed class TestEventListener : RivuletEventListenerBase
+    {
+        public ConcurrentDictionary<string, CounterData> ReceivedCounters { get; } = new();
+
+        protected override void OnCounterReceived(string name,
+            string displayName,
+            double value,
+            string displayUnits) =>
+            ReceivedCounters[name] = new(displayName, displayUnits);
+    }
+
+    private sealed record CounterData(string DisplayName, string DisplayUnits);
+
+    [EventSource(Name = "CustomEventSource")]
+    private sealed class CustomEventSource(string name) : EventSource(name)
+    {
+        [Event(100)]
+        public new void WriteEvent(int id, string message) => base.WriteEvent(id, message);
+    }
+
+    [EventSource(Name = "Rivulet.Core")]
+    private sealed class RivuletTestEventSource : EventSource
+    {
+        private readonly EventCounter? _testCounter;
+
+        public RivuletTestEventSource() => _testCounter = new("test-counter", this);
+
+        public void EmitCounterWithoutDisplayName() => _testCounter?.WriteMetric(1.0);
+
+        public void EmitCounterWithoutDisplayUnits() => _testCounter?.WriteMetric(2.0);
+
+        [Event(10)]
+        public void WriteEmptyEvent() => WriteEvent(10);
+
+        [Event(11, Level = EventLevel.Informational)]
+        public void WriteInformationalEvent(string message) => WriteEvent(11, message);
+
+        protected override void Dispose(bool disposing)
+        {
+            _testCounter?.Dispose();
+            base.Dispose(disposing);
+        }
     }
 }
 
@@ -411,4 +386,4 @@ public class RivuletEventListenerBaseTests : IDisposable
 // EventSource and EventListener are process-wide singletons - parallel execution
 // causes cross-test pollution where listeners receive events from other tests
 [CollectionDefinition(TestCollections.EventSource, DisableParallelization = true)]
-public class EventSourceTestCollection { }
+public class EventSourceTestCollection;

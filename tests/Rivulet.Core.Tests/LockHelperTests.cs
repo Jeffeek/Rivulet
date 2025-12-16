@@ -3,7 +3,7 @@ using Rivulet.Core.Internal;
 
 namespace Rivulet.Core.Tests;
 
-public class LockHelperTests
+public sealed class LockHelperTests
 {
 #if NET9_0_OR_GREATER
     private readonly Lock _lock = new();
@@ -36,7 +36,7 @@ public class LockHelperTests
     {
         var value = 10;
 
-        var result = LockHelper.Execute(_lock, () => value * 2 + 3);
+        var result = LockHelper.Execute(_lock, () => (value * 2) + 3);
 
         result.ShouldBe(23);
     }
@@ -81,13 +81,14 @@ public class LockHelperTests
     {
         var expectedException = new InvalidOperationException("Test exception");
 
-        var func = () => LockHelper.Execute(_lock, () =>
-        {
-            throw expectedException;
+        var func = () => LockHelper.Execute(_lock,
+            () =>
+            {
+                throw expectedException;
 #pragma warning disable CS0162 // Unreachable code detected
-            return 42;
+                return 42;
 #pragma warning restore CS0162 // Unreachable code detected
-        });
+            });
 
         Action act = () => func();
         var ex = act.ShouldThrow<InvalidOperationException>();
@@ -106,10 +107,7 @@ public class LockHelperTests
         {
             tasks[i] = Task.Run(() =>
             {
-                for (var j = 0; j < incrementsPerThread; j++)
-                {
-                    LockHelper.Execute(_lock, () => { counter++; });
-                }
+                for (var j = 0; j < incrementsPerThread; j++) LockHelper.Execute(_lock, () => { counter++; });
             });
         }
 
@@ -163,13 +161,14 @@ public class LockHelperTests
         var outerExecuted = false;
         var innerExecuted = false;
 
-        LockHelper.Execute(_lock, () =>
-        {
-            outerExecuted = true;
-            // Note: In production, nested locking with the same lock would deadlock on .NET 9
-            // but works with traditional locks. This test verifies the outer lock works.
-            innerExecuted = true;
-        });
+        LockHelper.Execute(_lock,
+            () =>
+            {
+                outerExecuted = true;
+                // Note: In production, nested locking with the same lock would deadlock on .NET 9
+                // but works with traditional locks. This test verifies the outer lock works.
+                innerExecuted = true;
+            });
 
         outerExecuted.ShouldBeTrue();
         innerExecuted.ShouldBeTrue();
@@ -192,11 +191,12 @@ public class LockHelperTests
     {
         var dictionary = new Dictionary<string, int>();
 
-        LockHelper.Execute(_lock, () =>
-        {
-            dictionary["key1"] = 100;
-            dictionary["key2"] = 200;
-        });
+        LockHelper.Execute(_lock,
+            () =>
+            {
+                dictionary["key1"] = 100;
+                dictionary["key2"] = 200;
+            });
 
         var sum = LockHelper.Execute(_lock, () => dictionary.Values.Sum());
 
@@ -231,22 +231,20 @@ public class LockHelperTests
             var threadId = i;
             tasks[i] = Task.Run(() =>
             {
-                LockHelper.Execute(_lock, () =>
-                {
-                    var current = Interlocked.Increment(ref activeCount);
-
-                    // Track max concurrent executions inside lock
-                    var currentMax = maxActiveCount;
-                    while (current > currentMax)
+                LockHelper.Execute(_lock,
+                    () =>
                     {
-                        currentMax = Interlocked.CompareExchange(ref maxActiveCount, current, currentMax);
-                    }
+                        var current = Interlocked.Increment(ref activeCount);
 
-                    executionOrder.Add(threadId);
-                    Thread.Sleep(50); // Reduced from 1000ms to 50ms for faster tests
+                        // Track max concurrent executions inside lock
+                        var currentMax = maxActiveCount;
+                        while (current > currentMax) currentMax = Interlocked.CompareExchange(ref maxActiveCount, current, currentMax);
 
-                    Interlocked.Decrement(ref activeCount);
-                });
+                        executionOrder.Add(threadId);
+                        Thread.Sleep(50); // Reduced from 1000ms to 50ms for faster tests
+
+                        Interlocked.Decrement(ref activeCount);
+                    });
             });
         }
 
@@ -275,11 +273,12 @@ public class LockHelperTests
 
         try
         {
-            LockHelper.Execute(_lock, () =>
-            {
-                counter++;
-                throw new InvalidOperationException("Test");
-            });
+            LockHelper.Execute(_lock,
+                () =>
+                {
+                    counter++;
+                    throw new InvalidOperationException("Test");
+                });
         }
         catch (InvalidOperationException)
         {
@@ -299,14 +298,15 @@ public class LockHelperTests
 
         try
         {
-            LockHelper.Execute(_lock, () =>
-            {
-                counter++;
-                throw new InvalidOperationException("Test");
+            LockHelper.Execute(_lock,
+                () =>
+                {
+                    counter++;
+                    throw new InvalidOperationException("Test");
 #pragma warning disable CS0162
-                return 42;
+                    return 42;
 #pragma warning restore CS0162
-            });
+                });
         }
         catch (InvalidOperationException)
         {
@@ -366,10 +366,7 @@ public class LockHelperTests
         {
             tasks[i] = Task.Run(() =>
             {
-                for (var j = 0; j < incrementsPerThread; j++)
-                {
-                    LockHelper.Execute(_lock, () => { counter++; });
-                }
+                for (var j = 0; j < incrementsPerThread; j++) LockHelper.Execute(_lock, () => { counter++; });
             });
         }
 

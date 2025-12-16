@@ -8,21 +8,19 @@ public class ErrorHandlingTests
     public async Task FailFast_SelectParallelAsync_ThrowsImmediatelyOnFirstError()
     {
         var source = Enumerable.Range(1, 100);
-        var options = new ParallelOptionsRivulet
-        {
-            ErrorMode = ErrorMode.FailFast,
-            MaxDegreeOfParallelism = 10
-        };
+        var options = new ParallelOptionsRivulet { ErrorMode = ErrorMode.FailFast, MaxDegreeOfParallelism = 10 };
         var processedCount = 0;
 
-        async Task<List<int>> Act() =>
-            await source.SelectParallelAsync(async (x, ct) =>
-            {
-                Interlocked.Increment(ref processedCount);
-                await Task.Delay(10, ct);
-                if (x == 5) throw new InvalidOperationException("Error at 5");
-                return x * 2;
-            }, options);
+        Task<List<int>> Act() =>
+            source.SelectParallelAsync(async (x, ct) =>
+                {
+                    Interlocked.Increment(ref processedCount);
+                    await Task.Delay(10, ct);
+                    if (x == 5) throw new InvalidOperationException("Error at 5");
+
+                    return x * 2;
+                },
+                options);
 
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(((Func<Task<List<int>>>?)Act)!);
         exception.Message.ShouldBe("Error at 5");
@@ -33,21 +31,19 @@ public class ErrorHandlingTests
     public async Task FailFast_SelectParallelStreamAsync_ThrowsOnFirstError()
     {
         var source = Enumerable.Range(1, 100).ToAsyncEnumerable();
-        var options = new ParallelOptionsRivulet
-        {
-            ErrorMode = ErrorMode.FailFast,
-            MaxDegreeOfParallelism = 10
-        };
+        var options = new ParallelOptionsRivulet { ErrorMode = ErrorMode.FailFast, MaxDegreeOfParallelism = 10 };
 
         async Task Act()
         {
             // ReSharper disable once PossibleMultipleEnumeration
             await foreach (var _ in source.SelectParallelStreamAsync(async (x, ct) =>
-                           {
-                               await Task.Delay(10, ct);
-                               if (x == 5) throw new InvalidOperationException("Error at 5");
-                               return x * 2;
-                           }, options))
+                               {
+                                   await Task.Delay(10, ct);
+                                   if (x == 5) throw new InvalidOperationException("Error at 5");
+
+                                   return x * 2;
+                               },
+                               options))
             {
                 // Consuming items
             }
@@ -60,18 +56,14 @@ public class ErrorHandlingTests
     public async Task CollectAndContinue_SelectParallelAsync_CollectsAllErrorsAndThrowsAggregateException()
     {
         var source = Enumerable.Range(1, 20);
-        var options = new ParallelOptionsRivulet
-        {
-            ErrorMode = ErrorMode.CollectAndContinue,
-            MaxDegreeOfParallelism = 5
-        };
+        var options = new ParallelOptionsRivulet { ErrorMode = ErrorMode.CollectAndContinue, MaxDegreeOfParallelism = 5 };
 
-        var act = async () => await source.SelectParallelAsync(
+        var act = () => source.SelectParallelAsync(
             async (x, ct) =>
             {
                 await Task.Delay(10, ct);
-                if (x % 5 == 0)
-                    throw new InvalidOperationException($"Error at {x}");
+                if (x % 5 == 0) throw new InvalidOperationException($"Error at {x}");
+
                 return x * 2;
             },
             options);
@@ -85,11 +77,7 @@ public class ErrorHandlingTests
     public async Task CollectAndContinue_ProcessesSuccessfulItemsDespiteErrors()
     {
         var source = Enumerable.Range(1, 10);
-        var options = new ParallelOptionsRivulet
-        {
-            ErrorMode = ErrorMode.CollectAndContinue,
-            MaxDegreeOfParallelism = 3
-        };
+        var options = new ParallelOptionsRivulet { ErrorMode = ErrorMode.CollectAndContinue, MaxDegreeOfParallelism = 3 };
 
         try
         {
@@ -97,8 +85,8 @@ public class ErrorHandlingTests
                 async (x, ct) =>
                 {
                     await Task.Delay(10, ct);
-                    if (x == 5)
-                        throw new InvalidOperationException("Error at 5");
+                    if (x == 5) throw new InvalidOperationException("Error at 5");
+
                     return x * 2;
                 },
                 options);
@@ -115,11 +103,7 @@ public class ErrorHandlingTests
     public async Task BestEffort_SelectParallelAsync_SwallowsErrorsAndContinues()
     {
         var source = Enumerable.Range(1, 20);
-        var options = new ParallelOptionsRivulet
-        {
-            ErrorMode = ErrorMode.BestEffort,
-            MaxDegreeOfParallelism = 5
-        };
+        var options = new ParallelOptionsRivulet { ErrorMode = ErrorMode.BestEffort, MaxDegreeOfParallelism = 5 };
         var errorCount = 0;
 
         var results = await source.SelectParallelAsync(
@@ -127,6 +111,7 @@ public class ErrorHandlingTests
             {
                 await Task.Delay(10, ct);
                 if (x % 5 != 0) return x * 2;
+
                 Interlocked.Increment(ref errorCount);
                 throw new InvalidOperationException($"Error at {x}");
             },
@@ -140,24 +125,19 @@ public class ErrorHandlingTests
     public async Task BestEffort_SelectParallelStreamAsync_SwallowsErrorsAndStreamsSuccessfulResults()
     {
         var source = Enumerable.Range(1, 20).ToAsyncEnumerable();
-        var options = new ParallelOptionsRivulet
-        {
-            ErrorMode = ErrorMode.BestEffort,
-            MaxDegreeOfParallelism = 5
-        };
+        var options = new ParallelOptionsRivulet { ErrorMode = ErrorMode.BestEffort, MaxDegreeOfParallelism = 5 };
         var results = await source.SelectParallelStreamAsync(async (x, ct) =>
-            {
-                await Task.Delay(10, ct);
-                if (x % 5 == 0) throw new InvalidOperationException($"Error at {x}");
-                return x * 2;
-            }, options)
+                {
+                    await Task.Delay(10, ct);
+                    if (x % 5 == 0) throw new InvalidOperationException($"Error at {x}");
+
+                    return x * 2;
+                },
+                options)
             .ToListAsync();
 
         results.Count.ShouldBe(16);
-        foreach (var value in new[] { 10, 20, 30, 40 })
-        {
-            results.ShouldNotContain(value);
-        }
+        foreach (var value in new[] { 10, 20, 30, 40 }) results.ShouldNotContain(value);
     }
 
     [Fact]
@@ -175,13 +155,15 @@ public class ErrorHandlingTests
             }
         };
 
-        async Task<List<int>> Act() =>
-            await source.SelectParallelAsync(async (x, ct) =>
-            {
-                await Task.Delay(10, ct);
-                if (x == 10) throw new InvalidOperationException("Test error");
-                return x;
-            }, options);
+        Task<List<int>> Act() =>
+            source.SelectParallelAsync(async (x, ct) =>
+                {
+                    await Task.Delay(10, ct);
+                    if (x == 10) throw new InvalidOperationException("Test error");
+
+                    return x;
+                },
+                options);
 
         await Assert.ThrowsAnyAsync<Exception>(((Func<Task<List<int>>>?)Act)!);
         errorHandled.ShouldBeTrue();
@@ -206,8 +188,8 @@ public class ErrorHandlingTests
             async (x, ct) =>
             {
                 await Task.Delay(10, ct);
-                if (x % 5 == 0)
-                    throw new InvalidOperationException($"Error at {x}");
+                if (x % 5 == 0) throw new InvalidOperationException($"Error at {x}");
+
                 return x * 2;
             },
             options);
@@ -231,13 +213,15 @@ public class ErrorHandlingTests
             }
         };
 
-        async Task<List<int>> Act() =>
-            await source.SelectParallelAsync(async (x, ct) =>
-            {
-                await Task.Delay(10, ct);
-                if (x is 5 or 15) throw new InvalidOperationException($"Error at {x}");
-                return x * 2;
-            }, options);
+        Task<List<int>> Act() =>
+            source.SelectParallelAsync(async (x, ct) =>
+                {
+                    await Task.Delay(10, ct);
+                    if (x is 5 or 15) throw new InvalidOperationException($"Error at {x}");
+
+                    return x * 2;
+                },
+                options);
 
         await Assert.ThrowsAsync<AggregateException>(((Func<Task<List<int>>>?)Act)!);
         errorMessages.Count.ShouldBe(2);
@@ -256,18 +240,21 @@ public class ErrorHandlingTests
             OnErrorAsync = (_, _) =>
             {
                 if (!firstError) return ValueTask.FromResult(true);
+
                 firstError = false;
                 return ValueTask.FromResult(false);
             }
         };
 
-        async Task<List<int>> Act() =>
-            await source.SelectParallelAsync(async (x, ct) =>
-            {
-                await Task.Delay(10, ct);
-                if (x % 10 == 0) throw new InvalidOperationException($"Error at {x}");
-                return x * 2;
-            }, options);
+        Task<List<int>> Act() =>
+            source.SelectParallelAsync(async (x, ct) =>
+                {
+                    await Task.Delay(10, ct);
+                    if (x % 10 == 0) throw new InvalidOperationException($"Error at {x}");
+
+                    return x * 2;
+                },
+                options);
 
         await Assert.ThrowsAsync<AggregateException>(((Func<Task<List<int>>>?)Act)!);
     }
@@ -276,16 +263,15 @@ public class ErrorHandlingTests
     public async Task CollectAndContinue_SelectParallelStreamAsync_SkipsErrorItems()
     {
         var source = Enumerable.Range(1, 10).ToAsyncEnumerable();
-        var options = new ParallelOptionsRivulet
-        {
-            ErrorMode = ErrorMode.CollectAndContinue
-        };
+        var options = new ParallelOptionsRivulet { ErrorMode = ErrorMode.CollectAndContinue };
         var results = await source.SelectParallelStreamAsync(async (x, ct) =>
-            {
-                await Task.Delay(10, ct);
-                if (x == 5) throw new InvalidOperationException("Error at 5");
-                return x * 2;
-            }, options)
+                {
+                    await Task.Delay(10, ct);
+                    if (x == 5) throw new InvalidOperationException("Error at 5");
+
+                    return x * 2;
+                },
+                options)
             .ToListAsync();
 
         results.Count.ShouldBe(9);
@@ -305,6 +291,7 @@ public class ErrorHandlingTests
             OnErrorAsync = (_, _) =>
             {
                 if (errorCaught) return ValueTask.FromResult(true);
+
                 errorCaught = true;
                 return ValueTask.FromResult(false);
             }
@@ -314,12 +301,14 @@ public class ErrorHandlingTests
         {
             // ReSharper disable once PossibleMultipleEnumeration
             await foreach (var _ in source.SelectParallelStreamAsync(async (x, ct) =>
-                           {
-                               Interlocked.Increment(ref processedCount);
-                               await Task.Delay(10, ct);
-                               if (x == 10) throw new InvalidOperationException($"Error at {x}");
-                               return x * 2;
-                           }, options))
+                               {
+                                   Interlocked.Increment(ref processedCount);
+                                   await Task.Delay(10, ct);
+                                   if (x == 10) throw new InvalidOperationException($"Error at {x}");
+
+                                   return x * 2;
+                               },
+                               options))
             {
                 // Consuming items
             }
@@ -343,6 +332,7 @@ public class ErrorHandlingTests
             OnErrorAsync = (_, _) =>
             {
                 if (errorCaught) return ValueTask.FromResult(true);
+
                 errorCaught = true;
                 return ValueTask.FromResult(false);
             }
@@ -352,12 +342,14 @@ public class ErrorHandlingTests
         {
             // ReSharper disable once PossibleMultipleEnumeration
             await foreach (var _ in source.SelectParallelStreamAsync(async (x, ct) =>
-                           {
-                               Interlocked.Increment(ref processedCount);
-                               await Task.Delay(10, ct);
-                               if (x == 10) throw new InvalidOperationException($"Error at {x}");
-                               return x * 2;
-                           }, options))
+                               {
+                                   Interlocked.Increment(ref processedCount);
+                                   await Task.Delay(10, ct);
+                                   if (x == 10) throw new InvalidOperationException($"Error at {x}");
+
+                                   return x * 2;
+                               },
+                               options))
             {
                 // Consuming items
             }

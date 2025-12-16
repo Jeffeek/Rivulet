@@ -5,12 +5,12 @@ using Rivulet.Core;
 namespace Rivulet.Hosting;
 
 /// <summary>
-/// Extension methods for registering Rivulet services with dependency injection.
+///     Extension methods for registering Rivulet services with dependency injection.
 /// </summary>
 public static class ServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers default ParallelOptionsRivulet configuration from IConfiguration.
+    ///     Registers default ParallelOptionsRivulet configuration from IConfiguration.
     /// </summary>
     public static IServiceCollection AddRivulet(this IServiceCollection services, IConfiguration configuration)
     {
@@ -19,7 +19,7 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
-    /// Registers default ParallelOptionsRivulet configuration with a custom setup action.
+    ///     Registers default ParallelOptionsRivulet configuration with a custom setup action.
     /// </summary>
     public static IServiceCollection AddRivulet(this IServiceCollection services, Action<ParallelOptionsRivulet> configure)
     {
@@ -28,11 +28,12 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
-    /// Registers a named ParallelOptionsRivulet configuration.
+    ///     Registers a named ParallelOptionsRivulet configuration.
     /// </summary>
     public static IServiceCollection AddRivulet(this IServiceCollection services, string name, IConfiguration configuration)
     {
-        services.Configure<ParallelOptionsRivulet>(name, configuration.GetSection($"{RivuletHostingConstants.ConfigurationSectionName}:{name}"));
+        services.Configure<ParallelOptionsRivulet>(name,
+            configuration.GetSection($"{RivuletHostingConstants.ConfigurationSectionName}:{name}"));
         return services;
     }
 }

@@ -1,10 +1,11 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 using Rivulet.Core;
 
 namespace Rivulet.Diagnostics.OpenTelemetry.Tests;
 
 /// <summary>
-/// Tests specifically designed to cover edge cases and improve code coverage.
+///     Tests specifically designed to cover edge cases and improve code coverage.
 /// </summary>
 [Collection(TestCollections.ActivitySource)]
 public class EdgeCaseCoverageTests
@@ -15,20 +16,18 @@ public class EdgeCaseCoverageTests
         using var listener = new ActivityListener();
         listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
-        listener.ActivityStopped = _ => { };
+        listener.ActivityStopped = static _ => { };
         ActivitySource.AddActivityListener(listener);
 
-        var options = new ParallelOptionsRivulet
-        {
-            MaxDegreeOfParallelism = 2
-        }.WithOpenTelemetryTracing(null!);
+        var options = new ParallelOptionsRivulet { MaxDegreeOfParallelism = 2 }.WithOpenTelemetryTracing(null!);
 
         var result = await Enumerable.Range(1, 3)
             .SelectParallelAsync(async (x, ct) =>
-            {
-                await Task.Delay(1, ct);
-                return x;
-            }, options);
+                {
+                    await Task.Delay(1, ct);
+                    return x;
+                },
+                options);
 
         result.Count.ShouldBe(3);
     }
@@ -39,17 +38,18 @@ public class EdgeCaseCoverageTests
         using var listener = new ActivityListener();
         listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
-        listener.ActivityStopped = _ => { };
+        listener.ActivityStopped = static _ => { };
         ActivitySource.AddActivityListener(listener);
 
         var options = new ParallelOptionsRivulet().WithOpenTelemetryTracing(string.Empty);
 
         var result = await Enumerable.Range(1, 2)
             .SelectParallelAsync(async (x, ct) =>
-            {
-                await Task.Delay(1, ct);
-                return x;
-            }, options);
+                {
+                    await Task.Delay(1, ct);
+                    return x;
+                },
+                options);
 
         result.Count.ShouldBe(2);
     }
@@ -65,18 +65,16 @@ public class EdgeCaseCoverageTests
         listener.ActivityStopped = activity => activities.Add(activity);
         ActivitySource.AddActivityListener(listener);
 
-        var options = new ParallelOptionsRivulet
-        {
-            MaxRetries = 3,
-            IsTransient = _ => true
-        }.WithOpenTelemetryTracingAndRetries("NoRetriesOp", trackRetries: true);
+        var options =
+            new ParallelOptionsRivulet { MaxRetries = 3, IsTransient = static _ => true }.WithOpenTelemetryTracingAndRetries("NoRetriesOp");
 
         var result = await Enumerable.Range(1, 5)
             .SelectParallelAsync(async (x, ct) =>
-            {
-                await Task.Delay(1, ct);
-                return x;
-            }, options);
+                {
+                    await Task.Delay(1, ct);
+                    return x;
+                },
+                options);
 
         result.Count.ShouldBe(5);
 
@@ -127,12 +125,13 @@ public class EdgeCaseCoverageTests
         {
             await Enumerable.Range(1, 5)
                 .SelectParallelAsync(async (x, ct) =>
-                {
-                    await Task.Delay(10, ct);
-                    if (x == 3)
-                        throw new InvalidOperationException("Test");
-                    return x;
-                }, options);
+                    {
+                        await Task.Delay(10, ct);
+                        if (x == 3) throw new InvalidOperationException("Test");
+
+                        return x;
+                    },
+                    options);
         }
         catch (AggregateException)
         {
@@ -153,10 +152,11 @@ public class EdgeCaseCoverageTests
 
         var result = await Enumerable.Range(1, 3)
             .SelectParallelAsync(async (x, ct) =>
-            {
-                await Task.Delay(1, ct);
-                return x;
-            }, options);
+                {
+                    await Task.Delay(1, ct);
+                    return x;
+                },
+                options);
 
         result.Count.ShouldBe(3);
     }
@@ -171,10 +171,11 @@ public class EdgeCaseCoverageTests
         await Enumerable.Range(1, 5)
             .ToAsyncEnumerable()
             .SelectParallelStreamAsync(async (x, ct) =>
-            {
-                await Task.Delay(1, ct);
-                return x;
-            }, new())
+                {
+                    await Task.Delay(1, ct);
+                    return x;
+                },
+                new())
             .ToListAsync();
 
         await Task.Delay(100);
@@ -184,7 +185,7 @@ public class EdgeCaseCoverageTests
     public async Task WithOpenTelemetryTracing_ShouldHandleVeryLargeOperationCounts()
     {
         // ReSharper disable once CollectionNeverQueried.Local
-        var activities = new System.Collections.Concurrent.ConcurrentBag<Activity>();
+        var activities = new ConcurrentBag<Activity>();
 
         using var listener = new ActivityListener();
         listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
@@ -192,17 +193,15 @@ public class EdgeCaseCoverageTests
         listener.ActivityStopped = activity => activities.Add(activity);
         ActivitySource.AddActivityListener(listener);
 
-        var options = new ParallelOptionsRivulet
-        {
-            MaxDegreeOfParallelism = 10
-        }.WithOpenTelemetryTracing("LargeOp");
+        var options = new ParallelOptionsRivulet { MaxDegreeOfParallelism = 10 }.WithOpenTelemetryTracing("LargeOp");
 
         var result = await Enumerable.Range(1, 100)
             .SelectParallelAsync(async (x, ct) =>
-            {
-                await Task.Delay(1, ct);
-                return x;
-            }, options);
+                {
+                    await Task.Delay(1, ct);
+                    return x;
+                },
+                options);
 
         result.Count.ShouldBe(100);
     }
@@ -218,22 +217,20 @@ public class EdgeCaseCoverageTests
         listener.ActivityStopped = activity => activities.Add(activity);
         ActivitySource.AddActivityListener(listener);
 
-        var options = new ParallelOptionsRivulet
-        {
-            MaxDegreeOfParallelism = 3,
-            ErrorMode = ErrorMode.CollectAndContinue
-        }.WithOpenTelemetryTracing("MixedResults");
+        var options = new ParallelOptionsRivulet { MaxDegreeOfParallelism = 3, ErrorMode = ErrorMode.CollectAndContinue }
+            .WithOpenTelemetryTracing("MixedResults");
 
         try
         {
             await Enumerable.Range(1, 10)
                 .SelectParallelAsync(async (x, ct) =>
-                {
-                    await Task.Delay(1, ct);
-                    if (x % 3 == 0)
-                        throw new InvalidOperationException($"Failed {x}");
-                    return x;
-                }, options);
+                    {
+                        await Task.Delay(1, ct);
+                        if (x % 3 == 0) throw new InvalidOperationException($"Failed {x}");
+
+                        return x;
+                    },
+                    options);
         }
         catch (AggregateException)
         {
@@ -265,23 +262,22 @@ public class EdgeCaseCoverageTests
 
         var options = new ParallelOptionsRivulet
         {
-            MaxRetries = 2,
-            IsTransient = ex => ex.Message.Contains("transient"),
-            ErrorMode = ErrorMode.CollectAndContinue
-        }.WithOpenTelemetryTracingAndRetries("ErrorClassification", trackRetries: true);
+            MaxRetries = 2, IsTransient = ex => ex.Message.Contains("transient"), ErrorMode = ErrorMode.CollectAndContinue
+        }.WithOpenTelemetryTracingAndRetries("ErrorClassification");
 
         try
         {
             await Enumerable.Range(1, 6)
                 .SelectParallelAsync(async (x, ct) =>
-                {
-                    await Task.Delay(1, ct);
-                    if (x % 3 == 0)
-                        throw new InvalidOperationException("transient error");
-                    if (x % 2 == 0)
-                        throw new InvalidOperationException("permanent error");
-                    return x;
-                }, options);
+                    {
+                        await Task.Delay(1, ct);
+                        if (x % 3 == 0) throw new InvalidOperationException("transient error");
+
+                        if (x % 2 == 0) throw new InvalidOperationException("permanent error");
+
+                        return x;
+                    },
+                    options);
         }
         catch (AggregateException)
         {
@@ -304,10 +300,11 @@ public class EdgeCaseCoverageTests
 
         var result = await Enumerable.Range(1, 5)
             .SelectParallelAsync(async (x, ct) =>
-            {
-                await Task.Delay(1, ct);
-                return x * 2;
-            }, options);
+                {
+                    await Task.Delay(1, ct);
+                    return x * 2;
+                },
+                options);
 
         result.Count.ShouldBe(5);
         result.ShouldContain(2);

@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Threading.Channels;
 using Rivulet.Core.Observability;
 using Rivulet.Core.Resilience;
@@ -8,22 +9,30 @@ using Rivulet.Core.Resilience;
 namespace Rivulet.Core;
 
 /// <summary>
-/// Provides async-first parallel LINQ operators with bounded concurrency, retries, and backpressure for I/O-heavy workloads.
+///     Provides async-first parallel LINQ operators with bounded concurrency, retries, and backpressure for I/O-heavy
+///     workloads.
 /// </summary>
 public static class AsyncParallelLinq
 {
     /// <summary>
-    /// Applies a transformation function to each element in a collection in parallel with bounded concurrency,
-    /// returning a materialized list of results. Supports retry policies, per-item timeouts, and configurable error handling.
+    ///     Applies a transformation function to each element in a collection in parallel with bounded concurrency,
+    ///     returning a materialized list of results. Supports retry policies, per-item timeouts, and configurable error
+    ///     handling.
     /// </summary>
     /// <typeparam name="TSource">The type of elements in the source collection.</typeparam>
     /// <typeparam name="TResult">The type of elements in the result collection.</typeparam>
     /// <param name="source">The source enumerable to process.</param>
     /// <param name="taskSelector">The async transformation function to apply to each element.</param>
-    /// <param name="options">Configuration options for parallel execution, including concurrency limits, retry policies, and lifecycle hooks. If null, defaults are used.</param>
+    /// <param name="options">
+    ///     Configuration options for parallel execution, including concurrency limits, retry policies, and
+    ///     lifecycle hooks. If null, defaults are used.
+    /// </param>
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>A task representing the asynchronous operation, containing a list of all transformed results.</returns>
-    /// <exception cref="AggregateException">Thrown when <see cref="ErrorMode.CollectAndContinue"/> is enabled and one or more errors occurred during processing.</exception>
+    /// <exception cref="AggregateException">
+    ///     Thrown when <see cref="ErrorMode.CollectAndContinue" /> is enabled and one or more
+    ///     errors occurred during processing.
+    /// </exception>
     /// <exception cref="OperationCanceledException">Thrown when the operation is cancelled via the cancellation token.</exception>
     [SuppressMessage("ReSharper", "AccessToDisposedClosure")]
     public static async Task<List<TResult>> SelectParallelAsync<TSource, TResult>(
@@ -72,110 +81,122 @@ public static class AsyncParallelLinq
 
         var channel = Channel.CreateBounded<(int idx, TSource item)>(new BoundedChannelOptions(options.ChannelCapacity)
         {
-            SingleReader = false,
-            SingleWriter = true,
-            FullMode = BoundedChannelFullMode.Wait
+            SingleReader = false, SingleWriter = true, FullMode = BoundedChannelFullMode.Wait
         });
 
         var writerTask = Task.Run(async () =>
-        {
-            var i = 0;
-            try
             {
-                foreach (var item in sourceList)
+                var i = 0;
+                try
                 {
-                    token.ThrowIfCancellationRequested();
-                    if (!await channel.Writer.WaitToWriteAsync(token).ConfigureAwait(false))
-                        break;
+                    foreach (var item in sourceList)
+                    {
+                        token.ThrowIfCancellationRequested();
+                        if (!await channel.Writer.WaitToWriteAsync(token).ConfigureAwait(false)) break;
 
-                    await channel.Writer.WriteAsync((i, item), token).ConfigureAwait(false);
-                    if (i++ % effectiveMaxWorkers != 0 || options.OnThrottleAsync is null) continue;
+                        await channel.Writer.WriteAsync((i, item), token).ConfigureAwait(false);
+                        if (i++ % effectiveMaxWorkers != 0 || options.OnThrottleAsync is null) continue;
 
-                    metricsTracker.IncrementThrottleEvents();
-                    await options.OnThrottleAsync(i).ConfigureAwait(false);
+                        metricsTracker.IncrementThrottleEvents();
+                        await options.OnThrottleAsync(i).ConfigureAwait(false);
+                    }
                 }
-            }
-            finally
-            {
-                channel.Writer.TryComplete();
-            }
-        }, token);
+                finally
+                {
+                    channel.Writer.TryComplete();
+                }
+            },
+            token);
 
         var workers = Enumerable.Range(0, effectiveMaxWorkers)
             .Select(_ => Task.Run(async () =>
-            {
-                await foreach (var (idx, item) in channel.Reader.ReadAllAsync(token).ConfigureAwait(false))
                 {
-                    var startTime = Stopwatch.GetTimestamp();
-                    var success = false;
-                    var acquiredAdaptive = false;
-
-                    try
+                    await foreach (var (idx, item) in channel.Reader.ReadAllAsync(token).ConfigureAwait(false))
                     {
-                        if (adaptiveController is not null)
+                        var startTime = Stopwatch.GetTimestamp();
+                        var success = false;
+                        var acquiredAdaptive = false;
+
+                        try
                         {
-                            await adaptiveController.AcquireAsync(token).ConfigureAwait(false);
-                            acquiredAdaptive = true;
+                            if (adaptiveController is not null)
+                            {
+                                await adaptiveController.AcquireAsync(token).ConfigureAwait(false);
+                                acquiredAdaptive = true;
+                            }
+
+                            if (tokenBucket is not null) await tokenBucket.AcquireAsync(token).ConfigureAwait(false);
+
+                            progressTracker?.IncrementStarted();
+                            metricsTracker.IncrementItemsStarted();
+                            if (options.OnStartItemAsync is not null) await options.OnStartItemAsync(idx).ConfigureAwait(false);
+
+                            TResult result;
+                            if (circuitBreaker is not null)
+                            {
+                                result = await circuitBreaker.ExecuteAsync(() =>
+                                            RetryPolicy.ExecuteWithRetry(item,
+                                                taskSelector,
+                                                options,
+                                                metricsTracker,
+                                                idx,
+                                                token),
+                                        token)
+                                    .ConfigureAwait(false);
+                            }
+                            else
+                            {
+                                result = await RetryPolicy.ExecuteWithRetry(item,
+                                        taskSelector,
+                                        options,
+                                        metricsTracker,
+                                        idx,
+                                        token)
+                                    .ConfigureAwait(false);
+                            }
+
+                            if (options.OrderedOutput && orderedResults != null)
+                                orderedResults[idx] = result;
+                            else
+                                results?.Add(result);
+
+                            progressTracker?.IncrementCompleted();
+                            metricsTracker.IncrementItemsCompleted();
+
+                            if (options.OnCompleteItemAsync is not null) await options.OnCompleteItemAsync(idx).ConfigureAwait(false);
+
+                            success = true;
                         }
-
-                        if (tokenBucket is not null)
-                            await tokenBucket.AcquireAsync(token).ConfigureAwait(false);
-
-                        progressTracker?.IncrementStarted();
-                        metricsTracker.IncrementItemsStarted();
-                        if (options.OnStartItemAsync is not null) await options.OnStartItemAsync(idx).ConfigureAwait(false);
-
-                        TResult result;
-                        if (circuitBreaker is not null)
+                        catch (Exception ex)
                         {
-                            result = await circuitBreaker.ExecuteAsync(async () =>
-                                await RetryPolicy.ExecuteWithRetry(item, taskSelector, options, metricsTracker, idx, token).ConfigureAwait(false), token).ConfigureAwait(false);
-                        }
-                        else
-                        {
-                            result = await RetryPolicy.ExecuteWithRetry(item, taskSelector, options, metricsTracker, idx, token).ConfigureAwait(false);
-                        }
+                            errors.Add(ex);
+                            progressTracker?.IncrementErrors();
+                            metricsTracker.IncrementFailures();
 
-                        if (options.OrderedOutput)
-                            orderedResults![idx] = result;
-                        else
-                            results!.Add(result);
+                            if (options.OnErrorAsync is not null)
+                            {
+                                var cont = await options.OnErrorAsync(idx, ex).ConfigureAwait(false);
+                                if (!cont) await cts.CancelAsync().ConfigureAwait(false);
+                            }
 
-                        progressTracker?.IncrementCompleted();
-                        metricsTracker.IncrementItemsCompleted();
-                        if (options.OnCompleteItemAsync is not null) await options.OnCompleteItemAsync(idx).ConfigureAwait(false);
-
-                        success = true;
-                    }
-                    catch (Exception ex)
-                    {
-                        errors.Add(ex);
-                        progressTracker?.IncrementErrors();
-                        metricsTracker.IncrementFailures();
-
-                        if (options.OnErrorAsync is not null)
-                        {
-                            var cont = await options.OnErrorAsync(idx, ex).ConfigureAwait(false);
-                            if (!cont)
+                            if (options.ErrorMode == ErrorMode.FailFast)
+                            {
                                 await cts.CancelAsync().ConfigureAwait(false);
+                                throw;
+                            }
                         }
-
-                        if (options.ErrorMode == ErrorMode.FailFast)
+                        finally
                         {
-                            await cts.CancelAsync().ConfigureAwait(false);
-                            throw;
+                            if (adaptiveController is not null && acquiredAdaptive)
+                            {
+                                var elapsed = Stopwatch.GetElapsedTime(startTime);
+                                adaptiveController.Release(elapsed, success);
+                            }
                         }
                     }
-                    finally
-                    {
-                        if (acquiredAdaptive)
-                        {
-                            var elapsed = Stopwatch.GetElapsedTime(startTime);
-                            adaptiveController!.Release(elapsed, success);
-                        }
-                    }
-                }
-            }, token)).ToArray();
+                },
+                token))
+            .ToArray();
 
         try
         {
@@ -186,16 +207,15 @@ public static class AsyncParallelLinq
             // Errors are collected in the errors list and handled after cleanup
         }
 
-        if (options.ErrorMode == ErrorMode.CollectAndContinue && errors.Count > 0)
-            throw new AggregateException(errors);
+        if (options.ErrorMode == ErrorMode.CollectAndContinue && errors.Count > 0) throw new AggregateException(errors);
 
-        if (!options.OrderedOutput) return [.. results!];
+        if (!options.OrderedOutput) return [.. results ?? []];
 
         var result = new List<TResult>(totalItems);
 
         for (var i = 0; i < totalItems; i++)
         {
-            if (orderedResults!.TryGetValue(i, out var value))
+            if (orderedResults is not null && orderedResults.TryGetValue(i, out var value))
                 result.Add(value);
         }
 
@@ -203,15 +223,19 @@ public static class AsyncParallelLinq
     }
 
     /// <summary>
-    /// Applies a transformation function to each element in an async stream in parallel with bounded concurrency,
-    /// returning results as a streaming async enumerable with built-in backpressure control.
-    /// Results may be yielded out-of-order relative to the input sequence unless <see cref="ParallelOptionsRivulet.OrderedOutput"/> is true.
+    ///     Applies a transformation function to each element in an async stream in parallel with bounded concurrency,
+    ///     returning results as a streaming async enumerable with built-in backpressure control.
+    ///     Results may be yielded out-of-order relative to the input sequence unless
+    ///     <see cref="ParallelOptionsRivulet.OrderedOutput" /> is true.
     /// </summary>
     /// <typeparam name="TSource">The type of elements in the source collection.</typeparam>
     /// <typeparam name="TResult">The type of elements in the result stream.</typeparam>
     /// <param name="source">The async source enumerable to process.</param>
     /// <param name="taskSelector">The async transformation function to apply to each element.</param>
-    /// <param name="options">Configuration options for parallel execution, including concurrency limits, retry policies, and lifecycle hooks. If null, defaults are used.</param>
+    /// <param name="options">
+    ///     Configuration options for parallel execution, including concurrency limits, retry policies, and
+    ///     lifecycle hooks. If null, defaults are used.
+    /// </param>
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>An async enumerable that yields transformed results as they complete.</returns>
     /// <exception cref="OperationCanceledException">Thrown when the operation is cancelled via the cancellation token.</exception>
@@ -220,7 +244,8 @@ public static class AsyncParallelLinq
         this IAsyncEnumerable<TSource> source,
         Func<TSource, CancellationToken, ValueTask<TResult>> taskSelector,
         ParallelOptionsRivulet? options = null,
-        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+        [EnumeratorCancellation]
+        CancellationToken cancellationToken = default)
     {
         options ??= new();
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -251,117 +276,130 @@ public static class AsyncParallelLinq
 
         var input = Channel.CreateBounded<(int idx, TSource item)>(new BoundedChannelOptions(options.ChannelCapacity)
         {
-            SingleReader = false,
-            SingleWriter = true,
-            FullMode = BoundedChannelFullMode.Wait
+            SingleReader = false, SingleWriter = true, FullMode = BoundedChannelFullMode.Wait
         });
         var output = Channel.CreateBounded<(int idx, TResult result)>(new BoundedChannelOptions(options.ChannelCapacity)
         {
-            SingleReader = true,
-            SingleWriter = false,
-            FullMode = BoundedChannelFullMode.Wait
+            SingleReader = true, SingleWriter = false, FullMode = BoundedChannelFullMode.Wait
         });
 
         var writer = Task.Run(async () =>
-        {
-            var i = 0;
-            try
             {
-                await foreach (var item in source.WithCancellation(token).ConfigureAwait(false))
-                {
-                    token.ThrowIfCancellationRequested();
-                    await input.Writer.WriteAsync((i++, item), token).ConfigureAwait(false);
-                }
-            }
-            finally
-            {
-                input.Writer.TryComplete();
-            }
-        }, token);
-
-        var workers = Enumerable.Range(0, effectiveMaxWorkers).Select(_ => Task.Run(async () =>
-        {
-            await foreach (var (idx, item) in input.Reader.ReadAllAsync(token).ConfigureAwait(false))
-            {
-                var startTime = Stopwatch.GetTimestamp();
-                var success = false;
-                var acquiredAdaptive = false;
-
+                var i = 0;
                 try
                 {
-                    if (adaptiveController is not null)
+                    await foreach (var item in source.WithCancellation(token).ConfigureAwait(false))
                     {
-                        await adaptiveController.AcquireAsync(token).ConfigureAwait(false);
-                        acquiredAdaptive = true;
-                    }
-
-                    if (tokenBucket is not null)
-                        await tokenBucket.AcquireAsync(token).ConfigureAwait(false);
-
-                    progressTracker?.IncrementStarted();
-                    metricsTracker.IncrementItemsStarted();
-                    if (options.OnStartItemAsync is not null) await options.OnStartItemAsync(idx).ConfigureAwait(false);
-
-                    TResult res;
-                    if (circuitBreaker is not null)
-                    {
-                        res = await circuitBreaker.ExecuteAsync(async () =>
-                            await RetryPolicy.ExecuteWithRetry(item, taskSelector, options, metricsTracker, idx, token).ConfigureAwait(false), token).ConfigureAwait(false);
-                    }
-                    else
-                    {
-                        res = await RetryPolicy.ExecuteWithRetry(item, taskSelector, options, metricsTracker, idx, token).ConfigureAwait(false);
-                    }
-
-                    await output.Writer.WriteAsync((idx, res), token).ConfigureAwait(false);
-                    progressTracker?.IncrementCompleted();
-                    metricsTracker.IncrementItemsCompleted();
-                    if (options.OnCompleteItemAsync is not null) await options.OnCompleteItemAsync(idx).ConfigureAwait(false);
-
-                    success = true;
-                }
-                catch (Exception ex)
-                {
-                    progressTracker?.IncrementErrors();
-                    metricsTracker.IncrementFailures();
-
-                    if (options.OnErrorAsync is not null)
-                    {
-                        var cont = await options.OnErrorAsync(idx, ex).ConfigureAwait(false);
-                        if (!cont) await cts.CancelAsync().ConfigureAwait(false);
-                    }
-
-                    switch (options.ErrorMode)
-                    {
-                        case ErrorMode.FailFast:
-                            await cts.CancelAsync().ConfigureAwait(false);
-                            throw;
-                        case ErrorMode.CollectAndContinue or ErrorMode.BestEffort:
-                        break;
+                        token.ThrowIfCancellationRequested();
+                        await input.Writer.WriteAsync((i++, item), token).ConfigureAwait(false);
                     }
                 }
                 finally
                 {
-                    if (acquiredAdaptive)
-                    {
-                        var elapsed = Stopwatch.GetElapsedTime(startTime);
-                        adaptiveController!.Release(elapsed, success);
-                    }
+                    input.Writer.TryComplete();
                 }
-            }
-        }, token)).ToArray();
+            },
+            token);
+
+        var workers = Enumerable.Range(0, effectiveMaxWorkers)
+            .Select(_ => Task.Run(async () =>
+                {
+                    await foreach (var (idx, item) in input.Reader.ReadAllAsync(token).ConfigureAwait(false))
+                    {
+                        var startTime = Stopwatch.GetTimestamp();
+                        var success = false;
+                        var acquiredAdaptive = false;
+
+                        try
+                        {
+                            if (adaptiveController is not null)
+                            {
+                                await adaptiveController.AcquireAsync(token).ConfigureAwait(false);
+                                acquiredAdaptive = true;
+                            }
+
+                            if (tokenBucket is not null) await tokenBucket.AcquireAsync(token).ConfigureAwait(false);
+
+                            progressTracker?.IncrementStarted();
+                            metricsTracker.IncrementItemsStarted();
+                            if (options.OnStartItemAsync is not null) await options.OnStartItemAsync(idx).ConfigureAwait(false);
+
+                            TResult res;
+                            if (circuitBreaker is not null)
+                            {
+                                res = await circuitBreaker.ExecuteAsync(() =>
+                                            RetryPolicy.ExecuteWithRetry(item,
+                                                taskSelector,
+                                                options,
+                                                metricsTracker,
+                                                idx,
+                                                token),
+                                        token)
+                                    .ConfigureAwait(false);
+                            }
+                            else
+                            {
+                                res = await RetryPolicy.ExecuteWithRetry(item,
+                                        taskSelector,
+                                        options,
+                                        metricsTracker,
+                                        idx,
+                                        token)
+                                    .ConfigureAwait(false);
+                            }
+
+                            await output.Writer.WriteAsync((idx, res), token).ConfigureAwait(false);
+                            progressTracker?.IncrementCompleted();
+                            metricsTracker.IncrementItemsCompleted();
+                            if (options.OnCompleteItemAsync is not null) await options.OnCompleteItemAsync(idx).ConfigureAwait(false);
+
+                            success = true;
+                        }
+                        catch (Exception ex)
+                        {
+                            progressTracker?.IncrementErrors();
+                            metricsTracker.IncrementFailures();
+
+                            if (options.OnErrorAsync is not null)
+                            {
+                                var cont = await options.OnErrorAsync(idx, ex).ConfigureAwait(false);
+                                if (!cont) await cts.CancelAsync().ConfigureAwait(false);
+                            }
+
+                            switch (options.ErrorMode)
+                            {
+                                case ErrorMode.FailFast:
+                                    await cts.CancelAsync().ConfigureAwait(false);
+                                    throw;
+                                case ErrorMode.CollectAndContinue or ErrorMode.BestEffort:
+                                break;
+                            }
+                        }
+                        finally
+                        {
+                            if (adaptiveController is not null && acquiredAdaptive)
+                            {
+                                var elapsed = Stopwatch.GetElapsedTime(startTime);
+                                adaptiveController.Release(elapsed, success);
+                            }
+                        }
+                    }
+                },
+                token))
+            .ToArray();
 
         var reader = Task.Run(async () =>
-        {
-            try
             {
-                await Task.WhenAll(workers).ConfigureAwait(false);
-            }
-            finally
-            {
-                output.Writer.TryComplete();
-            }
-        }, token);
+                try
+                {
+                    await Task.WhenAll(workers).ConfigureAwait(false);
+                }
+                finally
+                {
+                    output.Writer.TryComplete();
+                }
+            },
+            token);
 
         if (options.OrderedOutput)
         {
@@ -377,14 +415,12 @@ public static class AsyncParallelLinq
                 while (buffer.Remove(nextIndex, out var orderedResult))
                 {
                     yield return orderedResult;
+
                     nextIndex++;
                 }
             }
 
-            foreach (var idx in buffer.Keys.OrderBy(k => k))
-            {
-                yield return buffer[idx];
-            }
+            foreach (var idx in buffer.Keys.OrderBy(static k => k)) yield return buffer[idx];
         }
         else
         {
@@ -399,45 +435,58 @@ public static class AsyncParallelLinq
     }
 
     /// <summary>
-    /// Executes an async action on each element in a stream in parallel with bounded concurrency.
-    /// No results are returned; this is suitable for side effect operations like logging, updates, or fire-and-forget processing.
+    ///     Executes an async action on each element in a stream in parallel with bounded concurrency.
+    ///     No results are returned; this is suitable for side effect operations like logging, updates, or fire-and-forget
+    ///     processing.
     /// </summary>
     /// <typeparam name="TSource">The type of elements in the source collection.</typeparam>
     /// <param name="source">The async source enumerable to process.</param>
     /// <param name="action">The async action to execute for each element.</param>
-    /// <param name="options">Configuration options for parallel execution, including concurrency limits, retry policies, and lifecycle hooks. If null, defaults are used.</param>
+    /// <param name="options">
+    ///     Configuration options for parallel execution, including concurrency limits, retry policies, and
+    ///     lifecycle hooks. If null, defaults are used.
+    /// </param>
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>A task that completes when all items have been processed.</returns>
     /// <exception cref="OperationCanceledException">Thrown when the operation is cancelled via the cancellation token.</exception>
-    public static async Task ForEachParallelAsync<TSource>(
+    public static Task ForEachParallelAsync<TSource>(
         this IAsyncEnumerable<TSource> source,
         Func<TSource, CancellationToken, ValueTask> action,
         ParallelOptionsRivulet? options = null,
         CancellationToken cancellationToken = default) =>
-        await SelectParallelStreamAsync(
-            source,
-            async (item, ct) => { await action(item, ct).ConfigureAwait(false); return true; },
-            options,
-            cancellationToken
-        ).CollectAsync(cancellationToken).ConfigureAwait(false);
+        SelectParallelStreamAsync(
+                source,
+                async (item, ct) =>
+                {
+                    await action(item, ct).ConfigureAwait(false);
+                    return true;
+                },
+                options,
+                cancellationToken
+            )
+            .CollectAsync(cancellationToken);
 
     /// <summary>
-    /// Executes an async action on each element in an enumerable in parallel with bounded concurrency.
-    /// No results are returned; this is suitable for side effect operations like logging, updates, or fire-and-forget processing.
+    ///     Executes an async action on each element in an enumerable in parallel with bounded concurrency.
+    ///     No results are returned; this is suitable for side effect operations like logging, updates, or fire-and-forget
+    ///     processing.
     /// </summary>
     /// <typeparam name="TSource">The type of elements in the source collection.</typeparam>
     /// <param name="source">The source enumerable to process.</param>
     /// <param name="action">The async action to execute for each element.</param>
-    /// <param name="options">Configuration options for parallel execution, including concurrency limits, retry policies, and lifecycle hooks. If null, defaults are used.</param>
+    /// <param name="options">
+    ///     Configuration options for parallel execution, including concurrency limits, retry policies, and
+    ///     lifecycle hooks. If null, defaults are used.
+    /// </param>
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>A task that completes when all items have been processed.</returns>
     /// <exception cref="OperationCanceledException">Thrown when the operation is cancelled via the cancellation token.</exception>
-    public static async Task ForEachParallelAsync<TSource>(
+    public static Task ForEachParallelAsync<TSource>(
         this IEnumerable<TSource> source,
         Func<TSource, CancellationToken, ValueTask> action,
         ParallelOptionsRivulet? options = null,
         CancellationToken cancellationToken = default) =>
-        await source.ToAsyncEnumerable().ForEachParallelAsync(action, options, cancellationToken).ConfigureAwait(false);
+        source.ToAsyncEnumerable().ForEachParallelAsync(action, options, cancellationToken);
 
     private static async Task CollectAsync<T>(this IAsyncEnumerable<T> source, CancellationToken ct)
     {
@@ -445,8 +494,8 @@ public static class AsyncParallelLinq
     }
 
     /// <summary>
-    /// Groups items into batches and processes each batch in parallel with bounded concurrency.
-    /// Returns a materialized list of all batch results.
+    ///     Groups items into batches and processes each batch in parallel with bounded concurrency.
+    ///     Returns a materialized list of all batch results.
     /// </summary>
     /// <typeparam name="TSource">The type of elements in the source collection.</typeparam>
     /// <typeparam name="TResult">The type of result returned by processing each batch.</typeparam>
@@ -457,25 +506,27 @@ public static class AsyncParallelLinq
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>A task representing the asynchronous operation, containing a list of all batch results.</returns>
     /// <exception cref="ArgumentException">Thrown when batchSize is less than 1.</exception>
-    /// <exception cref="AggregateException">Thrown when <see cref="ErrorMode.CollectAndContinue"/> is enabled and one or more errors occurred during processing.</exception>
+    /// <exception cref="AggregateException">
+    ///     Thrown when <see cref="ErrorMode.CollectAndContinue" /> is enabled and one or more
+    ///     errors occurred during processing.
+    /// </exception>
     /// <exception cref="OperationCanceledException">Thrown when the operation is cancelled via the cancellation token.</exception>
-    public static async Task<List<TResult>> BatchParallelAsync<TSource, TResult>(
+    public static Task<List<TResult>> BatchParallelAsync<TSource, TResult>(
         this IEnumerable<TSource> source,
         int batchSize,
         Func<IReadOnlyList<TSource>, CancellationToken, ValueTask<TResult>> batchSelector,
         ParallelOptionsRivulet? options = null,
         CancellationToken cancellationToken = default)
     {
-        if (batchSize < 1)
-            throw new ArgumentException("Batch size must be at least 1.", nameof(batchSize));
+        if (batchSize < 1) throw new ArgumentException("Batch size must be at least 1.", nameof(batchSize));
 
         var batches = CreateBatches(source, batchSize);
-        return await batches.SelectParallelAsync(batchSelector, options, cancellationToken).ConfigureAwait(false);
+        return batches.SelectParallelAsync(batchSelector, options, cancellationToken);
     }
 
     /// <summary>
-    /// Groups items from an async stream into batches and processes each batch in parallel with bounded concurrency.
-    /// Returns results as a streaming async enumerable with built-in backpressure control.
+    ///     Groups items from an async stream into batches and processes each batch in parallel with bounded concurrency.
+    ///     Returns results as a streaming async enumerable with built-in backpressure control.
     /// </summary>
     /// <typeparam name="TSource">The type of elements in the source collection.</typeparam>
     /// <typeparam name="TResult">The type of result returned by processing each batch.</typeparam>
@@ -494,14 +545,13 @@ public static class AsyncParallelLinq
         Func<IReadOnlyList<TSource>, CancellationToken, ValueTask<TResult>> batchSelector,
         ParallelOptionsRivulet? options = null,
         TimeSpan? batchTimeout = null,
-        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+        [EnumeratorCancellation]
+        CancellationToken cancellationToken = default)
     {
-        if (batchSize < 1)
-            throw new ArgumentException("Batch size must be at least 1.", nameof(batchSize));
+        if (batchSize < 1) throw new ArgumentException("Batch size must be at least 1.", nameof(batchSize));
 
         var batches = CreateBatchesAsync(source, batchSize, batchTimeout, cancellationToken);
-        await foreach (var result in batches.SelectParallelStreamAsync(batchSelector, options, cancellationToken).ConfigureAwait(false))
-            yield return result;
+        await foreach (var result in batches.SelectParallelStreamAsync(batchSelector, options, cancellationToken).ConfigureAwait(false)) yield return result;
     }
 
     private static IEnumerable<IReadOnlyList<TSource>> CreateBatches<TSource>(IEnumerable<TSource> source, int batchSize)
@@ -513,18 +563,19 @@ public static class AsyncParallelLinq
             if (batch.Count < batchSize) continue;
 
             yield return batch;
+
             batch = new(batchSize);
         }
 
-        if (batch.Count > 0)
-            yield return batch;
+        if (batch.Count > 0) yield return batch;
     }
 
     private static async IAsyncEnumerable<IReadOnlyList<TSource>> CreateBatchesAsync<TSource>(
         IAsyncEnumerable<TSource> source,
         int batchSize,
         TimeSpan? batchTimeout,
-        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+        [EnumeratorCancellation]
+        CancellationToken cancellationToken)
     {
         var batch = new List<TSource>(batchSize);
 
@@ -536,42 +587,36 @@ public static class AsyncParallelLinq
 
             var channel = Channel.CreateBounded<IReadOnlyList<TSource>>(new BoundedChannelOptions(16)
             {
-                SingleReader = true,
-                SingleWriter = false,
-                FullMode = BoundedChannelFullMode.Wait
+                SingleReader = true, SingleWriter = false, FullMode = BoundedChannelFullMode.Wait
             });
 
             var producer = Task.Run(async () =>
-            {
-                try
                 {
-                    var flushTimer = Task.Delay(timeout, token);
-
-                    await foreach (var item in source.WithCancellation(token).ConfigureAwait(false))
+                    try
                     {
-                        batch.Add(item);
+                        var flushTimer = Task.Delay(timeout, token);
 
-                        if (batch.Count < batchSize && (!flushTimer.IsCompleted || batch.Count <= 0))
-                            continue;
+                        await foreach (var item in source.WithCancellation(token).ConfigureAwait(false))
+                        {
+                            batch.Add(item);
 
-                        await channel.Writer.WriteAsync(batch, token).ConfigureAwait(false);
-                        batch = new(batchSize);
-                        flushTimer = Task.Delay(timeout, token);
+                            if (batch.Count < batchSize && (!flushTimer.IsCompleted || batch.Count <= 0)) continue;
+
+                            await channel.Writer.WriteAsync(batch, token).ConfigureAwait(false);
+                            batch = new(batchSize);
+                            flushTimer = Task.Delay(timeout, token);
+                        }
+
+                        if (batch.Count > 0) await channel.Writer.WriteAsync(batch, token).ConfigureAwait(false);
                     }
-
-                    if (batch.Count > 0)
+                    finally
                     {
-                        await channel.Writer.WriteAsync(batch, token).ConfigureAwait(false);
+                        channel.Writer.TryComplete();
                     }
-                }
-                finally
-                {
-                    channel.Writer.TryComplete();
-                }
-            }, token);
+                },
+                token);
 
-            await foreach (var batchResult in channel.Reader.ReadAllAsync(token).ConfigureAwait(false))
-                yield return batchResult;
+            await foreach (var batchResult in channel.Reader.ReadAllAsync(token).ConfigureAwait(false)) yield return batchResult;
 
             await producer.ConfigureAwait(false);
         }
@@ -580,15 +625,14 @@ public static class AsyncParallelLinq
             await foreach (var item in source.WithCancellation(cancellationToken).ConfigureAwait(false))
             {
                 batch.Add(item);
-                if (batch.Count < batchSize)
-                    continue;
+                if (batch.Count < batchSize) continue;
 
                 yield return batch;
+
                 batch = new(batchSize);
             }
 
-            if (batch.Count > 0)
-                yield return batch;
+            if (batch.Count > 0) yield return batch;
         }
     }
 }

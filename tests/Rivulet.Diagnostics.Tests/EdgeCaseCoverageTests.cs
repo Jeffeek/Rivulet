@@ -4,7 +4,7 @@ using Rivulet.Core;
 namespace Rivulet.Diagnostics.Tests;
 
 /// <summary>
-/// Tests specifically designed to cover edge cases and improve code coverage.
+///     Tests specifically designed to cover edge cases and improve code coverage.
 /// </summary>
 [Collection(TestCollections.SerialEventSource)]
 public class EdgeCaseCoverageTests
@@ -27,27 +27,20 @@ public class EdgeCaseCoverageTests
     public async Task HealthCheck_ShouldHandleDegradedState()
     {
         using var exporter = new PrometheusExporter();
-        var healthCheck = new RivuletHealthCheck(exporter, new()
-        {
-            ErrorRateThreshold = 0.2,
-            FailureCountThreshold = 50
-        });
+        var healthCheck = new RivuletHealthCheck(exporter, new() { ErrorRateThreshold = 0.2, FailureCountThreshold = 50 });
 
         try
         {
             await Enumerable.Range(1, 100)
                 .ToAsyncEnumerable()
                 .SelectParallelStreamAsync(async (x, ct) =>
-                {
-                    await Task.Delay(5, ct);
-                    if (x <= 90)
-                        throw new InvalidOperationException("Test failure");
-                    return x;
-                }, new()
-                {
-                    MaxDegreeOfParallelism = 8,
-                    ErrorMode = ErrorMode.CollectAndContinue
-                })
+                    {
+                        await Task.Delay(5, ct);
+                        if (x <= 90) throw new InvalidOperationException("Test failure");
+
+                        return x;
+                    },
+                    new() { MaxDegreeOfParallelism = 8, ErrorMode = ErrorMode.CollectAndContinue })
                 .ToListAsync();
         }
         catch
@@ -87,7 +80,7 @@ public class EdgeCaseCoverageTests
     [Fact]
     public async Task ConsoleListener_ShouldHandleDifferentColorScenarios()
     {
-        var listener = new RivuletConsoleListener(useColors: true);
+        var listener = new RivuletConsoleListener();
 
         var attemptCount = 0;
         try
@@ -97,19 +90,16 @@ public class EdgeCaseCoverageTests
                 await Enumerable.Range(1, 5)
                     .ToAsyncEnumerable()
                     .SelectParallelStreamAsync(async (x, ct) =>
-                    {
-                        if (++attemptCount <= 2)
                         {
-                            await Task.Delay(1, ct);
-                            throw new InvalidOperationException("Retry");
-                        }
-                        return x;
-                    }, new()
-                    {
-                        MaxRetries = 2,
-                        IsTransient = _ => true,
-                        MaxDegreeOfParallelism = 1
-                    })
+                            if (++attemptCount <= 2)
+                            {
+                                await Task.Delay(1, ct);
+                                throw new InvalidOperationException("Retry");
+                            }
+
+                            return x;
+                        },
+                        new() { MaxRetries = 2, IsTransient = static _ => true, MaxDegreeOfParallelism = 1 })
                     .ToListAsync();
             }
             catch
@@ -141,13 +131,11 @@ public class EdgeCaseCoverageTests
                 await Enumerable.Range(1, 5)
                     .ToAsyncEnumerable()
                     .SelectParallelStreamAsync(async (x, ct) =>
-                    {
-                        await Task.Delay(200, ct);
-                        return x;
-                    }, new()
-                    {
-                        MaxDegreeOfParallelism = 2
-                    })
+                        {
+                            await Task.Delay(200, ct);
+                            return x;
+                        },
+                        new() { MaxDegreeOfParallelism = 2 })
                     .ToListAsync();
 
                 try
@@ -155,14 +143,11 @@ public class EdgeCaseCoverageTests
                     await Enumerable.Range(1, 5)
                         .ToAsyncEnumerable()
                         .SelectParallelStreamAsync(async (x, ct) =>
-                        {
-                            await Task.Delay(200, ct);
-                            return x % 2 == 0 ? throw new InvalidOperationException() : x;
-                        }, new()
-                        {
-                            MaxDegreeOfParallelism = 2,
-                            ErrorMode = ErrorMode.CollectAndContinue
-                        })
+                            {
+                                await Task.Delay(200, ct);
+                                return x % 2 == 0 ? throw new InvalidOperationException() : x;
+                            },
+                            new() { MaxDegreeOfParallelism = 2, ErrorMode = ErrorMode.CollectAndContinue })
                         .ToListAsync();
                 }
                 catch
@@ -200,13 +185,11 @@ public class EdgeCaseCoverageTests
                 await Enumerable.Range(1, 5)
                     .ToAsyncEnumerable()
                     .SelectParallelStreamAsync(async (x, ct) =>
-                    {
-                        await Task.Delay(200, ct);
-                        return x;
-                    }, new()
-                    {
-                        MaxDegreeOfParallelism = 2
-                    })
+                        {
+                            await Task.Delay(200, ct);
+                            return x;
+                        },
+                        new() { MaxDegreeOfParallelism = 2 })
                     .ToListAsync();
 
                 // Wait for EventSource counters to fire (1s default interval)
@@ -237,13 +220,11 @@ public class EdgeCaseCoverageTests
             await Enumerable.Range(1, 5)
                 .ToAsyncEnumerable()
                 .SelectParallelStreamAsync(async (x, ct) =>
-                {
-                    await Task.Delay(200, ct);
-                    return x;
-                }, new()
-                {
-                    MaxDegreeOfParallelism = 2
-                })
+                    {
+                        await Task.Delay(200, ct);
+                        return x;
+                    },
+                    new() { MaxDegreeOfParallelism = 2 })
                 .ToListAsync();
 
             // Wait for EventSource counters to fire (1s default interval)
@@ -268,13 +249,11 @@ public class EdgeCaseCoverageTests
         await Enumerable.Range(1, 5)
             .ToAsyncEnumerable()
             .SelectParallelStreamAsync(async (x, ct) =>
-            {
-                await Task.Delay(200, ct);
-                return x;
-            }, new()
-            {
-                MaxDegreeOfParallelism = 2
-            })
+                {
+                    await Task.Delay(200, ct);
+                    return x;
+                },
+                new() { MaxDegreeOfParallelism = 2 })
             .ToListAsync();
 
         // Wait for EventSource counters to fire (1s default interval)
@@ -310,13 +289,11 @@ public class EdgeCaseCoverageTests
         await Enumerable.Range(1, 5)
             .ToAsyncEnumerable()
             .SelectParallelStreamAsync(async (x, ct) =>
-            {
-                await Task.Delay(200, ct);
-                return x;
-            }, new()
-            {
-                MaxDegreeOfParallelism = 2
-            })
+                {
+                    await Task.Delay(200, ct);
+                    return x;
+                },
+                new() { MaxDegreeOfParallelism = 2 })
             .ToListAsync();
 
         // Wait for EventSource counters to fire (1s default interval)
@@ -330,7 +307,10 @@ public class EdgeCaseCoverageTests
     {
         public List<string> ReceivedCounters { get; } = new();
 
-        protected override void OnCounterReceived(string name, string displayName, double value, string displayUnits) =>
+        protected override void OnCounterReceived(string name,
+            string displayName,
+            double value,
+            string displayUnits) =>
             ReceivedCounters.Add(name);
     }
 }

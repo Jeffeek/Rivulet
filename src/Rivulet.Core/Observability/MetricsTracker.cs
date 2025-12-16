@@ -3,25 +3,25 @@ using System.Diagnostics;
 namespace Rivulet.Core.Observability;
 
 /// <summary>
-/// Active implementation of metrics tracker with full sampling and reporting.
-/// Used when user provides MetricsOptions with custom metrics collection.
+///     Active implementation of metrics tracker with full sampling and reporting.
+///     Used when user provides MetricsOptions with custom metrics collection.
 /// </summary>
 internal sealed class MetricsTracker : MetricsTrackerBase
 {
     private readonly MetricsOptions _options;
-    private readonly Stopwatch _stopwatch;
     private readonly CancellationTokenSource _samplerCts;
     private readonly Task _samplerTask;
+    private readonly Stopwatch _stopwatch;
+    private int _activeWorkers;
+    private bool _disposed;
+    private long _drainEvents;
+    private long _itemsCompleted;
 
     private long _itemsStarted;
-    private long _itemsCompleted;
-    private long _totalRetries;
-    private long _totalFailures;
-    private long _throttleEvents;
-    private long _drainEvents;
-    private int _activeWorkers;
     private int _queueDepth;
-    private bool _disposed;
+    private long _throttleEvents;
+    private long _totalFailures;
+    private long _totalRetries;
 
     internal MetricsTracker(MetricsOptions options, CancellationToken cancellationToken)
     {
@@ -31,6 +31,8 @@ internal sealed class MetricsTracker : MetricsTrackerBase
 
         _samplerTask = Task.Run(SampleMetricsPeriodically, _samplerCts.Token);
     }
+
+    private static TimeSpan DisposeWait => TimeSpan.FromSeconds(2);
 
     public override void IncrementItemsStarted()
     {
@@ -111,20 +113,23 @@ internal sealed class MetricsTracker : MetricsTrackerBase
         try
         {
             if (_options.OnMetricsSample != null)
-                await _options.OnMetricsSample(new MetricsSnapshot
-                {
-                    ActiveWorkers = activeWorkers,
-                    QueueDepth = queueDepth,
-                    ItemsStarted = started,
-                    ItemsCompleted = completed,
-                    TotalRetries = retries,
-                    TotalFailures = failures,
-                    ThrottleEvents = throttles,
-                    DrainEvents = drains,
-                    Elapsed = elapsed,
-                    ItemsPerSecond = itemsPerSecond,
-                    ErrorRate = errorRate
-                }).ConfigureAwait(false);
+            {
+                await _options.OnMetricsSample(new()
+                    {
+                        ActiveWorkers = activeWorkers,
+                        QueueDepth = queueDepth,
+                        ItemsStarted = started,
+                        ItemsCompleted = completed,
+                        TotalRetries = retries,
+                        TotalFailures = failures,
+                        ThrottleEvents = throttles,
+                        DrainEvents = drains,
+                        Elapsed = elapsed,
+                        ItemsPerSecond = itemsPerSecond,
+                        ErrorRate = errorRate
+                    })
+                    .ConfigureAwait(false);
+            }
         }
         catch (Exception ex)
         {
@@ -134,12 +139,9 @@ internal sealed class MetricsTracker : MetricsTrackerBase
         Thread.MemoryBarrier();
     }
 
-    private static TimeSpan DisposeWait => TimeSpan.FromSeconds(2);
-
     public override async ValueTask DisposeAsync()
     {
-        if (_disposed)
-            return;
+        if (_disposed) return;
 
         _disposed = true;
 

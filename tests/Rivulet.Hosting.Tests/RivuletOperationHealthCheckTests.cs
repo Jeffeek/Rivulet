@@ -18,11 +18,7 @@ public class RivuletOperationHealthCheckTests
     [Fact]
     public async Task Constructor_WithCustomOptions_ShouldUseProvidedOptions()
     {
-        var options = new RivuletOperationHealthCheckOptions
-        {
-            StalledThreshold = TimeSpan.FromSeconds(1),
-            UnhealthyFailureThreshold = 2
-        };
+        var options = new RivuletOperationHealthCheckOptions { StalledThreshold = TimeSpan.FromSeconds(1), UnhealthyFailureThreshold = 2 };
 
         var healthCheck = new RivuletOperationHealthCheck(options);
 
@@ -89,10 +85,7 @@ public class RivuletOperationHealthCheckTests
     [Fact]
     public async Task CheckHealthAsync_WhenStalled_ShouldReturnDegradedStatus()
     {
-        var options = new RivuletOperationHealthCheckOptions
-        {
-            StalledThreshold = TimeSpan.FromMilliseconds(100)
-        };
+        var options = new RivuletOperationHealthCheckOptions { StalledThreshold = TimeSpan.FromMilliseconds(100) };
 
         var healthCheck = new RivuletOperationHealthCheck(options);
 
@@ -111,18 +104,12 @@ public class RivuletOperationHealthCheckTests
     [Fact]
     public async Task CheckHealthAsync_WithTooManyFailures_ShouldReturnUnhealthyStatus()
     {
-        var options = new RivuletOperationHealthCheckOptions
-        {
-            UnhealthyFailureThreshold = 5
-        };
+        var options = new RivuletOperationHealthCheckOptions { UnhealthyFailureThreshold = 5 };
 
         var healthCheck = new RivuletOperationHealthCheck(options);
 
         // Record enough failures to exceed threshold
-        for (var i = 0; i < 5; i++)
-        {
-            healthCheck.RecordFailure();
-        }
+        for (var i = 0; i < 5; i++) healthCheck.RecordFailure();
 
         var result = await healthCheck.CheckHealthAsync(new());
 
@@ -136,18 +123,12 @@ public class RivuletOperationHealthCheckTests
     [Fact]
     public async Task CheckHealthAsync_WithJustBelowThreshold_ShouldStayHealthy()
     {
-        var options = new RivuletOperationHealthCheckOptions
-        {
-            UnhealthyFailureThreshold = 10
-        };
+        var options = new RivuletOperationHealthCheckOptions { UnhealthyFailureThreshold = 10 };
 
         var healthCheck = new RivuletOperationHealthCheck(options);
 
         // Record just below threshold
-        for (var i = 0; i < 9; i++)
-        {
-            healthCheck.RecordFailure();
-        }
+        for (var i = 0; i < 9; i++) healthCheck.RecordFailure();
 
         var result = await healthCheck.CheckHealthAsync(new());
 
@@ -158,17 +139,11 @@ public class RivuletOperationHealthCheckTests
     [Fact]
     public async Task CheckHealthAsync_WithExactThreshold_ShouldBeUnhealthy()
     {
-        var options = new RivuletOperationHealthCheckOptions
-        {
-            UnhealthyFailureThreshold = 3
-        };
+        var options = new RivuletOperationHealthCheckOptions { UnhealthyFailureThreshold = 3 };
 
         var healthCheck = new RivuletOperationHealthCheck(options);
 
-        for (var i = 0; i < 3; i++)
-        {
-            healthCheck.RecordFailure();
-        }
+        for (var i = 0; i < 3; i++) healthCheck.RecordFailure();
 
         var result = await healthCheck.CheckHealthAsync(new());
 
@@ -180,17 +155,13 @@ public class RivuletOperationHealthCheckTests
     {
         var options = new RivuletOperationHealthCheckOptions
         {
-            StalledThreshold = TimeSpan.FromMilliseconds(10),
-            UnhealthyFailureThreshold = 3
+            StalledThreshold = TimeSpan.FromMilliseconds(10), UnhealthyFailureThreshold = 3
         };
 
         var healthCheck = new RivuletOperationHealthCheck(options);
 
         // Record failures
-        for (var i = 0; i < 3; i++)
-        {
-            healthCheck.RecordFailure();
-        }
+        for (var i = 0; i < 3; i++) healthCheck.RecordFailure();
 
         // Wait for stalled threshold
         await Task.Delay(50);
@@ -206,10 +177,7 @@ public class RivuletOperationHealthCheckTests
     [Fact]
     public async Task RecordSuccess_ShouldUpdateLastSuccessTime()
     {
-        var options = new RivuletOperationHealthCheckOptions
-        {
-            StalledThreshold = TimeSpan.FromMilliseconds(100)
-        };
+        var options = new RivuletOperationHealthCheckOptions { StalledThreshold = TimeSpan.FromMilliseconds(100) };
 
         var healthCheck = new RivuletOperationHealthCheck(options);
 
@@ -267,11 +235,7 @@ public class RivuletOperationHealthCheckTests
     [Fact]
     public void RivuletOperationHealthCheckOptions_ShouldAllowCustomValues()
     {
-        var options = new RivuletOperationHealthCheckOptions
-        {
-            StalledThreshold = TimeSpan.FromSeconds(30),
-            UnhealthyFailureThreshold = 5
-        };
+        var options = new RivuletOperationHealthCheckOptions { StalledThreshold = TimeSpan.FromSeconds(30), UnhealthyFailureThreshold = 5 };
 
         options.StalledThreshold.ShouldBe(TimeSpan.FromSeconds(30));
         options.UnhealthyFailureThreshold.ShouldBe(5);
@@ -283,10 +247,7 @@ public class RivuletOperationHealthCheckTests
         var healthCheck = new RivuletOperationHealthCheck();
 
         // Record failures
-        for (var i = 0; i < 5; i++)
-        {
-            healthCheck.RecordFailure();
-        }
+        for (var i = 0; i < 5; i++) healthCheck.RecordFailure();
 
         // Concurrently record success
         var tasks = Enumerable.Range(0, 10)

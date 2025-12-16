@@ -8,8 +8,8 @@ namespace Rivulet.Hosting.Sample;
 /// </summary>
 public class DataProcessingWorker(
     IOptions<ParallelOptionsRivulet> options,
-    ILogger<DataProcessingWorker> logger)
-    : ParallelWorkerService<string, string>(logger, options.Value)
+    ILogger<DataProcessingWorker> logger
+) : ParallelWorkerService<string, string>(logger, options.Value)
 {
     private int _iterationCount;
 
@@ -23,10 +23,7 @@ public class DataProcessingWorker(
             await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
 
             // Yield work items for this iteration
-            for (var i = 1; i <= 20; i++)
-            {
-                yield return $"Item-{iteration}-{i}";
-            }
+            for (var i = 1; i <= 20; i++) yield return $"Item-{iteration}-{i}";
         }
     }
 
@@ -36,17 +33,12 @@ public class DataProcessingWorker(
         await Task.Delay(Random.Shared.Next(100, 500), cancellationToken);
 
         // Simulate occasional errors
-        if (Random.Shared.Next(0, 100) < 10) // 10% error rate
-        {
-            throw new InvalidOperationException($"Simulated error processing {item}");
-        }
-
-        return $"Processed-{item}";
+        return Random.Shared.Next(0, 100) < 10 // 10% error rate
+            ? throw new InvalidOperationException($"Simulated error processing {item}")
+            : $"Processed-{item}";
     }
 
-    protected override Task OnResultAsync(string result, CancellationToken cancellationToken)
-    {
+    protected override Task OnResultAsync(string result, CancellationToken cancellationToken) =>
         // Log successful processing
-        return Task.CompletedTask;
-    }
+        Task.CompletedTask;
 }

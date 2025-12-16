@@ -15,10 +15,7 @@ public class MetricsAggregatorTests
         await using var aggregator = new MetricsAggregator(TimeSpan.FromMilliseconds(500));
         aggregator.OnAggregation += metrics =>
         {
-            lock (lockObj)
-            {
-                aggregatedMetrics.Add(metrics);
-            }
+            lock (lockObj) aggregatedMetrics.Add(metrics);
         };
 
         // Use longer operation (200ms per item) to ensure EventCounters poll DURING execution
@@ -27,13 +24,11 @@ public class MetricsAggregatorTests
         await Enumerable.Range(1, 5)
             .ToAsyncEnumerable()
             .SelectParallelStreamAsync(async (x, ct) =>
-            {
-                await Task.Delay(200, ct);
-                return x * 2;
-            }, new()
-            {
-                MaxDegreeOfParallelism = 2
-            })
+                {
+                    await Task.Delay(200, ct);
+                    return x * 2;
+                },
+                new() { MaxDegreeOfParallelism = 2 })
             .ToListAsync();
 
         // Wait for EventCounters to poll and write metrics, then for aggregation window to fire
@@ -67,11 +62,9 @@ public class MetricsAggregatorTests
         await using var aggregator = new MetricsAggregator(TimeSpan.FromSeconds(2));
         aggregator.OnAggregation += metrics =>
         {
-            if (metrics.Count <= 0)
-                return;
+            if (metrics.Count <= 0) return;
 
-            lock (lockObj)
-                aggregatedMetrics.Add(metrics);
+            lock (lockObj) aggregatedMetrics.Add(metrics);
         };
 
         // Operations must run long enough for EventCounter polling (1 second interval)
@@ -79,13 +72,11 @@ public class MetricsAggregatorTests
         await Enumerable.Range(1, 5)
             .ToAsyncEnumerable()
             .SelectParallelStreamAsync(async (x, ct) =>
-            {
-                await Task.Delay(200, ct);
-                return x;
-            }, new()
-            {
-                MaxDegreeOfParallelism = 2
-            })
+                {
+                    await Task.Delay(200, ct);
+                    return x;
+                },
+                new() { MaxDegreeOfParallelism = 2 })
             .ToListAsync();
 
         // Wait for at least 2x the aggregation window to ensure timer fires reliably
@@ -93,10 +84,7 @@ public class MetricsAggregatorTests
 
         // Take a thread-safe snapshot of the list to avoid race conditions
         List<IReadOnlyList<AggregatedMetrics>> snapshot;
-        lock (lockObj)
-        {
-            snapshot = aggregatedMetrics.ToList();
-        }
+        lock (lockObj) snapshot = aggregatedMetrics.ToList();
 
         snapshot.ShouldNotBeEmpty();
 
@@ -124,24 +112,20 @@ public class MetricsAggregatorTests
         await using var aggregator = new MetricsAggregator(TimeSpan.FromSeconds(1)); // 1s aggregation window
         aggregator.OnAggregation += metrics =>
         {
-            if (metrics.Count <= 0)
-                return;
+            if (metrics.Count <= 0) return;
 
-            lock (lockObj)
-                aggregatedMetrics.Add(metrics);
+            lock (lockObj) aggregatedMetrics.Add(metrics);
         };
 
         // Use longer operation to ensure EventCounters have time to poll and emit metrics
         await Enumerable.Range(1, 20)
             .ToAsyncEnumerable()
             .SelectParallelStreamAsync(async (x, ct) =>
-            {
-                await Task.Delay(50, ct);
-                return x;
-            }, new()
-            {
-                MaxDegreeOfParallelism = 2
-            })
+                {
+                    await Task.Delay(50, ct);
+                    return x;
+                },
+                new() { MaxDegreeOfParallelism = 2 })
             .ToListAsync();
 
         // Wait for EventCounters to poll (~1s interval) + aggregation timer to fire

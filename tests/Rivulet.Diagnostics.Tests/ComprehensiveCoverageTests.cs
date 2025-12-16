@@ -4,7 +4,7 @@ using Rivulet.Core;
 namespace Rivulet.Diagnostics.Tests;
 
 /// <summary>
-/// Comprehensive tests to achieve 100% code coverage for edge cases.
+///     Comprehensive tests to achieve 100% code coverage for edge cases.
 /// </summary>
 [Collection(TestCollections.SerialEventSource)]
 public class ComprehensiveCoverageTests
@@ -34,8 +34,7 @@ public class ComprehensiveCoverageTests
         await using var aggregator = new MetricsAggregator(TimeSpan.FromSeconds(1));
         aggregator.OnAggregation += metrics =>
         {
-            if (metrics.Count > 0)
-                callbackInvoked = true;
+            if (metrics.Count > 0) callbackInvoked = true;
         };
 
         // Operations must run long enough for EventCounter polling (1 second interval)
@@ -43,13 +42,11 @@ public class ComprehensiveCoverageTests
         await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
             .SelectParallelStreamAsync(async (x, ct) =>
-            {
-                await Task.Delay(200, ct);
-                return x;
-            }, new()
-            {
-                MaxDegreeOfParallelism = 2
-            })
+                {
+                    await Task.Delay(200, ct);
+                    return x;
+                },
+                new() { MaxDegreeOfParallelism = 2 })
             .ToListAsync();
 
         // Wait for at least 2x the aggregation window to ensure timer fires and EventSource counters are received
@@ -75,13 +72,11 @@ public class ComprehensiveCoverageTests
                 await Enumerable.Range(1, 5)
                     .ToAsyncEnumerable()
                     .SelectParallelStreamAsync(async (x, ct) =>
-                    {
-                        await Task.Delay(400, ct);
-                        return x;
-                    }, new()
-                    {
-                        MaxDegreeOfParallelism = 2
-                    })
+                        {
+                            await Task.Delay(400, ct);
+                            return x;
+                        },
+                        new() { MaxDegreeOfParallelism = 2 })
                     .ToListAsync();
 
                 // Wait for EventSource counters to fire and be written to file
@@ -105,7 +100,10 @@ public class ComprehensiveCoverageTests
         // ReSharper disable once CollectionNeverQueried.Local
         private List<string> ReceivedMetrics { get; } = new();
 
-        protected override void OnCounterReceived(string name, string displayName, double value, string displayUnits) =>
+        protected override void OnCounterReceived(string name,
+            string displayName,
+            double value,
+            string displayUnits) =>
             ReceivedMetrics.Add(name);
     }
 }

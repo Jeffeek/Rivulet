@@ -7,14 +7,14 @@ using Rivulet.Core.Resilience;
 namespace Rivulet.Hosting.Configuration;
 
 /// <summary>
-/// Configures ParallelOptionsRivulet from IConfiguration using reflection to set init-only properties.
-/// This is necessary because IConfigureOptions receives an already-constructed instance,
-/// but ParallelOptionsRivulet uses init-only properties that can't be set normally after construction.
+///     Configures ParallelOptionsRivulet from IConfiguration using reflection to set init-only properties.
+///     This is necessary because IConfigureOptions receives an already-constructed instance,
+///     but ParallelOptionsRivulet uses init-only properties that can't be set normally after construction.
 /// </summary>
 /// <remarks>
-/// Note: This class uses reflection to work around the init-only property limitation.
-/// Consider using services.Configure&lt;ParallelOptionsRivulet&gt;(config.GetSection("Rivulet"))
-/// directly in ServiceCollectionExtensions, which handles init-only properties properly.
+///     Note: This class uses reflection to work around the init-only property limitation.
+///     Consider using services.Configure&lt;ParallelOptionsRivulet&gt;(config.GetSection("Rivulet"))
+///     directly in ServiceCollectionExtensions, which handles init-only properties properly.
 /// </remarks>
 internal sealed class RivuletOptionsSetup(IConfiguration configuration) : IConfigureOptions<ParallelOptionsRivulet>
 {
@@ -60,10 +60,7 @@ internal sealed class RivuletOptionsSetup(IConfiguration configuration) : IConfi
             var backingField = type.GetField($"<{propertyName}>k__BackingField",
                 BindingFlags.Instance | BindingFlags.NonPublic);
 
-            if (backingField != null)
-            {
-                backingField.SetValue(options, value);
-            }
+            if (backingField != null) backingField.SetValue(options, value);
         }
         catch
         {

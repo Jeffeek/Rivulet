@@ -4,12 +4,12 @@ using Rivulet.IO.Internal;
 namespace Rivulet.IO;
 
 /// <summary>
-/// Extension methods for parallel file operations with bounded concurrency and resilience.
+///     Extension methods for parallel file operations with bounded concurrency and resilience.
 /// </summary>
 public static class FileParallelExtensions
 {
     /// <summary>
-    /// Reads multiple files in parallel and returns their contents as strings.
+    ///     Reads multiple files in parallel and returns their contents as strings.
     /// </summary>
     /// <param name="filePaths">The collection of file paths to read.</param>
     /// <param name="options">File operation options. If null, defaults are used.</param>
@@ -29,15 +29,15 @@ public static class FileParallelExtensions
         var parallelOptions = options.GetMergedParallelOptions();
 
 #pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements in ReadFileTextAsync
-        return await filePaths.SelectParallelAsync(
-            async (filePath, ct) => await ReadFileTextAsync(filePath, options, ct),
-            parallelOptions,
-            cancellationToken).ConfigureAwait(false);
+        return await filePaths.SelectParallelAsync((filePath, ct) => ReadFileTextAsync(filePath, options, ct),
+                parallelOptions,
+                cancellationToken)
+            .ConfigureAwait(false);
 #pragma warning restore CA2007
     }
 
     /// <summary>
-    /// Reads multiple files in parallel and returns their contents as byte arrays.
+    ///     Reads multiple files in parallel and returns their contents as byte arrays.
     /// </summary>
     /// <param name="filePaths">The collection of file paths to read.</param>
     /// <param name="options">File operation options. If null, defaults are used.</param>
@@ -55,15 +55,15 @@ public static class FileParallelExtensions
         var parallelOptions = options.GetMergedParallelOptions();
 
 #pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements in ReadFileBytesAsync
-        return await filePaths.SelectParallelAsync(
-            async (filePath, ct) => await ReadFileBytesAsync(filePath, options, ct),
-            parallelOptions,
-            cancellationToken).ConfigureAwait(false);
+        return await filePaths.SelectParallelAsync((filePath, ct) => ReadFileBytesAsync(filePath, options, ct),
+                parallelOptions,
+                cancellationToken)
+            .ConfigureAwait(false);
 #pragma warning restore CA2007
     }
 
     /// <summary>
-    /// Reads multiple files in parallel as lines.
+    ///     Reads multiple files in parallel as lines.
     /// </summary>
     /// <param name="filePaths">The collection of file paths to read.</param>
     /// <param name="options">File operation options. If null, defaults are used.</param>
@@ -81,15 +81,15 @@ public static class FileParallelExtensions
         var parallelOptions = options.GetMergedParallelOptions();
 
 #pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements in ReadFileLinesAsync
-        return await filePaths.SelectParallelAsync(
-            async (filePath, ct) => await ReadFileLinesAsync(filePath, options, ct),
-            parallelOptions,
-            cancellationToken).ConfigureAwait(false);
+        return await filePaths.SelectParallelAsync((filePath, ct) => ReadFileLinesAsync(filePath, options, ct),
+                parallelOptions,
+                cancellationToken)
+            .ConfigureAwait(false);
 #pragma warning restore CA2007
     }
 
     /// <summary>
-    /// Writes content to multiple files in parallel.
+    ///     Writes content to multiple files in parallel.
     /// </summary>
     /// <param name="fileWrites">Collection of tuples containing file path and content to write.</param>
     /// <param name="options">File operation options. If null, defaults are used.</param>
@@ -109,18 +109,19 @@ public static class FileParallelExtensions
 
 #pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements in WriteFileTextAsync
         return await fileWrites.SelectParallelAsync(
-            async (write, ct) =>
-            {
-                await WriteFileTextAsync(write.filePath, write.content, options, ct);
-                return write.filePath;
-            },
-            parallelOptions,
-            cancellationToken).ConfigureAwait(false);
+                async (write, ct) =>
+                {
+                    await WriteFileTextAsync(write.filePath, write.content, options, ct);
+                    return write.filePath;
+                },
+                parallelOptions,
+                cancellationToken)
+            .ConfigureAwait(false);
 #pragma warning restore CA2007
     }
 
     /// <summary>
-    /// Writes byte data to multiple files in parallel.
+    ///     Writes byte data to multiple files in parallel.
     /// </summary>
     /// <param name="fileWrites">Collection of tuples containing file path and byte content to write.</param>
     /// <param name="options">File operation options. If null, defaults are used.</param>
@@ -139,18 +140,19 @@ public static class FileParallelExtensions
 
 #pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements in WriteFileBytesAsync
         return await fileWrites.SelectParallelAsync(
-            async (write, ct) =>
-            {
-                await WriteFileBytesAsync(write.filePath, write.content, options, ct);
-                return write.filePath;
-            },
-            parallelOptions,
-            cancellationToken).ConfigureAwait(false);
+                async (write, ct) =>
+                {
+                    await WriteFileBytesAsync(write.filePath, write.content, options, ct);
+                    return write.filePath;
+                },
+                parallelOptions,
+                cancellationToken)
+            .ConfigureAwait(false);
 #pragma warning restore CA2007
     }
 
     /// <summary>
-    /// Transforms files in parallel by applying a transformation function to their contents.
+    ///     Transforms files in parallel by applying a transformation function to their contents.
     /// </summary>
     /// <param name="files">Collection of source and destination file path pairs.</param>
     /// <param name="transformFunc">Function that transforms the content (input file path, content) => transformed content.</param>
@@ -172,20 +174,21 @@ public static class FileParallelExtensions
 
 #pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements in ReadFileTextAsync and WriteFileTextAsync
         return await files.SelectParallelAsync(
-            async (file, ct) =>
-            {
-                var content = await ReadFileTextAsync(file.sourcePath, options, ct);
-                var transformed = await transformFunc(file.sourcePath, content);
-                await WriteFileTextAsync(file.destinationPath, transformed, options, ct);
-                return file.destinationPath;
-            },
-            parallelOptions,
-            cancellationToken).ConfigureAwait(false);
+                async (file, ct) =>
+                {
+                    var content = await ReadFileTextAsync(file.sourcePath, options, ct);
+                    var transformed = await transformFunc(file.sourcePath, content);
+                    await WriteFileTextAsync(file.destinationPath, transformed, options, ct);
+                    return file.destinationPath;
+                },
+                parallelOptions,
+                cancellationToken)
+            .ConfigureAwait(false);
 #pragma warning restore CA2007
     }
 
     /// <summary>
-    /// Copies multiple files in parallel.
+    ///     Copies multiple files in parallel.
     /// </summary>
     /// <param name="files">Collection of source and destination file path pairs.</param>
     /// <param name="options">File operation options. If null, defaults are used.</param>
@@ -204,18 +207,19 @@ public static class FileParallelExtensions
 
 #pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements in CopyFileAsync
         return await files.SelectParallelAsync(
-            async (file, ct) =>
-            {
-                await CopyFileAsync(file.sourcePath, file.destinationPath, options, ct);
-                return file.destinationPath;
-            },
-            parallelOptions,
-            cancellationToken).ConfigureAwait(false);
+                async (file, ct) =>
+                {
+                    await CopyFileAsync(file.sourcePath, file.destinationPath, options, ct);
+                    return file.destinationPath;
+                },
+                parallelOptions,
+                cancellationToken)
+            .ConfigureAwait(false);
 #pragma warning restore CA2007
     }
 
     /// <summary>
-    /// Deletes multiple files in parallel.
+    ///     Deletes multiple files in parallel.
     /// </summary>
     /// <param name="filePaths">The collection of file paths to delete.</param>
     /// <param name="options">File operation options. If null, defaults are used.</param>
@@ -234,25 +238,26 @@ public static class FileParallelExtensions
 
 #pragma warning disable CA2007 // DeleteFileAsync uses Task.Run
         return await filePaths.SelectParallelAsync(
-            async (filePath, ct) =>
-            {
-                await DeleteFileAsync(filePath, options, ct);
-                return filePath;
-            },
-            parallelOptions,
-            cancellationToken).ConfigureAwait(false);
+                async (filePath, ct) =>
+                {
+                    await DeleteFileAsync(filePath, options, ct);
+                    return filePath;
+                },
+                parallelOptions,
+                cancellationToken)
+            .ConfigureAwait(false);
 #pragma warning restore CA2007
     }
 
     // Private helper methods
 
-    private static async ValueTask<string> ReadFileTextAsync(
+    private static ValueTask<string> ReadFileTextAsync(
         string filePath,
         FileOperationOptions options,
         CancellationToken cancellationToken)
     {
 #pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements
-        return await FileOperationHelper.ExecuteFileOperationAsync(
+        return FileOperationHelper.ExecuteFileOperationAsync(
             filePath,
             async () =>
             {
@@ -262,23 +267,23 @@ public static class FileParallelExtensions
                     FileAccess.Read,
                     options.ReadFileShare,
                     options.BufferSize,
-                    useAsync: true);
+                    true);
 
                 using var reader = new StreamReader(stream, options.Encoding);
                 return await reader.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
             },
             options,
-            content => content.Length);
+            static content => content.Length);
 #pragma warning restore CA2007
     }
 
-    private static async ValueTask<byte[]> ReadFileBytesAsync(
+    private static ValueTask<byte[]> ReadFileBytesAsync(
         string filePath,
         FileOperationOptions options,
         CancellationToken cancellationToken)
     {
 #pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements
-        return await FileOperationHelper.ExecuteFileOperationAsync(
+        return FileOperationHelper.ExecuteFileOperationAsync(
             filePath,
             async () =>
             {
@@ -288,24 +293,24 @@ public static class FileParallelExtensions
                     FileAccess.Read,
                     options.ReadFileShare,
                     options.BufferSize,
-                    useAsync: true);
+                    true);
 
                 var buffer = new byte[stream.Length];
                 _ = await stream.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
                 return buffer;
             },
             options,
-            bytes => bytes.Length);
+            static bytes => bytes.Length);
 #pragma warning restore CA2007
     }
 
-    private static async ValueTask<string[]> ReadFileLinesAsync(
+    private static ValueTask<string[]> ReadFileLinesAsync(
         string filePath,
         FileOperationOptions options,
         CancellationToken cancellationToken)
     {
 #pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements
-        return await FileOperationHelper.ExecuteFileOperationAsync(
+        return FileOperationHelper.ExecuteFileOperationAsync(
             filePath,
             async () =>
             {
@@ -315,7 +320,7 @@ public static class FileParallelExtensions
                     FileAccess.Read,
                     options.ReadFileShare,
                     options.BufferSize,
-                    useAsync: true);
+                    true);
 
                 using var reader = new StreamReader(stream, options.Encoding);
                 var lines = new List<string>();
@@ -323,16 +328,13 @@ public static class FileParallelExtensions
                 while (!reader.EndOfStream)
                 {
                     var line = await reader.ReadLineAsync(cancellationToken).ConfigureAwait(false);
-                    if (line != null)
-                    {
-                        lines.Add(line);
-                    }
+                    if (line != null) lines.Add(line);
                 }
 
                 return lines.ToArray();
             },
             options,
-            lines => lines.Length);
+            static lines => lines.Length);
 #pragma warning restore CA2007
     }
 
@@ -356,7 +358,7 @@ public static class FileParallelExtensions
                     FileAccess.Write,
                     options.WriteFileShare,
                     options.BufferSize,
-                    useAsync: true);
+                    true);
 
                 await using var writer = new StreamWriter(stream, options.Encoding);
                 await writer.WriteAsync(content.AsMemory(), cancellationToken).ConfigureAwait(false);
@@ -365,7 +367,7 @@ public static class FileParallelExtensions
                 return content.Length;
             },
             options,
-            length => length);
+            static length => length);
 #pragma warning restore CA2007
     }
 
@@ -389,7 +391,7 @@ public static class FileParallelExtensions
                     FileAccess.Write,
                     options.WriteFileShare,
                     options.BufferSize,
-                    useAsync: true);
+                    true);
 
                 await stream.WriteAsync(content, cancellationToken).ConfigureAwait(false);
                 await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
@@ -397,7 +399,7 @@ public static class FileParallelExtensions
                 return content.Length;
             },
             options,
-            length => length);
+            static length => length);
 #pragma warning restore CA2007
     }
 
@@ -421,7 +423,7 @@ public static class FileParallelExtensions
                     FileAccess.Read,
                     options.ReadFileShare,
                     options.BufferSize,
-                    useAsync: true);
+                    true);
 
                 await using var destStream = new FileStream(
                     destinationPath,
@@ -429,7 +431,7 @@ public static class FileParallelExtensions
                     FileAccess.Write,
                     options.WriteFileShare,
                     options.BufferSize,
-                    useAsync: true);
+                    true);
 
                 await sourceStream.CopyToAsync(destStream, options.BufferSize, cancellationToken).ConfigureAwait(false);
                 await destStream.FlushAsync(cancellationToken).ConfigureAwait(false);
@@ -437,22 +439,21 @@ public static class FileParallelExtensions
                 return sourceStream.Length;
             },
             options,
-            length => length);
+            static length => length);
 #pragma warning restore CA2007
     }
 
     private static async ValueTask DeleteFileAsync(
         string filePath,
         FileOperationOptions options,
-        CancellationToken cancellationToken)
-    {
+        CancellationToken cancellationToken) =>
         await FileOperationHelper.ExecuteFileOperationAsync(
-            filePath,
-            async () =>
-            {
-                await Task.Run(() => File.Delete(filePath), cancellationToken).ConfigureAwait(false);
-                return 0;
-            },
-            options).ConfigureAwait(false);
-    }
+                filePath,
+                async () =>
+                {
+                    await Task.Run(() => File.Delete(filePath), cancellationToken).ConfigureAwait(false);
+                    return 0;
+                },
+                options)
+            .ConfigureAwait(false);
 }

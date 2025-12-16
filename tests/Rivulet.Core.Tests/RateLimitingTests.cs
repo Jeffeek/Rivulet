@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Rivulet.Core.Resilience;
 
@@ -88,9 +89,7 @@ public class RateLimitingTests
             MaxDegreeOfParallelism = 20,
             RateLimit = new()
             {
-                TokensPerSecond = 50,
-                BurstCapacity = 25,
-                TokensPerOperation = 5  // Each operation costs 5 tokens
+                TokensPerSecond = 50, BurstCapacity = 25, TokensPerOperation = 5 // Each operation costs 5 tokens
             }
         };
 
@@ -120,19 +119,15 @@ public class RateLimitingTests
 
         var options = new ParallelOptionsRivulet
         {
-            MaxDegreeOfParallelism = 30,
-            RateLimit = new()
-            {
-                TokensPerSecond = 100,
-                BurstCapacity = 30
-            }
+            MaxDegreeOfParallelism = 30, RateLimit = new() { TokensPerSecond = 100, BurstCapacity = 30 }
         };
 
         var count = await source.SelectParallelStreamAsync(async (x, ct) =>
-            {
-                await Task.Delay(1, ct);
-                return x * 2;
-            }, options)
+                {
+                    await Task.Delay(1, ct);
+                    return x * 2;
+                },
+                options)
             .CountAsync();
 
         sw.Stop();
@@ -207,11 +202,7 @@ public class RateLimitingTests
     [Fact]
     public void RateLimitOptions_Validation_ThrowsWhenBurstLessThanTokensPerOperation()
     {
-        var act = () => new RateLimitOptions
-        {
-            BurstCapacity = 5,
-            TokensPerOperation = 10
-        }.Validate();
+        var act = () => new RateLimitOptions { BurstCapacity = 5, TokensPerOperation = 10 }.Validate();
 
         act.ShouldThrow<ArgumentException>().Message.ShouldContain("BurstCapacity");
     }
@@ -238,8 +229,7 @@ public class RateLimitingTests
             async (x, ct) =>
             {
                 Interlocked.Increment(ref processedCount);
-                if (processedCount >= 15)
-                    await cts.CancelAsync();
+                if (processedCount >= 15) await cts.CancelAsync();
 
                 await Task.Delay(1, ct);
                 return x * 2;
@@ -258,7 +248,7 @@ public class RateLimitingTests
         // 15 items, each fails once then succeeds = 30 total operations
         // Burst = 20, remaining 10 at 50/sec = 0.2 sec minimum
         var source = Enumerable.Range(1, 15);
-        var attempts = new System.Collections.Concurrent.ConcurrentDictionary<int, int>();
+        var attempts = new ConcurrentDictionary<int, int>();
         var sw = Stopwatch.StartNew();
 
         var options = new ParallelOptionsRivulet
@@ -266,11 +256,7 @@ public class RateLimitingTests
             MaxDegreeOfParallelism = 15,
             MaxRetries = 2,
             IsTransient = ex => ex is InvalidOperationException,
-            RateLimit = new()
-            {
-                TokensPerSecond = 50,
-                BurstCapacity = 20
-            }
+            RateLimit = new() { TokensPerSecond = 50, BurstCapacity = 20 }
         };
 
         var results = await source.SelectParallelAsync(
@@ -280,8 +266,7 @@ public class RateLimitingTests
                 var attemptCount = attempts.AddOrUpdate(x, 1, (_, count) => count + 1);
 
                 // Fail first attempt
-                if (attemptCount < 2)
-                    throw new InvalidOperationException("Transient");
+                if (attemptCount < 2) throw new InvalidOperationException("Transient");
 
                 return x * 2;
             },
@@ -302,13 +287,7 @@ public class RateLimitingTests
 
         var options = new ParallelOptionsRivulet
         {
-            MaxDegreeOfParallelism = 10,
-            OrderedOutput = true,
-            RateLimit = new()
-            {
-                TokensPerSecond = 100,
-                BurstCapacity = 100
-            }
+            MaxDegreeOfParallelism = 10, OrderedOutput = true, RateLimit = new() { TokensPerSecond = 100, BurstCapacity = 100 }
         };
 
         var results = await source.SelectParallelAsync(
@@ -321,7 +300,7 @@ public class RateLimitingTests
 
         results.Count.ShouldBe(20);
         results.ShouldBeInOrder();
-        results.ShouldBe(Enumerable.Range(1, 20).Select(x => x * 2));
+        results.ShouldBe(Enumerable.Range(1, 20).Select(static x => x * 2));
     }
 
     [Fact]
@@ -401,19 +380,15 @@ public class RateLimitingTests
         {
             MaxDegreeOfParallelism = 10,
             ErrorMode = ErrorMode.BestEffort,
-            RateLimit = new()
-            {
-                TokensPerSecond = 100,
-                BurstCapacity = 100
-            }
+            RateLimit = new() { TokensPerSecond = 100, BurstCapacity = 100 }
         };
 
         var results = await source.SelectParallelAsync(
             async (x, ct) =>
             {
                 await Task.Delay(1, ct);
-                if (x % 5 == 0)
-                    throw new InvalidOperationException("Error");
+                if (x % 5 == 0) throw new InvalidOperationException("Error");
+
                 return x * 2;
             },
             options);
@@ -425,12 +400,7 @@ public class RateLimitingTests
     [Fact]
     public void TokenBucket_TryAcquire_ReturnsTrue_WhenTokensAvailable()
     {
-        var bucket = new TokenBucket(new()
-        {
-            TokensPerSecond = 100,
-            BurstCapacity = 10,
-            TokensPerOperation = 1
-        });
+        var bucket = new TokenBucket(new() { TokensPerSecond = 100, BurstCapacity = 10, TokensPerOperation = 1 });
 
         var result = bucket.TryAcquire();
         result.ShouldBeTrue();
@@ -439,12 +409,7 @@ public class RateLimitingTests
     [Fact]
     public void TokenBucket_TryAcquire_ReturnsFalse_WhenTokensExhausted()
     {
-        var bucket = new TokenBucket(new()
-        {
-            TokensPerSecond = 10,
-            BurstCapacity = 2,
-            TokensPerOperation = 1
-        });
+        var bucket = new TokenBucket(new() { TokensPerSecond = 10, BurstCapacity = 2, TokensPerOperation = 1 });
 
         bucket.TryAcquire().ShouldBeTrue();
         bucket.TryAcquire().ShouldBeTrue();
@@ -456,12 +421,7 @@ public class RateLimitingTests
     [Fact]
     public void TokenBucket_GetAvailableTokens_ReturnsCorrectValue()
     {
-        var bucket = new TokenBucket(new()
-        {
-            TokensPerSecond = 100,
-            BurstCapacity = 50,
-            TokensPerOperation = 5
-        });
+        var bucket = new TokenBucket(new() { TokensPerSecond = 100, BurstCapacity = 50, TokensPerOperation = 5 });
 
         var tokens = bucket.GetAvailableTokens();
         tokens.ShouldBe(50);
@@ -470,16 +430,10 @@ public class RateLimitingTests
     [Fact]
     public async Task TokenBucket_GetAvailableTokens_RefillsOverTime()
     {
-        var bucket = new TokenBucket(new()
-        {
-            TokensPerSecond = 100,
-            BurstCapacity = 10,
-            TokensPerOperation = 1
-        });
+        var bucket = new TokenBucket(new() { TokensPerSecond = 100, BurstCapacity = 10, TokensPerOperation = 1 });
 
         // Exhaust bucket
-        for (var i = 0; i < 10; i++)
-            bucket.TryAcquire().ShouldBeTrue();
+        for (var i = 0; i < 10; i++) bucket.TryAcquire().ShouldBeTrue();
 
         bucket.GetAvailableTokens().ShouldBeLessThan(1);
 
@@ -494,12 +448,7 @@ public class RateLimitingTests
     [Fact]
     public void TokenBucket_TryAcquire_WithMultipleTokensPerOperation()
     {
-        var bucket = new TokenBucket(new()
-        {
-            TokensPerSecond = 100,
-            BurstCapacity = 10,
-            TokensPerOperation = 5
-        });
+        var bucket = new TokenBucket(new() { TokensPerSecond = 100, BurstCapacity = 10, TokensPerOperation = 5 });
 
         // Should succeed with 10 tokens available and 5 needed
         bucket.TryAcquire().ShouldBeTrue();
@@ -514,19 +463,11 @@ public class RateLimitingTests
     [Fact]
     public void TokenBucket_RapidCalls_HandlesZeroElapsedTime()
     {
-        var bucket = new TokenBucket(new()
-        {
-            TokensPerSecond = 1000,
-            BurstCapacity = 100,
-            TokensPerOperation = 1
-        });
+        var bucket = new TokenBucket(new() { TokensPerSecond = 1000, BurstCapacity = 100, TokensPerOperation = 1 });
 
         // Make rapid successive calls to try to hit elapsedTicks <= 0 case
         // GetAvailableTokens() calls RefillTokens() internally
-        for (var i = 0; i < 1000; i++)
-        {
-            _ = bucket.GetAvailableTokens();
-        }
+        for (var i = 0; i < 1000; i++) _ = bucket.GetAvailableTokens();
 
         // Should not crash and should maintain valid state
         bucket.GetAvailableTokens().ShouldBeLessThanOrEqualTo(100);

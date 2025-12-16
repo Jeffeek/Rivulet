@@ -7,6 +7,17 @@ public class RivuletFileListenerTests : IDisposable
 {
     private readonly string _testFilePath = Path.Join(Path.GetTempPath(), $"rivulet-test-{Guid.NewGuid()}.log");
 
+    public void Dispose()
+    {
+        TestCleanupHelper.RetryDeleteFile(_testFilePath);
+
+        var directory = Path.GetDirectoryName(_testFilePath) ?? string.Empty;
+        var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(_testFilePath);
+        var rotatedFiles = Directory.GetFiles(directory, $"{fileNameWithoutExtension}-*");
+
+        foreach (var file in rotatedFiles) TestCleanupHelper.RetryDeleteFile(file);
+    }
+
     [Fact]
     public async Task FileListener_ShouldWriteMetricsToFile_WhenOperationsRun()
     {
@@ -18,13 +29,11 @@ public class RivuletFileListenerTests : IDisposable
             await Enumerable.Range(1, 10)
                 .ToAsyncEnumerable()
                 .SelectParallelStreamAsync(async (x, ct) =>
-                {
-                    await Task.Delay(300, ct);
-                    return x * 2;
-                }, new()
-                {
-                    MaxDegreeOfParallelism = 2
-                })
+                    {
+                        await Task.Delay(300, ct);
+                        return x * 2;
+                    },
+                    new() { MaxDegreeOfParallelism = 2 })
                 .ToListAsync();
 
             // Wait for EventCounters to poll and write metrics after operation completes
@@ -56,13 +65,11 @@ public class RivuletFileListenerTests : IDisposable
             await Enumerable.Range(1, 10)
                 .ToAsyncEnumerable()
                 .SelectParallelStreamAsync(async (x, ct) =>
-                {
-                    await Task.Delay(300, ct);
-                    return x;
-                }, new()
-                {
-                    MaxDegreeOfParallelism = 2
-                })
+                    {
+                        await Task.Delay(300, ct);
+                        return x;
+                    },
+                    new() { MaxDegreeOfParallelism = 2 })
                 .ToListAsync();
 
             // Wait for EventCounters to fire and write to file
@@ -97,19 +104,5 @@ public class RivuletFileListenerTests : IDisposable
         Directory.Exists(directory).ShouldBeTrue();
 
         TestCleanupHelper.RetryDeleteDirectory(directory);
-    }
-
-    public void Dispose()
-    {
-        TestCleanupHelper.RetryDeleteFile(_testFilePath);
-
-        var directory = Path.GetDirectoryName(_testFilePath) ?? string.Empty;
-        var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(_testFilePath);
-        var rotatedFiles = Directory.GetFiles(directory, $"{fileNameWithoutExtension}-*");
-        
-        foreach (var file in rotatedFiles)
-        {
-            TestCleanupHelper.RetryDeleteFile(file);
-        }
     }
 }

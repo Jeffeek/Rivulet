@@ -3,13 +3,13 @@ using Rivulet.Core;
 namespace Rivulet.IO;
 
 /// <summary>
-/// Extension methods for parallel directory and file processing operations.
+///     Extension methods for parallel directory and file processing operations.
 /// </summary>
 public static class DirectoryParallelExtensions
 {
     /// <summary>
-    /// Processes all files in a directory in parallel using a custom processing function.
-    /// This is the core method matching the ROADMAP example: Directory.GetFiles("*.csv").ProcessFilesParallelAsync(...)
+    ///     Processes all files in a directory in parallel using a custom processing function.
+    ///     This is the core method matching the ROADMAP example: Directory.GetFiles("*.csv").ProcessFilesParallelAsync(...)
     /// </summary>
     /// <typeparam name="TResult">The result type from processing each file.</typeparam>
     /// <param name="filePaths">The collection of file paths to process.</param>
@@ -31,40 +31,35 @@ public static class DirectoryParallelExtensions
         var parallelOptions = options.GetMergedParallelOptions();
 
         return await filePaths.SelectParallelAsync(
-            async (filePath, ct) =>
-            {
-                if (options.OnFileStartAsync != null)
+                async (filePath, ct) =>
                 {
-                    await options.OnFileStartAsync(filePath).ConfigureAwait(false);
-                }
+                    if (options.OnFileStartAsync != null) await options.OnFileStartAsync(filePath).ConfigureAwait(false);
 
-                try
-                {
-                    var result = await processFunc(filePath, ct).ConfigureAwait(false);
-
-                    if (options.OnFileCompleteAsync == null)
-                        return result;
-
-                    var fileInfo = new FileInfo(filePath);
-                    await options.OnFileCompleteAsync(filePath, fileInfo.Length).ConfigureAwait(false);
-
-                    return result;
-                }
-                catch (Exception ex)
-                {
-                    if (options.OnFileErrorAsync != null)
+                    try
                     {
-                        await options.OnFileErrorAsync(filePath, ex).ConfigureAwait(false);
+                        var result = await processFunc(filePath, ct).ConfigureAwait(false);
+
+                        if (options.OnFileCompleteAsync == null) return result;
+
+                        var fileInfo = new FileInfo(filePath);
+                        await options.OnFileCompleteAsync(filePath, fileInfo.Length).ConfigureAwait(false);
+
+                        return result;
                     }
-                    throw;
-                }
-            },
-            parallelOptions,
-            cancellationToken).ConfigureAwait(false);
+                    catch (Exception ex)
+                    {
+                        if (options.OnFileErrorAsync != null) await options.OnFileErrorAsync(filePath, ex).ConfigureAwait(false);
+
+                        throw;
+                    }
+                },
+                parallelOptions,
+                cancellationToken)
+            .ConfigureAwait(false);
     }
 
     /// <summary>
-    /// Gets all files matching a search pattern from a directory and processes them in parallel.
+    ///     Gets all files matching a search pattern from a directory and processes them in parallel.
     /// </summary>
     /// <typeparam name="TResult">The result type from processing each file.</typeparam>
     /// <param name="directoryPath">The directory path to search.</param>
@@ -76,7 +71,7 @@ public static class DirectoryParallelExtensions
     /// <returns>A list of results from processing each file.</returns>
     /// <exception cref="ArgumentNullException">Thrown when directoryPath or processFunc is null.</exception>
     /// <exception cref="DirectoryNotFoundException">Thrown when the directory doesn't exist.</exception>
-    public static async Task<IReadOnlyList<TResult>> ProcessDirectoryFilesParallelAsync<TResult>(
+    public static Task<IReadOnlyList<TResult>> ProcessDirectoryFilesParallelAsync<TResult>(
         string directoryPath,
         string searchPattern,
         Func<string, CancellationToken, ValueTask<TResult>> processFunc,
@@ -87,17 +82,14 @@ public static class DirectoryParallelExtensions
         ArgumentException.ThrowIfNullOrWhiteSpace(directoryPath);
         ArgumentNullException.ThrowIfNull(processFunc);
 
-        if (!Directory.Exists(directoryPath))
-        {
-            throw new DirectoryNotFoundException($"Directory not found: {directoryPath}");
-        }
+        if (!Directory.Exists(directoryPath)) throw new DirectoryNotFoundException($"Directory not found: {directoryPath}");
 
         var files = Directory.GetFiles(directoryPath, searchPattern, searchOption);
-        return await files.ProcessFilesParallelAsync(processFunc, options, cancellationToken).ConfigureAwait(false);
+        return files.ProcessFilesParallelAsync(processFunc, options, cancellationToken);
     }
 
     /// <summary>
-    /// Gets all files from a directory and reads them as text in parallel.
+    ///     Gets all files from a directory and reads them as text in parallel.
     /// </summary>
     /// <param name="directoryPath">The directory path to search.</param>
     /// <param name="searchPattern">The search pattern. Default is "*.*".</param>
@@ -114,10 +106,7 @@ public static class DirectoryParallelExtensions
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(directoryPath);
 
-        if (!Directory.Exists(directoryPath))
-        {
-            throw new DirectoryNotFoundException($"Directory not found: {directoryPath}");
-        }
+        if (!Directory.Exists(directoryPath)) throw new DirectoryNotFoundException($"Directory not found: {directoryPath}");
 
         var files = Directory.GetFiles(directoryPath, searchPattern, searchOption);
 
@@ -136,7 +125,7 @@ public static class DirectoryParallelExtensions
             OnFileStartAsync = options.OnFileStartAsync,
             OnFileCompleteAsync = options.OnFileCompleteAsync,
             OnFileErrorAsync = options.OnFileErrorAsync,
-            ParallelOptions = new ParallelOptionsRivulet
+            ParallelOptions = new()
             {
                 MaxDegreeOfParallelism = parallelOpts.MaxDegreeOfParallelism,
                 OrderedOutput = true // Force ordered output for correct Zip alignment
@@ -145,12 +134,12 @@ public static class DirectoryParallelExtensions
 
         var contents = await files.ReadAllTextParallelAsync(orderedOptions, cancellationToken).ConfigureAwait(false);
 
-        return files.Zip(contents, (file, content) => (file, content))
-            .ToDictionary(x => x.file, x => x.content);
+        return files.Zip(contents, static (file, content) => (file, content))
+            .ToDictionary(static x => x.file, static x => x.content);
     }
 
     /// <summary>
-    /// Transforms all files in a directory in parallel by applying a transformation function.
+    ///     Transforms all files in a directory in parallel by applying a transformation function.
     /// </summary>
     /// <param name="sourceDirectory">The source directory containing files to transform.</param>
     /// <param name="destinationDirectory">The destination directory for transformed files.</param>
@@ -160,7 +149,7 @@ public static class DirectoryParallelExtensions
     /// <param name="options">File operation options. If null, defaults are used.</param>
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>A list of destination file paths that were created.</returns>
-    public static async Task<IReadOnlyList<string>> TransformDirectoryFilesParallelAsync(
+    public static Task<IReadOnlyList<string>> TransformDirectoryFilesParallelAsync(
         string sourceDirectory,
         string destinationDirectory,
         string searchPattern,
@@ -173,10 +162,7 @@ public static class DirectoryParallelExtensions
         ArgumentException.ThrowIfNullOrWhiteSpace(destinationDirectory);
         ArgumentNullException.ThrowIfNull(transformFunc);
 
-        if (!Directory.Exists(sourceDirectory))
-        {
-            throw new DirectoryNotFoundException($"Source directory not found: {sourceDirectory}");
-        }
+        if (!Directory.Exists(sourceDirectory)) throw new DirectoryNotFoundException($"Source directory not found: {sourceDirectory}");
 
         var sourceFiles = Directory.GetFiles(sourceDirectory, searchPattern, searchOption);
 
@@ -187,11 +173,11 @@ public static class DirectoryParallelExtensions
             return (sourcePath, destPath);
         });
 
-        return await filePairs.TransformFilesParallelAsync(transformFunc, options, cancellationToken).ConfigureAwait(false);
+        return filePairs.TransformFilesParallelAsync(transformFunc, options, cancellationToken);
     }
 
     /// <summary>
-    /// Copies all files from source directory to destination directory in parallel.
+    ///     Copies all files from source directory to destination directory in parallel.
     /// </summary>
     /// <param name="sourceDirectory">The source directory.</param>
     /// <param name="destinationDirectory">The destination directory.</param>
@@ -200,7 +186,7 @@ public static class DirectoryParallelExtensions
     /// <param name="options">File operation options. If null, defaults are used.</param>
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>A list of destination file paths that were copied.</returns>
-    public static async Task<IReadOnlyList<string>> CopyDirectoryFilesParallelAsync(
+    public static Task<IReadOnlyList<string>> CopyDirectoryFilesParallelAsync(
         string sourceDirectory,
         string destinationDirectory,
         string searchPattern = "*.*",
@@ -211,10 +197,7 @@ public static class DirectoryParallelExtensions
         ArgumentException.ThrowIfNullOrWhiteSpace(sourceDirectory);
         ArgumentException.ThrowIfNullOrWhiteSpace(destinationDirectory);
 
-        if (!Directory.Exists(sourceDirectory))
-        {
-            throw new DirectoryNotFoundException($"Source directory not found: {sourceDirectory}");
-        }
+        if (!Directory.Exists(sourceDirectory)) throw new DirectoryNotFoundException($"Source directory not found: {sourceDirectory}");
 
         var sourceFiles = Directory.GetFiles(sourceDirectory, searchPattern, searchOption);
 
@@ -225,11 +208,11 @@ public static class DirectoryParallelExtensions
             return (sourcePath, destPath);
         });
 
-        return await filePairs.CopyFilesParallelAsync(options, cancellationToken).ConfigureAwait(false);
+        return filePairs.CopyFilesParallelAsync(options, cancellationToken);
     }
 
     /// <summary>
-    /// Deletes all files matching the search pattern from a directory in parallel.
+    ///     Deletes all files matching the search pattern from a directory in parallel.
     /// </summary>
     /// <param name="directoryPath">The directory path.</param>
     /// <param name="searchPattern">The search pattern for files to delete.</param>
@@ -237,7 +220,7 @@ public static class DirectoryParallelExtensions
     /// <param name="options">File operation options. If null, defaults are used.</param>
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>A list of file paths that were deleted.</returns>
-    public static async Task<IReadOnlyList<string>> DeleteDirectoryFilesParallelAsync(
+    public static Task<IReadOnlyList<string>> DeleteDirectoryFilesParallelAsync(
         string directoryPath,
         string searchPattern,
         SearchOption searchOption = SearchOption.TopDirectoryOnly,
@@ -246,17 +229,14 @@ public static class DirectoryParallelExtensions
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(directoryPath);
 
-        if (!Directory.Exists(directoryPath))
-        {
-            throw new DirectoryNotFoundException($"Directory not found: {directoryPath}");
-        }
+        if (!Directory.Exists(directoryPath)) throw new DirectoryNotFoundException($"Directory not found: {directoryPath}");
 
         var files = Directory.GetFiles(directoryPath, searchPattern, searchOption);
-        return await files.DeleteFilesParallelAsync(options, cancellationToken).ConfigureAwait(false);
+        return files.DeleteFilesParallelAsync(options, cancellationToken);
     }
 
     /// <summary>
-    /// Processes multiple directories in parallel, applying a processing function to each file.
+    ///     Processes multiple directories in parallel, applying a processing function to each file.
     /// </summary>
     /// <typeparam name="TResult">The result type from processing each file.</typeparam>
     /// <param name="directoryPaths">The collection of directory paths to process.</param>
@@ -266,7 +246,7 @@ public static class DirectoryParallelExtensions
     /// <param name="options">File operation options. If null, defaults are used.</param>
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>A list of results from processing all files across all directories.</returns>
-    public static async Task<IReadOnlyList<TResult>> ProcessMultipleDirectoriesParallelAsync<TResult>(
+    public static Task<IReadOnlyList<TResult>> ProcessMultipleDirectoriesParallelAsync<TResult>(
         this IEnumerable<string> directoryPaths,
         string searchPattern,
         Func<string, CancellationToken, ValueTask<TResult>> processFunc,
@@ -283,6 +263,6 @@ public static class DirectoryParallelExtensions
             .Where(Directory.Exists)
             .SelectMany(dir => Directory.GetFiles(dir, searchPattern, searchOption));
 
-        return await allFiles.ProcessFilesParallelAsync(processFunc, options, cancellationToken).ConfigureAwait(false);
+        return allFiles.ProcessFilesParallelAsync(processFunc, options, cancellationToken);
     }
 }

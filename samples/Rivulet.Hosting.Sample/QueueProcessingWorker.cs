@@ -57,8 +57,6 @@ public class QueueProcessingWorker : ParallelBackgroundService<string>
 
         // Simulate occasional failures
         if (Random.Shared.Next(0, 100) < 5) // 5% error rate
-        {
             throw new InvalidOperationException($"Failed to process {item}");
-        }
     }
 }

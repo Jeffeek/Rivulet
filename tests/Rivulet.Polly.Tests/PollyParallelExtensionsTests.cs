@@ -11,12 +11,7 @@ public class PollyParallelExtensionsTests
         var items = Enumerable.Range(1, 5).ToList();
 
         var retryPolicy = new ResiliencePipelineBuilder()
-            .AddRetry(new()
-            {
-                MaxRetryAttempts = 3,
-                Delay = TimeSpan.FromMilliseconds(10),
-                BackoffType = DelayBackoffType.Constant
-            })
+            .AddRetry(new() { MaxRetryAttempts = 3, Delay = TimeSpan.FromMilliseconds(10), BackoffType = DelayBackoffType.Constant })
             .Build();
 
         var results = await items.SelectParallelWithPolicyAsync(
@@ -29,8 +24,7 @@ public class PollyParallelExtensionsTests
                 }
 
                 // Fail first 2 attempts for item 3
-                if (item != 3 || attempts[item] > 2)
-                    return item * 2;
+                if (item != 3 || attempts[item] > 2) return item * 2;
 
                 await Task.Delay(1, ct).ConfigureAwait(false);
                 throw new InvalidOperationException($"Transient failure for item {item}");
@@ -39,7 +33,7 @@ public class PollyParallelExtensionsTests
             new() { MaxDegreeOfParallelism = 2 });
 
         results.Count.ShouldBe(5);
-        results.OrderBy(x => x).ShouldBe([2, 4, 6, 8, 10]);
+        results.OrderBy(static x => x).ShouldBe([2, 4, 6, 8, 10]);
         attempts[3].ShouldBe(3, "item 3 should have been attempted 3 times");
     }
 
@@ -57,7 +51,7 @@ public class PollyParallelExtensionsTests
                 BackoffType = DelayBackoffType.Constant,
                 ShouldHandle = new PredicateBuilder<int>()
                     .Handle<Exception>()
-                    .HandleResult(result => result == -1) // Retry when result is -1
+                    .HandleResult(static result => result == -1) // Retry when result is -1
             })
             .Build();
 
@@ -73,10 +67,7 @@ public class PollyParallelExtensionsTests
                 await Task.Delay(1, ct).ConfigureAwait(false);
 
                 // Return -1 on first 2 attempts for item 3
-                if (item == 3 && attempts[item] <= 2)
-                {
-                    return -1;
-                }
+                if (item == 3 && attempts[item] <= 2) return -1;
 
                 return item * 2;
             },
@@ -84,7 +75,7 @@ public class PollyParallelExtensionsTests
             new() { MaxDegreeOfParallelism = 2 });
 
         results.Count.ShouldBe(5);
-        results.OrderBy(x => x).ShouldBe([2, 4, 6, 8, 10]);
+        results.OrderBy(static x => x).ShouldBe([2, 4, 6, 8, 10]);
         attempts[3].ShouldBe(3, "item 3 should have been attempted 3 times");
     }
 
@@ -94,7 +85,7 @@ public class PollyParallelExtensionsTests
         var items = Enumerable.Range(1, 5).ToList();
 
         var timeoutPolicy = new ResiliencePipelineBuilder()
-            .AddTimeout(TimeSpan.FromSeconds(5))  // Generous timeout to avoid flakiness
+            .AddTimeout(TimeSpan.FromSeconds(5)) // Generous timeout to avoid flakiness
             .Build();
 
         // Just verify it works with timeout policy
@@ -108,7 +99,7 @@ public class PollyParallelExtensionsTests
             new() { MaxDegreeOfParallelism = 2 });
 
         results.Count.ShouldBe(5);
-        results.OrderBy(x => x).ShouldBe([2, 4, 6, 8, 10]);
+        results.OrderBy(static x => x).ShouldBe([2, 4, 6, 8, 10]);
     }
 
     [Fact]
@@ -157,12 +148,7 @@ public class PollyParallelExtensionsTests
         var attempts = new Dictionary<int, int>();
 
         var retryPolicy = new ResiliencePipelineBuilder()
-            .AddRetry(new()
-            {
-                MaxRetryAttempts = 2,
-                Delay = TimeSpan.FromMilliseconds(10),
-                BackoffType = DelayBackoffType.Constant
-            })
+            .AddRetry(new() { MaxRetryAttempts = 2, Delay = TimeSpan.FromMilliseconds(10), BackoffType = DelayBackoffType.Constant })
             .Build();
 
         await items.ForEachParallelWithPolicyAsync(
@@ -183,16 +169,13 @@ public class PollyParallelExtensionsTests
 
                 await Task.Delay(1, ct).ConfigureAwait(false);
 
-                lock (results)
-                {
-                    results.Add(item);
-                }
+                lock (results) results.Add(item);
             },
             retryPolicy,
             new() { MaxDegreeOfParallelism = 4 });
 
         results.Count.ShouldBe(10);
-        results.OrderBy(x => x).ShouldBe(items.OrderBy(x => x));
+        results.OrderBy(static x => x).ShouldBe(items.OrderBy(static x => x));
         attempts[5].ShouldBe(2, "item 5 should have been attempted twice");
     }
 

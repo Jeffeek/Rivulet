@@ -5,7 +5,7 @@ using Rivulet.Core;
 namespace Rivulet.Hosting;
 
 /// <summary>
-/// Base class for background services that process items in parallel.
+///     Base class for background services that process items in parallel.
 /// </summary>
 public abstract class ParallelBackgroundService<T> : BackgroundService
 {
@@ -13,7 +13,7 @@ public abstract class ParallelBackgroundService<T> : BackgroundService
     private readonly ParallelOptionsRivulet? _options;
 
     /// <summary>
-    /// Initializes a new instance of the ParallelBackgroundService class.
+    ///     Initializes a new instance of the ParallelBackgroundService class.
     /// </summary>
     /// <param name="logger">The logger instance.</param>
     /// <param name="options">Optional parallel processing options.</param>
@@ -24,7 +24,7 @@ public abstract class ParallelBackgroundService<T> : BackgroundService
     }
 
     /// <summary>
-    /// Executes the background service asynchronously.
+    ///     Executes the background service asynchronously.
     /// </summary>
     /// <param name="stoppingToken">Cancellation token that triggers when the application is stopping.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
@@ -48,12 +48,12 @@ public abstract class ParallelBackgroundService<T> : BackgroundService
     }
 
     /// <summary>
-    /// Gets the stream of items to process. Override this to provide your data source.
+    ///     Gets the stream of items to process. Override this to provide your data source.
     /// </summary>
     protected abstract IAsyncEnumerable<T> GetItemsAsync(CancellationToken cancellationToken);
 
     /// <summary>
-    /// Processes a single item. Override this to define your processing logic.
+    ///     Processes a single item. Override this to define your processing logic.
     /// </summary>
     protected abstract ValueTask ProcessItemAsync(T item, CancellationToken cancellationToken);
 }

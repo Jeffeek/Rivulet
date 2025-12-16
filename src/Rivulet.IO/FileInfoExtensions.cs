@@ -3,56 +3,50 @@ using Rivulet.IO.Internal;
 namespace Rivulet.IO;
 
 /// <summary>
-/// Extension methods for FileInfo to enable parallel operations on collections of FileInfo objects.
+///     Extension methods for FileInfo to enable parallel operations on collections of FileInfo objects.
 /// </summary>
 public static class FileInfoExtensions
 {
     /// <summary>
-    /// Reads multiple FileInfo objects in parallel and returns their contents as strings.
+    ///     Reads multiple FileInfo objects in parallel and returns their contents as strings.
     /// </summary>
     /// <param name="files">The collection of FileInfo objects to read.</param>
     /// <param name="options">File operation options. If null, defaults are used.</param>
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>A list of file contents as strings.</returns>
     /// <exception cref="ArgumentNullException">Thrown when files is null.</exception>
-    public static async Task<IReadOnlyList<string>> ReadAllTextParallelAsync(
+    public static Task<IReadOnlyList<string>> ReadAllTextParallelAsync(
         this IEnumerable<FileInfo> files,
         FileOperationOptions? options = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(files);
 
-#pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements in ReadAllTextParallelAsync
-        return await files.Select(f => f.FullName)
-            .ReadAllTextParallelAsync(options, cancellationToken)
-            .ConfigureAwait(false);
-#pragma warning restore CA2007
+        return files.Select(static f => f.FullName)
+            .ReadAllTextParallelAsync(options, cancellationToken);
     }
 
     /// <summary>
-    /// Reads multiple FileInfo objects in parallel and returns their contents as byte arrays.
+    ///     Reads multiple FileInfo objects in parallel and returns their contents as byte arrays.
     /// </summary>
     /// <param name="files">The collection of FileInfo objects to read.</param>
     /// <param name="options">File operation options. If null, defaults are used.</param>
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>A list of file contents as byte arrays.</returns>
     /// <exception cref="ArgumentNullException">Thrown when files is null.</exception>
-    public static async Task<IReadOnlyList<byte[]>> ReadAllBytesParallelAsync(
+    public static Task<IReadOnlyList<byte[]>> ReadAllBytesParallelAsync(
         this IEnumerable<FileInfo> files,
         FileOperationOptions? options = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(files);
 
-#pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements in ReadAllBytesParallelAsync
-        return await files.Select(f => f.FullName)
-            .ReadAllBytesParallelAsync(options, cancellationToken)
-            .ConfigureAwait(false);
-#pragma warning restore CA2007
+        return files.Select(static f => f.FullName)
+            .ReadAllBytesParallelAsync(options, cancellationToken);
     }
 
     /// <summary>
-    /// Reads a single FileInfo object as text asynchronously.
+    ///     Reads a single FileInfo object as text asynchronously.
     /// </summary>
     /// <param name="file">The FileInfo object to read.</param>
     /// <param name="options">File operation options. If null, defaults are used.</param>
@@ -68,7 +62,6 @@ public static class FileInfoExtensions
 
         options ??= new();
 
-#pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements
         return await FileOperationHelper.ExecuteFileOperationAsync(
             file.FullName,
             async () =>
@@ -79,18 +72,17 @@ public static class FileInfoExtensions
                     FileAccess.Read,
                     options.ReadFileShare,
                     options.BufferSize,
-                    useAsync: true);
+                    true);
 
                 using var reader = new StreamReader(stream, options.Encoding);
                 return await reader.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
             },
             options,
-            content => content.Length);
-#pragma warning restore CA2007
+            static content => content.Length);
     }
 
     /// <summary>
-    /// Reads a single FileInfo object as bytes asynchronously.
+    ///     Reads a single FileInfo object as bytes asynchronously.
     /// </summary>
     /// <param name="file">The FileInfo object to read.</param>
     /// <param name="options">File operation options. If null, defaults are used.</param>
@@ -117,19 +109,19 @@ public static class FileInfoExtensions
                     FileAccess.Read,
                     options.ReadFileShare,
                     options.BufferSize,
-                    useAsync: true);
+                    true);
 
                 var buffer = new byte[stream.Length];
                 _ = await stream.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
                 return buffer;
             },
             options,
-            bytes => bytes.Length);
+            static bytes => bytes.Length);
 #pragma warning restore CA2007
     }
 
     /// <summary>
-    /// Writes text content to a FileInfo object asynchronously.
+    ///     Writes text content to a FileInfo object asynchronously.
     /// </summary>
     /// <param name="file">The FileInfo object to write to.</param>
     /// <param name="content">The text content to write.</param>
@@ -161,7 +153,7 @@ public static class FileInfoExtensions
                     FileAccess.Write,
                     options.WriteFileShare,
                     options.BufferSize,
-                    useAsync: true);
+                    true);
 
                 await using var writer = new StreamWriter(stream, options.Encoding);
                 await writer.WriteAsync(content.AsMemory(), cancellationToken).ConfigureAwait(false);
@@ -170,12 +162,12 @@ public static class FileInfoExtensions
                 return content.Length;
             },
             options,
-            length => length);
+            static length => length);
 #pragma warning restore CA2007
     }
 
     /// <summary>
-    /// Writes byte content to a FileInfo object asynchronously.
+    ///     Writes byte content to a FileInfo object asynchronously.
     /// </summary>
     /// <param name="file">The FileInfo object to write to.</param>
     /// <param name="content">The byte content to write.</param>
@@ -207,7 +199,7 @@ public static class FileInfoExtensions
                     FileAccess.Write,
                     options.WriteFileShare,
                     options.BufferSize,
-                    useAsync: true);
+                    true);
 
                 await stream.WriteAsync(content, cancellationToken).ConfigureAwait(false);
                 await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
@@ -215,12 +207,12 @@ public static class FileInfoExtensions
                 return content.Length;
             },
             options,
-            length => length);
+            static length => length);
 #pragma warning restore CA2007
     }
 
     /// <summary>
-    /// Copies a FileInfo to a destination path asynchronously.
+    ///     Copies a FileInfo to a destination path asynchronously.
     /// </summary>
     /// <param name="file">The source FileInfo object.</param>
     /// <param name="destinationPath">The destination file path.</param>
@@ -252,7 +244,7 @@ public static class FileInfoExtensions
                     FileAccess.Read,
                     options.ReadFileShare,
                     options.BufferSize,
-                    useAsync: true);
+                    true);
 
                 await using var destStream = new FileStream(
                     destinationPath,
@@ -260,7 +252,7 @@ public static class FileInfoExtensions
                     FileAccess.Write,
                     options.WriteFileShare,
                     options.BufferSize,
-                    useAsync: true);
+                    true);
 
                 await sourceStream.CopyToAsync(destStream, options.BufferSize, cancellationToken).ConfigureAwait(false);
                 await destStream.FlushAsync(cancellationToken).ConfigureAwait(false);
@@ -268,12 +260,12 @@ public static class FileInfoExtensions
                 return sourceStream.Length;
             },
             options,
-            length => length);
+            static length => length);
 #pragma warning restore CA2007
     }
 
     /// <summary>
-    /// Deletes a FileInfo object asynchronously.
+    ///     Deletes a FileInfo object asynchronously.
     /// </summary>
     /// <param name="file">The FileInfo object to delete.</param>
     /// <param name="options">File operation options. If null, defaults are used.</param>
@@ -289,12 +281,13 @@ public static class FileInfoExtensions
         options ??= new();
 
         await FileOperationHelper.ExecuteFileOperationAsync(
-            file.FullName,
-            async () =>
-            {
-                await Task.Run(() => File.Delete(file.FullName), cancellationToken).ConfigureAwait(false);
-                return 0;
-            },
-            options).ConfigureAwait(false);
+                file.FullName,
+                async () =>
+                {
+                    await Task.Run(() => File.Delete(file.FullName), cancellationToken).ConfigureAwait(false);
+                    return 0;
+                },
+                options)
+            .ConfigureAwait(false);
     }
 }

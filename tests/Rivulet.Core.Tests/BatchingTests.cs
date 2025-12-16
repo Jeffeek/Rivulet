@@ -6,7 +6,7 @@ using Rivulet.Core.Observability;
 namespace Rivulet.Core.Tests;
 
 [SuppressMessage("ReSharper", "AccessToDisposedClosure")]
-public class BatchingTests
+public sealed class BatchingTests
 {
     [Fact]
     public async Task BatchParallelAsync_ExactBatches_ProcessesCorrectly()
@@ -15,7 +15,7 @@ public class BatchingTests
         var batchSizes = new ConcurrentBag<int>();
 
         var results = await source.BatchParallelAsync(
-            batchSize: 10,
+            10,
             async (batch, ct) =>
             {
                 batchSizes.Add(batch.Count);
@@ -35,7 +35,7 @@ public class BatchingTests
         var batchSizes = new ConcurrentBag<int>();
 
         var results = await source.BatchParallelAsync(
-            batchSize: 10,
+            10,
             async (batch, ct) =>
             {
                 batchSizes.Add(batch.Count);
@@ -55,8 +55,8 @@ public class BatchingTests
         var source = Enumerable.Empty<int>();
 
         var results = await source.BatchParallelAsync(
-            batchSize: 10,
-            async (batch, _) =>
+            10,
+            static async (batch, _) =>
             {
                 await Task.CompletedTask;
                 return batch.Sum();
@@ -71,8 +71,8 @@ public class BatchingTests
         var source = new[] { 42 };
 
         var results = await source.BatchParallelAsync(
-            batchSize: 10,
-            async (batch, _) =>
+            10,
+            static async (batch, _) =>
             {
                 await Task.CompletedTask;
                 return batch.First();
@@ -87,9 +87,9 @@ public class BatchingTests
     {
         var source = Enumerable.Range(1, 10);
 
-        var act = async () => await source.BatchParallelAsync(
-            batchSize: -5,
-            async (batch, _) =>
+        var act = () => source.BatchParallelAsync(
+            -5,
+            static async (batch, _) =>
             {
                 await Task.CompletedTask;
                 return batch.Sum();
@@ -105,17 +105,13 @@ public class BatchingTests
         var source = Enumerable.Range(1, 50);
 
         var results = await source.BatchParallelAsync(
-            batchSize: 10,
-            async (batch, ct) =>
+            10,
+            static async (batch, ct) =>
             {
                 await Task.Delay(Random.Shared.Next(5, 20), ct);
                 return batch.First();
             },
-            new()
-            {
-                MaxDegreeOfParallelism = 5,
-                OrderedOutput = true
-            });
+            new() { MaxDegreeOfParallelism = 5, OrderedOutput = true });
 
         results.Count.ShouldBe(5);
         results.ShouldBe(new[] { 1, 11, 21, 31, 41 });
@@ -128,7 +124,7 @@ public class BatchingTests
         var snapshots = new ConcurrentBag<ProgressSnapshot>();
 
         var results = await source.BatchParallelAsync(
-            batchSize: 10,
+            10,
             async (batch, ct) =>
             {
                 await Task.Delay(10, ct);
@@ -170,7 +166,7 @@ public class BatchingTests
         var attemptCounts = new ConcurrentDictionary<int, int>();
 
         var results = await source.BatchParallelAsync(
-            batchSize: 10,
+            10,
             async (batch, ct) =>
             {
                 var batchId = batch.First();
@@ -178,17 +174,11 @@ public class BatchingTests
 
                 await Task.Delay(5, ct);
 
-                if (batchId == 1 && attempts == 1)
-                    throw new InvalidOperationException("Transient error");
+                if (batchId == 1 && attempts == 1) throw new InvalidOperationException("Transient error");
 
                 return batch.Sum();
             },
-            new()
-            {
-                MaxRetries = 2,
-                IsTransient = ex => ex is InvalidOperationException,
-                ErrorMode = ErrorMode.CollectAndContinue
-            });
+            new() { MaxRetries = 2, IsTransient = ex => ex is InvalidOperationException, ErrorMode = ErrorMode.CollectAndContinue });
 
         results.Count.ShouldBe(3);
         attemptCounts[1].ShouldBe(2);
@@ -200,19 +190,13 @@ public class BatchingTests
         var source = Enumerable.Range(1, 40);
 
         var results = await source.BatchParallelAsync(
-            batchSize: 10,
+            10,
             async (batch, ct) =>
             {
                 await Task.Delay(5, ct);
-                if (batch.First() == 11)
-                    throw new InvalidOperationException("Permanent error");
-                return batch.Sum();
+                return batch.First() == 11 ? throw new InvalidOperationException("Permanent error") : batch.Sum();
             },
-            new()
-            {
-                MaxRetries = 0,
-                ErrorMode = ErrorMode.BestEffort
-            });
+            new() { MaxRetries = 0, ErrorMode = ErrorMode.BestEffort });
 
         results.Count.ShouldBe(3);
     }
@@ -223,9 +207,9 @@ public class BatchingTests
         var source = Enumerable.Range(1, 1000);
         using var cts = new CancellationTokenSource();
 
-        var act = async () => await source.BatchParallelAsync(
-            batchSize: 10,
-            async (batch, ct) =>
+        var act = () => source.BatchParallelAsync(
+            10,
+            static async (batch, ct) =>
             {
                 await Task.Delay(50, ct);
                 return batch.Sum();
@@ -244,13 +228,14 @@ public class BatchingTests
         var batchSizes = new ConcurrentBag<int>();
 
         var results = await source.BatchParallelStreamAsync(
-            batchSize: 10,
-            async (batch, ct) =>
-            {
-                batchSizes.Add(batch.Count);
-                await Task.Delay(5, ct);
-                return batch.Sum();
-            }).ToListAsync();
+                10,
+                async (batch, ct) =>
+                {
+                    batchSizes.Add(batch.Count);
+                    await Task.Delay(5, ct);
+                    return batch.Sum();
+                })
+            .ToListAsync();
 
         results.Count.ShouldBe(10);
         batchSizes.ShouldAllBe(size => size == 10);
@@ -264,13 +249,14 @@ public class BatchingTests
         var batchSizes = new ConcurrentBag<int>();
 
         var results = await source.BatchParallelStreamAsync(
-            batchSize: 10,
-            async (batch, ct) =>
-            {
-                batchSizes.Add(batch.Count);
-                await Task.Delay(5, ct);
-                return batch.Sum();
-            }).ToListAsync();
+                10,
+                async (batch, ct) =>
+                {
+                    batchSizes.Add(batch.Count);
+                    await Task.Delay(5, ct);
+                    return batch.Sum();
+                })
+            .ToListAsync();
 
         results.Count.ShouldBe(3);
         batchSizes.ShouldContain(10);
@@ -281,17 +267,19 @@ public class BatchingTests
     [Fact]
     public async Task BatchParallelStreamAsync_WithTimeout_FlushesOnTimeout()
     {
-        var source = SlowAsyncEnumerable(30, delayMs: 50);
+        var source = SlowAsyncEnumerable(30, 50);
         var batchSizes = new ConcurrentBag<int>();
 
         var results = await source.BatchParallelStreamAsync(
-            batchSize: 100, async (batch, _) =>
-            {
-                batchSizes.Add(batch.Count);
-                await Task.CompletedTask;
-                return batch.Count;
-            },
-            batchTimeout: TimeSpan.FromMilliseconds(200)).ToListAsync();
+                100,
+                async (batch, _) =>
+                {
+                    batchSizes.Add(batch.Count);
+                    await Task.CompletedTask;
+                    return batch.Count;
+                },
+                batchTimeout: TimeSpan.FromMilliseconds(200))
+            .ToListAsync();
 
         results.ShouldNotBeEmpty();
         batchSizes.ShouldContain(size => size < 100);
@@ -303,12 +291,13 @@ public class BatchingTests
         var source = AsyncEnumerable.Empty<int>();
 
         var results = await source.BatchParallelStreamAsync(
-            batchSize: 10,
-            async (batch, _) =>
-            {
-                await Task.CompletedTask;
-                return batch.Sum();
-            }).ToListAsync();
+                10,
+                static async (batch, _) =>
+                {
+                    await Task.CompletedTask;
+                    return batch.Sum();
+                })
+            .ToListAsync();
 
         results.ShouldBeEmpty();
     }
@@ -321,12 +310,12 @@ public class BatchingTests
         var act = async () =>
         {
             await foreach (var _ in source.BatchParallelStreamAsync(
-                batchSize: 0,
-                async (batch, _) =>
-                {
-                    await Task.CompletedTask;
-                    return batch.Sum();
-                }))
+                               0,
+                               static async (batch, _) =>
+                               {
+                                   await Task.CompletedTask;
+                                   return batch.Sum();
+                               }))
             {
                 // Consuming batches
             }
@@ -342,17 +331,14 @@ public class BatchingTests
         var source = AsyncEnumerable.Range(1, 50);
 
         var results = await source.BatchParallelStreamAsync(
-            batchSize: 10,
-            async (batch, ct) =>
-            {
-                await Task.Delay(Random.Shared.Next(5, 20), ct);
-                return batch.First();
-            },
-            new()
-            {
-                MaxDegreeOfParallelism = 5,
-                OrderedOutput = true
-            }).ToListAsync();
+                10,
+                static async (batch, ct) =>
+                {
+                    await Task.Delay(Random.Shared.Next(5, 20), ct);
+                    return batch.First();
+                },
+                new() { MaxDegreeOfParallelism = 5, OrderedOutput = true })
+            .ToListAsync();
 
         results.Count.ShouldBe(5);
         results.ShouldBe(new[] { 1, 11, 21, 31, 41 });
@@ -367,13 +353,13 @@ public class BatchingTests
         var act = async () =>
         {
             await foreach (var _ in source.BatchParallelStreamAsync(
-                batchSize: 10,
-                async (batch, ct) =>
-                {
-                    await Task.Delay(50, ct);
-                    return batch.Sum();
-                },
-                cancellationToken: cts.Token))
+                               10,
+                               static async (batch, ct) =>
+                               {
+                                   await Task.Delay(50, ct);
+                                   return batch.Sum();
+                               },
+                               cancellationToken: cts.Token))
             {
                 // Consuming batches
             }
@@ -390,16 +376,13 @@ public class BatchingTests
         var source = Enumerable.Range(1, 10000);
 
         var results = await source.BatchParallelAsync(
-            batchSize: 1000,
-            async (batch, ct) =>
+            1000,
+            static async (batch, ct) =>
             {
                 await Task.Delay(1, ct);
                 return batch.Count;
             },
-            new()
-            {
-                MaxDegreeOfParallelism = 4
-            });
+            new() { MaxDegreeOfParallelism = 4 });
 
         results.Count.ShouldBe(10);
         results.ShouldAllBe(count => count == 1000);
@@ -412,24 +395,25 @@ public class BatchingTests
         var snapshots = new ConcurrentBag<ProgressSnapshot>();
 
         var results = await source.BatchParallelStreamAsync(
-            batchSize: 10,
-            async (batch, ct) =>
-            {
-                await Task.Delay(10, ct);
-                return batch.Sum();
-            },
-            new()
-            {
-                Progress = new()
+                10,
+                async (batch, ct) =>
                 {
-                    ReportInterval = TimeSpan.FromMilliseconds(50),
-                    OnProgress = snapshot =>
+                    await Task.Delay(10, ct);
+                    return batch.Sum();
+                },
+                new()
+                {
+                    Progress = new()
                     {
-                        snapshots.Add(snapshot);
-                        return ValueTask.CompletedTask;
+                        ReportInterval = TimeSpan.FromMilliseconds(50),
+                        OnProgress = snapshot =>
+                        {
+                            snapshots.Add(snapshot);
+                            return ValueTask.CompletedTask;
+                        }
                     }
-                }
-            }).ToListAsync();
+                })
+            .ToListAsync();
 
         results.Count.ShouldBe(6);
         snapshots.ShouldNotBeEmpty();
@@ -441,8 +425,8 @@ public class BatchingTests
         var source = Enumerable.Range(1, 10);
 
         var results = await source.BatchParallelAsync(
-            batchSize: 1,
-            async (batch, ct) =>
+            1,
+            static async (batch, ct) =>
             {
                 await Task.Delay(5, ct);
                 return batch.Single();
@@ -459,13 +443,14 @@ public class BatchingTests
         var source = AsyncEnumerable.Range(1, 10);
 
         var results = await source.BatchParallelStreamAsync(
-            batchSize: 1,
-            async (batch, ct) =>
-            {
-                await Task.Delay(5, ct);
-                return batch.Single();
-            },
-            new() { OrderedOutput = true }).ToListAsync();
+                1,
+                static async (batch, ct) =>
+                {
+                    await Task.Delay(5, ct);
+                    return batch.Single();
+                },
+                new() { OrderedOutput = true })
+            .ToListAsync();
 
         results.Count.ShouldBe(10);
         results.ShouldBe(Enumerable.Range(1, 10));
@@ -479,7 +464,7 @@ public class BatchingTests
         var attemptCounts = new ConcurrentDictionary<int, int>();
 
         var results = await source.BatchParallelAsync(
-            batchSize: 10,
+            10,
             async (batch, ct) =>
             {
                 var batchId = batch.First();
@@ -487,8 +472,7 @@ public class BatchingTests
 
                 await Task.Delay(10, ct);
 
-                if (batchId == 21 && attempts == 1)
-                    throw new InvalidOperationException("Transient");
+                if (batchId == 21 && attempts == 1) throw new InvalidOperationException("Transient");
 
                 return batch.Sum();
             },
@@ -519,15 +503,17 @@ public class BatchingTests
     [Fact]
     public async Task BatchParallelStreamAsync_TimeoutWithSlowSource_FlushesPartialBatches()
     {
-        var source = SlowAsyncEnumerable(15, delayMs: 100);
+        var source = SlowAsyncEnumerable(15, 100);
 
         var results = await source.BatchParallelStreamAsync(
-            batchSize: 20, async (batch, _) =>
-            {
-                await Task.CompletedTask;
-                return batch.Count;
-            },
-            batchTimeout: TimeSpan.FromMilliseconds(300)).ToListAsync();
+                20,
+                static async (batch, _) =>
+                {
+                    await Task.CompletedTask;
+                    return batch.Count;
+                },
+                batchTimeout: TimeSpan.FromMilliseconds(300))
+            .ToListAsync();
 
         results.ShouldNotBeEmpty();
         results.ShouldContain(count => count < 20);
@@ -539,14 +525,15 @@ public class BatchingTests
         var source = AsyncEnumerable.Range(1, 25);
 
         var results = await source.BatchParallelStreamAsync(
-            batchSize: 10,
-            async (batch, ct) =>
-            {
-                await Task.Delay(5, ct);
-                return batch.Count;
-            },
-            batchTimeout: null
-        ).ToListAsync();
+                10,
+                static async (batch, ct) =>
+                {
+                    await Task.Delay(5, ct);
+                    return batch.Count;
+                },
+                batchTimeout: null
+            )
+            .ToListAsync();
 
         results.Count.ShouldBe(3);
         results.ShouldContain(10);
@@ -566,17 +553,19 @@ public class BatchingTests
     [Fact]
     public async Task BatchParallelStreamAsync_TimeoutTriggersBeforeBatchFull()
     {
-        var source = SlowAsyncEnumerable(5, delayMs: 100);
+        var source = SlowAsyncEnumerable(5, 100);
         var batchSizes = new ConcurrentBag<int>();
 
         var results = await source.BatchParallelStreamAsync(
-            batchSize: 100, async (batch, _) =>
-            {
-                batchSizes.Add(batch.Count);
-                await Task.CompletedTask;
-                return batch.Sum();
-            },
-            batchTimeout: TimeSpan.FromMilliseconds(300)).ToListAsync();
+                100,
+                async (batch, _) =>
+                {
+                    batchSizes.Add(batch.Count);
+                    await Task.CompletedTask;
+                    return batch.Sum();
+                },
+                batchTimeout: TimeSpan.FromMilliseconds(300))
+            .ToListAsync();
 
         results.ShouldNotBeEmpty();
         batchSizes.ShouldAllBe(size => size < 100);
@@ -588,16 +577,13 @@ public class BatchingTests
         var source = Enumerable.Range(1, 20);
 
         var results = await source.BatchParallelAsync(
-            batchSize: 10,
-            async (batch, ct) =>
+            10,
+            static async (batch, ct) =>
             {
                 await Task.Delay(5, ct);
                 return batch.Sum();
             },
-            new()
-            {
-                PerItemTimeout = TimeSpan.FromSeconds(1)
-            });
+            new() { PerItemTimeout = TimeSpan.FromSeconds(1) });
 
         results.Count.ShouldBe(2);
     }
@@ -608,7 +594,8 @@ public class BatchingTests
         var source = Enumerable.Range(1, 100);
 
         var results = await source.BatchParallelAsync(
-            batchSize: 1000, async (batch, _) =>
+            1000,
+            static async (batch, _) =>
             {
                 await Task.CompletedTask;
                 return batch.Count;
@@ -624,12 +611,13 @@ public class BatchingTests
         var source = AsyncEnumerable.Range(1, 50);
 
         var results = await source.BatchParallelStreamAsync(
-            batchSize: 1000,
-            async (batch, _) =>
-            {
-                await Task.CompletedTask;
-                return batch.Count;
-            }).ToListAsync();
+                1000,
+                static async (batch, _) =>
+                {
+                    await Task.CompletedTask;
+                    return batch.Count;
+                })
+            .ToListAsync();
 
         results.Count.ShouldBe(1);
         results[0].ShouldBe(50);
@@ -638,24 +626,23 @@ public class BatchingTests
     [Fact]
     public async Task BatchParallelStreamAsync_CancellationDuringBatching_Cancels()
     {
-        var source = SlowAsyncEnumerable(1000, delayMs: 10);
+        var source = SlowAsyncEnumerable(1000, 10);
         using var cts = new CancellationTokenSource();
 
         var act = async () =>
         {
             var count = 0;
             await foreach (var _ in source.BatchParallelStreamAsync(
-                batchSize: 10,
-                async (batch, ct) =>
-                {
-                    await Task.Delay(10, ct);
-                    return batch.Sum();
-                },
-                cancellationToken: cts.Token))
+                               10,
+                               static async (batch, ct) =>
+                               {
+                                   await Task.Delay(10, ct);
+                                   return batch.Sum();
+                               },
+                               cancellationToken: cts.Token))
             {
                 count++;
-                if (count >= 3)
-                    await cts.CancelAsync();
+                if (count >= 3) await cts.CancelAsync();
             }
         };
 
@@ -665,20 +652,20 @@ public class BatchingTests
     [Fact]
     public async Task BatchParallelStreamAsync_TimeoutCancellation_HandlesGracefully()
     {
-        var source = SlowAsyncEnumerable(100, delayMs: 10);
+        var source = SlowAsyncEnumerable(100, 10);
         using var cts = new CancellationTokenSource();
 
         var act = async () =>
         {
             await foreach (var _ in source.BatchParallelStreamAsync(
-                batchSize: 10,
-                async (batch, ct) =>
-                {
-                    await Task.Delay(5, ct);
-                    return batch.Sum();
-                },
-                batchTimeout: TimeSpan.FromMilliseconds(100),
-                cancellationToken: cts.Token))
+                               10,
+                               static async (batch, ct) =>
+                               {
+                                   await Task.Delay(5, ct);
+                                   return batch.Sum();
+                               },
+                               batchTimeout: TimeSpan.FromMilliseconds(100),
+                               cancellationToken: cts.Token))
             {
                 // Consuming batches
             }
@@ -695,11 +682,11 @@ public class BatchingTests
         var emptyBatchCount = 0;
 
         var results = await source.BatchParallelAsync(
-            batchSize: 10,
+            10,
             async (batch, _) =>
             {
-                if (batch.Count == 0)
-                    Interlocked.Increment(ref emptyBatchCount);
+                if (batch.Count == 0) Interlocked.Increment(ref emptyBatchCount);
+
                 await Task.CompletedTask;
                 return batch.Count;
             });
@@ -715,14 +702,15 @@ public class BatchingTests
         var emptyBatchCount = 0;
 
         var results = await source.BatchParallelStreamAsync(
-            batchSize: 10,
-            async (batch, _) =>
-            {
-                if (batch.Count == 0)
-                    Interlocked.Increment(ref emptyBatchCount);
-                await Task.CompletedTask;
-                return batch.Count;
-            }).ToListAsync();
+                10,
+                async (batch, _) =>
+                {
+                    if (batch.Count == 0) Interlocked.Increment(ref emptyBatchCount);
+
+                    await Task.CompletedTask;
+                    return batch.Count;
+                })
+            .ToListAsync();
 
         emptyBatchCount.ShouldBe(0);
         results.ShouldAllBe(count => count > 0);
@@ -734,13 +722,15 @@ public class BatchingTests
         var source = AsyncEnumerable.Range(1, 23);
         var batchContents = new ConcurrentBag<IReadOnlyList<int>>();
 
-        var results = await source.BatchParallelStreamAsync(batchSize: 10, async (batch, _) =>
-        {
-            batchContents.Add(batch.ToList());
-            await Task.CompletedTask;
-            return batch.Count;
-        }, batchTimeout: null)
-        .ToListAsync();
+        var results = await source.BatchParallelStreamAsync(10,
+                async (batch, _) =>
+                {
+                    batchContents.Add(batch.ToList());
+                    await Task.CompletedTask;
+                    return batch.Count;
+                },
+                batchTimeout: null)
+            .ToListAsync();
 
         results.Count.ShouldBe(3);
         results.ShouldContain(10);
@@ -753,12 +743,13 @@ public class BatchingTests
     public async Task BatchParallelStreamAsync_ManualIteration_YieldsAllResults()
     {
         var source = AsyncEnumerable.Range(1, 17);
-        var yieldedResults = await source.BatchParallelStreamAsync(batchSize: 5, async (batch, ct) =>
-        {
-            await Task.Delay(1, ct);
-            return batch.Sum();
-        })
-        .ToListAsync();
+        var yieldedResults = await source.BatchParallelStreamAsync(5,
+                static async (batch, ct) =>
+                {
+                    await Task.Delay(1, ct);
+                    return batch.Sum();
+                })
+            .ToListAsync();
 
         yieldedResults.Count.ShouldBe(4);
         yieldedResults.Sum().ShouldBe(153);
@@ -770,20 +761,22 @@ public class BatchingTests
         var source = AsyncEnumerable.Range(1, 30);
         var processedIndices = new ConcurrentBag<int>();
 
-        var results = await source.BatchParallelStreamAsync(batchSize: 7, async (batch, ct) =>
-        {
-            await Task.Delay(5, ct);
-            return batch.Count;
-        }, new()
-        {
-            MaxDegreeOfParallelism = 2,
-            OnStartItemAsync = idx =>
-            {
-                processedIndices.Add(idx);
-                return ValueTask.CompletedTask;
-            }
-        }, batchTimeout: null)
-        .ToListAsync();
+        var results = await source.BatchParallelStreamAsync(7,
+                static async (batch, ct) =>
+                {
+                    await Task.Delay(5, ct);
+                    return batch.Count;
+                },
+                new()
+                {
+                    MaxDegreeOfParallelism = 2,
+                    OnStartItemAsync = idx =>
+                    {
+                        processedIndices.Add(idx);
+                        return ValueTask.CompletedTask;
+                    }
+                })
+            .ToListAsync();
 
         results.Count.ShouldBe(5);
         results.Sum().ShouldBe(30);
@@ -797,17 +790,16 @@ public class BatchingTests
         var yieldedCount = 0;
 
         await foreach (var _ in source.BatchParallelStreamAsync(
-            batchSize: 10,
-            async (batch, ct) =>
-            {
-                await Task.Delay(10, ct);
-                return batch.Count;
-            },
-            batchTimeout: null))
+                           10,
+                           async (batch, ct) =>
+                           {
+                               await Task.Delay(10, ct);
+                               return batch.Count;
+                           },
+                           batchTimeout: null))
         {
             yieldedCount++;
-            if (yieldedCount >= 3)
-                break;
+            if (yieldedCount >= 3) break;
         }
 
         yieldedCount.ShouldBe(3);
@@ -823,18 +815,17 @@ public class BatchingTests
         var act = async () =>
         {
             await foreach (var _ in source.BatchParallelStreamAsync(
-                batchSize: 10,
-                async (batch, ct) =>
-                {
-                    await Task.Delay(10, ct);
-                    return batch.Sum();
-                },
-                batchTimeout: null,
-                cancellationToken: cts.Token))
+                               10,
+                               async (batch, ct) =>
+                               {
+                                   await Task.Delay(10, ct);
+                                   return batch.Sum();
+                               },
+                               batchTimeout: null,
+                               cancellationToken: cts.Token))
             {
                 yieldedCount++;
-                if (yieldedCount == 2)
-                    await cts.CancelAsync();
+                if (yieldedCount == 2) await cts.CancelAsync();
             }
         };
 
@@ -850,13 +841,14 @@ public class BatchingTests
 
         var act = async () =>
         {
-            yieldedCount += await source.BatchParallelStreamAsync(batchSize: 10, async (batch, ct) =>
-            {
-                await Task.Delay(5, ct);
-                if (batch.First() == 21) throw new InvalidOperationException("Test exception");
-                return batch.Sum();
-            }, new() { ErrorMode = ErrorMode.FailFast }, batchTimeout: null)
-            .CountAsync();
+            yieldedCount += await source.BatchParallelStreamAsync(10,
+                    async (batch, ct) =>
+                    {
+                        await Task.Delay(5, ct);
+                        return batch.First() == 21 ? throw new InvalidOperationException("Test exception") : batch.Sum();
+                    },
+                    new() { ErrorMode = ErrorMode.FailFast })
+                .CountAsync();
         };
 
         await act.ShouldThrowAsync<Exception>();
@@ -868,12 +860,14 @@ public class BatchingTests
     {
         var source = AsyncEnumerable.Range(1, 7);
 
-        var results = await source.BatchParallelStreamAsync(batchSize: 10, async (batch, ct) =>
-        {
-            await Task.Delay(5, ct);
-            return batch.Count;
-        }, batchTimeout: null)
-        .ToListAsync();
+        var results = await source.BatchParallelStreamAsync(10,
+                async (batch, ct) =>
+                {
+                    await Task.Delay(5, ct);
+                    return batch.Count;
+                },
+                batchTimeout: null)
+            .ToListAsync();
 
         results.Count.ShouldBe(1);
         results[0].ShouldBe(7);
@@ -886,20 +880,18 @@ public class BatchingTests
         var consumedResults = new List<int>();
 
         var enumerator = source.BatchParallelStreamAsync(
-            batchSize: 10,
-            async (batch, ct) =>
-            {
-                await Task.Delay(5, ct);
-                return batch.Count;
-            },
-            batchTimeout: null).GetAsyncEnumerator();
+                10,
+                async (batch, ct) =>
+                {
+                    await Task.Delay(5, ct);
+                    return batch.Count;
+                },
+                batchTimeout: null)
+            .GetAsyncEnumerator();
 
         try
         {
-            while (await enumerator.MoveNextAsync())
-            {
-                consumedResults.Add(enumerator.Current);
-            }
+            while (await enumerator.MoveNextAsync()) consumedResults.Add(enumerator.Current);
         }
         finally
         {
@@ -957,11 +949,12 @@ public class BatchingTests
     {
         var source = Enumerable.Range(1, 50).ToAsyncEnumerable();
         const int batchSize = 10;
-        var results = await source.BatchParallelStreamAsync(batchSize, async (batch, ct) =>
-            {
-                await Task.Delay(5, ct);
-                return batch.Sum();
-            })
+        var results = await source.BatchParallelStreamAsync(batchSize,
+                async (batch, ct) =>
+                {
+                    await Task.Delay(5, ct);
+                    return batch.Sum();
+                })
             .ToListAsync();
 
         results.Count.ShouldBe(5);
@@ -974,11 +967,13 @@ public class BatchingTests
         var source = Enumerable.Range(1, 30).ToAsyncEnumerable();
         const int batchSize = 10;
         var timeout = TimeSpan.FromMilliseconds(100);
-        var results = await source.BatchParallelStreamAsync(batchSize, async (batch, ct) =>
-            {
-                await Task.Delay(10, ct);
-                return batch.Count;
-            }, batchTimeout: timeout)
+        var results = await source.BatchParallelStreamAsync(batchSize,
+                async (batch, ct) =>
+                {
+                    await Task.Delay(10, ct);
+                    return batch.Count;
+                },
+                batchTimeout: timeout)
             .ToListAsync();
 
         results.Count.ShouldBe(3);
@@ -989,11 +984,12 @@ public class BatchingTests
     {
         var source = Enumerable.Range(1, 10).ToArray();
 
-        async Task<List<int>> Act() => await source.BatchParallelAsync(
-            0,
-            (batch, _) => new ValueTask<int>(batch.Count));
-
         await Assert.ThrowsAsync<ArgumentException>(Act);
+        return;
+
+        Task<List<int>> Act() => source.BatchParallelAsync(
+            0,
+            static (batch, _) => new ValueTask<int>(batch.Count));
     }
 
     [Fact]
@@ -1001,10 +997,7 @@ public class BatchingTests
     {
         var source = Enumerable.Range(1, 100);
         const int batchSize = 10;
-        var options = new ParallelOptionsRivulet
-        {
-            MaxDegreeOfParallelism = 2
-        };
+        var options = new ParallelOptionsRivulet { MaxDegreeOfParallelism = 2 };
 
         var results = await source.BatchParallelAsync(
             batchSize,
@@ -1038,8 +1031,7 @@ public class BatchingTests
                                cancellationToken: cts.Token))
             {
                 processedBatches++;
-                if (processedBatches == 5)
-                    await cts.CancelAsync();
+                if (processedBatches == 5) await cts.CancelAsync();
             }
         }
 
@@ -1086,17 +1078,19 @@ public class BatchingTests
             ErrorMode = ErrorMode.BestEffort
         };
 
-        var results = await source.BatchParallelStreamAsync(10, async (batch, ct) =>
-            {
-                var batchSum = batch.Sum();
-                var attempts = attemptCounts.AddOrUpdate(batchSum, 1, (_, count) => count + 1);
+        var results = await source.BatchParallelStreamAsync(10,
+                async (batch, ct) =>
+                {
+                    var batchSum = batch.Sum();
+                    var attempts = attemptCounts.AddOrUpdate(batchSum, 1, (_, count) => count + 1);
 
-                if (attempts == 1 && batchSum == 55) // First batch on first attempt
-                    throw new InvalidOperationException("Simulated transient failure");
+                    if (attempts == 1 && batchSum == 55) // First batch on first attempt
+                        throw new InvalidOperationException("Simulated transient failure");
 
-                await Task.Delay(5, ct);
-                return batchSum;
-            }, options)
+                    await Task.Delay(5, ct);
+                    return batchSum;
+                },
+                options)
             .ToListAsync();
 
         results.Count.ShouldBe(3);

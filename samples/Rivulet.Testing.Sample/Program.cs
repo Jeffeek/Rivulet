@@ -1,6 +1,10 @@
 using Rivulet.Core;
 using Rivulet.Testing;
-// ReSharper disable All
+
+// ReSharper disable AccessToDisposedClosure
+// ReSharper disable ArrangeObjectCreationWhenTypeNotEvident
+// ReSharper disable ArgumentsStyleLiteral
+// ReSharper disable ArgumentsStyleOther
 
 Console.WriteLine("=== Rivulet.Testing Sample ===\n");
 
@@ -87,24 +91,26 @@ var startStopwatch = System.Diagnostics.Stopwatch.StartNew();
 var data = Enumerable.Range(1, 10);
 var executedCount = 0;
 
-await data.ToAsyncEnumerable().ForEachParallelAsync(
-    async (item, ct) =>
-    {
-        try
+await data.ToAsyncEnumerable()
+    .ForEachParallelAsync(
+        async (item, ct) =>
         {
-            await latencyChaos.ExecuteAsync(async () =>
+            try
             {
-                await Task.Delay(10, ct);
-                Interlocked.Increment(ref executedCount);
-                return item;
-            }, ct);
-        }
-        catch (ChaosException)
-        {
-            // Expected chaos exception
-        }
-    },
-    new ParallelOptionsRivulet { MaxDegreeOfParallelism = 3 });
+                await latencyChaos.ExecuteAsync(async () =>
+                    {
+                        await Task.Delay(10, ct);
+                        Interlocked.Increment(ref executedCount);
+                        return item;
+                    },
+                    ct);
+            }
+            catch (ChaosException)
+            {
+                // Expected chaos exception
+            }
+        },
+        new ParallelOptionsRivulet { MaxDegreeOfParallelism = 3 });
 
 startStopwatch.Stop();
 Console.WriteLine($"Executed {executedCount}/10 operations in {startStopwatch.ElapsedMilliseconds}ms");
@@ -137,14 +143,15 @@ Console.WriteLine("6. ConcurrencyAsserter - Concurrency tracking");
 var asserter2 = new ConcurrencyAsserter();
 
 // Launch many tasks simultaneously
-var tasks = Enumerable.Range(1, 20).Select(async i =>
-{
-    using (asserter2.Enter())
+var tasks = Enumerable.Range(1, 20)
+    .Select(async i =>
     {
-        await Task.Delay(50);
-        return i;
-    }
-});
+        using (asserter2.Enter())
+        {
+            await Task.Delay(50);
+            return i;
+        }
+    });
 
 await Task.WhenAll(tasks);
 
@@ -166,10 +173,7 @@ using (var fakeChannel = new FakeChannel<int>())
 
     // Read items from the channel
     Console.WriteLine("Reading items from FakeChannel:");
-    await foreach (var item in fakeChannel.Reader.ReadAllAsync())
-    {
-        Console.WriteLine($"  Read: {item}");
-    }
+    await foreach (var item in fakeChannel.Reader.ReadAllAsync()) Console.WriteLine($"  Read: {item}");
 
     Console.WriteLine($"Total writes: {fakeChannel.WriteCount}");
     Console.WriteLine($"Total reads: {fakeChannel.ReadCount}");
@@ -183,10 +187,8 @@ using (var trackedChannel = new FakeChannel<string>(boundedCapacity: 10))
     // Producer
     var producerTask = Task.Run(async () =>
     {
-        for (int i = 0; i < 5; i++)
-        {
-            await trackedChannel.WriteAsync($"Message-{i}");
-        }
+        for (var i = 0; i < 5; i++) await trackedChannel.WriteAsync($"Message-{i}");
+
         trackedChannel.Complete();
     });
 
@@ -194,10 +196,8 @@ using (var trackedChannel = new FakeChannel<string>(boundedCapacity: 10))
     var consumerTask = Task.Run(async () =>
     {
         var messages = new List<string>();
-        await foreach (var msg in trackedChannel.Reader.ReadAllAsync())
-        {
-            messages.Add(msg);
-        }
+        await foreach (var msg in trackedChannel.Reader.ReadAllAsync()) messages.Add(msg);
+
         return messages;
     });
 

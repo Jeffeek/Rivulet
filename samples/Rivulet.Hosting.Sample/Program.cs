@@ -2,6 +2,8 @@ using Rivulet.Diagnostics;
 using Rivulet.Hosting;
 using Rivulet.Hosting.Sample;
 
+// ReSharper disable ArrangeObjectCreationWhenTypeNotEvident
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
@@ -27,49 +29,53 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 // Map health check endpoints
-app.MapHealthChecks("/health/ready", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
-{
-    Predicate = check => check.Tags.Contains("ready")
-});
+app.MapHealthChecks("/health/ready",
+    new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+    {
+        Predicate = static check => check.Tags.Contains("ready")
+    });
 
-app.MapHealthChecks("/health/live", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
-{
-    Predicate = check => check.Tags.Contains("live")
-});
+app.MapHealthChecks("/health/live",
+    new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+    {
+        Predicate = static check => check.Tags.Contains("live")
+    });
 
 // Map Prometheus metrics endpoint
-app.MapGet("/metrics", (PrometheusExporter exporter) =>
-{
-    var metrics = exporter.Export();
-    return Results.Text(metrics, "text/plain; version=0.0.4");
-});
+app.MapGet("/metrics",
+    static (PrometheusExporter exporter) =>
+    {
+        var metrics = exporter.Export();
+        return Results.Text(metrics, "text/plain; version=0.0.4");
+    });
 
 // Map controllers
 app.MapControllers();
 
 // Root endpoint with information
-app.MapGet("/", () => Results.Ok(new
-{
-    application = "Rivulet.Hosting.Sample",
-    version = "1.3.0",
-    endpoints = new
+app.MapGet("/",
+    static () => Results.Ok(new
     {
-        healthReady = "/health/ready",
-        healthLive = "/health/live",
-        metrics = "/metrics",
-        api = new
+        application = "Rivulet.Hosting.Sample",
+        version = "1.3.0",
+        endpoints = new
         {
-            square = "POST /api/batch/square",
-            fetch = "POST /api/batch/fetch",
-            batchSum = "POST /api/batch/batch-sum"
+            healthReady = "/health/ready",
+            healthLive = "/health/live",
+            metrics = "/metrics",
+            api = new
+            {
+                square = "POST /api/batch/square",
+                fetch = "POST /api/batch/fetch",
+                batchSum = "POST /api/batch/batch-sum"
+            }
+        },
+        configuration = new
+        {
+            message = "Rivulet options are loaded from appsettings.json",
+            section = "Rivulet"
         }
-    },
-    configuration = new
-    {
-        message = "Rivulet options are loaded from appsettings.json",
-        section = "Rivulet"
-    }
-}));
+    }));
 
 Console.WriteLine("=== Rivulet.Hosting Sample ===");
 Console.WriteLine("Starting ASP.NET Core application with Rivulet integration");

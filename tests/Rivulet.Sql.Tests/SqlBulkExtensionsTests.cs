@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Data;
 using System.Diagnostics.CodeAnalysis;
 using Rivulet.Base.Tests;
@@ -9,7 +10,7 @@ public class SqlBulkExtensionsTests
     [Fact]
     public async Task BulkInsertAsync_WithValidItems_ShouldInsertAllBatches()
     {
-        var items = Enumerable.Range(1, 2500).Select(i => new { Id = i, Name = $"User{i}" }).ToList();
+        var items = Enumerable.Range(1, 2500).Select(static i => new { Id = i, Name = $"User{i}" }).ToList();
         var totalAffectedRows = 0;
 
         var result = await items.BulkInsertAsync(
@@ -21,14 +22,12 @@ public class SqlBulkExtensionsTests
             }),
             async (batch, cmd, _) =>
             {
-                cmd.CommandText = string.Join(";", batch.Select(item =>
-                    $"INSERT INTO Users (Id, Name) VALUES ({item.Id}, '{item.Name}')"));
+                cmd.CommandText = string.Join(";",
+                    batch.Select(item =>
+                        $"INSERT INTO Users (Id, Name) VALUES ({item.Id}, '{item.Name}')"));
                 await Task.CompletedTask;
             },
-            new()
-            {
-                BatchSize = 1000
-            });
+            new() { BatchSize = 1000 });
 
         result.ShouldBeGreaterThan(0);
         totalAffectedRows.ShouldBeGreaterThan(0);
@@ -39,10 +38,9 @@ public class SqlBulkExtensionsTests
     {
         IEnumerable<object> items = null!;
 
-        await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await items.BulkInsertAsync(
-                () => new TestDbConnection(),
-                (_, _, _) => ValueTask.CompletedTask));
+        await Assert.ThrowsAsync<ArgumentNullException>(async () => await items.BulkInsertAsync(
+            () => new TestDbConnection(),
+            (_, _, _) => ValueTask.CompletedTask));
     }
 
     [Fact]
@@ -50,10 +48,9 @@ public class SqlBulkExtensionsTests
     {
         var items = new[] { 1, 2, 3 };
 
-        await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await items.BulkInsertAsync(
-                null!,
-                (_, _, _) => ValueTask.CompletedTask));
+        await Assert.ThrowsAsync<ArgumentNullException>(async () => await items.BulkInsertAsync(
+            null!,
+            (_, _, _) => ValueTask.CompletedTask));
     }
 
     [Fact]
@@ -61,16 +58,15 @@ public class SqlBulkExtensionsTests
     {
         var items = new[] { 1, 2, 3 };
 
-        await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await items.BulkInsertAsync(
-                () => new TestDbConnection(),
-                null!));
+        await Assert.ThrowsAsync<ArgumentNullException>(async () => await items.BulkInsertAsync(
+            () => new TestDbConnection(),
+            null!));
     }
 
     [Fact]
     public async Task BulkUpdateAsync_WithValidItems_ShouldUpdateAllBatches()
     {
-        var items = Enumerable.Range(1, 1500).Select(i => new { Id = i, Name = $"UpdatedUser{i}" }).ToList();
+        var items = Enumerable.Range(1, 1500).Select(static i => new { Id = i, Name = $"UpdatedUser{i}" }).ToList();
         var batchesExecuted = 0;
 
         var result = await items.BulkUpdateAsync(
@@ -79,16 +75,14 @@ public class SqlBulkExtensionsTests
                 Interlocked.Increment(ref batchesExecuted);
                 return 500;
             }),
-            async (batch, cmd, _) =>
+            static async (batch, cmd, _) =>
             {
-                cmd.CommandText = string.Join(";", batch.Select(item =>
-                    $"UPDATE Users SET Name = '{item.Name}' WHERE Id = {item.Id}"));
+                cmd.CommandText = string.Join(";",
+                    batch.Select(static item =>
+                        $"UPDATE Users SET Name = '{item.Name}' WHERE Id = {item.Id}"));
                 await Task.CompletedTask;
             },
-            new()
-            {
-                BatchSize = 500
-            });
+            new() { BatchSize = 500 });
 
         result.ShouldBe(1500);
         batchesExecuted.ShouldBe(3);
@@ -98,17 +92,13 @@ public class SqlBulkExtensionsTests
     public async Task BulkDeleteAsync_WithValidItems_ShouldDeleteAllBatches()
     {
         var ids = Enumerable.Range(1, 2000).ToList();
-        var result = await ids.BulkDeleteAsync(
-            () => new TestDbConnection(executeNonQueryFunc: _ => 1000),
-            async (batch, cmd, _) =>
+        var result = await ids.BulkDeleteAsync(static () => new TestDbConnection(executeNonQueryFunc: static _ => 1000),
+            static async (batch, cmd, _) =>
             {
                 cmd.CommandText = $"DELETE FROM Users WHERE Id IN ({string.Join(",", batch)})";
                 await Task.CompletedTask;
             },
-            new()
-            {
-                BatchSize = 1000
-            });
+            new() { BatchSize = 1000 });
 
         result.ShouldBe(2000);
     }
@@ -129,16 +119,12 @@ public class SqlBulkExtensionsTests
                 });
                 return conn;
             },
-            async (_, cmd, _) =>
+            static async (_, cmd, _) =>
             {
                 cmd.CommandText = "INSERT INTO Users (Id) VALUES (...)";
                 await Task.CompletedTask;
             },
-            new()
-            {
-                UseTransaction = true,
-                BatchSize = 100
-            });
+            new() { UseTransaction = true, BatchSize = 100 });
 
         result.ShouldBe(100);
         capturedTransaction.ShouldNotBeNull();
@@ -162,23 +148,12 @@ public class SqlBulkExtensionsTests
                     });
                     return conn;
                 },
-                async (_, cmd, _) =>
+                static async (_, cmd, _) =>
                 {
                     cmd.CommandText = "INSERT INTO Users (Id) VALUES (...)";
                     await Task.CompletedTask;
                 },
-                new()
-                {
-                    UseTransaction = true,
-                    BatchSize = 100,
-                    SqlOptions = new()
-                    {
-                        ParallelOptions = new()
-                        {
-                            MaxRetries = 0
-                        }
-                    }
-                }));
+                new() { UseTransaction = true, BatchSize = 100, SqlOptions = new() { ParallelOptions = new() { MaxRetries = 0 } } }));
 
         capturedTransaction.ShouldNotBeNull();
         capturedTransaction!.IsRolledBack.ShouldBeTrue();
@@ -192,9 +167,8 @@ public class SqlBulkExtensionsTests
         var batchCompleted = new List<int>();
         var lockObj = new object();
 
-        var result = await items.BulkInsertAsync(
-            () => new TestDbConnection(executeNonQueryFunc: _ => 100),
-            async (_, cmd, _) =>
+        var result = await items.BulkInsertAsync(static () => new TestDbConnection(executeNonQueryFunc: static _ => 100),
+            static async (_, cmd, _) =>
             {
                 cmd.CommandText = "INSERT INTO Users (Id) VALUES (...)";
                 await Task.CompletedTask;
@@ -204,12 +178,14 @@ public class SqlBulkExtensionsTests
                 BatchSize = 100,
                 OnBatchStartAsync = (_, batchNum) =>
                 {
-                    lock (lockObj) { batchStarted.Add(batchNum); }
+                    lock (lockObj) batchStarted.Add(batchNum);
+
                     return ValueTask.CompletedTask;
                 },
                 OnBatchCompleteAsync = (_, batchNum, _) =>
                 {
-                    lock (lockObj) { batchCompleted.Add(batchNum); }
+                    lock (lockObj) batchCompleted.Add(batchNum);
+
                     return ValueTask.CompletedTask;
                 }
             });
@@ -233,9 +209,8 @@ public class SqlBulkExtensionsTests
         Exception? errorException = null;
 
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
-            await items.BulkInsertAsync(
-                () => new TestDbConnection(executeNonQueryFunc: _ => throw new InvalidOperationException("Batch failed")),
-                async (_, cmd, _) =>
+            await items.BulkInsertAsync(static () => new TestDbConnection(executeNonQueryFunc: static _ => throw new InvalidOperationException("Batch failed")),
+                static async (_, cmd, _) =>
                 {
                     cmd.CommandText = "INSERT INTO Users (Id) VALUES (...)";
                     await Task.CompletedTask;
@@ -249,13 +224,7 @@ public class SqlBulkExtensionsTests
                         errorException = ex;
                         return ValueTask.CompletedTask;
                     },
-                    SqlOptions = new()
-                    {
-                        ParallelOptions = new()
-                        {
-                            MaxRetries = 0
-                        }
-                    }
+                    SqlOptions = new() { ParallelOptions = new() { MaxRetries = 0 } }
                 }));
 
         errorBatchNumber.ShouldBe(0);
@@ -275,15 +244,12 @@ public class SqlBulkExtensionsTests
                 Interlocked.Increment(ref batchesExecuted);
                 return 250;
             }),
-            async (_, cmd, _) =>
+            static async (_, cmd, _) =>
             {
                 cmd.CommandText = "INSERT INTO Users (Id) VALUES (...)";
                 await Task.CompletedTask;
             },
-            new()
-            {
-                BatchSize = 250
-            });
+            new() { BatchSize = 250 });
 
         result.ShouldBeGreaterThan(0);
         batchesExecuted.ShouldBe(10);
@@ -308,10 +274,7 @@ public class SqlBulkExtensionsTests
 
                 Task.Delay(50, CancellationToken.None).Wait();
 
-                lock (lockObj)
-                {
-                    currentConcurrent--;
-                }
+                lock (lockObj) currentConcurrent--;
 
                 return 500;
             }),
@@ -320,17 +283,7 @@ public class SqlBulkExtensionsTests
                 cmd.CommandText = "INSERT INTO Users (Id) VALUES (...)";
                 await Task.CompletedTask;
             },
-            new()
-            {
-                BatchSize = 500,
-                SqlOptions = new()
-                {
-                    ParallelOptions = new()
-                    {
-                        MaxDegreeOfParallelism = 3
-                    }
-                }
-            });
+            new() { BatchSize = 500, SqlOptions = new() { ParallelOptions = new() { MaxDegreeOfParallelism = 3 } } });
 
         result.ShouldBeGreaterThan(0);
         maxConcurrent.ShouldBeLessThanOrEqualTo(3);
@@ -357,15 +310,7 @@ public class SqlBulkExtensionsTests
                 cmd.CommandText = "INSERT INTO Users (Id) VALUES (...)";
                 await Task.CompletedTask;
             },
-            new()
-            {
-                UseTransaction = true,
-                BatchSize = 100,
-                SqlOptions = new()
-                {
-                    IsolationLevel = IsolationLevel.Serializable
-                }
-            });
+            new() { UseTransaction = true, BatchSize = 100, SqlOptions = new() { IsolationLevel = IsolationLevel.Serializable } });
 
         result.ShouldBe(100);
         capturedIsolationLevel.ShouldBe(IsolationLevel.Serializable);
@@ -381,10 +326,7 @@ public class SqlBulkExtensionsTests
             () => new TestDbConnection(executeNonQueryFunc: _ =>
             {
                 attemptCount++;
-                if (attemptCount < 2)
-                {
-                    throw new TimeoutException("Timeout occurred");
-                }
+                if (attemptCount < 2) throw new TimeoutException("Timeout occurred");
 
                 return 100;
             }),
@@ -396,14 +338,7 @@ public class SqlBulkExtensionsTests
             new()
             {
                 BatchSize = 100,
-                SqlOptions = new()
-                {
-                    ParallelOptions = new()
-                    {
-                        MaxRetries = 3,
-                        BaseDelay = TimeSpan.FromMilliseconds(10)
-                    }
-                }
+                SqlOptions = new() { ParallelOptions = new() { MaxRetries = 3, BaseDelay = TimeSpan.FromMilliseconds(10) } }
             });
 
         attemptCount.ShouldBe(2);
@@ -419,23 +354,19 @@ public class SqlBulkExtensionsTests
 
         cts.CancelAfter(50);
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(
-            async () => await items.BulkInsertAsync(
-                () => new TestDbConnection(executeNonQueryFunc: _ =>
-                {
-                    Task.Delay(200, cts.Token).Wait(cts.Token);
-                    return 1000;
-                }),
-                async (_, cmd, _) =>
-                {
-                    cmd.CommandText = "INSERT INTO Users (Id) VALUES (...)";
-                    await Task.CompletedTask;
-                },
-                new()
-                {
-                    BatchSize = 1000
-                },
-                cts.Token));
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => await items.BulkInsertAsync(
+            () => new TestDbConnection(executeNonQueryFunc: _ =>
+            {
+                Task.Delay(200, cts.Token).Wait(cts.Token);
+                return 1000;
+            }),
+            async (_, cmd, _) =>
+            {
+                cmd.CommandText = "INSERT INTO Users (Id) VALUES (...)";
+                await Task.CompletedTask;
+            },
+            new() { BatchSize = 1000 },
+            cts.Token));
     }
 
     [Fact]
@@ -444,13 +375,12 @@ public class SqlBulkExtensionsTests
         var items = Enumerable.Range(1, 10).ToList();
 
         var result = await items.BulkInsertAsync(
-            () => new TestDbConnection(executeNonQueryFunc: _ => 10),
+            () => new TestDbConnection(executeNonQueryFunc: static _ => 10),
             async (_, cmd, _) =>
             {
                 cmd.CommandText = "INSERT INTO Users (Id) VALUES (...)";
                 await Task.CompletedTask;
-            },
-            options: null);
+            });
 
         result.ShouldBe(10);
     }
@@ -461,13 +391,12 @@ public class SqlBulkExtensionsTests
         var items = Enumerable.Range(1, 10).ToList();
 
         var result = await items.BulkUpdateAsync(
-            () => new TestDbConnection(executeNonQueryFunc: _ => 10),
+            () => new TestDbConnection(executeNonQueryFunc: static _ => 10),
             async (_, cmd, _) =>
             {
                 cmd.CommandText = "UPDATE Users SET Name = 'Updated'";
                 await Task.CompletedTask;
-            },
-            options: null);
+            });
 
         result.ShouldBe(10);
     }
@@ -478,13 +407,12 @@ public class SqlBulkExtensionsTests
         var items = Enumerable.Range(1, 10).ToList();
 
         var result = await items.BulkDeleteAsync(
-            () => new TestDbConnection(executeNonQueryFunc: _ => 10),
+            () => new TestDbConnection(executeNonQueryFunc: static _ => 10),
             async (_, cmd, _) =>
             {
                 cmd.CommandText = "DELETE FROM Users WHERE Id IN (...)";
                 await Task.CompletedTask;
-            },
-            options: null);
+            });
 
         result.ShouldBe(10);
     }
@@ -498,7 +426,7 @@ public class SqlBulkExtensionsTests
         var result = await items.BulkInsertAsync(
             () =>
             {
-                var conn = new TestDbConnection(executeNonQueryFunc: _ => 10);
+                var conn = new TestDbConnection(executeNonQueryFunc: static _ => 10);
                 capturedConnection = conn;
                 return conn;
             },
@@ -507,14 +435,7 @@ public class SqlBulkExtensionsTests
                 cmd.CommandText = "INSERT INTO Users (Id) VALUES (...)";
                 await Task.CompletedTask;
             },
-            new()
-            {
-                BatchSize = 10,
-                SqlOptions = new()
-                {
-                    AutoManageConnection = true
-                }
-            });
+            new() { BatchSize = 10, SqlOptions = new() { AutoManageConnection = true } });
 
         result.ShouldBe(10);
         capturedConnection.ShouldNotBeNull();
@@ -534,10 +455,7 @@ public class SqlBulkExtensionsTests
                 cmd.CommandText = "INSERT INTO Users (Id) VALUES (...)";
                 await Task.CompletedTask;
             },
-            new()
-            {
-                BatchSize = 10
-            });
+            new() { BatchSize = 10 });
 
         result.ShouldBe(10);
         openCalled.ShouldBeTrue();
@@ -560,10 +478,7 @@ public class SqlBulkExtensionsTests
                 cmd.CommandText = "INSERT INTO Users (Id) VALUES (...)";
                 await Task.CompletedTask;
             },
-            new()
-            {
-                BatchSize = 10
-            });
+            new() { BatchSize = 10 });
 
         result.ShouldBe(10);
         executeNonQueryCalled.ShouldBeTrue();
@@ -572,21 +487,19 @@ public class SqlBulkExtensionsTests
     // Mock IDbConnection that does NOT extend DbConnection
     private class NonDbConnectionMock(Action onOpen, Func<int> executeNonQueryFunc) : IDbConnection
     {
-        private ConnectionState _state = ConnectionState.Closed;
-
         [AllowNull]
         public string ConnectionString { get; set; } = string.Empty;
         public int ConnectionTimeout => 30;
         public string Database => "TestDB";
-        public ConnectionState State => _state;
+        public ConnectionState State { get; private set; } = ConnectionState.Closed;
 
         public void Open()
         {
-            _state = ConnectionState.Open;
+            State = ConnectionState.Open;
             onOpen();
         }
 
-        public void Close() => _state = ConnectionState.Closed;
+        public void Close() => State = ConnectionState.Closed;
 
         public IDbTransaction BeginTransaction() => new NonDbTransactionMock();
         public IDbTransaction BeginTransaction(IsolationLevel il) => new NonDbTransactionMock();
@@ -594,7 +507,7 @@ public class SqlBulkExtensionsTests
 
         public IDbCommand CreateCommand() => new NonDbCommandMock(executeNonQueryFunc);
 
-        public void Dispose() => _state = ConnectionState.Closed;
+        public void Dispose() => State = ConnectionState.Closed;
     }
 
     // Mock IDbCommand that does NOT extend DbCommand
@@ -638,12 +551,18 @@ public class SqlBulkExtensionsTests
         public int Count => _items.Count;
         public bool IsSynchronized => false;
         public object SyncRoot => this;
-        public int Add(object? value) { _items.Add(value); return _items.Count - 1; }
+
+        public int Add(object? value)
+        {
+            _items.Add(value);
+            return _items.Count - 1;
+        }
+
         public void Clear() => _items.Clear();
         public bool Contains(object? value) => _items.Contains(value);
         public bool Contains(string parameterName) => throw new NotImplementedException();
         public void CopyTo(Array array, int index) => throw new NotImplementedException();
-        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => _items.GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => _items.GetEnumerator();
         public int IndexOf(object? value) => _items.IndexOf(value);
         public int IndexOf(string parameterName) => throw new NotImplementedException();
         public void Insert(int index, object? value) => _items.Insert(index, value);

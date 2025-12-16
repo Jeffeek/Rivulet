@@ -159,13 +159,13 @@ public class VirtualTimeProviderTests
         timeProvider.AdvanceTime(TimeSpan.FromSeconds(10));
 
         // Wait for all delays to complete concurrently
-        await Task.WhenAll(delayTasks.Select(x => x.Task));
+        await Task.WhenAll(delayTasks.Select(static x => x.Task));
 
         // Verify all delays completed
-        var results = delayTasks.Select(x => x.Index).ToList();
+        var results = delayTasks.Select(static x => x.Index).ToList();
 
         results.Count.ShouldBe(100);
-        results.ShouldAllBe(i => i >= 1 && i <= 100);
+        results.ShouldAllBe(static i => i >= 1 && i <= 100);
     }
 
     [Fact]
@@ -194,8 +194,8 @@ public class VirtualTimeProviderTests
         // Wait for all tasks to complete
         var results = await Task.WhenAll(tasks);
 
-        results.Count().ShouldBe(100);
-        results.ShouldAllBe(i => i >= 1 && i <= 100);
+        results.Length.ShouldBe(100);
+        results.ShouldAllBe(static i => i >= 1 && i <= 100);
     }
 
     [Fact]

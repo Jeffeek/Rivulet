@@ -1,17 +1,24 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Rivulet.Core;
 
 namespace Rivulet.Hosting.Sample;
 
-public record FetchResult(string Url, int StatusCode, bool Success, string? Error = null);
+// Properties are accessed via JSON serialization when returned from API endpoints
+// ReSharper disable once MemberCanBeFileLocal
+public sealed record FetchResult(
+    string Url,
+    int StatusCode,
+    bool Success,
+    string? Error = null
+);
 
-[ApiController]
-[Route("api/[controller]")]
+[ApiController, Route("api/[controller]"), SuppressMessage("ReSharper", "ArrangeObjectCreationWhenTypeNotEvident")]
 public class BatchController(
     IOptions<ParallelOptionsRivulet> options,
-    ILogger<BatchController> logger)
-    : ControllerBase
+    ILogger<BatchController> logger
+) : ControllerBase
 {
     private readonly ParallelOptionsRivulet _options = options.Value;
 
@@ -23,15 +30,11 @@ public class BatchController(
     [HttpPost("square")]
     public async Task<ActionResult<int[]>> SquareNumbers([FromBody] int[] numbers)
     {
-        if (numbers.Length == 0)
-        {
-            return BadRequest("Numbers array cannot be empty");
-        }
+        if (numbers.Length == 0) return BadRequest("Numbers array cannot be empty");
 
         logger.LogInformation("Processing {Count} numbers", numbers.Length);
 
-        var results = await numbers.SelectParallelAsync(
-            async (num, ct) =>
+        var results = await numbers.SelectParallelAsync(static async (num, ct) =>
             {
                 // Simulate some async work
                 await Task.Delay(10, ct);
@@ -50,10 +53,7 @@ public class BatchController(
     [HttpPost("fetch")]
     public async Task<ActionResult<object[]>> FetchUrls([FromBody] string[] urls)
     {
-        if (urls.Length == 0)
-        {
-            return BadRequest("URLs array cannot be empty");
-        }
+        if (urls.Length == 0) return BadRequest("URLs array cannot be empty");
 
         logger.LogInformation("Fetching {Count} URLs", urls.Length);
 
@@ -63,7 +63,7 @@ public class BatchController(
         {
             MaxDegreeOfParallelism = _options.MaxDegreeOfParallelism,
             MaxRetries = 2,
-            IsTransient = ex => ex is HttpRequestException,
+            IsTransient = static ex => ex is HttpRequestException,
             ErrorMode = ErrorMode.CollectAndContinue
         };
 
@@ -93,15 +93,9 @@ public class BatchController(
     [HttpPost("batch-sum")]
     public async Task<ActionResult<int[]>> BatchSum([FromBody] BatchSumRequest request)
     {
-        if (request.Numbers.Length == 0)
-        {
-            return BadRequest("Numbers array cannot be empty");
-        }
+        if (request.Numbers.Length == 0) return BadRequest("Numbers array cannot be empty");
 
-        if (request.BatchSize <= 0)
-        {
-            return BadRequest("Batch size must be greater than 0");
-        }
+        if (request.BatchSize <= 0) return BadRequest("Batch size must be greater than 0");
 
         logger.LogInformation(
             "Processing {Count} numbers in batches of {BatchSize}",
@@ -110,7 +104,7 @@ public class BatchController(
 
         var results = await request.Numbers.BatchParallelAsync(
             request.BatchSize,
-            async (batch, ct) =>
+            static async (batch, ct) =>
             {
                 await Task.Delay(50, ct);
                 return batch.Sum();
@@ -121,4 +115,4 @@ public class BatchController(
     }
 }
 
-public record BatchSumRequest(int[] Numbers, int BatchSize);
+public sealed record BatchSumRequest(int[] Numbers, int BatchSize);

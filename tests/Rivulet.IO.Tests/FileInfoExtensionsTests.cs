@@ -1,4 +1,5 @@
-﻿using Rivulet.Base.Tests;
+﻿using System.Text;
+using Rivulet.Base.Tests;
 
 namespace Rivulet.IO.Tests;
 
@@ -20,10 +21,7 @@ public class FileInfoExtensionsTests : TempDirectoryFixture
 
         // Act
         var results = await files.ReadAllTextParallelAsync(
-            new()
-            {
-                ParallelOptions = new() { OrderedOutput = true }
-            });
+            new() { ParallelOptions = new() { OrderedOutput = true } });
 
         // Assert
         results.Count.ShouldBe(3);
@@ -49,10 +47,7 @@ public class FileInfoExtensionsTests : TempDirectoryFixture
 
         // Act
         var results = await files.ReadAllBytesParallelAsync(
-            new()
-            {
-                ParallelOptions = new() { OrderedOutput = true }
-            });
+            new() { ParallelOptions = new() { OrderedOutput = true } });
 
         // Assert
         results.Count.ShouldBe(2);
@@ -192,7 +187,7 @@ public class FileInfoExtensionsTests : TempDirectoryFixture
         // Arrange
         var file = new FileInfo(Path.Join(TestDirectory, "encoding.txt"));
         const string content = "Special chars: ñ, é, ü";
-        var options = new FileOperationOptions { Encoding = System.Text.Encoding.Unicode };
+        var options = new FileOperationOptions { Encoding = Encoding.Unicode };
 
         // Act
         await file.WriteAllTextAsync(content, options);

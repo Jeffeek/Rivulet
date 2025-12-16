@@ -1,14 +1,15 @@
-﻿namespace Rivulet.Core.Tests;
+﻿using System.Collections.Concurrent;
 
-public class SelectParallelAsyncTests
+namespace Rivulet.Core.Tests;
+
+public sealed class SelectParallelAsyncTests
 {
     [Fact]
     public async Task SelectParallelAsync_EmptyCollection_ReturnsEmptyList()
     {
         var source = Enumerable.Empty<int>();
 
-        var results = await source.SelectParallelAsync(
-            (x, _) => new ValueTask<int>(x * 2));
+        var results = await source.SelectParallelAsync((x, _) => new ValueTask<int>(x * 2));
 
         results.ShouldBeEmpty();
     }
@@ -18,8 +19,7 @@ public class SelectParallelAsyncTests
     {
         var source = new[] { 5 };
 
-        var results = await source.SelectParallelAsync(
-            (x, _) => new ValueTask<int>(x * 2));
+        var results = await source.SelectParallelAsync((x, _) => new ValueTask<int>(x * 2));
 
         results.ShouldHaveSingleItem().ShouldBe(10);
     }
@@ -29,11 +29,10 @@ public class SelectParallelAsyncTests
     {
         var source = Enumerable.Range(1, 10);
 
-        var results = await source.SelectParallelAsync(
-            (x, _) => new ValueTask<int>(x * 2));
+        var results = await source.SelectParallelAsync((x, _) => new ValueTask<int>(x * 2));
 
         results.Count.ShouldBe(10);
-        results.OrderBy(x => x).ShouldBe([2, 4, 6, 8, 10, 12, 14, 16, 18, 20]);
+        results.OrderBy(static x => x).ShouldBe([2, 4, 6, 8, 10, 12, 14, 16, 18, 20]);
     }
 
     [Fact]
@@ -41,8 +40,7 @@ public class SelectParallelAsyncTests
     {
         var source = Enumerable.Range(1, 1000);
 
-        var results = await source.SelectParallelAsync(
-            (x, _) => new ValueTask<int>(x * 2));
+        var results = await source.SelectParallelAsync((x, _) => new ValueTask<int>(x * 2));
 
         results.Count.ShouldBe(1000);
         results.Sum().ShouldBe(1001000);
@@ -92,10 +90,7 @@ public class SelectParallelAsyncTests
 
                 await Task.Delay(50, ct);
 
-                lock (lockObj)
-                {
-                    concurrentCount--;
-                }
+                lock (lockObj) concurrentCount--;
 
                 return x;
             },
@@ -110,23 +105,17 @@ public class SelectParallelAsyncTests
     {
         var source = Enumerable.Range(1, 5);
 
-        var results = await source.SelectParallelAsync(
-            (x, _) => new ValueTask<int>(x * 2),
-            options: null);
+        var results = await source.SelectParallelAsync((x, _) => new ValueTask<int>(x * 2));
 
         results.Count.ShouldBe(5);
-        results.OrderBy(x => x).ShouldBe([2, 4, 6, 8, 10]);
+        results.OrderBy(static x => x).ShouldBe([2, 4, 6, 8, 10]);
     }
 
     [Fact]
     public async Task SelectParallelAsync_CustomChannelCapacity_HandlesBackpressure()
     {
         var source = Enumerable.Range(1, 100);
-        var options = new ParallelOptionsRivulet
-        {
-            ChannelCapacity = 10,
-            MaxDegreeOfParallelism = 2
-        };
+        var options = new ParallelOptionsRivulet { ChannelCapacity = 10, MaxDegreeOfParallelism = 2 };
 
         var results = await source.SelectParallelAsync(
             async (x, ct) =>
@@ -144,12 +133,11 @@ public class SelectParallelAsyncTests
     {
         var source = Enumerable.Range(1, 50);
 
-        var results = await source.SelectParallelAsync(
-            async (x, ct) =>
-            {
-                await Task.Delay(1, ct);
-                return new { Original = x, Squared = x * x, IsEven = x % 2 == 0 };
-            });
+        var results = await source.SelectParallelAsync(async (x, ct) =>
+        {
+            await Task.Delay(1, ct);
+            return new { Original = x, Squared = x * x, IsEven = x % 2 == 0 };
+        });
 
         results.Count.ShouldBe(50);
         results.Where(r => r.IsEven).Count().ShouldBe(25);
@@ -161,8 +149,7 @@ public class SelectParallelAsyncTests
     {
         var source = Enumerable.Range(1, 10);
 
-        var results = await source.SelectParallelAsync(
-            (x, _) => new ValueTask<int>(x * 2));
+        var results = await source.SelectParallelAsync((x, _) => new ValueTask<int>(x * 2));
 
         results.Count.ShouldBe(10);
     }
@@ -172,10 +159,9 @@ public class SelectParallelAsyncTests
     {
         var source = new[] { "hello", "world", "test", "xunit" };
 
-        var results = await source.SelectParallelAsync(
-            (s, _) => new ValueTask<string>(s.ToUpper()));
+        var results = await source.SelectParallelAsync((s, _) => new ValueTask<string>(s.ToUpper()));
 
-        results.OrderBy(x => x).ShouldBe(["HELLO", "TEST", "WORLD", "XUNIT"]);
+        results.OrderBy(static x => x).ShouldBe(["HELLO", "TEST", "WORLD", "XUNIT"]);
     }
 
     [Fact]
@@ -187,34 +173,28 @@ public class SelectParallelAsyncTests
         var results = await source.SelectParallelAsync(
             (x, _) =>
             {
-                if (failOn.Contains(x))
-                    throw new InvalidOperationException($"Failed on {x}");
+                if (failOn.Contains(x)) throw new InvalidOperationException($"Failed on {x}");
+
                 return new ValueTask<int>(x * 2);
             },
-            new()
-            {
-                OnFallback = (_, _) => -1
-            });
+            new() { OnFallback = (_, _) => -1 });
 
         results.Count.ShouldBe(10);
-        foreach (var expected in new[] { 2, 4, -1, 8, 10, 12, -1, 16, 18, 20 })
-        {
-            results.ShouldContain(expected);
-        }
+        foreach (var expected in new[] { 2, 4, -1, 8, 10, 12, -1, 16, 18, 20 }) results.ShouldContain(expected);
     }
 
     [Fact]
     public async Task SelectParallelAsync_WithFallback_UsesFallbackAfterRetriesExhausted()
     {
         var source = new[] { 1, 2, 3, 4, 5 };
-        var attemptCounts = new System.Collections.Concurrent.ConcurrentDictionary<int, int>();
+        var attemptCounts = new ConcurrentDictionary<int, int>();
 
         var results = await source.SelectParallelAsync(
             (x, _) =>
             {
                 attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
-                if (x == 3)
-                    throw new TimeoutException("Always fails");
+                if (x == 3) throw new TimeoutException("Always fails");
+
                 return new ValueTask<int>(x * 10);
             },
             new()
@@ -226,10 +206,8 @@ public class SelectParallelAsyncTests
             });
 
         results.Count.ShouldBe(5);
-        foreach (var expected in new[] { 10, 20, 999, 40, 50 })
-        {
-            results.ShouldContain(expected);
-        }
+        foreach (var expected in new[] { 10, 20, 999, 40, 50 }) results.ShouldContain(expected);
+
         attemptCounts[3].ShouldBe(3); // Initial + 2 retries
     }
 
@@ -241,17 +219,14 @@ public class SelectParallelAsyncTests
         var results = await source.SelectParallelAsync(
             (x, _) =>
             {
-                if (x == "b")
-                    throw new InvalidOperationException();
+                if (x == "b") throw new InvalidOperationException();
+
                 return new ValueTask<string>(x.ToUpper());
             },
-            new()
-            {
-                OnFallback = (_, _) => null
-            });
+            new() { OnFallback = (_, _) => null });
 
         results.Count.ShouldBe(3);
-        results.OrderBy(x => x).ShouldBe([null, "A", "C"]);
+        results.OrderBy(static x => x).ShouldBe([null, "A", "C"]);
     }
 
     [Fact]
@@ -262,22 +237,16 @@ public class SelectParallelAsyncTests
         var results = await source.SelectParallelAsync(
             (x, _) =>
             {
-                if (x == 2)
-                    throw new TimeoutException();
-                if (x == 4)
-                    throw new InvalidOperationException();
+                if (x == 2) throw new TimeoutException();
+
+                if (x == 4) throw new InvalidOperationException();
+
                 return new ValueTask<int>(x * 10);
             },
-            new()
-            {
-                OnFallback = (_, ex) => ex is TimeoutException ? -1 : -2
-            });
+            new() { OnFallback = (_, ex) => ex is TimeoutException ? -1 : -2 });
 
         results.Count.ShouldBe(5);
-        foreach (var expected in new[] { 10, -1, 30, -2, 50 })
-        {
-            results.ShouldContain(expected);
-        }
+        foreach (var expected in new[] { 10, -1, 30, -2, 50 }) results.ShouldContain(expected);
     }
 
     [Fact]
@@ -288,21 +257,15 @@ public class SelectParallelAsyncTests
         var results = await source.SelectParallelAsync(
             (x, _) =>
             {
-                if (x == 20 || x == 40)
-                    throw new();
+                if (x == 20 || x == 40) throw new();
+
                 return new ValueTask<int>(x);
             },
-            new()
-            {
-                OnFallback = (index, _) => index * 1000
-            });
+            new() { OnFallback = (index, _) => index * 1000 });
 
         results.Count.ShouldBe(4);
         // Index 0 -> 10, Index 1 -> 1000, Index 2 -> 30, Index 3 -> 3000
-        foreach (var expected in new[] { 10, 1000, 30, 3000 })
-        {
-            results.ShouldContain(expected);
-        }
+        foreach (var expected in new[] { 10, 1000, 30, 3000 }) results.ShouldContain(expected);
     }
 
     [Fact]
@@ -312,13 +275,12 @@ public class SelectParallelAsyncTests
 
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
         {
-            await source.SelectParallelAsync(
-                (x, _) =>
-                {
-                    if (x == 3)
-                        throw new InvalidOperationException();
-                    return new ValueTask<int>(x * 2);
-                });
+            await source.SelectParallelAsync((x, _) =>
+            {
+                if (x == 3) throw new InvalidOperationException();
+
+                return new ValueTask<int>(x * 2);
+            });
         });
     }
 
@@ -330,19 +292,13 @@ public class SelectParallelAsyncTests
         var results = await source.SelectParallelAsync(
             (x, _) =>
             {
-                if (x == 2)
-                    throw new();
+                if (x == 2) throw new();
+
                 return new ValueTask<(int Value, string Status)>((x, "OK"));
             },
-            new()
-            {
-                OnFallback = (_, _) => (0, "FAILED")
-            });
+            new() { OnFallback = (_, _) => (0, "FAILED") });
 
         results.Count.ShouldBe(4);
-        foreach (var expected in new[] { (1, "OK"), (0, "FAILED"), (3, "OK"), (4, "OK") })
-        {
-            results.ShouldContain(expected);
-        }
+        foreach (var expected in new[] { (1, "OK"), (0, "FAILED"), (3, "OK"), (4, "OK") }) results.ShouldContain(expected);
     }
 }

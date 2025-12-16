@@ -2,7 +2,7 @@
 
 namespace Rivulet.Core.Tests;
 
-public class LifecycleHooksTests
+public sealed class LifecycleHooksTests
 {
     [Fact]
     public async Task OnStartItemAsync_CalledForEachItem()
@@ -60,8 +60,8 @@ public class LifecycleHooksTests
         await source.SelectParallelAsync(
             (x, _) =>
             {
-                if (x == 5)
-                    throw new InvalidOperationException("Error");
+                if (x == 5) throw new InvalidOperationException("Error");
+
                 return new ValueTask<int>(x * 2);
             },
             options);
@@ -89,8 +89,8 @@ public class LifecycleHooksTests
         await source.SelectParallelAsync(
             (x, _) =>
             {
-                if (x is 3 or 7)
-                    throw new InvalidOperationException($"Error at {x}");
+                if (x is 3 or 7) throw new InvalidOperationException($"Error at {x}");
+
                 return new ValueTask<int>(x * 2);
             },
             options);
@@ -179,8 +179,8 @@ public class LifecycleHooksTests
         await source.SelectParallelAsync(
             (x, _) =>
             {
-                if (x == 5)
-                    throw new InvalidOperationException("Error");
+                if (x == 5) throw new InvalidOperationException("Error");
+
                 return new ValueTask<int>(x * 2);
             },
             options);
@@ -257,14 +257,14 @@ public class LifecycleHooksTests
             OnErrorAsync = (_, _) => ValueTask.FromResult(false)
         };
 
-        var act = async () => await source.SelectParallelAsync(
+        var act = () => source.SelectParallelAsync(
             async (x, ct) =>
             {
                 Interlocked.Increment(ref processedCount);
                 // Add small delay to allow signal propagation when error occurs
                 await Task.Delay(1, ct);
-                if (x == 10)
-                    throw new InvalidOperationException("Error");
+                if (x == 10) throw new InvalidOperationException("Error");
+
                 return x * 2;
             },
             options);
@@ -319,10 +319,7 @@ public class LifecycleHooksTests
     public async Task OnThrottleAsync_NullValue_DoesNotCauseError()
     {
         var source = Enumerable.Range(1, 50);
-        var options = new ParallelOptionsRivulet
-        {
-            OnThrottleAsync = null
-        };
+        var options = new ParallelOptionsRivulet { OnThrottleAsync = null };
 
         var results = await source.SelectParallelAsync((x, _) => new ValueTask<int>(x * 2), options);
 

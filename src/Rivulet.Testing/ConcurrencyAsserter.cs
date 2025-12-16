@@ -1,7 +1,7 @@
 namespace Rivulet.Testing;
 
 /// <summary>
-/// Helper for asserting concurrency behavior in tests.
+///     Helper for asserting concurrency behavior in tests.
 /// </summary>
 public sealed class ConcurrencyAsserter
 {
@@ -9,17 +9,17 @@ public sealed class ConcurrencyAsserter
     private int _maxConcurrency;
 
     /// <summary>
-    /// Gets the maximum concurrency observed.
+    ///     Gets the maximum concurrency observed.
     /// </summary>
     public int MaxConcurrency => _maxConcurrency;
 
     /// <summary>
-    /// Gets the current concurrency level.
+    ///     Gets the current concurrency level.
     /// </summary>
     public int CurrentConcurrency => _currentConcurrency;
 
     /// <summary>
-    /// Tracks entry into a concurrent operation.
+    ///     Tracks entry into a concurrent operation.
     /// </summary>
     public IDisposable Enter()
     {
@@ -32,6 +32,7 @@ public sealed class ConcurrencyAsserter
         {
             var original = Interlocked.CompareExchange(ref _maxConcurrency, current, max);
             if (original == max) break; // Successfully updated
+
             max = _maxConcurrency; // Retry with latest value
         }
 
@@ -39,7 +40,7 @@ public sealed class ConcurrencyAsserter
     }
 
     /// <summary>
-    /// Resets the concurrency tracking using thread-safe operations.
+    ///     Resets the concurrency tracking using thread-safe operations.
     /// </summary>
     public void Reset()
     {
@@ -54,6 +55,7 @@ public sealed class ConcurrencyAsserter
         public void Dispose()
         {
             if (_disposed) return;
+
             _disposed = true;
             Interlocked.Decrement(ref asserter._currentConcurrency);
         }

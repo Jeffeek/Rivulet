@@ -380,3 +380,6 @@ site/
 docs/readthedocs/*.md
 docs/readthedocs/assets/
 !docs/readthedocs/assets/favicon.ico
+
+# JetBrains Resharper
+/linter-reports

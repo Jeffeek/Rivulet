@@ -4,7 +4,7 @@ using Rivulet.Core.Observability;
 namespace Rivulet.Core.Tests;
 
 [Collection(TestCollections.EventSourceSequential)]
-public class RivuletEventSourceTests
+public sealed class RivuletEventSourceTests
 {
     [Fact]
     public void Log_ShouldBeSingleton()
@@ -162,7 +162,7 @@ public class RivuletEventSourceTests
         RivuletEventSource.Log.ShouldNotBeNull();
     }
 
-    private class TestEventListener : EventListener
+    private sealed class TestEventListener : EventListener
     {
         protected override void OnEventWritten(EventWrittenEventArgs eventData)
         {

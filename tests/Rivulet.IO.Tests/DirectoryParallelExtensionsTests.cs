@@ -17,12 +17,11 @@ public class DirectoryParallelExtensionsTests : TempDirectoryFixture
         var files = new[] { file1, file2 };
 
         // Act
-        var results = await files.ProcessFilesParallelAsync(
-            async (path, ct) =>
-            {
-                var content = await File.ReadAllTextAsync(path, ct);
-                return content.Length;
-            });
+        var results = await files.ProcessFilesParallelAsync(async (path, ct) =>
+        {
+            var content = await File.ReadAllTextAsync(path, ct);
+            return content.Length;
+        });
 
         // Assert
         results.Count.ShouldBe(2);

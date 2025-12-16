@@ -1,6 +1,8 @@
 using Microsoft.Data.SqlClient;
 using Rivulet.Core;
 
+// ReSharper disable ArrangeObjectCreationWhenTypeNotEvident
+
 Console.WriteLine("=== Rivulet.Sql Sample ===\n");
 Console.WriteLine("NOTE: Configure connection string before running!\n");
 
@@ -20,7 +22,7 @@ try
     };
 
     var results = await queries.SelectParallelAsync(
-        async (query, ct) =>
+        static async (query, ct) =>
         {
             await using var connection = new SqlConnection(connectionString);
             await connection.OpenAsync(ct);
@@ -36,10 +38,8 @@ try
         });
 
     Console.WriteLine($"✓ Executed {results.Count} queries in parallel");
-    foreach (var (query, count) in results)
-    {
-        Console.WriteLine($"  {query}: {count} rows");
-    }
+    foreach (var (query, count) in results) Console.WriteLine($"  {query}: {count} rows");
+
     Console.WriteLine();
 
     // Sample 2: Parameterized queries in parallel
@@ -48,7 +48,7 @@ try
     var userIds = Enumerable.Range(1, 10).ToList();
 
     var users = await userIds.SelectParallelAsync(
-        async (userId, ct) =>
+        static async (userId, ct) =>
         {
             await using var connection = new SqlConnection(connectionString);
             await connection.OpenAsync(ct);
@@ -59,10 +59,8 @@ try
             command.Parameters.AddWithValue("@UserId", userId);
 
             await using var reader = await command.ExecuteReaderAsync(ct);
-            if (await reader.ReadAsync(ct))
-            {
-                return new { Id = reader.GetInt32(0), Name = reader.GetString(1) };
-            }
+            if (await reader.ReadAsync(ct)) return new { Id = reader.GetInt32(0), Name = reader.GetString(1) };
+
             return null;
         },
         new ParallelOptionsRivulet
@@ -71,17 +69,18 @@ try
             ErrorMode = ErrorMode.BestEffort
         });
 
-    Console.WriteLine($"✓ Retrieved {users.Count(u => u != null)} user records\n");
+    Console.WriteLine($"✓ Retrieved {users.Count(static u => u != null)} user records\n");
 
     // Sample 3: Parallel INSERT operations
     Console.WriteLine("3. Parallel INSERT operations - Execute many inserts");
 
     var dataToInsert = Enumerable.Range(1, 20)
-        .Select(i => new { Id = i + 1000, Name = $"NewUser{i}", Email = $"newuser{i}@test.com" })
+        // ReSharper disable once StringLiteralTypo
+        .Select(static i => new { Id = i + 1000, Name = $"NewUser{i}", Email = $"newuser{i}@test.com" })
         .ToList();
 
     var insertResults = await dataToInsert.SelectParallelAsync(
-        async (data, ct) =>
+        static async (data, ct) =>
         {
             await using var connection = new SqlConnection(connectionString);
             await connection.OpenAsync(ct);
@@ -110,7 +109,7 @@ try
     var idsToUpdate = Enumerable.Range(1, 10).ToList();
 
     var updateResults = await idsToUpdate.SelectParallelAsync(
-        async (id, ct) =>
+        static async (id, ct) =>
         {
             await using var connection = new SqlConnection(connectionString);
             await connection.OpenAsync(ct);

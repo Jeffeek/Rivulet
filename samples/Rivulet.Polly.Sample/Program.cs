@@ -4,6 +4,11 @@ using Polly.CircuitBreaker;
 using Rivulet.Core;
 using Rivulet.Polly;
 
+// ReSharper disable ArgumentsStyleOther
+// ReSharper disable ArgumentsStyleAnonymousFunction
+// ReSharper disable ArgumentsStyleLiteral
+// ReSharper disable ArrangeObjectCreationWhenTypeNotEvident
+
 Console.WriteLine("=== Rivulet.Polly Sample ===\n");
 
 using var httpClient = new HttpClient();
@@ -43,7 +48,7 @@ Console.WriteLine("2. ToPollyPipeline - Convert Rivulet resilience settings to P
 var rivuletOptions = new ParallelOptionsRivulet
 {
     MaxRetries = 3,
-    IsTransient = ex => ex is HttpRequestException,
+    IsTransient = static ex => ex is HttpRequestException,
     BackoffStrategy = Rivulet.Core.Resilience.BackoffStrategy.ExponentialJitter,
     BaseDelay = TimeSpan.FromMilliseconds(500),
     PerItemTimeout = TimeSpan.FromSeconds(5)
@@ -82,7 +87,7 @@ var circuitBreakerPipeline = new ResiliencePipelineBuilder()
     .Build();
 
 var flakyUrls = Enumerable.Range(1, 10)
-    .Select(i => $"https://httpbin.org/status/{(i % 3 == 0 ? 500 : 200)}")
+    .Select(static i => $"https://httpbin.org/status/{(i % 3 == 0 ? 500 : 200)}")
     .ToArray();
 
 try
@@ -139,7 +144,7 @@ var resultRetryResults = await statusUrls.SelectParallelWithResultRetryAsync(
         var response = await httpClient.GetAsync(url, ct);
         return response;
     },
-    shouldRetry: response => !response.IsSuccessStatusCode,
+    shouldRetry: static response => !response.IsSuccessStatusCode,
     maxRetries: 2,
     delayBetweenRetries: TimeSpan.FromMilliseconds(500),
     new ParallelOptionsRivulet
@@ -161,7 +166,7 @@ var combinedPipeline = new ResiliencePipelineBuilder<HttpResponseMessage>()
         Delay = TimeSpan.FromMilliseconds(500),
         ShouldHandle = new PredicateBuilder<HttpResponseMessage>()
             .Handle<HttpRequestException>()
-            .HandleResult(r => !r.IsSuccessStatusCode)
+            .HandleResult(static r => !r.IsSuccessStatusCode)
     })
     .AddCircuitBreaker(new CircuitBreakerStrategyOptions<HttpResponseMessage>
     {
@@ -171,7 +176,7 @@ var combinedPipeline = new ResiliencePipelineBuilder<HttpResponseMessage>()
         BreakDuration = TimeSpan.FromSeconds(5),
         ShouldHandle = new PredicateBuilder<HttpResponseMessage>()
             .Handle<HttpRequestException>()
-            .HandleResult(r => !r.IsSuccessStatusCode)
+            .HandleResult(static r => !r.IsSuccessStatusCode)
     })
     .Build();
 

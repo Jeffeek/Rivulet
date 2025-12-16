@@ -1,18 +1,18 @@
+using System.Text;
 using Rivulet.Core.Internal;
 
 namespace Rivulet.Diagnostics;
 
 /// <summary>
-/// EventListener that writes Rivulet metrics to a file.
-/// Supports automatic file rotation based on size or time.
+///     EventListener that writes Rivulet metrics to a file.
+///     Supports automatic file rotation based on size or time.
 /// </summary>
 /// <example>
-/// <code>
+///     <code>
 /// using var listener = new RivuletFileListener("metrics.log", maxFileSizeBytes: 10 * 1024 * 1024);
-/// 
 /// await Enumerable.Range(1, 100)
 ///     .ToAsyncEnumerable()
-///     .SelectParallelAsync(async x => await ProcessAsync(x), new ParallelOptionsRivulet
+///     .SelectParallelAsync(async x =&gt; await ProcessAsync(x), new ParallelOptionsRivulet
 ///     {
 ///         MaxDegreeOfParallelism = 10
 ///     });
@@ -31,7 +31,7 @@ public sealed class RivuletFileListener : RivuletEventListenerBase, IAsyncDispos
     private long _currentFileSize;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="RivuletFileListener"/> class.
+    ///     Initializes a new instance of the <see cref="RivuletFileListener" /> class.
     /// </summary>
     /// <param name="filePath">The path to the log file.</param>
     /// <param name="maxFileSizeBytes">Maximum file size before rotation. Default is 10MB.</param>
@@ -43,50 +43,43 @@ public sealed class RivuletFileListener : RivuletEventListenerBase, IAsyncDispos
     }
 
     /// <summary>
-    /// Called when a counter value is received.
+    ///     Called when a counter value is received.
     /// </summary>
-    protected override void OnCounterReceived(string name, string displayName, double value, string displayUnits)
-    {
-        LockHelper.Execute(_lock, () =>
-        {
-            CheckRotation();
+    protected override void OnCounterReceived(
+        string name,
+        string displayName,
+        double value,
+        string displayUnits) =>
+        LockHelper.Execute(_lock,
+            () =>
+            {
+                CheckRotation();
 
-            var timestamp = DateTime.UtcNow.ToString(RivuletDiagnosticsConstants.DateTimeFormats.File);
-            var formattedValue = string.IsNullOrEmpty(displayUnits)
-                ? $"{value:F2}"
-                : $"{value:F2} {displayUnits}";
+                var timestamp = DateTime.UtcNow.ToString(RivuletDiagnosticsConstants.DateTimeFormats.File);
+                var formattedValue = string.IsNullOrEmpty(displayUnits)
+                    ? $"{value:F2}"
+                    : $"{value:F2} {displayUnits}";
 
-            var line = $"[{timestamp}] {displayName}: {formattedValue}";
-            _writer?.WriteLine(line);
-            _writer?.Flush();
+                var line = $"[{timestamp}] {displayName}: {formattedValue}";
+                _writer?.WriteLine(line);
+                _writer?.Flush();
 
-            _currentFileSize += System.Text.Encoding.UTF8.GetByteCount(line) + Environment.NewLine.Length;
-        });
-    }
+                _currentFileSize += Encoding.UTF8.GetByteCount(line) + Environment.NewLine.Length;
+            });
 
     private void InitializeWriter()
     {
         var directory = Path.GetDirectoryName(_filePath);
-        if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
-        {
-            Directory.CreateDirectory(directory);
-        }
+        if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory)) Directory.CreateDirectory(directory);
 
-        _writer = new(_filePath, append: true, System.Text.Encoding.UTF8)
-        {
-            AutoFlush = false
-        };
+        _writer = new(_filePath, true, Encoding.UTF8) { AutoFlush = false };
 
-        if (File.Exists(_filePath))
-        {
-            _currentFileSize = new FileInfo(_filePath).Length;
-        }
+        if (File.Exists(_filePath)) _currentFileSize = new FileInfo(_filePath).Length;
     }
 
     private void CheckRotation()
     {
-        if (_currentFileSize < _maxFileSizeBytes)
-            return;
+        if (_currentFileSize < _maxFileSizeBytes) return;
 
         _writer?.Flush();
         _writer?.Dispose();
@@ -118,35 +111,37 @@ public sealed class RivuletFileListener : RivuletEventListenerBase, IAsyncDispos
     }
 
     /// <summary>
-    /// Disposes the file listener and closes the file.
+    ///     Disposes the file listener and closes the file.
     /// </summary>
     public override void Dispose()
     {
-        LockHelper.Execute(_lock, () =>
-        {
-            if (_writer == null) return;
+        LockHelper.Execute(_lock,
+            () =>
+            {
+                if (_writer == null) return;
 
-            _writer.Flush();
-            _writer.Close();
-            _writer.Dispose();
-            _writer = null;
-        });
+                _writer.Flush();
+                _writer.Close();
+                _writer.Dispose();
+                _writer = null;
+            });
 
         base.Dispose();
     }
 
     /// <summary>
-    /// Disposes the file listener asynchronously and closes the file.
+    ///     Disposes the file listener asynchronously and closes the file.
     /// </summary>
     public async ValueTask DisposeAsync()
     {
         // Extract writer under lock to ensure thread-safety
-        StreamWriter? writer = LockHelper.Execute(_lock, () =>
-        {
-            var w = _writer;
-            _writer = null;
-            return w;
-        });
+        var writer = LockHelper.Execute(_lock,
+            () =>
+            {
+                var w = _writer;
+                _writer = null;
+                return w;
+            });
 
         // Dispose outside lock to avoid holding lock during async I/O
         if (writer != null)

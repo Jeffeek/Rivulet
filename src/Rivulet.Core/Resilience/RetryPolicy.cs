@@ -31,10 +31,7 @@ internal static class RetryPolicy
                 attempt++;
                 metricsTracker.IncrementRetries();
 
-                if (options.OnRetryAsync is not null)
-                {
-                    await options.OnRetryAsync(itemIndex, attempt, ex).ConfigureAwait(false);
-                }
+                if (options.OnRetryAsync is not null) await options.OnRetryAsync(itemIndex, attempt, ex).ConfigureAwait(false);
 
                 var delay = BackoffCalculator.CalculateDelay(options.BackoffStrategy, options.BaseDelay, attempt, ref previousDelay);
                 await Task.Delay(delay, ct).ConfigureAwait(false);
@@ -45,8 +42,10 @@ internal static class RetryPolicy
                 return fallbackValue switch
                 {
                     TResult result => result,
+                    // ReSharper disable once NullableWarningSuppressionIsUsed
                     null when !typeof(TResult).IsValueType => default!,
-                    _ => throw new InvalidOperationException($"Fallback returned {fallbackValue?.GetType().Name ?? "null"}, expected {typeof(TResult).Name}")
+                    _ => throw new InvalidOperationException(
+                        $"Fallback returned {fallbackValue?.GetType().Name ?? "null"}, expected {typeof(TResult).Name}")
                 };
             }
         }

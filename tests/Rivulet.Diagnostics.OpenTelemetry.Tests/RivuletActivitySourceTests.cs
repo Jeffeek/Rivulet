@@ -1,12 +1,11 @@
-﻿using Rivulet.Core;
-using System.Diagnostics;
+﻿using System.Diagnostics;
+using Rivulet.Core;
 
 namespace Rivulet.Diagnostics.OpenTelemetry.Tests;
 
 [Collection(TestCollections.ActivitySource)]
 public class RivuletActivitySourceTests
 {
-
     [Fact]
     public void ActivitySource_ShouldHaveCorrectNameAndVersion()
     {
@@ -66,6 +65,7 @@ public class RivuletActivitySourceTests
         RivuletActivitySource.RecordRetry(activity, 1, exception);
 
         if (activity is null) return;
+
         activity.Events.Count().ShouldBe(1);
         var retryEvent = activity.Events.First();
         retryEvent.Name.ShouldBe("retry");
@@ -85,7 +85,7 @@ public class RivuletActivitySourceTests
         using var activity = RivuletActivitySource.StartItemActivity("ProcessItem", 0);
 
         var exception = new InvalidOperationException("Test error");
-        RivuletActivitySource.RecordError(activity, exception, isTransient: true);
+        RivuletActivitySource.RecordError(activity, exception, true);
 
         activity.ShouldNotBeNull();
         activity.Status.ShouldBe(ActivityStatusCode.Error);

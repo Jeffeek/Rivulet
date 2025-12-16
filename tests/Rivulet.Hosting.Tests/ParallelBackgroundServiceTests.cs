@@ -1,34 +1,13 @@
+using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Rivulet.Base.Tests;
 using Rivulet.Core;
-using System.Collections.Concurrent;
 
 namespace Rivulet.Hosting.Tests;
 
 public class ParallelBackgroundServiceTests
 {
-    private class TestBackgroundService(
-        ILogger<TestBackgroundService> logger,
-        IAsyncEnumerable<int> items,
-        ParallelOptionsRivulet? options = null) : ParallelBackgroundService<int>(logger, options)
-    {
-        public ConcurrentBag<int> ProcessedItems { get; } = new();
-        public int ProcessCallCount => _processCallCount;
-        private int _processCallCount;
-
-        protected override IAsyncEnumerable<int> GetItemsAsync(CancellationToken cancellationToken) =>
-            items;
-
-        protected override ValueTask ProcessItemAsync(int item, CancellationToken cancellationToken)
-        {
-            Interlocked.Increment(ref _processCallCount);
-            ProcessedItems.Add(item);
-            return ValueTask.CompletedTask;
-        }
-    }
-
-
     [Fact]
     public async Task StartAsync_ShouldProcessAllItems()
     {
@@ -47,7 +26,7 @@ public class ParallelBackgroundServiceTests
         await service.StopAsync(CancellationToken.None);
 
         service.ProcessedItems.Count.ShouldBe(5);
-        service.ProcessedItems.OrderBy(x => x).ShouldBe([1, 2, 3, 4, 5]);
+        service.ProcessedItems.OrderBy(static x => x).ShouldBe([1, 2, 3, 4, 5]);
     }
 
     [Fact]
@@ -160,7 +139,7 @@ public class ParallelBackgroundServiceTests
 
         // Act
         await service.StartAsync(cts.Token);
-        await Task.Delay(20); // Let it start
+        await Task.Delay(20);    // Let it start
         await cts.CancelAsync(); // Cancel it
         await service.StopAsync(CancellationToken.None);
 
@@ -212,27 +191,43 @@ public class ParallelBackgroundServiceTests
         // No unhandled exception should crash the test
     }
 
+    private class TestBackgroundService(
+        ILogger<TestBackgroundService> logger,
+        IAsyncEnumerable<int> items,
+        ParallelOptionsRivulet? options = null) : ParallelBackgroundService<int>(logger, options)
+    {
+        private int _processCallCount;
+        public ConcurrentBag<int> ProcessedItems { get; } = new();
+        public int ProcessCallCount => _processCallCount;
+
+        protected override IAsyncEnumerable<int> GetItemsAsync(CancellationToken cancellationToken) =>
+            items;
+
+        protected override ValueTask ProcessItemAsync(int item, CancellationToken cancellationToken)
+        {
+            Interlocked.Increment(ref _processCallCount);
+            ProcessedItems.Add(item);
+            return ValueTask.CompletedTask;
+        }
+    }
+
     private class ThrowingBackgroundService(
         ILogger<ThrowingBackgroundService> logger,
         IAsyncEnumerable<int> items) : ParallelBackgroundService<int>(logger)
     {
         protected override IAsyncEnumerable<int> GetItemsAsync(CancellationToken cancellationToken) => items;
 
-        protected override ValueTask ProcessItemAsync(int item, CancellationToken cancellationToken)
-        {
+        protected override ValueTask ProcessItemAsync(int item, CancellationToken cancellationToken) => throw
             // Simulate an unhandled exception
-            throw new InvalidOperationException($"Test exception for item {item}");
-        }
+            new InvalidOperationException($"Test exception for item {item}");
     }
 
     private class FatalErrorBackgroundService(ILogger<FatalErrorBackgroundService> logger)
         : ParallelBackgroundService<int>(logger)
     {
-        protected override IAsyncEnumerable<int> GetItemsAsync(CancellationToken cancellationToken)
-        {
+        protected override IAsyncEnumerable<int> GetItemsAsync(CancellationToken cancellationToken) => throw
             // Throw from GetItemsAsync to hit the exception path in ExecuteAsync
-            throw new InvalidOperationException("Fatal error in GetItemsAsync");
-        }
+            new InvalidOperationException("Fatal error in GetItemsAsync");
 
         protected override ValueTask ProcessItemAsync(int item, CancellationToken cancellationToken) => ValueTask.CompletedTask;
     }
