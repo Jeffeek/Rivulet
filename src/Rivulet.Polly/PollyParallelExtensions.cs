@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Polly;
 using Rivulet.Core;
 
@@ -6,6 +7,7 @@ namespace Rivulet.Polly;
 /// <summary>
 ///     Extensions for integrating Polly resilience policies with Rivulet parallel operations.
 /// </summary>
+[SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public static class PollyParallelExtensions
 {
     /// <summary>

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace Rivulet.Hosting.HealthChecks;
@@ -5,6 +6,7 @@ namespace Rivulet.Hosting.HealthChecks;
 /// <summary>
 ///     Health check for monitoring long-running Rivulet operations.
 /// </summary>
+[SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public sealed class RivuletOperationHealthCheck : IHealthCheck
 {
     private readonly RivuletOperationHealthCheckOptions _options;
@@ -35,10 +37,11 @@ public sealed class RivuletOperationHealthCheck : IHealthCheck
         if (failures >= _options.UnhealthyFailureThreshold)
         {
             return Task.FromResult(HealthCheckResult.Unhealthy(
-                $"Operation has failed {failures} consecutive times",
+                string.Format(RivuletHostingConstants.HealthCheckMessages.ConsecutiveFailuresFormat, failures),
                 data: new Dictionary<string, object>
                 {
-                    ["consecutive_failures"] = failures, ["time_since_last_success"] = timeSinceLastSuccess
+                    [RivuletHostingConstants.HealthCheckKeys.ConsecutiveFailures] = failures,
+                    [RivuletHostingConstants.HealthCheckKeys.TimeSinceLastSuccess] = timeSinceLastSuccess
                 }));
         }
 
@@ -48,14 +51,18 @@ public sealed class RivuletOperationHealthCheck : IHealthCheck
                 $"No successful operations in {timeSinceLastSuccess.TotalSeconds:F0} seconds",
                 data: new Dictionary<string, object>
                 {
-                    ["time_since_last_success"] = timeSinceLastSuccess, ["consecutive_failures"] = failures
+                    [RivuletHostingConstants.HealthCheckKeys.ConsecutiveFailures] = failures,
+                    [RivuletHostingConstants.HealthCheckKeys.TimeSinceLastSuccess] = timeSinceLastSuccess
                 }));
         }
 
         return Task.FromResult(HealthCheckResult.Healthy(
             $"Operation healthy, {failures} recent failures",
             new Dictionary<string, object>
-                { ["consecutive_failures"] = failures, ["time_since_last_success"] = timeSinceLastSuccess }));
+            {
+                [RivuletHostingConstants.HealthCheckKeys.ConsecutiveFailures] = failures,
+                [RivuletHostingConstants.HealthCheckKeys.TimeSinceLastSuccess] = timeSinceLastSuccess
+            }));
     }
 
     /// <summary>
@@ -77,6 +84,7 @@ public sealed class RivuletOperationHealthCheck : IHealthCheck
 /// <summary>
 ///     Options for configuring RivuletOperationHealthCheck.
 /// </summary>
+[SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public sealed class RivuletOperationHealthCheckOptions
 {
     /// <summary>

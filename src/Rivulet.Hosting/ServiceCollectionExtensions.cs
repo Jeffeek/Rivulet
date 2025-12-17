@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Rivulet.Core;
@@ -7,6 +8,7 @@ namespace Rivulet.Hosting;
 /// <summary>
 ///     Extension methods for registering Rivulet services with dependency injection.
 /// </summary>
+[SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public static class ServiceCollectionExtensions
 {
     /// <summary>

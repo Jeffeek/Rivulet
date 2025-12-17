@@ -1,13 +1,15 @@
-using System.Collections.Concurrent;
-using System.Diagnostics;
 using Rivulet.Core;
 using Rivulet.Core.Resilience;
+using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Rivulet.Diagnostics.OpenTelemetry;
 
 /// <summary>
 ///     Extension methods for integrating OpenTelemetry with Rivulet parallel operations.
 /// </summary>
+[SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public static class ParallelOptionsRivuletExtensions
 {
     /// <summary>

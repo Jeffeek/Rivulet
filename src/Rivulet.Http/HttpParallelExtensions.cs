@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using Rivulet.Core;
 
@@ -6,6 +7,7 @@ namespace Rivulet.Http;
 /// <summary>
 ///     Provides parallel HTTP operations with bounded concurrency, automatic retries, and resilience features.
 /// </summary>
+[SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public static class HttpParallelExtensions
 {
     /// <summary>

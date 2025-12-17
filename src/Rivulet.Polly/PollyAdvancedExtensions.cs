@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Polly;
 using Rivulet.Core;
 
@@ -6,6 +7,7 @@ namespace Rivulet.Polly;
 /// <summary>
 ///     Advanced Polly features integrated with Rivulet parallel processing.
 /// </summary>
+[SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public static class PollyAdvancedExtensions
 {
     /// <summary>

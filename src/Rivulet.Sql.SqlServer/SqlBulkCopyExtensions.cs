@@ -1,4 +1,5 @@
 using System.Data;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Data.SqlClient;
 using Rivulet.Core;
 
@@ -8,6 +9,7 @@ namespace Rivulet.Sql.SqlServer;
 ///     Extension methods for SQL Server-specific bulk operations using SqlBulkCopy.
 ///     Provides 10-100x performance improvement over standard batched inserts.
 /// </summary>
+[SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public static class SqlBulkCopyExtensions
 {
     /// <summary>

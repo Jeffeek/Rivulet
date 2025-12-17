@@ -25,7 +25,6 @@ internal static class RivuletHostingConstants
     public static class HealthCheckMessages
     {
         public const string OperationHealthy = "Operation healthy";
-        public const string NoSuccessfulOperationsFormat = "No successful operations for {0}";
         public const string ConsecutiveFailuresFormat = "Operation has failed {0} consecutive times";
     }
 }

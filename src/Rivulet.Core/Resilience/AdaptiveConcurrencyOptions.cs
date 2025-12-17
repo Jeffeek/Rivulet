@@ -1,9 +1,12 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Rivulet.Core.Resilience;
 
 /// <summary>
 ///     Configuration options for adaptive concurrency control.
 ///     Dynamically adjusts parallelism based on system performance and load.
 /// </summary>
+[SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public sealed class AdaptiveConcurrencyOptions
 {
     /// <summary>

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using Rivulet.Core;
 
@@ -7,6 +8,7 @@ namespace Rivulet.Http;
 ///     Configuration options specific to HTTP operations with parallel processing.
 ///     Extends <see cref="ParallelOptionsRivulet" /> with HTTP-specific retry policies and resilience features.
 /// </summary>
+[SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public sealed class HttpOptions
 {
     internal const int DefaultRetryCount = 3;

@@ -53,8 +53,7 @@ public sealed class RivuletHealthCheck : IHealthCheck, IDisposable
             var metrics = _exporter.ExportDictionary();
 
             if (metrics.Count == 0)
-                return Task.FromResult(
-                    HealthCheckResult.Healthy(RivuletDiagnosticsConstants.HealthCheckMessages.NothingRunning));
+                return Task.FromResult(HealthCheckResult.Healthy(RivuletDiagnosticsConstants.HealthCheckMessages.NothingRunning));
 
             var itemsStarted = metrics.GetValueOrDefault(RivuletMetricsConstants.CounterNames.ItemsStarted, 0);
             var itemsCompleted = metrics.GetValueOrDefault(RivuletMetricsConstants.CounterNames.ItemsCompleted, 0);
@@ -112,11 +111,11 @@ public sealed class RivuletHealthCheckOptions
     ///     Gets or sets the error rate threshold (0.0 to 1.0) above which the health check reports degraded status.
     ///     Default is 0.1 (10%).
     /// </summary>
-    public double ErrorRateThreshold { get; set; } = 0.1;
+    public double ErrorRateThreshold { get; init; } = 0.1;
 
     /// <summary>
     ///     Gets or sets the failure count threshold above which the health check reports unhealthy status.
     ///     Default is 1000.
     /// </summary>
-    public long FailureCountThreshold { get; set; } = 1000;
+    public long FailureCountThreshold { get; init; } = 1000;
 }

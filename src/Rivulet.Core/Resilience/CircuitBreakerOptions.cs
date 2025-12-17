@@ -41,6 +41,7 @@ public sealed class CircuitBreakerOptions
     ///     Validates the circuit breaker options.
     /// </summary>
     /// <exception cref="ArgumentException">Thrown when options are invalid.</exception>
+    // ReSharper disable once MemberCanBeInternal
     public void Validate()
     {
         if (FailureThreshold <= 0)
@@ -53,7 +54,6 @@ public sealed class CircuitBreakerOptions
             throw new ArgumentException("OpenTimeout must be greater than zero.", nameof(OpenTimeout));
 
         if (SamplingDuration.HasValue && SamplingDuration.Value <= TimeSpan.Zero)
-            throw new ArgumentException("SamplingDuration must be greater than zero when specified.",
-                nameof(SamplingDuration));
+            throw new ArgumentException("SamplingDuration must be greater than zero when specified.", nameof(SamplingDuration));
     }
 }

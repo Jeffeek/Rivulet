@@ -42,7 +42,7 @@ public sealed class TestDbConnection(
         new TestDbCommand(executeScalarFunc, executeNonQueryFunc, executeReaderFunc);
 }
 
-public sealed class TestDbCommand(
+internal sealed class TestDbCommand(
     Func<IDbCommand, object?>? executeScalarFunc,
     Func<IDbCommand, int>? executeNonQueryFunc,
     Func<IDbCommand, IDataReader>? executeReaderFunc
@@ -98,7 +98,7 @@ public sealed class TestDbTransaction(DbConnection connection, IsolationLevel is
     public override void Rollback() => IsRolledBack = true;
 }
 
-public sealed class TestDbParameterCollection : DbParameterCollection
+internal sealed class TestDbParameterCollection : DbParameterCollection
 {
     private readonly List<object> _parameters = [];
 
@@ -147,7 +147,7 @@ public sealed class TestDbParameterCollection : DbParameterCollection
     protected override void SetParameter(string parameterName, DbParameter value) { }
 }
 
-public sealed class TestDbParameter : DbParameter
+internal sealed class TestDbParameter : DbParameter
 {
     public override DbType DbType { get; set; }
     public override ParameterDirection Direction { get; set; }
@@ -317,7 +317,7 @@ public sealed class NonDbConnection(
 ///     A test command that implements IDbCommand directly (not DbCommand)
 ///     to test the Task.Run fallback paths in SqlParallelExtensions.
 /// </summary>
-public sealed class NonDbCommand(
+internal sealed class NonDbCommand(
     Func<IDbCommand, object?>? executeScalarFunc,
     Func<IDbCommand, int>? executeNonQueryFunc,
     Func<IDbCommand, IDataReader>? executeReaderFunc

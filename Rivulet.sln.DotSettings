@@ -156,6 +156,7 @@
 	<s:String x:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=VirtualMemberCallInConstructor/@EntryIndexedValue">DO_NOT_SHOW</s:String>
 	<s:String x:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=Xaml_002EConstructorWarning/@EntryIndexedValue">ERROR</s:String>
 	<s:Boolean x:Key="/Default/CodeStyle/CodeFormatting/CommonFormatter/ENFORCE_LINE_ENDING_STYLE/@EntryValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/CodeStyle/CodeFormatting/CppFormatting/USE_INDENT_FROM_VS/@EntryValue">False</s:Boolean>
 	<s:String x:Key="/Default/CodeStyle/CodeFormatting/CSharpCodeStyle/BRACES_FOR_DOWHILE/@EntryValue">RequiredForMultiline</s:String>
 	<s:String x:Key="/Default/CodeStyle/CodeFormatting/CSharpCodeStyle/BRACES_FOR_FIXED/@EntryValue">RequiredForMultiline</s:String>
 	<s:String x:Key="/Default/CodeStyle/CodeFormatting/CSharpCodeStyle/BRACES_FOR_LOCK/@EntryValue">RequiredForMultiline</s:String>
@@ -233,6 +234,11 @@
 	<s:String x:Key="/Default/CodeStyle/CodeFormatting/CSharpCodeStyle/MODIFIERS_ORDER/@EntryValue">public private protected internal static extern new virtual abstract sealed override readonly unsafe volatile async</s:String>
 	<s:String x:Key="/Default/CodeStyle/CodeFormatting/CSharpCodeStyle/PREFER_SEPARATE_DECONSTRUCTED_VARIABLES_DECLARATION/@EntryValue">True</s:String>
 	<s:String x:Key="/Default/CodeStyle/CodeFormatting/CSharpCodeStyle/PREFER_EXPLICIT_DISCARD_DECLARATION/@EntryValue">True</s:String>
+	<s:Boolean x:Key="/Default/CodeStyle/CodeFormatting/HtmlFormatter/USE_INDENT_FROM_VS/@EntryValue">False</s:Boolean>
+	<s:Boolean x:Key="/Default/CodeStyle/CodeFormatting/ShaderLabFormat/USE_INDENT_FROM_VS/@EntryValue">False</s:Boolean>
+	<s:Boolean x:Key="/Default/CodeStyle/CodeFormatting/VBFormat/USE_INDENT_FROM_VS/@EntryValue">False</s:Boolean>
+	<s:Boolean x:Key="/Default/CodeStyle/CodeFormatting/XmlDocFormatter/USE_INDENT_FROM_VS/@EntryValue">False</s:Boolean>
+	<s:Boolean x:Key="/Default/CodeStyle/CodeFormatting/XmlFormatter/USE_INDENT_FROM_VS/@EntryValue">False</s:Boolean>
 	<s:Boolean x:Key="/Default/CodeStyle/CSharpVarKeywordUsage/UseRoslynLogicForEvidentTypes/@EntryValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/CodeStyle/EditorConfig/SyncToVisualStudio/@EntryValue">True</s:Boolean>
 	<s:String x:Key="/Default/CodeStyle/Naming/CSharpNaming/PredefinedNamingRules/=Interfaces/@EntryIndexedValue">&lt;Policy Inspect="True" Prefix="I" Suffix="" Style="AaBb" /&gt;</s:String>
@@ -393,6 +399,7 @@
 	<s:String x:Key="/Default/CodeStyle/Naming/CSharpNaming/UserRules/=c873eafb_002Dd57f_002D481d_002D8c93_002D77f6863c2f88/@EntryIndexedValue">&lt;Policy&gt;&lt;Descriptor Staticness="Static" AccessRightKinds="Protected, ProtectedInternal, Internal, Public, PrivateProtected" Description="Static readonly fields (not private)"&gt;&lt;ElementKinds&gt;&lt;Kind Name="READONLY_FIELD" /&gt;&lt;/ElementKinds&gt;&lt;/Descriptor&gt;&lt;Policy Inspect="True" WarnAboutPrefixesAndSuffixes="False" Prefix="" Suffix="" Style="AaBb" /&gt;&lt;/Policy&gt;</s:String>
 	<s:String x:Key="/Default/CodeStyle/Naming/CSharpNaming/UserRules/=f9fce829_002De6f4_002D4cb2_002D80f1_002D5497c44f51df/@EntryIndexedValue">&lt;Policy&gt;&lt;Descriptor Staticness="Static" AccessRightKinds="Private" Description="Static fields (private)"&gt;&lt;ElementKinds&gt;&lt;Kind Name="FIELD" /&gt;&lt;/ElementKinds&gt;&lt;/Descriptor&gt;&lt;Policy Inspect="True" WarnAboutPrefixesAndSuffixes="False" Prefix="_" Suffix="" Style="aaBb" /&gt;&lt;/Policy&gt;</s:String>
 	<s:Boolean x:Key="/Default/Environment/SettingsMigration/IsMigratorApplied/=JetBrains_002EReSharper_002EFeature_002EServices_002ECodeCleanup_002EFileHeader_002EFileHeaderSettingsMigrate/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/Environment/SettingsMigration/IsMigratorApplied/=JetBrains_002EReSharper_002EFeature_002EServices_002ECpp_002ECodeStyle_002ESettingsUpgrade_002EFunctionReturnStyleSettingsUpgrader/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/Environment/SettingsMigration/IsMigratorApplied/=JetBrains_002EReSharper_002EPsi_002ECSharp_002ECodeStyle_002ECSharpKeepExistingMigration/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/Environment/SettingsMigration/IsMigratorApplied/=JetBrains_002EReSharper_002EPsi_002ECSharp_002ECodeStyle_002ECSharpPlaceEmbeddedOnSameLineMigration/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/Environment/SettingsMigration/IsMigratorApplied/=JetBrains_002EReSharper_002EPsi_002ECSharp_002ECodeStyle_002ECSharpUseContinuousIndentInsideBracesMigration/@EntryIndexedValue">True</s:Boolean>
@@ -692,6 +699,7 @@
 	<s:String x:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=WithExpressionInsteadOfInitializer/@EntryIndexedValue">WARNING</s:String>
 	<s:String x:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=WrongIndentSize/@EntryIndexedValue">WARNING</s:String>
 	<s:String x:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=WrongMetadataUse/@EntryIndexedValue">WARNING</s:String>
+	<s:Boolean x:Key="/Default/Environment/SettingsMigration/IsMigratorApplied/=JetBrains_002EReSharper_002EPsi_002EVB_002ECodeStyle_002ESettingsUpgrade_002EVBSpaceAfterUnaryMigration/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/GrammarAndSpelling/GrammarChecking/Exceptions/=should_0020timeout/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/GrammarAndSpelling/GrammarChecking/Exceptions/=side_002Deffect/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/GrammarAndSpelling/GrammarChecking/Exceptions/=to_0020backup/@EntryIndexedValue">True</s:Boolean>
@@ -699,7 +707,14 @@
 	<s:String x:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=ConfigureAwaitChecker/@EntryIndexedValue">SUGGESTION</s:String>
 	<s:String x:Key="/Default/CodeStyle/CodeCleanup/Profiles/=Rivulet/@EntryIndexedValue">&lt;?xml version="1.0" encoding="utf-16"?&gt;&lt;Profile name="Rivulet"&gt;&lt;CSArrangeThisQualifier&gt;True&lt;/CSArrangeThisQualifier&gt;&lt;CSRemoveCodeRedundancies&gt;True&lt;/CSRemoveCodeRedundancies&gt;&lt;CSUseVarKeyword&gt;True&lt;/CSUseVarKeyword&gt;&lt;CSUpdateFileHeader&gt;False&lt;/CSUpdateFileHeader&gt;&lt;CSOptimizeUsings&gt;&lt;OptimizeUsings&gt;True&lt;/OptimizeUsings&gt;&lt;/CSOptimizeUsings&gt;&lt;CSShortenReferences&gt;True&lt;/CSShortenReferences&gt;&lt;CSReformatCode&gt;True&lt;/CSReformatCode&gt;&lt;CSFixBuiltinTypeReferences&gt;True&lt;/CSFixBuiltinTypeReferences&gt;&lt;/Profile&gt;</s:String>
 	<s:Boolean x:Key="/Default/Environment/SettingsMigration/IsMigratorApplied/=JetBrains_002EReSharper_002EPsi_002ECSharp_002ECodeStyle_002ESettingsUpgrade_002EPredefinedNamingRulesToUserRulesUpgrade/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=ACCESSORHOLDER/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=appsettings/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=DOWHILE/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=Deffect/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=FASMDEF/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=FFILENAME/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=IFELSE/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=OTLP/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=Singleline/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=testdb/@EntryIndexedValue">True</s:Boolean>
 </wpf:ResourceDictionary>

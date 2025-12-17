@@ -50,6 +50,7 @@ public sealed class RivuletStructuredLogListener : RivuletEventListenerBase, IAs
     /// </summary>
     /// <param name="logAction">Action to invoke with each JSON log line.</param>
     /// <param name="writeIndented">Whether to format JSON with indentation. Default is false for compact output.</param>
+    // ReSharper disable once MemberCanBeInternal
     public RivuletStructuredLogListener(Action<string> logAction, bool writeIndented = false)
     {
         _logAction = logAction ?? throw new ArgumentNullException(nameof(logAction));

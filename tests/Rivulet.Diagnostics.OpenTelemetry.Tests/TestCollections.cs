@@ -3,7 +3,7 @@ namespace Rivulet.Diagnostics.OpenTelemetry.Tests;
 /// <summary>
 ///     Defines shared test collection names as constants to avoid string duplication.
 /// </summary>
-public static class TestCollections
+internal static class TestCollections
 {
     /// <summary>
     ///     Collection for metrics tests that use EventSource singleton and must run sequentially.

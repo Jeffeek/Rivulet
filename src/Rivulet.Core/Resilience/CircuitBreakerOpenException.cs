@@ -1,8 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Rivulet.Core.Resilience;
 
 /// <summary>
 ///     Exception thrown when a circuit breaker is in the Open state and rejects operations.
 /// </summary>
+[SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public sealed class CircuitBreakerOpenException : Exception
 {
     /// <summary>

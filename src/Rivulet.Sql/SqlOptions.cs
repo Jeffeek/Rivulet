@@ -1,4 +1,5 @@
 using System.Data;
+using System.Diagnostics.CodeAnalysis;
 using Rivulet.Core;
 
 namespace Rivulet.Sql;
@@ -6,6 +7,7 @@ namespace Rivulet.Sql;
 /// <summary>
 ///     Configuration options for parallel SQL operations.
 /// </summary>
+[SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public sealed class SqlOptions
 {
     internal const int DefaultRetryCount = 3;

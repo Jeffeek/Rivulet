@@ -7,6 +7,10 @@ namespace Rivulet.Hosting.Sample;
 
 // Properties are accessed via JSON serialization when returned from API endpoints
 // ReSharper disable once MemberCanBeFileLocal
+[
+    SuppressMessage("ReSharper", "MemberCanBeInternal"),
+    SuppressMessage("ReSharper", "NotAccessedPositionalProperty.Global")
+]
 public sealed record FetchResult(
     string Url,
     int StatusCode,

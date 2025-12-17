@@ -42,6 +42,7 @@ public sealed class ConcurrencyAsserter
     /// <summary>
     ///     Resets the concurrency tracking using thread-safe operations.
     /// </summary>
+    // ReSharper disable once MemberCanBeInternal
     public void Reset()
     {
         Interlocked.Exchange(ref _currentConcurrency, 0);

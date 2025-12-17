@@ -1,8 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Rivulet.Core.Resilience;
 
 /// <summary>
 ///     Provides backoff delay calculations for retry strategies.
 /// </summary>
+[SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public static class BackoffCalculator
 {
     /// <summary>

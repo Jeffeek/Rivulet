@@ -50,6 +50,7 @@ public sealed class AggregatedMetrics
     /// <summary>
     ///     Gets the timestamp when the metrics were aggregated.
     /// </summary>
+    // ReSharper disable once MemberCanBeInternal
     public DateTime Timestamp { get; init; }
 }
 

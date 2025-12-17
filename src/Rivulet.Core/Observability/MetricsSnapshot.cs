@@ -1,9 +1,12 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Rivulet.Core.Observability;
 
 /// <summary>
 ///     Represents a snapshot of runtime metrics for parallel operations.
 ///     Provides visibility into active workers, queue depth, throughput, and error rates.
 /// </summary>
+[SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public sealed class MetricsSnapshot
 {
     /// <summary>

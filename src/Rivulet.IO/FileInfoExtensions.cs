@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Rivulet.IO.Internal;
 
 namespace Rivulet.IO;
@@ -5,6 +6,7 @@ namespace Rivulet.IO;
 /// <summary>
 ///     Extension methods for FileInfo to enable parallel operations on collections of FileInfo objects.
 /// </summary>
+[SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public static class FileInfoExtensions
 {
     /// <summary>

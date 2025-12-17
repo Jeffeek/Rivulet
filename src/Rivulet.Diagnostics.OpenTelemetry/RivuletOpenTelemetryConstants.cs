@@ -1,8 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Rivulet.Diagnostics.OpenTelemetry;
 
 /// <summary>
 ///     Constants for Rivulet OpenTelemetry integration to avoid magic strings and ensure consistency.
 /// </summary>
+[SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public static class RivuletOpenTelemetryConstants
 {
     /// <summary>

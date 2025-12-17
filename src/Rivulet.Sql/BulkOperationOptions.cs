@@ -1,8 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Rivulet.Sql;
 
 /// <summary>
 ///     Configuration options for bulk SQL operations.
 /// </summary>
+[SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public sealed class BulkOperationOptions
 {
     /// <summary>

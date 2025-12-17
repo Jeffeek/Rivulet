@@ -1,5 +1,6 @@
 ﻿using Rivulet.Core.Observability;
 using Rivulet.Core.Resilience;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Rivulet.Core;
 
@@ -7,6 +8,7 @@ namespace Rivulet.Core;
 ///     Configuration options for controlling parallel async operations, including concurrency limits,
 ///     error handling modes, retry policies, timeouts, and lifecycle hooks.
 /// </summary>
+[SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public sealed class ParallelOptionsRivulet
 {
     /// <summary>

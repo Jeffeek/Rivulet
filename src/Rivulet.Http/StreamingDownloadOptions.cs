@@ -1,8 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Rivulet.Http;
 
 /// <summary>
 ///     Configuration options for streaming downloads with resume support.
 /// </summary>
+[SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public sealed class StreamingDownloadOptions
 {
     /// <summary>

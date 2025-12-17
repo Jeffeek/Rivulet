@@ -83,6 +83,7 @@ public sealed class VirtualTimeProvider : IDisposable
     ///     Resets virtual time to zero and cancels all scheduled tasks.
     ///     Any tasks awaiting delays will be canceled.
     /// </summary>
+    // ReSharper disable once MemberCanBeInternal
     public void Reset()
     {
         var tasksToCancel = LockHelper.Execute(_lock,

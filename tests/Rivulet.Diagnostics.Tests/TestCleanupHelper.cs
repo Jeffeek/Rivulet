@@ -1,6 +1,6 @@
 namespace Rivulet.Diagnostics.Tests;
 
-public static class TestCleanupHelper
+internal static class TestCleanupHelper
 {
     public static void RetryDeleteFile(string filePath)
     {

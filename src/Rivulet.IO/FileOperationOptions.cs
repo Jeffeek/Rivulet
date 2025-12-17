@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using Rivulet.Core;
 
@@ -6,13 +7,14 @@ namespace Rivulet.IO;
 /// <summary>
 ///     Configuration options for file operations with Rivulet.IO.
 /// </summary>
+[SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public sealed class FileOperationOptions
 {
     /// <summary>
     ///     Gets or sets the buffer size for file read/write operations in bytes.
     ///     Default is 81920 bytes (80 KB).
     /// </summary>
-    public int BufferSize { get; set; } = 81920;
+    public int BufferSize { get; init; } = 81920;
 
     /// <summary>
     ///     Gets or sets the text encoding to use for text file operations.

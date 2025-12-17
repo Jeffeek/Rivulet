@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Rivulet.Core;
 
 namespace Rivulet.IO;
@@ -5,6 +6,7 @@ namespace Rivulet.IO;
 /// <summary>
 ///     Extension methods for parallel directory and file processing operations.
 /// </summary>
+[SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public static class DirectoryParallelExtensions
 {
     /// <summary>

@@ -1,4 +1,5 @@
 using Rivulet.Core.Internal;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Rivulet.Diagnostics;
 
@@ -28,6 +29,7 @@ namespace Rivulet.Diagnostics;
 ///     });
 /// </code>
 /// </example>
+[SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public sealed class DiagnosticsBuilder : IDisposable, IAsyncDisposable
 {
 #if NET9_0_OR_GREATER

@@ -1,5 +1,6 @@
 using System.Data;
 using System.Data.Common;
+using System.Diagnostics.CodeAnalysis;
 using Rivulet.Core;
 
 namespace Rivulet.Sql;
@@ -7,6 +8,7 @@ namespace Rivulet.Sql;
 /// <summary>
 ///     Extension methods for bulk SQL operations (inserts, updates, deletes).
 /// </summary>
+[SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public static class SqlBulkExtensions
 {
     /// <summary>

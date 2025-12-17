@@ -1,8 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Rivulet.Core.Observability;
 
 /// <summary>
 ///     Constants for Rivulet.Core metrics to avoid magic strings and ensure consistency.
 /// </summary>
+[SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public static class RivuletMetricsConstants
 {
     /// <summary>

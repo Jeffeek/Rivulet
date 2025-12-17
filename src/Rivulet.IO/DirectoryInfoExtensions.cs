@@ -1,8 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Rivulet.IO;
 
 /// <summary>
 ///     Extension methods for DirectoryInfo to enable parallel directory operations.
 /// </summary>
+[SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public static class DirectoryInfoExtensions
 {
     /// <summary>

@@ -1,5 +1,7 @@
 // HttpClient instances from IHttpClientFactory should NOT be disposed - the factory manages their lifecycle
 
+using System.Diagnostics.CodeAnalysis;
+
 #pragma warning disable CA2000 // Do not dispose objects before losing scope
 
 namespace Rivulet.Http;
@@ -7,6 +9,7 @@ namespace Rivulet.Http;
 /// <summary>
 ///     Provides integration between Rivulet parallel HTTP operations and IHttpClientFactory.
 /// </summary>
+[SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public static class HttpClientFactoryExtensions
 {
     /// <summary>

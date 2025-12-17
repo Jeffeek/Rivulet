@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Rivulet.Core;
 using Rivulet.IO.Internal;
 
@@ -6,6 +7,7 @@ namespace Rivulet.IO;
 /// <summary>
 ///     Extension methods for parallel file operations with bounded concurrency and resilience.
 /// </summary>
+[SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public static class FileParallelExtensions
 {
     /// <summary>

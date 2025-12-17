@@ -1,8 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Rivulet.Core.Observability;
 
 /// <summary>
 ///     Represents a snapshot of progress information for a parallel operation at a specific point in time.
 /// </summary>
+[SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public sealed class ProgressSnapshot
 {
     /// <summary>

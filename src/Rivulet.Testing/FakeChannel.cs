@@ -23,6 +23,7 @@ public sealed class FakeChannel<T> : IDisposable
     /// <summary>
     ///     Gets the channel writer.
     /// </summary>
+    // ReSharper disable once MemberCanBeInternal
     public ChannelWriter<T> Writer => _innerChannel.Writer;
 
     /// <summary>
@@ -69,6 +70,7 @@ public sealed class FakeChannel<T> : IDisposable
     /// <summary>
     ///     Reads an item from the channel and increments the read counter.
     /// </summary>
+    // ReSharper disable once MemberCanBeInternal
     public async ValueTask<T> ReadAsync(CancellationToken cancellationToken = default)
     {
         ObjectDisposedException.ThrowIf(_disposed, nameof(FakeChannel<T>));
@@ -87,6 +89,7 @@ public sealed class FakeChannel<T> : IDisposable
     /// <summary>
     ///     Resets the read and write counters using thread-safe operations.
     /// </summary>
+    // ReSharper disable once MemberCanBeInternal
     public void ResetCounters()
     {
         Interlocked.Exchange(ref _writeCount, 0);

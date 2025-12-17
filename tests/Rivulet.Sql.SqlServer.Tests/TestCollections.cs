@@ -3,7 +3,7 @@ namespace Rivulet.Sql.SqlServer.Tests;
 /// <summary>
 ///     Defines shared test collection names as constants to avoid string duplication.
 /// </summary>
-public static class TestCollections
+internal static class TestCollections
 {
     /// <summary>
     ///     Collection for SQL Server integration tests that share a container.

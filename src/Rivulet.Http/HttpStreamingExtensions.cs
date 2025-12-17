@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using Rivulet.Core;
 
@@ -7,6 +8,7 @@ namespace Rivulet.Http;
 /// <summary>
 ///     Provides streaming download operations with resume support and parallel processing.
 /// </summary>
+[SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public static class HttpStreamingExtensions
 {
     /// <summary>

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Polly;
 using Polly.Timeout;
 using Rivulet.Core;
@@ -9,6 +10,7 @@ namespace Rivulet.Polly;
 /// <summary>
 ///     Converts Rivulet resilience options to Polly resilience pipelines.
 /// </summary>
+[SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public static class RivuletToPollyConverter
 {
     /// <summary>
