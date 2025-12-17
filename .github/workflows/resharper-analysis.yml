@@ -3,7 +3,6 @@ name: ReSharper Code Analysis
 on:
   workflow_dispatch:
   pull_request:
-    types: [opened, reopened]
     branches:
       - "master"
       - "release/**"
@@ -53,7 +52,6 @@ jobs:
          output: linter-reports/resharper-report.xml
          format: Xml
          jobs: 0
-         exclude: "**/obj/**;**/bin/**;**/TestResults/**;**/samples/**;**/tests/**"
          verbosity: WARN
          severity: WARN
          no-build: True
