@@ -153,7 +153,7 @@ public class RivuletMetricsExporterTests : IDisposable
         var items = Enumerable.Range(1, 50);
 
         await items.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(1, ct);
                 return x * 2;

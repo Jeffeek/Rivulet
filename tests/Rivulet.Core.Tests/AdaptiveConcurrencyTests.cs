@@ -212,7 +212,7 @@ public sealed class AdaptiveConcurrencyTests
         // Poll for callbacks with timeout
         await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddSeconds(2),
-            () => Task.Delay(50),
+            static () => Task.Delay(50),
             () => concurrencyLevels.Count == 0);
 
         // Should have decreased concurrency due to low success rate
@@ -247,8 +247,7 @@ public sealed class AdaptiveConcurrencyTests
             }
         };
 
-        var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+        var results = await source.SelectParallelAsync(static async (x, ct) =>
             {
                 await Task.Delay(10, ct);
                 return x * 2;
@@ -260,7 +259,7 @@ public sealed class AdaptiveConcurrencyTests
         // Poll for callbacks with timeout (may not change if already optimal)
         await Task.Delay(500);
 
-        lock (concurrencyLevels) concurrencyLevels.ShouldAllBe(c => c >= 3 && c <= 5);
+        lock (concurrencyLevels) concurrencyLevels.ShouldAllBe(static c => c >= 3 && c <= 5);
     }
 
     [Fact]
@@ -300,7 +299,7 @@ public sealed class AdaptiveConcurrencyTests
         // Poll for callbacks with timeout
         await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddSeconds(2),
-            () => Task.Delay(50),
+            static () => Task.Delay(50),
             () => concurrencyLevels.Count == 0);
 
         lock (concurrencyLevels) concurrencyLevels.ShouldNotBeEmpty();
@@ -468,8 +467,7 @@ public sealed class AdaptiveConcurrencyTests
             }
         };
 
-        var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+        var results = await source.SelectParallelAsync(static async (x, ct) =>
             {
                 await Task.Delay(50, ct); // High latency
                 return x * 2;
@@ -480,7 +478,7 @@ public sealed class AdaptiveConcurrencyTests
 
         await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddSeconds(3),
-            () => Task.Delay(50),
+            static () => Task.Delay(50),
             () => concurrencyLevels.Count == 0);
 
         lock (concurrencyLevels)
@@ -514,8 +512,7 @@ public sealed class AdaptiveConcurrencyTests
             }
         };
 
-        var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+        var results = await source.SelectParallelAsync(static async (x, ct) =>
             {
                 await Task.Delay(10, ct);
                 return x * 2;

@@ -27,7 +27,7 @@ public class RateLimitingTests
         };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(1, ct); // Minimal work
                 return x * 2;
@@ -60,7 +60,7 @@ public class RateLimitingTests
         };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(1, ct);
                 return x * 2;
@@ -94,7 +94,7 @@ public class RateLimitingTests
         };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(1, ct);
                 return x * 2;
@@ -122,7 +122,7 @@ public class RateLimitingTests
             MaxDegreeOfParallelism = 30, RateLimit = new() { TokensPerSecond = 100, BurstCapacity = 30 }
         };
 
-        var count = await source.SelectParallelStreamAsync(async (x, ct) =>
+        var count = await source.SelectParallelStreamAsync(static async (x, ct) =>
                 {
                     await Task.Delay(1, ct);
                     return x * 2;
@@ -150,7 +150,7 @@ public class RateLimitingTests
         };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(1, ct);
                 return x * 2;
@@ -255,7 +255,7 @@ public class RateLimitingTests
         {
             MaxDegreeOfParallelism = 15,
             MaxRetries = 2,
-            IsTransient = ex => ex is InvalidOperationException,
+            IsTransient = static ex => ex is InvalidOperationException,
             RateLimit = new() { TokensPerSecond = 50, BurstCapacity = 20 }
         };
 
@@ -291,7 +291,7 @@ public class RateLimitingTests
         };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(Random.Shared.Next(1, 10), ct);
                 return x * 2;
@@ -322,7 +322,7 @@ public class RateLimitingTests
         };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(1, ct);
                 return x * 2;
@@ -356,7 +356,7 @@ public class RateLimitingTests
         };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(1, ct);
                 return x * 2;
@@ -384,7 +384,7 @@ public class RateLimitingTests
         };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(1, ct);
                 if (x % 5 == 0) throw new InvalidOperationException("Error");

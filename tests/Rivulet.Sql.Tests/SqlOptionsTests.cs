@@ -261,7 +261,7 @@ public class SqlOptionsTests
     {
         var customParallelOptions = new ParallelOptionsRivulet
         {
-            IsTransient = ex => ex is ArgumentException // User defines ArgumentException as transient
+            IsTransient = static ex => ex is ArgumentException // User defines ArgumentException as transient
         };
 
         var options = new SqlOptions { ParallelOptions = customParallelOptions };

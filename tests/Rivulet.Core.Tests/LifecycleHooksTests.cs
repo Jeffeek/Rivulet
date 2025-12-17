@@ -18,7 +18,7 @@ public sealed class LifecycleHooksTests
             }
         };
 
-        await source.SelectParallelAsync((x, _) => new ValueTask<int>(x * 2), options);
+        await source.SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2), options);
 
         startedItems.Count.ShouldBe(10);
     }
@@ -37,7 +37,7 @@ public sealed class LifecycleHooksTests
             }
         };
 
-        await source.SelectParallelAsync((x, _) => new ValueTask<int>(x * 2), options);
+        await source.SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2), options);
 
         completedItems.Count.ShouldBe(10);
     }
@@ -116,7 +116,7 @@ public sealed class LifecycleHooksTests
         };
 
         await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(1, ct);
                 return x * 2;
@@ -146,7 +146,7 @@ public sealed class LifecycleHooksTests
             }
         };
 
-        await source.SelectParallelAsync((x, _) => new ValueTask<int>(x * 2), options);
+        await source.SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2), options);
 
         events.Count.ShouldBe(10);
     }
@@ -210,7 +210,7 @@ public sealed class LifecycleHooksTests
             }
         };
 
-        var results = await source.SelectParallelStreamAsync((x, _) => new ValueTask<int>(x * 2), options).ToListAsync();
+        var results = await source.SelectParallelStreamAsync(static (x, _) => new ValueTask<int>(x * 2), options).ToListAsync();
 
         startedItems.Count.ShouldBe(10);
         completedItems.Count.ShouldBe(10);
@@ -286,7 +286,7 @@ public sealed class LifecycleHooksTests
             OnDrainAsync = null
         };
 
-        var results = await source.SelectParallelAsync((x, _) => new ValueTask<int>(x * 2), options);
+        var results = await source.SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2), options);
 
         results.Count.ShouldBe(10);
     }
@@ -310,7 +310,7 @@ public sealed class LifecycleHooksTests
             }
         };
 
-        await source.SelectParallelAsync((x, _) => new ValueTask<int>(x * 2), options);
+        await source.SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2), options);
 
         asyncWorkDone.Count.ShouldBe(10);
     }
@@ -321,7 +321,7 @@ public sealed class LifecycleHooksTests
         var source = Enumerable.Range(1, 50);
         var options = new ParallelOptionsRivulet { OnThrottleAsync = null };
 
-        var results = await source.SelectParallelAsync((x, _) => new ValueTask<int>(x * 2), options);
+        var results = await source.SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2), options);
 
         results.Count.ShouldBe(50);
     }

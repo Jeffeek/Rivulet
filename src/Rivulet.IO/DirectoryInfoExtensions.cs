@@ -112,7 +112,8 @@ public static class DirectoryInfoExtensions
         ArgumentNullException.ThrowIfNull(sourceDirectory);
         ArgumentNullException.ThrowIfNull(transformFunc);
 
-        if (!sourceDirectory.Exists) throw new DirectoryNotFoundException($"Source directory not found: {sourceDirectory.FullName}");
+        if (!sourceDirectory.Exists)
+            throw new DirectoryNotFoundException($"Source directory not found: {sourceDirectory.FullName}");
 
         return DirectoryParallelExtensions.TransformDirectoryFilesParallelAsync(
             sourceDirectory.FullName,
@@ -145,7 +146,8 @@ public static class DirectoryInfoExtensions
     {
         ArgumentNullException.ThrowIfNull(sourceDirectory);
 
-        if (!sourceDirectory.Exists) throw new DirectoryNotFoundException($"Source directory not found: {sourceDirectory.FullName}");
+        if (!sourceDirectory.Exists)
+            throw new DirectoryNotFoundException($"Source directory not found: {sourceDirectory.FullName}");
 
         return DirectoryParallelExtensions.CopyDirectoryFilesParallelAsync(
             sourceDirectory.FullName,

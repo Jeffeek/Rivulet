@@ -28,7 +28,7 @@ public class RivuletFileListenerTests : IDisposable
             // 10 items * 300ms / 2 parallelism = 1500ms of operation time
             await Enumerable.Range(1, 10)
                 .ToAsyncEnumerable()
-                .SelectParallelStreamAsync(async (x, ct) =>
+                .SelectParallelStreamAsync(static async (x, ct) =>
                     {
                         await Task.Delay(300, ct);
                         return x * 2;
@@ -64,7 +64,7 @@ public class RivuletFileListenerTests : IDisposable
             // 10 items * 300ms / 2 parallelism = 1500ms of operation time per iteration
             await Enumerable.Range(1, 10)
                 .ToAsyncEnumerable()
-                .SelectParallelStreamAsync(async (x, ct) =>
+                .SelectParallelStreamAsync(static async (x, ct) =>
                     {
                         await Task.Delay(300, ct);
                         return x;

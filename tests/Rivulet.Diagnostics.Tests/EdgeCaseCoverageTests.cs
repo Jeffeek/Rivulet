@@ -33,7 +33,7 @@ public class EdgeCaseCoverageTests
         {
             await Enumerable.Range(1, 100)
                 .ToAsyncEnumerable()
-                .SelectParallelStreamAsync(async (x, ct) =>
+                .SelectParallelStreamAsync(static async (x, ct) =>
                     {
                         await Task.Delay(5, ct);
                         if (x <= 90) throw new InvalidOperationException("Test failure");
@@ -130,7 +130,7 @@ public class EdgeCaseCoverageTests
                 // 5 items * 200ms / 2 parallelism = 500ms minimum operation time
                 await Enumerable.Range(1, 5)
                     .ToAsyncEnumerable()
-                    .SelectParallelStreamAsync(async (x, ct) =>
+                    .SelectParallelStreamAsync(static async (x, ct) =>
                         {
                             await Task.Delay(200, ct);
                             return x;
@@ -142,7 +142,7 @@ public class EdgeCaseCoverageTests
                 {
                     await Enumerable.Range(1, 5)
                         .ToAsyncEnumerable()
-                        .SelectParallelStreamAsync(async (x, ct) =>
+                        .SelectParallelStreamAsync(static async (x, ct) =>
                             {
                                 await Task.Delay(200, ct);
                                 return x % 2 == 0 ? throw new InvalidOperationException() : x;
@@ -184,7 +184,7 @@ public class EdgeCaseCoverageTests
                 // 5 items * 200ms / 2 parallelism = 500ms minimum operation time
                 await Enumerable.Range(1, 5)
                     .ToAsyncEnumerable()
-                    .SelectParallelStreamAsync(async (x, ct) =>
+                    .SelectParallelStreamAsync(static async (x, ct) =>
                         {
                             await Task.Delay(200, ct);
                             return x;
@@ -219,7 +219,7 @@ public class EdgeCaseCoverageTests
             // 5 items * 200ms / 2 parallelism = 500ms minimum operation time
             await Enumerable.Range(1, 5)
                 .ToAsyncEnumerable()
-                .SelectParallelStreamAsync(async (x, ct) =>
+                .SelectParallelStreamAsync(static async (x, ct) =>
                     {
                         await Task.Delay(200, ct);
                         return x;
@@ -248,7 +248,7 @@ public class EdgeCaseCoverageTests
         // 5 items * 200ms / 2 parallelism = 500ms minimum operation time
         await Enumerable.Range(1, 5)
             .ToAsyncEnumerable()
-            .SelectParallelStreamAsync(async (x, ct) =>
+            .SelectParallelStreamAsync(static async (x, ct) =>
                 {
                     await Task.Delay(200, ct);
                     return x;
@@ -288,7 +288,7 @@ public class EdgeCaseCoverageTests
         // 5 items * 200ms / 2 parallelism = 500ms minimum operation time
         await Enumerable.Range(1, 5)
             .ToAsyncEnumerable()
-            .SelectParallelStreamAsync(async (x, ct) =>
+            .SelectParallelStreamAsync(static async (x, ct) =>
                 {
                     await Task.Delay(200, ct);
                     return x;

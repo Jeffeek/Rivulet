@@ -31,7 +31,7 @@ public class ParallelOptionsRivuletExtensionsTests
         var options = new ParallelOptionsRivulet { MaxDegreeOfParallelism = 2 }.WithOpenTelemetryTracing("TestOperation");
 
         var results = await items.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(1, ct);
                 return x * 2;
@@ -69,7 +69,7 @@ public class ParallelOptionsRivuletExtensionsTests
         var options = new ParallelOptionsRivulet().WithOpenTelemetryTracing("SuccessOperation");
 
         var results = await items.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(1, ct);
                 return x;
@@ -113,7 +113,7 @@ public class ParallelOptionsRivuletExtensionsTests
         try
         {
             await items.SelectParallelAsync<int, int>(
-                async (x, ct) =>
+                static async (x, ct) =>
                 {
                     await Task.Delay(1, ct);
                     throw new InvalidOperationException($"Error {x}");
@@ -209,7 +209,7 @@ public class ParallelOptionsRivuletExtensionsTests
         }.WithOpenTelemetryTracing("PreserveHooksOperation");
 
         var results = await items.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(1, ct);
                 return x;
@@ -324,7 +324,7 @@ public class ParallelOptionsRivuletExtensionsTests
         }.WithOpenTelemetryTracing("AdaptiveConcurrencyOperation");
 
         var results = await items.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 // Vary latency significantly to force adjustments
                 var delay = x <= 10 ? 20 : 1;
@@ -382,7 +382,7 @@ public class ParallelOptionsRivuletExtensionsTests
         var options = new ParallelOptionsRivulet().WithOpenTelemetryTracing("IndexTagsOperation");
 
         await items.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(1, ct);
                 return x;
@@ -408,7 +408,7 @@ public class ParallelOptionsRivuletExtensionsTests
         var options = new ParallelOptionsRivulet().WithOpenTelemetryTracing("NoListenerOperation");
 
         var act = async () => await items.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(1, ct);
                 return x;

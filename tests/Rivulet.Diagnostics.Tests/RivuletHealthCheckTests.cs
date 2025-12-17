@@ -57,7 +57,7 @@ public class RivuletHealthCheckTests
         // 10 items * 200ms / 2 parallelism = 1000ms (1 second) minimum operation time
         await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
-            .SelectParallelStreamAsync(async (x, ct) =>
+            .SelectParallelStreamAsync(static async (x, ct) =>
                 {
                     await Task.Delay(200, ct);
                     return x * 2;
@@ -178,7 +178,7 @@ public class RivuletHealthCheckTests
             // enough operations for EventCounter to poll
             await Enumerable.Range(1, 5000)
                 .ToAsyncEnumerable()
-                .SelectParallelStreamAsync(async (x, ct) =>
+                .SelectParallelStreamAsync(static async (x, ct) =>
                     {
                         await Task.Delay(1, ct);
                         if (x <= 4000) throw new InvalidOperationException("Test error");
@@ -257,7 +257,7 @@ public class RivuletHealthCheckTests
         // 5 items * 100ms / 2 parallelism = 250ms minimum operation time
         await Enumerable.Range(1, 5)
             .ToAsyncEnumerable()
-            .SelectParallelStreamAsync(async (x, ct) =>
+            .SelectParallelStreamAsync(static async (x, ct) =>
                 {
                     await Task.Delay(100, ct);
                     return x * 2;

@@ -25,7 +25,7 @@ public sealed class CircuitBreakerTests
     [Fact]
     public void CircuitBreakerOptions_Validation_ThrowsOnInvalidOpenTimeout()
     {
-        var act = () => new CircuitBreakerOptions { OpenTimeout = TimeSpan.Zero }.Validate();
+        var act = static () => new CircuitBreakerOptions { OpenTimeout = TimeSpan.Zero }.Validate();
         act.ShouldThrow<ArgumentException>().Message.ShouldContain("OpenTimeout");
     }
 
@@ -384,7 +384,7 @@ public sealed class CircuitBreakerTests
         };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(1, ct);
                 // Fail for items 1, 2, 3
@@ -411,7 +411,7 @@ public sealed class CircuitBreakerTests
             ErrorMode = ErrorMode.BestEffort
         };
 
-        var results = await source.SelectParallelStreamAsync(async (x, ct) =>
+        var results = await source.SelectParallelStreamAsync(static async (x, ct) =>
                 {
                     await Task.Delay(1, ct);
 
@@ -438,7 +438,7 @@ public sealed class CircuitBreakerTests
         {
             MaxDegreeOfParallelism = 1,
             MaxRetries = 2,
-            IsTransient = ex => ex is InvalidOperationException,
+            IsTransient = static ex => ex is InvalidOperationException,
             CircuitBreaker = new()
             {
                 FailureThreshold = 2, // Open after 2 items fully fail (after retries)
@@ -514,7 +514,7 @@ public sealed class CircuitBreakerTests
         };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(Random.Shared.Next(1, 10), ct);
                 return x * 2;
@@ -633,7 +633,7 @@ public sealed class CircuitBreakerTests
                 lock (transitions)
                 {
                     var hasOpen = transitions.Any(t => t.Item2 == CircuitBreakerState.Open);
-                    var hasOther = transitions.Any(t => t.Item2 == CircuitBreakerState.HalfOpen || t.Item2 == CircuitBreakerState.Closed);
+                    var hasOther = transitions.Any(t => t.Item2 is CircuitBreakerState.HalfOpen or CircuitBreakerState.Closed);
                     return !hasOpen || !hasOther;
                 }
             });

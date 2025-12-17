@@ -30,7 +30,7 @@ public class ProgressReportingTests
         };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(10, ct);
                 return x * 2;
@@ -69,7 +69,7 @@ public class ProgressReportingTests
         };
 
         var results = await source.SelectParallelStreamAsync(
-                async (x, ct) =>
+                static async (x, ct) =>
                 {
                     await Task.Delay(10, ct);
                     return x * 2;
@@ -111,7 +111,7 @@ public class ProgressReportingTests
         };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 // Increased delay to ensure operation spans multiple timer intervals
                 // This gives the timer adequate time to capture all error states
@@ -166,7 +166,7 @@ public class ProgressReportingTests
         };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(20, ct);
                 return x;
@@ -203,7 +203,7 @@ public class ProgressReportingTests
         };
 
         await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(10, ct);
                 return x;
@@ -235,7 +235,7 @@ public class ProgressReportingTests
         };
 
         await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(10, ct);
                 return x;
@@ -256,7 +256,7 @@ public class ProgressReportingTests
         var options = new ParallelOptionsRivulet { Progress = null };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(5, ct);
                 return x * 2;
@@ -287,7 +287,7 @@ public class ProgressReportingTests
         };
 
         await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(20, ct);
                 return x;
@@ -320,7 +320,7 @@ public class ProgressReportingTests
         };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(10, ct);
                 return x * 2;
@@ -386,7 +386,7 @@ public class ProgressReportingTests
         };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(5, ct);
                 return x * 2;
@@ -417,7 +417,7 @@ public class ProgressReportingTests
         };
 
         await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(10, ct);
                 return x;
@@ -451,7 +451,7 @@ public class ProgressReportingTests
         };
 
         var results = await source.SelectParallelStreamAsync(
-                async (x, ct) =>
+                static async (x, ct) =>
                 {
                     await Task.Delay(10, ct);
                     return x * 2;
@@ -486,7 +486,7 @@ public class ProgressReportingTests
         };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(5, ct);
                 if (x % 5 == 0) throw new InvalidOperationException("Permanent error");
@@ -561,7 +561,7 @@ public class ProgressReportingTests
         };
 
         var act = () => source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(10, ct);
                 return x;
@@ -581,7 +581,7 @@ public class ProgressReportingTests
         var options = new ParallelOptionsRivulet { Progress = new() { ReportInterval = TimeSpan.FromMilliseconds(50), OnProgress = null } };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(5, ct);
                 return x * 2;
@@ -642,7 +642,7 @@ public class ProgressReportingTests
         };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(5, ct);
                 return x * 2;
@@ -672,7 +672,7 @@ public class ProgressReportingTests
         };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(5, ct);
                 return x;
@@ -691,7 +691,7 @@ public class ProgressReportingTests
         var options = new ParallelOptionsRivulet { Progress = new() { OnProgress = null } };
 
         var results = await source.SelectParallelStreamAsync(
-                async (x, ct) =>
+                static async (x, ct) =>
                 {
                     await Task.Delay(5, ct);
                     return x * 2;
@@ -716,7 +716,7 @@ public class ProgressReportingTests
         await cts.CancelAsync();
 
         var act = () => source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(100, ct);
                 return x;
@@ -747,7 +747,7 @@ public class ProgressReportingTests
         };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(5, ct);
                 return x;
@@ -805,7 +805,7 @@ public class ProgressReportingTests
         for (var i = 0; i < 3; i++)
         {
             var results = await source.SelectParallelAsync(
-                async (x, ct) =>
+                static async (x, ct) =>
                 {
                     await Task.Delay(2, ct);
                     return x;

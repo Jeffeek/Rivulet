@@ -13,7 +13,7 @@ public sealed class EdgeCaseCoverageTests
         var options = new ParallelOptionsRivulet { MaxDegreeOfParallelism = 10 };
 
         var result = await Enumerable.Range(1, 3)
-            .SelectParallelAsync((x, _) => ValueTask.FromResult(x), options);
+            .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x), options);
 
         result.Count.ShouldBe(3);
     }
@@ -48,7 +48,7 @@ public sealed class EdgeCaseCoverageTests
         var options = new ParallelOptionsRivulet { MaxDegreeOfParallelism = 5 };
 
         var result = await Enumerable.Range(1, 10)
-            .SelectParallelAsync((x, _) => ValueTask.FromResult(x), options);
+            .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x), options);
 
         result.Count.ShouldBe(10);
     }
@@ -103,7 +103,7 @@ public sealed class EdgeCaseCoverageTests
         var options = new ParallelOptionsRivulet { MaxDegreeOfParallelism = 10 };
 
         var result = await Enumerable.Range(1, 20)
-            .SelectParallelAsync((x, _) => ValueTask.FromResult(x * 2), options);
+            .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x * 2), options);
 
         result.Count.ShouldBe(20);
     }
@@ -128,7 +128,7 @@ public sealed class EdgeCaseCoverageTests
         };
 
         var result = await Enumerable.Range(1, 50)
-            .SelectParallelAsync(async (x, ct) =>
+            .SelectParallelAsync(static async (x, ct) =>
                 {
                     var delay = x % 2 == 0 ? 10 : 100;
                     await Task.Delay(delay, ct);
@@ -145,7 +145,7 @@ public sealed class EdgeCaseCoverageTests
         var emptySource = Enumerable.Empty<int>();
 
         var result = await emptySource.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(1, ct);
                 return x;
@@ -161,7 +161,7 @@ public sealed class EdgeCaseCoverageTests
         var singleItem = Enumerable.Range(1, 1);
 
         var result = await singleItem.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(10, ct);
                 return x * 2;
@@ -178,7 +178,7 @@ public sealed class EdgeCaseCoverageTests
         var options = new ParallelOptionsRivulet { MaxDegreeOfParallelism = 2, ErrorMode = ErrorMode.BestEffort };
 
         var result = await Enumerable.Range(1, 10)
-            .SelectParallelAsync(async (x, ct) =>
+            .SelectParallelAsync(static async (x, ct) =>
                 {
                     await Task.Delay(1, ct);
                     if (x % 3 == 0) throw new InvalidOperationException($"Failed on {x}");
@@ -236,7 +236,7 @@ public sealed class EdgeCaseCoverageTests
         };
 
         var result = await Enumerable.Range(1, 5)
-            .SelectParallelAsync(async (x, ct) =>
+            .SelectParallelAsync(static async (x, ct) =>
                 {
                     await Task.Delay(10, ct);
                     return x * 2;
@@ -265,7 +265,7 @@ public sealed class EdgeCaseCoverageTests
         };
 
         var task = Enumerable.Range(1, 100)
-            .SelectParallelAsync(async (x, ct) =>
+            .SelectParallelAsync(static async (x, ct) =>
                 {
                     await Task.Delay(20, ct);
                     return x;

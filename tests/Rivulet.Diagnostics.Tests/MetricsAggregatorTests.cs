@@ -23,7 +23,7 @@ public class MetricsAggregatorTests
         // 5 items * 200ms / 2 parallelism = 500ms (0.5 second) of operation time
         await Enumerable.Range(1, 5)
             .ToAsyncEnumerable()
-            .SelectParallelStreamAsync(async (x, ct) =>
+            .SelectParallelStreamAsync(static async (x, ct) =>
                 {
                     await Task.Delay(200, ct);
                     return x * 2;
@@ -71,7 +71,7 @@ public class MetricsAggregatorTests
         // 5 items * 200ms / 2 parallelism = 500ms minimum operation time
         await Enumerable.Range(1, 5)
             .ToAsyncEnumerable()
-            .SelectParallelStreamAsync(async (x, ct) =>
+            .SelectParallelStreamAsync(static async (x, ct) =>
                 {
                     await Task.Delay(200, ct);
                     return x;
@@ -120,7 +120,7 @@ public class MetricsAggregatorTests
         // Use longer operation to ensure EventCounters have time to poll and emit metrics
         await Enumerable.Range(1, 20)
             .ToAsyncEnumerable()
-            .SelectParallelStreamAsync(async (x, ct) =>
+            .SelectParallelStreamAsync(static async (x, ct) =>
                 {
                     await Task.Delay(50, ct);
                     return x;

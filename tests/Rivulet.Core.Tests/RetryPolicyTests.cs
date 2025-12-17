@@ -37,7 +37,7 @@ public class RetryPolicyTests
             ErrorMode = ErrorMode.BestEffort,
             MaxRetries = 3,
             BaseDelay = TimeSpan.FromMilliseconds(10),
-            IsTransient = ex => ex is InvalidOperationException
+            IsTransient = static ex => ex is InvalidOperationException
         };
 
         var results = await source.SelectParallelAsync(
@@ -64,7 +64,7 @@ public class RetryPolicyTests
             ErrorMode = ErrorMode.BestEffort,
             MaxRetries = 3,
             BaseDelay = TimeSpan.FromMilliseconds(10),
-            IsTransient = ex => ex is TimeoutException
+            IsTransient = static ex => ex is TimeoutException
         };
 
         var results = await source.SelectParallelAsync(
@@ -147,7 +147,7 @@ public class RetryPolicyTests
             ErrorMode = ErrorMode.BestEffort,
             MaxRetries = 2,
             BaseDelay = TimeSpan.FromMilliseconds(10),
-            IsTransient = ex => ex is InvalidOperationException
+            IsTransient = static ex => ex is InvalidOperationException
         };
 
         var results = await source.SelectParallelStreamAsync((x, _) =>
@@ -252,7 +252,7 @@ public class RetryPolicyTests
             ErrorMode = ErrorMode.BestEffort,
             MaxRetries = 2,
             BaseDelay = TimeSpan.FromMilliseconds(10),
-            IsTransient = ex => ex is TimeoutException
+            IsTransient = static ex => ex is TimeoutException
         };
 
         var results = await source.SelectParallelAsync(

@@ -4,6 +4,7 @@ using Rivulet.Core.Resilience;
 
 namespace Rivulet.Core.Tests;
 
+[SuppressMessage("ReSharper", "AccessToDisposedClosure")]
 public sealed class BackoffStrategyTests
 {
     [Fact]
@@ -23,7 +24,7 @@ public sealed class BackoffStrategyTests
         var results = await new[] { 1, 2, 3 }.SelectParallelAsync(
             (x, _) =>
             {
-                var attempts = attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
+                var attempts = attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
                 if (x == 2 && attempts <= 2) throw new InvalidOperationException("Transient error");
 
                 return new ValueTask<int>(x * 2);
@@ -49,7 +50,7 @@ public sealed class BackoffStrategyTests
         var results = await new[] { 1, 2, 3 }.SelectParallelAsync(
             (x, _) =>
             {
-                var attempts = attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
+                var attempts = attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
                 if (x == 2 && attempts <= 2) throw new InvalidOperationException("Transient error");
 
                 return new ValueTask<int>(x * 2);
@@ -75,7 +76,7 @@ public sealed class BackoffStrategyTests
         var results = await new[] { 1, 2, 3 }.SelectParallelAsync(
             (x, _) =>
             {
-                var attempts = attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
+                var attempts = attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
                 if (x == 2 && attempts <= 2) throw new InvalidOperationException("Transient error");
 
                 return new ValueTask<int>(x * 2);
@@ -102,7 +103,7 @@ public sealed class BackoffStrategyTests
         var results = await new[] { 1, 2, 3 }.SelectParallelAsync(
             (x, _) =>
             {
-                var attempts = attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
+                var attempts = attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
                 if (x == 2 && attempts <= 2) throw new InvalidOperationException("Transient error");
 
                 return new ValueTask<int>(x * 2);
@@ -129,7 +130,7 @@ public sealed class BackoffStrategyTests
         var results = await new[] { 1, 2, 3 }.SelectParallelAsync(
             (x, _) =>
             {
-                var attempts = attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
+                var attempts = attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
                 if (x == 2 && attempts <= 2) throw new InvalidOperationException("Transient error");
 
                 return new ValueTask<int>(x * 2);
@@ -165,7 +166,7 @@ public sealed class BackoffStrategyTests
         var results = await source.SelectParallelStreamAsync(
                 (x, _) =>
                 {
-                    var attempts = attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
+                    var attempts = attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
                     if (x == 5 && attempts <= 2) throw new InvalidOperationException("Transient error");
 
                     return new ValueTask<int>(x * 2);
@@ -178,7 +179,6 @@ public sealed class BackoffStrategyTests
     }
 
     [Fact]
-    [SuppressMessage("ReSharper", "AccessToDisposedClosure")]
     public async Task BackoffStrategy_CancellationDuringDelay_ThrowsOperationCanceledException()
     {
         using var cts = new CancellationTokenSource();
@@ -233,15 +233,13 @@ public sealed class BackoffStrategyTests
         var results = await source.SelectParallelAsync(
             (x, _) =>
             {
-                var attempts = attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
-                if (attempts <= 2) throw new InvalidOperationException($"Transient error for {x}");
-
-                return new ValueTask<int>(x * 2);
+                var attempts = attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
+                return attempts <= 2 ? throw new InvalidOperationException($"Transient error for {x}") : new ValueTask<int>(x * 2);
             },
             options);
 
         results.Count.ShouldBe(5);
-        attemptCounts.Values.ShouldAllBe(count => count == 3);
+        attemptCounts.Values.ShouldAllBe(static count => count == 3);
     }
 
     [Fact]
@@ -262,10 +260,8 @@ public sealed class BackoffStrategyTests
         var act = () => source.SelectParallelAsync(
             (x, _) =>
             {
-                attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
-                if (x == 2) throw new InvalidOperationException("Always fails");
-
-                return new ValueTask<int>(x * 2);
+                attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
+                return x == 2 ? throw new InvalidOperationException("Always fails") : new ValueTask<int>(x * 2);
             },
             options);
 
@@ -303,7 +299,7 @@ public sealed class BackoffStrategyTests
         await source.ForEachParallelAsync(
             (x, _) =>
             {
-                var attempts = attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
+                var attempts = attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
                 if (x == 5 && attempts <= 2) throw new InvalidOperationException("Transient error");
 
                 Interlocked.Increment(ref processedCount);
@@ -328,10 +324,8 @@ public sealed class BackoffStrategyTests
         var results = await new[] { 1 }.SelectParallelAsync(
             (x, _) =>
             {
-                var attempts = attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
-                if (attempts <= 2) throw new InvalidOperationException("Transient error");
-
-                return new ValueTask<int>(x);
+                var attempts = attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
+                return attempts <= 2 ? throw new InvalidOperationException("Transient error") : new ValueTask<int>(x);
             },
             options);
 
@@ -364,10 +358,8 @@ public sealed class BackoffStrategyTests
             var results = await new[] { 1 }.SelectParallelAsync(
                 (x, _) =>
                 {
-                    var attempts = attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
-                    if (attempts <= 2) throw new InvalidOperationException($"Test {strategy}");
-
-                    return new ValueTask<int>(x);
+                    var attempts = attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
+                    return attempts <= 2 ? throw new InvalidOperationException($"Test {strategy}") : new ValueTask<int>(x);
                 },
                 options);
 
@@ -394,7 +386,7 @@ public sealed class BackoffStrategyTests
             .SelectParallelAsync(
                 (x, _) =>
                 {
-                    var attempts = attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
+                    var attempts = attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
                     if (x == 3 && attempts <= 2) throw new InvalidOperationException("Transient error");
 
                     return new ValueTask<int>(x * 2);
@@ -421,10 +413,8 @@ public sealed class BackoffStrategyTests
         var results = await new[] { 1 }.SelectParallelAsync(
             (x, _) =>
             {
-                var attempts = attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
-                if (attempts <= 2) throw new InvalidOperationException("Transient error");
-
-                return new ValueTask<int>(x);
+                var attempts = attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
+                return attempts <= 2 ? throw new InvalidOperationException("Transient error") : new ValueTask<int>(x);
             },
             options);
 
@@ -458,10 +448,8 @@ public sealed class BackoffStrategyTests
             var results = await new[] { 1 }.SelectParallelAsync(
                 (x, _) =>
                 {
-                    var attempts = attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
-                    if (attempts <= 1) throw new InvalidOperationException($"Test {strategy}");
-
-                    return new ValueTask<int>(x);
+                    var attempts = attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
+                    return attempts <= 1 ? throw new InvalidOperationException($"Test {strategy}") : new ValueTask<int>(x);
                 },
                 options);
 

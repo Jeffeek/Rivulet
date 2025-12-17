@@ -33,7 +33,7 @@ public sealed class OrderedOutputTests
         for (var run = 0; run < totalRuns; run++)
         {
             results = await source.SelectParallelAsync(
-                async (x, ct) =>
+                static async (x, ct) =>
                 {
                     await Task.Delay(Random.Shared.Next(1, 5), ct);
                     return x;
@@ -54,7 +54,7 @@ public sealed class OrderedOutputTests
         var source = Enumerable.Range(1, 100).ToAsyncEnumerable();
         var options = new ParallelOptionsRivulet { MaxDegreeOfParallelism = 16, OrderedOutput = true };
 
-        var results = await source.SelectParallelStreamAsync(async (x, ct) =>
+        var results = await source.SelectParallelStreamAsync(static async (x, ct) =>
                 {
                     await Task.Delay(Random.Shared.Next(1, 10), ct);
                     return x * 2;
@@ -96,7 +96,7 @@ public sealed class OrderedOutputTests
         var options = new ParallelOptionsRivulet { MaxDegreeOfParallelism = 8, OrderedOutput = true, ErrorMode = ErrorMode.BestEffort };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(Random.Shared.Next(1, 5), ct);
                 if (x % 5 == 0) throw new InvalidOperationException($"Error at {x}");
@@ -125,7 +125,7 @@ public sealed class OrderedOutputTests
         try
         {
             await foreach (var result in source.SelectParallelStreamAsync(
-                               async (x, ct) =>
+                               static async (x, ct) =>
                                {
                                    await Task.Delay(Random.Shared.Next(1, 5), ct);
                                    return x * 2;
@@ -152,7 +152,7 @@ public sealed class OrderedOutputTests
         var options = new ParallelOptionsRivulet { OrderedOutput = true };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(10, ct);
                 return x * 2;
@@ -169,7 +169,7 @@ public sealed class OrderedOutputTests
         var options = new ParallelOptionsRivulet { OrderedOutput = true };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(10, ct);
                 return x * 2;
@@ -186,7 +186,7 @@ public sealed class OrderedOutputTests
         var attemptCounts = new ConcurrentDictionary<int, int>();
         var options = new ParallelOptionsRivulet
         {
-            MaxDegreeOfParallelism = 8, OrderedOutput = true, MaxRetries = 2, IsTransient = ex => ex is InvalidOperationException
+            MaxDegreeOfParallelism = 8, OrderedOutput = true, MaxRetries = 2, IsTransient = static ex => ex is InvalidOperationException
         };
 
         var results = await source.SelectParallelStreamAsync(async (x, ct) =>
@@ -212,7 +212,7 @@ public sealed class OrderedOutputTests
         var options = new ParallelOptionsRivulet { MaxDegreeOfParallelism = 32, OrderedOutput = true };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(Random.Shared.Next(1, 3), ct);
                 return x;
@@ -246,7 +246,7 @@ public sealed class OrderedOutputTests
             }
         };
 
-        var results = await source.SelectParallelStreamAsync(async (x, ct) =>
+        var results = await source.SelectParallelStreamAsync(static async (x, ct) =>
                 {
                     await Task.Delay(Random.Shared.Next(1, 5), ct);
                     return x * 2;

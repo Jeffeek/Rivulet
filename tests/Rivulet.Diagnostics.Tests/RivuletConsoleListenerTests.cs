@@ -36,7 +36,7 @@ public class RivuletConsoleListenerTests : IDisposable
             // Total time: 1000 * 5ms / 10 parallelism = 500ms
             await Enumerable.Range(1, 1000)
                 .ToAsyncEnumerable()
-                .SelectParallelStreamAsync(async (x, ct) =>
+                .SelectParallelStreamAsync(static async (x, ct) =>
                     {
                         await Task.Delay(5, ct);
                         return x;
@@ -129,7 +129,7 @@ public class RivuletConsoleListenerTests : IDisposable
             // 10 items * 100ms / 2 parallelism = 500ms of operation time
             await Enumerable.Range(1, 10)
                 .ToAsyncEnumerable()
-                .SelectParallelStreamAsync(async (x, ct) =>
+                .SelectParallelStreamAsync(static async (x, ct) =>
                     {
                         await Task.Delay(100, ct);
                         return x;
@@ -162,7 +162,7 @@ public class RivuletConsoleListenerTests : IDisposable
             // 5 items * 200ms / 2 parallelism = 500ms of operation time
             await Enumerable.Range(1, 5)
                 .ToAsyncEnumerable()
-                .SelectParallelStreamAsync(async (x, ct) =>
+                .SelectParallelStreamAsync(static async (x, ct) =>
                     {
                         await Task.Delay(200, ct);
                         return x * 2;
@@ -222,7 +222,7 @@ public class RivuletConsoleListenerTests : IDisposable
             // Run operations with retries (will trigger yellow color in console)
             await Enumerable.Range(1, 5)
                 .ToAsyncEnumerable()
-                .SelectParallelStreamAsync(async (x, ct) =>
+                .SelectParallelStreamAsync(static async (x, ct) =>
                     {
                         await Task.Delay(1, ct);
                         return x;
@@ -325,7 +325,7 @@ public class RivuletConsoleListenerTests : IDisposable
             // Run few operations (< 1000)
             await Enumerable.Range(1, 50)
                 .ToAsyncEnumerable()
-                .SelectParallelStreamAsync(async (x, ct) =>
+                .SelectParallelStreamAsync(static async (x, ct) =>
                     {
                         await Task.Delay(1, ct);
                         return x;

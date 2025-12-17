@@ -30,7 +30,7 @@ public class MetricsTests
         };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(10, ct);
                 return x * 2;
@@ -68,7 +68,7 @@ public class MetricsTests
         };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(5, ct);
                 if (x % 5 == 0) throw new InvalidOperationException("Error");
@@ -103,7 +103,7 @@ public class MetricsTests
         {
             MaxDegreeOfParallelism = 4,
             MaxRetries = 3,
-            IsTransient = ex => ex is InvalidOperationException,
+            IsTransient = static ex => ex is InvalidOperationException,
             Metrics = new()
             {
                 SampleInterval = TimeSpan.FromMilliseconds(50),
@@ -160,7 +160,7 @@ public class MetricsTests
         };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(1, ct);
                 return x * 2;
@@ -195,7 +195,7 @@ public class MetricsTests
         };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(5, ct);
                 return x * 2;
@@ -230,7 +230,7 @@ public class MetricsTests
             }
         };
 
-        var results = await source.SelectParallelStreamAsync(async (x, ct) =>
+        var results = await source.SelectParallelStreamAsync(static async (x, ct) =>
                 {
                     await Task.Delay(10, ct);
                     return x * 2;
@@ -269,7 +269,7 @@ public class MetricsTests
             }
         };
 
-        var results = await source.SelectParallelStreamAsync(async (x, ct) =>
+        var results = await source.SelectParallelStreamAsync(static async (x, ct) =>
                 {
                     await Task.Delay(5, ct);
                     if (x % 3 == 0) throw new InvalidOperationException("Error");
@@ -305,7 +305,7 @@ public class MetricsTests
         };
 
         var act = () => source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(5, ct);
                 return x * 2;
@@ -331,7 +331,7 @@ public class MetricsTests
         };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(5, ct);
                 return x * 2;
@@ -366,7 +366,7 @@ public class MetricsTests
         {
             cts.CancelAfter(100);
             await source.SelectParallelAsync(
-                async (x, ct) =>
+                static async (x, ct) =>
                 {
                     await Task.Delay(20, ct);
                     return x * 2;
@@ -401,7 +401,7 @@ public class MetricsTests
         };
 
         var act = () => source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(5, ct);
                 if (x == 10) throw new InvalidOperationException("Error");
@@ -456,13 +456,13 @@ public class MetricsTests
         // Operation 2: 30 items / 4 parallelism * 50ms = 375ms (37.5 sample intervals)
         // This ensures metrics timers fire frequently enough to reliably capture final state
         // even if last item completes between timer ticks
-        var task1 = source1.SelectParallelAsync(async (x, ct) =>
+        var task1 = source1.SelectParallelAsync(static async (x, ct) =>
             {
                 await Task.Delay(50, ct);
                 return x * 2;
             },
             options1);
-        var task2 = source2.SelectParallelAsync(async (x, ct) =>
+        var task2 = source2.SelectParallelAsync(static async (x, ct) =>
             {
                 await Task.Delay(50, ct);
                 return x * 3;
@@ -529,7 +529,7 @@ public class MetricsTests
         };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(10, ct);
                 return x * 2;
@@ -592,7 +592,7 @@ public class MetricsTests
         };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(10, ct);
                 return x * 2;
@@ -631,7 +631,7 @@ public class MetricsTests
         // Operation with sufficient delay (100ms) to ensure timer fires multiple times
         // This keeps the MetricsTracker alive and prevents race conditions
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(100, ct);
                 return x * 2;
@@ -679,7 +679,7 @@ public class MetricsTests
         };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(10, ct);
                 return x * 2;
@@ -719,7 +719,7 @@ public class MetricsTests
         };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(1, ct);
                 return x * 2;
@@ -771,7 +771,7 @@ public class MetricsTests
                 case ErrorMode.FailFast:
                 {
                     var act = () => source.SelectParallelAsync(
-                        async (x, ct) =>
+                        static async (x, ct) =>
                         {
                             await Task.Delay(5, ct);
                             if (x == 10) throw new InvalidOperationException("Error");
@@ -786,7 +786,7 @@ public class MetricsTests
                 case ErrorMode.CollectAndContinue:
                 {
                     var act = () => source.SelectParallelAsync(
-                        async (x, ct) =>
+                        static async (x, ct) =>
                         {
                             await Task.Delay(5, ct);
                             if (x % 5 == 0) throw new InvalidOperationException("Error");
@@ -802,7 +802,7 @@ public class MetricsTests
                 default:
                 {
                     var results = await source.SelectParallelAsync(
-                        async (x, ct) =>
+                        static async (x, ct) =>
                         {
                             await Task.Delay(5, ct);
                             if (x % 5 == 0) throw new InvalidOperationException("Error");
@@ -986,7 +986,7 @@ public class MetricsTests
         {
             MaxDegreeOfParallelism = 4,
             MaxRetries = 2,
-            IsTransient = ex => ex is InvalidOperationException,
+            IsTransient = static ex => ex is InvalidOperationException,
             ErrorMode = ErrorMode.BestEffort,
             Metrics = new()
             {
@@ -1034,7 +1034,7 @@ public class MetricsTests
         {
             MaxDegreeOfParallelism = 4,
             MaxRetries = 2,
-            IsTransient = ex => ex is InvalidOperationException,
+            IsTransient = static ex => ex is InvalidOperationException,
             ErrorMode = ErrorMode.BestEffort
         };
 
@@ -1185,7 +1185,7 @@ public class MetricsTests
         {
             MaxRetries = 2,
             BaseDelay = TimeSpan.FromMilliseconds(1),
-            IsTransient = ex => ex is InvalidOperationException,
+            IsTransient = static ex => ex is InvalidOperationException,
             ErrorMode = ErrorMode.BestEffort,
             Metrics = new()
             {

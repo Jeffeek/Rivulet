@@ -51,6 +51,7 @@ internal static class FileOperationHelper
     /// </summary>
     public static void ValidateOverwrite(string filePath, FileOperationOptions options)
     {
-        if (!options.OverwriteExisting && File.Exists(filePath)) throw new IOException($"File already exists: {filePath}");
+        if (!options.OverwriteExisting && File.Exists(filePath))
+            throw new IOException($"File already exists: {filePath}");
     }
 }

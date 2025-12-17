@@ -44,7 +44,7 @@ public class DiagnosticsBuilderTests : IDisposable
             // Operations must run long enough for EventCounter polling (1 second interval)
             // 10 items * 100ms / 2 parallelism = 500ms of operation time
             await Enumerable.Range(1, 10)
-                .SelectParallelAsync(async (x, ct) =>
+                .SelectParallelAsync(static async (x, ct) =>
                     {
                         await Task.Delay(100, ct);
                         return x * 2;
@@ -79,7 +79,7 @@ public class DiagnosticsBuilderTests : IDisposable
         // 10 items * 100ms / 2 parallelism = 500ms of operation time
         await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
-            .SelectParallelStreamAsync(async (x, ct) =>
+            .SelectParallelStreamAsync(static async (x, ct) =>
                 {
                     await Task.Delay(100, ct);
                     return x * 2;
@@ -107,7 +107,7 @@ public class DiagnosticsBuilderTests : IDisposable
             // 10 items * 100ms / 2 parallelism = 1000ms of operation time
             await Enumerable.Range(1, 10)
                 .ToAsyncEnumerable()
-                .SelectParallelStreamAsync(async (x, ct) =>
+                .SelectParallelStreamAsync(static async (x, ct) =>
                     {
                         await Task.Delay(100, ct);
                         return x;
@@ -137,7 +137,7 @@ public class DiagnosticsBuilderTests : IDisposable
         // 10 items * 100ms / 2 parallelism = 500ms of operation time
         await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
-            .SelectParallelStreamAsync(async (x, ct) =>
+            .SelectParallelStreamAsync(static async (x, ct) =>
                 {
                     await Task.Delay(100, ct);
                     return x;
@@ -176,7 +176,7 @@ public class DiagnosticsBuilderTests : IDisposable
         // 10 items * 100ms / 2 parallelism = 500ms of operation time
         await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
-            .SelectParallelStreamAsync(async (x, ct) =>
+            .SelectParallelStreamAsync(static async (x, ct) =>
                 {
                     await Task.Delay(100, ct);
                     return x;
@@ -200,7 +200,7 @@ public class DiagnosticsBuilderTests : IDisposable
             .Build();
 
         var task = Enumerable.Range(1, 3)
-            .SelectParallelAsync((x, _) => ValueTask.FromResult(x), new());
+            .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x), new());
 #pragma warning disable xUnit1031
         task.Wait();
 #pragma warning restore xUnit1031
@@ -225,7 +225,7 @@ public class DiagnosticsBuilderTests : IDisposable
 
         // Run operation
         var task = Enumerable.Range(1, 3)
-            .SelectParallelAsync((x, _) => ValueTask.FromResult(x), new());
+            .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x), new());
 #pragma warning disable xUnit1031
         task.Wait();
 #pragma warning restore xUnit1031
@@ -247,7 +247,7 @@ public class DiagnosticsBuilderTests : IDisposable
             .Build();
 
         await Enumerable.Range(1, 3)
-            .SelectParallelAsync((x, _) => ValueTask.FromResult(x), new());
+            .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x), new());
 
         await diagnostics.DisposeAsync();
 
@@ -265,7 +265,7 @@ public class DiagnosticsBuilderTests : IDisposable
 
         // Run minimal operation
         var task = Enumerable.Range(1, 1)
-            .SelectParallelAsync((x, _) => ValueTask.FromResult(x), new());
+            .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x), new());
 #pragma warning disable xUnit1031
         task.Wait();
 #pragma warning restore xUnit1031

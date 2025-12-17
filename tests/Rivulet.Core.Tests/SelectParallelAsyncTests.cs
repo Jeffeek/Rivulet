@@ -9,7 +9,7 @@ public sealed class SelectParallelAsyncTests
     {
         var source = Enumerable.Empty<int>();
 
-        var results = await source.SelectParallelAsync((x, _) => new ValueTask<int>(x * 2));
+        var results = await source.SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2));
 
         results.ShouldBeEmpty();
     }
@@ -19,7 +19,7 @@ public sealed class SelectParallelAsyncTests
     {
         var source = new[] { 5 };
 
-        var results = await source.SelectParallelAsync((x, _) => new ValueTask<int>(x * 2));
+        var results = await source.SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2));
 
         results.ShouldHaveSingleItem().ShouldBe(10);
     }
@@ -29,7 +29,7 @@ public sealed class SelectParallelAsyncTests
     {
         var source = Enumerable.Range(1, 10);
 
-        var results = await source.SelectParallelAsync((x, _) => new ValueTask<int>(x * 2));
+        var results = await source.SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2));
 
         results.Count.ShouldBe(10);
         results.OrderBy(static x => x).ShouldBe([2, 4, 6, 8, 10, 12, 14, 16, 18, 20]);
@@ -40,7 +40,7 @@ public sealed class SelectParallelAsyncTests
     {
         var source = Enumerable.Range(1, 1000);
 
-        var results = await source.SelectParallelAsync((x, _) => new ValueTask<int>(x * 2));
+        var results = await source.SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2));
 
         results.Count.ShouldBe(1000);
         results.Sum().ShouldBe(1001000);
@@ -54,7 +54,7 @@ public sealed class SelectParallelAsyncTests
         var startTime = DateTime.UtcNow;
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(100, ct);
                 return x * 2;
@@ -105,7 +105,7 @@ public sealed class SelectParallelAsyncTests
     {
         var source = Enumerable.Range(1, 5);
 
-        var results = await source.SelectParallelAsync((x, _) => new ValueTask<int>(x * 2));
+        var results = await source.SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2));
 
         results.Count.ShouldBe(5);
         results.OrderBy(static x => x).ShouldBe([2, 4, 6, 8, 10]);
@@ -118,7 +118,7 @@ public sealed class SelectParallelAsyncTests
         var options = new ParallelOptionsRivulet { ChannelCapacity = 10, MaxDegreeOfParallelism = 2 };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(10, ct);
                 return x * 2;
@@ -133,15 +133,15 @@ public sealed class SelectParallelAsyncTests
     {
         var source = Enumerable.Range(1, 50);
 
-        var results = await source.SelectParallelAsync(async (x, ct) =>
+        var results = await source.SelectParallelAsync(static async (x, ct) =>
         {
             await Task.Delay(1, ct);
             return new { Original = x, Squared = x * x, IsEven = x % 2 == 0 };
         });
 
         results.Count.ShouldBe(50);
-        results.Where(r => r.IsEven).Count().ShouldBe(25);
-        results.First(r => r.Original == 5).Squared.ShouldBe(25);
+        results.Where(static r => r.IsEven).Count().ShouldBe(25);
+        results.First(static r => r.Original == 5).Squared.ShouldBe(25);
     }
 
     [Fact]
@@ -149,7 +149,7 @@ public sealed class SelectParallelAsyncTests
     {
         var source = Enumerable.Range(1, 10);
 
-        var results = await source.SelectParallelAsync((x, _) => new ValueTask<int>(x * 2));
+        var results = await source.SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2));
 
         results.Count.ShouldBe(10);
     }
@@ -200,7 +200,7 @@ public sealed class SelectParallelAsyncTests
             new()
             {
                 MaxRetries = 2,
-                IsTransient = ex => ex is TimeoutException,
+                IsTransient = static ex => ex is TimeoutException,
                 BaseDelay = TimeSpan.FromMilliseconds(1),
                 OnFallback = (_, _) => 999
             });
@@ -257,7 +257,7 @@ public sealed class SelectParallelAsyncTests
         var results = await source.SelectParallelAsync(
             (x, _) =>
             {
-                if (x == 20 || x == 40) throw new();
+                if (x is 20 or 40) throw new();
 
                 return new ValueTask<int>(x);
             },

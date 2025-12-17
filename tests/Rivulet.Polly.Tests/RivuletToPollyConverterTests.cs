@@ -23,7 +23,7 @@ public class RivuletToPollyConverterTests
         var options = new ParallelOptionsRivulet
         {
             MaxRetries = 3,
-            IsTransient = ex => ex is InvalidOperationException,
+            IsTransient = static ex => ex is InvalidOperationException,
             BackoffStrategy = BackoffStrategy.Exponential,
             BaseDelay = TimeSpan.FromMilliseconds(10)
         };
@@ -49,7 +49,7 @@ public class RivuletToPollyConverterTests
         var options = new ParallelOptionsRivulet
         {
             MaxRetries = 3,
-            IsTransient = ex => ex is InvalidOperationException,
+            IsTransient = static ex => ex is InvalidOperationException,
             BackoffStrategy = BackoffStrategy.Exponential,
             BaseDelay = TimeSpan.FromMilliseconds(10)
         };
@@ -73,7 +73,7 @@ public class RivuletToPollyConverterTests
         var options = new ParallelOptionsRivulet
         {
             MaxRetries = 3,
-            IsTransient = ex => ex is InvalidOperationException,
+            IsTransient = static ex => ex is InvalidOperationException,
             BackoffStrategy = BackoffStrategy.ExponentialJitter,
             BaseDelay = TimeSpan.FromMilliseconds(100)
         };
@@ -100,7 +100,7 @@ public class RivuletToPollyConverterTests
         var options = new ParallelOptionsRivulet
         {
             MaxRetries = 3,
-            IsTransient = ex => ex is InvalidOperationException,
+            IsTransient = static ex => ex is InvalidOperationException,
             BackoffStrategy = BackoffStrategy.DecorrelatedJitter,
             BaseDelay = TimeSpan.FromMilliseconds(50)
         };
@@ -126,7 +126,7 @@ public class RivuletToPollyConverterTests
         var options = new ParallelOptionsRivulet
         {
             MaxRetries = 3,
-            IsTransient = ex => ex is InvalidOperationException,
+            IsTransient = static ex => ex is InvalidOperationException,
             BackoffStrategy = BackoffStrategy.Linear,
             BaseDelay = TimeSpan.FromMilliseconds(50)
         };
@@ -258,7 +258,7 @@ public class RivuletToPollyConverterTests
     {
         var options = new ParallelOptionsRivulet
         {
-            MaxRetries = 2, IsTransient = ex => ex is InvalidOperationException, BaseDelay = TimeSpan.FromMilliseconds(10)
+            MaxRetries = 2, IsTransient = static ex => ex is InvalidOperationException, BaseDelay = TimeSpan.FromMilliseconds(10)
         };
 
         var pipeline = options.ToPollyPipeline();
@@ -311,7 +311,7 @@ public class RivuletToPollyConverterTests
         var options = new ParallelOptionsRivulet
         {
             MaxRetries = 2,
-            IsTransient = ex => ex is InvalidOperationException,
+            IsTransient = static ex => ex is InvalidOperationException,
             BaseDelay = TimeSpan.FromMilliseconds(10),
             PerItemTimeout = TimeSpan.FromSeconds(1),
             CircuitBreaker = new() { FailureThreshold = 5, OpenTimeout = TimeSpan.FromSeconds(1) }
@@ -387,7 +387,7 @@ public class RivuletToPollyConverterTests
         var options = new ParallelOptionsRivulet
         {
             MaxRetries = 2,
-            IsTransient = ex => ex is InvalidOperationException,
+            IsTransient = static ex => ex is InvalidOperationException,
             BackoffStrategy = BackoffStrategy.DecorrelatedJitter,
             BaseDelay = TimeSpan.FromMilliseconds(10)
         };
@@ -440,7 +440,7 @@ public class RivuletToPollyConverterTests
         var options = new ParallelOptionsRivulet
         {
             MaxRetries = 2,
-            IsTransient = ex => ex is InvalidOperationException,
+            IsTransient = static ex => ex is InvalidOperationException,
             BackoffStrategy = BackoffStrategy.DecorrelatedJitter,
             BaseDelay = TimeSpan.FromMilliseconds(10)
         };

@@ -22,7 +22,7 @@ public sealed class EventSourceTests
         var initialCompleted = RivuletEventSource.Log.GetItemsCompleted();
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(5, ct);
                 return x * 2;
@@ -48,7 +48,7 @@ public sealed class EventSourceTests
         var initialFailures = RivuletEventSource.Log.GetTotalFailures();
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(5, ct);
                 if (x % 5 == 0) throw new InvalidOperationException("Error");
@@ -72,7 +72,7 @@ public sealed class EventSourceTests
 
         var options = new ParallelOptionsRivulet
         {
-            MaxDegreeOfParallelism = 4, MaxRetries = 2, IsTransient = ex => ex is InvalidOperationException
+            MaxDegreeOfParallelism = 4, MaxRetries = 2, IsTransient = static ex => ex is InvalidOperationException
         };
 
         var initialRetries = RivuletEventSource.Log.GetTotalRetries();

@@ -23,7 +23,7 @@ public class RivuletEventListenerBaseTests : IDisposable
         // 10 items * 300ms / 2 parallelism = 1500ms of operation time
         await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
-            .SelectParallelStreamAsync(async (x, ct) =>
+            .SelectParallelStreamAsync(static async (x, ct) =>
                 {
                     await Task.Delay(300, ct);
                     return x * 2;
@@ -49,7 +49,7 @@ public class RivuletEventListenerBaseTests : IDisposable
         // 10 items * 300ms / 2 parallelism = 1500ms of operation time
         await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
-            .SelectParallelStreamAsync(async (x, ct) =>
+            .SelectParallelStreamAsync(static async (x, ct) =>
                 {
                     await Task.Delay(300, ct);
                     return x;
@@ -73,7 +73,7 @@ public class RivuletEventListenerBaseTests : IDisposable
         // 10 items * 300ms / 2 parallelism = 1500ms of operation time
         await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
-            .SelectParallelStreamAsync(async (x, ct) =>
+            .SelectParallelStreamAsync(static async (x, ct) =>
                 {
                     await Task.Delay(300, ct);
                     return x;
@@ -97,7 +97,7 @@ public class RivuletEventListenerBaseTests : IDisposable
 
         // Run a simple operation asynchronously
         var task = Enumerable.Range(1, 3)
-            .SelectParallelAsync((x, _) => ValueTask.FromResult(x), new());
+            .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x), new());
 
 #pragma warning disable xUnit1031
         task.Wait();
@@ -210,7 +210,7 @@ public class RivuletEventListenerBaseTests : IDisposable
         // 10 items * 300ms / 2 parallelism = 1500ms of operation time
         await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
-            .SelectParallelStreamAsync(async (x, ct) =>
+            .SelectParallelStreamAsync(static async (x, ct) =>
                 {
                     await Task.Delay(300, ct);
                     return x;
@@ -320,7 +320,7 @@ public class RivuletEventListenerBaseTests : IDisposable
         // 10 items * 300ms / 2 parallelism = 1500ms of operation time
         await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
-            .SelectParallelStreamAsync(async (x, ct) =>
+            .SelectParallelStreamAsync(static async (x, ct) =>
                 {
                     await Task.Delay(300, ct);
                     return x;

@@ -37,7 +37,7 @@ public class RivuletStructuredLogListenerTests : IDisposable
             // 5 items * 200ms / 2 parallelism = 500ms of operation time
             await Enumerable.Range(1, 5)
                 .ToAsyncEnumerable()
-                .SelectParallelStreamAsync(async (x, ct) =>
+                .SelectParallelStreamAsync(static async (x, ct) =>
                     {
                         await Task.Delay(200, ct);
                         return x;
@@ -67,7 +67,7 @@ public class RivuletStructuredLogListenerTests : IDisposable
             // 5 items * 200ms / 2 parallelism = 500ms of operation time
             await Enumerable.Range(1, 5)
                 .ToAsyncEnumerable()
-                .SelectParallelStreamAsync(async (x, ct) =>
+                .SelectParallelStreamAsync(static async (x, ct) =>
                     {
                         await Task.Delay(200, ct);
                         return x * 2;
@@ -105,7 +105,7 @@ public class RivuletStructuredLogListenerTests : IDisposable
         // 5 items * 200ms / 2 parallelism = 500ms of operation time
         await Enumerable.Range(1, 5)
             .ToAsyncEnumerable()
-            .SelectParallelStreamAsync(async (x, ct) =>
+            .SelectParallelStreamAsync(static async (x, ct) =>
                 {
                     await Task.Delay(200, ct);
                     return x * 2;
@@ -131,7 +131,7 @@ public class RivuletStructuredLogListenerTests : IDisposable
         // 5 items * 200ms / 2 parallelism = 500ms of operation time
         await Enumerable.Range(1, 5)
             .ToAsyncEnumerable()
-            .SelectParallelStreamAsync(async (x, ct) =>
+            .SelectParallelStreamAsync(static async (x, ct) =>
                 {
                     await Task.Delay(200, ct);
                     return x;
@@ -160,7 +160,7 @@ public class RivuletStructuredLogListenerTests : IDisposable
         var listener = new RivuletStructuredLogListener(testFile);
 
         var task = Enumerable.Range(1, 3)
-            .SelectParallelAsync((x, _) => ValueTask.FromResult(x), new());
+            .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x), new());
 #pragma warning disable xUnit1031
         task.Wait();
 #pragma warning restore xUnit1031
@@ -180,7 +180,7 @@ public class RivuletStructuredLogListenerTests : IDisposable
         var listener = new RivuletStructuredLogListener(loggedLines.Add);
 
         var task = Enumerable.Range(1, 3)
-            .SelectParallelAsync((x, _) => ValueTask.FromResult(x), new());
+            .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x), new());
 #pragma warning disable xUnit1031
         task.Wait();
 #pragma warning restore xUnit1031

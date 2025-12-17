@@ -41,7 +41,7 @@ public class ComprehensiveCoverageTests
         // 10 items * 200ms / 2 parallelism = 1000ms (1 second) minimum operation time
         await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
-            .SelectParallelStreamAsync(async (x, ct) =>
+            .SelectParallelStreamAsync(static async (x, ct) =>
                 {
                     await Task.Delay(200, ct);
                     return x;
@@ -71,7 +71,7 @@ public class ComprehensiveCoverageTests
                 // 5 items * 400ms / 2 parallelism = 1000ms (1 second) minimum operation time
                 await Enumerable.Range(1, 5)
                     .ToAsyncEnumerable()
-                    .SelectParallelStreamAsync(async (x, ct) =>
+                    .SelectParallelStreamAsync(static async (x, ct) =>
                         {
                             await Task.Delay(400, ct);
                             return x;

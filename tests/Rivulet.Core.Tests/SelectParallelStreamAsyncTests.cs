@@ -7,7 +7,7 @@ public sealed class SelectParallelStreamAsyncTests
     {
         var source = AsyncEnumerable.Empty<int>();
 
-        var results = await source.SelectParallelStreamAsync((x, _) => new ValueTask<int>(x * 2)).ToListAsync();
+        var results = await source.SelectParallelStreamAsync(static (x, _) => new ValueTask<int>(x * 2)).ToListAsync();
 
         results.ShouldBeEmpty();
     }
@@ -17,7 +17,7 @@ public sealed class SelectParallelStreamAsyncTests
     {
         var source = new[] { 5 }.ToAsyncEnumerable();
 
-        var results = await source.SelectParallelStreamAsync((x, _) => new ValueTask<int>(x * 2)).ToListAsync();
+        var results = await source.SelectParallelStreamAsync(static (x, _) => new ValueTask<int>(x * 2)).ToListAsync();
 
         results.ShouldHaveSingleItem().ShouldBe(10);
     }
@@ -27,7 +27,7 @@ public sealed class SelectParallelStreamAsyncTests
     {
         var source = Enumerable.Range(1, 10).ToAsyncEnumerable();
 
-        var results = await source.SelectParallelStreamAsync((x, _) => new ValueTask<int>(x * 2)).ToListAsync();
+        var results = await source.SelectParallelStreamAsync(static (x, _) => new ValueTask<int>(x * 2)).ToListAsync();
 
         results.Count.ShouldBe(10);
         results.OrderBy(static x => x).ShouldBe([2, 4, 6, 8, 10, 12, 14, 16, 18, 20]);
@@ -40,7 +40,7 @@ public sealed class SelectParallelStreamAsyncTests
         var results = new List<int>();
         var timestamps = new List<DateTime>();
 
-        await foreach (var item in source.SelectParallelStreamAsync(async (x, ct) =>
+        await foreach (var item in source.SelectParallelStreamAsync(static async (x, ct) =>
                        {
                            await Task.Delay(x * 10, ct);
                            return x;
@@ -63,7 +63,7 @@ public sealed class SelectParallelStreamAsyncTests
         var options = new ParallelOptionsRivulet { MaxDegreeOfParallelism = 5 };
         var startTime = DateTime.UtcNow;
 
-        var results = await source.SelectParallelStreamAsync(async (x, ct) =>
+        var results = await source.SelectParallelStreamAsync(static async (x, ct) =>
                 {
                     await Task.Delay(100, ct);
                     return x * 2;
@@ -88,7 +88,7 @@ public sealed class SelectParallelStreamAsyncTests
 
         var results = new List<int>();
         await foreach (var item in source.SelectParallelStreamAsync(
-                           async (x, ct) =>
+                           static async (x, ct) =>
                            {
                                await Task.Delay(5, ct);
                                return x * 2;
@@ -107,7 +107,7 @@ public sealed class SelectParallelStreamAsyncTests
     {
         var source = Enumerable.Range(1, 5).ToAsyncEnumerable();
 
-        var results = await source.SelectParallelStreamAsync((x, _) => new ValueTask<int>(x * 2)).ToListAsync();
+        var results = await source.SelectParallelStreamAsync(static (x, _) => new ValueTask<int>(x * 2)).ToListAsync();
 
         results.Count.ShouldBe(5);
         results.OrderBy(static x => x).ShouldBe([2, 4, 6, 8, 10]);
@@ -118,7 +118,7 @@ public sealed class SelectParallelStreamAsyncTests
     {
         var source = Enumerable.Range(1, 1000).ToAsyncEnumerable();
 
-        var count = await source.SelectParallelStreamAsync((x, _) => new ValueTask<int>(x * 2)).CountAsync();
+        var count = await source.SelectParallelStreamAsync(static (x, _) => new ValueTask<int>(x * 2)).CountAsync();
 
         count.ShouldBe(1000);
     }
@@ -128,7 +128,7 @@ public sealed class SelectParallelStreamAsyncTests
     {
         var source = Enumerable.Range(1, 20).ToAsyncEnumerable();
 
-        var results = await source.SelectParallelStreamAsync(async (x, ct) =>
+        var results = await source.SelectParallelStreamAsync(static async (x, ct) =>
             {
                 await Task.Delay(1, ct);
                 return (x, x % 2 == 0);
@@ -145,7 +145,7 @@ public sealed class SelectParallelStreamAsyncTests
         var source = Enumerable.Range(1, 10).ToAsyncEnumerable();
         using var cts = new CancellationTokenSource();
 
-        var results = await source.SelectParallelStreamAsync((x, _) => new ValueTask<int>(x * 2), cancellationToken: cts.Token)
+        var results = await source.SelectParallelStreamAsync(static (x, _) => new ValueTask<int>(x * 2), cancellationToken: cts.Token)
             .ToListAsync(cts.Token);
 
         results.Count.ShouldBe(10);
@@ -154,6 +154,12 @@ public sealed class SelectParallelStreamAsyncTests
     [Fact]
     public async Task SelectParallelStreamAsync_SlowProducer_HandlesCorrectly()
     {
+        var results = await SlowProducer().SelectParallelStreamAsync(static (x, _) => new ValueTask<int>(x * 2)).ToListAsync();
+
+        results.Count.ShouldBe(5);
+        results.OrderBy(static x => x).ShouldBe([2, 4, 6, 8, 10]);
+        return;
+
         async IAsyncEnumerable<int> SlowProducer()
         {
             for (var i = 1; i <= 5; i++)
@@ -162,10 +168,5 @@ public sealed class SelectParallelStreamAsyncTests
                 yield return i;
             }
         }
-
-        var results = await SlowProducer().SelectParallelStreamAsync((x, _) => new ValueTask<int>(x * 2)).ToListAsync();
-
-        results.Count.ShouldBe(5);
-        results.OrderBy(static x => x).ShouldBe([2, 4, 6, 8, 10]);
     }
 }

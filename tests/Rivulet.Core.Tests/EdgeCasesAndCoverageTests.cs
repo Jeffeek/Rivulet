@@ -78,7 +78,7 @@ public sealed class EdgeCasesAndCoverageTests
         var options = new ParallelOptionsRivulet { ChannelCapacity = 1, MaxDegreeOfParallelism = 2 };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(5, ct);
                 return x * 2;
@@ -128,7 +128,7 @@ public sealed class EdgeCasesAndCoverageTests
             for (var i = 1; i <= 5; i++) yield return i;
         }
 
-        var results = await Source().SelectParallelStreamAsync((x, _) => new ValueTask<int>(x * 2)).ToListAsync();
+        var results = await Source().SelectParallelStreamAsync(static (x, _) => new ValueTask<int>(x * 2)).ToListAsync();
 
         results.Count.ShouldBe(5);
     }
@@ -136,6 +136,10 @@ public sealed class EdgeCasesAndCoverageTests
     [Fact]
     public async Task SelectParallelAsync_ExceptionInWriter_PropagatesCorrectly()
     {
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(((Func<Task<List<int>>>?)Act)!);
+        exception.Message.ShouldBe("Source enumeration error");
+        return;
+
         IEnumerable<int> FaultySource()
         {
             yield return 1;
@@ -143,15 +147,15 @@ public sealed class EdgeCasesAndCoverageTests
             throw new InvalidOperationException("Source enumeration error");
         }
 
-        Task<List<int>> Act() => FaultySource().SelectParallelAsync((x, _) => new ValueTask<int>(x * 2));
-
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(((Func<Task<List<int>>>?)Act)!);
-        exception.Message.ShouldBe("Source enumeration error");
+        Task<List<int>> Act() => FaultySource().SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2));
     }
 
     [Fact]
     public async Task SelectParallelStreamAsync_ExceptionInSource_PropagatesCorrectly()
     {
+        await Assert.ThrowsAsync<InvalidOperationException>(Act);
+        return;
+
         async IAsyncEnumerable<int> FaultySource()
         {
             yield return 1;
@@ -160,9 +164,7 @@ public sealed class EdgeCasesAndCoverageTests
             throw new InvalidOperationException("Async source error");
         }
 
-        async Task Act() => await FaultySource().SelectParallelStreamAsync((x, _) => new ValueTask<int>(x * 2)).ToListAsync();
-
-        await Assert.ThrowsAsync<InvalidOperationException>(Act);
+        async Task Act() => await FaultySource().SelectParallelStreamAsync(static (x, _) => new ValueTask<int>(x * 2)).ToListAsync();
     }
 
     [Fact]
@@ -204,7 +206,7 @@ public sealed class EdgeCasesAndCoverageTests
         var source = Enumerable.Range(1, 20).ToAsyncEnumerable();
         var options = new ParallelOptionsRivulet { MaxDegreeOfParallelism = 3 };
 
-        var results = await source.SelectParallelStreamAsync(async (x, ct) =>
+        var results = await source.SelectParallelStreamAsync(static async (x, ct) =>
                 {
                     await Task.Delay(10, ct);
                     return x * 2;
@@ -231,7 +233,7 @@ public sealed class EdgeCasesAndCoverageTests
         };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(10, ct);
                 if (x == 10) throw new InvalidOperationException("Error");
@@ -260,7 +262,7 @@ public sealed class EdgeCasesAndCoverageTests
             }
         };
 
-        var results = await source.SelectParallelStreamAsync((x, _) => new ValueTask<int>(x * 2), options).ToListAsync();
+        var results = await source.SelectParallelStreamAsync(static (x, _) => new ValueTask<int>(x * 2), options).ToListAsync();
 
         results.Count.ShouldBe(30);
         workerIndices.Count.ShouldBe(30);
@@ -269,6 +271,9 @@ public sealed class EdgeCasesAndCoverageTests
     [Fact]
     public async Task ChannelWriter_TryComplete_CalledInFinally()
     {
+        await Assert.ThrowsAsync<InvalidOperationException>(((Func<Task<List<int>>>?)Act)!);
+        return;
+
         IEnumerable<int> Source()
         {
             yield return 1;
@@ -276,9 +281,7 @@ public sealed class EdgeCasesAndCoverageTests
             throw new InvalidOperationException("Writer error");
         }
 
-        Task<List<int>> Act() => Source().SelectParallelAsync((x, _) => new ValueTask<int>(x * 2));
-
-        await Assert.ThrowsAsync<InvalidOperationException>(((Func<Task<List<int>>>?)Act)!);
+        Task<List<int>> Act() => Source().SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2));
     }
 
     [Fact]
@@ -287,7 +290,7 @@ public sealed class EdgeCasesAndCoverageTests
         var source = Enumerable.Range(1, 10).ToAsyncEnumerable();
         var options = new ParallelOptionsRivulet { ErrorMode = ErrorMode.BestEffort, MaxDegreeOfParallelism = 2 };
 
-        var results = await source.SelectParallelStreamAsync(async (x, ct) =>
+        var results = await source.SelectParallelStreamAsync(static async (x, ct) =>
                 {
                     await Task.Delay(10, ct);
                     return x * 2;
@@ -326,8 +329,11 @@ public sealed class EdgeCasesAndCoverageTests
         var source = Enumerable.Range(1, 1000);
         var options = new ParallelOptionsRivulet { ChannelCapacity = 1, MaxDegreeOfParallelism = 1, ErrorMode = ErrorMode.FailFast };
 
+        await Assert.ThrowsAnyAsync<Exception>(((Func<Task<List<int>>>?)Act)!);
+        return;
+
         Task<List<int>> Act() =>
-            source.SelectParallelAsync(async (x, ct) =>
+            source.SelectParallelAsync(static async (x, ct) =>
                 {
                     await Task.Delay(100, ct);
                     if (x == 5) throw new InvalidOperationException("Error at 5");
@@ -335,8 +341,6 @@ public sealed class EdgeCasesAndCoverageTests
                     return x * 2;
                 },
                 options);
-
-        await Assert.ThrowsAnyAsync<Exception>(((Func<Task<List<int>>>?)Act)!);
     }
 
     [Fact]
@@ -371,7 +375,7 @@ public sealed class EdgeCasesAndCoverageTests
         var act = async () =>
         {
             await foreach (var _ in source.SelectParallelStreamAsync(
-                               async (x, ct) =>
+                               static async (x, ct) =>
                                {
                                    await Task.Delay(1, ct);
                                    return x * 2;
@@ -408,7 +412,7 @@ public sealed class EdgeCasesAndCoverageTests
         var act = async () =>
         {
             await foreach (var result in source.SelectParallelStreamAsync(
-                               async (x, ct) =>
+                               static async (x, ct) =>
                                {
                                    await Task.Delay(10, ct);
                                    return x * 2;
@@ -438,7 +442,7 @@ public sealed class EdgeCasesAndCoverageTests
         var act = async () =>
         {
             await foreach (var result in source.SelectParallelStreamAsync(
-                               async (x, ct) =>
+                               static async (x, ct) =>
                                {
                                    await Task.Delay(10, ct);
                                    return x * 2;
@@ -463,7 +467,7 @@ public sealed class EdgeCasesAndCoverageTests
         var options = new ParallelOptionsRivulet { MaxDegreeOfParallelism = 8, OrderedOutput = false };
 
         var results = await source.SelectParallelStreamAsync(
-                async (x, ct) =>
+                static async (x, ct) =>
                 {
                     await Task.Delay(5, ct);
                     return x * 2;
@@ -482,7 +486,7 @@ public sealed class EdgeCasesAndCoverageTests
         var options = new ParallelOptionsRivulet { MaxDegreeOfParallelism = 8, OrderedOutput = true };
 
         var results = await source.SelectParallelStreamAsync(
-                async (x, ct) =>
+                static async (x, ct) =>
                 {
                     await Task.Delay(5, ct);
                     return x * 2;
@@ -500,7 +504,7 @@ public sealed class EdgeCasesAndCoverageTests
         var source = Enumerable.Range(1, 25).ToAsyncEnumerable();
         var options = new ParallelOptionsRivulet { MaxDegreeOfParallelism = 5, OrderedOutput = false };
 
-        var count = await source.SelectParallelStreamAsync(async (x, ct) =>
+        var count = await source.SelectParallelStreamAsync(static async (x, ct) =>
                 {
                     await Task.Delay(2, ct);
                     return x * 3;
@@ -517,7 +521,7 @@ public sealed class EdgeCasesAndCoverageTests
         var source = Enumerable.Range(1, 25).ToAsyncEnumerable();
         var options = new ParallelOptionsRivulet { MaxDegreeOfParallelism = 5, OrderedOutput = true };
 
-        var count = await source.SelectParallelStreamAsync(async (x, ct) =>
+        var count = await source.SelectParallelStreamAsync(static async (x, ct) =>
                 {
                     await Task.Delay(2, ct);
                     return x * 3;

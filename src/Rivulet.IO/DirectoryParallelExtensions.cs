@@ -33,7 +33,8 @@ public static class DirectoryParallelExtensions
         return await filePaths.SelectParallelAsync(
                 async (filePath, ct) =>
                 {
-                    if (options.OnFileStartAsync != null) await options.OnFileStartAsync(filePath).ConfigureAwait(false);
+                    if (options.OnFileStartAsync != null)
+                        await options.OnFileStartAsync(filePath).ConfigureAwait(false);
 
                     try
                     {
@@ -48,7 +49,8 @@ public static class DirectoryParallelExtensions
                     }
                     catch (Exception ex)
                     {
-                        if (options.OnFileErrorAsync != null) await options.OnFileErrorAsync(filePath, ex).ConfigureAwait(false);
+                        if (options.OnFileErrorAsync != null)
+                            await options.OnFileErrorAsync(filePath, ex).ConfigureAwait(false);
 
                         throw;
                     }
@@ -82,7 +84,8 @@ public static class DirectoryParallelExtensions
         ArgumentException.ThrowIfNullOrWhiteSpace(directoryPath);
         ArgumentNullException.ThrowIfNull(processFunc);
 
-        if (!Directory.Exists(directoryPath)) throw new DirectoryNotFoundException($"Directory not found: {directoryPath}");
+        if (!Directory.Exists(directoryPath))
+            throw new DirectoryNotFoundException($"Directory not found: {directoryPath}");
 
         var files = Directory.GetFiles(directoryPath, searchPattern, searchOption);
         return files.ProcessFilesParallelAsync(processFunc, options, cancellationToken);
@@ -106,7 +109,8 @@ public static class DirectoryParallelExtensions
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(directoryPath);
 
-        if (!Directory.Exists(directoryPath)) throw new DirectoryNotFoundException($"Directory not found: {directoryPath}");
+        if (!Directory.Exists(directoryPath))
+            throw new DirectoryNotFoundException($"Directory not found: {directoryPath}");
 
         var files = Directory.GetFiles(directoryPath, searchPattern, searchOption);
 
@@ -162,7 +166,8 @@ public static class DirectoryParallelExtensions
         ArgumentException.ThrowIfNullOrWhiteSpace(destinationDirectory);
         ArgumentNullException.ThrowIfNull(transformFunc);
 
-        if (!Directory.Exists(sourceDirectory)) throw new DirectoryNotFoundException($"Source directory not found: {sourceDirectory}");
+        if (!Directory.Exists(sourceDirectory))
+            throw new DirectoryNotFoundException($"Source directory not found: {sourceDirectory}");
 
         var sourceFiles = Directory.GetFiles(sourceDirectory, searchPattern, searchOption);
 
@@ -197,7 +202,8 @@ public static class DirectoryParallelExtensions
         ArgumentException.ThrowIfNullOrWhiteSpace(sourceDirectory);
         ArgumentException.ThrowIfNullOrWhiteSpace(destinationDirectory);
 
-        if (!Directory.Exists(sourceDirectory)) throw new DirectoryNotFoundException($"Source directory not found: {sourceDirectory}");
+        if (!Directory.Exists(sourceDirectory))
+            throw new DirectoryNotFoundException($"Source directory not found: {sourceDirectory}");
 
         var sourceFiles = Directory.GetFiles(sourceDirectory, searchPattern, searchOption);
 
@@ -229,7 +235,8 @@ public static class DirectoryParallelExtensions
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(directoryPath);
 
-        if (!Directory.Exists(directoryPath)) throw new DirectoryNotFoundException($"Directory not found: {directoryPath}");
+        if (!Directory.Exists(directoryPath))
+            throw new DirectoryNotFoundException($"Directory not found: {directoryPath}");
 
         var files = Directory.GetFiles(directoryPath, searchPattern, searchOption);
         return files.DeleteFilesParallelAsync(options, cancellationToken);

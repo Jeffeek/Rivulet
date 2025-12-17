@@ -22,7 +22,7 @@ public class EdgeCaseCoverageTests
         var options = new ParallelOptionsRivulet { MaxDegreeOfParallelism = 2 }.WithOpenTelemetryTracing(null!);
 
         var result = await Enumerable.Range(1, 3)
-            .SelectParallelAsync(async (x, ct) =>
+            .SelectParallelAsync(static async (x, ct) =>
                 {
                     await Task.Delay(1, ct);
                     return x;
@@ -44,7 +44,7 @@ public class EdgeCaseCoverageTests
         var options = new ParallelOptionsRivulet().WithOpenTelemetryTracing(string.Empty);
 
         var result = await Enumerable.Range(1, 2)
-            .SelectParallelAsync(async (x, ct) =>
+            .SelectParallelAsync(static async (x, ct) =>
                 {
                     await Task.Delay(1, ct);
                     return x;
@@ -69,7 +69,7 @@ public class EdgeCaseCoverageTests
             new ParallelOptionsRivulet { MaxRetries = 3, IsTransient = static _ => true }.WithOpenTelemetryTracingAndRetries("NoRetriesOp");
 
         var result = await Enumerable.Range(1, 5)
-            .SelectParallelAsync(async (x, ct) =>
+            .SelectParallelAsync(static async (x, ct) =>
                 {
                     await Task.Delay(1, ct);
                     return x;
@@ -124,7 +124,7 @@ public class EdgeCaseCoverageTests
         try
         {
             await Enumerable.Range(1, 5)
-                .SelectParallelAsync(async (x, ct) =>
+                .SelectParallelAsync(static async (x, ct) =>
                     {
                         await Task.Delay(10, ct);
                         if (x == 3) throw new InvalidOperationException("Test");
@@ -151,7 +151,7 @@ public class EdgeCaseCoverageTests
         var options = new ParallelOptionsRivulet().WithOpenTelemetryTracing("NullActivityTest");
 
         var result = await Enumerable.Range(1, 3)
-            .SelectParallelAsync(async (x, ct) =>
+            .SelectParallelAsync(static async (x, ct) =>
                 {
                     await Task.Delay(1, ct);
                     return x;
@@ -170,7 +170,7 @@ public class EdgeCaseCoverageTests
 
         await Enumerable.Range(1, 5)
             .ToAsyncEnumerable()
-            .SelectParallelStreamAsync(async (x, ct) =>
+            .SelectParallelStreamAsync(static async (x, ct) =>
                 {
                     await Task.Delay(1, ct);
                     return x;
@@ -196,7 +196,7 @@ public class EdgeCaseCoverageTests
         var options = new ParallelOptionsRivulet { MaxDegreeOfParallelism = 10 }.WithOpenTelemetryTracing("LargeOp");
 
         var result = await Enumerable.Range(1, 100)
-            .SelectParallelAsync(async (x, ct) =>
+            .SelectParallelAsync(static async (x, ct) =>
                 {
                     await Task.Delay(1, ct);
                     return x;
@@ -223,7 +223,7 @@ public class EdgeCaseCoverageTests
         try
         {
             await Enumerable.Range(1, 10)
-                .SelectParallelAsync(async (x, ct) =>
+                .SelectParallelAsync(static async (x, ct) =>
                     {
                         await Task.Delay(1, ct);
                         if (x % 3 == 0) throw new InvalidOperationException($"Failed {x}");
@@ -268,7 +268,7 @@ public class EdgeCaseCoverageTests
         try
         {
             await Enumerable.Range(1, 6)
-                .SelectParallelAsync(async (x, ct) =>
+                .SelectParallelAsync(static async (x, ct) =>
                     {
                         await Task.Delay(1, ct);
                         if (x % 3 == 0) throw new InvalidOperationException("transient error");
@@ -299,7 +299,7 @@ public class EdgeCaseCoverageTests
         var options = new ParallelOptionsRivulet().WithOpenTelemetryTracing("DisposedTest");
 
         var result = await Enumerable.Range(1, 5)
-            .SelectParallelAsync(async (x, ct) =>
+            .SelectParallelAsync(static async (x, ct) =>
                 {
                     await Task.Delay(1, ct);
                     return x * 2;
