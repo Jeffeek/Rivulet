@@ -1,12 +1,10 @@
 using System.Collections.Concurrent;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Rivulet.Diagnostics;
 
 /// <summary>
 ///     Represents a snapshot of aggregated metrics over a specific time window.
 /// </summary>
-[SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public sealed class AggregatedMetrics
 {
     /// <summary>
