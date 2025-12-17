@@ -185,9 +185,7 @@ public sealed class RivuletHealthCheckTests
                 .SelectParallelStreamAsync(static async (x, ct) =>
                     {
                         await Task.Delay(1, ct);
-                        if (x <= 4000) throw new InvalidOperationException("Test error");
-
-                        return x * 2;
+                        return x <= 4000 ? throw new InvalidOperationException("Test error") : x * 2;
                     },
                     new() { MaxDegreeOfParallelism = 20, ErrorMode = ErrorMode.CollectAndContinue })
                 .ToListAsync();

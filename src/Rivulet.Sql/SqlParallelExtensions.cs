@@ -287,9 +287,9 @@ public static class SqlParallelExtensions
 
                 var result = await ExecuteScalarInternalAsync(command, cancellationToken).ConfigureAwait(false);
 
-                if (result == null || result == DBNull.Value) return default;
-
-                return (TResult)Convert.ChangeType(result, typeof(TResult));
+                return result == null || result == DBNull.Value
+                    ? default
+                    : (TResult)Convert.ChangeType(result, typeof(TResult));
             }
             catch (Exception ex)
             {
@@ -313,28 +313,19 @@ public static class SqlParallelExtensions
     }
 
     private static async ValueTask<IDataReader> ExecuteReaderAsync(IDbCommand command,
-        CancellationToken cancellationToken)
-    {
-        if (command is DbCommand dbCommand)
-            return await dbCommand.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+        CancellationToken cancellationToken) =>
+        command is DbCommand dbCommand
+            ? await dbCommand.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false)
+            : await Task.Run(command.ExecuteReader, cancellationToken).ConfigureAwait(false);
 
-        return await Task.Run(command.ExecuteReader, cancellationToken).ConfigureAwait(false);
-    }
-
-    private static async ValueTask<int> ExecuteNonQueryAsync(IDbCommand command, CancellationToken cancellationToken)
-    {
-        if (command is DbCommand dbCommand)
-            return await dbCommand.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-
-        return await Task.Run(command.ExecuteNonQuery, cancellationToken).ConfigureAwait(false);
-    }
+    private static async ValueTask<int> ExecuteNonQueryAsync(IDbCommand command, CancellationToken cancellationToken) =>
+        command is DbCommand dbCommand
+            ? await dbCommand.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false)
+            : await Task.Run(command.ExecuteNonQuery, cancellationToken).ConfigureAwait(false);
 
     private static async ValueTask<object?> ExecuteScalarInternalAsync(IDbCommand command,
-        CancellationToken cancellationToken)
-    {
-        if (command is DbCommand dbCommand)
-            return await dbCommand.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
-
-        return await Task.Run(command.ExecuteScalar, cancellationToken).ConfigureAwait(false);
-    }
+        CancellationToken cancellationToken) =>
+        command is DbCommand dbCommand
+            ? await dbCommand.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false)
+            : await Task.Run(command.ExecuteScalar, cancellationToken).ConfigureAwait(false);
 }

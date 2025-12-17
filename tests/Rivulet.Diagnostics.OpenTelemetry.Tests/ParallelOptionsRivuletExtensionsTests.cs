@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Rivulet.Core;
@@ -162,9 +162,7 @@ public sealed class ParallelOptionsRivuletExtensionsTests
             async (x, ct) =>
             {
                 await Task.Delay(1, ct);
-                if (++attemptCount < 3) throw new InvalidOperationException("Transient error");
-
-                return x * 2;
+                return ++attemptCount < 3 ? throw new InvalidOperationException("Transient error") : x * 2;
             },
             options);
 

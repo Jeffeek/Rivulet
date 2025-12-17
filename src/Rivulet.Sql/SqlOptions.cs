@@ -75,94 +75,74 @@ public sealed class SqlOptions
             AdaptiveConcurrency = baseOptions.AdaptiveConcurrency
         };
 
-        bool SqlIsTransient(Exception ex)
-        {
-            if (userIsTransient != null && userIsTransient(ex)) return true;
-
-            return ex switch
+        bool SqlIsTransient(Exception ex) =>
+            (userIsTransient != null && userIsTransient(ex)) || ex switch
             {
                 TimeoutException => true,
-                InvalidOperationException invalidOp when invalidOp.Message.Contains("timeout",
-                    StringComparison.OrdinalIgnoreCase) => true,
+                InvalidOperationException invalidOp when invalidOp.Message.Contains("timeout", StringComparison.OrdinalIgnoreCase) => true,
                 // Check MySQL and Npgsql before SqlException since "MySqlException" contains "SqlException"
                 _ when ex.GetType().Name.Contains("MySqlException") => IsMySqlTransientError(ex),
                 _ when ex.GetType().Name.Contains("NpgsqlException") => IsNpgsqlTransientError(ex),
                 _ when ex.GetType().Name.Contains("SqlException") => IsSqlTransientError(ex),
                 _ => false
             };
-        }
     }
 
     private static bool IsSqlTransientError(Exception ex)
     {
         var numberProperty = ex.GetType().GetProperty("Number");
-        if (numberProperty?.GetValue(ex) is int errorNumber)
+        return numberProperty?.GetValue(ex) is int errorNumber && errorNumber switch
         {
-            return errorNumber switch
-            {
-                -2 => true,    // Timeout
-                -1 => true,    // Connection broken
-                2 => true,     // Connection timeout
-                53 => true,    // Connection does not exist
-                64 => true,    // Error on server
-                233 => true,   // Connection initialization failed
-                10053 => true, // Transport-level error
-                10054 => true, // Connection reset by peer
-                10060 => true, // Network timeout
-                40197 => true, // Service unavailable
-                40501 => true, // Service busy
-                40613 => true, // Database unavailable
-                49918 => true, // Cannot process request
-                49919 => true, // Cannot process create or update
-                49920 => true, // Cannot process more than requests
-                _ => false
-            };
-        }
-
-        return false;
+            -2 => true,    // Timeout
+            -1 => true,    // Connection broken
+            2 => true,     // Connection timeout
+            53 => true,    // Connection does not exist
+            64 => true,    // Error on server
+            233 => true,   // Connection initialization failed
+            10053 => true, // Transport-level error
+            10054 => true, // Connection reset by peer
+            10060 => true, // Network timeout
+            40197 => true, // Service unavailable
+            40501 => true, // Service busy
+            40613 => true, // Database unavailable
+            49918 => true, // Cannot process request
+            49919 => true, // Cannot process create or update
+            49920 => true, // Cannot process more than requests
+            _ => false
+        };
     }
 
     private static bool IsNpgsqlTransientError(Exception ex)
     {
         var sqlStateProperty = ex.GetType().GetProperty("SqlState");
-        if (sqlStateProperty?.GetValue(ex) is string sqlState)
+        return sqlStateProperty?.GetValue(ex) is string sqlState && sqlState switch
         {
-            return sqlState switch
-            {
-                "08000" => true, // Connection exception
-                "08003" => true, // Connection does not exist
-                "08006" => true, // Connection failure
-                "08001" => true, // Unable to establish connection
-                "08004" => true, // Server rejected connection
-                "53300" => true, // Too many connections
-                "57P03" => true, // Cannot connect now
-                "58000" => true, // System error
-                "58030" => true, // IO error
-                _ => false
-            };
-        }
-
-        return false;
+            "08000" => true, // Connection exception
+            "08003" => true, // Connection does not exist
+            "08006" => true, // Connection failure
+            "08001" => true, // Unable to establish connection
+            "08004" => true, // Server rejected connection
+            "53300" => true, // Too many connections
+            "57P03" => true, // Cannot connect now
+            "58000" => true, // System error
+            "58030" => true, // IO error
+            _ => false
+        };
     }
 
     private static bool IsMySqlTransientError(Exception ex)
     {
         var numberProperty = ex.GetType().GetProperty("Number");
-        if (numberProperty?.GetValue(ex) is int errorNumber)
+        return numberProperty?.GetValue(ex) is int errorNumber && errorNumber switch
         {
-            return errorNumber switch
-            {
-                1040 => true,         // Too many connections
-                1205 => true,         // Lock wait timeout
-                1213 => true,         // Deadlock found
-                1226 => true,         // User has exceeded resource limit
-                2002 or 2003 => true, // Can't connect to server
-                2006 => true,         // Server has gone away
-                2013 => true,         // Lost connection during query
-                _ => false
-            };
-        }
-
-        return false;
+            1040 => true,         // Too many connections
+            1205 => true,         // Lock wait timeout
+            1213 => true,         // Deadlock found
+            1226 => true,         // User has exceeded resource limit
+            2002 or 2003 => true, // Can't connect to server
+            2006 => true,         // Server has gone away
+            2013 => true,         // Lost connection during query
+            _ => false
+        };
     }
 }

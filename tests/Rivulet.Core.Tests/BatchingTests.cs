@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using Rivulet.Base.Tests;
 using Rivulet.Core.Observability;
@@ -174,9 +174,7 @@ public sealed class BatchingTests
 
                 await Task.Delay(5, ct);
 
-                if (batchId == 1 && attempts == 1) throw new InvalidOperationException("Transient error");
-
-                return batch.Sum();
+                return batchId == 1 && attempts == 1 ? throw new InvalidOperationException("Transient error") : batch.Sum();
             },
             new()
             {
@@ -476,9 +474,7 @@ public sealed class BatchingTests
 
                 await Task.Delay(10, ct);
 
-                if (batchId == 21 && attempts == 1) throw new InvalidOperationException("Transient");
-
-                return batch.Sum();
+                return batchId == 21 && attempts == 1 ? throw new InvalidOperationException("Transient") : batch.Sum();
             },
             new()
             {

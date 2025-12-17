@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 
 namespace Rivulet.Core.Tests;
 
@@ -21,9 +21,7 @@ public sealed class ErrorHandlingTests
                 {
                     Interlocked.Increment(ref processedCount);
                     await Task.Delay(10, ct);
-                    if (x == 5) throw new InvalidOperationException("Error at 5");
-
-                    return x * 2;
+                    return x == 5 ? throw new InvalidOperationException("Error at 5") : x * 2;
                 },
                 options);
     }
@@ -63,9 +61,7 @@ public sealed class ErrorHandlingTests
             static async (x, ct) =>
             {
                 await Task.Delay(10, ct);
-                if (x % 5 == 0) throw new InvalidOperationException($"Error at {x}");
-
-                return x * 2;
+                return x % 5 == 0 ? throw new InvalidOperationException($"Error at {x}") : x * 2;
             },
             options);
 
@@ -87,9 +83,7 @@ public sealed class ErrorHandlingTests
                 static async (x, ct) =>
                 {
                     await Task.Delay(10, ct);
-                    if (x == 5) throw new InvalidOperationException("Error at 5");
-
-                    return x * 2;
+                    return x == 5 ? throw new InvalidOperationException("Error at 5") : x * 2;
                 },
                 options);
 
@@ -131,9 +125,7 @@ public sealed class ErrorHandlingTests
         var results = await source.SelectParallelStreamAsync(static async (x, ct) =>
                 {
                     await Task.Delay(10, ct);
-                    if (x % 5 == 0) throw new InvalidOperationException($"Error at {x}");
-
-                    return x * 2;
+                    return x % 5 == 0 ? throw new InvalidOperationException($"Error at {x}") : x * 2;
                 },
                 options)
             .ToListAsync();
@@ -189,9 +181,7 @@ public sealed class ErrorHandlingTests
             static async (x, ct) =>
             {
                 await Task.Delay(10, ct);
-                if (x % 5 == 0) throw new InvalidOperationException($"Error at {x}");
-
-                return x * 2;
+                return x % 5 == 0 ? throw new InvalidOperationException($"Error at {x}") : x * 2;
             },
             options);
 
@@ -224,9 +214,7 @@ public sealed class ErrorHandlingTests
             source.SelectParallelAsync(static async (x, ct) =>
                 {
                     await Task.Delay(10, ct);
-                    if (x is 5 or 15) throw new InvalidOperationException($"Error at {x}");
-
-                    return x * 2;
+                    return x is 5 or 15 ? throw new InvalidOperationException($"Error at {x}") : x * 2;
                 },
                 options);
     }
@@ -255,9 +243,7 @@ public sealed class ErrorHandlingTests
             source.SelectParallelAsync(static async (x, ct) =>
                 {
                     await Task.Delay(10, ct);
-                    if (x % 10 == 0) throw new InvalidOperationException($"Error at {x}");
-
-                    return x * 2;
+                    return x % 10 == 0 ? throw new InvalidOperationException($"Error at {x}") : x * 2;
                 },
                 options);
     }
@@ -270,9 +256,7 @@ public sealed class ErrorHandlingTests
         var results = await source.SelectParallelStreamAsync(static async (x, ct) =>
                 {
                     await Task.Delay(10, ct);
-                    if (x == 5) throw new InvalidOperationException("Error at 5");
-
-                    return x * 2;
+                    return x == 5 ? throw new InvalidOperationException("Error at 5") : x * 2;
                 },
                 options)
             .ToListAsync();
@@ -312,9 +296,7 @@ public sealed class ErrorHandlingTests
                                {
                                    Interlocked.Increment(ref processedCount);
                                    await Task.Delay(10, ct);
-                                   if (x == 10) throw new InvalidOperationException($"Error at {x}");
-
-                                   return x * 2;
+                                   return x == 10 ? throw new InvalidOperationException($"Error at {x}") : x * 2;
                                },
                                options))
             {
@@ -354,9 +336,7 @@ public sealed class ErrorHandlingTests
                                {
                                    Interlocked.Increment(ref processedCount);
                                    await Task.Delay(10, ct);
-                                   if (x == 10) throw new InvalidOperationException($"Error at {x}");
-
-                                   return x * 2;
+                                   return x == 10 ? throw new InvalidOperationException($"Error at {x}") : x * 2;
                                },
                                options))
             {
