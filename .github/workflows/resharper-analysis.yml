@@ -48,7 +48,6 @@ jobs:
       with:
          solution: ./Rivulet.sln
          tool-version: 2025.3.0.3
-         settings: ./Rivulet.sln.DotSettings
          output: linter-reports/resharper-report.xml
          format: Xml
          severity: WARNING
