@@ -34,7 +34,8 @@ public abstract class ParallelBackgroundService<T> : BackgroundService
 
         try
         {
-            await GetItemsAsync(stoppingToken).ForEachParallelAsync(ProcessItemAsync, _options, stoppingToken).ConfigureAwait(false);
+            await GetItemsAsync(stoppingToken).ForEachParallelAsync(ProcessItemAsync, _options, stoppingToken)
+                .ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {

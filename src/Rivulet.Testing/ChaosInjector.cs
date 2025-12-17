@@ -15,7 +15,8 @@ public sealed class ChaosInjector
     /// <param name="artificialDelay">Optional delay to inject before each operation.</param>
     public ChaosInjector(double failureRate = 0.1, TimeSpan? artificialDelay = null)
     {
-        if (failureRate is < 0 or > 1) throw new ArgumentOutOfRangeException(nameof(failureRate), "Failure rate must be between 0 and 1");
+        if (failureRate is < 0 or > 1)
+            throw new ArgumentOutOfRangeException(nameof(failureRate), "Failure rate must be between 0 and 1");
 
         _failureRate = failureRate;
         _artificialDelay = artificialDelay;
@@ -26,7 +27,8 @@ public sealed class ChaosInjector
     /// </summary>
     public async Task<T> ExecuteAsync<T>(Func<Task<T>> action, CancellationToken cancellationToken = default)
     {
-        if (_artificialDelay.HasValue) await Task.Delay(_artificialDelay.Value, cancellationToken).ConfigureAwait(false);
+        if (_artificialDelay.HasValue)
+            await Task.Delay(_artificialDelay.Value, cancellationToken).ConfigureAwait(false);
 
         if (ShouldFail()) throw new ChaosException("Chaos injected failure");
 

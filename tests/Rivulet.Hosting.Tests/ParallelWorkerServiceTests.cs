@@ -6,7 +6,7 @@ using Rivulet.Core;
 
 namespace Rivulet.Hosting.Tests;
 
-public class ParallelWorkerServiceTests
+public sealed class ParallelWorkerServiceTests
 {
     [Fact]
     public async Task StartAsync_ShouldProcessAllItems()
@@ -202,7 +202,8 @@ public class ParallelWorkerServiceTests
     [Fact]
     public async Task ExecuteAsync_WhenCancelled_ShouldLogInformationAndExitGracefully()
     {
-        var loggerFactory = LoggerFactory.Create(static builder => builder.AddConsole().SetMinimumLevel(LogLevel.Information));
+        var loggerFactory =
+            LoggerFactory.Create(static builder => builder.AddConsole().SetMinimumLevel(LogLevel.Information));
         var logger = loggerFactory.CreateLogger<TestWorkerService>();
 
         var service = new TestWorkerService(logger, SlowGenerateItems());
@@ -230,7 +231,8 @@ public class ParallelWorkerServiceTests
     [Fact]
     public async Task ExecuteAsync_WhenProcessThrowsFatalError_ShouldLogErrorAndRethrow()
     {
-        var loggerFactory = LoggerFactory.Create(static builder => builder.AddConsole().SetMinimumLevel(LogLevel.Error));
+        var loggerFactory =
+            LoggerFactory.Create(static builder => builder.AddConsole().SetMinimumLevel(LogLevel.Error));
         var logger = loggerFactory.CreateLogger<FatalErrorWorkerService>();
 
         var items = TestDataGenerators.GenerateItemsAsync(3);
@@ -248,7 +250,8 @@ public class ParallelWorkerServiceTests
     [Fact]
     public async Task ExecuteAsync_WithMultipleExceptions_ShouldLogFirstError()
     {
-        var loggerFactory = LoggerFactory.Create(static builder => builder.AddConsole().SetMinimumLevel(LogLevel.Error));
+        var loggerFactory =
+            LoggerFactory.Create(static builder => builder.AddConsole().SetMinimumLevel(LogLevel.Error));
         var logger = loggerFactory.CreateLogger<FatalErrorWorkerService>();
 
         var items = TestDataGenerators.GenerateItemsAsync(5);
@@ -268,7 +271,8 @@ public class ParallelWorkerServiceTests
     [Fact]
     public async Task ExecuteAsync_WhenGetSourceItemsThrowsException_ShouldLogErrorAndHandleGracefully()
     {
-        var loggerFactory = LoggerFactory.Create(static builder => builder.AddConsole().SetMinimumLevel(LogLevel.Error));
+        var loggerFactory =
+            LoggerFactory.Create(static builder => builder.AddConsole().SetMinimumLevel(LogLevel.Error));
         var logger = loggerFactory.CreateLogger<FatalGetSourceItemsWorkerService>();
 
         var service = new FatalGetSourceItemsWorkerService(logger);
@@ -359,6 +363,7 @@ public class ParallelWorkerServiceTests
             // Throw from GetSourceItems to hit the exception path in ExecuteAsync
             new InvalidOperationException("Fatal error in GetSourceItems");
 
-        protected override Task<int> ProcessAsync(int item, CancellationToken cancellationToken) => Task.FromResult(item);
+        protected override Task<int> ProcessAsync(int item, CancellationToken cancellationToken) =>
+            Task.FromResult(item);
     }
 }

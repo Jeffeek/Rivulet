@@ -171,7 +171,7 @@ public sealed class SqlOptionsTests
     // Cannot process request
     // Cannot process create or update
     // Cannot process more than requests
-        // Non-transient error code
+    // Non-transient error code
     public void GetMergedParallelOptions_IsTransient_SqlServerErrors(int errorNumber, bool expectedTransient)
     {
         var options = new SqlOptions();
@@ -205,7 +205,7 @@ public sealed class SqlOptionsTests
     // Cannot connect now
     // System error
     // IO error
-        // Non-transient error (unique violation)
+    // Non-transient error (unique violation)
     public void GetMergedParallelOptions_IsTransient_PostgreSqlErrors(string sqlState, bool expectedTransient)
     {
         var options = new SqlOptions();

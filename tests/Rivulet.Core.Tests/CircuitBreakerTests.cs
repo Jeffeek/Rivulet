@@ -144,7 +144,8 @@ public sealed class CircuitBreakerTests
     [Fact]
     public async Task CircuitBreaker_ClosesFromHalfOpen_AfterSuccessThreshold()
     {
-        var cb = new CircuitBreaker(new() { FailureThreshold = 2, SuccessThreshold = 2, OpenTimeout = TimeSpan.FromMilliseconds(100) });
+        var cb = new CircuitBreaker(new()
+            { FailureThreshold = 2, SuccessThreshold = 2, OpenTimeout = TimeSpan.FromMilliseconds(100) });
 
         for (var i = 0; i < 2; i++)
         {
@@ -181,7 +182,8 @@ public sealed class CircuitBreakerTests
     [Fact]
     public async Task CircuitBreaker_ReopensFromHalfOpen_OnFailure()
     {
-        var cb = new CircuitBreaker(new() { FailureThreshold = 2, SuccessThreshold = 2, OpenTimeout = TimeSpan.FromMilliseconds(100) });
+        var cb = new CircuitBreaker(new()
+            { FailureThreshold = 2, SuccessThreshold = 2, OpenTimeout = TimeSpan.FromMilliseconds(100) });
 
         // Open the circuit
         for (var i = 0; i < 2; i++)
@@ -212,7 +214,8 @@ public sealed class CircuitBreakerTests
         // Execute one failed operation - should reopen circuit
         try
         {
-            await cb.ExecuteAsync(static () => ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")));
+            await cb.ExecuteAsync(static () =>
+                ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")));
         }
         catch (InvalidOperationException)
         {
@@ -227,7 +230,8 @@ public sealed class CircuitBreakerTests
     {
         var cb = new CircuitBreaker(new()
         {
-            FailureThreshold = 3, SamplingDuration = TimeSpan.FromMilliseconds(200), OpenTimeout = TimeSpan.FromSeconds(1)
+            FailureThreshold = 3, SamplingDuration = TimeSpan.FromMilliseconds(200),
+            OpenTimeout = TimeSpan.FromSeconds(1)
         });
 
         // Execute 2 failures
@@ -269,7 +273,8 @@ public sealed class CircuitBreakerTests
         // One more failure (3 in window) should open circuit
         try
         {
-            await cb.ExecuteAsync(static () => ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")));
+            await cb.ExecuteAsync(static () =>
+                ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")));
         }
         catch (InvalidOperationException)
         {
@@ -407,7 +412,8 @@ public sealed class CircuitBreakerTests
         var options = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 1,
-            CircuitBreaker = new() { FailureThreshold = 5, SuccessThreshold = 2, OpenTimeout = TimeSpan.FromMilliseconds(100) },
+            CircuitBreaker = new()
+                { FailureThreshold = 5, SuccessThreshold = 2, OpenTimeout = TimeSpan.FromMilliseconds(100) },
             ErrorMode = ErrorMode.BestEffort
         };
 
@@ -476,7 +482,8 @@ public sealed class CircuitBreakerTests
 
         var options = new ParallelOptionsRivulet
         {
-            MaxDegreeOfParallelism = 1, CircuitBreaker = new() { FailureThreshold = 50, OpenTimeout = TimeSpan.FromSeconds(1) }
+            MaxDegreeOfParallelism = 1,
+            CircuitBreaker = new() { FailureThreshold = 50, OpenTimeout = TimeSpan.FromSeconds(1) }
         };
 
         var processedCount = 0;
@@ -562,7 +569,8 @@ public sealed class CircuitBreakerTests
         {
             try
             {
-                await cb.ExecuteAsync<int>(static () => throw new InvalidOperationException("Test"), CancellationToken.None);
+                await cb.ExecuteAsync<int>(static () => throw new InvalidOperationException("Test"),
+                    CancellationToken.None);
             }
             catch (InvalidOperationException)
             {
@@ -633,7 +641,8 @@ public sealed class CircuitBreakerTests
                 lock (transitions)
                 {
                     var hasOpen = transitions.Any(static t => t.Item2 == CircuitBreakerState.Open);
-                    var hasOther = transitions.Any(static t => t.Item2 is CircuitBreakerState.HalfOpen or CircuitBreakerState.Closed);
+                    var hasOther = transitions.Any(static t =>
+                        t.Item2 is CircuitBreakerState.HalfOpen or CircuitBreakerState.Closed);
                     return !hasOpen || !hasOther;
                 }
             });
@@ -641,7 +650,8 @@ public sealed class CircuitBreakerTests
         lock (transitions)
         {
             transitions.ShouldContain(static t => t.Item2 == CircuitBreakerState.Open);
-            transitions.ShouldContain(static t => t.Item2 == CircuitBreakerState.HalfOpen || t.Item2 == CircuitBreakerState.Closed);
+            transitions.ShouldContain(static t =>
+                t.Item2 == CircuitBreakerState.HalfOpen || t.Item2 == CircuitBreakerState.Closed);
         }
     }
 }

@@ -36,7 +36,8 @@ public sealed class RivuletOptionsSetupTests
     {
         var configData = new Dictionary<string, string?>
         {
-            ["Rivulet:MaxDegreeOfParallelism"] = "8", ["Rivulet:ErrorMode"] = "CollectAndContinue", ["Rivulet:OrderedOutput"] = "true"
+            ["Rivulet:MaxDegreeOfParallelism"] = "8", ["Rivulet:ErrorMode"] = "CollectAndContinue",
+            ["Rivulet:OrderedOutput"] = "true"
         };
 
         var configuration = new ConfigurationBuilder()
@@ -58,7 +59,8 @@ public sealed class RivuletOptionsSetupTests
     [Fact]
     public void Configure_WithRetryOptions_ShouldBindConfiguration()
     {
-        var configData = new Dictionary<string, string?> { ["Rivulet:MaxRetries"] = "5", ["Rivulet:BaseDelay"] = "00:00:02" };
+        var configData = new Dictionary<string, string?>
+            { ["Rivulet:MaxRetries"] = "5", ["Rivulet:BaseDelay"] = "00:00:02" };
 
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(configData)
@@ -222,7 +224,8 @@ public sealed class RivuletOptionsSetupTests
     [Fact]
     public void Configure_WithInvalidTimeSpanValue_ShouldIgnoreAndKeepDefault()
     {
-        var configData = new Dictionary<string, string?> { ["Rivulet:BaseDelay"] = "invalid-timespan", ["Rivulet:MaxRetries"] = "3" };
+        var configData = new Dictionary<string, string?>
+            { ["Rivulet:BaseDelay"] = "invalid-timespan", ["Rivulet:MaxRetries"] = "3" };
 
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(configData)
@@ -322,7 +325,8 @@ public sealed class RivuletOptionsSetupTests
     [Fact]
     public void Configure_WithEmptyStringValues_ShouldNotModifyOptions()
     {
-        var configData = new Dictionary<string, string?> { ["Rivulet:MaxDegreeOfParallelism"] = "", ["Rivulet:ChannelCapacity"] = "  " };
+        var configData = new Dictionary<string, string?>
+            { ["Rivulet:MaxDegreeOfParallelism"] = "", ["Rivulet:ChannelCapacity"] = "  " };
 
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(configData)
@@ -357,7 +361,8 @@ public sealed class RivuletOptionsSetupTests
             .Build();
 
         var setup = new RivuletOptionsSetup(configuration);
-        var options = new ParallelOptionsRivulet { MaxDegreeOfParallelism = 8, OrderedOutput = false, BaseDelay = TimeSpan.FromSeconds(2) };
+        var options = new ParallelOptionsRivulet
+            { MaxDegreeOfParallelism = 8, OrderedOutput = false, BaseDelay = TimeSpan.FromSeconds(2) };
 
         // Act
         setup.Configure(options);

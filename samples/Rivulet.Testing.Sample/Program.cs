@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Rivulet.Core;
 using Rivulet.Testing;
 
@@ -87,7 +88,7 @@ Console.WriteLine("✓ Chaos injection demonstrated\n");
 Console.WriteLine("4. ChaosInjector - ExecuteAsync with delays");
 var latencyChaos = new ChaosInjector(failureRate: 0.2, artificialDelay: TimeSpan.FromMilliseconds(50));
 
-var startStopwatch = System.Diagnostics.Stopwatch.StartNew();
+var startStopwatch = Stopwatch.StartNew();
 var data = Enumerable.Range(1, 10);
 var executedCount = 0;
 

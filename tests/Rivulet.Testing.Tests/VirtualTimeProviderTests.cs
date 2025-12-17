@@ -3,7 +3,7 @@
 namespace Rivulet.Testing.Tests;
 
 [SuppressMessage("ReSharper", "AccessToDisposedClosure")]
-public class VirtualTimeProviderTests
+public sealed class VirtualTimeProviderTests
 {
     [Fact]
     public void Constructor_ShouldInitializeWithZeroTime()

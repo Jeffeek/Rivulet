@@ -40,7 +40,8 @@ public static class PostgreSqlCopyExtensions
 
         if (columns.Length == 0) throw new ArgumentException("Columns array cannot be empty", nameof(columns));
 
-        if (batchSize <= 0) throw new ArgumentOutOfRangeException(nameof(batchSize), "Batch size must be greater than 0");
+        if (batchSize <= 0)
+            throw new ArgumentOutOfRangeException(nameof(batchSize), "Batch size must be greater than 0");
 
         options ??= new();
 
@@ -95,9 +96,12 @@ public static class PostgreSqlCopyExtensions
                             $"[PostgreSQL COPY] Failed to bulk insert batch of {batch.Length} rows to table '{tableName}'. " +
                             $"Copy command: {copyCommand}. " +
                             $"Exception: {ex.GetType().FullName} - {ex.Message}";
-                        if (ex.InnerException != null) detailMessage += $" | InnerException: {ex.InnerException.GetType().FullName} - {ex.InnerException.Message}";
+                        if (ex.InnerException != null)
+                            detailMessage +=
+                                $" | InnerException: {ex.InnerException.GetType().FullName} - {ex.InnerException.Message}";
 
-                        if (ex.StackTrace != null) detailMessage += $" | StackTrace: {ex.StackTrace[..Math.Min(500, ex.StackTrace.Length)]}";
+                        if (ex.StackTrace != null)
+                            detailMessage += $" | StackTrace: {ex.StackTrace[..Math.Min(500, ex.StackTrace.Length)]}";
 
                         throw new InvalidOperationException(detailMessage, ex);
                     }
@@ -137,7 +141,8 @@ public static class PostgreSqlCopyExtensions
 
         if (columns.Length == 0) throw new ArgumentException("Columns array cannot be empty", nameof(columns));
 
-        if (batchSize <= 0) throw new ArgumentOutOfRangeException(nameof(batchSize), "Batch size must be greater than 0");
+        if (batchSize <= 0)
+            throw new ArgumentOutOfRangeException(nameof(batchSize), "Batch size must be greater than 0");
 
         options ??= new();
 
@@ -148,7 +153,8 @@ public static class PostgreSqlCopyExtensions
         // Escape delimiter (handle single quotes)
         var escapedDelimiter = delimiter.ToString().Replace("'", "''");
         var headerOption = hasHeader ? ", HEADER" : "";
-        var copyCommand = $"COPY {escapedTableName} ({columnList}) FROM STDIN (FORMAT CSV, DELIMITER '{escapedDelimiter}'{headerOption})";
+        var copyCommand =
+            $"COPY {escapedTableName} ({columnList}) FROM STDIN (FORMAT CSV, DELIMITER '{escapedDelimiter}'{headerOption})";
 
         return source
             .Chunk(batchSize)
@@ -207,7 +213,8 @@ public static class PostgreSqlCopyExtensions
 
         if (columns.Length == 0) throw new ArgumentException("Columns array cannot be empty", nameof(columns));
 
-        if (batchSize <= 0) throw new ArgumentOutOfRangeException(nameof(batchSize), "Batch size must be greater than 0");
+        if (batchSize <= 0)
+            throw new ArgumentOutOfRangeException(nameof(batchSize), "Batch size must be greater than 0");
 
         options ??= new();
 

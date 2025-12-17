@@ -91,7 +91,8 @@ public sealed class DiagnosticsBuilder : IDisposable, IAsyncDisposable
     /// <param name="aggregationWindow">The time window for aggregation.</param>
     /// <param name="onAggregation">Action to invoke when metrics are aggregated.</param>
     /// <returns>The builder for chaining.</returns>
-    public DiagnosticsBuilder AddMetricsAggregator(TimeSpan aggregationWindow, Action<IReadOnlyList<AggregatedMetrics>> onAggregation)
+    public DiagnosticsBuilder AddMetricsAggregator(TimeSpan aggregationWindow,
+        Action<IReadOnlyList<AggregatedMetrics>> onAggregation)
     {
         var aggregator = new MetricsAggregator(aggregationWindow);
         aggregator.OnAggregation += onAggregation;

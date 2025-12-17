@@ -4,7 +4,7 @@ using Rivulet.Core;
 namespace Rivulet.Diagnostics.OpenTelemetry.Tests;
 
 [Collection(TestCollections.ActivitySource)]
-public class RivuletActivitySourceTests
+public sealed class RivuletActivitySourceTests
 {
     [Fact]
     public void ActivitySource_ShouldHaveCorrectNameAndVersion()
@@ -70,7 +70,8 @@ public class RivuletActivitySourceTests
         var retryEvent = activity.Events.First();
         retryEvent.Name.ShouldBe("retry");
         retryEvent.Tags.ShouldContain(static tag => tag.Key == "rivulet.retry_attempt" && (int)tag.Value! == 1);
-        retryEvent.Tags.ShouldContain(static tag => tag.Key == "exception.type" && ((string)tag.Value!).EndsWith("InvalidOperationException"));
+        retryEvent.Tags.ShouldContain(static tag =>
+            tag.Key == "exception.type" && ((string)tag.Value!).EndsWith("InvalidOperationException"));
         activity.GetTagItem("rivulet.retries").ShouldBe(1);
     }
 
@@ -126,7 +127,8 @@ public class RivuletActivitySourceTests
         activity.Events.Count().ShouldBe(1);
         var cbEvent = activity.Events.First();
         cbEvent.Name.ShouldBe("circuit_breaker_state_change");
-        cbEvent.Tags.ShouldContain(static tag => tag.Key == "rivulet.circuit_breaker.state" && (string)tag.Value! == "Open");
+        cbEvent.Tags.ShouldContain(static tag =>
+            tag.Key == "rivulet.circuit_breaker.state" && (string)tag.Value! == "Open");
     }
 
     [Fact]
@@ -145,8 +147,10 @@ public class RivuletActivitySourceTests
         activity.Events.Count().ShouldBe(1);
         var concurrencyEvent = activity.Events.First();
         concurrencyEvent.Name.ShouldBe("adaptive_concurrency_change");
-        concurrencyEvent.Tags.ShouldContain(static tag => tag.Key == "rivulet.concurrency.old" && (int)tag.Value! == 16);
-        concurrencyEvent.Tags.ShouldContain(static tag => tag.Key == "rivulet.concurrency.new" && (int)tag.Value! == 32);
+        concurrencyEvent.Tags.ShouldContain(static tag =>
+            tag.Key == "rivulet.concurrency.old" && (int)tag.Value! == 16);
+        concurrencyEvent.Tags.ShouldContain(static tag =>
+            tag.Key == "rivulet.concurrency.new" && (int)tag.Value! == 32);
         activity.GetTagItem("rivulet.concurrency.current").ShouldBe(32);
     }
 

@@ -133,7 +133,9 @@ internal sealed class MetricsTracker : MetricsTrackerBase
         }
         catch (Exception ex)
         {
-            RivuletEventSource.Log.CallbackFailed(nameof(MetricsOptions.OnMetricsSample), ex.GetType().Name, ex.Message);
+            RivuletEventSource.Log.CallbackFailed(nameof(MetricsOptions.OnMetricsSample),
+                ex.GetType().Name,
+                ex.Message);
         }
 
         Thread.MemoryBarrier();

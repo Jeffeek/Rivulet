@@ -3,9 +3,10 @@ using Rivulet.Base.Tests;
 
 namespace Rivulet.Http.Tests;
 
-public class HttpStreamingExtensionsTests
+public sealed class HttpStreamingExtensionsTests
 {
-    private static HttpClient CreateTestClient(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> handler)
+    private static HttpClient CreateTestClient(
+        Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> handler)
         => TestHttpClientFactory.CreateTestClient(handler);
 
     [Fact]
@@ -119,11 +120,12 @@ public class HttpStreamingExtensionsTests
 
         var options = new StreamingDownloadOptions { ValidateContentLength = true };
 
-        var exception = await Assert.ThrowsAsync<HttpRequestException>(async () => await HttpStreamingExtensions.DownloadToStreamAsync(
-            uri,
-            destination,
-            httpClient,
-            options));
+        var exception = await Assert.ThrowsAsync<HttpRequestException>(async () =>
+            await HttpStreamingExtensions.DownloadToStreamAsync(
+                uri,
+                destination,
+                httpClient,
+                options));
 
         exception.Message.ShouldContain("Content length mismatch");
     }
@@ -182,13 +184,15 @@ public class HttpStreamingExtensionsTests
 
             using var httpClient = CreateTestClient(static (_, _) =>
             {
-                var response = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("New content") };
+                var response = new HttpResponseMessage(HttpStatusCode.OK)
+                    { Content = new StringContent("New content") };
                 return Task.FromResult(response);
             });
 
             var options = new StreamingDownloadOptions { OverwriteExisting = false, EnableResume = false };
 
-            await Assert.ThrowsAsync<IOException>(async () => await downloads.DownloadParallelAsync(httpClient, options));
+            await Assert.ThrowsAsync<IOException>(async () =>
+                await downloads.DownloadParallelAsync(httpClient, options));
         }
         finally
         {
@@ -282,7 +286,8 @@ public class HttpStreamingExtensionsTests
                     return Task.FromResult(headResponse);
                 }
 
-                if (request.Headers.Range != null) return Task.FromResult(new HttpResponseMessage(HttpStatusCode.RequestedRangeNotSatisfiable));
+                if (request.Headers.Range != null)
+                    return Task.FromResult(new HttpResponseMessage(HttpStatusCode.RequestedRangeNotSatisfiable));
 
                 var response = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(content) };
                 return Task.FromResult(response);

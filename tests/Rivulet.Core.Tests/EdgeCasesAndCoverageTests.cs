@@ -121,7 +121,8 @@ public sealed class EdgeCasesAndCoverageTests
     [Fact]
     public async Task SelectParallelStreamAsync_EmptyAfterSomeItems_CompletesCorrectly()
     {
-        var results = await Source().SelectParallelStreamAsync(static (x, _) => new ValueTask<int>(x * 2)).ToListAsync();
+        var results = await Source().SelectParallelStreamAsync(static (x, _) => new ValueTask<int>(x * 2))
+            .ToListAsync();
 
         results.Count.ShouldBe(5);
         return;
@@ -167,7 +168,8 @@ public sealed class EdgeCasesAndCoverageTests
             throw new InvalidOperationException("Async source error");
         }
 
-        static async Task Act() => await FaultySource().SelectParallelStreamAsync(static (x, _) => new ValueTask<int>(x * 2)).ToListAsync();
+        static async Task Act() => await FaultySource()
+            .SelectParallelStreamAsync(static (x, _) => new ValueTask<int>(x * 2)).ToListAsync();
     }
 
     [Fact]
@@ -191,7 +193,8 @@ public sealed class EdgeCasesAndCoverageTests
         var source = Enumerable.Range(1, 10);
         var options = new ParallelOptionsRivulet { ErrorMode = ErrorMode.CollectAndContinue };
 
-        var act = () => source.SelectParallelAsync(static (x, _) => x == 5 ? throw new InvalidOperationException("Error") : new ValueTask<int>(x * 2),
+        var act = () => source.SelectParallelAsync(
+            static (x, _) => x == 5 ? throw new InvalidOperationException("Error") : new ValueTask<int>(x * 2),
             options);
 
         await act.ShouldThrowAsync<AggregateException>();
@@ -259,7 +262,8 @@ public sealed class EdgeCasesAndCoverageTests
             }
         };
 
-        var results = await source.SelectParallelStreamAsync(static (x, _) => new ValueTask<int>(x * 2), options).ToListAsync();
+        var results = await source.SelectParallelStreamAsync(static (x, _) => new ValueTask<int>(x * 2), options)
+            .ToListAsync();
 
         results.Count.ShouldBe(30);
         workerIndices.Count.ShouldBe(30);
@@ -324,7 +328,8 @@ public sealed class EdgeCasesAndCoverageTests
     public async Task WaitToWriteAsync_ReturnsFalse_HandledGracefully()
     {
         var source = Enumerable.Range(1, 1000);
-        var options = new ParallelOptionsRivulet { ChannelCapacity = 1, MaxDegreeOfParallelism = 1, ErrorMode = ErrorMode.FailFast };
+        var options = new ParallelOptionsRivulet
+            { ChannelCapacity = 1, MaxDegreeOfParallelism = 1, ErrorMode = ErrorMode.FailFast };
 
         await Assert.ThrowsAnyAsync<Exception>(((Func<Task<List<int>>>?)Act)!);
         return;

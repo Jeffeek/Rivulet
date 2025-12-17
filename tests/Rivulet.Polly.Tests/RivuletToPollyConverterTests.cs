@@ -34,7 +34,9 @@ public sealed class RivuletToPollyConverterTests
         var result = await pipeline.ExecuteAsync(_ =>
         {
             attemptCount++;
-            return attemptCount <= 2 ? throw new InvalidOperationException("Transient failure") : ValueTask.FromResult(42);
+            return attemptCount <= 2
+                ? throw new InvalidOperationException("Transient failure")
+                : ValueTask.FromResult(42);
         });
 
         result.ShouldBe(42);
@@ -82,7 +84,9 @@ public sealed class RivuletToPollyConverterTests
         var result = await pipeline.ExecuteAsync(_ =>
         {
             attemptTimes.Add(DateTime.UtcNow);
-            return attemptTimes.Count <= 2 ? throw new InvalidOperationException("Transient failure") : ValueTask.FromResult(42);
+            return attemptTimes.Count <= 2
+                ? throw new InvalidOperationException("Transient failure")
+                : ValueTask.FromResult(42);
         });
 
         result.ShouldBe(42);
@@ -107,7 +111,9 @@ public sealed class RivuletToPollyConverterTests
         var result = await pipeline.ExecuteAsync(_ =>
         {
             attemptCount++;
-            return attemptCount <= 2 ? throw new InvalidOperationException("Transient failure") : ValueTask.FromResult(42);
+            return attemptCount <= 2
+                ? throw new InvalidOperationException("Transient failure")
+                : ValueTask.FromResult(42);
         });
 
         result.ShouldBe(42);
@@ -131,7 +137,9 @@ public sealed class RivuletToPollyConverterTests
         var result = await pipeline.ExecuteAsync(_ =>
         {
             attemptCount++;
-            return attemptCount <= 2 ? throw new InvalidOperationException("Transient failure") : ValueTask.FromResult(42);
+            return attemptCount <= 2
+                ? throw new InvalidOperationException("Transient failure")
+                : ValueTask.FromResult(42);
         });
 
         result.ShouldBe(42);
@@ -247,7 +255,8 @@ public sealed class RivuletToPollyConverterTests
     {
         var options = new ParallelOptionsRivulet
         {
-            MaxRetries = 2, IsTransient = static ex => ex is InvalidOperationException, BaseDelay = TimeSpan.FromMilliseconds(10)
+            MaxRetries = 2, IsTransient = static ex => ex is InvalidOperationException,
+            BaseDelay = TimeSpan.FromMilliseconds(10)
         };
 
         var pipeline = options.ToPollyPipeline();
@@ -256,7 +265,9 @@ public sealed class RivuletToPollyConverterTests
         var result = await pipeline.ExecuteAsync(_ =>
         {
             attemptCount++;
-            return attemptCount <= 1 ? throw new InvalidOperationException("Transient failure") : ValueTask.FromResult(42);
+            return attemptCount <= 1
+                ? throw new InvalidOperationException("Transient failure")
+                : ValueTask.FromResult(42);
         });
 
         result.ShouldBe(42);
@@ -551,8 +562,10 @@ public sealed class RivuletToPollyConverterTests
         result.ShouldBe(42);
 
         // Verify all state transitions occurred
-        stateChanges.ShouldContain(static sc => sc.From == CircuitBreakerState.Open && sc.To == CircuitBreakerState.HalfOpen);
-        stateChanges.ShouldContain(static sc => sc.From == CircuitBreakerState.HalfOpen && sc.To == CircuitBreakerState.Closed);
+        stateChanges.ShouldContain(static sc =>
+            sc.From == CircuitBreakerState.Open && sc.To == CircuitBreakerState.HalfOpen);
+        stateChanges.ShouldContain(static sc =>
+            sc.From == CircuitBreakerState.HalfOpen && sc.To == CircuitBreakerState.Closed);
     }
 
     [Fact]
@@ -603,7 +616,9 @@ public sealed class RivuletToPollyConverterTests
         result.ShouldBe(42);
 
         // Verify state transitions
-        stateChanges.ShouldContain(static sc => sc.From == CircuitBreakerState.Open && sc.To == CircuitBreakerState.HalfOpen);
-        stateChanges.ShouldContain(static sc => sc.From == CircuitBreakerState.HalfOpen && sc.To == CircuitBreakerState.Closed);
+        stateChanges.ShouldContain(static sc =>
+            sc.From == CircuitBreakerState.Open && sc.To == CircuitBreakerState.HalfOpen);
+        stateChanges.ShouldContain(static sc =>
+            sc.From == CircuitBreakerState.HalfOpen && sc.To == CircuitBreakerState.Closed);
     }
 }

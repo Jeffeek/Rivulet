@@ -3,7 +3,7 @@ using Rivulet.Hosting.HealthChecks;
 
 namespace Rivulet.Hosting.Tests;
 
-public class RivuletOperationHealthCheckTests
+public sealed class RivuletOperationHealthCheckTests
 {
     [Fact]
     public async Task Constructor_WithNullOptions_ShouldUseDefaults()
@@ -18,7 +18,8 @@ public class RivuletOperationHealthCheckTests
     [Fact]
     public async Task Constructor_WithCustomOptions_ShouldUseProvidedOptions()
     {
-        var options = new RivuletOperationHealthCheckOptions { StalledThreshold = TimeSpan.FromSeconds(1), UnhealthyFailureThreshold = 2 };
+        var options = new RivuletOperationHealthCheckOptions
+            { StalledThreshold = TimeSpan.FromSeconds(1), UnhealthyFailureThreshold = 2 };
 
         var healthCheck = new RivuletOperationHealthCheck(options);
 
@@ -235,7 +236,8 @@ public class RivuletOperationHealthCheckTests
     [Fact]
     public void RivuletOperationHealthCheckOptions_ShouldAllowCustomValues()
     {
-        var options = new RivuletOperationHealthCheckOptions { StalledThreshold = TimeSpan.FromSeconds(30), UnhealthyFailureThreshold = 5 };
+        var options = new RivuletOperationHealthCheckOptions
+            { StalledThreshold = TimeSpan.FromSeconds(30), UnhealthyFailureThreshold = 5 };
 
         options.StalledThreshold.ShouldBe(TimeSpan.FromSeconds(30));
         options.UnhealthyFailureThreshold.ShouldBe(5);

@@ -1,6 +1,6 @@
 ﻿namespace Rivulet.Testing.Tests;
 
-public class ConcurrencyAsserterTests
+public sealed class ConcurrencyAsserterTests
 {
     [Fact]
     public void Constructor_ShouldInitializeWithZeroValues()

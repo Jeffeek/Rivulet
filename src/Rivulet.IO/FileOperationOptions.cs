@@ -6,7 +6,7 @@ namespace Rivulet.IO;
 /// <summary>
 ///     Configuration options for file operations with Rivulet.IO.
 /// </summary>
-public class FileOperationOptions
+public sealed class FileOperationOptions
 {
     /// <summary>
     ///     Gets or sets the buffer size for file read/write operations in bytes.

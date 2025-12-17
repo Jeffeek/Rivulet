@@ -40,9 +40,11 @@ public static class SqlBulkCopyExtensions
         ArgumentException.ThrowIfNullOrWhiteSpace(destinationTable);
         ArgumentNullException.ThrowIfNull(mapToDataTable);
 
-        if (batchSize <= 0) throw new ArgumentOutOfRangeException(nameof(batchSize), "Batch size must be greater than 0");
+        if (batchSize <= 0)
+            throw new ArgumentOutOfRangeException(nameof(batchSize), "Batch size must be greater than 0");
 
-        if (bulkCopyTimeout < 0) throw new ArgumentOutOfRangeException(nameof(bulkCopyTimeout), "Timeout must be non-negative");
+        if (bulkCopyTimeout < 0)
+            throw new ArgumentOutOfRangeException(nameof(bulkCopyTimeout), "Timeout must be non-negative");
 
         options ??= new();
 
@@ -120,9 +122,12 @@ public static class SqlBulkCopyExtensions
         ArgumentNullException.ThrowIfNull(mapToDataTable);
         ArgumentNullException.ThrowIfNull(columnMappings);
 
-        if (batchSize <= 0) throw new ArgumentOutOfRangeException(nameof(batchSize), "Batch size must be greater than 0");
-        if (bulkCopyTimeout < 0) throw new ArgumentOutOfRangeException(nameof(bulkCopyTimeout), "Timeout must be non-negative");
-        if (columnMappings.Count == 0) throw new ArgumentException("Column mappings dictionary cannot be empty", nameof(columnMappings));
+        if (batchSize <= 0)
+            throw new ArgumentOutOfRangeException(nameof(batchSize), "Batch size must be greater than 0");
+        if (bulkCopyTimeout < 0)
+            throw new ArgumentOutOfRangeException(nameof(bulkCopyTimeout), "Timeout must be non-negative");
+        if (columnMappings.Count == 0)
+            throw new ArgumentException("Column mappings dictionary cannot be empty", nameof(columnMappings));
 
         options ??= new();
 
@@ -145,7 +150,8 @@ public static class SqlBulkCopyExtensions
                         bulkCopy.BulkCopyTimeout = bulkCopyTimeout;
 
                         // Apply explicit column mappings
-                        foreach (var (sourceColumn, destColumn) in columnMappings) bulkCopy.ColumnMappings.Add(sourceColumn, destColumn);
+                        foreach (var (sourceColumn, destColumn) in columnMappings)
+                            bulkCopy.ColumnMappings.Add(sourceColumn, destColumn);
 
                         try
                         {
@@ -193,16 +199,19 @@ public static class SqlBulkCopyExtensions
         ArgumentNullException.ThrowIfNull(connectionFactory);
         ArgumentException.ThrowIfNullOrWhiteSpace(destinationTable);
 
-        if (batchSize <= 0) throw new ArgumentOutOfRangeException(nameof(batchSize), "Batch size must be greater than 0");
+        if (batchSize <= 0)
+            throw new ArgumentOutOfRangeException(nameof(batchSize), "Batch size must be greater than 0");
 
-        if (bulkCopyTimeout < 0) throw new ArgumentOutOfRangeException(nameof(bulkCopyTimeout), "Timeout must be non-negative");
+        if (bulkCopyTimeout < 0)
+            throw new ArgumentOutOfRangeException(nameof(bulkCopyTimeout), "Timeout must be non-negative");
 
         options ??= new();
 
         return source
             .ForEachParallelAsync(async (reader, ct) =>
                 {
-                    if (reader == null) throw new InvalidOperationException("Source collection contains a null DataReader");
+                    if (reader == null)
+                        throw new InvalidOperationException("Source collection contains a null DataReader");
 
                     var connection = connectionFactory();
                     if (connection == null) throw new InvalidOperationException("Connection factory returned null");

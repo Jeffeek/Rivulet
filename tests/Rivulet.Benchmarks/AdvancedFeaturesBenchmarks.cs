@@ -39,7 +39,8 @@ public class AdvancedFeaturesBenchmarks
             new()
             {
                 MaxDegreeOfParallelism = 16,
-                CircuitBreaker = new() { FailureThreshold = 5, SuccessThreshold = 2, OpenTimeout = TimeSpan.FromSeconds(10) }
+                CircuitBreaker = new()
+                    { FailureThreshold = 5, SuccessThreshold = 2, OpenTimeout = TimeSpan.FromSeconds(10) }
             });
 
     [Benchmark(Description = "With RateLimit")]
@@ -74,7 +75,10 @@ public class AdvancedFeaturesBenchmarks
             new()
             {
                 MaxDegreeOfParallelism = 16,
-                Progress = new() { ReportInterval = TimeSpan.FromMilliseconds(100), OnProgress = static _ => ValueTask.CompletedTask }
+                Progress = new()
+                {
+                    ReportInterval = TimeSpan.FromMilliseconds(100), OnProgress = static _ => ValueTask.CompletedTask
+                }
             });
 
     [Benchmark(Description = "With Metrics tracking")]
@@ -87,7 +91,11 @@ public class AdvancedFeaturesBenchmarks
             new()
             {
                 MaxDegreeOfParallelism = 16,
-                Metrics = new() { SampleInterval = TimeSpan.FromMilliseconds(100), OnMetricsSample = static _ => ValueTask.CompletedTask }
+                Metrics = new()
+                {
+                    SampleInterval = TimeSpan.FromMilliseconds(100),
+                    OnMetricsSample = static _ => ValueTask.CompletedTask
+                }
             });
 
     [Benchmark(Description = "With all features combined")]
@@ -100,9 +108,17 @@ public class AdvancedFeaturesBenchmarks
             new()
             {
                 MaxDegreeOfParallelism = 16,
-                CircuitBreaker = new() { FailureThreshold = 5, SuccessThreshold = 2, OpenTimeout = TimeSpan.FromSeconds(10) },
+                CircuitBreaker = new()
+                    { FailureThreshold = 5, SuccessThreshold = 2, OpenTimeout = TimeSpan.FromSeconds(10) },
                 RateLimit = new() { TokensPerSecond = 1000, BurstCapacity = 100 },
-                Progress = new() { ReportInterval = TimeSpan.FromMilliseconds(100), OnProgress = static _ => ValueTask.CompletedTask },
-                Metrics = new() { SampleInterval = TimeSpan.FromMilliseconds(100), OnMetricsSample = static _ => ValueTask.CompletedTask }
+                Progress = new()
+                {
+                    ReportInterval = TimeSpan.FromMilliseconds(100), OnProgress = static _ => ValueTask.CompletedTask
+                },
+                Metrics = new()
+                {
+                    SampleInterval = TimeSpan.FromMilliseconds(100),
+                    OnMetricsSample = static _ => ValueTask.CompletedTask
+                }
             });
 }

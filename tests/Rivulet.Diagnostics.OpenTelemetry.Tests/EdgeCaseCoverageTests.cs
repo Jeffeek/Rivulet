@@ -66,7 +66,8 @@ public sealed class EdgeCaseCoverageTests
         ActivitySource.AddActivityListener(listener);
 
         var options =
-            new ParallelOptionsRivulet { MaxRetries = 3, IsTransient = static _ => true }.WithOpenTelemetryTracingAndRetries("NoRetriesOp");
+            new ParallelOptionsRivulet { MaxRetries = 3, IsTransient = static _ => true }
+                .WithOpenTelemetryTracingAndRetries("NoRetriesOp");
 
         var result = await Enumerable.Range(1, 5)
             .SelectParallelAsync(static async (x, ct) =>
@@ -215,7 +216,8 @@ public sealed class EdgeCaseCoverageTests
         listener.ActivityStopped = activity => activities.Add(activity);
         ActivitySource.AddActivityListener(listener);
 
-        var options = new ParallelOptionsRivulet { MaxDegreeOfParallelism = 3, ErrorMode = ErrorMode.CollectAndContinue }
+        var options = new ParallelOptionsRivulet
+                { MaxDegreeOfParallelism = 3, ErrorMode = ErrorMode.CollectAndContinue }
             .WithOpenTelemetryTracing("MixedResults");
 
         try
@@ -258,7 +260,8 @@ public sealed class EdgeCaseCoverageTests
 
         var options = new ParallelOptionsRivulet
         {
-            MaxRetries = 2, IsTransient = static ex => ex.Message.Contains("transient"), ErrorMode = ErrorMode.CollectAndContinue
+            MaxRetries = 2, IsTransient = static ex => ex.Message.Contains("transient"),
+            ErrorMode = ErrorMode.CollectAndContinue
         }.WithOpenTelemetryTracingAndRetries("ErrorClassification");
 
         try

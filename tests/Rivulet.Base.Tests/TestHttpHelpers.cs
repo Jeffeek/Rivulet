@@ -3,9 +3,12 @@ namespace Rivulet.Base.Tests;
 /// <summary>
 ///     Test helper for mocking HTTP message handlers.
 /// </summary>
-public sealed class TestHttpMessageHandler(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> handler) : HttpMessageHandler
+public sealed class TestHttpMessageHandler(
+    Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> handler
+) : HttpMessageHandler
 {
-    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
+        CancellationToken cancellationToken) =>
         handler(request, cancellationToken);
 }
 

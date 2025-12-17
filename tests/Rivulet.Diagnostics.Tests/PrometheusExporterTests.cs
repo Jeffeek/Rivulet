@@ -56,10 +56,7 @@ public sealed class PrometheusExporterTests
         // 10 items * 200ms / 2 parallelism = 1000ms (1 second) minimum operation time
         await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
-            .ForEachParallelAsync(static async (_, ct) =>
-                {
-                    await Task.Delay(200, ct);
-                },
+            .ForEachParallelAsync(static async (_, ct) => { await Task.Delay(200, ct); },
                 new() { MaxDegreeOfParallelism = 2 });
 
         // Wait for EventCounters to fire

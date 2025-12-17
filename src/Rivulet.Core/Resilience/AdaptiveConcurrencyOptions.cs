@@ -73,21 +73,29 @@ public sealed class AdaptiveConcurrencyOptions
     /// <exception cref="ArgumentException">Thrown when options are invalid.</exception>
     internal void Validate()
     {
-        if (MinConcurrency <= 0) throw new ArgumentException("MinConcurrency must be greater than 0.", nameof(MinConcurrency));
+        if (MinConcurrency <= 0)
+            throw new ArgumentException("MinConcurrency must be greater than 0.", nameof(MinConcurrency));
 
-        if (MaxConcurrency < MinConcurrency) throw new ArgumentException("MaxConcurrency must be greater than or equal to MinConcurrency.", nameof(MaxConcurrency));
+        if (MaxConcurrency < MinConcurrency)
+            throw new ArgumentException("MaxConcurrency must be greater than or equal to MinConcurrency.",
+                nameof(MaxConcurrency));
 
-        if (InitialConcurrency.HasValue && (InitialConcurrency.Value < MinConcurrency || InitialConcurrency.Value > MaxConcurrency))
+        if (InitialConcurrency.HasValue &&
+            (InitialConcurrency.Value < MinConcurrency || InitialConcurrency.Value > MaxConcurrency))
         {
             throw new ArgumentException("InitialConcurrency must be between MinConcurrency and MaxConcurrency.",
                 nameof(InitialConcurrency));
         }
 
-        if (SampleInterval <= TimeSpan.Zero) throw new ArgumentException("SampleInterval must be greater than zero.", nameof(SampleInterval));
+        if (SampleInterval <= TimeSpan.Zero)
+            throw new ArgumentException("SampleInterval must be greater than zero.", nameof(SampleInterval));
 
-        if (TargetLatency.HasValue && TargetLatency.Value <= TimeSpan.Zero) throw new ArgumentException("TargetLatency must be greater than zero when specified.", nameof(TargetLatency));
+        if (TargetLatency.HasValue && TargetLatency.Value <= TimeSpan.Zero)
+            throw new ArgumentException("TargetLatency must be greater than zero when specified.",
+                nameof(TargetLatency));
 
-        if (MinSuccessRate is < 0.0 or > 1.0) throw new ArgumentException("MinSuccessRate must be between 0.0 and 1.0.", nameof(MinSuccessRate));
+        if (MinSuccessRate is < 0.0 or > 1.0)
+            throw new ArgumentException("MinSuccessRate must be between 0.0 and 1.0.", nameof(MinSuccessRate));
     }
 }
 

@@ -145,7 +145,8 @@ public sealed class SelectParallelStreamAsyncTests
         var source = Enumerable.Range(1, 10).ToAsyncEnumerable();
         using var cts = new CancellationTokenSource();
 
-        var results = await source.SelectParallelStreamAsync(static (x, _) => new ValueTask<int>(x * 2), cancellationToken: cts.Token)
+        var results = await source
+            .SelectParallelStreamAsync(static (x, _) => new ValueTask<int>(x * 2), cancellationToken: cts.Token)
             .ToListAsync(cts.Token);
 
         results.Count.ShouldBe(10);
@@ -154,7 +155,8 @@ public sealed class SelectParallelStreamAsyncTests
     [Fact]
     public async Task SelectParallelStreamAsync_SlowProducer_HandlesCorrectly()
     {
-        var results = await SlowProducer().SelectParallelStreamAsync(static (x, _) => new ValueTask<int>(x * 2)).ToListAsync();
+        var results = await SlowProducer().SelectParallelStreamAsync(static (x, _) => new ValueTask<int>(x * 2))
+            .ToListAsync();
 
         results.Count.ShouldBe(5);
         results.OrderBy(static x => x).ShouldBe([2, 4, 6, 8, 10]);

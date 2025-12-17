@@ -93,7 +93,7 @@ public sealed class ParallelOptionsRivulet
     /// </summary>
     /// <remarks>
     ///     Different strategies provide different trade-offs:
-    ///     - <see cref="BackoffStrategy.Exponential" />: Predictable exponential growth without jitter (default).
+    ///     - <see cref="Resilience.BackoffStrategy.Exponential" />: Predictable exponential growth without jitter (default).
     ///     - <see cref="BackoffStrategy.ExponentialJitter" />: Recommended for rate-limited APIs to reduce thundering herd.
     ///     - <see cref="BackoffStrategy.DecorrelatedJitter" />: Best for preventing synchronization across multiple clients.
     ///     - <see cref="BackoffStrategy.Linear" />: Gentler, predictable linear growth.

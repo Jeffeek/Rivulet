@@ -95,7 +95,8 @@ internal sealed class ProgressTracker : IAsyncDisposable
         if (_totalItems is > 0)
         {
             var remaining = _totalItems.Value - completed;
-            if (itemsPerSecond > 0 && remaining > 0) estimatedTimeRemaining = TimeSpan.FromSeconds(remaining / itemsPerSecond);
+            if (itemsPerSecond > 0 && remaining > 0)
+                estimatedTimeRemaining = TimeSpan.FromSeconds(remaining / itemsPerSecond);
 
             percentComplete = (double)completed / _totalItems.Value * 100.0;
         }

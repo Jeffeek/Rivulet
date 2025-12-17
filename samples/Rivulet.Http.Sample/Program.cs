@@ -1,3 +1,5 @@
+using System.Text;
+using System.Text.Json;
 using Rivulet.Core;
 
 // ReSharper disable ArrangeObjectCreationWhenTypeNotEvident
@@ -46,8 +48,8 @@ var postData = Enumerable.Range(1, 3)
 var postResults = await postData.SelectParallelAsync(
     async (data, ct) =>
     {
-        var json = System.Text.Json.JsonSerializer.Serialize(data);
-        using var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+        var json = JsonSerializer.Serialize(data);
+        using var content = new StringContent(json, Encoding.UTF8, "application/json");
         using var response = await httpClient.PostAsync("https://httpbin.org/post", content, ct);
         return (data.id, statusCode: (int)response.StatusCode);
     },
@@ -102,8 +104,8 @@ Console.WriteLine("4. HTTP requests with retry - Handle transient failures");
 
 var unreliableUrls = new[]
 {
-    "https://httpbin.org/status/500",  // Will fail
-    "https://httpbin.org/status/200"   // Will succeed
+    "https://httpbin.org/status/500", // Will fail
+    "https://httpbin.org/status/200"  // Will succeed
 };
 
 var retryResults = await unreliableUrls.SelectParallelAsync(
@@ -122,7 +124,8 @@ var retryResults = await unreliableUrls.SelectParallelAsync(
     });
 
 Console.WriteLine($"✓ Processed {retryResults.Count} requests with retry");
-foreach (var (url, status, success) in retryResults) Console.WriteLine($"  {url}: HTTP {status} {(success ? "✓" : "✗")}");
+foreach (var (url, status, success) in retryResults)
+    Console.WriteLine($"  {url}: HTTP {status} {(success ? "✓" : "✗")}");
 
 Console.WriteLine();
 

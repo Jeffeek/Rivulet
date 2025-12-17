@@ -287,7 +287,8 @@ public sealed class RateLimitingTests
 
         var options = new ParallelOptionsRivulet
         {
-            MaxDegreeOfParallelism = 10, OrderedOutput = true, RateLimit = new() { TokensPerSecond = 100, BurstCapacity = 100 }
+            MaxDegreeOfParallelism = 10, OrderedOutput = true,
+            RateLimit = new() { TokensPerSecond = 100, BurstCapacity = 100 }
         };
 
         var results = await source.SelectParallelAsync(

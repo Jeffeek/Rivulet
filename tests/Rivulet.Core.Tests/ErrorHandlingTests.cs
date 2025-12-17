@@ -58,7 +58,8 @@ public sealed class ErrorHandlingTests
     public async Task CollectAndContinue_SelectParallelAsync_CollectsAllErrorsAndThrowsAggregateException()
     {
         var source = Enumerable.Range(1, 20);
-        var options = new ParallelOptionsRivulet { ErrorMode = ErrorMode.CollectAndContinue, MaxDegreeOfParallelism = 5 };
+        var options = new ParallelOptionsRivulet
+            { ErrorMode = ErrorMode.CollectAndContinue, MaxDegreeOfParallelism = 5 };
 
         var act = () => source.SelectParallelAsync(
             static async (x, ct) =>
@@ -79,7 +80,8 @@ public sealed class ErrorHandlingTests
     public async Task CollectAndContinue_ProcessesSuccessfulItemsDespiteErrors()
     {
         var source = Enumerable.Range(1, 10);
-        var options = new ParallelOptionsRivulet { ErrorMode = ErrorMode.CollectAndContinue, MaxDegreeOfParallelism = 3 };
+        var options = new ParallelOptionsRivulet
+            { ErrorMode = ErrorMode.CollectAndContinue, MaxDegreeOfParallelism = 3 };
 
         try
         {

@@ -56,12 +56,16 @@ public sealed class RateLimitOptions
     /// <exception cref="ArgumentException">Thrown when configuration is invalid.</exception>
     internal void Validate()
     {
-        if (TokensPerSecond <= 0) throw new ArgumentException("TokensPerSecond must be greater than 0.", nameof(TokensPerSecond));
+        if (TokensPerSecond <= 0)
+            throw new ArgumentException("TokensPerSecond must be greater than 0.", nameof(TokensPerSecond));
 
-        if (BurstCapacity <= 0) throw new ArgumentException("BurstCapacity must be greater than 0.", nameof(BurstCapacity));
+        if (BurstCapacity <= 0)
+            throw new ArgumentException("BurstCapacity must be greater than 0.", nameof(BurstCapacity));
 
-        if (TokensPerOperation <= 0) throw new ArgumentException("TokensPerOperation must be greater than 0.", nameof(TokensPerOperation));
+        if (TokensPerOperation <= 0)
+            throw new ArgumentException("TokensPerOperation must be greater than 0.", nameof(TokensPerOperation));
 
-        if (BurstCapacity < TokensPerOperation) throw new ArgumentException("BurstCapacity must be at least TokensPerOperation.", nameof(BurstCapacity));
+        if (BurstCapacity < TokensPerOperation)
+            throw new ArgumentException("BurstCapacity must be at least TokensPerOperation.", nameof(BurstCapacity));
     }
 }

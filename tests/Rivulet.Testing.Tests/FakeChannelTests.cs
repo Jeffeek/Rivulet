@@ -4,7 +4,7 @@ using System.Threading.Channels;
 namespace Rivulet.Testing.Tests;
 
 [SuppressMessage("ReSharper", "AccessToDisposedClosure")]
-public class FakeChannelTests
+public sealed class FakeChannelTests
 {
     [Fact]
     public void Constructor_ShouldInitializeWithZeroCounts()

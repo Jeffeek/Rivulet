@@ -59,9 +59,13 @@ public sealed class PrometheusExporter : RivuletEventListenerBase
                     var metricName = SanitizeMetricName(kvp.Key);
                     var (displayName, value, _) = kvp.Value;
 
-                    sb.AppendLine(string.Format(RivuletDiagnosticsConstants.PrometheusFormats.HelpFormat, metricName, displayName));
+                    sb.AppendLine(string.Format(RivuletDiagnosticsConstants.PrometheusFormats.HelpFormat,
+                        metricName,
+                        displayName));
                     sb.AppendLine(string.Format(RivuletDiagnosticsConstants.PrometheusFormats.TypeFormat, metricName));
-                    sb.AppendLine(string.Format(RivuletDiagnosticsConstants.PrometheusFormats.MetricFormat, metricName, value));
+                    sb.AppendLine(string.Format(RivuletDiagnosticsConstants.PrometheusFormats.MetricFormat,
+                        metricName,
+                        value));
                     sb.AppendLine();
                 }
 

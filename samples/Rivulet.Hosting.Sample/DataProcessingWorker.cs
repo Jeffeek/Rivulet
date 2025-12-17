@@ -1,19 +1,22 @@
+using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Options;
 using Rivulet.Core;
 
 namespace Rivulet.Hosting.Sample;
 
 /// <summary>
-/// Example background worker that processes data using Rivulet
+///     Example background worker that processes data using Rivulet
 /// </summary>
-public class DataProcessingWorker(
+public sealed class DataProcessingWorker(
     IOptions<ParallelOptionsRivulet> options,
     ILogger<DataProcessingWorker> logger
 ) : ParallelWorkerService<string, string>(logger, options.Value)
 {
     private int _iterationCount;
 
-    protected override async IAsyncEnumerable<string> GetSourceItems([System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    protected override async IAsyncEnumerable<string> GetSourceItems(
+        [EnumeratorCancellation]
+        CancellationToken cancellationToken)
     {
         while (!cancellationToken.IsCancellationRequested)
         {

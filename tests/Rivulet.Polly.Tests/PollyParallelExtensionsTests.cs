@@ -11,7 +11,10 @@ public sealed class PollyParallelExtensionsTests
         var items = Enumerable.Range(1, 5).ToList();
 
         var retryPolicy = new ResiliencePipelineBuilder()
-            .AddRetry(new() { MaxRetryAttempts = 3, Delay = TimeSpan.FromMilliseconds(10), BackoffType = DelayBackoffType.Constant })
+            .AddRetry(new()
+            {
+                MaxRetryAttempts = 3, Delay = TimeSpan.FromMilliseconds(10), BackoffType = DelayBackoffType.Constant
+            })
             .Build();
 
         var results = await items.SelectParallelWithPolicyAsync(
@@ -145,7 +148,10 @@ public sealed class PollyParallelExtensionsTests
         var attempts = new Dictionary<int, int>();
 
         var retryPolicy = new ResiliencePipelineBuilder()
-            .AddRetry(new() { MaxRetryAttempts = 2, Delay = TimeSpan.FromMilliseconds(10), BackoffType = DelayBackoffType.Constant })
+            .AddRetry(new()
+            {
+                MaxRetryAttempts = 2, Delay = TimeSpan.FromMilliseconds(10), BackoffType = DelayBackoffType.Constant
+            })
             .Build();
 
         await items.ForEachParallelWithPolicyAsync(

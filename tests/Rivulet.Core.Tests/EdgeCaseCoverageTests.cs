@@ -198,10 +198,7 @@ public sealed class EdgeCaseCoverageTests
             BaseDelay = TimeSpan.FromMilliseconds(10),
             BackoffStrategy = BackoffStrategy.ExponentialJitter,
             IsTransient = static _ => true,
-            OnRetryAsync = static async (_, _, _) =>
-            {
-                await Task.CompletedTask;
-            }
+            OnRetryAsync = static async (_, _, _) => { await Task.CompletedTask; }
         };
 
         var attemptCount = 0;
@@ -230,7 +227,8 @@ public sealed class EdgeCaseCoverageTests
     {
         var options = new ParallelOptionsRivulet
         {
-            MaxDegreeOfParallelism = 2, Metrics = new() { SampleInterval = TimeSpan.FromMilliseconds(10), OnMetricsSample = null }
+            MaxDegreeOfParallelism = 2,
+            Metrics = new() { SampleInterval = TimeSpan.FromMilliseconds(10), OnMetricsSample = null }
         };
 
         var result = await Enumerable.Range(1, 5)

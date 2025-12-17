@@ -27,7 +27,8 @@ public sealed class EdgeCaseCoverageTests
     public async Task HealthCheck_ShouldHandleDegradedState()
     {
         using var exporter = new PrometheusExporter();
-        var healthCheck = new RivuletHealthCheck(exporter, new() { ErrorRateThreshold = 0.2, FailureCountThreshold = 50 });
+        var healthCheck =
+            new RivuletHealthCheck(exporter, new() { ErrorRateThreshold = 0.2, FailureCountThreshold = 50 });
 
         try
         {
@@ -260,10 +261,7 @@ public sealed class EdgeCaseCoverageTests
     public async Task MetricsAggregator_ShouldHandleEmptyMetrics()
     {
         await using var aggregator = new MetricsAggregator(TimeSpan.FromMilliseconds(500));
-        aggregator.OnAggregation += metrics =>
-        {
-            _ = true;
-        };
+        aggregator.OnAggregation += metrics => { _ = true; };
 
         await Task.Delay(1000, CancellationToken.None);
     }

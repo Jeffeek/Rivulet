@@ -3,7 +3,7 @@ using Rivulet.Core;
 
 namespace Rivulet.Http.Tests;
 
-public class HttpOptionsTests
+public sealed class HttpOptionsTests
 {
     [Fact]
     public void HttpOptions_DefaultValues_ShouldBeCorrect()
@@ -66,7 +66,8 @@ public class HttpOptionsTests
             ErrorMode = ErrorMode.CollectAndContinue
         };
 
-        var options = new HttpOptions { ParallelOptions = customParallelOptions, RequestTimeout = TimeSpan.FromSeconds(45) };
+        var options = new HttpOptions
+            { ParallelOptions = customParallelOptions, RequestTimeout = TimeSpan.FromSeconds(45) };
 
         var mergedOptions = options.GetMergedParallelOptions();
 

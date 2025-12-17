@@ -16,7 +16,8 @@ public sealed class RivuletOperationHealthCheck : IHealthCheck
     ///     Initializes a new instance of the RivuletOperationHealthCheck class.
     /// </summary>
     /// <param name="options">Optional configuration options.</param>
-    public RivuletOperationHealthCheck(RivuletOperationHealthCheckOptions? options = null) => _options = options ?? new RivuletOperationHealthCheckOptions();
+    public RivuletOperationHealthCheck(RivuletOperationHealthCheckOptions? options = null) =>
+        _options = options ?? new RivuletOperationHealthCheckOptions();
 
     /// <summary>
     ///     Checks the health status based on recent operation successes and failures.
@@ -24,7 +25,8 @@ public sealed class RivuletOperationHealthCheck : IHealthCheck
     /// <param name="context">The health check context.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The health check result.</returns>
-    public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
+    public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context,
+        CancellationToken cancellationToken = default)
     {
         var lastSuccessTime = new DateTime(Interlocked.Read(ref _lastSuccessTimeTicks), DateTimeKind.Utc);
         var timeSinceLastSuccess = DateTime.UtcNow - lastSuccessTime;
@@ -52,7 +54,8 @@ public sealed class RivuletOperationHealthCheck : IHealthCheck
 
         return Task.FromResult(HealthCheckResult.Healthy(
             $"Operation healthy, {failures} recent failures",
-            new Dictionary<string, object> { ["consecutive_failures"] = failures, ["time_since_last_success"] = timeSinceLastSuccess }));
+            new Dictionary<string, object>
+                { ["consecutive_failures"] = failures, ["time_since_last_success"] = timeSinceLastSuccess }));
     }
 
     /// <summary>

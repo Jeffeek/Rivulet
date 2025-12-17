@@ -52,7 +52,8 @@ internal sealed class CircuitBreaker
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The result of the operation.</returns>
     /// <exception cref="CircuitBreakerOpenException">Thrown when circuit is open.</exception>
-    public async ValueTask<T> ExecuteAsync<T>(Func<ValueTask<T>> operation, CancellationToken cancellationToken = default)
+    public async ValueTask<T> ExecuteAsync<T>(Func<ValueTask<T>> operation,
+        CancellationToken cancellationToken = default)
     {
         await BeforeExecuteAsync(cancellationToken).ConfigureAwait(false);
 
@@ -121,7 +122,8 @@ internal sealed class CircuitBreaker
                             _failureTimestamps.Enqueue(now);
 
                             var cutoffMs = (long)_options.SamplingDuration.Value.TotalMilliseconds;
-                            while (_failureTimestamps.TryPeek(out var timestamp) && now - timestamp > cutoffMs) _failureTimestamps.TryDequeue(out _);
+                            while (_failureTimestamps.TryPeek(out var timestamp) && now - timestamp > cutoffMs)
+                                _failureTimestamps.TryDequeue(out _);
 
                             if (_failureTimestamps.Count >= _options.FailureThreshold) TransitionToOpen();
                         }
@@ -153,7 +155,9 @@ internal sealed class CircuitBreaker
                     }
                     catch (Exception ex)
                     {
-                        RivuletEventSource.Log.CallbackFailed(nameof(CircuitBreakerOptions.OnStateChange), ex.GetType().Name, ex.Message);
+                        RivuletEventSource.Log.CallbackFailed(nameof(CircuitBreakerOptions.OnStateChange),
+                            ex.GetType().Name,
+                            ex.Message);
                     }
                 },
                 CancellationToken.None);
@@ -177,7 +181,9 @@ internal sealed class CircuitBreaker
                     }
                     catch (Exception ex)
                     {
-                        RivuletEventSource.Log.CallbackFailed(nameof(CircuitBreakerOptions.OnStateChange), ex.GetType().Name, ex.Message);
+                        RivuletEventSource.Log.CallbackFailed(nameof(CircuitBreakerOptions.OnStateChange),
+                            ex.GetType().Name,
+                            ex.Message);
                     }
                 },
                 CancellationToken.None);
@@ -201,7 +207,9 @@ internal sealed class CircuitBreaker
                     }
                     catch (Exception ex)
                     {
-                        RivuletEventSource.Log.CallbackFailed(nameof(CircuitBreakerOptions.OnStateChange), ex.GetType().Name, ex.Message);
+                        RivuletEventSource.Log.CallbackFailed(nameof(CircuitBreakerOptions.OnStateChange),
+                            ex.GetType().Name,
+                            ex.Message);
                     }
                 },
                 CancellationToken.None);

@@ -46,7 +46,8 @@ public static class PollyAdvancedExtensions
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(selector);
 
-        if (maxHedgedAttempts < 1) throw new ArgumentOutOfRangeException(nameof(maxHedgedAttempts), "Must be at least 1");
+        if (maxHedgedAttempts < 1)
+            throw new ArgumentOutOfRangeException(nameof(maxHedgedAttempts), "Must be at least 1");
 
         var delay = hedgingDelay ?? TimeSpan.FromMilliseconds(100);
 
@@ -62,7 +63,9 @@ public static class PollyAdvancedExtensions
                         ActionGenerator = args =>
                         {
                             // Create a hedged action that executes the selector with the captured item
-                            return async () => Outcome.FromResult(await selector(item, args.ActionContext.CancellationToken).ConfigureAwait(false));
+                            return async () =>
+                                Outcome.FromResult(await selector(item, args.ActionContext.CancellationToken)
+                                    .ConfigureAwait(false));
                         }
                     })
                     .Build();

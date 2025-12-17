@@ -115,7 +115,8 @@ public sealed class RivuletStructuredLogListenerTests : IDisposable
 
         loggedLines.ShouldNotBeEmpty();
 
-        foreach (var act in loggedLines.Select<string, Func<JsonDocument>>(static line => () => JsonDocument.Parse(line))) act.ShouldNotThrow();
+        foreach (var act in loggedLines.Select<string, Func<JsonDocument>>(static line =>
+                     () => JsonDocument.Parse(line))) act.ShouldNotThrow();
     }
 
     [Fact]

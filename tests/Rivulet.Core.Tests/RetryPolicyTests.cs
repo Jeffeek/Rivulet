@@ -11,7 +11,8 @@ public sealed class RetryPolicyTests
     {
         var source = Enumerable.Range(1, 5);
         var attemptCounts = new ConcurrentDictionary<int, int>();
-        var options = new ParallelOptionsRivulet { ErrorMode = ErrorMode.BestEffort, MaxRetries = 0, IsTransient = static _ => true };
+        var options = new ParallelOptionsRivulet
+            { ErrorMode = ErrorMode.BestEffort, MaxRetries = 0, IsTransient = static _ => true };
 
         var results = await source.SelectParallelAsync(
             (x, _) =>
@@ -84,14 +85,17 @@ public sealed class RetryPolicyTests
         var attemptTimestamps = new List<DateTime>();
         var options = new ParallelOptionsRivulet
         {
-            ErrorMode = ErrorMode.BestEffort, MaxRetries = 3, BaseDelay = TimeSpan.FromMilliseconds(100), IsTransient = static _ => true
+            ErrorMode = ErrorMode.BestEffort, MaxRetries = 3, BaseDelay = TimeSpan.FromMilliseconds(100),
+            IsTransient = static _ => true
         };
 
         _ = await source.SelectParallelAsync(
             (x, _) =>
             {
                 attemptTimestamps.Add(DateTime.UtcNow);
-                return attemptTimestamps.Count < 4 ? throw new InvalidOperationException("Transient error") : new ValueTask<int>(x * 2);
+                return attemptTimestamps.Count < 4
+                    ? throw new InvalidOperationException("Transient error")
+                    : new ValueTask<int>(x * 2);
             },
             options);
 
@@ -113,7 +117,8 @@ public sealed class RetryPolicyTests
         var attemptCount = 0;
         var options = new ParallelOptionsRivulet
         {
-            ErrorMode = ErrorMode.FailFast, MaxRetries = 2, BaseDelay = TimeSpan.FromMilliseconds(10), IsTransient = static _ => true
+            ErrorMode = ErrorMode.FailFast, MaxRetries = 2, BaseDelay = TimeSpan.FromMilliseconds(10),
+            IsTransient = static _ => true
         };
 
         Task<List<int>> Act() =>
@@ -166,7 +171,8 @@ public sealed class RetryPolicyTests
         var processedItems = new ConcurrentBag<int>();
         var options = new ParallelOptionsRivulet
         {
-            ErrorMode = ErrorMode.BestEffort, MaxRetries = 2, BaseDelay = TimeSpan.FromMilliseconds(10), IsTransient = static _ => true
+            ErrorMode = ErrorMode.BestEffort, MaxRetries = 2, BaseDelay = TimeSpan.FromMilliseconds(10),
+            IsTransient = static _ => true
         };
 
         await source.ForEachParallelAsync(
@@ -191,7 +197,8 @@ public sealed class RetryPolicyTests
         var attemptCount = 0;
         var options = new ParallelOptionsRivulet
         {
-            ErrorMode = ErrorMode.BestEffort, MaxRetries = 3, BaseDelay = TimeSpan.FromMilliseconds(10), IsTransient = null
+            ErrorMode = ErrorMode.BestEffort, MaxRetries = 3, BaseDelay = TimeSpan.FromMilliseconds(10),
+            IsTransient = null
         };
 
         var results = await source.SelectParallelAsync(
@@ -213,7 +220,8 @@ public sealed class RetryPolicyTests
         using var cts = new CancellationTokenSource();
         var options = new ParallelOptionsRivulet
         {
-            ErrorMode = ErrorMode.FailFast, MaxRetries = 5, BaseDelay = TimeSpan.FromMilliseconds(500), IsTransient = static _ => true
+            ErrorMode = ErrorMode.FailFast, MaxRetries = 5, BaseDelay = TimeSpan.FromMilliseconds(500),
+            IsTransient = static _ => true
         };
 
         Task<List<int>> Act() =>

@@ -171,7 +171,9 @@ public sealed class SelectParallelAsyncTests
         var failOn = new HashSet<int> { 3, 7 };
 
         var results = await source.SelectParallelAsync(
-            (x, _) => failOn.Contains(x) ? throw new InvalidOperationException($"Failed on {x}") : new ValueTask<int>(x * 2),
+            (x, _) => failOn.Contains(x)
+                ? throw new InvalidOperationException($"Failed on {x}")
+                : new ValueTask<int>(x * 2),
             new() { OnFallback = static (_, _) => -1 });
 
         results.Count.ShouldBe(10);
@@ -209,7 +211,8 @@ public sealed class SelectParallelAsyncTests
     {
         var source = new[] { "a", "b", "c" };
 
-        var results = await source.SelectParallelAsync(static (x, _) => x == "b" ? throw new InvalidOperationException() : new ValueTask<string>(x.ToUpper()),
+        var results = await source.SelectParallelAsync(
+            static (x, _) => x == "b" ? throw new InvalidOperationException() : new ValueTask<string>(x.ToUpper()),
             new() { OnFallback = static (_, _) => null });
 
         results.Count.ShouldBe(3);
@@ -238,7 +241,8 @@ public sealed class SelectParallelAsyncTests
     {
         var source = new[] { 10, 20, 30, 40 };
 
-        var results = await source.SelectParallelAsync(static (x, _) => x is 20 or 40 ? throw new() : new ValueTask<int>(x),
+        var results = await source.SelectParallelAsync(
+            static (x, _) => x is 20 or 40 ? throw new() : new ValueTask<int>(x),
             new() { OnFallback = static (index, _) => index * 1000 });
 
         results.Count.ShouldBe(4);
@@ -252,7 +256,8 @@ public sealed class SelectParallelAsyncTests
         var source = Enumerable.Range(1, 5);
 
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
-            await source.SelectParallelAsync(static (x, _) => x == 3 ? throw new InvalidOperationException() : new ValueTask<int>(x * 2)));
+            await source.SelectParallelAsync(static (x, _) =>
+                x == 3 ? throw new InvalidOperationException() : new ValueTask<int>(x * 2)));
     }
 
     [Fact]
@@ -260,10 +265,12 @@ public sealed class SelectParallelAsyncTests
     {
         var source = new[] { 1, 2, 3, 4 };
 
-        var results = await source.SelectParallelAsync(static (x, _) => x == 2 ? throw new() : new ValueTask<(int Value, string Status)>((x, "OK")),
+        var results = await source.SelectParallelAsync(
+            static (x, _) => x == 2 ? throw new() : new ValueTask<(int Value, string Status)>((x, "OK")),
             new() { OnFallback = static (_, _) => (0, "FAILED") });
 
         results.Count.ShouldBe(4);
-        foreach (var expected in new[] { (1, "OK"), (0, "FAILED"), (3, "OK"), (4, "OK") }) results.ShouldContain(expected);
+        foreach (var expected in new[] { (1, "OK"), (0, "FAILED"), (3, "OK"), (4, "OK") })
+            results.ShouldContain(expected);
     }
 }

@@ -23,7 +23,7 @@ public class BatchController(
     private readonly ParallelOptionsRivulet _options = options.Value;
 
     /// <summary>
-    /// Process a batch of numbers in parallel
+    ///     Process a batch of numbers in parallel
     /// </summary>
     /// <param name="numbers">Array of numbers to process</param>
     /// <returns>Squared numbers</returns>
@@ -46,7 +46,7 @@ public class BatchController(
     }
 
     /// <summary>
-    /// Simulate fetching data from multiple URLs
+    ///     Simulate fetching data from multiple URLs
     /// </summary>
     /// <param name="urls">Array of URLs to fetch</param>
     /// <returns>Status codes for each URL</returns>
@@ -86,7 +86,7 @@ public class BatchController(
     }
 
     /// <summary>
-    /// Process items in batches
+    ///     Process items in batches
     /// </summary>
     /// <param name="request">Batch processing request</param>
     /// <returns>Batch sums</returns>

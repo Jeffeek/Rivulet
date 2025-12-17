@@ -45,7 +45,8 @@ public sealed class OrderedOutputTests
 
         results.Count.ShouldBe(50);
         orderedCount.ShouldBe(0);
-        results.OrderBy(static x => x).ShouldBe(source.OrderBy(static x => x), "all items should be present regardless of order");
+        results.OrderBy(static x => x)
+            .ShouldBe(source.OrderBy(static x => x), "all items should be present regardless of order");
     }
 
     [Fact]
@@ -86,14 +87,16 @@ public sealed class OrderedOutputTests
             .ToListAsync();
 
         ((IEnumerable<int>)results).ShouldBe([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "results should be in order");
-        completionOrder.SequenceEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]).ShouldBeFalse("completion should be out of order");
+        completionOrder.SequenceEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+            .ShouldBeFalse("completion should be out of order");
     }
 
     [Fact]
     public async Task SelectParallelAsync_OrderedOutput_WithErrors_MaintainsOrderForSuccessful()
     {
         var source = Enumerable.Range(1, 20).ToArray();
-        var options = new ParallelOptionsRivulet { MaxDegreeOfParallelism = 8, OrderedOutput = true, ErrorMode = ErrorMode.BestEffort };
+        var options = new ParallelOptionsRivulet
+            { MaxDegreeOfParallelism = 8, OrderedOutput = true, ErrorMode = ErrorMode.BestEffort };
 
         var results = await source.SelectParallelAsync(
             static async (x, ct) =>
@@ -186,7 +189,8 @@ public sealed class OrderedOutputTests
         var attemptCounts = new ConcurrentDictionary<int, int>();
         var options = new ParallelOptionsRivulet
         {
-            MaxDegreeOfParallelism = 8, OrderedOutput = true, MaxRetries = 2, IsTransient = static ex => ex is InvalidOperationException
+            MaxDegreeOfParallelism = 8, OrderedOutput = true, MaxRetries = 2,
+            IsTransient = static ex => ex is InvalidOperationException
         };
 
         var results = await source.SelectParallelStreamAsync(async (x, ct) =>

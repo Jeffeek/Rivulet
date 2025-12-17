@@ -11,7 +11,7 @@ namespace Rivulet.Sql.SqlServer.Tests;
 ///     For shared containers across test classes, use [Collection(TestCollections.SqlServer)] with SqlServerFixture.
 /// </summary>
 [Trait("Category", "Integration")]
-public class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
+public sealed class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
 {
     private string? _connectionString;
     private MsSqlContainer? _container;
@@ -119,7 +119,8 @@ public class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
     public async Task BulkInsertUsingSqlBulkCopyAsync_WithColumnMappings_ShouldInsertRecords()
     {
         // Arrange
-        var records = new[] { new TestRecord(100, "Dave", "dave@example.com"), new TestRecord(101, "Eve", "eve@example.com") };
+        var records = new[]
+            { new TestRecord(100, "Dave", "dave@example.com"), new TestRecord(101, "Eve", "eve@example.com") };
 
         var columnMappings = new Dictionary<string, string> { ["Id"] = "Id", ["Name"] = "Name", ["Email"] = "Email" };
 

@@ -9,7 +9,7 @@ namespace Rivulet.Sql.MySql.Tests;
 ///     Requires Docker Desktop to be running.
 /// </summary>
 [Trait("Category", "Integration")]
-public class MySqlBulkExtensionsIntegrationTests : IAsyncLifetime
+public sealed class MySqlBulkExtensionsIntegrationTests : IAsyncLifetime
 {
     private string? _connectionString;
     private MySqlContainer? _container;

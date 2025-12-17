@@ -57,7 +57,8 @@ public sealed class LifecycleHooksTests
             }
         };
 
-        await source.SelectParallelAsync(static (x, _) => x == 5 ? throw new InvalidOperationException("Error") : new ValueTask<int>(x * 2),
+        await source.SelectParallelAsync(
+            static (x, _) => x == 5 ? throw new InvalidOperationException("Error") : new ValueTask<int>(x * 2),
             options);
 
         completedItems.Count.ShouldBe(9);
@@ -80,7 +81,9 @@ public sealed class LifecycleHooksTests
             }
         };
 
-        await source.SelectParallelAsync(static (x, _) => x is 3 or 7 ? throw new InvalidOperationException($"Error at {x}") : new ValueTask<int>(x * 2),
+        await source.SelectParallelAsync(
+            static (x, _) =>
+                x is 3 or 7 ? throw new InvalidOperationException($"Error at {x}") : new ValueTask<int>(x * 2),
             options);
 
         errorIndices.Count.ShouldBe(2);
@@ -164,7 +167,8 @@ public sealed class LifecycleHooksTests
             }
         };
 
-        await source.SelectParallelAsync(static (x, _) => x == 5 ? throw new InvalidOperationException("Error") : new ValueTask<int>(x * 2),
+        await source.SelectParallelAsync(
+            static (x, _) => x == 5 ? throw new InvalidOperationException("Error") : new ValueTask<int>(x * 2),
             options);
 
         events.ShouldContain(static e => e.StartsWith("Error-"));
@@ -192,7 +196,8 @@ public sealed class LifecycleHooksTests
             }
         };
 
-        var results = await source.SelectParallelStreamAsync(static (x, _) => new ValueTask<int>(x * 2), options).ToListAsync();
+        var results = await source.SelectParallelStreamAsync(static (x, _) => new ValueTask<int>(x * 2), options)
+            .ToListAsync();
 
         startedItems.Count.ShouldBe(10);
         completedItems.Count.ShouldBe(10);

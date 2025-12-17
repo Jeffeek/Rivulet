@@ -8,7 +8,8 @@ namespace Rivulet.Http.Tests;
 // ReSharper disable once MemberCanBeFileLocal
 public sealed class HttpClientFactoryExtensionsTests
 {
-    private static IHttpClientFactory CreateTestFactory(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> handler)
+    private static IHttpClientFactory CreateTestFactory(
+        Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> handler)
     {
         var services = new ServiceCollection();
         services.AddHttpClient("test")
@@ -28,7 +29,8 @@ public sealed class HttpClientFactoryExtensionsTests
 
         var factory = CreateTestFactory(static (request, _) =>
         {
-            var response = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent($"Response for {request.RequestUri}") };
+            var response = new HttpResponseMessage(HttpStatusCode.OK)
+                { Content = new StringContent($"Response for {request.RequestUri}") };
             return Task.FromResult(response);
         });
 
@@ -64,7 +66,8 @@ public sealed class HttpClientFactoryExtensionsTests
     {
         var uris = new[] { new Uri("http://test.local") };
 
-        await Assert.ThrowsAsync<ArgumentNullException>(async () => await uris.GetParallelAsync((IHttpClientFactory)null!));
+        await Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            await uris.GetParallelAsync((IHttpClientFactory)null!));
     }
 
     [Fact]
@@ -180,7 +183,8 @@ public sealed class HttpClientFactoryExtensionsTests
 
         try
         {
-            var downloads = new[] { (uri: new Uri("http://test.local/file1.txt"), destinationPath: Path.Join(tempDir, "file1.txt")) };
+            var downloads = new[]
+                { (uri: new Uri("http://test.local/file1.txt"), destinationPath: Path.Join(tempDir, "file1.txt")) };
 
             var factory = CreateTestFactory(static (request, _) =>
             {
@@ -212,10 +216,13 @@ public sealed class HttpClientFactoryExtensionsTests
         var factory = CreateTestFactory((_, _) =>
         {
             attemptCount++;
-            return Task.FromResult(attemptCount < 3 ? new(HttpStatusCode.ServiceUnavailable) : new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("Success") });
+            return Task.FromResult(attemptCount < 3
+                ? new(HttpStatusCode.ServiceUnavailable)
+                : new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("Success") });
         });
 
-        var options = new HttpOptions { ParallelOptions = new() { MaxRetries = 3, BaseDelay = TimeSpan.FromMilliseconds(10) } };
+        var options = new HttpOptions
+            { ParallelOptions = new() { MaxRetries = 3, BaseDelay = TimeSpan.FromMilliseconds(10) } };
 
         var results = await uris.GetParallelAsync(factory, "test", options);
 

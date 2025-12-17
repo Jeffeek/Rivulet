@@ -47,7 +47,8 @@ public sealed class ProgressReportingTests
 
         snapshots.All(static s => s.TotalItems == 100).ShouldBeTrue();
         snapshots.Where(static s => s.ItemsCompleted > 0).All(static s => s.ItemsPerSecond > 0).ShouldBeTrue();
-        snapshots.Where(static s => s.ItemsCompleted > 0).All(static s => s.PercentComplete is >= 0 and <= 100).ShouldBeTrue();
+        snapshots.Where(static s => s.ItemsCompleted > 0).All(static s => s.PercentComplete is >= 0 and <= 100)
+            .ShouldBeTrue();
     }
 
     [Fact]
@@ -428,7 +429,8 @@ public sealed class ProgressReportingTests
 
         snapshots.ShouldNotBeEmpty();
         var orderedSnapshots = snapshots.OrderBy(static s => s.Elapsed).ToList();
-        for (var i = 1; i < orderedSnapshots.Count; i++) orderedSnapshots[i].Elapsed.ShouldBeGreaterThanOrEqualTo(orderedSnapshots[i - 1].Elapsed);
+        for (var i = 1; i < orderedSnapshots.Count; i++)
+            orderedSnapshots[i].Elapsed.ShouldBeGreaterThanOrEqualTo(orderedSnapshots[i - 1].Elapsed);
     }
 
     [Fact]
@@ -578,7 +580,8 @@ public sealed class ProgressReportingTests
     {
         var source = Enumerable.Range(1, 20);
 
-        var options = new ParallelOptionsRivulet { Progress = new() { ReportInterval = TimeSpan.FromMilliseconds(50), OnProgress = null } };
+        var options = new ParallelOptionsRivulet
+            { Progress = new() { ReportInterval = TimeSpan.FromMilliseconds(50), OnProgress = null } };
 
         var results = await source.SelectParallelAsync(
             static async (x, ct) =>
@@ -709,7 +712,8 @@ public sealed class ProgressReportingTests
 
         var options = new ParallelOptionsRivulet
         {
-            Progress = new() { ReportInterval = TimeSpan.FromMilliseconds(10), OnProgress = static _ => ValueTask.CompletedTask }
+            Progress = new()
+                { ReportInterval = TimeSpan.FromMilliseconds(10), OnProgress = static _ => ValueTask.CompletedTask }
         };
 
         await cts.CancelAsync();
@@ -770,7 +774,8 @@ public sealed class ProgressReportingTests
                 ReportInterval = TimeSpan.FromMilliseconds(1),
                 OnProgress = static snapshot =>
                 {
-                    if (snapshot.Elapsed.TotalMilliseconds < 10) snapshot.ItemsPerSecond.ShouldBeGreaterThanOrEqualTo(0);
+                    if (snapshot.Elapsed.TotalMilliseconds < 10)
+                        snapshot.ItemsPerSecond.ShouldBeGreaterThanOrEqualTo(0);
 
                     return ValueTask.CompletedTask;
                 }

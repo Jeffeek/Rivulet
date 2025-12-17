@@ -68,7 +68,8 @@ public sealed class BulkOperationOptionsTests
     {
         var options = new BulkOperationOptions
         {
-            SqlOptions = new() { CommandTimeout = 90, IsolationLevel = IsolationLevel.Serializable, AutoManageConnection = false }
+            SqlOptions = new()
+                { CommandTimeout = 90, IsolationLevel = IsolationLevel.Serializable, AutoManageConnection = false }
         };
 
         options.SqlOptions.ShouldNotBeNull();

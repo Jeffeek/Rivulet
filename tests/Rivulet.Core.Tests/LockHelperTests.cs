@@ -241,7 +241,8 @@ public sealed class LockHelperTests
 
                         // Track max concurrent executions inside lock
                         var currentMax = maxActiveCount;
-                        while (current > currentMax) currentMax = Interlocked.CompareExchange(ref maxActiveCount, current, currentMax);
+                        while (current > currentMax)
+                            currentMax = Interlocked.CompareExchange(ref maxActiveCount, current, currentMax);
 
                         executionOrder.Add(threadId);
                         Thread.Sleep(50); // Reduced from 1000ms to 50ms for faster tests
@@ -328,10 +329,7 @@ public sealed class LockHelperTests
     {
         var counter = 0;
 
-        await Task.Run(() =>
-        {
-            LockHelper.Execute(_lock, () => { counter++; });
-        });
+        await Task.Run(() => { LockHelper.Execute(_lock, () => { counter++; }); });
 
         counter.ShouldBe(1);
     }

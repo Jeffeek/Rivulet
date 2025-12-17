@@ -6,7 +6,7 @@ using Rivulet.Core;
 
 namespace Rivulet.Hosting.Tests;
 
-public class ParallelBackgroundServiceTests
+public sealed class ParallelBackgroundServiceTests
 {
     [Fact]
     public async Task StartAsync_ShouldProcessAllItems()
@@ -121,7 +121,8 @@ public class ParallelBackgroundServiceTests
     [Fact]
     public async Task ExecuteAsync_WhenCancelled_ShouldLogInformationAndExitGracefully()
     {
-        var loggerFactory = LoggerFactory.Create(static builder => builder.AddConsole().SetMinimumLevel(LogLevel.Information));
+        var loggerFactory =
+            LoggerFactory.Create(static builder => builder.AddConsole().SetMinimumLevel(LogLevel.Information));
         var logger = loggerFactory.CreateLogger<TestBackgroundService>();
 
         var service = new TestBackgroundService(logger, SlowGenerateItems());
@@ -130,8 +131,8 @@ public class ParallelBackgroundServiceTests
 
         // Act
         await service.StartAsync(cts.Token);
-        await Task.Delay(20, CancellationToken.None);    // Let it start
-        await cts.CancelAsync(); // Cancel it
+        await Task.Delay(20, CancellationToken.None); // Let it start
+        await cts.CancelAsync();                      // Cancel it
         await service.StopAsync(CancellationToken.None);
 
         // Assert - should exit gracefully without throwing
@@ -151,7 +152,8 @@ public class ParallelBackgroundServiceTests
     [Fact]
     public async Task ExecuteAsync_WhenProcessThrowsException_ShouldLogErrorAndRethrow()
     {
-        var loggerFactory = LoggerFactory.Create(static builder => builder.AddConsole().SetMinimumLevel(LogLevel.Error));
+        var loggerFactory =
+            LoggerFactory.Create(static builder => builder.AddConsole().SetMinimumLevel(LogLevel.Error));
         var logger = loggerFactory.CreateLogger<ThrowingBackgroundService>();
 
         var items = TestDataGenerators.GenerateItemsAsync(3);
@@ -173,7 +175,8 @@ public class ParallelBackgroundServiceTests
     [Fact]
     public async Task ExecuteAsync_WhenGetItemsAsyncThrowsException_ShouldLogErrorAndHandleGracefully()
     {
-        var loggerFactory = LoggerFactory.Create(static builder => builder.AddConsole().SetMinimumLevel(LogLevel.Error));
+        var loggerFactory =
+            LoggerFactory.Create(static builder => builder.AddConsole().SetMinimumLevel(LogLevel.Error));
         var logger = loggerFactory.CreateLogger<FatalErrorBackgroundService>();
 
         var service = new FatalErrorBackgroundService(logger);
@@ -232,6 +235,7 @@ public class ParallelBackgroundServiceTests
             // Throw from GetItemsAsync to hit the exception path in ExecuteAsync
             new InvalidOperationException("Fatal error in GetItemsAsync");
 
-        protected override ValueTask ProcessItemAsync(int item, CancellationToken cancellationToken) => ValueTask.CompletedTask;
+        protected override ValueTask ProcessItemAsync(int item, CancellationToken cancellationToken) =>
+            ValueTask.CompletedTask;
     }
 }

@@ -107,7 +107,8 @@ internal sealed class AdaptiveConcurrencyController : IAsyncDisposable
                     {
                         AdaptiveConcurrencyStrategy.AIMD => Math.Max(_options.MinConcurrency, oldConcurrency / 2),
                         AdaptiveConcurrencyStrategy.Aggressive => Math.Max(_options.MinConcurrency, oldConcurrency / 2),
-                        AdaptiveConcurrencyStrategy.Gradual => Math.Max(_options.MinConcurrency, oldConcurrency * 3 / 4),
+                        AdaptiveConcurrencyStrategy.Gradual =>
+                            Math.Max(_options.MinConcurrency, oldConcurrency * 3 / 4),
                         _ => Math.Max(_options.MinConcurrency, oldConcurrency / 2)
                     };
                 }
@@ -147,7 +148,8 @@ internal sealed class AdaptiveConcurrencyController : IAsyncDisposable
                     {
                         try
                         {
-                            for (var i = 0; i < Math.Abs(delta); i++) await _semaphore.WaitAsync().ConfigureAwait(false);
+                            for (var i = 0; i < Math.Abs(delta); i++)
+                                await _semaphore.WaitAsync().ConfigureAwait(false);
                         }
                         catch (Exception ex)
                         {

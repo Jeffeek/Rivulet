@@ -46,13 +46,17 @@ public static class MySqlBulkExtensions
         ArgumentNullException.ThrowIfNull(fieldSeparator);
         ArgumentNullException.ThrowIfNull(lineTerminator);
 
-        if (columnNames.Length == 0) throw new ArgumentException("Column names array cannot be empty", nameof(columnNames));
+        if (columnNames.Length == 0)
+            throw new ArgumentException("Column names array cannot be empty", nameof(columnNames));
 
-        if (batchSize <= 0) throw new ArgumentOutOfRangeException(nameof(batchSize), "Batch size must be greater than 0");
+        if (batchSize <= 0)
+            throw new ArgumentOutOfRangeException(nameof(batchSize), "Batch size must be greater than 0");
 
-        if (string.IsNullOrEmpty(fieldSeparator)) throw new ArgumentException("Field separator cannot be empty", nameof(fieldSeparator));
+        if (string.IsNullOrEmpty(fieldSeparator))
+            throw new ArgumentException("Field separator cannot be empty", nameof(fieldSeparator));
 
-        if (string.IsNullOrEmpty(lineTerminator)) throw new ArgumentException("Line terminator cannot be empty", nameof(lineTerminator));
+        if (string.IsNullOrEmpty(lineTerminator))
+            throw new ArgumentException("Line terminator cannot be empty", nameof(lineTerminator));
 
         options ??= new();
 
@@ -143,11 +147,14 @@ public static class MySqlBulkExtensions
         ArgumentNullException.ThrowIfNull(fieldSeparator);
         ArgumentNullException.ThrowIfNull(lineTerminator);
 
-        if (columnNames.Length == 0) throw new ArgumentException("Column names array cannot be empty", nameof(columnNames));
+        if (columnNames.Length == 0)
+            throw new ArgumentException("Column names array cannot be empty", nameof(columnNames));
 
-        if (string.IsNullOrEmpty(fieldSeparator)) throw new ArgumentException("Field separator cannot be empty", nameof(fieldSeparator));
+        if (string.IsNullOrEmpty(fieldSeparator))
+            throw new ArgumentException("Field separator cannot be empty", nameof(fieldSeparator));
 
-        if (string.IsNullOrEmpty(lineTerminator)) throw new ArgumentException("Line terminator cannot be empty", nameof(lineTerminator));
+        if (string.IsNullOrEmpty(lineTerminator))
+            throw new ArgumentException("Line terminator cannot be empty", nameof(lineTerminator));
 
         options ??= new();
 

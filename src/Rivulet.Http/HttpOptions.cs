@@ -114,7 +114,8 @@ public sealed class HttpOptions
 
             return ex switch
             {
-                HttpRequestException { StatusCode: not null } httpEx => RetriableStatusCodes.Contains(httpEx.StatusCode.Value),
+                HttpRequestException { StatusCode: not null } httpEx => RetriableStatusCodes.Contains(httpEx.StatusCode
+                    .Value),
                 TaskCanceledException => true,
                 _ => false
             };

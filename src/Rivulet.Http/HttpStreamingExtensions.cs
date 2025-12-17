@@ -91,7 +91,8 @@ public static class HttpStreamingExtensions
         var totalBytes = response.Content.Headers.ContentLength;
 
 #pragma warning disable CA2007 // ConfigureAwait not applicable to await using declarations
-        await using var contentStream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+        await using var contentStream =
+            await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
 #pragma warning restore CA2007
 
         var bytesDownloaded = 0L;
@@ -116,7 +117,8 @@ public static class HttpStreamingExtensions
         }
 
         // Final progress report
-        if (options.OnProgressAsync is not null) await options.OnProgressAsync(uri, bytesDownloaded, totalBytes).ConfigureAwait(false);
+        if (options.OnProgressAsync is not null)
+            await options.OnProgressAsync(uri, bytesDownloaded, totalBytes).ConfigureAwait(false);
 
         // Validate content length if requested
         if (options.ValidateContentLength && totalBytes.HasValue && bytesDownloaded != totalBytes.Value)
@@ -159,7 +161,8 @@ public static class HttpStreamingExtensions
                 if (supportsResume)
                 {
                     fileMode = FileMode.Append;
-                    if (options.OnResumeAsync is not null) await options.OnResumeAsync(uri, existingFileSize).ConfigureAwait(false);
+                    if (options.OnResumeAsync is not null)
+                        await options.OnResumeAsync(uri, existingFileSize).ConfigureAwait(false);
                 }
                 else
                 {
@@ -168,7 +171,8 @@ public static class HttpStreamingExtensions
                 }
             }
         }
-        else if (File.Exists(destinationPath) && !options.OverwriteExisting) throw new IOException($"File already exists at '{destinationPath}' and OverwriteExisting is false");
+        else if (File.Exists(destinationPath) && !options.OverwriteExisting)
+            throw new IOException($"File already exists at '{destinationPath}' and OverwriteExisting is false");
 
         using var request = new HttpRequestMessage(HttpMethod.Get, uri);
 
@@ -185,7 +189,8 @@ public static class HttpStreamingExtensions
         if (response.StatusCode == HttpStatusCode.RequestedRangeNotSatisfiable)
         {
             // File is already complete
-            if (options.OnCompleteAsync is not null) await options.OnCompleteAsync(uri, destinationPath, existingFileSize).ConfigureAwait(false);
+            if (options.OnCompleteAsync is not null)
+                await options.OnCompleteAsync(uri, destinationPath, existingFileSize).ConfigureAwait(false);
 
             return existingFileSize;
         }
@@ -203,7 +208,8 @@ public static class HttpStreamingExtensions
             options.BufferSize,
             true);
 
-        await using var contentStream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+        await using var contentStream =
+            await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
 #pragma warning restore CA2007
 
         var bytesDownloaded = existingFileSize;
@@ -225,7 +231,9 @@ public static class HttpStreamingExtensions
 
             await options.OnProgressAsync(uri,
                     bytesDownloaded,
-                    response.StatusCode == HttpStatusCode.PartialContent ? totalBytes : response.Content.Headers.ContentLength)
+                    response.StatusCode == HttpStatusCode.PartialContent
+                        ? totalBytes
+                        : response.Content.Headers.ContentLength)
                 .ConfigureAwait(false);
             lastProgressReport = Stopwatch.GetTimestamp();
         }
@@ -238,7 +246,9 @@ public static class HttpStreamingExtensions
         {
             await options.OnProgressAsync(uri,
                     bytesDownloaded,
-                    response.StatusCode == HttpStatusCode.PartialContent ? totalBytes : response.Content.Headers.ContentLength)
+                    response.StatusCode == HttpStatusCode.PartialContent
+                        ? totalBytes
+                        : response.Content.Headers.ContentLength)
                 .ConfigureAwait(false);
         }
 
@@ -257,7 +267,8 @@ public static class HttpStreamingExtensions
         }
 
         // Invoke completion callback
-        if (options.OnCompleteAsync is not null) await options.OnCompleteAsync(uri, destinationPath, bytesDownloaded).ConfigureAwait(false);
+        if (options.OnCompleteAsync is not null)
+            await options.OnCompleteAsync(uri, destinationPath, bytesDownloaded).ConfigureAwait(false);
 
         return bytesDownloaded;
     }

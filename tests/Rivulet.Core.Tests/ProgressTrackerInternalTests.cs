@@ -14,7 +14,8 @@ public sealed class ProgressTrackerInternalTests
     [Fact]
     public async Task ProgressTracker_DoubleDispose_DoesNotThrow()
     {
-        var options = new ProgressOptions { ReportInterval = TimeSpan.FromMilliseconds(50), OnProgress = static _ => ValueTask.CompletedTask };
+        var options = new ProgressOptions
+            { ReportInterval = TimeSpan.FromMilliseconds(50), OnProgress = static _ => ValueTask.CompletedTask };
 
         using var cts = new CancellationTokenSource();
         var tracker = new ProgressTracker(100, options, cts.Token);
@@ -53,7 +54,8 @@ public sealed class ProgressTrackerInternalTests
     [Fact]
     public async Task ProgressTracker_RapidCancellation_DisposesCleanly()
     {
-        var options = new ProgressOptions { ReportInterval = TimeSpan.FromMilliseconds(10), OnProgress = static _ => ValueTask.CompletedTask };
+        var options = new ProgressOptions
+            { ReportInterval = TimeSpan.FromMilliseconds(10), OnProgress = static _ => ValueTask.CompletedTask };
 
         using var cts = new CancellationTokenSource();
         var tracker = new ProgressTracker(100, options, cts.Token);
@@ -89,7 +91,8 @@ public sealed class ProgressTrackerInternalTests
         tracker.IncrementCompleted();
 
         // Wait for callback to actually fire (with timeout for safety)
-        var completedInTime = await Task.WhenAny(callbackFired.Task, Task.Delay(500, CancellationToken.None)) == callbackFired.Task;
+        var completedInTime = await Task.WhenAny(callbackFired.Task, Task.Delay(500, CancellationToken.None)) ==
+                              callbackFired.Task;
         completedInTime.ShouldBeTrue("callback should fire within 500ms");
 
         var act = async () => await tracker.DisposeAsync();

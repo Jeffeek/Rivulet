@@ -5,7 +5,7 @@ using Rivulet.Core;
 
 namespace Rivulet.Hosting.Tests;
 
-public class ServiceCollectionExtensionsTests
+public sealed class ServiceCollectionExtensionsTests
 {
     [Fact]
     public void AddRivulet_WithConfiguration_ShouldRegisterOptions()

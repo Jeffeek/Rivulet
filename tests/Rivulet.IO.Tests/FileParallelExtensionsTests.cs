@@ -87,7 +87,10 @@ public sealed class FileParallelExtensionsTests : TempDirectoryFixture
     public async Task WriteAllTextParallelAsync_WithMultipleFiles_ShouldWriteAllCorrectly()
     {
         // Arrange
-        var writes = new[] { (Path.Join(TestDirectory, "write1.txt"), "Content 1"), (Path.Join(TestDirectory, "write2.txt"), "Content 2") };
+        var writes = new[]
+        {
+            (Path.Join(TestDirectory, "write1.txt"), "Content 1"), (Path.Join(TestDirectory, "write2.txt"), "Content 2")
+        };
 
         var options = new FileOperationOptions { OverwriteExisting = true };
 
@@ -127,7 +130,8 @@ public sealed class FileParallelExtensionsTests : TempDirectoryFixture
         // Arrange
         var writes = new[]
         {
-            (Path.Join(TestDirectory, "bytes1.bin"), [1, 2, 3]), (Path.Join(TestDirectory, "bytes2.bin"), new byte[] { 4, 5, 6 })
+            (Path.Join(TestDirectory, "bytes1.bin"), [1, 2, 3]),
+            (Path.Join(TestDirectory, "bytes2.bin"), new byte[] { 4, 5, 6 })
         };
 
         var options = new FileOperationOptions { OverwriteExisting = true };
@@ -160,7 +164,8 @@ public sealed class FileParallelExtensionsTests : TempDirectoryFixture
         var files = new[] { (sourceFile1, destFile1), (sourceFile2, destFile2) };
 
         // Act
-        var results = await files.TransformFilesParallelAsync(static (_, content) => ValueTask.FromResult(content.ToUpper()),
+        var results = await files.TransformFilesParallelAsync(
+            static (_, content) => ValueTask.FromResult(content.ToUpper()),
             new() { OverwriteExisting = true });
 
         // Assert

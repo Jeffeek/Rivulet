@@ -279,7 +279,8 @@ public static class HttpParallelExtensions
         }
         catch (HttpRequestException ex)
         {
-            if (options.OnHttpErrorAsync is not null) await options.OnHttpErrorAsync(uri, ex.StatusCode, ex).ConfigureAwait(false);
+            if (options.OnHttpErrorAsync is not null)
+                await options.OnHttpErrorAsync(uri, ex.StatusCode, ex).ConfigureAwait(false);
 
             throw;
         }
@@ -287,7 +288,8 @@ public static class HttpParallelExtensions
         {
             var timeoutEx = new HttpRequestException("HTTP request timed out", ex);
 
-            if (options.OnHttpErrorAsync is not null) await options.OnHttpErrorAsync(uri, null, timeoutEx).ConfigureAwait(false);
+            if (options.OnHttpErrorAsync is not null)
+                await options.OnHttpErrorAsync(uri, null, timeoutEx).ConfigureAwait(false);
 
             throw timeoutEx;
         }

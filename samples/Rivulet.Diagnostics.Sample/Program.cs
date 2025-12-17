@@ -1,6 +1,6 @@
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Rivulet.Core;
 using Rivulet.Diagnostics;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 // ReSharper disable ArrangeObjectCreationWhenTypeNotEvident
 
@@ -28,10 +28,7 @@ await using (new RivuletFileListener(metricsFile))
 {
     var items = Enumerable.Range(1, 30);
     await items.ToAsyncEnumerable()
-        .ForEachParallelAsync(static async (_, ct) =>
-            {
-                await Task.Delay(20, ct);
-            },
+        .ForEachParallelAsync(static async (_, ct) => { await Task.Delay(20, ct); },
             new ParallelOptionsRivulet { MaxDegreeOfParallelism = 5 });
 }
 
@@ -133,10 +130,7 @@ var aggregatedMetricsList = new List<AggregatedMetrics>();
 await using (var aggregator = new MetricsAggregator(TimeSpan.FromSeconds(2)))
 {
     // Subscribe to aggregation events
-    aggregator.OnAggregation += metrics =>
-    {
-        aggregatedMetricsList.AddRange(metrics);
-    };
+    aggregator.OnAggregation += metrics => { aggregatedMetricsList.AddRange(metrics); };
 
     await Task.Delay(100); // Let aggregator initialize
 

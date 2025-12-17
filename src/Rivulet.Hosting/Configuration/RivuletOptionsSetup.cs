@@ -18,7 +18,8 @@ namespace Rivulet.Hosting.Configuration;
 /// </remarks>
 internal sealed class RivuletOptionsSetup(IConfiguration configuration) : IConfigureOptions<ParallelOptionsRivulet>
 {
-    private readonly IConfiguration _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+    private readonly IConfiguration _configuration =
+        configuration ?? throw new ArgumentNullException(nameof(configuration));
 
     public void Configure(ParallelOptionsRivulet options)
     {
@@ -36,7 +37,11 @@ internal sealed class RivuletOptionsSetup(IConfiguration configuration) : IConfi
         SetPropertyIfExists(options, type, section, nameof(ParallelOptionsRivulet.PerItemTimeout), TimeSpan.Parse);
         SetPropertyIfExists(options, type, section, nameof(ParallelOptionsRivulet.BaseDelay), TimeSpan.Parse);
         SetPropertyIfExists(options, type, section, nameof(ParallelOptionsRivulet.ErrorMode), Enum.Parse<ErrorMode>);
-        SetPropertyIfExists(options, type, section, nameof(ParallelOptionsRivulet.BackoffStrategy), Enum.Parse<BackoffStrategy>);
+        SetPropertyIfExists(options,
+            type,
+            section,
+            nameof(ParallelOptionsRivulet.BackoffStrategy),
+            Enum.Parse<BackoffStrategy>);
     }
 
     private static void SetPropertyIfExists<T>(

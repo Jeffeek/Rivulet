@@ -24,7 +24,8 @@ public sealed class AdaptiveConcurrencyTests
     [Fact]
     public void AdaptiveConcurrencyOptions_Validation_ThrowsOnInvalidInitialConcurrency()
     {
-        var act = static () => new AdaptiveConcurrencyOptions { MinConcurrency = 5, MaxConcurrency = 10, InitialConcurrency = 15 }.Validate();
+        var act = static () => new AdaptiveConcurrencyOptions
+            { MinConcurrency = 5, MaxConcurrency = 10, InitialConcurrency = 15 }.Validate();
 
         act.ShouldThrow<ArgumentException>().Message.ShouldContain("InitialConcurrency");
     }
@@ -71,7 +72,8 @@ public sealed class AdaptiveConcurrencyTests
     [Fact]
     public async Task AdaptiveConcurrencyController_InitialConcurrency_DefaultsToMin()
     {
-        await using var controller = new AdaptiveConcurrencyController(new() { MinConcurrency = 5, MaxConcurrency = 20 });
+        await using var controller =
+            new AdaptiveConcurrencyController(new() { MinConcurrency = 5, MaxConcurrency = 20 });
 
         controller.CurrentConcurrency.ShouldBe(5);
     }
@@ -361,7 +363,8 @@ public sealed class AdaptiveConcurrencyTests
                 var count = Interlocked.Increment(ref processedCount);
 
                 // Cancel only once, deterministically
-                if (count == 10 && cancelRequested == 0 && Interlocked.CompareExchange(ref cancelRequested, 1, 0) == 0) await cts.CancelAsync();
+                if (count == 10 && cancelRequested == 0 && Interlocked.CompareExchange(ref cancelRequested, 1, 0) == 0)
+                    await cts.CancelAsync();
 
                 // Longer delay to ensure cancellation propagates
                 await Task.Delay(20, ct);
@@ -530,7 +533,8 @@ public sealed class AdaptiveConcurrencyTests
     {
         await using var controller = new AdaptiveConcurrencyController(new()
         {
-            MinConcurrency = 1, MaxConcurrency = 10, InitialConcurrency = 5, SampleInterval = TimeSpan.FromMilliseconds(5)
+            MinConcurrency = 1, MaxConcurrency = 10, InitialConcurrency = 5,
+            SampleInterval = TimeSpan.FromMilliseconds(5)
         });
 
         // Trigger some activity

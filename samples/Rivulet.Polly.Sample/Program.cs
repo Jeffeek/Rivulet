@@ -1,7 +1,8 @@
 using Polly;
-using Polly.Retry;
 using Polly.CircuitBreaker;
+using Polly.Retry;
 using Rivulet.Core;
+using Rivulet.Core.Resilience;
 using Rivulet.Polly;
 
 // ReSharper disable ArgumentsStyleOther
@@ -49,7 +50,7 @@ var rivuletOptions = new ParallelOptionsRivulet
 {
     MaxRetries = 3,
     IsTransient = static ex => ex is HttpRequestException,
-    BackoffStrategy = Rivulet.Core.Resilience.BackoffStrategy.ExponentialJitter,
+    BackoffStrategy = BackoffStrategy.ExponentialJitter,
     BaseDelay = TimeSpan.FromMilliseconds(500),
     PerItemTimeout = TimeSpan.FromSeconds(5)
 };

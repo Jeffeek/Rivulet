@@ -2,7 +2,7 @@
 
 namespace Rivulet.Sql.MySql.Tests;
 
-public class MySqlBulkExtensionsTests
+public sealed class MySqlBulkExtensionsTests
 {
     private static MySqlConnection CreateMockConnection() =>
         // Note: This creates a real MySqlConnection object but we won't actually use it

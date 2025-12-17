@@ -281,7 +281,8 @@ public sealed class MetricsTests
                 options)
             .ToListAsync();
 
-        results.Count.ShouldBe(20, "30 items minus 10 failures (every 3rd: 3,6,9,12,15,18,21,24,27,30) equals 20 successful results");
+        results.Count.ShouldBe(20,
+            "30 items minus 10 failures (every 3rd: 3,6,9,12,15,18,21,24,27,30) equals 20 successful results");
 
         await Task.Yield();
 
@@ -293,7 +294,8 @@ public sealed class MetricsTests
         callbackInvocationCount.ShouldBeGreaterThan(0,
             "at least one metrics sample should have been captured during operation execution and disposal");
         capturedSnapshot.ShouldNotBeNull("final metrics snapshot should be available after disposal completes");
-        capturedSnapshot!.TotalFailures.ShouldBe(10, "items 3,6,9,12,15,18,21,24,27,30 should have failed (10 total failures)");
+        capturedSnapshot!.TotalFailures.ShouldBe(10,
+            "items 3,6,9,12,15,18,21,24,27,30 should have failed (10 total failures)");
     }
 
     [Fact]
@@ -303,7 +305,8 @@ public sealed class MetricsTests
 
         var options = new ParallelOptionsRivulet
         {
-            MaxDegreeOfParallelism = 4, Metrics = new() { SampleInterval = TimeSpan.FromMilliseconds(50), OnMetricsSample = null }
+            MaxDegreeOfParallelism = 4,
+            Metrics = new() { SampleInterval = TimeSpan.FromMilliseconds(50), OnMetricsSample = null }
         };
 
         var act = () => source.SelectParallelAsync(
@@ -887,7 +890,8 @@ public sealed class MetricsTests
     [Fact]
     public async Task MetricsTracker_DoubleDispose_DoesNotThrow()
     {
-        var options = new MetricsOptions { SampleInterval = TimeSpan.FromMilliseconds(50), OnMetricsSample = static _ => ValueTask.CompletedTask };
+        var options = new MetricsOptions
+            { SampleInterval = TimeSpan.FromMilliseconds(50), OnMetricsSample = static _ => ValueTask.CompletedTask };
 
         var tracker = new MetricsTracker(options, CancellationToken.None);
 
@@ -959,10 +963,7 @@ public sealed class MetricsTests
         var options = new MetricsOptions
         {
             SampleInterval = TimeSpan.FromMilliseconds(10),
-            OnMetricsSample = async _ =>
-            {
-                await tcs.Task;
-            }
+            OnMetricsSample = async _ => { await tcs.Task; }
         };
 
         var tracker = new MetricsTracker(options, cts.Token);
@@ -1064,10 +1065,7 @@ public sealed class MetricsTests
         var options = new MetricsOptions
         {
             SampleInterval = TimeSpan.FromMilliseconds(10),
-            OnMetricsSample = async _ =>
-            {
-                await longRunningTcs.Task;
-            }
+            OnMetricsSample = async _ => { await longRunningTcs.Task; }
         };
 
         var tracker = new MetricsTracker(options, CancellationToken.None);
@@ -1075,10 +1073,7 @@ public sealed class MetricsTests
 
         await Task.Delay(50, CancellationToken.None);
 
-        var disposeTask = Task.Run(async () =>
-        {
-            await tracker.DisposeAsync();
-        });
+        var disposeTask = Task.Run(async () => { await tracker.DisposeAsync(); });
 
         await Task.Delay(100, CancellationToken.None);
 
@@ -1131,7 +1126,8 @@ public sealed class MetricsTests
             await Task.Delay(500, CancellationToken.None);
 
             // Should not crash despite exception
-            callbackCount.ShouldBeGreaterThan(0, "callback should have been invoked at least once after waiting 25x the sample interval");
+            callbackCount.ShouldBeGreaterThan(0,
+                "callback should have been invoked at least once after waiting 25x the sample interval");
         }
         finally
         {

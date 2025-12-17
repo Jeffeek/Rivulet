@@ -45,13 +45,16 @@ public sealed class RivuletHealthCheck : IHealthCheck, IDisposable
     /// <summary>
     ///     Checks the health of Rivulet operations.
     /// </summary>
-    public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
+    public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context,
+        CancellationToken cancellationToken = default)
     {
         try
         {
             var metrics = _exporter.ExportDictionary();
 
-            if (metrics.Count == 0) return Task.FromResult(HealthCheckResult.Healthy(RivuletDiagnosticsConstants.HealthCheckMessages.NothingRunning));
+            if (metrics.Count == 0)
+                return Task.FromResult(
+                    HealthCheckResult.Healthy(RivuletDiagnosticsConstants.HealthCheckMessages.NothingRunning));
 
             var itemsStarted = metrics.GetValueOrDefault(RivuletMetricsConstants.CounterNames.ItemsStarted, 0);
             var itemsCompleted = metrics.GetValueOrDefault(RivuletMetricsConstants.CounterNames.ItemsCompleted, 0);

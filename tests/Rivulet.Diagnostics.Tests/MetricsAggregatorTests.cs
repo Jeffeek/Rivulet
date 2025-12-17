@@ -44,7 +44,8 @@ public sealed class MetricsAggregatorTests
 
         lastAggregation.ShouldNotBeEmpty();
 
-        var itemsStartedMetric = lastAggregation.FirstOrDefault(static m => m.Name == RivuletMetricsConstants.CounterNames.ItemsStarted);
+        var itemsStartedMetric =
+            lastAggregation.FirstOrDefault(static m => m.Name == RivuletMetricsConstants.CounterNames.ItemsStarted);
         itemsStartedMetric.ShouldNotBeNull();
         itemsStartedMetric.Min.ShouldBeGreaterThanOrEqualTo(0);
         itemsStartedMetric.Max.ShouldBeGreaterThanOrEqualTo(itemsStartedMetric.Min);

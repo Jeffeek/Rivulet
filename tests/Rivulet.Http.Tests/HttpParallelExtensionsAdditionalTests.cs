@@ -7,9 +7,10 @@ namespace Rivulet.Http.Tests;
 /// <summary>
 ///     Additional tests to improve branch coverage for HTTP parallel extensions.
 /// </summary>
-public class HttpParallelExtensionsAdditionalTests
+public sealed class HttpParallelExtensionsAdditionalTests
 {
-    private static HttpClient CreateTestClient(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> handler)
+    private static HttpClient CreateTestClient(
+        Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> handler)
         => TestHttpClientFactory.CreateTestClient(handler);
 
     [Fact]
@@ -21,7 +22,9 @@ public class HttpParallelExtensionsAdditionalTests
         using var httpClient = CreateTestClient((_, _) =>
         {
             attemptCount++;
-            if (attemptCount != 1) return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("Success after retry") });
+            if (attemptCount != 1)
+                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+                    { Content = new StringContent("Success after retry") });
 
             var response = new HttpResponseMessage(HttpStatusCode.TooManyRequests);
             response.Headers.RetryAfter = new(TimeSpan.FromMilliseconds(50));
@@ -30,7 +33,8 @@ public class HttpParallelExtensionsAdditionalTests
 
         var options = new HttpOptions
         {
-            RespectRetryAfterHeader = true, ParallelOptions = new() { MaxRetries = 3, BaseDelay = TimeSpan.FromMilliseconds(10) }
+            RespectRetryAfterHeader = true,
+            ParallelOptions = new() { MaxRetries = 3, BaseDelay = TimeSpan.FromMilliseconds(10) }
         };
 
         var results = await uris.GetParallelAsync(httpClient, options);
@@ -60,7 +64,8 @@ public class HttpParallelExtensionsAdditionalTests
 
         var options = new HttpOptions
         {
-            RespectRetryAfterHeader = false, ParallelOptions = new() { MaxRetries = 3, BaseDelay = TimeSpan.FromMilliseconds(10) }
+            RespectRetryAfterHeader = false,
+            ParallelOptions = new() { MaxRetries = 3, BaseDelay = TimeSpan.FromMilliseconds(10) }
         };
 
         var results = await uris.GetParallelAsync(httpClient, options);
@@ -89,7 +94,8 @@ public class HttpParallelExtensionsAdditionalTests
 
         var options = new HttpOptions
         {
-            RespectRetryAfterHeader = true, ParallelOptions = new() { MaxRetries = 3, BaseDelay = TimeSpan.FromMilliseconds(10) }
+            RespectRetryAfterHeader = true,
+            ParallelOptions = new() { MaxRetries = 3, BaseDelay = TimeSpan.FromMilliseconds(10) }
         };
 
         var results = await uris.GetParallelAsync(httpClient, options);
@@ -107,7 +113,8 @@ public class HttpParallelExtensionsAdditionalTests
         Uri? callbackUri = null;
         HttpStatusCode? callbackStatus = null;
 
-        using var httpClient = CreateTestClient(static (_, _) => throw new HttpRequestException("Network error", null, HttpStatusCode.BadGateway));
+        using var httpClient = CreateTestClient(static (_, _) =>
+            throw new HttpRequestException("Network error", null, HttpStatusCode.BadGateway));
 
         var options = new HttpOptions
         {
@@ -133,7 +140,8 @@ public class HttpParallelExtensionsAdditionalTests
         var callbackInvoked = false;
 
         using var httpClient = CreateTestClient(static (_, _) =>
-            Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound) { Content = new StringContent("Not found") }));
+            Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound)
+                { Content = new StringContent("Not found") }));
 
         var options = new HttpOptions
         {
@@ -196,7 +204,8 @@ public class HttpParallelExtensionsAdditionalTests
 
             using var httpClient = CreateTestClient(static (_, _) =>
             {
-                var response = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("New content") };
+                var response = new HttpResponseMessage(HttpStatusCode.OK)
+                    { Content = new StringContent("New content") };
                 response.Content.Headers.ContentLength = 11;
                 return Task.FromResult(response);
             });

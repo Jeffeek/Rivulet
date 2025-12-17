@@ -127,7 +127,8 @@ public sealed class RivuletHealthCheckTests
     public async Task HealthCheck_ShouldReturnUnhealthy_WhenFailureCountExceedsThreshold()
     {
         using var exporter = new PrometheusExporter();
-        var healthCheck = new RivuletHealthCheck(exporter, new() { ErrorRateThreshold = 1.0, FailureCountThreshold = 5 });
+        var healthCheck =
+            new RivuletHealthCheck(exporter, new() { ErrorRateThreshold = 1.0, FailureCountThreshold = 5 });
 
         try
         {
@@ -171,7 +172,8 @@ public sealed class RivuletHealthCheckTests
     public async Task HealthCheck_ShouldReturnDegraded_WhenErrorRateExceedsThresholdButNotFailureCount()
     {
         using var exporter = new PrometheusExporter();
-        var healthCheck = new RivuletHealthCheck(exporter, new() { ErrorRateThreshold = 0.2, FailureCountThreshold = 10000 });
+        var healthCheck =
+            new RivuletHealthCheck(exporter, new() { ErrorRateThreshold = 0.2, FailureCountThreshold = 10000 });
 
         try
         {

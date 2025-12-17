@@ -38,7 +38,8 @@ public sealed class TestDbConnection(
         return Task.CompletedTask;
     }
 
-    protected override DbCommand CreateDbCommand() => new TestDbCommand(executeScalarFunc, executeNonQueryFunc, executeReaderFunc);
+    protected override DbCommand CreateDbCommand() =>
+        new TestDbCommand(executeScalarFunc, executeNonQueryFunc, executeReaderFunc);
 }
 
 public sealed class TestDbCommand(
@@ -62,11 +63,13 @@ public sealed class TestDbCommand(
 
     public override int ExecuteNonQuery() => executeNonQueryFunc?.Invoke(this) ?? 0;
 
-    public override Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken) => Task.FromResult(ExecuteNonQuery());
+    public override Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken) =>
+        Task.FromResult(ExecuteNonQuery());
 
     public override object? ExecuteScalar() => executeScalarFunc?.Invoke(this);
 
-    public override Task<object?> ExecuteScalarAsync(CancellationToken cancellationToken) => Task.FromResult(ExecuteScalar());
+    public override Task<object?> ExecuteScalarAsync(CancellationToken cancellationToken) =>
+        Task.FromResult(ExecuteScalar());
 
     public override void Prepare() { }
 
@@ -78,7 +81,8 @@ public sealed class TestDbCommand(
         return (DbDataReader)reader;
     }
 
-    protected override Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken) =>
+    protected override Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior,
+        CancellationToken cancellationToken) =>
         Task.FromResult(ExecuteDbDataReader(behavior));
 }
 
@@ -294,7 +298,9 @@ public sealed class NonDbConnection(
     public string Database => "TestDatabase";
     public ConnectionState State { get; private set; } = ConnectionState.Closed;
 
-    public IDbTransaction BeginTransaction() => new TestDbTransaction(new TestDbConnection(), IsolationLevel.Unspecified);
+    public IDbTransaction BeginTransaction() =>
+        new TestDbTransaction(new TestDbConnection(), IsolationLevel.Unspecified);
+
     public IDbTransaction BeginTransaction(IsolationLevel il) => new TestDbTransaction(new TestDbConnection(), il);
     public void ChangeDatabase(string databaseName) { }
 

@@ -60,7 +60,8 @@ public sealed class RivuletEventListenerBaseTests : IDisposable
         // EventSource publishes counters every 1 second - poll with timeout
         // Increased to 8000ms for Windows CI/CD reliability
         var deadline = DateTime.UtcNow.AddMilliseconds(8000);
-        while (_listener.ReceivedCounters.IsEmpty && DateTime.UtcNow < deadline) await Task.Delay(100, CancellationToken.None);
+        while (_listener.ReceivedCounters.IsEmpty && DateTime.UtcNow < deadline)
+            await Task.Delay(100, CancellationToken.None);
 
         _listener.ReceivedCounters.ShouldNotBeEmpty();
         foreach (var counter in _listener.ReceivedCounters) counter.Value.DisplayName.ShouldNotBeNullOrEmpty();
@@ -84,7 +85,8 @@ public sealed class RivuletEventListenerBaseTests : IDisposable
         // EventSource publishes counters every 1 second - poll with timeout
         // Increased to 8000ms for Windows CI/CD reliability
         var deadline = DateTime.UtcNow.AddMilliseconds(8000);
-        while (_listener.ReceivedCounters.IsEmpty && DateTime.UtcNow < deadline) await Task.Delay(100, CancellationToken.None);
+        while (_listener.ReceivedCounters.IsEmpty && DateTime.UtcNow < deadline)
+            await Task.Delay(100, CancellationToken.None);
 
         _listener.ReceivedCounters.ShouldNotBeEmpty();
         foreach (var counter in _listener.ReceivedCounters) counter.Value.DisplayUnits.ShouldNotBeNull();
@@ -330,7 +332,8 @@ public sealed class RivuletEventListenerBaseTests : IDisposable
 
         // Increased to 8000ms for CI/CD reliability
         var deadline = DateTime.UtcNow.AddMilliseconds(8000);
-        while (listener.ReceivedCounters.IsEmpty && DateTime.UtcNow < deadline) await Task.Delay(100, CancellationToken.None);
+        while (listener.ReceivedCounters.IsEmpty && DateTime.UtcNow < deadline)
+            await Task.Delay(100, CancellationToken.None);
 
         listener.ReceivedCounters.ShouldNotBeEmpty();
 

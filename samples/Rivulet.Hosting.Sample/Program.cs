@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Rivulet.Diagnostics;
 using Rivulet.Hosting;
 using Rivulet.Hosting.Sample;
@@ -30,13 +31,13 @@ app.UseAuthorization();
 
 // Map health check endpoints
 app.MapHealthChecks("/health/ready",
-    new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+    new HealthCheckOptions
     {
         Predicate = static check => check.Tags.Contains("ready")
     });
 
 app.MapHealthChecks("/health/live",
-    new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+    new HealthCheckOptions
     {
         Predicate = static check => check.Tags.Contains("live")
     });

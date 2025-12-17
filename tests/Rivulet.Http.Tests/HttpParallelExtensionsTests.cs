@@ -5,19 +5,22 @@ using Rivulet.Core;
 
 namespace Rivulet.Http.Tests;
 
-public class HttpParallelExtensionsTests
+public sealed class HttpParallelExtensionsTests
 {
-    private static HttpClient CreateTestClient(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> handler)
+    private static HttpClient CreateTestClient(
+        Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> handler)
         => TestHttpClientFactory.CreateTestClient(handler);
 
     [Fact]
     public async Task GetParallelAsync_WithValidUris_ShouldReturnResponses()
     {
-        var uris = new[] { new Uri("http://test.local/1"), new Uri("http://test.local/2"), new Uri("http://test.local/3") };
+        var uris = new[]
+            { new Uri("http://test.local/1"), new Uri("http://test.local/2"), new Uri("http://test.local/3") };
 
         using var httpClient = CreateTestClient(static (request, _) =>
         {
-            var response = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent($"Response for {request.RequestUri}") };
+            var response = new HttpResponseMessage(HttpStatusCode.OK)
+                { Content = new StringContent($"Response for {request.RequestUri}") };
             return Task.FromResult(response);
         });
 
@@ -98,7 +101,8 @@ public class HttpParallelExtensionsTests
         using var httpClient = CreateTestClient(static async (request, ct) =>
         {
             var requestBody = await request.Content!.ReadAsStringAsync(ct);
-            var response = new HttpResponseMessage(HttpStatusCode.Created) { Content = new StringContent($"Created with {requestBody}") };
+            var response = new HttpResponseMessage(HttpStatusCode.Created)
+                { Content = new StringContent($"Created with {requestBody}") };
             return response;
         });
 
@@ -161,10 +165,13 @@ public class HttpParallelExtensionsTests
         using var httpClient = CreateTestClient((_, _) =>
         {
             attemptCount++;
-            return Task.FromResult(attemptCount < 2 ? new(HttpStatusCode.ServiceUnavailable) : new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("Success") });
+            return Task.FromResult(attemptCount < 2
+                ? new(HttpStatusCode.ServiceUnavailable)
+                : new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("Success") });
         });
 
-        var options = new HttpOptions { ParallelOptions = new() { MaxRetries = 3, BaseDelay = TimeSpan.FromMilliseconds(10) } };
+        var options = new HttpOptions
+            { ParallelOptions = new() { MaxRetries = 3, BaseDelay = TimeSpan.FromMilliseconds(10) } };
 
         var results = await uris.GetParallelAsync(httpClient, options);
 
@@ -202,7 +209,8 @@ public class HttpParallelExtensionsTests
         Uri? callbackUri = null;
         HttpStatusCode? callbackStatus = null;
 
-        using var httpClient = CreateTestClient(static (_, _) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.InternalServerError)));
+        using var httpClient = CreateTestClient(static (_, _) =>
+            Task.FromResult(new HttpResponseMessage(HttpStatusCode.InternalServerError)));
 
         var options = new HttpOptions
         {

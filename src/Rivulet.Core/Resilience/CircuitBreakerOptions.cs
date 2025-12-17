@@ -43,12 +43,17 @@ public sealed class CircuitBreakerOptions
     /// <exception cref="ArgumentException">Thrown when options are invalid.</exception>
     public void Validate()
     {
-        if (FailureThreshold <= 0) throw new ArgumentException("FailureThreshold must be greater than 0.", nameof(FailureThreshold));
+        if (FailureThreshold <= 0)
+            throw new ArgumentException("FailureThreshold must be greater than 0.", nameof(FailureThreshold));
 
-        if (SuccessThreshold <= 0) throw new ArgumentException("SuccessThreshold must be greater than 0.", nameof(SuccessThreshold));
+        if (SuccessThreshold <= 0)
+            throw new ArgumentException("SuccessThreshold must be greater than 0.", nameof(SuccessThreshold));
 
-        if (OpenTimeout <= TimeSpan.Zero) throw new ArgumentException("OpenTimeout must be greater than zero.", nameof(OpenTimeout));
+        if (OpenTimeout <= TimeSpan.Zero)
+            throw new ArgumentException("OpenTimeout must be greater than zero.", nameof(OpenTimeout));
 
-        if (SamplingDuration.HasValue && SamplingDuration.Value <= TimeSpan.Zero) throw new ArgumentException("SamplingDuration must be greater than zero when specified.", nameof(SamplingDuration));
+        if (SamplingDuration.HasValue && SamplingDuration.Value <= TimeSpan.Zero)
+            throw new ArgumentException("SamplingDuration must be greater than zero when specified.",
+                nameof(SamplingDuration));
     }
 }

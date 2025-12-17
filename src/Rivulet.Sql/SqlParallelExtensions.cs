@@ -34,7 +34,8 @@ public static class SqlParallelExtensions
         options ??= new();
         var parallelOptions = options.GetMergedParallelOptions();
 
-        return queries.SelectParallelAsync((query, ct) => ExecuteQueryAsync(query, connectionFactory, readerMapper, options, ct),
+        return queries.SelectParallelAsync(
+            (query, ct) => ExecuteQueryAsync(query, connectionFactory, readerMapper, options, ct),
             parallelOptions,
             cancellationToken);
     }
@@ -96,7 +97,8 @@ public static class SqlParallelExtensions
         options ??= new();
         var parallelOptions = options.GetMergedParallelOptions();
 
-        return commands.SelectParallelAsync((command, ct) => ExecuteCommandAsync(command, connectionFactory, options, ct),
+        return commands.SelectParallelAsync(
+            (command, ct) => ExecuteCommandAsync(command, connectionFactory, options, ct),
             parallelOptions,
             cancellationToken);
     }
@@ -121,7 +123,8 @@ public static class SqlParallelExtensions
         options ??= new();
         var parallelOptions = options.GetMergedParallelOptions();
 
-        return commandsWithParams.SelectParallelAsync((item, ct) => ExecuteCommandAsync(item.command, connectionFactory, options, ct, item.configureParams),
+        return commandsWithParams.SelectParallelAsync(
+            (item, ct) => ExecuteCommandAsync(item.command, connectionFactory, options, ct, item.configureParams),
             parallelOptions,
             cancellationToken);
     }
@@ -148,7 +151,8 @@ public static class SqlParallelExtensions
         var parallelOptions = options.GetMergedParallelOptions();
 
 #pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements in ExecuteScalarAsync
-        return queries.SelectParallelAsync((query, ct) => ExecuteScalarAsync<TResult>(query, connectionFactory, options, ct),
+        return queries.SelectParallelAsync(
+            (query, ct) => ExecuteScalarAsync<TResult>(query, connectionFactory, options, ct),
             parallelOptions,
             cancellationToken);
 #pragma warning restore CA2007
@@ -176,7 +180,8 @@ public static class SqlParallelExtensions
         var parallelOptions = options.GetMergedParallelOptions();
 
 #pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements in ExecuteScalarAsync
-        return queriesWithParams.SelectParallelAsync((item, ct) => ExecuteScalarAsync<TResult>(item.query, connectionFactory, options, ct, item.configureParams),
+        return queriesWithParams.SelectParallelAsync(
+            (item, ct) => ExecuteScalarAsync<TResult>(item.query, connectionFactory, options, ct, item.configureParams),
             parallelOptions,
             cancellationToken);
 #pragma warning restore CA2007
@@ -195,7 +200,8 @@ public static class SqlParallelExtensions
         {
             try
             {
-                if (options.AutoManageConnection && connection.State != ConnectionState.Open) await OpenConnectionAsync(connection, cancellationToken).ConfigureAwait(false);
+                if (options.AutoManageConnection && connection.State != ConnectionState.Open)
+                    await OpenConnectionAsync(connection, cancellationToken).ConfigureAwait(false);
 
                 using var command = connection.CreateCommand();
                 command.CommandText = query;
@@ -231,7 +237,8 @@ public static class SqlParallelExtensions
         {
             try
             {
-                if (options.AutoManageConnection && connection.State != ConnectionState.Open) await OpenConnectionAsync(connection, cancellationToken).ConfigureAwait(false);
+                if (options.AutoManageConnection && connection.State != ConnectionState.Open)
+                    await OpenConnectionAsync(connection, cancellationToken).ConfigureAwait(false);
 
                 using var command = connection.CreateCommand();
                 command.CommandText = commandText;
@@ -243,7 +250,8 @@ public static class SqlParallelExtensions
             }
             catch (Exception ex)
             {
-                if (options.OnSqlErrorAsync != null) await options.OnSqlErrorAsync(commandText, ex, 0).ConfigureAwait(false);
+                if (options.OnSqlErrorAsync != null)
+                    await options.OnSqlErrorAsync(commandText, ex, 0).ConfigureAwait(false);
 
                 throw;
             }
@@ -266,7 +274,8 @@ public static class SqlParallelExtensions
         {
             try
             {
-                if (options.AutoManageConnection && connection.State != ConnectionState.Open) await OpenConnectionAsync(connection, cancellationToken).ConfigureAwait(false);
+                if (options.AutoManageConnection && connection.State != ConnectionState.Open)
+                    await OpenConnectionAsync(connection, cancellationToken).ConfigureAwait(false);
 
                 using var command = connection.CreateCommand();
                 command.CommandText = query;
@@ -301,23 +310,28 @@ public static class SqlParallelExtensions
             await Task.Run(connection.Open, cancellationToken).ConfigureAwait(false);
     }
 
-    private static async ValueTask<IDataReader> ExecuteReaderAsync(IDbCommand command, CancellationToken cancellationToken)
+    private static async ValueTask<IDataReader> ExecuteReaderAsync(IDbCommand command,
+        CancellationToken cancellationToken)
     {
-        if (command is DbCommand dbCommand) return await dbCommand.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+        if (command is DbCommand dbCommand)
+            return await dbCommand.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
 
         return await Task.Run(command.ExecuteReader, cancellationToken).ConfigureAwait(false);
     }
 
     private static async ValueTask<int> ExecuteNonQueryAsync(IDbCommand command, CancellationToken cancellationToken)
     {
-        if (command is DbCommand dbCommand) return await dbCommand.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        if (command is DbCommand dbCommand)
+            return await dbCommand.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
 
         return await Task.Run(command.ExecuteNonQuery, cancellationToken).ConfigureAwait(false);
     }
 
-    private static async ValueTask<object?> ExecuteScalarInternalAsync(IDbCommand command, CancellationToken cancellationToken)
+    private static async ValueTask<object?> ExecuteScalarInternalAsync(IDbCommand command,
+        CancellationToken cancellationToken)
     {
-        if (command is DbCommand dbCommand) return await dbCommand.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+        if (command is DbCommand dbCommand)
+            return await dbCommand.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
 
         return await Task.Run(command.ExecuteScalar, cancellationToken).ConfigureAwait(false);
     }

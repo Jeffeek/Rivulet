@@ -1,6 +1,6 @@
 ﻿namespace Rivulet.Http.Tests;
 
-public class StreamingDownloadOptionsTests
+public sealed class StreamingDownloadOptionsTests
 {
     [Fact]
     public void StreamingDownloadOptions_DefaultValues_ShouldBeCorrect()
@@ -102,7 +102,8 @@ public class StreamingDownloadOptionsTests
     [Fact]
     public void StreamingDownloadOptions_WithHttpOptions_ShouldPassThrough()
     {
-        var httpOptions = new HttpOptions { RequestTimeout = TimeSpan.FromSeconds(120), RespectRetryAfterHeader = false };
+        var httpOptions = new HttpOptions
+            { RequestTimeout = TimeSpan.FromSeconds(120), RespectRetryAfterHeader = false };
 
         var options = new StreamingDownloadOptions { HttpOptions = httpOptions };
 

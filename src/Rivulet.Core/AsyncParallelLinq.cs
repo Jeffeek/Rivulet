@@ -129,7 +129,8 @@ public static class AsyncParallelLinq
 
                             progressTracker?.IncrementStarted();
                             metricsTracker.IncrementItemsStarted();
-                            if (options.OnStartItemAsync is not null) await options.OnStartItemAsync(idx).ConfigureAwait(false);
+                            if (options.OnStartItemAsync is not null)
+                                await options.OnStartItemAsync(idx).ConfigureAwait(false);
 
                             TResult result;
                             if (circuitBreaker is not null)
@@ -163,7 +164,8 @@ public static class AsyncParallelLinq
                             progressTracker?.IncrementCompleted();
                             metricsTracker.IncrementItemsCompleted();
 
-                            if (options.OnCompleteItemAsync is not null) await options.OnCompleteItemAsync(idx).ConfigureAwait(false);
+                            if (options.OnCompleteItemAsync is not null)
+                                await options.OnCompleteItemAsync(idx).ConfigureAwait(false);
 
                             success = true;
                         }
@@ -322,7 +324,8 @@ public static class AsyncParallelLinq
 
                             progressTracker?.IncrementStarted();
                             metricsTracker.IncrementItemsStarted();
-                            if (options.OnStartItemAsync is not null) await options.OnStartItemAsync(idx).ConfigureAwait(false);
+                            if (options.OnStartItemAsync is not null)
+                                await options.OnStartItemAsync(idx).ConfigureAwait(false);
 
                             TResult res;
                             if (circuitBreaker is not null)
@@ -351,7 +354,8 @@ public static class AsyncParallelLinq
                             await output.Writer.WriteAsync((idx, res), token).ConfigureAwait(false);
                             progressTracker?.IncrementCompleted();
                             metricsTracker.IncrementItemsCompleted();
-                            if (options.OnCompleteItemAsync is not null) await options.OnCompleteItemAsync(idx).ConfigureAwait(false);
+                            if (options.OnCompleteItemAsync is not null)
+                                await options.OnCompleteItemAsync(idx).ConfigureAwait(false);
 
                             success = true;
                         }
@@ -551,10 +555,12 @@ public static class AsyncParallelLinq
         if (batchSize < 1) throw new ArgumentException("Batch size must be at least 1.", nameof(batchSize));
 
         var batches = CreateBatchesAsync(source, batchSize, batchTimeout, cancellationToken);
-        await foreach (var result in batches.SelectParallelStreamAsync(batchSelector, options, cancellationToken).ConfigureAwait(false)) yield return result;
+        await foreach (var result in batches.SelectParallelStreamAsync(batchSelector, options, cancellationToken)
+                           .ConfigureAwait(false)) yield return result;
     }
 
-    private static IEnumerable<IReadOnlyList<TSource>> CreateBatches<TSource>(IEnumerable<TSource> source, int batchSize)
+    private static IEnumerable<IReadOnlyList<TSource>> CreateBatches<TSource>(IEnumerable<TSource> source,
+        int batchSize)
     {
         var batch = new List<TSource>(batchSize);
         foreach (var item in source)
@@ -616,7 +622,8 @@ public static class AsyncParallelLinq
                 },
                 token);
 
-            await foreach (var batchResult in channel.Reader.ReadAllAsync(token).ConfigureAwait(false)) yield return batchResult;
+            await foreach (var batchResult in channel.Reader.ReadAllAsync(token).ConfigureAwait(false))
+                yield return batchResult;
 
             await producer.ConfigureAwait(false);
         }

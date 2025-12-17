@@ -30,7 +30,8 @@ public sealed class ParallelOptionsRivuletExtensionsTests
         ActivitySource.AddActivityListener(listener);
 
         var items = Enumerable.Range(1, 5);
-        var options = new ParallelOptionsRivulet { MaxDegreeOfParallelism = 2 }.WithOpenTelemetryTracing("TestOperation");
+        var options =
+            new ParallelOptionsRivulet { MaxDegreeOfParallelism = 2 }.WithOpenTelemetryTracing("TestOperation");
 
         var results = await items.SelectParallelAsync(
             static async (x, ct) =>
@@ -84,7 +85,8 @@ public sealed class ParallelOptionsRivuletExtensionsTests
 
         results.Count.ShouldBe(3);
 
-        var successActivities = activities.Where(static a => a.OperationName == "Rivulet.SuccessOperation.Item").ToList();
+        var successActivities =
+            activities.Where(static a => a.OperationName == "Rivulet.SuccessOperation.Item").ToList();
         successActivities.Count.ShouldBe(3);
         successActivities.All(static a => a.Status == ActivityStatusCode.Ok).ShouldBeTrue();
         successActivities.All(static a => (int)a.GetTagItem("rivulet.items_processed")! == 1).ShouldBeTrue();
@@ -110,7 +112,9 @@ public sealed class ParallelOptionsRivuletExtensionsTests
         ActivitySource.AddActivityListener(listener);
 
         var items = Enumerable.Range(1, 3);
-        var options = new ParallelOptionsRivulet { ErrorMode = ErrorMode.CollectAndContinue }.WithOpenTelemetryTracing("ErrorOperation");
+        var options =
+            new ParallelOptionsRivulet { ErrorMode = ErrorMode.CollectAndContinue }.WithOpenTelemetryTracing(
+                "ErrorOperation");
 
         try
         {
@@ -395,11 +399,13 @@ public sealed class ParallelOptionsRivuletExtensionsTests
         allActivitiesStopped.Wait(TimeSpan.FromSeconds(2));
         await Task.Delay(50, CancellationToken.None); // Extra buffer for activity processing
 
-        var indexActivities = activities.Where(static a => a.OperationName == "Rivulet.IndexTagsOperation.Item").ToList();
+        var indexActivities =
+            activities.Where(static a => a.OperationName == "Rivulet.IndexTagsOperation.Item").ToList();
         indexActivities.Count.ShouldBe(3, "should have one activity per item");
 
         // Each activity should have its item index
-        var indices = indexActivities.Select(static a => (int)a.GetTagItem("rivulet.item_index")!).OrderBy(static i => i).ToList();
+        var indices = indexActivities.Select(static a => (int)a.GetTagItem("rivulet.item_index")!)
+            .OrderBy(static i => i).ToList();
         indices.ShouldBe([0, 1, 2], "each item should have its sequential index");
     }
 

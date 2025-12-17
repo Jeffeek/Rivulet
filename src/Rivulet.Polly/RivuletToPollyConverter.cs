@@ -68,7 +68,8 @@ public static class RivuletToPollyConverter
     /// </example>
     public static ResiliencePipeline ToPollyTimeoutPipeline(this TimeSpan timeout)
     {
-        if (timeout <= TimeSpan.Zero) throw new ArgumentOutOfRangeException(nameof(timeout), "Timeout must be positive");
+        if (timeout <= TimeSpan.Zero)
+            throw new ArgumentOutOfRangeException(nameof(timeout), "Timeout must be positive");
 
         return new ResiliencePipelineBuilder()
             .AddTimeout(new TimeoutStrategyOptions { Timeout = timeout })
@@ -148,7 +149,8 @@ public static class RivuletToPollyConverter
         return hasAnyStrategy ? builder.Build() : ResiliencePipeline.Empty;
     }
 
-    private static PollyCircuitBreaker.CircuitBreakerStrategyOptions CreateCircuitBreakerOptions(CircuitBreakerOptions options) =>
+    private static PollyCircuitBreaker.CircuitBreakerStrategyOptions CreateCircuitBreakerOptions(
+        CircuitBreakerOptions options) =>
         new()
         {
             FailureRatio = 1.0,

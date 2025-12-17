@@ -47,7 +47,8 @@ public static class RivuletActivitySource
         // ReSharper disable once RedundantArgumentDefaultValue
         var activity = Source.StartActivity($"Rivulet.{operationName}", ActivityKind.Internal);
 
-        if (activity is not null && totalItems.HasValue) activity.SetTag(RivuletOpenTelemetryConstants.TagNames.TotalItems, totalItems.Value);
+        if (activity is not null && totalItems.HasValue)
+            activity.SetTag(RivuletOpenTelemetryConstants.TagNames.TotalItems, totalItems.Value);
 
         return activity;
     }

@@ -28,7 +28,8 @@ public sealed class VirtualTimeProvider : IDisposable
     /// <exception cref="ArgumentOutOfRangeException">Thrown when duration is negative.</exception>
     public void AdvanceTime(TimeSpan duration)
     {
-        if (duration < TimeSpan.Zero) throw new ArgumentOutOfRangeException(nameof(duration), duration, "Duration cannot be negative.");
+        if (duration < TimeSpan.Zero)
+            throw new ArgumentOutOfRangeException(nameof(duration), duration, "Duration cannot be negative.");
 
         ObjectDisposedException.ThrowIf(_disposed, nameof(VirtualTimeProvider));
 

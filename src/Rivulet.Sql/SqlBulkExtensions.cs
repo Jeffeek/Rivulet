@@ -145,7 +145,8 @@ public static class SqlBulkExtensions
         int batchNumber,
         CancellationToken cancellationToken)
     {
-        if (options.OnBatchStartAsync != null) await options.OnBatchStartAsync(batch.Cast<object>().ToList(), batchNumber).ConfigureAwait(false);
+        if (options.OnBatchStartAsync != null)
+            await options.OnBatchStartAsync(batch.Cast<object>().ToList(), batchNumber).ConfigureAwait(false);
 
         var connection = connectionFactory();
         var sqlOptions = options.SqlOptions ?? new SqlOptions();
@@ -154,7 +155,8 @@ public static class SqlBulkExtensions
         {
             try
             {
-                if (sqlOptions.AutoManageConnection && connection.State != ConnectionState.Open) await OpenConnectionAsync(connection, cancellationToken).ConfigureAwait(false);
+                if (sqlOptions.AutoManageConnection && connection.State != ConnectionState.Open)
+                    await OpenConnectionAsync(connection, cancellationToken).ConfigureAwait(false);
 
                 var transaction = options.UseTransaction
                     ? connection.BeginTransaction(sqlOptions.IsolationLevel)
@@ -187,7 +189,9 @@ public static class SqlBulkExtensions
                     {
                         transaction?.Rollback();
 
-                        if (options.OnBatchErrorAsync != null) await options.OnBatchErrorAsync(batch.Cast<object>().ToList(), batchNumber, ex).ConfigureAwait(false);
+                        if (options.OnBatchErrorAsync != null)
+                            await options.OnBatchErrorAsync(batch.Cast<object>().ToList(), batchNumber, ex)
+                                .ConfigureAwait(false);
 
                         throw;
                     }
@@ -210,7 +214,8 @@ public static class SqlBulkExtensions
 
     private static async ValueTask<int> ExecuteNonQueryAsync(IDbCommand command, CancellationToken cancellationToken)
     {
-        if (command is DbCommand dbCommand) return await dbCommand.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        if (command is DbCommand dbCommand)
+            return await dbCommand.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
 
         return await Task.Run(command.ExecuteNonQuery, cancellationToken).ConfigureAwait(false);
     }

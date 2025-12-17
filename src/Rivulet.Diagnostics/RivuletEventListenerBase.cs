@@ -41,17 +41,20 @@ public abstract class RivuletEventListenerBase : EventListener
         {
             if (eventData.Payload[i] is not IDictionary<string, object> eventPayload) continue;
 
-            if (!eventPayload.TryGetValue(RivuletDiagnosticsConstants.EventCounterKeys.Name, out var nameObj) || nameObj is not string name) continue;
+            if (!eventPayload.TryGetValue(RivuletDiagnosticsConstants.EventCounterKeys.Name, out var nameObj) ||
+                nameObj is not string name) continue;
 
             if (!eventPayload.TryGetValue(RivuletDiagnosticsConstants.EventCounterKeys.Mean, out var meanObj) &&
                 !eventPayload.TryGetValue(RivuletDiagnosticsConstants.EventCounterKeys.Increment, out meanObj))
                 continue;
 
             var value = Convert.ToDouble(meanObj);
-            var displayName = eventPayload.TryGetValue(RivuletDiagnosticsConstants.EventCounterKeys.DisplayName, out var displayNameObj)
+            var displayName = eventPayload.TryGetValue(RivuletDiagnosticsConstants.EventCounterKeys.DisplayName,
+                out var displayNameObj)
                 ? displayNameObj.ToString()
                 : name;
-            var displayUnits = eventPayload.TryGetValue(RivuletDiagnosticsConstants.EventCounterKeys.DisplayUnits, out var displayUnitsObj)
+            var displayUnits = eventPayload.TryGetValue(RivuletDiagnosticsConstants.EventCounterKeys.DisplayUnits,
+                out var displayUnitsObj)
                 ? displayUnitsObj.ToString()
                 : string.Empty;
 

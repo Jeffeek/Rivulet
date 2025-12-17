@@ -178,7 +178,11 @@ public sealed class BatchingTests
 
                 return batch.Sum();
             },
-            new() { MaxRetries = 2, IsTransient = static ex => ex is InvalidOperationException, ErrorMode = ErrorMode.CollectAndContinue });
+            new()
+            {
+                MaxRetries = 2, IsTransient = static ex => ex is InvalidOperationException,
+                ErrorMode = ErrorMode.CollectAndContinue
+            });
 
         results.Count.ShouldBe(3);
         attemptCounts[1].ShouldBe(2);
@@ -845,7 +849,9 @@ public sealed class BatchingTests
                     static async (batch, ct) =>
                     {
                         await Task.Delay(5, ct);
-                        return batch.First() == 21 ? throw new InvalidOperationException("Test exception") : batch.Sum();
+                        return batch.First() == 21
+                            ? throw new InvalidOperationException("Test exception")
+                            : batch.Sum();
                     },
                     new() { ErrorMode = ErrorMode.FailFast })
                 .CountAsync();
@@ -1044,7 +1050,8 @@ public sealed class BatchingTests
     public async Task BatchParallelStreamAsync_EmptySource_YieldsNothing()
     {
         var source = AsyncEnumerable.Empty<int>();
-        var results = await source.BatchParallelStreamAsync(10, static (batch, _) => new ValueTask<int>(batch.Count)).ToListAsync();
+        var results = await source.BatchParallelStreamAsync(10, static (batch, _) => new ValueTask<int>(batch.Count))
+            .ToListAsync();
 
         results.ShouldBeEmpty();
     }

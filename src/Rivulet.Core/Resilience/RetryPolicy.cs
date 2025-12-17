@@ -31,9 +31,13 @@ internal static class RetryPolicy
                 attempt++;
                 metricsTracker.IncrementRetries();
 
-                if (options.OnRetryAsync is not null) await options.OnRetryAsync(itemIndex, attempt, ex).ConfigureAwait(false);
+                if (options.OnRetryAsync is not null)
+                    await options.OnRetryAsync(itemIndex, attempt, ex).ConfigureAwait(false);
 
-                var delay = BackoffCalculator.CalculateDelay(options.BackoffStrategy, options.BaseDelay, attempt, ref previousDelay);
+                var delay = BackoffCalculator.CalculateDelay(options.BackoffStrategy,
+                    options.BaseDelay,
+                    attempt,
+                    ref previousDelay);
                 await Task.Delay(delay, ct).ConfigureAwait(false);
             }
             catch (Exception ex) when (options.OnFallback is not null)

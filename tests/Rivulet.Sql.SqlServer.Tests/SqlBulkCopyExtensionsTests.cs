@@ -4,7 +4,7 @@ using Rivulet.Base.Tests;
 
 namespace Rivulet.Sql.SqlServer.Tests;
 
-public class SqlBulkCopyExtensionsTests
+public sealed class SqlBulkCopyExtensionsTests
 {
     private static SqlConnection CreateMockConnection() =>
         // Note: This creates a real SqlConnection object, but we won't actually use it
@@ -290,7 +290,8 @@ public class SqlBulkCopyExtensionsTests
     [Fact]
     public void MapToDataTable_Helper_ShouldCreateValidDataTable()
     {
-        var records = new[] { new TestRecord(1, "Alice", "alice@example.com"), new TestRecord(2, "Bob", "bob@example.com") };
+        var records = new[]
+            { new TestRecord(1, "Alice", "alice@example.com"), new TestRecord(2, "Bob", "bob@example.com") };
 
         var dataTable = MapToDataTable(records);
 

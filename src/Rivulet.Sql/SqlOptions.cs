@@ -80,7 +80,8 @@ public sealed class SqlOptions
             return ex switch
             {
                 TimeoutException => true,
-                InvalidOperationException invalidOp when invalidOp.Message.Contains("timeout", StringComparison.OrdinalIgnoreCase) => true,
+                InvalidOperationException invalidOp when invalidOp.Message.Contains("timeout",
+                    StringComparison.OrdinalIgnoreCase) => true,
                 // Check MySQL and Npgsql before SqlException since "MySqlException" contains "SqlException"
                 _ when ex.GetType().Name.Contains("MySqlException") => IsMySqlTransientError(ex),
                 _ when ex.GetType().Name.Contains("NpgsqlException") => IsNpgsqlTransientError(ex),

@@ -23,7 +23,8 @@ public static class ParallelOptionsRivuletExtensions
     public static ParallelOptionsRivulet WithOpenTelemetryTracingAndRetries(
         this ParallelOptionsRivulet options,
         string operationName,
-        bool trackRetries = true) => CreateTracingOptions(options, operationName, trackRetries && options.MaxRetries > 0);
+        bool trackRetries = true) =>
+        CreateTracingOptions(options, operationName, trackRetries && options.MaxRetries > 0);
 
     private static ParallelOptionsRivulet CreateTracingOptions(
         ParallelOptionsRivulet options,
@@ -90,7 +91,9 @@ public static class ParallelOptionsRivuletExtensions
             {
                 var activity = asyncLocalActivity.Value ?? itemActivities.GetValueOrDefault(index);
 
-                if (activity is null) return options.OnErrorAsync is null || await options.OnErrorAsync(index, exception).ConfigureAwait(false);
+                if (activity is null)
+                    return options.OnErrorAsync is null ||
+                           await options.OnErrorAsync(index, exception).ConfigureAwait(false);
 
                 var previousActivity = Activity.Current;
                 try
@@ -101,7 +104,9 @@ public static class ParallelOptionsRivuletExtensions
                     RivuletActivitySource.RecordError(activity, exception, isTransient);
 
                     var willRetry = isTransient && options.MaxRetries > 0;
-                    if (willRetry || !itemActivities.TryRemove(index, out _)) return options.OnErrorAsync is null || await options.OnErrorAsync(index, exception).ConfigureAwait(false);
+                    if (willRetry || !itemActivities.TryRemove(index, out _))
+                        return options.OnErrorAsync is null ||
+                               await options.OnErrorAsync(index, exception).ConfigureAwait(false);
 
                     try
                     {
@@ -112,7 +117,8 @@ public static class ParallelOptionsRivuletExtensions
                         asyncLocalActivity.Value = null;
                     }
 
-                    return options.OnErrorAsync is null || await options.OnErrorAsync(index, exception).ConfigureAwait(false);
+                    return options.OnErrorAsync is null ||
+                           await options.OnErrorAsync(index, exception).ConfigureAwait(false);
                 }
                 finally
                 {
@@ -120,7 +126,8 @@ public static class ParallelOptionsRivuletExtensions
                 }
             },
             CircuitBreaker = CreateCircuitBreakerOptions(options.CircuitBreaker, itemActivities, asyncLocalActivity),
-            AdaptiveConcurrency = CreateAdaptiveConcurrencyOptions(options.AdaptiveConcurrency, itemActivities, asyncLocalActivity)
+            AdaptiveConcurrency =
+                CreateAdaptiveConcurrencyOptions(options.AdaptiveConcurrency, itemActivities, asyncLocalActivity)
         };
     }
 
