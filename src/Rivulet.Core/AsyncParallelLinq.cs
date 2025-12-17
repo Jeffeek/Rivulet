@@ -56,7 +56,6 @@ public static class AsyncParallelLinq
         var sourceList = source as ICollection<TSource> ?? source.ToList();
         var totalItems = sourceList.Count;
 
-#pragma warning disable CA2007 // ConfigureAwait not applicable to await using declarations
         await using var progressTracker = options.Progress is not null
             ? new ProgressTracker(totalItems, options.Progress, token)
             : null;
@@ -74,7 +73,6 @@ public static class AsyncParallelLinq
         await using var adaptiveController = options.AdaptiveConcurrency is not null
             ? new AdaptiveConcurrencyController(options.AdaptiveConcurrency)
             : null;
-#pragma warning restore CA2007
 
         var effectiveMaxWorkers = options.AdaptiveConcurrency?.MaxConcurrency ?? options.MaxDegreeOfParallelism;
         metricsTracker.SetActiveWorkers(effectiveMaxWorkers);
@@ -253,7 +251,6 @@ public static class AsyncParallelLinq
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         var token = cts.Token;
 
-#pragma warning disable CA2007 // ConfigureAwait not applicable to await using declarations
         await using var progressTracker = options.Progress is not null
             ? new ProgressTracker(null, options.Progress, token)
             : null;
@@ -271,7 +268,6 @@ public static class AsyncParallelLinq
         await using var adaptiveController = options.AdaptiveConcurrency is not null
             ? new AdaptiveConcurrencyController(options.AdaptiveConcurrency)
             : null;
-#pragma warning restore CA2007
 
         var effectiveMaxWorkers = options.AdaptiveConcurrency?.MaxConcurrency ?? options.MaxDegreeOfParallelism;
         metricsTracker.SetActiveWorkers(effectiveMaxWorkers);
