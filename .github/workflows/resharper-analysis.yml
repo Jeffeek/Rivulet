@@ -51,11 +51,12 @@ jobs:
          settings: ./Rivulet.sln.DotSettings
          output: linter-reports/resharper-report.xml
          format: Xml
-         jobs: 0
-         verbosity: WARN
          severity: WARNING
          no-build: True
          build: False
-         properties: Configuration=Release
-         no-swea: True
-         swea: False
+
+    - name: Upload InspectCode Report
+      uses: actions/upload-artifact@v4
+      with:
+          name: resharper-report
+          path: linter-reports/resharper-report.xml
