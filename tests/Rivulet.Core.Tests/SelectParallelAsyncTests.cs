@@ -225,11 +225,12 @@ public sealed class SelectParallelAsyncTests
         var source = Enumerable.Range(1, 5);
 
         var results = await source.SelectParallelAsync(static (x, _) =>
-            {
-                if (x == 2) throw new TimeoutException();
-
-                return x == 4 ? throw new InvalidOperationException() : new ValueTask<int>(x * 10);
-            },
+                x switch
+                {
+                    2 => throw new TimeoutException(),
+                    4 => throw new InvalidOperationException(),
+                    _ => new ValueTask<int>(x * 10)
+                },
             new() { OnFallback = static (_, ex) => ex is TimeoutException ? -1 : -2 });
 
         results.Count.ShouldBe(5);

@@ -23,8 +23,7 @@ public sealed class HttpParallelExtensionsAdditionalTests
         {
             attemptCount++;
             if (attemptCount != 1)
-                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
-                    { Content = new StringContent("Success after retry") });
+                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("Success after retry") });
 
             var response = new HttpResponseMessage(HttpStatusCode.TooManyRequests);
             response.Headers.RetryAfter = new(TimeSpan.FromMilliseconds(50));

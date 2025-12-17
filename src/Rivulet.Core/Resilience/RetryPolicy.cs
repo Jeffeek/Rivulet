@@ -46,10 +46,11 @@ internal static class RetryPolicy
                 return fallbackValue switch
                 {
                     TResult result => result,
-                    // ReSharper disable once NullableWarningSuppressionIsUsed
                     null when !typeof(TResult).IsValueType => default!,
                     _ => throw new InvalidOperationException(
+#pragma warning disable CA1508
                         $"Fallback returned {fallbackValue?.GetType().Name ?? "null"}, expected {typeof(TResult).Name}")
+#pragma warning restore CA1508
                 };
             }
         }

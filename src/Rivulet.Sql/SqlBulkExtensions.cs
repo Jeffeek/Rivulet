@@ -192,8 +192,7 @@ public static class SqlBulkExtensions
                         transaction?.Rollback();
 
                         if (options.OnBatchErrorAsync != null)
-                            await options.OnBatchErrorAsync(batch.Cast<object>().ToList(), batchNumber, ex)
-                                .ConfigureAwait(false);
+                            await options.OnBatchErrorAsync(batch.Cast<object>().ToList(), batchNumber, ex).ConfigureAwait(false);
 
                         throw;
                     }

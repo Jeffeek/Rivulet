@@ -1,4 +1,4 @@
-﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
 	<s:Boolean x:Key="/Default/CodeEditing/ContextActionTable/DisabledContextActions/=JetBrains_002EReSharper_002EIntentions_002ECSharp_002EContextActions_002EFieldKeywordToExplicitFieldAction/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/CodeEditing/ContextActionTable/DisabledContextActions/=JetBrains_002EReSharper_002EIntentions_002ECSharp_002EContextActions_002EToExplicitFieldAction/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/CodeInspection/Highlighting/CapturedPrimaryConstructorParameterIsMutable/IncludeUnconstrainedGenerics/@EntryValue">True</s:Boolean>
@@ -219,7 +219,7 @@
 	<s:Int64 x:Key="/Default/CodeStyle/CodeFormatting/CSharpFormat/MAX_INVOCATION_ARGUMENTS_ON_LINE/@EntryValue">5</s:Int64>
 	<s:String x:Key="/Default/CodeStyle/CodeFormatting/CSharpFormat/WRAP_ARGUMENTS_STYLE/@EntryValue">CHOP_IF_LONG</s:String>
 	<s:String x:Key="/Default/CodeStyle/CodeFormatting/CSharpFormat/WRAP_PARAMETERS_STYLE/@EntryValue">CHOP_IF_LONG</s:String>
-	<s:String x:Key="/Default/CodeStyle/CodeFormatting/CSharpCodeStyle/USE_VAR/@EntryValue">UseVarWhenEvident</s:String>
+	<s:String x:Key="/Default/CodeStyle/CodeFormatting/CSharpCodeStyle/USE_VAR/@EntryValue">UseVarAlways</s:String>
 	<s:String x:Key="/Default/CodeStyle/CodeFormatting/CSharpCodeStyle/BRACES_FOR_FOR/@EntryValue">RequiredForMultiline</s:String>
 	<s:String x:Key="/Default/CodeStyle/CodeFormatting/CSharpCodeStyle/BRACES_FOR_FOREACH/@EntryValue">RequiredForMultiline</s:String>
 	<s:String x:Key="/Default/CodeStyle/CodeFormatting/CSharpCodeStyle/BRACES_FOR_IFELSE/@EntryValue">RequiredForMultiline</s:String>
@@ -228,7 +228,7 @@
 	<s:String x:Key="/Default/CodeStyle/CodeFormatting/CSharpCodeStyle/NAMESPACE_DECLARATION/@EntryValue">FileScoped</s:String>
 	<s:String x:Key="/Default/CodeStyle/CodeFormatting/CSharpCodeStyle/USE_THIS_QUALIFIER_IN_MEMBER_ACCESS/@EntryValue">DO_NOT_USE</s:String>
 	<s:String x:Key="/Default/CodeStyle/CodeFormatting/CSharpCodeStyle/METHOD_OR_OPERATOR_BODY/@EntryValue">ExpressionBody</s:String>
-	<s:String x:Key="/Default/CodeStyle/CodeFormatting/CSharpCodeStyle/ACCESSOR_OWNER_BODY/@EntryValue">EXPRESSION_BODY_WHEN_ON_SINGLE_LINE</s:String>
+	<s:String x:Key="/Default/CodeStyle/CodeFormatting/CSharpCodeStyle/ACCESSOR_OWNER_BODY/@EntryValue">ExpressionBody</s:String>
 	<s:String x:Key="/Default/CodeStyle/CodeFormatting/CSharpCodeStyle/CONSTRUCTOR_OR_DESTRUCTOR_BODY/@EntryValue">ExpressionBody</s:String>
 	<s:String x:Key="/Default/CodeStyle/CodeFormatting/CSharpCodeStyle/LOCAL_FUNCTION_BODY/@EntryValue">ExpressionBody</s:String>
 	<s:String x:Key="/Default/CodeStyle/CodeFormatting/CSharpCodeStyle/MODIFIERS_ORDER/@EntryValue">public private protected internal static extern new virtual abstract sealed override readonly unsafe volatile async</s:String>
@@ -259,9 +259,6 @@
 	<s:String x:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=AssignNullToNotNullAttribute/@EntryIndexedValue">WARNING</s:String>
 	<s:String x:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=ConditionIsAlwaysTrueOrFalse/@EntryIndexedValue">WARNING</s:String>
 	<s:String x:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=MissingXmlDoc/@EntryIndexedValue">WARNING</s:String>
-	<s:String x:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator/@EntryIndexedValue">HINT</s:String>
-	<s:String x:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=LoopCanBeConvertedToQuery/@EntryIndexedValue">HINT</s:String>
-	<s:String x:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=ForCanBeConvertedToForeach/@EntryIndexedValue">HINT</s:String>
 	<s:String x:Key="/Default/CodeStyle/CodeFormatting/CSharpCodeStyle/MEMBER_ARRANGEMENT_PATTERNS/@EntryValue">&lt;?xml version="1.0" encoding="utf-8"?&gt;
 &lt;Patterns xmlns="urn:schemas-jetbrains-com:member-reordering-patterns"&gt;
   &lt;TypePattern DisplayName="Default Pattern" Priority="1000"&gt;
@@ -704,7 +701,6 @@
 	<s:Boolean x:Key="/Default/GrammarAndSpelling/GrammarChecking/Exceptions/=side_002Deffect/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/GrammarAndSpelling/GrammarChecking/Exceptions/=to_0020backup/@EntryIndexedValue">True</s:Boolean>
     <s:Boolean x:Key="/Default/GrammarAndSpelling/GrammarChecking/Scope/CheckInInterpolatedStringLiterals/@EntryValue">True</s:Boolean>
-	<s:String x:Key="/Default/CodeInspection/Highlighting/InspectionSeverities/=ConfigureAwaitChecker/@EntryIndexedValue">SUGGESTION</s:String>
 	<s:String x:Key="/Default/CodeStyle/CodeCleanup/Profiles/=Rivulet/@EntryIndexedValue">&lt;?xml version="1.0" encoding="utf-16"?&gt;&lt;Profile name="Rivulet"&gt;&lt;CSArrangeThisQualifier&gt;True&lt;/CSArrangeThisQualifier&gt;&lt;CSRemoveCodeRedundancies&gt;True&lt;/CSRemoveCodeRedundancies&gt;&lt;CSUseVarKeyword&gt;True&lt;/CSUseVarKeyword&gt;&lt;CSUpdateFileHeader&gt;False&lt;/CSUpdateFileHeader&gt;&lt;CSOptimizeUsings&gt;&lt;OptimizeUsings&gt;True&lt;/OptimizeUsings&gt;&lt;/CSOptimizeUsings&gt;&lt;CSShortenReferences&gt;True&lt;/CSShortenReferences&gt;&lt;CSReformatCode&gt;True&lt;/CSReformatCode&gt;&lt;CSFixBuiltinTypeReferences&gt;True&lt;/CSFixBuiltinTypeReferences&gt;&lt;/Profile&gt;</s:String>
 	<s:Boolean x:Key="/Default/Environment/SettingsMigration/IsMigratorApplied/=JetBrains_002EReSharper_002EPsi_002ECSharp_002ECodeStyle_002ESettingsUpgrade_002EPredefinedNamingRulesToUserRulesUpgrade/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=ACCESSORHOLDER/@EntryIndexedValue">True</s:Boolean>

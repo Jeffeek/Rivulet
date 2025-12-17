@@ -6,7 +6,9 @@ namespace Rivulet.IO;
 /// <summary>
 ///     Extension methods for FileInfo to enable parallel operations on collections of FileInfo objects.
 /// </summary>
+#pragma warning disable IDE0079
 [SuppressMessage("ReSharper", "MemberCanBeInternal")]
+#pragma warning restore IDE0079
 public static class FileInfoExtensions
 {
     /// <summary>
@@ -55,7 +57,7 @@ public static class FileInfoExtensions
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>The file content as a string.</returns>
     /// <exception cref="ArgumentNullException">Thrown when file is null.</exception>
-    public static async Task<string> ReadAllTextAsync(
+    public static ValueTask<string> ReadAllTextAsync(
         this FileInfo file,
         FileOperationOptions? options = null,
         CancellationToken cancellationToken = default)
@@ -64,10 +66,11 @@ public static class FileInfoExtensions
 
         options ??= new();
 
-        return await FileOperationHelper.ExecuteFileOperationAsync(
+        return FileOperationHelper.ExecuteFileOperationAsync(
             file.FullName,
             async () =>
             {
+#pragma warning disable CA2007
                 await using var stream = new FileStream(
                     file.FullName,
                     FileMode.Open,
@@ -75,6 +78,7 @@ public static class FileInfoExtensions
                     options.ReadFileShare,
                     options.BufferSize,
                     true);
+#pragma warning restore CA2007
 
                 using var reader = new StreamReader(stream, options.Encoding);
                 return await reader.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
@@ -91,7 +95,7 @@ public static class FileInfoExtensions
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>The file content as a byte array.</returns>
     /// <exception cref="ArgumentNullException">Thrown when file is null.</exception>
-    public static async Task<byte[]> ReadAllBytesAsync(
+    public static ValueTask<byte[]> ReadAllBytesAsync(
         this FileInfo file,
         FileOperationOptions? options = null,
         CancellationToken cancellationToken = default)
@@ -100,11 +104,11 @@ public static class FileInfoExtensions
 
         options ??= new();
 
-#pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements
-        return await FileOperationHelper.ExecuteFileOperationAsync(
+        return FileOperationHelper.ExecuteFileOperationAsync(
             file.FullName,
             async () =>
             {
+#pragma warning disable CA2007
                 await using var stream = new FileStream(
                     file.FullName,
                     FileMode.Open,
@@ -112,6 +116,7 @@ public static class FileInfoExtensions
                     options.ReadFileShare,
                     options.BufferSize,
                     true);
+#pragma warning restore CA2007
 
                 var buffer = new byte[stream.Length];
                 _ = await stream.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
@@ -119,7 +124,6 @@ public static class FileInfoExtensions
             },
             options,
             static bytes => bytes.Length);
-#pragma warning restore CA2007
     }
 
     /// <summary>
@@ -129,9 +133,10 @@ public static class FileInfoExtensions
     /// <param name="content">The text content to write.</param>
     /// <param name="options">File operation options. If null, defaults are used.</param>
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    /// <returns>File length.</returns>
     /// <exception cref="ArgumentNullException">Thrown when file is null.</exception>
     /// <exception cref="IOException">Thrown when file exists and OverwriteExisting is false.</exception>
-    public static async Task WriteAllTextAsync(
+    public static ValueTask<int> WriteAllTextAsync(
         this FileInfo file,
         string content,
         FileOperationOptions? options = null,
@@ -141,14 +146,14 @@ public static class FileInfoExtensions
 
         options ??= new();
 
-#pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements
-        await FileOperationHelper.ExecuteFileOperationAsync(
+        return FileOperationHelper.ExecuteFileOperationAsync(
             file.FullName,
             async () =>
             {
                 FileOperationHelper.EnsureDirectoryExists(file.FullName, options);
                 FileOperationHelper.ValidateOverwrite(file.FullName, options);
 
+#pragma warning disable CA2007
                 await using var stream = new FileStream(
                     file.FullName,
                     FileMode.Create,
@@ -158,6 +163,7 @@ public static class FileInfoExtensions
                     true);
 
                 await using var writer = new StreamWriter(stream, options.Encoding);
+#pragma warning restore CA2007
                 await writer.WriteAsync(content.AsMemory(), cancellationToken).ConfigureAwait(false);
                 await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
 
@@ -165,7 +171,6 @@ public static class FileInfoExtensions
             },
             options,
             static length => length);
-#pragma warning restore CA2007
     }
 
     /// <summary>
@@ -175,9 +180,10 @@ public static class FileInfoExtensions
     /// <param name="content">The byte content to write.</param>
     /// <param name="options">File operation options. If null, defaults are used.</param>
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    /// <returns>File length.</returns>
     /// <exception cref="ArgumentNullException">Thrown when file is null.</exception>
     /// <exception cref="IOException">Thrown when file exists and OverwriteExisting is false.</exception>
-    public static async Task WriteAllBytesAsync(
+    public static ValueTask<int> WriteAllBytesAsync(
         this FileInfo file,
         byte[] content,
         FileOperationOptions? options = null,
@@ -187,14 +193,14 @@ public static class FileInfoExtensions
 
         options ??= new();
 
-#pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements
-        await FileOperationHelper.ExecuteFileOperationAsync(
+        return FileOperationHelper.ExecuteFileOperationAsync(
             file.FullName,
             async () =>
             {
                 FileOperationHelper.EnsureDirectoryExists(file.FullName, options);
                 FileOperationHelper.ValidateOverwrite(file.FullName, options);
 
+#pragma warning disable CA2007
                 await using var stream = new FileStream(
                     file.FullName,
                     FileMode.Create,
@@ -202,6 +208,7 @@ public static class FileInfoExtensions
                     options.WriteFileShare,
                     options.BufferSize,
                     true);
+#pragma warning restore CA2007
 
                 await stream.WriteAsync(content, cancellationToken).ConfigureAwait(false);
                 await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
@@ -210,7 +217,6 @@ public static class FileInfoExtensions
             },
             options,
             static length => length);
-#pragma warning restore CA2007
     }
 
     /// <summary>
@@ -220,9 +226,10 @@ public static class FileInfoExtensions
     /// <param name="destinationPath">The destination file path.</param>
     /// <param name="options">File operation options. If null, defaults are used.</param>
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    /// <returns>Stream length.</returns>
     /// <exception cref="ArgumentNullException">Thrown when file is null.</exception>
     /// <exception cref="IOException">Thrown when destination exists and OverwriteExisting is false.</exception>
-    public static async Task CopyToAsync(
+    public static ValueTask<long> CopyToAsync(
         this FileInfo file,
         string destinationPath,
         FileOperationOptions? options = null,
@@ -232,14 +239,14 @@ public static class FileInfoExtensions
 
         options ??= new();
 
-#pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements
-        await FileOperationHelper.ExecuteFileOperationAsync(
+        return FileOperationHelper.ExecuteFileOperationAsync(
             file.FullName,
             async () =>
             {
                 FileOperationHelper.EnsureDirectoryExists(destinationPath, options);
                 FileOperationHelper.ValidateOverwrite(destinationPath, options);
 
+#pragma warning disable CA2007
                 await using var sourceStream = new FileStream(
                     file.FullName,
                     FileMode.Open,
@@ -255,6 +262,7 @@ public static class FileInfoExtensions
                     options.WriteFileShare,
                     options.BufferSize,
                     true);
+#pragma warning restore CA2007
 
                 await sourceStream.CopyToAsync(destStream, options.BufferSize, cancellationToken).ConfigureAwait(false);
                 await destStream.FlushAsync(cancellationToken).ConfigureAwait(false);
@@ -263,7 +271,6 @@ public static class FileInfoExtensions
             },
             options,
             static length => length);
-#pragma warning restore CA2007
     }
 
     /// <summary>
@@ -272,8 +279,9 @@ public static class FileInfoExtensions
     /// <param name="file">The FileInfo object to delete.</param>
     /// <param name="options">File operation options. If null, defaults are used.</param>
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    /// <returns><value>0</value></returns>
     /// <exception cref="ArgumentNullException">Thrown when file is null.</exception>
-    public static async Task DeleteAsync(
+    public static ValueTask<int> DeleteAsync(
         this FileInfo file,
         FileOperationOptions? options = null,
         CancellationToken cancellationToken = default)
@@ -282,14 +290,13 @@ public static class FileInfoExtensions
 
         options ??= new();
 
-        await FileOperationHelper.ExecuteFileOperationAsync(
-                file.FullName,
-                async () =>
-                {
-                    await Task.Run(() => File.Delete(file.FullName), cancellationToken).ConfigureAwait(false);
-                    return 0;
-                },
-                options)
-            .ConfigureAwait(false);
+        return FileOperationHelper.ExecuteFileOperationAsync(
+            file.FullName,
+            async () =>
+            {
+                await Task.Run(() => File.Delete(file.FullName), cancellationToken).ConfigureAwait(false);
+                return 0;
+            },
+            options);
     }
 }

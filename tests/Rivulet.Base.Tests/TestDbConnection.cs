@@ -225,12 +225,10 @@ public sealed class TestDataReader(List<Dictionary<string, object>> rows) : DbDa
 
     public override string GetString(int ordinal) => (string)GetValue(ordinal);
 
-    public override object GetValue(int ordinal)
-    {
-        if (_currentRow < 0 || _currentRow >= rows.Count) throw new InvalidOperationException("No current row");
-
-        return rows[_currentRow].Values.ElementAt(ordinal);
-    }
+    public override object GetValue(int ordinal) =>
+        _currentRow < 0 || _currentRow >= rows.Count
+            ? throw new InvalidOperationException("No current row")
+            : rows[_currentRow].Values.ElementAt(ordinal);
 
     public override int GetValues(object[] values)
     {

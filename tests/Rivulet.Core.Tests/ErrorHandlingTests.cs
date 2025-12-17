@@ -43,9 +43,7 @@ public sealed class ErrorHandlingTests
             await foreach (var _ in source.SelectParallelStreamAsync(static async (x, ct) =>
                                {
                                    await Task.Delay(10, ct);
-                                   if (x == 5) throw new InvalidOperationException("Error at 5");
-
-                                   return x * 2;
+                                   return x == 5 ? throw new InvalidOperationException("Error at 5") : x * 2;
                                },
                                options))
             {

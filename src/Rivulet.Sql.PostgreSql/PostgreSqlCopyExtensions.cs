@@ -97,8 +97,7 @@ public static class PostgreSqlCopyExtensions
                             $"Copy command: {copyCommand}. " +
                             $"Exception: {ex.GetType().FullName} - {ex.Message}";
                         if (ex.InnerException != null)
-                            detailMessage +=
-                                $" | InnerException: {ex.InnerException.GetType().FullName} - {ex.InnerException.Message}";
+                            detailMessage += $" | InnerException: {ex.InnerException.GetType().FullName} - {ex.InnerException.Message}";
 
                         if (ex.StackTrace != null)
                             detailMessage += $" | StackTrace: {ex.StackTrace[..Math.Min(500, ex.StackTrace.Length)]}";

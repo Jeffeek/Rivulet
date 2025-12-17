@@ -43,9 +43,9 @@ public sealed class RetryPolicyTests
             (x, _) =>
             {
                 var attempts = attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
-                if (x == 3 && attempts <= 2) throw new InvalidOperationException("Transient error");
-
-                return new ValueTask<int>(x * 2);
+                return x == 3 && attempts <= 2
+                    ? throw new InvalidOperationException("Transient error")
+                    : new ValueTask<int>(x * 2);
             },
             options);
 

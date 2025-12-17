@@ -80,8 +80,7 @@ public sealed class AdaptiveConcurrencyOptions
             throw new ArgumentException("MinConcurrency must be greater than 0.", nameof(MinConcurrency));
 
         if (MaxConcurrency < MinConcurrency)
-            throw new ArgumentException("MaxConcurrency must be greater than or equal to MinConcurrency.",
-                nameof(MaxConcurrency));
+            throw new ArgumentException("MaxConcurrency must be greater than or equal to MinConcurrency.", nameof(MaxConcurrency));
 
         if (InitialConcurrency.HasValue &&
             (InitialConcurrency.Value < MinConcurrency || InitialConcurrency.Value > MaxConcurrency))
@@ -94,8 +93,7 @@ public sealed class AdaptiveConcurrencyOptions
             throw new ArgumentException("SampleInterval must be greater than zero.", nameof(SampleInterval));
 
         if (TargetLatency.HasValue && TargetLatency.Value <= TimeSpan.Zero)
-            throw new ArgumentException("TargetLatency must be greater than zero when specified.",
-                nameof(TargetLatency));
+            throw new ArgumentException("TargetLatency must be greater than zero when specified.", nameof(TargetLatency));
 
         if (MinSuccessRate is < 0.0 or > 1.0)
             throw new ArgumentException("MinSuccessRate must be between 0.0 and 1.0.", nameof(MinSuccessRate));

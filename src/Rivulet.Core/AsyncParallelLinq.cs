@@ -34,7 +34,6 @@ public static class AsyncParallelLinq
     ///     errors occurred during processing.
     /// </exception>
     /// <exception cref="OperationCanceledException">Thrown when the operation is cancelled via the cancellation token.</exception>
-    [SuppressMessage("ReSharper", "AccessToDisposedClosure")]
     public static async Task<List<TResult>> SelectParallelAsync<TSource, TResult>(
         this IEnumerable<TSource> source,
         Func<TSource, CancellationToken, ValueTask<TResult>> taskSelector,
@@ -53,14 +52,16 @@ public static class AsyncParallelLinq
             : null;
         var errors = new ConcurrentBag<Exception>();
 
-        var sourceList = source as ICollection<TSource> ?? source.ToList();
+        var sourceList = source as ICollection<TSource> ?? [..source];
         var totalItems = sourceList.Count;
 
+#pragma warning disable CA2007
         await using var progressTracker = options.Progress is not null
             ? new ProgressTracker(totalItems, options.Progress, token)
             : null;
 
         await using var metricsTracker = MetricsTrackerBase.Create(options.Metrics, token);
+#pragma warning restore CA2007
 
         var tokenBucket = options.RateLimit is not null
             ? new TokenBucket(options.RateLimit)
@@ -70,9 +71,11 @@ public static class AsyncParallelLinq
             ? new CircuitBreaker(options.CircuitBreaker)
             : null;
 
+#pragma warning disable CA2007
         await using var adaptiveController = options.AdaptiveConcurrency is not null
             ? new AdaptiveConcurrencyController(options.AdaptiveConcurrency)
             : null;
+#pragma warning restore CA2007
 
         var effectiveMaxWorkers = options.AdaptiveConcurrency?.MaxConcurrency ?? options.MaxDegreeOfParallelism;
         metricsTracker.SetActiveWorkers(effectiveMaxWorkers);
@@ -95,6 +98,7 @@ public static class AsyncParallelLinq
                         await channel.Writer.WriteAsync((i, item), token).ConfigureAwait(false);
                         if (i++ % effectiveMaxWorkers != 0 || options.OnThrottleAsync is null) continue;
 
+                        // ReSharper disable once AccessToDisposedClosure
                         metricsTracker.IncrementThrottleEvents();
                         await options.OnThrottleAsync(i).ConfigureAwait(false);
                     }
@@ -117,50 +121,46 @@ public static class AsyncParallelLinq
 
                         try
                         {
+                            // ReSharper disable AccessToDisposedClosure
                             if (adaptiveController is not null)
                             {
                                 await adaptiveController.AcquireAsync(token).ConfigureAwait(false);
+                                // ReSharper restore AccessToDisposedClosure
                                 acquiredAdaptive = true;
                             }
 
                             if (tokenBucket is not null) await tokenBucket.AcquireAsync(token).ConfigureAwait(false);
 
+                            // ReSharper disable AccessToDisposedClosure
                             progressTracker?.IncrementStarted();
                             metricsTracker.IncrementItemsStarted();
+                            // ReSharper restore AccessToDisposedClosure
+
                             if (options.OnStartItemAsync is not null)
                                 await options.OnStartItemAsync(idx).ConfigureAwait(false);
 
-                            TResult result;
-                            if (circuitBreaker is not null)
-                            {
-                                result = await circuitBreaker.ExecuteAsync(() =>
-                                            RetryPolicy.ExecuteWithRetry(item,
-                                                taskSelector,
-                                                options,
-                                                metricsTracker,
-                                                idx,
-                                                token),
-                                        token)
-                                    .ConfigureAwait(false);
-                            }
-                            else
-                            {
-                                result = await RetryPolicy.ExecuteWithRetry(item,
-                                        taskSelector,
-                                        options,
-                                        metricsTracker,
-                                        idx,
-                                        token)
-                                    .ConfigureAwait(false);
-                            }
+                            ValueTask<TResult> ToExecute() =>
+                                RetryPolicy.ExecuteWithRetry(item,
+                                    taskSelector,
+                                    options,
+                                    // ReSharper disable once AccessToDisposedClosure
+                                    metricsTracker,
+                                    idx,
+                                    token);
+
+                            var result = circuitBreaker is not null
+                                ? await circuitBreaker.ExecuteAsync(ToExecute, token).ConfigureAwait(false)
+                                : await ToExecute().ConfigureAwait(false);
 
                             if (options.OrderedOutput && orderedResults != null)
                                 orderedResults[idx] = result;
                             else
                                 results?.Add(result);
 
+                            // ReSharper disable AccessToDisposedClosure
                             progressTracker?.IncrementCompleted();
                             metricsTracker.IncrementItemsCompleted();
+                            // ReSharper restore AccessToDisposedClosure
 
                             if (options.OnCompleteItemAsync is not null)
                                 await options.OnCompleteItemAsync(idx).ConfigureAwait(false);
@@ -170,27 +170,33 @@ public static class AsyncParallelLinq
                         catch (Exception ex)
                         {
                             errors.Add(ex);
+                            // ReSharper disable AccessToDisposedClosure
                             progressTracker?.IncrementErrors();
                             metricsTracker.IncrementFailures();
+                            // ReSharper restore AccessToDisposedClosure
 
                             if (options.OnErrorAsync is not null)
                             {
                                 var cont = await options.OnErrorAsync(idx, ex).ConfigureAwait(false);
+                                // ReSharper disable once AccessToDisposedClosure
                                 if (!cont) await cts.CancelAsync().ConfigureAwait(false);
                             }
 
                             if (options.ErrorMode == ErrorMode.FailFast)
                             {
+                                // ReSharper disable once AccessToDisposedClosure
                                 await cts.CancelAsync().ConfigureAwait(false);
                                 throw;
                             }
                         }
                         finally
                         {
+                            // ReSharper disable AccessToDisposedClosure
                             if (adaptiveController is not null && acquiredAdaptive)
                             {
                                 var elapsed = Stopwatch.GetElapsedTime(startTime);
                                 adaptiveController.Release(elapsed, success);
+                                // ReSharper restore AccessToDisposedClosure
                             }
                         }
                     }
@@ -207,7 +213,7 @@ public static class AsyncParallelLinq
             // Errors are collected in the errors list and handled after cleanup
         }
 
-        if (options.ErrorMode == ErrorMode.CollectAndContinue && errors.Count > 0) throw new AggregateException(errors);
+        if (options.ErrorMode == ErrorMode.CollectAndContinue && !errors.IsEmpty) throw new AggregateException(errors);
 
         if (!options.OrderedOutput) return [.. results ?? []];
 
@@ -251,11 +257,13 @@ public static class AsyncParallelLinq
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         var token = cts.Token;
 
+#pragma warning disable CA2007
         await using var progressTracker = options.Progress is not null
             ? new ProgressTracker(null, options.Progress, token)
             : null;
 
         await using var metricsTracker = MetricsTrackerBase.Create(options.Metrics, token);
+#pragma warning restore CA2007
 
         var tokenBucket = options.RateLimit is not null
             ? new TokenBucket(options.RateLimit)
@@ -265,9 +273,11 @@ public static class AsyncParallelLinq
             ? new CircuitBreaker(options.CircuitBreaker)
             : null;
 
+#pragma warning disable CA2007
         await using var adaptiveController = options.AdaptiveConcurrency is not null
             ? new AdaptiveConcurrencyController(options.AdaptiveConcurrency)
             : null;
+#pragma warning restore CA2007
 
         var effectiveMaxWorkers = options.AdaptiveConcurrency?.MaxConcurrency ?? options.MaxDegreeOfParallelism;
         metricsTracker.SetActiveWorkers(effectiveMaxWorkers);
@@ -323,31 +333,19 @@ public static class AsyncParallelLinq
                             if (options.OnStartItemAsync is not null)
                                 await options.OnStartItemAsync(idx).ConfigureAwait(false);
 
-                            TResult res;
-                            if (circuitBreaker is not null)
-                            {
-                                res = await circuitBreaker.ExecuteAsync(() =>
-                                            RetryPolicy.ExecuteWithRetry(item,
-                                                taskSelector,
-                                                options,
-                                                metricsTracker,
-                                                idx,
-                                                token),
-                                        token)
-                                    .ConfigureAwait(false);
-                            }
-                            else
-                            {
-                                res = await RetryPolicy.ExecuteWithRetry(item,
-                                        taskSelector,
-                                        options,
-                                        metricsTracker,
-                                        idx,
-                                        token)
-                                    .ConfigureAwait(false);
-                            }
+                            ValueTask<TResult> ToExecute() =>
+                                RetryPolicy.ExecuteWithRetry(item,
+                                    taskSelector,
+                                    options,
+                                    metricsTracker,
+                                    idx,
+                                    token);
 
-                            await output.Writer.WriteAsync((idx, res), token).ConfigureAwait(false);
+                            var result = circuitBreaker is not null
+                                ? await circuitBreaker.ExecuteAsync(ToExecute, token).ConfigureAwait(false)
+                                : await ToExecute().ConfigureAwait(false);
+
+                            await output.Writer.WriteAsync((idx, result), token).ConfigureAwait(false);
                             progressTracker?.IncrementCompleted();
                             metricsTracker.IncrementItemsCompleted();
                             if (options.OnCompleteItemAsync is not null)
@@ -551,8 +549,8 @@ public static class AsyncParallelLinq
         if (batchSize < 1) throw new ArgumentException("Batch size must be at least 1.", nameof(batchSize));
 
         var batches = CreateBatchesAsync(source, batchSize, batchTimeout, cancellationToken);
-        await foreach (var result in batches.SelectParallelStreamAsync(batchSelector, options, cancellationToken)
-                           .ConfigureAwait(false)) yield return result;
+        await foreach (var result in batches.SelectParallelStreamAsync(batchSelector, options, cancellationToken).ConfigureAwait(false))
+            yield return result;
     }
 
     private static IEnumerable<IReadOnlyList<TSource>> CreateBatches<TSource>(IEnumerable<TSource> source,

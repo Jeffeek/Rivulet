@@ -70,9 +70,7 @@ public sealed class PollyParallelExtensionsTests
                 await Task.Delay(1, ct).ConfigureAwait(false);
 
                 // Return -1 on first 2 attempts for item 3
-                if (item == 3 && attempts[item] <= 2) return -1;
-
-                return item * 2;
+                return item == 3 && attempts[item] <= 2 ? -1 : item * 2;
             },
             retryPolicy,
             new() { MaxDegreeOfParallelism = 2 });

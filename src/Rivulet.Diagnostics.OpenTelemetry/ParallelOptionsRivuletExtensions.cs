@@ -94,8 +94,7 @@ public static class ParallelOptionsRivuletExtensions
                 var activity = asyncLocalActivity.Value ?? itemActivities.GetValueOrDefault(index);
 
                 if (activity is null)
-                    return options.OnErrorAsync is null ||
-                           await options.OnErrorAsync(index, exception).ConfigureAwait(false);
+                    return options.OnErrorAsync is null || await options.OnErrorAsync(index, exception).ConfigureAwait(false);
 
                 var previousActivity = Activity.Current;
                 try
@@ -107,8 +106,7 @@ public static class ParallelOptionsRivuletExtensions
 
                     var willRetry = isTransient && options.MaxRetries > 0;
                     if (willRetry || !itemActivities.TryRemove(index, out _))
-                        return options.OnErrorAsync is null ||
-                               await options.OnErrorAsync(index, exception).ConfigureAwait(false);
+                        return options.OnErrorAsync is null || await options.OnErrorAsync(index, exception).ConfigureAwait(false);
 
                     try
                     {

@@ -109,7 +109,7 @@ public sealed class FileInfoExtensionsTests : TempDirectoryFixture
         var options = new FileOperationOptions { OverwriteExisting = false };
 
         // Act
-        var act = () => file.WriteAllTextAsync("New content", options);
+        var act = () => file.WriteAllTextAsync("New content", options).AsTask();
 
         // Assert
         await act.ShouldThrowAsync<IOException>();
@@ -119,6 +119,7 @@ public sealed class FileInfoExtensionsTests : TempDirectoryFixture
     public async Task WriteAllBytesAsync_ShouldWriteCorrectly()
     {
         // Arrange
+        // ReSharper disable once StringLiteralTypo
         var file = new FileInfo(Path.Join(TestDirectory, "writebytes.bin"));
         var data = "def"u8.ToArray();
 
@@ -161,7 +162,7 @@ public sealed class FileInfoExtensionsTests : TempDirectoryFixture
         var options = new FileOperationOptions { OverwriteExisting = false };
 
         // Act
-        var act = () => sourceFile.CopyToAsync(destPath, options);
+        var act = () => sourceFile.CopyToAsync(destPath, options).AsTask();
 
         // Assert
         await act.ShouldThrowAsync<IOException>();
@@ -171,6 +172,7 @@ public sealed class FileInfoExtensionsTests : TempDirectoryFixture
     public async Task DeleteAsync_ShouldDeleteFileCorrectly()
     {
         // Arrange
+        // ReSharper disable once StringLiteralTypo
         var file = new FileInfo(Path.Join(TestDirectory, "todelete.txt"));
         await File.WriteAllTextAsync(file.FullName, "Will be deleted");
 
@@ -249,7 +251,7 @@ public sealed class FileInfoExtensionsTests : TempDirectoryFixture
         };
 
         // Act
-        var act = () => file.ReadAllTextAsync(options);
+        var act = () => file.ReadAllTextAsync(options).AsTask();
 
         // Assert
         await act.ShouldThrowAsync<FileNotFoundException>();

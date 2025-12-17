@@ -51,9 +51,7 @@ public sealed class EventSourceTests
             static async (x, ct) =>
             {
                 await Task.Delay(5, ct);
-                if (x % 5 == 0) throw new InvalidOperationException("Error");
-
-                return x * 2;
+                return x % 5 == 0 ? throw new InvalidOperationException("Error") : x * 2;
             },
             options);
 

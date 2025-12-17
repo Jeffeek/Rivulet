@@ -270,9 +270,11 @@ public sealed class EdgeCaseCoverageTests
                 .SelectParallelAsync(static async (x, ct) =>
                     {
                         await Task.Delay(1, ct);
-                        if (x % 3 == 0) throw new InvalidOperationException("transient error");
-
-                        return x % 2 == 0 ? throw new InvalidOperationException("permanent error") : x;
+                        return x % 3 == 0
+                            ? throw new InvalidOperationException("transient error")
+                            : x % 2 == 0
+                                ? throw new InvalidOperationException("permanent error")
+                                : x;
                     },
                     options);
         }

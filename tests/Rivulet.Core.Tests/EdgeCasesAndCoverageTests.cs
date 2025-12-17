@@ -338,9 +338,7 @@ public sealed class EdgeCasesAndCoverageTests
             source.SelectParallelAsync(static async (x, ct) =>
                 {
                     await Task.Delay(100, ct);
-                    if (x == 5) throw new InvalidOperationException("Error at 5");
-
-                    return x * 2;
+                    return x == 5 ? throw new InvalidOperationException("Error at 5") : x * 2;
                 },
                 options);
     }

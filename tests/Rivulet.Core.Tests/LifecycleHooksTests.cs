@@ -249,9 +249,7 @@ public sealed class LifecycleHooksTests
                 Interlocked.Increment(ref processedCount);
                 // Add small delay to allow signal propagation when error occurs
                 await Task.Delay(1, ct);
-                if (x == 10) throw new InvalidOperationException("Error");
-
-                return x * 2;
+                return x == 10 ? throw new InvalidOperationException("Error") : x * 2;
             },
             options);
 

@@ -102,9 +102,7 @@ public sealed class OrderedOutputTests
             static async (x, ct) =>
             {
                 await Task.Delay(Random.Shared.Next(1, 5), ct);
-                if (x % 5 == 0) throw new InvalidOperationException($"Error at {x}");
-
-                return x * 2;
+                return x % 5 == 0 ? throw new InvalidOperationException($"Error at {x}") : x * 2;
             },
             options);
 
