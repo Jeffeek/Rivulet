@@ -39,14 +39,14 @@ public sealed class CircuitBreakerTests
     [Fact]
     public void CircuitBreaker_Constructor_ThrowsOnNullOptions()
     {
-        var act = () => new CircuitBreaker(null!);
+        var act = static () => new CircuitBreaker(null!);
         act.ShouldThrow<ArgumentNullException>().Message.ShouldContain("options");
     }
 
     [Fact]
     public void CircuitBreaker_Constructor_ValidatesOptions()
     {
-        var act = () => new CircuitBreaker(new() { FailureThreshold = 0 });
+        var act = static () => new CircuitBreaker(new() { FailureThreshold = 0 });
         act.ShouldThrow<ArgumentException>().Message.ShouldContain("FailureThreshold");
     }
 
@@ -70,7 +70,7 @@ public sealed class CircuitBreakerTests
         {
             try
             {
-                await cb.ExecuteAsync(async () =>
+                await cb.ExecuteAsync(static async () =>
                 {
                     await Task.Delay(1);
                     throw new InvalidOperationException("Test failure");
@@ -91,7 +91,7 @@ public sealed class CircuitBreakerTests
         cb.State.ShouldBe(CircuitBreakerState.Open);
 
         // Next call should fail fast without executing
-        var act = async () => await cb.ExecuteAsync(async () =>
+        var act = async () => await cb.ExecuteAsync(static async () =>
         {
             await Task.Delay(1);
             return 1;
@@ -110,7 +110,7 @@ public sealed class CircuitBreakerTests
         {
             try
             {
-                await cb.ExecuteAsync(async () =>
+                await cb.ExecuteAsync(static async () =>
                 {
                     await Task.Delay(1);
                     throw new InvalidOperationException("Test failure");
@@ -131,7 +131,7 @@ public sealed class CircuitBreakerTests
         await Task.Delay(150);
 
         // Next execution attempt should transition to HalfOpen
-        var result = await cb.ExecuteAsync(async () =>
+        var result = await cb.ExecuteAsync(static async () =>
         {
             await Task.Delay(1);
             return 42;
@@ -150,7 +150,7 @@ public sealed class CircuitBreakerTests
         {
             try
             {
-                await cb.ExecuteAsync(() =>
+                await cb.ExecuteAsync(static () =>
                     ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")));
             }
             catch (InvalidOperationException)
@@ -188,7 +188,7 @@ public sealed class CircuitBreakerTests
         {
             try
             {
-                await cb.ExecuteAsync(() =>
+                await cb.ExecuteAsync(static () =>
                     ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")));
             }
             catch (InvalidOperationException)
@@ -201,7 +201,7 @@ public sealed class CircuitBreakerTests
         await Task.Delay(150);
 
         // Execute one successful operation
-        await cb.ExecuteAsync(async () =>
+        await cb.ExecuteAsync(static async () =>
         {
             await Task.Delay(1);
             return 1;
@@ -305,7 +305,7 @@ public sealed class CircuitBreakerTests
         {
             try
             {
-                await cb.ExecuteAsync(() =>
+                await cb.ExecuteAsync(static () =>
                     ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")));
             }
             catch (InvalidOperationException)
@@ -318,7 +318,7 @@ public sealed class CircuitBreakerTests
         await Task.Delay(200);
 
         // Execute successful operation - this triggers HalfOpen transition and then closes circuit
-        await cb.ExecuteAsync(async () =>
+        await cb.ExecuteAsync(static async () =>
         {
             await Task.Delay(1);
             return 1;
@@ -363,7 +363,7 @@ public sealed class CircuitBreakerTests
         cb.State.ShouldBe(CircuitBreakerState.Closed);
 
         // Should execute normally
-        var result = await cb.ExecuteAsync(async () =>
+        var result = await cb.ExecuteAsync(static async () =>
         {
             await Task.Delay(1);
             return 42;

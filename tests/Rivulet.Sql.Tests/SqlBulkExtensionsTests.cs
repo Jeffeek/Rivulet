@@ -5,6 +5,7 @@ using Rivulet.Base.Tests;
 
 namespace Rivulet.Sql.Tests;
 
+[SuppressMessage("ReSharper", "AccessToDisposedClosure")]
 public class SqlBulkExtensionsTests
 {
     [Fact]
@@ -346,7 +347,6 @@ public class SqlBulkExtensionsTests
     }
 
     [Fact]
-    [SuppressMessage("ReSharper", "AccessToDisposedClosure")]
     public async Task BulkInsertAsync_WithCancellation_ShouldThrowOperationCanceledException()
     {
         var items = Enumerable.Range(1, 10000).ToList();
@@ -360,7 +360,7 @@ public class SqlBulkExtensionsTests
                 Task.Delay(200, cts.Token).Wait(cts.Token);
                 return 1000;
             }),
-            async (_, cmd, _) =>
+            static async (_, cmd, _) =>
             {
                 cmd.CommandText = "INSERT INTO Users (Id) VALUES (...)";
                 await Task.CompletedTask;

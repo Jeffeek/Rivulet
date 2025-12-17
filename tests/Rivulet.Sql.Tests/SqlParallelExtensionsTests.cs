@@ -4,6 +4,7 @@ using Rivulet.Base.Tests;
 
 namespace Rivulet.Sql.Tests;
 
+[SuppressMessage("ReSharper", "AccessToDisposedClosure")]
 public class SqlParallelExtensionsTests
 {
     [Fact]
@@ -263,7 +264,6 @@ public class SqlParallelExtensionsTests
     }
 
     [Fact]
-    [SuppressMessage("ReSharper", "AccessToDisposedClosure")]
     public async Task ExecuteCommandsParallelAsync_WithCancellation_ShouldThrowOperationCanceledException()
     {
         var commands = Enumerable.Range(1, 100).Select(static i => $"INSERT INTO Users (Id) VALUES ({i})");
@@ -341,7 +341,7 @@ public class SqlParallelExtensionsTests
 
         var results = await queries.ExecuteQueriesParallelAsync(
             () => connection,
-            reader =>
+            static reader =>
             {
                 reader.Read();
                 return reader.GetInt32(0);

@@ -72,7 +72,7 @@ public class HttpParallelExtensionsTests
     {
         var uris = new[] { new Uri("http://test.local/1"), new Uri("http://test.local/2") };
 
-        using var httpClient = CreateTestClient((request, _) =>
+        using var httpClient = CreateTestClient(static (request, _) =>
         {
             var content = Encoding.UTF8.GetBytes($"Binary-{request.RequestUri!.AbsolutePath}");
             var response = new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(content) };
@@ -95,7 +95,7 @@ public class HttpParallelExtensionsTests
             (uri: new Uri("http://test.local/post2"), content: new StringContent("data2"))
         };
 
-        using var httpClient = CreateTestClient(async (request, ct) =>
+        using var httpClient = CreateTestClient(static async (request, ct) =>
         {
             var requestBody = await request.Content!.ReadAsStringAsync(ct);
             var response = new HttpResponseMessage(HttpStatusCode.Created) { Content = new StringContent($"Created with {requestBody}") };

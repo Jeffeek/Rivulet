@@ -159,7 +159,7 @@ public sealed class SelectParallelAsyncTests
     {
         var source = new[] { "hello", "world", "test", "xunit" };
 
-        var results = await source.SelectParallelAsync((s, _) => new ValueTask<string>(s.ToUpper()));
+        var results = await source.SelectParallelAsync(static (s, _) => new ValueTask<string>(s.ToUpper()));
 
         results.OrderBy(static x => x).ShouldBe(["HELLO", "TEST", "WORLD", "XUNIT"]);
     }
@@ -171,13 +171,8 @@ public sealed class SelectParallelAsyncTests
         var failOn = new HashSet<int> { 3, 7 };
 
         var results = await source.SelectParallelAsync(
-            (x, _) =>
-            {
-                if (failOn.Contains(x)) throw new InvalidOperationException($"Failed on {x}");
-
-                return new ValueTask<int>(x * 2);
-            },
-            new() { OnFallback = (_, _) => -1 });
+            (x, _) => failOn.Contains(x) ? throw new InvalidOperationException($"Failed on {x}") : new ValueTask<int>(x * 2),
+            new() { OnFallback = static (_, _) => -1 });
 
         results.Count.ShouldBe(10);
         foreach (var expected in new[] { 2, 4, -1, 8, 10, 12, -1, 16, 18, 20 }) results.ShouldContain(expected);
@@ -192,17 +187,15 @@ public sealed class SelectParallelAsyncTests
         var results = await source.SelectParallelAsync(
             (x, _) =>
             {
-                attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
-                if (x == 3) throw new TimeoutException("Always fails");
-
-                return new ValueTask<int>(x * 10);
+                attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
+                return x == 3 ? throw new TimeoutException("Always fails") : new ValueTask<int>(x * 10);
             },
             new()
             {
                 MaxRetries = 2,
                 IsTransient = static ex => ex is TimeoutException,
                 BaseDelay = TimeSpan.FromMilliseconds(1),
-                OnFallback = (_, _) => 999
+                OnFallback = static (_, _) => 999
             });
 
         results.Count.ShouldBe(5);
@@ -216,14 +209,8 @@ public sealed class SelectParallelAsyncTests
     {
         var source = new[] { "a", "b", "c" };
 
-        var results = await source.SelectParallelAsync(
-            (x, _) =>
-            {
-                if (x == "b") throw new InvalidOperationException();
-
-                return new ValueTask<string>(x.ToUpper());
-            },
-            new() { OnFallback = (_, _) => null });
+        var results = await source.SelectParallelAsync(static (x, _) => x == "b" ? throw new InvalidOperationException() : new ValueTask<string>(x.ToUpper()),
+            new() { OnFallback = static (_, _) => null });
 
         results.Count.ShouldBe(3);
         results.OrderBy(static x => x).ShouldBe([null, "A", "C"]);
@@ -274,14 +261,7 @@ public sealed class SelectParallelAsyncTests
         var source = Enumerable.Range(1, 5);
 
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
-        {
-            await source.SelectParallelAsync((x, _) =>
-            {
-                if (x == 3) throw new InvalidOperationException();
-
-                return new ValueTask<int>(x * 2);
-            });
-        });
+            await source.SelectParallelAsync(static (x, _) => x == 3 ? throw new InvalidOperationException() : new ValueTask<int>(x * 2)));
     }
 
     [Fact]
@@ -289,14 +269,11 @@ public sealed class SelectParallelAsyncTests
     {
         var source = new[] { 1, 2, 3, 4 };
 
-        var results = await source.SelectParallelAsync(
-            (x, _) =>
+        var results = await source.SelectParallelAsync(static (x, _) =>
             {
-                if (x == 2) throw new();
-
-                return new ValueTask<(int Value, string Status)>((x, "OK"));
+                return x == 2 ? throw new() : new ValueTask<(int Value, string Status)>((x, "OK"));
             },
-            new() { OnFallback = (_, _) => (0, "FAILED") });
+            new() { OnFallback = static (_, _) => (0, "FAILED") });
 
         results.Count.ShouldBe(4);
         foreach (var expected in new[] { (1, "OK"), (0, "FAILED"), (3, "OK"), (4, "OK") }) results.ShouldContain(expected);
