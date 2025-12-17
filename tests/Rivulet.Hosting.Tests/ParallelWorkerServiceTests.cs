@@ -202,17 +202,8 @@ public class ParallelWorkerServiceTests
     [Fact]
     public async Task ExecuteAsync_WhenCancelled_ShouldLogInformationAndExitGracefully()
     {
-        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Information));
+        var loggerFactory = LoggerFactory.Create(static builder => builder.AddConsole().SetMinimumLevel(LogLevel.Information));
         var logger = loggerFactory.CreateLogger<TestWorkerService>();
-
-        async IAsyncEnumerable<int> SlowGenerateItems()
-        {
-            for (var i = 1; i <= 100; i++)
-            {
-                await Task.Delay(50); // Slow enough to get cancelled
-                yield return i;
-            }
-        }
 
         var service = new TestWorkerService(logger, SlowGenerateItems());
 
@@ -224,12 +215,22 @@ public class ParallelWorkerServiceTests
         await service.StopAsync(CancellationToken.None);
 
         service.ProcessedItems.Count.ShouldBeLessThan(100);
+        return;
+
+        static async IAsyncEnumerable<int> SlowGenerateItems()
+        {
+            for (var i = 1; i <= 100; i++)
+            {
+                await Task.Delay(50, CancellationToken.None); // Slow enough to get cancelled
+                yield return i;
+            }
+        }
     }
 
     [Fact]
     public async Task ExecuteAsync_WhenProcessThrowsFatalError_ShouldLogErrorAndRethrow()
     {
-        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Error));
+        var loggerFactory = LoggerFactory.Create(static builder => builder.AddConsole().SetMinimumLevel(LogLevel.Error));
         var logger = loggerFactory.CreateLogger<FatalErrorWorkerService>();
 
         var items = TestDataGenerators.GenerateItemsAsync(3);
@@ -247,7 +248,7 @@ public class ParallelWorkerServiceTests
     [Fact]
     public async Task ExecuteAsync_WithMultipleExceptions_ShouldLogFirstError()
     {
-        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Error));
+        var loggerFactory = LoggerFactory.Create(static builder => builder.AddConsole().SetMinimumLevel(LogLevel.Error));
         var logger = loggerFactory.CreateLogger<FatalErrorWorkerService>();
 
         var items = TestDataGenerators.GenerateItemsAsync(5);
@@ -267,7 +268,7 @@ public class ParallelWorkerServiceTests
     [Fact]
     public async Task ExecuteAsync_WhenGetSourceItemsThrowsException_ShouldLogErrorAndHandleGracefully()
     {
-        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Error));
+        var loggerFactory = LoggerFactory.Create(static builder => builder.AddConsole().SetMinimumLevel(LogLevel.Error));
         var logger = loggerFactory.CreateLogger<FatalGetSourceItemsWorkerService>();
 
         var service = new FatalGetSourceItemsWorkerService(logger);
@@ -286,11 +287,11 @@ public class ParallelWorkerServiceTests
         // No unhandled exception should crash the test
     }
 
-    private class TestWorkerService(
+    private sealed class TestWorkerService(
         ILogger<TestWorkerService> logger,
         IAsyncEnumerable<int> sourceItems,
-        ParallelOptionsRivulet? options = null)
-        : ParallelWorkerService<int, string>(logger, options)
+        ParallelOptionsRivulet? options = null
+    ) : ParallelWorkerService<int, string>(logger, options)
     {
         private int _processCallCount;
         public ConcurrentBag<int> ProcessedItems { get; } = [];
@@ -314,12 +315,12 @@ public class ParallelWorkerServiceTests
         }
     }
 
-    private class DelayedWorkerService(
+    private sealed class DelayedWorkerService(
         ILogger<DelayedWorkerService> logger,
         IAsyncEnumerable<int> sourceItems,
         int delayMs,
-        ParallelOptionsRivulet? options = null)
-        : ParallelWorkerService<int, int>(logger, options)
+        ParallelOptionsRivulet? options = null
+    ) : ParallelWorkerService<int, int>(logger, options)
     {
         protected override IAsyncEnumerable<int> GetSourceItems(CancellationToken cancellationToken) => sourceItems;
 
@@ -330,7 +331,7 @@ public class ParallelWorkerServiceTests
         }
     }
 
-    private class ThrowingWorkerService(ILogger<ThrowingWorkerService> logger, IAsyncEnumerable<int> sourceItems)
+    private sealed class ThrowingWorkerService(ILogger<ThrowingWorkerService> logger, IAsyncEnumerable<int> sourceItems)
         : ParallelWorkerService<int, int>(logger)
     {
         protected override IAsyncEnumerable<int> GetSourceItems(CancellationToken cancellationToken) => sourceItems;
@@ -339,10 +340,10 @@ public class ParallelWorkerServiceTests
             throw new InvalidOperationException("Test exception");
     }
 
-    private class FatalErrorWorkerService(
+    private sealed class FatalErrorWorkerService(
         ILogger<FatalErrorWorkerService> logger,
-        IAsyncEnumerable<int> sourceItems)
-        : ParallelWorkerService<int, int>(logger)
+        IAsyncEnumerable<int> sourceItems
+    ) : ParallelWorkerService<int, int>(logger)
     {
         protected override IAsyncEnumerable<int> GetSourceItems(CancellationToken cancellationToken) => sourceItems;
 
@@ -351,7 +352,7 @@ public class ParallelWorkerServiceTests
             new InvalidOperationException($"Fatal error processing item {item}");
     }
 
-    private class FatalGetSourceItemsWorkerService(ILogger<FatalGetSourceItemsWorkerService> logger)
+    private sealed class FatalGetSourceItemsWorkerService(ILogger<FatalGetSourceItemsWorkerService> logger)
         : ParallelWorkerService<int, int>(logger)
     {
         protected override IAsyncEnumerable<int> GetSourceItems(CancellationToken cancellationToken) => throw

@@ -30,12 +30,14 @@ public class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
         await connection.OpenAsync();
 
         await using var command = connection.CreateCommand();
-        command.CommandText = @"
-            CREATE TABLE TestTable (
-                Id INT NOT NULL,
-                Name NVARCHAR(100) NOT NULL,
-                Email NVARCHAR(100) NOT NULL
-            )";
+        command.CommandText = """
+
+                                          CREATE TABLE TestTable (
+                                              Id INT NOT NULL,
+                                              Name NVARCHAR(100) NOT NULL,
+                                              Email NVARCHAR(100) NOT NULL
+                                          )
+                              """;
         await command.ExecuteNonQueryAsync();
     }
 
@@ -145,11 +147,13 @@ public class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
     {
         var records = new[] { new TestRecord(1, "Test", "test@example.com") };
 
-        var act = () => records.BulkInsertUsingSqlBulkCopyAsync(static () => null!,
-            "TestTable",
-            MapToDataTable);
+        await Should.ThrowAsync<OperationCanceledException>(((Func<Task>?)Act)!);
+        return;
 
-        await Should.ThrowAsync<OperationCanceledException>(act);
+        Task Act() =>
+            records.BulkInsertUsingSqlBulkCopyAsync(static () => null!,
+                "TestTable",
+                MapToDataTable);
     }
 
     [Fact]
@@ -157,12 +161,13 @@ public class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
     {
         var records = new[] { new TestRecord(1, "Test", "test@example.com") };
 
-        var act = () => records.BulkInsertUsingSqlBulkCopyAsync(
-            CreateConnection,
-            "NonExistentTable",
-            MapToDataTable);
+        await Should.ThrowAsync<OperationCanceledException>(((Func<Task>?)Act)!);
+        return;
 
-        await Should.ThrowAsync<OperationCanceledException>(act);
+        Task Act() =>
+            records.BulkInsertUsingSqlBulkCopyAsync(CreateConnection,
+                "NonExistentTable",
+                MapToDataTable);
     }
 
     [Fact]
@@ -171,13 +176,14 @@ public class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
         var records = new[] { new TestRecord(1, "Test", "test@example.com") };
         var mappings = new Dictionary<string, string> { ["Id"] = "Id" };
 
-        var act = () => records.BulkInsertUsingSqlBulkCopyAsync(
-            () => null!,
-            "TestTable",
-            MapToDataTable,
-            mappings);
+        await Should.ThrowAsync<OperationCanceledException>(((Func<Task>?)Act)!);
+        return;
 
-        await Should.ThrowAsync<OperationCanceledException>(act);
+        Task Act() =>
+            records.BulkInsertUsingSqlBulkCopyAsync(static () => null!,
+                "TestTable",
+                MapToDataTable,
+                mappings);
     }
 
     [Fact]
@@ -239,10 +245,12 @@ public class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
         var rows = new List<Dictionary<string, object>> { new() { ["Id"] = 1, ["Name"] = "Test" } };
         var readers = new[] { new TestDataReader(rows) };
 
-        var act = () => readers.BulkInsertUsingSqlBulkCopyAsync(static () => null!,
-            "TestTable");
+        await Should.ThrowAsync<OperationCanceledException>((Func<Task>)Act);
+        return;
 
-        await Should.ThrowAsync<OperationCanceledException>(act);
+        Task Act() =>
+            readers.BulkInsertUsingSqlBulkCopyAsync(static () => null!,
+                "TestTable");
     }
 
     [Fact]
@@ -253,11 +261,12 @@ public class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
             .Select(static _ => (IDataReader?)null!)
             .Where(static r => r == null!); // This will fail when enumerated
 
-        var act = () => readers.BulkInsertUsingSqlBulkCopyAsync(
-            CreateConnection,
-            "TestTable");
+        await Should.ThrowAsync<Exception>(((Func<Task>?)Act)!);
+        return;
 
-        await Should.ThrowAsync<Exception>(act);
+        Task Act() =>
+            readers.BulkInsertUsingSqlBulkCopyAsync(CreateConnection,
+                "TestTable");
     }
 
     private sealed record TestRecord(int Id, string Name, string Email);

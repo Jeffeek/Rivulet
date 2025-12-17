@@ -5,9 +5,11 @@ using Rivulet.Core.Observability;
 
 namespace Rivulet.Core.Tests;
 
-[Collection(TestCollections.EventSourceSequential)]
-[SuppressMessage("ReSharper", "AccessToDisposedClosure")]
-public class MetricsTests
+[
+    Collection(TestCollections.EventSourceSequential),
+    SuppressMessage("ReSharper", "AccessToDisposedClosure")
+]
+public sealed class MetricsTests
 {
     [Fact]
     public async Task SelectParallelAsync_WithMetrics_TracksItemsStartedAndCompleted()
@@ -37,7 +39,7 @@ public class MetricsTests
             },
             options);
 
-        await Task.Delay(100);
+        await Task.Delay(100, CancellationToken.None);
 
         results.Count.ShouldBe(100);
         capturedSnapshot.ShouldNotBeNull();
@@ -84,7 +86,7 @@ public class MetricsTests
         // 2. Any remaining async state machine cleanup
         // Using Task.Yield() to force a context switch, ensuring all memory writes are globally visible
         await Task.Yield();
-        await Task.Delay(500);
+        await Task.Delay(500, CancellationToken.None);
 
         results.Count.ShouldBe(40); // 50 - 10 failures
         capturedSnapshot.ShouldNotBeNull();
@@ -119,14 +121,14 @@ public class MetricsTests
             async (x, ct) =>
             {
                 await Task.Delay(5, ct);
-                var attemptCount = attempts.AddOrUpdate(x, 1, (_, count) => count + 1);
+                var attemptCount = attempts.AddOrUpdate(x, 1, static (_, count) => count + 1);
                 if (attemptCount < 3) throw new InvalidOperationException("Transient error");
 
                 return x * 2;
             },
             options);
 
-        await Task.Delay(100);
+        await Task.Delay(100, CancellationToken.None);
 
         results.Count.ShouldBe(20);
         capturedSnapshot.ShouldNotBeNull();
@@ -167,7 +169,7 @@ public class MetricsTests
             },
             options);
 
-        await Task.Delay(100);
+        await Task.Delay(100, CancellationToken.None);
 
         results.Count.ShouldBe(100);
         capturedSnapshot.ShouldNotBeNull();
@@ -202,7 +204,7 @@ public class MetricsTests
             },
             options);
 
-        await Task.Delay(100);
+        await Task.Delay(100, CancellationToken.None);
 
         results.Count.ShouldBe(100);
         capturedSnapshot.ShouldNotBeNull();
@@ -238,7 +240,7 @@ public class MetricsTests
                 options)
             .ToListAsync();
 
-        await Task.Delay(100);
+        await Task.Delay(100, CancellationToken.None);
 
         results.Count.ShouldBe(50);
         capturedSnapshot.ShouldNotBeNull();
@@ -285,7 +287,7 @@ public class MetricsTests
 
         await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddMilliseconds(4000),
-            () => Task.Delay(100),
+            static () => Task.Delay(100),
             () => callbackInvocationCount == 0 || capturedSnapshot is not { TotalFailures: 10 });
 
         callbackInvocationCount.ShouldBeGreaterThan(0,
@@ -479,7 +481,7 @@ public class MetricsTests
 
         await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddMilliseconds(4000),
-            () => Task.Delay(100),
+            static () => Task.Delay(100),
             () =>
             {
                 if (!snapshots1.Any() || !snapshots2.Any()) return true;
@@ -487,12 +489,12 @@ public class MetricsTests
                 var list1 = snapshots1.ToList();
                 var list2 = snapshots2.ToList();
 
-                var max1 = list1.Max(s => s.ItemsCompleted);
-                var max2 = list2.Max(s => s.ItemsCompleted);
+                var max1 = list1.Max(static s => s.ItemsCompleted);
+                var max2 = list2.Max(static s => s.ItemsCompleted);
                 return max1 != 20 || max2 != 30;
             });
 
-        await Task.Delay(200);
+        await Task.Delay(200, CancellationToken.None);
 
         snapshots1.ShouldNotBeEmpty("first operation should have captured at least one metrics sample");
         snapshots2.ShouldNotBeEmpty("second operation should have captured at least one metrics sample");
@@ -500,8 +502,8 @@ public class MetricsTests
         var finalSnapshots1 = snapshots1.ToList();
         var finalSnapshots2 = snapshots2.ToList();
 
-        var maxCompleted1 = finalSnapshots1.Max(s => s.ItemsCompleted);
-        var maxCompleted2 = finalSnapshots2.Max(s => s.ItemsCompleted);
+        var maxCompleted1 = finalSnapshots1.Max(static s => s.ItemsCompleted);
+        var maxCompleted2 = finalSnapshots2.Max(static s => s.ItemsCompleted);
 
         maxCompleted1.ShouldBe(20, "first operation's final metrics snapshot should show all 20 items completed");
         maxCompleted2.ShouldBe(30, "second operation's final metrics snapshot should show all 30 items completed");
@@ -536,7 +538,7 @@ public class MetricsTests
             },
             options);
 
-        await Task.Delay(100);
+        await Task.Delay(100, CancellationToken.None);
 
         results.Count.ShouldBe(50);
         results.ShouldBeInOrder();
@@ -599,7 +601,7 @@ public class MetricsTests
             },
             options);
 
-        await Task.Delay(100);
+        await Task.Delay(100, CancellationToken.None);
 
         results.Count.ShouldBe(100);
         sampleCount.ShouldBeGreaterThan(1);
@@ -689,7 +691,7 @@ public class MetricsTests
         // Wait for timers to fire multiple times after completion
         // Both sample intervals are 50ms, so wait 200ms (4x interval) to ensure
         // final state is fully captured in both metrics and progress snapshots
-        await Task.Delay(200);
+        await Task.Delay(200, CancellationToken.None);
 
         results.Count.ShouldBe(50);
         metricsSnapshot.ShouldNotBeNull();
@@ -730,7 +732,7 @@ public class MetricsTests
 
         await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddMilliseconds(4000),
-            () => Task.Delay(100),
+            static () => Task.Delay(100),
             () => capturedSnapshot is not { ItemsStarted: 1000 } || capturedSnapshot.ItemsCompleted != 1000);
 
         results.Count.ShouldBe(1000, "all 1000 items should complete successfully");
@@ -816,7 +818,7 @@ public class MetricsTests
                 }
             }
 
-            await Task.Delay(100);
+            await Task.Delay(100, CancellationToken.None);
 
             capturedSnapshot.ShouldNotBeNull($"Error mode: {errorMode}");
             capturedSnapshot!.ItemsStarted.ShouldBeGreaterThan(0, $"Error mode: {errorMode}");
@@ -848,7 +850,7 @@ public class MetricsTests
         // Wait for metrics sample to capture the drain events
         // SampleInterval is 50ms, so we wait for multiple intervals plus buffer
         // Race condition fixed by 50ms delay before final sample in MetricsTracker
-        await Task.Delay(150);
+        await Task.Delay(150, CancellationToken.None);
 
         capturedSnapshot.ShouldNotBeNull();
         capturedSnapshot!.DrainEvents.ShouldBe(3);
@@ -876,7 +878,7 @@ public class MetricsTests
 
         // Wait for metrics timer to fire - sample interval is 50ms
         // Using 200ms (4x interval) for reliability in CI/CD
-        await Task.Delay(200);
+        await Task.Delay(200, CancellationToken.None);
 
         capturedSnapshot.ShouldNotBeNull();
         capturedSnapshot!.QueueDepth.ShouldBe(42);
@@ -885,14 +887,14 @@ public class MetricsTests
     [Fact]
     public async Task MetricsTracker_DoubleDispose_DoesNotThrow()
     {
-        var options = new MetricsOptions { SampleInterval = TimeSpan.FromMilliseconds(50), OnMetricsSample = _ => ValueTask.CompletedTask };
+        var options = new MetricsOptions { SampleInterval = TimeSpan.FromMilliseconds(50), OnMetricsSample = static _ => ValueTask.CompletedTask };
 
         var tracker = new MetricsTracker(options, CancellationToken.None);
 
         try
         {
             tracker.IncrementItemsStarted();
-            await Task.Delay(100);
+            await Task.Delay(100, CancellationToken.None);
 
             var act = async () => await tracker.DisposeAsync();
             await act.ShouldNotThrowAsync();
@@ -941,7 +943,7 @@ public class MetricsTests
         // Poll for the snapshot with a timeout to avoid flakiness
         await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddMilliseconds(200),
-            () => Task.Delay(5),
+            static () => Task.Delay(5),
             () => capturedSnapshot is null);
 
         capturedSnapshot.ShouldNotBeNull();
@@ -1005,7 +1007,7 @@ public class MetricsTests
             async (x, ct) =>
             {
                 await Task.Delay(10, ct);
-                var attempt = attempts.AddOrUpdate(x, 1, (_, count) => count + 1);
+                var attempt = attempts.AddOrUpdate(x, 1, static (_, count) => count + 1);
 
                 if (x % 5 == 0 && attempt <= 1) throw new InvalidOperationException("Transient error");
 
@@ -1013,7 +1015,7 @@ public class MetricsTests
             },
             options);
 
-        await Task.Delay(100);
+        await Task.Delay(100, CancellationToken.None);
 
         capturedSnapshot.ShouldNotBeNull();
         capturedSnapshot!.ItemsStarted.ShouldBe(30);
@@ -1042,7 +1044,7 @@ public class MetricsTests
             async (x, ct) =>
             {
                 await Task.Delay(5, ct);
-                var attempt = attempts.AddOrUpdate(x, 1, (_, count) => count + 1);
+                var attempt = attempts.AddOrUpdate(x, 1, static (_, count) => count + 1);
 
                 if (x % 5 == 0 && attempt <= 1) throw new InvalidOperationException("Transient error");
 
@@ -1051,7 +1053,7 @@ public class MetricsTests
             options);
 
         results.Count.ShouldBe(20);
-        attempts.Values.ShouldContain(v => v > 1);
+        attempts.Values.ShouldContain(static v => v > 1);
     }
 
     [Fact]
@@ -1071,14 +1073,14 @@ public class MetricsTests
         var tracker = new MetricsTracker(options, CancellationToken.None);
         tracker.IncrementItemsStarted();
 
-        await Task.Delay(50);
+        await Task.Delay(50, CancellationToken.None);
 
         var disposeTask = Task.Run(async () =>
         {
             await tracker.DisposeAsync();
         });
 
-        await Task.Delay(100);
+        await Task.Delay(100, CancellationToken.None);
 
         longRunningTcs.SetResult(true);
 
@@ -1126,7 +1128,7 @@ public class MetricsTests
             // Wait for metrics timer to fire - sample interval is 20ms
             // Using 500ms (25x interval) for reliability in CI/CD environments
             // Timer needs time to initialize and fire at least once
-            await Task.Delay(500);
+            await Task.Delay(500, CancellationToken.None);
 
             // Should not crash despite exception
             callbackCount.ShouldBeGreaterThan(0, "callback should have been invoked at least once after waiting 25x the sample interval");
@@ -1205,14 +1207,13 @@ public class MetricsTests
                 if (x != 5) return new(x * 2);
 
                 var attempt = Interlocked.Increment(ref attemptCount);
-                if (attempt <= 2) // Fail first 2 attempts
-                    throw new InvalidOperationException("Transient");
-
-                return new ValueTask<int>(x * 2);
+                return attempt <= 2 // Fail first 2 attempts
+                    ? throw new InvalidOperationException("Transient")
+                    : new ValueTask<int>(x * 2);
             },
             options);
 
-        await Task.Delay(150); // Wait for sampling
+        await Task.Delay(150, CancellationToken.None); // Wait for sampling
 
         snapshot.ShouldNotBeNull();
         snapshot!.TotalRetries.ShouldBeGreaterThan(0);

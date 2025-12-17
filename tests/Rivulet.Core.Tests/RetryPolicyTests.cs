@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace Rivulet.Core.Tests;
 
 [SuppressMessage("ReSharper", "AccessToDisposedClosure")]
-public class RetryPolicyTests
+public sealed class RetryPolicyTests
 {
     [Fact]
     public async Task NoRetryPolicy_ErrorsAreNotRetried()
@@ -16,10 +16,8 @@ public class RetryPolicyTests
         var results = await source.SelectParallelAsync(
             (x, _) =>
             {
-                attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
-                if (x == 3) throw new InvalidOperationException("Transient error");
-
-                return new ValueTask<int>(x * 2);
+                attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
+                return x == 3 ? throw new InvalidOperationException("Transient error") : new ValueTask<int>(x * 2);
             },
             options);
 
@@ -43,7 +41,7 @@ public class RetryPolicyTests
         var results = await source.SelectParallelAsync(
             (x, _) =>
             {
-                var attempts = attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
+                var attempts = attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
                 if (x == 3 && attempts <= 2) throw new InvalidOperationException("Transient error");
 
                 return new ValueTask<int>(x * 2);
@@ -70,10 +68,8 @@ public class RetryPolicyTests
         var results = await source.SelectParallelAsync(
             (x, _) =>
             {
-                attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
-                if (x == 3) throw new InvalidOperationException("Non-transient error");
-
-                return new ValueTask<int>(x * 2);
+                attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
+                return x == 3 ? throw new InvalidOperationException("Non-transient error") : new ValueTask<int>(x * 2);
             },
             options);
 
@@ -95,9 +91,7 @@ public class RetryPolicyTests
             (x, _) =>
             {
                 attemptTimestamps.Add(DateTime.UtcNow);
-                if (attemptTimestamps.Count < 4) throw new InvalidOperationException("Transient error");
-
-                return new ValueTask<int>(x * 2);
+                return attemptTimestamps.Count < 4 ? throw new InvalidOperationException("Transient error") : new ValueTask<int>(x * 2);
             },
             options);
 
@@ -152,7 +146,7 @@ public class RetryPolicyTests
 
         var results = await source.SelectParallelStreamAsync((x, _) =>
                 {
-                    var attempts = attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
+                    var attempts = attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
                     if (x == 3 && attempts == 1) throw new InvalidOperationException("Transient error");
 
                     return new ValueTask<int>(x * 2);
@@ -178,7 +172,7 @@ public class RetryPolicyTests
         await source.ForEachParallelAsync(
             (x, _) =>
             {
-                var attempts = attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
+                var attempts = attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
                 if (x == 3 && attempts == 1) throw new InvalidOperationException("Transient error");
 
                 processedItems.Add(x);
@@ -204,9 +198,7 @@ public class RetryPolicyTests
             (x, _) =>
             {
                 attemptCount++;
-                if (attemptCount == 1) throw new InvalidOperationException("Error");
-
-                return new ValueTask<int>(x * 2);
+                return attemptCount == 1 ? throw new InvalidOperationException("Error") : new ValueTask<int>(x * 2);
             },
             options);
 
@@ -225,7 +217,7 @@ public class RetryPolicyTests
         };
 
         Task<List<int>> Act() =>
-            source.SelectParallelAsync((x, _) =>
+            source.SelectParallelAsync(static (x, _) =>
                 {
                     throw new InvalidOperationException("Transient error");
 #pragma warning disable CS0162
@@ -258,7 +250,7 @@ public class RetryPolicyTests
         var results = await source.SelectParallelAsync(
             (x, _) =>
             {
-                attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
+                attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
 
                 return x switch
                 {

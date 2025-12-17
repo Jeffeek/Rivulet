@@ -3,7 +3,7 @@
 namespace Rivulet.Diagnostics.Tests;
 
 [Collection(TestCollections.SerialEventSource)]
-public class RivuletFileListenerTests : IDisposable
+public sealed class RivuletFileListenerTests : IDisposable
 {
     private readonly string _testFilePath = Path.Join(Path.GetTempPath(), $"rivulet-test-{Guid.NewGuid()}.log");
 
@@ -38,11 +38,11 @@ public class RivuletFileListenerTests : IDisposable
 
             // Wait for EventCounters to poll and write metrics after operation completes
             // Polling interval is ~1 second, wait 2 seconds for CI/CD reliability
-            await Task.Delay(2000);
+            await Task.Delay(2000, CancellationToken.None);
         } // Dispose listener to flush and close file
 
         // Wait for file handle to be fully released
-        await Task.Delay(500);
+        await Task.Delay(500, CancellationToken.None);
 
         File.Exists(_testFilePath).ShouldBeTrue();
         var content = await File.ReadAllTextAsync(_testFilePath);
@@ -73,11 +73,11 @@ public class RivuletFileListenerTests : IDisposable
                 .ToListAsync();
 
             // Wait for EventCounters to fire and write to file
-            await Task.Delay(1500);
+            await Task.Delay(1500, CancellationToken.None);
         }
 
         // Wait for final flush and rotation to complete
-        await Task.Delay(1000);
+        await Task.Delay(1000, CancellationToken.None);
 
         var directory = Path.GetDirectoryName(_testFilePath) ?? string.Empty;
         var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(_testFilePath);
@@ -89,7 +89,7 @@ public class RivuletFileListenerTests : IDisposable
     [Fact]
     public void FileListener_ShouldThrow_WhenFilePathIsNull()
     {
-        var act = () => new RivuletFileListener(null!);
+        var act = static () => new RivuletFileListener(null!);
         act.ShouldThrow<ArgumentNullException>().ParamName.ShouldBe("filePath");
     }
 

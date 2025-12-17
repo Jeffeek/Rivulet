@@ -70,7 +70,7 @@ public class CoreOperatorsBenchmarks
         var results = new List<int>();
         foreach (var item in _source)
         {
-            await Task.Delay(1);
+            await Task.Delay(1, CancellationToken.None);
             results.Add(item * 2);
         }
 
@@ -82,7 +82,7 @@ public class CoreOperatorsBenchmarks
     {
         var tasks = _source.Select(static async x =>
         {
-            await Task.Delay(1);
+            await Task.Delay(1, CancellationToken.None);
             return x * 2;
         });
         return Task.WhenAll(tasks);

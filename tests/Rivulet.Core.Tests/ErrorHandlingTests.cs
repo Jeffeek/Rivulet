@@ -2,7 +2,7 @@
 
 namespace Rivulet.Core.Tests;
 
-public class ErrorHandlingTests
+public sealed class ErrorHandlingTests
 {
     [Fact]
     public async Task FailFast_SelectParallelAsync_ThrowsImmediatelyOnFirstError()
@@ -72,7 +72,7 @@ public class ErrorHandlingTests
 
         var exception = await act.ShouldThrowAsync<AggregateException>();
         exception.InnerExceptions.Count.ShouldBe(4);
-        exception.InnerExceptions.ShouldAllBe(x => x.GetType() == typeof(InvalidOperationException));
+        exception.InnerExceptions.ShouldAllBe(static x => x.GetType() == typeof(InvalidOperationException));
     }
 
     [Fact]
@@ -165,9 +165,7 @@ public class ErrorHandlingTests
             source.SelectParallelAsync(static async (x, ct) =>
                 {
                     await Task.Delay(10, ct);
-                    if (x == 10) throw new InvalidOperationException("Test error");
-
-                    return x;
+                    return x == 10 ? throw new InvalidOperationException("Test error") : x;
                 },
                 options);
     }

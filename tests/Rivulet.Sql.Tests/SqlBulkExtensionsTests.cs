@@ -6,7 +6,7 @@ using Rivulet.Base.Tests;
 namespace Rivulet.Sql.Tests;
 
 [SuppressMessage("ReSharper", "AccessToDisposedClosure")]
-public class SqlBulkExtensionsTests
+public sealed class SqlBulkExtensionsTests
 {
     [Fact]
     public async Task BulkInsertAsync_WithValidItems_ShouldInsertAllBatches()
@@ -21,10 +21,10 @@ public class SqlBulkExtensionsTests
                 totalAffectedRows += batchSize;
                 return batchSize;
             }),
-            async (batch, cmd, _) =>
+            static async (batch, cmd, _) =>
             {
                 cmd.CommandText = string.Join(";",
-                    batch.Select(item =>
+                    batch.Select(static item =>
                         $"INSERT INTO Users (Id, Name) VALUES ({item.Id}, '{item.Name}')"));
                 await Task.CompletedTask;
             },
@@ -39,9 +39,8 @@ public class SqlBulkExtensionsTests
     {
         IEnumerable<object> items = null!;
 
-        await Assert.ThrowsAsync<ArgumentNullException>(async () => await items.BulkInsertAsync(
-            () => new TestDbConnection(),
-            (_, _, _) => ValueTask.CompletedTask));
+        await Assert.ThrowsAsync<ArgumentNullException>(async () => await items.BulkInsertAsync(static () => new TestDbConnection(),
+            static (_, _, _) => ValueTask.CompletedTask));
     }
 
     [Fact]
@@ -51,7 +50,7 @@ public class SqlBulkExtensionsTests
 
         await Assert.ThrowsAsync<ArgumentNullException>(async () => await items.BulkInsertAsync(
             null!,
-            (_, _, _) => ValueTask.CompletedTask));
+            static (_, _, _) => ValueTask.CompletedTask));
     }
 
     [Fact]
@@ -59,8 +58,7 @@ public class SqlBulkExtensionsTests
     {
         var items = new[] { 1, 2, 3 };
 
-        await Assert.ThrowsAsync<ArgumentNullException>(async () => await items.BulkInsertAsync(
-            () => new TestDbConnection(),
+        await Assert.ThrowsAsync<ArgumentNullException>(async () => await items.BulkInsertAsync(static () => new TestDbConnection(),
             null!));
     }
 
@@ -279,7 +277,7 @@ public class SqlBulkExtensionsTests
 
                 return 500;
             }),
-            async (_, cmd, _) =>
+            static async (_, cmd, _) =>
             {
                 cmd.CommandText = "INSERT INTO Users (Id) VALUES (...)";
                 await Task.CompletedTask;
@@ -306,7 +304,7 @@ public class SqlBulkExtensionsTests
                 });
                 return conn;
             },
-            async (_, cmd, _) =>
+            static async (_, cmd, _) =>
             {
                 cmd.CommandText = "INSERT INTO Users (Id) VALUES (...)";
                 await Task.CompletedTask;
@@ -327,11 +325,9 @@ public class SqlBulkExtensionsTests
             () => new TestDbConnection(executeNonQueryFunc: _ =>
             {
                 attemptCount++;
-                if (attemptCount < 2) throw new TimeoutException("Timeout occurred");
-
-                return 100;
+                return attemptCount < 2 ? throw new TimeoutException("Timeout occurred") : 100;
             }),
-            async (_, cmd, _) =>
+            static async (_, cmd, _) =>
             {
                 cmd.CommandText = "UPDATE Users SET Name = 'Updated'";
                 await Task.CompletedTask;
@@ -374,9 +370,8 @@ public class SqlBulkExtensionsTests
     {
         var items = Enumerable.Range(1, 10).ToList();
 
-        var result = await items.BulkInsertAsync(
-            () => new TestDbConnection(executeNonQueryFunc: static _ => 10),
-            async (_, cmd, _) =>
+        var result = await items.BulkInsertAsync(static () => new TestDbConnection(executeNonQueryFunc: static _ => 10),
+            static async (_, cmd, _) =>
             {
                 cmd.CommandText = "INSERT INTO Users (Id) VALUES (...)";
                 await Task.CompletedTask;
@@ -390,9 +385,8 @@ public class SqlBulkExtensionsTests
     {
         var items = Enumerable.Range(1, 10).ToList();
 
-        var result = await items.BulkUpdateAsync(
-            () => new TestDbConnection(executeNonQueryFunc: static _ => 10),
-            async (_, cmd, _) =>
+        var result = await items.BulkUpdateAsync(static () => new TestDbConnection(executeNonQueryFunc: static _ => 10),
+            static async (_, cmd, _) =>
             {
                 cmd.CommandText = "UPDATE Users SET Name = 'Updated'";
                 await Task.CompletedTask;
@@ -406,9 +400,8 @@ public class SqlBulkExtensionsTests
     {
         var items = Enumerable.Range(1, 10).ToList();
 
-        var result = await items.BulkDeleteAsync(
-            () => new TestDbConnection(executeNonQueryFunc: static _ => 10),
-            async (_, cmd, _) =>
+        var result = await items.BulkDeleteAsync(static () => new TestDbConnection(executeNonQueryFunc: static _ => 10),
+            static async (_, cmd, _) =>
             {
                 cmd.CommandText = "DELETE FROM Users WHERE Id IN (...)";
                 await Task.CompletedTask;
@@ -430,7 +423,7 @@ public class SqlBulkExtensionsTests
                 capturedConnection = conn;
                 return conn;
             },
-            async (_, cmd, _) =>
+            static async (_, cmd, _) =>
             {
                 cmd.CommandText = "INSERT INTO Users (Id) VALUES (...)";
                 await Task.CompletedTask;
@@ -449,8 +442,8 @@ public class SqlBulkExtensionsTests
         var openCalled = false;
 
         var result = await items.BulkInsertAsync(
-            () => new NonDbConnectionMock(() => openCalled = true, () => 10),
-            async (_, cmd, _) =>
+            () => new NonDbConnectionMock(() => openCalled = true, static () => 10),
+            static async (_, cmd, _) =>
             {
                 cmd.CommandText = "INSERT INTO Users (Id) VALUES (...)";
                 await Task.CompletedTask;
@@ -473,7 +466,7 @@ public class SqlBulkExtensionsTests
                 executeNonQueryCalled = true;
                 return 10;
             }),
-            async (_, cmd, _) =>
+            static async (_, cmd, _) =>
             {
                 cmd.CommandText = "INSERT INTO Users (Id) VALUES (...)";
                 await Task.CompletedTask;
@@ -485,10 +478,11 @@ public class SqlBulkExtensionsTests
     }
 
     // Mock IDbConnection that does NOT extend DbConnection
-    private class NonDbConnectionMock(Action onOpen, Func<int> executeNonQueryFunc) : IDbConnection
+    private sealed class NonDbConnectionMock(Action onOpen, Func<int> executeNonQueryFunc) : IDbConnection
     {
         [AllowNull]
         public string ConnectionString { get; set; } = string.Empty;
+
         public int ConnectionTimeout => 30;
         public string Database => "TestDB";
         public ConnectionState State { get; private set; } = ConnectionState.Closed;
@@ -511,10 +505,11 @@ public class SqlBulkExtensionsTests
     }
 
     // Mock IDbCommand that does NOT extend DbCommand
-    private class NonDbCommandMock(Func<int> executeNonQueryFunc) : IDbCommand
+    private sealed class NonDbCommandMock(Func<int> executeNonQueryFunc) : IDbCommand
     {
         [AllowNull]
         public string CommandText { get; set; } = string.Empty;
+
         public int CommandTimeout { get; set; }
         public CommandType CommandType { get; set; }
         public IDbConnection? Connection { get; set; }
@@ -532,7 +527,7 @@ public class SqlBulkExtensionsTests
         public void Dispose() { }
     }
 
-    private class NonDbTransactionMock : IDbTransaction
+    private sealed class NonDbTransactionMock : IDbTransaction
     {
         public IDbConnection? Connection => null;
         public IsolationLevel IsolationLevel => IsolationLevel.ReadCommitted;
@@ -541,11 +536,22 @@ public class SqlBulkExtensionsTests
         public void Dispose() { }
     }
 
-    private class NonDbParameterCollectionMock : IDataParameterCollection
+    private sealed class NonDbParameterCollectionMock : IDataParameterCollection
     {
         private readonly List<object?> _items = [];
-        public object this[string parameterName] { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public object? this[int index] { get => _items[index]; set => _items[index] = value; }
+
+        public object this[string parameterName]
+        {
+            get => throw new NotImplementedException();
+            set => throw new NotImplementedException();
+        }
+
+        public object? this[int index]
+        {
+            get => _items[index];
+            set => _items[index] = value;
+        }
+
         public bool IsFixedSize => false;
         public bool IsReadOnly => false;
         public int Count => _items.Count;
@@ -572,10 +578,11 @@ public class SqlBulkExtensionsTests
     }
 
     // Mock that uses NonDbCommandMock for testing
-    private class NonDbConnectionWithNonDbCommandMock(Func<int> executeNonQueryFunc) : IDbConnection
+    private sealed class NonDbConnectionWithNonDbCommandMock(Func<int> executeNonQueryFunc) : IDbConnection
     {
         [AllowNull]
         public string ConnectionString { get; set; } = string.Empty;
+
         public int ConnectionTimeout => 30;
         public string Database => "TestDB";
         public ConnectionState State { get; private set; } = ConnectionState.Closed;

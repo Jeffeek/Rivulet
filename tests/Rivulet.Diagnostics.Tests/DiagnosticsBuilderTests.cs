@@ -8,7 +8,7 @@ namespace Rivulet.Diagnostics.Tests;
 ///     EventSource is a process-wide singleton, so parallel tests interfere with each other.
 /// </summary>
 [Collection(TestCollections.SerialEventSource)]
-public class DiagnosticsBuilderTests : IDisposable
+public sealed class DiagnosticsBuilderTests : IDisposable
 {
     private readonly TextWriter _originalOutput;
     private readonly StringWriter _stringWriter;
@@ -52,11 +52,11 @@ public class DiagnosticsBuilderTests : IDisposable
                     new() { MaxDegreeOfParallelism = 2 });
 
             // Wait for at least 2x the aggregation interval to ensure timer fires reliably
-            await Task.Delay(2000);
+            await Task.Delay(2000, CancellationToken.None);
         } // Dispose to flush all listeners
 
         // Wait for file handle to be released and final aggregations to complete
-        await Task.Delay(500);
+        await Task.Delay(500, CancellationToken.None);
 
         // Note: Console output timing is unreliable in parallel tests due to async flushing,
         // so we verify metrics through file output and aggregated metrics instead
@@ -88,7 +88,7 @@ public class DiagnosticsBuilderTests : IDisposable
             .ToListAsync();
 
         // Wait for EventCounters to fire - increased for CI/CD reliability
-        await Task.Delay(2000);
+        await Task.Delay(2000, CancellationToken.None);
 
         var prometheusText = exporter.Export();
         prometheusText.ShouldContain("rivulet_items_started");
@@ -116,10 +116,10 @@ public class DiagnosticsBuilderTests : IDisposable
                 .ToListAsync();
 
             // Wait for EventCounters to fire - increased for CI/CD reliability
-            await Task.Delay(2000);
+            await Task.Delay(2000, CancellationToken.None);
         }
 
-        await Task.Delay(200);
+        await Task.Delay(200, CancellationToken.None);
 
         File.Exists(logFile).ShouldBeTrue();
         TestCleanupHelper.RetryDeleteFile(logFile);
@@ -146,7 +146,7 @@ public class DiagnosticsBuilderTests : IDisposable
             .ToListAsync();
 
         // Wait for EventCounters to be polled and metrics to be available - increased for CI/CD reliability
-        await Task.Delay(2000);
+        await Task.Delay(2000, CancellationToken.None);
 
         var prometheusText = exporter.Export();
         prometheusText.ShouldContain("rivulet_items_started");
@@ -185,7 +185,7 @@ public class DiagnosticsBuilderTests : IDisposable
             .ToListAsync();
 
         // Wait for EventCounters to fire - increased for CI/CD reliability
-        await Task.Delay(2000);
+        await Task.Delay(2000, CancellationToken.None);
 
         loggedLines.ShouldNotBeEmpty();
     }
@@ -307,13 +307,13 @@ public class DiagnosticsBuilderTests : IDisposable
     }
 
     [Fact]
-    public async Task DiagnosticsBuilder_WithEmptyBuilder_ShouldDisposeAsyncSuccessfully()
+    public Task DiagnosticsBuilder_WithEmptyBuilder_ShouldDisposeAsyncSuccessfully()
     {
         var diagnostics = new DiagnosticsBuilder().Build();
         diagnostics.ShouldNotBeNull();
 
         var act = async () => await diagnostics.DisposeAsync();
-        await act.ShouldNotThrowAsync();
+        return act.ShouldNotThrowAsync();
     }
 
     [Fact]

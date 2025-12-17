@@ -2,7 +2,7 @@
 
 namespace Rivulet.Polly.Tests;
 
-public class PollyParallelExtensionsTests
+public sealed class PollyParallelExtensionsTests
 {
     [Fact]
     public async Task SelectParallelWithPolicyAsync_AppliesRetryPolicy_RetriesTransientFailures()
@@ -89,8 +89,7 @@ public class PollyParallelExtensionsTests
             .Build();
 
         // Just verify it works with timeout policy
-        var results = await items.SelectParallelWithPolicyAsync(
-            async (item, ct) =>
+        var results = await items.SelectParallelWithPolicyAsync(static async (item, ct) =>
             {
                 await Task.Delay(10, ct).ConfigureAwait(false);
                 return item * 2;
@@ -108,8 +107,7 @@ public class PollyParallelExtensionsTests
         IEnumerable<int>? source = null;
         var policy = ResiliencePipeline.Empty;
 
-        var act = async () => await source!.SelectParallelWithPolicyAsync(
-            (item, _) => ValueTask.FromResult(item),
+        var act = () => source!.SelectParallelWithPolicyAsync(static (item, _) => ValueTask.FromResult(item),
             policy);
 
         (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("source");
@@ -121,7 +119,7 @@ public class PollyParallelExtensionsTests
         var source = Enumerable.Range(1, 5);
         var policy = ResiliencePipeline.Empty;
 
-        var act = async () => await source.SelectParallelWithPolicyAsync<int, int>(
+        var act = () => source.SelectParallelWithPolicyAsync<int, int>(
             null!,
             policy);
 
@@ -133,8 +131,7 @@ public class PollyParallelExtensionsTests
     {
         var source = Enumerable.Range(1, 5);
 
-        var act = async () => await source.SelectParallelWithPolicyAsync(
-            (item, _) => ValueTask.FromResult(item),
+        var act = () => source.SelectParallelWithPolicyAsync(static (item, _) => ValueTask.FromResult(item),
             (ResiliencePipeline)null!);
 
         (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("policy");
@@ -185,8 +182,7 @@ public class PollyParallelExtensionsTests
         IEnumerable<int>? source = null;
         var policy = ResiliencePipeline.Empty;
 
-        var act = async () => await source!.ForEachParallelWithPolicyAsync(
-            (_, _) => ValueTask.CompletedTask,
+        var act = () => source!.ForEachParallelWithPolicyAsync(static (_, _) => ValueTask.CompletedTask,
             policy);
 
         (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("source");
@@ -198,7 +194,7 @@ public class PollyParallelExtensionsTests
         var source = Enumerable.Range(1, 5);
         var policy = ResiliencePipeline.Empty;
 
-        var act = async () => await source.ForEachParallelWithPolicyAsync(
+        var act = () => source.ForEachParallelWithPolicyAsync(
             null!,
             policy);
 
@@ -210,8 +206,7 @@ public class PollyParallelExtensionsTests
     {
         var source = Enumerable.Range(1, 5);
 
-        var act = async () => await source.ForEachParallelWithPolicyAsync(
-            (_, _) => ValueTask.CompletedTask,
+        var act = () => source.ForEachParallelWithPolicyAsync(static (_, _) => ValueTask.CompletedTask,
             null!);
 
         (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("policy");

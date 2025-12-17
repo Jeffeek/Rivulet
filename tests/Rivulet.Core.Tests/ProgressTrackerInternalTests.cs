@@ -9,12 +9,12 @@ namespace Rivulet.Core.Tests;
 ///     These tests access internal members via InternalsVisibleTo.
 /// </summary>
 [SuppressMessage("ReSharper", "AccessToDisposedClosure")]
-public class ProgressTrackerInternalTests
+public sealed class ProgressTrackerInternalTests
 {
     [Fact]
     public async Task ProgressTracker_DoubleDispose_DoesNotThrow()
     {
-        var options = new ProgressOptions { ReportInterval = TimeSpan.FromMilliseconds(50), OnProgress = _ => ValueTask.CompletedTask };
+        var options = new ProgressOptions { ReportInterval = TimeSpan.FromMilliseconds(50), OnProgress = static _ => ValueTask.CompletedTask };
 
         using var cts = new CancellationTokenSource();
         var tracker = new ProgressTracker(100, options, cts.Token);
@@ -53,7 +53,7 @@ public class ProgressTrackerInternalTests
     [Fact]
     public async Task ProgressTracker_RapidCancellation_DisposesCleanly()
     {
-        var options = new ProgressOptions { ReportInterval = TimeSpan.FromMilliseconds(10), OnProgress = _ => ValueTask.CompletedTask };
+        var options = new ProgressOptions { ReportInterval = TimeSpan.FromMilliseconds(10), OnProgress = static _ => ValueTask.CompletedTask };
 
         using var cts = new CancellationTokenSource();
         var tracker = new ProgressTracker(100, options, cts.Token);
@@ -155,7 +155,7 @@ public class ProgressTrackerInternalTests
             // Poll for snapshot to be captured (timer fires every 10ms but may be delayed in CI)
             await DeadlineExtensions.ApplyDeadlineAsync(
                 DateTime.UtcNow.AddMilliseconds(500),
-                () => Task.Delay(20, CancellationToken.None),
+                static () => Task.Delay(20, CancellationToken.None),
                 () => lastSnapshot == null);
 
             lastSnapshot.ShouldNotBeNull();
@@ -215,7 +215,7 @@ public class ProgressTrackerInternalTests
             // Poll for snapshot to capture all errors (timer fires every 10ms but may be delayed in CI)
             await DeadlineExtensions.ApplyDeadlineAsync(
                 DateTime.UtcNow.AddMilliseconds(1500),
-                () => Task.Delay(20, CancellationToken.None),
+                static () => Task.Delay(20, CancellationToken.None),
                 () => lastSnapshot is not { ErrorCount: 5 });
 
             lastSnapshot.ShouldNotBeNull();

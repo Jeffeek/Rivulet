@@ -5,7 +5,7 @@ using Rivulet.Core;
 namespace Rivulet.Diagnostics.Tests;
 
 [Collection(TestCollections.SerialEventSource)]
-public class RivuletStructuredLogListenerTests : IDisposable
+public sealed class RivuletStructuredLogListenerTests : IDisposable
 {
     private readonly string _testFilePath = Path.Join(Path.GetTempPath(), $"rivulet-test-{Guid.NewGuid()}.json");
 
@@ -14,14 +14,14 @@ public class RivuletStructuredLogListenerTests : IDisposable
     [Fact]
     public void StructuredLogListener_ShouldThrow_WhenFilePathIsNull()
     {
-        var act = () => new RivuletStructuredLogListener((string)null!);
+        var act = static () => new RivuletStructuredLogListener((string)null!);
         act.ShouldThrow<ArgumentNullException>().ParamName.ShouldBe("filePath");
     }
 
     [Fact]
     public void StructuredLogListener_ShouldThrow_WhenLogActionIsNull()
     {
-        var act = () => new RivuletStructuredLogListener((Action<string>)null!);
+        var act = static () => new RivuletStructuredLogListener((Action<string>)null!);
         act.ShouldThrow<ArgumentNullException>().ParamName.ShouldBe("logAction");
     }
 
@@ -46,10 +46,10 @@ public class RivuletStructuredLogListenerTests : IDisposable
                 .ToListAsync();
 
             // Wait for EventCounters to fire - increased for CI/CD reliability
-            await Task.Delay(1500);
+            await Task.Delay(1500, CancellationToken.None);
         }
 
-        await Task.Delay(200);
+        await Task.Delay(200, CancellationToken.None);
 
         Directory.Exists(directory).ShouldBeTrue();
         File.Exists(filePath).ShouldBeTrue();
@@ -76,21 +76,18 @@ public class RivuletStructuredLogListenerTests : IDisposable
                 .ToListAsync();
 
             // Wait for EventCounters to poll and write metrics after operation completes
-            await Task.Delay(1500);
+            await Task.Delay(1500, CancellationToken.None);
         } // Dispose listener to flush and close file
 
         // Wait for file handle to be fully released
-        await Task.Delay(200);
+        await Task.Delay(200, CancellationToken.None);
 
         File.Exists(_testFilePath).ShouldBeTrue();
         var lines = await File.ReadAllLinesAsync(_testFilePath);
         lines.ShouldNotBeEmpty();
 
-        foreach (var line in lines)
-        {
-            var act = () => JsonDocument.Parse(line);
-            act.ShouldNotThrow();
-        }
+        foreach (var act in lines.Select(static line => (Func<JsonDocument>?)(() => JsonDocument.Parse(line))))
+            act!.ShouldNotThrow();
     }
 
     [Fact]
@@ -114,11 +111,11 @@ public class RivuletStructuredLogListenerTests : IDisposable
             .ToListAsync();
 
         // Wait for EventCounters to fire - increased for CI/CD reliability
-        await Task.Delay(1500);
+        await Task.Delay(1500, CancellationToken.None);
 
         loggedLines.ShouldNotBeEmpty();
 
-        foreach (var act in loggedLines.Select<string, Func<JsonDocument>>(line => () => JsonDocument.Parse(line))) act.ShouldNotThrow();
+        foreach (var act in loggedLines.Select<string, Func<JsonDocument>>(static line => () => JsonDocument.Parse(line))) act.ShouldNotThrow();
     }
 
     [Fact]
@@ -140,7 +137,7 @@ public class RivuletStructuredLogListenerTests : IDisposable
             .ToListAsync();
 
         // Wait for EventCounters to fire - increased for CI/CD reliability
-        await Task.Delay(1500);
+        await Task.Delay(1500, CancellationToken.None);
 
         loggedLines.ShouldNotBeEmpty();
 

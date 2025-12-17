@@ -3,7 +3,7 @@ using Rivulet.Base.Tests;
 
 namespace Rivulet.IO.Tests;
 
-public class FileInfoExtensionsTests : TempDirectoryFixture
+public sealed class FileInfoExtensionsTests : TempDirectoryFixture
 {
     [Fact]
     public async Task ReadAllTextParallelAsync_WithMultipleFileInfos_ShouldReadCorrectly()
@@ -109,7 +109,7 @@ public class FileInfoExtensionsTests : TempDirectoryFixture
         var options = new FileOperationOptions { OverwriteExisting = false };
 
         // Act
-        var act = async () => await file.WriteAllTextAsync("New content", options);
+        var act = () => file.WriteAllTextAsync("New content", options);
 
         // Assert
         await act.ShouldThrowAsync<IOException>();
@@ -161,7 +161,7 @@ public class FileInfoExtensionsTests : TempDirectoryFixture
         var options = new FileOperationOptions { OverwriteExisting = false };
 
         // Act
-        var act = async () => await sourceFile.CopyToAsync(destPath, options);
+        var act = () => sourceFile.CopyToAsync(destPath, options);
 
         // Assert
         await act.ShouldThrowAsync<IOException>();
@@ -249,7 +249,7 @@ public class FileInfoExtensionsTests : TempDirectoryFixture
         };
 
         // Act
-        var act = async () => await file.ReadAllTextAsync(options);
+        var act = () => file.ReadAllTextAsync(options);
 
         // Assert
         await act.ShouldThrowAsync<FileNotFoundException>();

@@ -12,10 +12,10 @@ public sealed class HttpClientFactoryExtensionsTests
     {
         var services = new ServiceCollection();
         services.AddHttpClient("test")
-                .ConfigurePrimaryHttpMessageHandler(() => new TestHttpMessageHandler(handler));
+            .ConfigurePrimaryHttpMessageHandler(() => new TestHttpMessageHandler(handler));
 
         services.AddHttpClient(string.Empty)
-                .ConfigurePrimaryHttpMessageHandler(() => new TestHttpMessageHandler(handler));
+            .ConfigurePrimaryHttpMessageHandler(() => new TestHttpMessageHandler(handler));
 
         var provider = services.BuildServiceProvider();
         return provider.GetRequiredService<IHttpClientFactory>();
@@ -116,7 +116,7 @@ public sealed class HttpClientFactoryExtensionsTests
             (uri: new Uri("http://test.local/post2"), content: new StringContent("data2"))
         };
 
-        var factory = CreateTestFactory((_, _) =>
+        var factory = CreateTestFactory(static (_, _) =>
         {
             var response = new HttpResponseMessage(HttpStatusCode.Created) { Content = new StringContent("Created") };
             return Task.FromResult(response);
@@ -125,7 +125,7 @@ public sealed class HttpClientFactoryExtensionsTests
         var results = await requests.PostParallelAsync(factory, "test");
 
         results.Count.ShouldBe(2);
-        results.ShouldAllBe(r => r.StatusCode == HttpStatusCode.Created);
+        results.ShouldAllBe(static r => r.StatusCode == HttpStatusCode.Created);
 
         foreach (var response in results) response.Dispose();
     }
@@ -139,7 +139,7 @@ public sealed class HttpClientFactoryExtensionsTests
             (uri: new Uri("http://test.local/put2"), content: (HttpContent)new StringContent("update2"))
         };
 
-        var factory = CreateTestFactory((_, _) =>
+        var factory = CreateTestFactory(static (_, _) =>
         {
             var response = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("Updated") };
             return Task.FromResult(response);
@@ -148,7 +148,7 @@ public sealed class HttpClientFactoryExtensionsTests
         var results = await requests.PutParallelAsync(factory, "test");
 
         results.Count.ShouldBe(2);
-        results.ShouldAllBe(r => r.StatusCode == HttpStatusCode.OK);
+        results.ShouldAllBe(static r => r.StatusCode == HttpStatusCode.OK);
 
         foreach (var response in results) response.Dispose();
     }
@@ -158,7 +158,7 @@ public sealed class HttpClientFactoryExtensionsTests
     {
         var uris = new[] { new Uri("http://test.local/delete1"), new Uri("http://test.local/delete2") };
 
-        var factory = CreateTestFactory((_, _) =>
+        var factory = CreateTestFactory(static (_, _) =>
         {
             var response = new HttpResponseMessage(HttpStatusCode.NoContent);
             return Task.FromResult(response);
@@ -167,7 +167,7 @@ public sealed class HttpClientFactoryExtensionsTests
         var results = await uris.DeleteParallelAsync(factory, "test");
 
         results.Count.ShouldBe(2);
-        results.ShouldAllBe(r => r.StatusCode == HttpStatusCode.NoContent);
+        results.ShouldAllBe(static r => r.StatusCode == HttpStatusCode.NoContent);
 
         foreach (var response in results) response.Dispose();
     }
@@ -182,7 +182,7 @@ public sealed class HttpClientFactoryExtensionsTests
         {
             var downloads = new[] { (uri: new Uri("http://test.local/file1.txt"), destinationPath: Path.Join(tempDir, "file1.txt")) };
 
-            var factory = CreateTestFactory((request, _) =>
+            var factory = CreateTestFactory(static (request, _) =>
             {
                 var content = $"Content for {request.RequestUri!.AbsolutePath}";
                 var response = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(content) };
@@ -212,9 +212,7 @@ public sealed class HttpClientFactoryExtensionsTests
         var factory = CreateTestFactory((_, _) =>
         {
             attemptCount++;
-            if (attemptCount < 3) return Task.FromResult(new HttpResponseMessage(HttpStatusCode.ServiceUnavailable));
-
-            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("Success") });
+            return Task.FromResult(attemptCount < 3 ? new(HttpStatusCode.ServiceUnavailable) : new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("Success") });
         });
 
         var options = new HttpOptions { ParallelOptions = new() { MaxRetries = 3, BaseDelay = TimeSpan.FromMilliseconds(10) } };

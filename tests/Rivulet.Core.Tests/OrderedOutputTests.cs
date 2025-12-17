@@ -28,7 +28,7 @@ public sealed class OrderedOutputTests
         var options = new ParallelOptionsRivulet { MaxDegreeOfParallelism = 16, OrderedOutput = false };
 
         var orderedCount = 0;
-        var totalRuns = 10;
+        const int totalRuns = 10;
         List<int> results = null!;
         for (var run = 0; run < totalRuns; run++)
         {
@@ -192,7 +192,7 @@ public sealed class OrderedOutputTests
         var results = await source.SelectParallelStreamAsync(async (x, ct) =>
                 {
                     await Task.Delay(Random.Shared.Next(1, 5), ct);
-                    var attempts = attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
+                    var attempts = attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
 
                     if (attempts == 1 && x % 3 == 0) throw new InvalidOperationException($"Transient error at {x}");
 
@@ -202,7 +202,7 @@ public sealed class OrderedOutputTests
             .ToListAsync();
 
         results.ShouldBe(Enumerable.Range(1, 20).Select(static x => x * 2));
-        attemptCounts.Values.ShouldContain(v => v > 1, "some items should have retried");
+        attemptCounts.Values.ShouldContain(static v => v > 1, "some items should have retried");
     }
 
     [Fact]

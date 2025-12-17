@@ -8,14 +8,16 @@ namespace Rivulet.Diagnostics.Tests;
 ///     These tests use RivuletEventSource which is a static singleton shared across all test assemblies.
 ///     Some tests are added to a serial collection to prevent parallel execution issues with metrics.
 /// </summary>
-[Collection(TestCollections.SerialEventSource)]
-[SuppressMessage("ReSharper", "AccessToDisposedClosure")]
-public class RivuletHealthCheckTests
+[
+    Collection(TestCollections.SerialEventSource),
+    SuppressMessage("ReSharper", "AccessToDisposedClosure")
+]
+public sealed class RivuletHealthCheckTests
 {
     [Fact]
     public void HealthCheck_ShouldThrow_WhenExporterIsNull()
     {
-        var act = () => new RivuletHealthCheck(null!);
+        var act = static () => new RivuletHealthCheck(null!);
         act.ShouldThrow<ArgumentNullException>().ParamName.ShouldBe("exporter");
     }
 
@@ -65,7 +67,7 @@ public class RivuletHealthCheckTests
                 new() { MaxDegreeOfParallelism = 2 })
             .ToListAsync();
 
-        await Task.Delay(2000);
+        await Task.Delay(2000, CancellationToken.None);
 
         var context = new HealthCheckContext();
         var result = await healthCheck.CheckHealthAsync(context);
@@ -94,7 +96,7 @@ public class RivuletHealthCheckTests
             // Operations must run long enough for EventCounter polling (1 second interval)
             await Enumerable.Range(1, 100)
                 .ToAsyncEnumerable()
-                .SelectParallelStreamAsync<int, int>(async (_, ct) =>
+                .SelectParallelStreamAsync<int, int>(static async (_, ct) =>
                     {
                         await Task.Delay(20, ct);
                         throw new InvalidOperationException("Test error");
@@ -107,7 +109,7 @@ public class RivuletHealthCheckTests
             // ignored
         }
 
-        await Task.Delay(2000);
+        await Task.Delay(2000, CancellationToken.None);
 
         var context = new HealthCheckContext();
         var result = await healthCheck.CheckHealthAsync(context);
@@ -133,7 +135,7 @@ public class RivuletHealthCheckTests
             // 10 items * 200ms / 2 parallelism = 1000ms (1 second) minimum operation time
             await Enumerable.Range(1, 10)
                 .ToAsyncEnumerable()
-                .SelectParallelStreamAsync<int, int>(async (_, ct) =>
+                .SelectParallelStreamAsync<int, int>(static async (_, ct) =>
                     {
                         await Task.Delay(200, ct);
                         throw new InvalidOperationException("Test error");
@@ -146,7 +148,7 @@ public class RivuletHealthCheckTests
             // ignored
         }
 
-        await Task.Delay(2000);
+        await Task.Delay(2000, CancellationToken.None);
 
         var context = new HealthCheckContext();
         var result = await healthCheck.CheckHealthAsync(context);
@@ -195,7 +197,7 @@ public class RivuletHealthCheckTests
 
         await Task.Yield();
         // Wait for EventCounters to fire
-        await Task.Delay(2000);
+        await Task.Delay(2000, CancellationToken.None);
 
         var context = new HealthCheckContext();
         var result = await healthCheck.CheckHealthAsync(context);
@@ -265,7 +267,7 @@ public class RivuletHealthCheckTests
                 new() { MaxDegreeOfParallelism = 2 })
             .ToListAsync();
 
-        await Task.Delay(2000);
+        await Task.Delay(2000, CancellationToken.None);
 
         var context = new HealthCheckContext();
         var result = await healthCheck.CheckHealthAsync(context);
@@ -284,12 +286,12 @@ public class RivuletHealthCheckTests
         var healthCheck = new RivuletHealthCheck(exporter);
 
         // Fresh exporter - may or may not have received counter events yet depending on test order
-        await Task.Delay(100);
+        await Task.Delay(100, CancellationToken.None);
 
         var context = new HealthCheckContext();
 
         // Primary test: health check should not throw (verifies division-by-zero is handled)
-        var act = async () => await healthCheck.CheckHealthAsync(context);
+        var act = () => healthCheck.CheckHealthAsync(context);
         await act.ShouldNotThrowAsync();
 
         // Secondary test: result should be a valid health status

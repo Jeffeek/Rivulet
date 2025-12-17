@@ -6,7 +6,7 @@ using Rivulet.Core.Resilience;
 namespace Rivulet.Core.Tests;
 
 [SuppressMessage("ReSharper", "AccessToDisposedClosure")]
-public class RateLimitingTests
+public sealed class RateLimitingTests
 {
     [Fact]
     public async Task RateLimit_EnforcesTokensPerSecond()
@@ -167,42 +167,42 @@ public class RateLimitingTests
     [Fact]
     public void TokenBucket_Constructor_ThrowsOnNullOptions()
     {
-        var act = () => new TokenBucket(null!);
+        var act = static () => new TokenBucket(null!);
         act.ShouldThrow<ArgumentNullException>().Message.ShouldContain("options");
     }
 
     [Fact]
     public void TokenBucket_Constructor_ValidatesOptions()
     {
-        var act = () => new TokenBucket(new() { TokensPerSecond = 0 });
+        var act = static () => new TokenBucket(new() { TokensPerSecond = 0 });
         act.ShouldThrow<ArgumentException>().Message.ShouldContain("TokensPerSecond");
     }
 
     [Fact]
     public void RateLimitOptions_Validation_ThrowsOnInvalidTokensPerSecond()
     {
-        var act = () => new RateLimitOptions { TokensPerSecond = 0 }.Validate();
+        var act = static () => new RateLimitOptions { TokensPerSecond = 0 }.Validate();
         act.ShouldThrow<ArgumentException>().Message.ShouldContain("TokensPerSecond");
     }
 
     [Fact]
     public void RateLimitOptions_Validation_ThrowsOnInvalidBurstCapacity()
     {
-        var act = () => new RateLimitOptions { BurstCapacity = 0 }.Validate();
+        var act = static () => new RateLimitOptions { BurstCapacity = 0 }.Validate();
         act.ShouldThrow<ArgumentException>().Message.ShouldContain("BurstCapacity");
     }
 
     [Fact]
     public void RateLimitOptions_Validation_ThrowsOnInvalidTokensPerOperation()
     {
-        var act = () => new RateLimitOptions { TokensPerOperation = 0 }.Validate();
+        var act = static () => new RateLimitOptions { TokensPerOperation = 0 }.Validate();
         act.ShouldThrow<ArgumentException>().Message.ShouldContain("TokensPerOperation");
     }
 
     [Fact]
     public void RateLimitOptions_Validation_ThrowsWhenBurstLessThanTokensPerOperation()
     {
-        var act = () => new RateLimitOptions { BurstCapacity = 5, TokensPerOperation = 10 }.Validate();
+        var act = static () => new RateLimitOptions { BurstCapacity = 5, TokensPerOperation = 10 }.Validate();
 
         act.ShouldThrow<ArgumentException>().Message.ShouldContain("BurstCapacity");
     }
@@ -263,7 +263,7 @@ public class RateLimitingTests
             async (x, ct) =>
             {
                 await Task.Delay(1, ct);
-                var attemptCount = attempts.AddOrUpdate(x, 1, (_, count) => count + 1);
+                var attemptCount = attempts.AddOrUpdate(x, 1, static (_, count) => count + 1);
 
                 // Fail first attempt
                 if (attemptCount < 2) throw new InvalidOperationException("Transient");
@@ -438,7 +438,7 @@ public class RateLimitingTests
         bucket.GetAvailableTokens().ShouldBeLessThan(1);
 
         // Wait for refill
-        await Task.Delay(200); // 200ms should add ~20 tokens (100 tokens/sec = 0.1 tokens/ms)
+        await Task.Delay(200, CancellationToken.None); // 200ms should add ~20 tokens (100 tokens/sec = 0.1 tokens/ms)
 
         var tokens = bucket.GetAvailableTokens();
         tokens.ShouldBeGreaterThan(5);

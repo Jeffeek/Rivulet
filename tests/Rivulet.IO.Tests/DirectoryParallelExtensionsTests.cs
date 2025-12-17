@@ -2,7 +2,7 @@
 
 namespace Rivulet.IO.Tests;
 
-public class DirectoryParallelExtensionsTests : TempDirectoryFixture
+public sealed class DirectoryParallelExtensionsTests : TempDirectoryFixture
 {
     [Fact]
     public async Task ProcessFilesParallelAsync_WithMultipleFiles_ShouldProcessAll()
@@ -17,7 +17,7 @@ public class DirectoryParallelExtensionsTests : TempDirectoryFixture
         var files = new[] { file1, file2 };
 
         // Act
-        var results = await files.ProcessFilesParallelAsync(async (path, ct) =>
+        var results = await files.ProcessFilesParallelAsync(static async (path, ct) =>
         {
             var content = await File.ReadAllTextAsync(path, ct);
             return content.Length;
@@ -36,7 +36,7 @@ public class DirectoryParallelExtensionsTests : TempDirectoryFixture
         var files = new[] { "file.txt" };
 
         // Act
-        var act = async () => await files.ProcessFilesParallelAsync<int>(null!);
+        var act = () => files.ProcessFilesParallelAsync<int>(null!);
 
         // Assert
         await act.ShouldThrowAsync<ArgumentNullException>();
@@ -58,7 +58,7 @@ public class DirectoryParallelExtensionsTests : TempDirectoryFixture
         var results = await DirectoryParallelExtensions.ProcessDirectoryFilesParallelAsync(
             TestDirectory,
             "*.txt",
-            async (path, ct) =>
+            static async (path, ct) =>
             {
                 var content = await File.ReadAllTextAsync(path, ct);
                 return content;
@@ -78,10 +78,10 @@ public class DirectoryParallelExtensionsTests : TempDirectoryFixture
         var nonExistent = Path.Join(TestDirectory, "nonexistent");
 
         // Act
-        var act = async () => await DirectoryParallelExtensions.ProcessDirectoryFilesParallelAsync(
+        var act = () => DirectoryParallelExtensions.ProcessDirectoryFilesParallelAsync(
             nonExistent,
             "*.*",
-            (path, _) => ValueTask.FromResult(path));
+            static (path, _) => ValueTask.FromResult(path));
 
         // Assert
         await act.ShouldThrowAsync<DirectoryNotFoundException>();
@@ -104,7 +104,7 @@ public class DirectoryParallelExtensionsTests : TempDirectoryFixture
         var results = await DirectoryParallelExtensions.ProcessDirectoryFilesParallelAsync(
             TestDirectory,
             "*.txt",
-            async (path, ct) =>
+            static async (path, ct) =>
             {
                 var content = await File.ReadAllTextAsync(path, ct);
                 return content;
@@ -161,7 +161,7 @@ public class DirectoryParallelExtensionsTests : TempDirectoryFixture
             sourceDir,
             destDir,
             "*.txt",
-            (_, content) => ValueTask.FromResult(content.ToUpper()),
+            static (_, content) => ValueTask.FromResult(content.ToUpper()),
             options: new() { OverwriteExisting = true });
 
         // Assert
@@ -264,7 +264,7 @@ public class DirectoryParallelExtensionsTests : TempDirectoryFixture
         // Act
         var results = await directories.ProcessMultipleDirectoriesParallelAsync(
             "*.txt",
-            async (path, ct) =>
+            static async (path, ct) =>
             {
                 var content = await File.ReadAllTextAsync(path, ct);
                 return content.Length;
@@ -293,7 +293,7 @@ public class DirectoryParallelExtensionsTests : TempDirectoryFixture
         // Act
         var results = await directories.ProcessMultipleDirectoriesParallelAsync(
             "*.txt",
-            async (path, ct) =>
+            static async (path, ct) =>
             {
                 var content = await File.ReadAllTextAsync(path, ct);
                 return content;
@@ -329,8 +329,7 @@ public class DirectoryParallelExtensionsTests : TempDirectoryFixture
         };
 
         // Act
-        await new[] { file }.ProcessFilesParallelAsync(
-            (path, _) => ValueTask.FromResult(path),
+        await new[] { file }.ProcessFilesParallelAsync(static (path, _) => ValueTask.FromResult(path),
             options);
 
         // Assert

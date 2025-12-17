@@ -2,7 +2,7 @@
 
 namespace Rivulet.Sql.Tests;
 
-public class BulkOperationOptionsTests
+public sealed class BulkOperationOptionsTests
 {
     [Fact]
     public void BulkOperationOptions_DefaultValues_ShouldBeCorrect()

@@ -81,7 +81,7 @@ public sealed class EventSourceTests
             async (x, ct) =>
             {
                 await Task.Delay(5, ct);
-                var attemptCount = attempts.AddOrUpdate(x, 1, (_, count) => count + 1);
+                var attemptCount = attempts.AddOrUpdate(x, 1, static (_, count) => count + 1);
                 if (attemptCount < 2) throw new InvalidOperationException("Transient");
 
                 return x * 2;
@@ -120,7 +120,7 @@ public sealed class EventSourceTests
         listener.DisableEvents(RivuletEventSource.Log);
     }
 
-    private class TestEventListener : EventListener
+    private sealed class TestEventListener : EventListener
     {
         // ReSharper disable once RedundantOverriddenMember
         protected override void OnEventSourceCreated(EventSource eventSource) =>

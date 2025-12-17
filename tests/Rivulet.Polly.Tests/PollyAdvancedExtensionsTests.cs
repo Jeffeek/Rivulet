@@ -1,6 +1,6 @@
 ﻿namespace Rivulet.Polly.Tests;
 
-public class PollyAdvancedExtensionsTests
+public sealed class PollyAdvancedExtensionsTests
 {
     [Fact]
     public async Task SelectParallelWithHedgingAsync_ReturnsFirstSuccessfulResult()
@@ -34,7 +34,7 @@ public class PollyAdvancedExtensionsTests
     {
         IEnumerable<int>? source = null;
 
-        var act = () => source!.SelectParallelWithHedgingAsync((item, _) => ValueTask.FromResult(item));
+        var act = () => source!.SelectParallelWithHedgingAsync(static (item, _) => ValueTask.FromResult(item));
 
         var ex = await act.ShouldThrowAsync<ArgumentNullException>();
         ex.ParamName.ShouldBe("source");
@@ -56,7 +56,7 @@ public class PollyAdvancedExtensionsTests
     {
         var source = Enumerable.Range(1, 5);
 
-        var act = () => source.SelectParallelWithHedgingAsync((item, _) => ValueTask.FromResult(item), 0);
+        var act = () => source.SelectParallelWithHedgingAsync(static (item, _) => ValueTask.FromResult(item), 0);
 
         (await act.ShouldThrowAsync<ArgumentOutOfRangeException>()).ParamName.ShouldBe("maxHedgedAttempts");
     }
@@ -116,7 +116,7 @@ public class PollyAdvancedExtensionsTests
     {
         IEnumerable<int>? source = null;
 
-        var act = () => source!.SelectParallelWithResultRetryAsync((item, _) => ValueTask.FromResult(item),
+        var act = () => source!.SelectParallelWithResultRetryAsync(static (item, _) => ValueTask.FromResult(item),
             static result => result == -1);
 
         (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("source");

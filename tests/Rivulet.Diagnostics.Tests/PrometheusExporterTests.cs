@@ -5,7 +5,7 @@ using Rivulet.Core.Observability;
 namespace Rivulet.Diagnostics.Tests;
 
 [Collection(TestCollections.SerialEventSource)]
-public class PrometheusExporterTests
+public sealed class PrometheusExporterTests
 {
     [Fact]
     public async Task PrometheusExporter_ShouldExportMetrics_InPrometheusFormat()
@@ -30,13 +30,13 @@ public class PrometheusExporterTests
         // Must wait for BOTH items_started AND items_completed to be present
         await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddMilliseconds(4000),
-            () => Task.Delay(100),
+            static () => Task.Delay(100),
             () =>
             {
                 var export = exporter.Export();
                 return string.IsNullOrEmpty(export) ||
-                    !export.Contains("rivulet_items_started") ||
-                    !export.Contains("rivulet_items_completed");
+                       !export.Contains("rivulet_items_started") ||
+                       !export.Contains("rivulet_items_completed");
             });
 
         var prometheusText = exporter.Export();
@@ -56,7 +56,7 @@ public class PrometheusExporterTests
         // 10 items * 200ms / 2 parallelism = 1000ms (1 second) minimum operation time
         await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
-            .ForEachParallelAsync(async (_, ct) =>
+            .ForEachParallelAsync(static async (_, ct) =>
                 {
                     await Task.Delay(200, ct);
                 },
@@ -68,12 +68,12 @@ public class PrometheusExporterTests
         // Must wait for BOTH items_started AND items_completed keys to be present
         await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddMilliseconds(4000),
-            () => Task.Delay(100),
+            static () => Task.Delay(100),
             () =>
             {
                 var dict = exporter.ExportDictionary();
                 return !dict.ContainsKey(RivuletMetricsConstants.CounterNames.ItemsStarted) ||
-                    !dict.ContainsKey(RivuletMetricsConstants.CounterNames.ItemsCompleted);
+                       !dict.ContainsKey(RivuletMetricsConstants.CounterNames.ItemsCompleted);
             });
 
         var metrics = exporter.ExportDictionary();

@@ -107,7 +107,7 @@ public class HttpParallelExtensionsAdditionalTests
         Uri? callbackUri = null;
         HttpStatusCode? callbackStatus = null;
 
-        using var httpClient = CreateTestClient((_, _) => throw new HttpRequestException("Network error", null, HttpStatusCode.BadGateway));
+        using var httpClient = CreateTestClient(static (_, _) => throw new HttpRequestException("Network error", null, HttpStatusCode.BadGateway));
 
         var options = new HttpOptions
         {
@@ -132,7 +132,7 @@ public class HttpParallelExtensionsAdditionalTests
         var uris = new[] { new Uri("http://test.local/notfound") };
         var callbackInvoked = false;
 
-        using var httpClient = CreateTestClient((_, _) =>
+        using var httpClient = CreateTestClient(static (_, _) =>
             Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound) { Content = new StringContent("Not found") }));
 
         var options = new HttpOptions
@@ -154,9 +154,9 @@ public class HttpParallelExtensionsAdditionalTests
     public async Task DownloadToStreamAsync_WithoutContentLength_ShouldStillDownload()
     {
         var uri = new Uri("http://test.local/no-length.txt");
-        var expectedContent = "Content without length";
+        const string expectedContent = "Content without length";
 
-        using var httpClient = CreateTestClient((_, _) =>
+        using var httpClient = CreateTestClient(static (_, _) =>
         {
             var response = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(expectedContent) };
             // Explicitly remove Content-Length header
@@ -194,7 +194,7 @@ public class HttpParallelExtensionsAdditionalTests
 
             var downloads = new[] { (uri: new Uri("http://test.local/file.txt"), destinationPath: filePath) };
 
-            using var httpClient = CreateTestClient((_, _) =>
+            using var httpClient = CreateTestClient(static (_, _) =>
             {
                 var response = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("New content") };
                 response.Content.Headers.ContentLength = 11;

@@ -121,17 +121,8 @@ public class ParallelBackgroundServiceTests
     [Fact]
     public async Task ExecuteAsync_WhenCancelled_ShouldLogInformationAndExitGracefully()
     {
-        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Information));
+        var loggerFactory = LoggerFactory.Create(static builder => builder.AddConsole().SetMinimumLevel(LogLevel.Information));
         var logger = loggerFactory.CreateLogger<TestBackgroundService>();
-
-        async IAsyncEnumerable<int> SlowGenerateItems()
-        {
-            for (var i = 1; i <= 100; i++)
-            {
-                await Task.Delay(50); // Slow enough to get cancelled
-                yield return i;
-            }
-        }
 
         var service = new TestBackgroundService(logger, SlowGenerateItems());
 
@@ -139,18 +130,28 @@ public class ParallelBackgroundServiceTests
 
         // Act
         await service.StartAsync(cts.Token);
-        await Task.Delay(20);    // Let it start
+        await Task.Delay(20, CancellationToken.None);    // Let it start
         await cts.CancelAsync(); // Cancel it
         await service.StopAsync(CancellationToken.None);
 
         // Assert - should exit gracefully without throwing
         service.ProcessedItems.Count.ShouldBeLessThan(100);
+        return;
+
+        static async IAsyncEnumerable<int> SlowGenerateItems()
+        {
+            for (var i = 1; i <= 100; i++)
+            {
+                await Task.Delay(50, CancellationToken.None); // Slow enough to get cancelled
+                yield return i;
+            }
+        }
     }
 
     [Fact]
     public async Task ExecuteAsync_WhenProcessThrowsException_ShouldLogErrorAndRethrow()
     {
-        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Error));
+        var loggerFactory = LoggerFactory.Create(static builder => builder.AddConsole().SetMinimumLevel(LogLevel.Error));
         var logger = loggerFactory.CreateLogger<ThrowingBackgroundService>();
 
         var items = TestDataGenerators.GenerateItemsAsync(3);
@@ -172,7 +173,7 @@ public class ParallelBackgroundServiceTests
     [Fact]
     public async Task ExecuteAsync_WhenGetItemsAsyncThrowsException_ShouldLogErrorAndHandleGracefully()
     {
-        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Error));
+        var loggerFactory = LoggerFactory.Create(static builder => builder.AddConsole().SetMinimumLevel(LogLevel.Error));
         var logger = loggerFactory.CreateLogger<FatalErrorBackgroundService>();
 
         var service = new FatalErrorBackgroundService(logger);
@@ -191,10 +192,11 @@ public class ParallelBackgroundServiceTests
         // No unhandled exception should crash the test
     }
 
-    private class TestBackgroundService(
+    private sealed class TestBackgroundService(
         ILogger<TestBackgroundService> logger,
         IAsyncEnumerable<int> items,
-        ParallelOptionsRivulet? options = null) : ParallelBackgroundService<int>(logger, options)
+        ParallelOptionsRivulet? options = null
+    ) : ParallelBackgroundService<int>(logger, options)
     {
         private int _processCallCount;
         public ConcurrentBag<int> ProcessedItems { get; } = new();
@@ -211,9 +213,10 @@ public class ParallelBackgroundServiceTests
         }
     }
 
-    private class ThrowingBackgroundService(
+    private sealed class ThrowingBackgroundService(
         ILogger<ThrowingBackgroundService> logger,
-        IAsyncEnumerable<int> items) : ParallelBackgroundService<int>(logger)
+        IAsyncEnumerable<int> items
+    ) : ParallelBackgroundService<int>(logger)
     {
         protected override IAsyncEnumerable<int> GetItemsAsync(CancellationToken cancellationToken) => items;
 
@@ -222,7 +225,7 @@ public class ParallelBackgroundServiceTests
             new InvalidOperationException($"Test exception for item {item}");
     }
 
-    private class FatalErrorBackgroundService(ILogger<FatalErrorBackgroundService> logger)
+    private sealed class FatalErrorBackgroundService(ILogger<FatalErrorBackgroundService> logger)
         : ParallelBackgroundService<int>(logger)
     {
         protected override IAsyncEnumerable<int> GetItemsAsync(CancellationToken cancellationToken) => throw

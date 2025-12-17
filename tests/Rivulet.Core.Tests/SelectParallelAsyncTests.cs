@@ -221,16 +221,13 @@ public sealed class SelectParallelAsyncTests
     {
         var source = Enumerable.Range(1, 5);
 
-        var results = await source.SelectParallelAsync(
-            (x, _) =>
+        var results = await source.SelectParallelAsync(static (x, _) =>
             {
                 if (x == 2) throw new TimeoutException();
 
-                if (x == 4) throw new InvalidOperationException();
-
-                return new ValueTask<int>(x * 10);
+                return x == 4 ? throw new InvalidOperationException() : new ValueTask<int>(x * 10);
             },
-            new() { OnFallback = (_, ex) => ex is TimeoutException ? -1 : -2 });
+            new() { OnFallback = static (_, ex) => ex is TimeoutException ? -1 : -2 });
 
         results.Count.ShouldBe(5);
         foreach (var expected in new[] { 10, -1, 30, -2, 50 }) results.ShouldContain(expected);
@@ -241,14 +238,8 @@ public sealed class SelectParallelAsyncTests
     {
         var source = new[] { 10, 20, 30, 40 };
 
-        var results = await source.SelectParallelAsync(
-            (x, _) =>
-            {
-                if (x is 20 or 40) throw new();
-
-                return new ValueTask<int>(x);
-            },
-            new() { OnFallback = (index, _) => index * 1000 });
+        var results = await source.SelectParallelAsync(static (x, _) => x is 20 or 40 ? throw new() : new ValueTask<int>(x),
+            new() { OnFallback = static (index, _) => index * 1000 });
 
         results.Count.ShouldBe(4);
         // Index 0 -> 10, Index 1 -> 1000, Index 2 -> 30, Index 3 -> 3000
@@ -269,10 +260,7 @@ public sealed class SelectParallelAsyncTests
     {
         var source = new[] { 1, 2, 3, 4 };
 
-        var results = await source.SelectParallelAsync(static (x, _) =>
-            {
-                return x == 2 ? throw new() : new ValueTask<(int Value, string Status)>((x, "OK"));
-            },
+        var results = await source.SelectParallelAsync(static (x, _) => x == 2 ? throw new() : new ValueTask<(int Value, string Status)>((x, "OK")),
             new() { OnFallback = static (_, _) => (0, "FAILED") });
 
         results.Count.ShouldBe(4);

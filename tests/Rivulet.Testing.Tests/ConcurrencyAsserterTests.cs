@@ -64,7 +64,7 @@ public class ConcurrencyAsserterTests
             .Select(async _ =>
             {
                 using var scope = asserter.Enter();
-                await Task.Delay(50);
+                await Task.Delay(50, CancellationToken.None);
             })
             .ToArray();
 
@@ -98,7 +98,7 @@ public class ConcurrencyAsserterTests
             .Select(async _ =>
             {
                 using var scope = asserter.Enter();
-                await Task.Delay(1);
+                await Task.Delay(1, CancellationToken.None);
             })
             .ToArray();
 
@@ -164,7 +164,7 @@ public class ConcurrencyAsserterTests
                     if (concurrentExecutions > maxObserved) maxObserved = concurrentExecutions;
                 }
 
-                await Task.Delay(10);
+                await Task.Delay(10, CancellationToken.None);
 
                 lock (lockObj) concurrentExecutions--;
             })
@@ -225,12 +225,12 @@ public class ConcurrencyAsserterTests
             {
                 await startSignal.Task; // Wait for signal to start all at once
                 using var scope = asserter.Enter();
-                await Task.Delay(1);
+                await Task.Delay(1, CancellationToken.None);
             }))
             .ToArray();
 
         // Give threads time to all reach the wait point
-        await Task.Delay(50);
+        await Task.Delay(50, CancellationToken.None);
 
         // Release all threads at once to create maximum contention
         startSignal.SetResult(true);
@@ -271,7 +271,7 @@ public class ConcurrencyAsserterTests
         {
             using (asserter.Enter())
             {
-                await Task.Delay(1);
+                await Task.Delay(1, CancellationToken.None);
                 asserter.CurrentConcurrency.ShouldBe(1);
                 asserter.MaxConcurrency.ShouldBe(1);
             }

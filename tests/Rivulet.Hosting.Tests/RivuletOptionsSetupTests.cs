@@ -6,12 +6,12 @@ using Rivulet.Hosting.Configuration;
 
 namespace Rivulet.Hosting.Tests;
 
-public class RivuletOptionsSetupTests
+public sealed class RivuletOptionsSetupTests
 {
     [Fact]
     public void Constructor_WithNullConfiguration_ShouldThrow()
     {
-        var act = () => new RivuletOptionsSetup(null!);
+        var act = static () => new RivuletOptionsSetup(null!);
 
         act.ShouldThrow<ArgumentNullException>().ParamName.ShouldBe("configuration");
     }

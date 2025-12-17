@@ -9,7 +9,7 @@ namespace Rivulet.Diagnostics.Tests;
 ///     Note: Console redirection tests may not work reliably when running under code coverage tools.
 /// </summary>
 [Collection(TestCollections.SerialEventSource)]
-public class RivuletConsoleListenerTests : IDisposable
+public sealed class RivuletConsoleListenerTests : IDisposable
 {
     private TextWriter? _originalOutput;
     private StringWriter? _stringWriter;
@@ -45,7 +45,7 @@ public class RivuletConsoleListenerTests : IDisposable
                 .ToListAsync();
 
             // Wait for EventCounters to fire
-            await Task.Delay(1500);
+            await Task.Delay(1500, CancellationToken.None);
         }
         finally
         {
@@ -70,7 +70,7 @@ public class RivuletConsoleListenerTests : IDisposable
                 // 10 items * 100ms / 2 parallelism = 500ms of operation time
                 await Enumerable.Range(1, 10)
                     .ToAsyncEnumerable()
-                    .SelectParallelStreamAsync<int, int>(async (_, ct) =>
+                    .SelectParallelStreamAsync<int, int>(static async (_, ct) =>
                         {
                             await Task.Delay(100, ct);
                             throw new InvalidOperationException("Test");
@@ -84,13 +84,13 @@ public class RivuletConsoleListenerTests : IDisposable
             }
 
             // Wait for EventCounters to fire - increased for CI/CD reliability
-            await Task.Delay(2000);
+            await Task.Delay(2000, CancellationToken.None);
 
             // Dispose listener before reading output to prevent race condition
             // where background EventSource writes conflict with ToString()
             // ReSharper disable once DisposeOnUsingVariable
             listener.Dispose();
-            await Task.Delay(100);
+            await Task.Delay(100, CancellationToken.None);
 
             var output = consoleOutput.ToString();
 
@@ -138,7 +138,7 @@ public class RivuletConsoleListenerTests : IDisposable
                 .ToListAsync();
 
             // Wait for EventCounters to fire - increased for CI/CD reliability
-            await Task.Delay(2000);
+            await Task.Delay(2000, CancellationToken.None);
         }
         finally
         {
@@ -171,10 +171,10 @@ public class RivuletConsoleListenerTests : IDisposable
                 .ToListAsync();
 
             // EventCounters fire every 1 second. Wait for at least 1.5 intervals
-            await Task.Delay(1500);
+            await Task.Delay(1500, CancellationToken.None);
 
             // Give a brief moment for console output to be written
-            await Task.Delay(100);
+            await Task.Delay(100, CancellationToken.None);
 
             var output = _stringWriter.ToString();
             output.ShouldContain("Items Started");
@@ -230,7 +230,7 @@ public class RivuletConsoleListenerTests : IDisposable
                     new() { MaxDegreeOfParallelism = 2, MaxRetries = 2 })
                 .ToListAsync();
 
-            await Task.Delay(1100);
+            await Task.Delay(1100, CancellationToken.None);
         }
         finally
         {
@@ -252,7 +252,7 @@ public class RivuletConsoleListenerTests : IDisposable
             // Run many operations to generate millions of items
             await Enumerable.Range(1, 10000)
                 .ToAsyncEnumerable()
-                .SelectParallelStreamAsync(async (x, _) =>
+                .SelectParallelStreamAsync(static async (x, _) =>
                     {
                         await Task.CompletedTask;
                         return x;
@@ -260,12 +260,12 @@ public class RivuletConsoleListenerTests : IDisposable
                     new() { MaxDegreeOfParallelism = 100 })
                 .ToListAsync();
 
-            await Task.Delay(1500);
+            await Task.Delay(1500, CancellationToken.None);
 
             // Dispose listener before checking output
             // ReSharper disable once DisposeOnUsingVariable
             listener.Dispose();
-            await Task.Delay(100);
+            await Task.Delay(100, CancellationToken.None);
 
             _ = consoleOutput.ToString();
             // Should format large numbers with M or K suffix
@@ -291,7 +291,7 @@ public class RivuletConsoleListenerTests : IDisposable
             // Run thousands of operations
             await Enumerable.Range(1, 2000)
                 .ToAsyncEnumerable()
-                .SelectParallelStreamAsync(async (x, _) =>
+                .SelectParallelStreamAsync(static async (x, _) =>
                     {
                         await Task.CompletedTask;
                         return x;
@@ -299,11 +299,11 @@ public class RivuletConsoleListenerTests : IDisposable
                     new() { MaxDegreeOfParallelism = 50 })
                 .ToListAsync();
 
-            await Task.Delay(1500);
+            await Task.Delay(1500, CancellationToken.None);
 
             // ReSharper disable once DisposeOnUsingVariable
             listener.Dispose();
-            await Task.Delay(100);
+            await Task.Delay(100, CancellationToken.None);
         }
         finally
         {
@@ -333,7 +333,7 @@ public class RivuletConsoleListenerTests : IDisposable
                     new() { MaxDegreeOfParallelism = 2 })
                 .ToListAsync();
 
-            await Task.Delay(1100);
+            await Task.Delay(1100, CancellationToken.None);
         }
         finally
         {

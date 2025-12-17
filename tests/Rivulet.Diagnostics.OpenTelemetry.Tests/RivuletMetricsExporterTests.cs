@@ -37,8 +37,8 @@ public class RivuletMetricsExporterTests : IDisposable
 
         _meterProvider.ForceFlush();
 
-        _exportedMetrics.ShouldContain(m => m.Name == "rivulet.items.started");
-        var itemsStarted = _exportedMetrics.First(m => m.Name == "rivulet.items.started");
+        _exportedMetrics.ShouldContain(static m => m.Name == "rivulet.items.started");
+        var itemsStarted = _exportedMetrics.First(static m => m.Name == "rivulet.items.started");
         var currentValue = GetMetricValue(itemsStarted);
         (currentValue - initialValue).ShouldBe(10);
     }
@@ -52,8 +52,8 @@ public class RivuletMetricsExporterTests : IDisposable
 
         _meterProvider.ForceFlush();
 
-        _exportedMetrics.ShouldContain(m => m.Name == "rivulet.items.completed");
-        var itemsCompleted = _exportedMetrics.First(m => m.Name == "rivulet.items.completed");
+        _exportedMetrics.ShouldContain(static m => m.Name == "rivulet.items.completed");
+        var itemsCompleted = _exportedMetrics.First(static m => m.Name == "rivulet.items.completed");
         var currentValue = GetMetricValue(itemsCompleted);
         (currentValue - initialValue).ShouldBe(5);
     }
@@ -67,8 +67,8 @@ public class RivuletMetricsExporterTests : IDisposable
 
         _meterProvider.ForceFlush();
 
-        _exportedMetrics.ShouldContain(m => m.Name == "rivulet.retries.total");
-        var retries = _exportedMetrics.First(m => m.Name == "rivulet.retries.total");
+        _exportedMetrics.ShouldContain(static m => m.Name == "rivulet.retries.total");
+        var retries = _exportedMetrics.First(static m => m.Name == "rivulet.retries.total");
         var currentValue = GetMetricValue(retries);
         (currentValue - initialValue).ShouldBe(3);
     }
@@ -82,8 +82,8 @@ public class RivuletMetricsExporterTests : IDisposable
 
         _meterProvider.ForceFlush();
 
-        _exportedMetrics.ShouldContain(m => m.Name == "rivulet.failures.total");
-        var failures = _exportedMetrics.First(m => m.Name == "rivulet.failures.total");
+        _exportedMetrics.ShouldContain(static m => m.Name == "rivulet.failures.total");
+        var failures = _exportedMetrics.First(static m => m.Name == "rivulet.failures.total");
         var currentValue = GetMetricValue(failures);
         (currentValue - initialValue).ShouldBe(2);
     }
@@ -100,8 +100,8 @@ public class RivuletMetricsExporterTests : IDisposable
 
         _meterProvider.ForceFlush();
 
-        _exportedMetrics.ShouldContain(m => m.Name == "rivulet.error.rate");
-        var errorRate = _exportedMetrics.First(m => m.Name == "rivulet.error.rate");
+        _exportedMetrics.ShouldContain(static m => m.Name == "rivulet.error.rate");
+        var errorRate = _exportedMetrics.First(static m => m.Name == "rivulet.error.rate");
         var value = GetMetricValue(errorRate);
 
         var expectedErrorRate = initialStarted + 10 > 0
@@ -119,8 +119,8 @@ public class RivuletMetricsExporterTests : IDisposable
 
         _meterProvider.ForceFlush();
 
-        _exportedMetrics.ShouldContain(m => m.Name == "rivulet.throttle.events");
-        var throttleEvents = _exportedMetrics.First(m => m.Name == "rivulet.throttle.events");
+        _exportedMetrics.ShouldContain(static m => m.Name == "rivulet.throttle.events");
+        var throttleEvents = _exportedMetrics.First(static m => m.Name == "rivulet.throttle.events");
         var currentValue = GetMetricValue(throttleEvents);
         (currentValue - initialValue).ShouldBe(4);
     }
@@ -134,8 +134,8 @@ public class RivuletMetricsExporterTests : IDisposable
 
         _meterProvider.ForceFlush();
 
-        _exportedMetrics.ShouldContain(m => m.Name == "rivulet.drain.events");
-        var drainEvents = _exportedMetrics.First(m => m.Name == "rivulet.drain.events");
+        _exportedMetrics.ShouldContain(static m => m.Name == "rivulet.drain.events");
+        var drainEvents = _exportedMetrics.First(static m => m.Name == "rivulet.drain.events");
         var currentValue = GetMetricValue(drainEvents);
         (currentValue - initialValue).ShouldBe(3);
     }
@@ -162,14 +162,14 @@ public class RivuletMetricsExporterTests : IDisposable
 
         // Force flush to get latest metrics
         _meterProvider.ForceFlush();
-        await Task.Delay(50); // Give time for metrics to be exported
+        await Task.Delay(50, CancellationToken.None); // Give time for metrics to be exported
 
-        _exportedMetrics.ShouldContain(m => m.Name == "rivulet.items.started");
-        _exportedMetrics.ShouldContain(m => m.Name == "rivulet.items.completed");
+        _exportedMetrics.ShouldContain(static m => m.Name == "rivulet.items.started");
+        _exportedMetrics.ShouldContain(static m => m.Name == "rivulet.items.completed");
 
         // Get the LATEST metrics (Last instead of First)
-        var itemsStarted = _exportedMetrics.Last(m => m.Name == "rivulet.items.started");
-        var itemsCompleted = _exportedMetrics.Last(m => m.Name == "rivulet.items.completed");
+        var itemsStarted = _exportedMetrics.Last(static m => m.Name == "rivulet.items.started");
+        var itemsCompleted = _exportedMetrics.Last(static m => m.Name == "rivulet.items.completed");
 
         // Read final values from EventSource for accurate comparison
         var finalStarted = RivuletEventSource.Log.GetItemsStarted();

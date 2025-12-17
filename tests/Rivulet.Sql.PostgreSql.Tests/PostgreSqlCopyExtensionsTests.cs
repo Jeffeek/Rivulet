@@ -2,7 +2,7 @@
 
 namespace Rivulet.Sql.PostgreSql.Tests;
 
-public class PostgreSqlCopyExtensionsTests
+public sealed class PostgreSqlCopyExtensionsTests
 {
     private static NpgsqlConnection CreateMockConnection() =>
         // Note: This creates a real NpgsqlConnection object, but we won't actually use it
@@ -402,7 +402,7 @@ public class PostgreSqlCopyExtensionsTests
             ["id", "name", "email"]);
     }
 
-    private record TestRecord(int Id, string Name, string Email);
+    private sealed record TestRecord(int Id, string Name, string Email);
 
     // New tests for fixes
     // Note: Tests for SQL injection prevention and null connection factory return

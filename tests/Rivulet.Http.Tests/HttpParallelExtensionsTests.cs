@@ -15,7 +15,7 @@ public class HttpParallelExtensionsTests
     {
         var uris = new[] { new Uri("http://test.local/1"), new Uri("http://test.local/2"), new Uri("http://test.local/3") };
 
-        using var httpClient = CreateTestClient((request, _) =>
+        using var httpClient = CreateTestClient(static (request, _) =>
         {
             var response = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent($"Response for {request.RequestUri}") };
             return Task.FromResult(response);
@@ -24,7 +24,7 @@ public class HttpParallelExtensionsTests
         var results = await uris.GetParallelAsync(httpClient);
 
         results.Count.ShouldBe(3);
-        results.ShouldAllBe(r => r.StatusCode == HttpStatusCode.OK);
+        results.ShouldAllBe(static r => r.StatusCode == HttpStatusCode.OK);
 
         foreach (var response in results) response.Dispose();
     }
@@ -51,7 +51,7 @@ public class HttpParallelExtensionsTests
     {
         var uris = new[] { new Uri("http://test.local/1"), new Uri("http://test.local/2") };
 
-        using var httpClient = CreateTestClient((request, _) =>
+        using var httpClient = CreateTestClient(static (request, _) =>
         {
             var response = new HttpResponseMessage(HttpStatusCode.OK)
             {
@@ -105,7 +105,7 @@ public class HttpParallelExtensionsTests
         var results = await requests.PostParallelAsync(httpClient);
 
         results.Count.ShouldBe(2);
-        results.ShouldAllBe(r => r.StatusCode == HttpStatusCode.Created);
+        results.ShouldAllBe(static r => r.StatusCode == HttpStatusCode.Created);
 
         foreach (var response in results) response.Dispose();
     }
@@ -119,7 +119,7 @@ public class HttpParallelExtensionsTests
             (uri: new Uri("http://test.local/put2"), content: (HttpContent)new StringContent("update2"))
         };
 
-        using var httpClient = CreateTestClient((_, _) =>
+        using var httpClient = CreateTestClient(static (_, _) =>
         {
             var response = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("Updated") };
             return Task.FromResult(response);
@@ -128,7 +128,7 @@ public class HttpParallelExtensionsTests
         var results = await requests.PutParallelAsync(httpClient);
 
         results.Count.ShouldBe(2);
-        results.ShouldAllBe(r => r.StatusCode == HttpStatusCode.OK);
+        results.ShouldAllBe(static r => r.StatusCode == HttpStatusCode.OK);
 
         foreach (var response in results) response.Dispose();
     }
@@ -161,9 +161,7 @@ public class HttpParallelExtensionsTests
         using var httpClient = CreateTestClient((_, _) =>
         {
             attemptCount++;
-            if (attemptCount < 2) return Task.FromResult(new HttpResponseMessage(HttpStatusCode.ServiceUnavailable));
-
-            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("Success") });
+            return Task.FromResult(attemptCount < 2 ? new(HttpStatusCode.ServiceUnavailable) : new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("Success") });
         });
 
         var options = new HttpOptions { ParallelOptions = new() { MaxRetries = 3, BaseDelay = TimeSpan.FromMilliseconds(10) } };
@@ -204,7 +202,7 @@ public class HttpParallelExtensionsTests
         Uri? callbackUri = null;
         HttpStatusCode? callbackStatus = null;
 
-        using var httpClient = CreateTestClient((_, _) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.InternalServerError)));
+        using var httpClient = CreateTestClient(static (_, _) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.InternalServerError)));
 
         var options = new HttpOptions
         {
@@ -230,7 +228,7 @@ public class HttpParallelExtensionsTests
         var uris = Enumerable.Range(1, 10).Select(static i => new Uri($"http://test.local/{i}"));
         using var cts = new CancellationTokenSource();
 
-        using var httpClient = CreateTestClient(async (_, ct) =>
+        using var httpClient = CreateTestClient(static async (_, ct) =>
         {
             await Task.Delay(100, CancellationToken.None); // Use CancellationToken.None to avoid canceling delay
             ct.ThrowIfCancellationRequested();

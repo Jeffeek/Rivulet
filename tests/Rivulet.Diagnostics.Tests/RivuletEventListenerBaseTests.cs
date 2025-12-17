@@ -9,7 +9,7 @@ namespace Rivulet.Diagnostics.Tests;
 // EventSource and EventListener are process-wide singletons by design.
 // These tests must run sequentially to avoid cross-test pollution.
 [Collection(TestCollections.SerialEventSource)]
-public class RivuletEventListenerBaseTests : IDisposable
+public sealed class RivuletEventListenerBaseTests : IDisposable
 {
     private readonly TestEventListener _listener = new();
 
@@ -35,7 +35,7 @@ public class RivuletEventListenerBaseTests : IDisposable
         // Increased to 8000ms for Windows CI/CD reliability
         await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddMilliseconds(6000),
-            () => Task.Delay(100),
+            static () => Task.Delay(100),
             () => _listener.ReceivedCounters.IsEmpty);
 
         _listener.ReceivedCounters.ShouldNotBeEmpty();
@@ -60,7 +60,7 @@ public class RivuletEventListenerBaseTests : IDisposable
         // EventSource publishes counters every 1 second - poll with timeout
         // Increased to 8000ms for Windows CI/CD reliability
         var deadline = DateTime.UtcNow.AddMilliseconds(8000);
-        while (_listener.ReceivedCounters.IsEmpty && DateTime.UtcNow < deadline) await Task.Delay(100);
+        while (_listener.ReceivedCounters.IsEmpty && DateTime.UtcNow < deadline) await Task.Delay(100, CancellationToken.None);
 
         _listener.ReceivedCounters.ShouldNotBeEmpty();
         foreach (var counter in _listener.ReceivedCounters) counter.Value.DisplayName.ShouldNotBeNullOrEmpty();
@@ -84,7 +84,7 @@ public class RivuletEventListenerBaseTests : IDisposable
         // EventSource publishes counters every 1 second - poll with timeout
         // Increased to 8000ms for Windows CI/CD reliability
         var deadline = DateTime.UtcNow.AddMilliseconds(8000);
-        while (_listener.ReceivedCounters.IsEmpty && DateTime.UtcNow < deadline) await Task.Delay(100);
+        while (_listener.ReceivedCounters.IsEmpty && DateTime.UtcNow < deadline) await Task.Delay(100, CancellationToken.None);
 
         _listener.ReceivedCounters.ShouldNotBeEmpty();
         foreach (var counter in _listener.ReceivedCounters) counter.Value.DisplayUnits.ShouldNotBeNull();
@@ -124,7 +124,7 @@ public class RivuletEventListenerBaseTests : IDisposable
         customSource.WriteEvent(1, "test");
 
         // Give it a moment for any events to be processed
-        await Task.Delay(100);
+        await Task.Delay(100, CancellationToken.None);
 
         // Should not receive any counters because event source name doesn't match
         listener.ReceivedCounters.ShouldBeEmpty();
@@ -161,7 +161,7 @@ public class RivuletEventListenerBaseTests : IDisposable
         customSource.EmitCounterWithoutDisplayUnits();
 
         // Wait a bit for the event to be processed
-        await Task.Delay(1000);
+        await Task.Delay(1000, CancellationToken.None);
 
         listener.Dispose();
     }
@@ -221,7 +221,7 @@ public class RivuletEventListenerBaseTests : IDisposable
         // Wait for counters - increased to 8000ms for CI/CD reliability
         await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddMilliseconds(6000),
-            () => Task.Delay(100),
+            static () => Task.Delay(100),
             () => listener.ReceivedCounters.IsEmpty);
 
         // Listener should have received counters, proving IsEnabled was set to true
@@ -330,7 +330,7 @@ public class RivuletEventListenerBaseTests : IDisposable
 
         // Increased to 8000ms for CI/CD reliability
         var deadline = DateTime.UtcNow.AddMilliseconds(8000);
-        while (listener.ReceivedCounters.IsEmpty && DateTime.UtcNow < deadline) await Task.Delay(100);
+        while (listener.ReceivedCounters.IsEmpty && DateTime.UtcNow < deadline) await Task.Delay(100, CancellationToken.None);
 
         listener.ReceivedCounters.ShouldNotBeEmpty();
 

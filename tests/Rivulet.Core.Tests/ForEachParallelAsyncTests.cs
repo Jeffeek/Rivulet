@@ -175,7 +175,7 @@ public sealed class ForEachParallelAsyncTests
     {
         var source = Enumerable.Range(1, 5).ToAsyncEnumerable();
 
-        var task = source.ForEachParallelAsync((_, _) => ValueTask.CompletedTask);
+        var task = source.ForEachParallelAsync(static (_, _) => ValueTask.CompletedTask);
 
         await task;
         task.IsCompleted.ShouldBeTrue();

@@ -57,13 +57,7 @@ public sealed class LifecycleHooksTests
             }
         };
 
-        await source.SelectParallelAsync(
-            (x, _) =>
-            {
-                if (x == 5) throw new InvalidOperationException("Error");
-
-                return new ValueTask<int>(x * 2);
-            },
+        await source.SelectParallelAsync(static (x, _) => x == 5 ? throw new InvalidOperationException("Error") : new ValueTask<int>(x * 2),
             options);
 
         completedItems.Count.ShouldBe(9);
@@ -86,18 +80,12 @@ public sealed class LifecycleHooksTests
             }
         };
 
-        await source.SelectParallelAsync(
-            (x, _) =>
-            {
-                if (x is 3 or 7) throw new InvalidOperationException($"Error at {x}");
-
-                return new ValueTask<int>(x * 2);
-            },
+        await source.SelectParallelAsync(static (x, _) => x is 3 or 7 ? throw new InvalidOperationException($"Error at {x}") : new ValueTask<int>(x * 2),
             options);
 
         errorIndices.Count.ShouldBe(2);
         errorExceptions.Count.ShouldBe(2);
-        errorExceptions.ShouldAllBe(x => x.GetType() == typeof(InvalidOperationException));
+        errorExceptions.ShouldAllBe(static x => x.GetType() == typeof(InvalidOperationException));
     }
 
     [Fact]
@@ -176,18 +164,12 @@ public sealed class LifecycleHooksTests
             }
         };
 
-        await source.SelectParallelAsync(
-            (x, _) =>
-            {
-                if (x == 5) throw new InvalidOperationException("Error");
-
-                return new ValueTask<int>(x * 2);
-            },
+        await source.SelectParallelAsync(static (x, _) => x == 5 ? throw new InvalidOperationException("Error") : new ValueTask<int>(x * 2),
             options);
 
-        events.ShouldContain(e => e.StartsWith("Error-"));
-        events.Where(e => e.StartsWith("Complete-")).Count().ShouldBe(9);
-        events.Where(e => e.StartsWith("Start-")).Count().ShouldBe(10);
+        events.ShouldContain(static e => e.StartsWith("Error-"));
+        events.Where(static e => e.StartsWith("Complete-", StringComparison.Ordinal)).Count().ShouldBe(9);
+        events.Where(static e => e.StartsWith("Start-", StringComparison.Ordinal)).Count().ShouldBe(10);
     }
 
     [Fact]
@@ -237,8 +219,7 @@ public sealed class LifecycleHooksTests
             }
         };
 
-        await source.ForEachParallelAsync(
-            (_, _) => ValueTask.CompletedTask,
+        await source.ForEachParallelAsync(static (_, _) => ValueTask.CompletedTask,
             options);
 
         startedItems.Count.ShouldBe(10);
@@ -254,7 +235,7 @@ public sealed class LifecycleHooksTests
         {
             MaxDegreeOfParallelism = 4, // Limit concurrency to reduce in-flight items when error occurs
             ErrorMode = ErrorMode.CollectAndContinue,
-            OnErrorAsync = (_, _) => ValueTask.FromResult(false)
+            OnErrorAsync = static (_, _) => ValueTask.FromResult(false)
         };
 
         var act = () => source.SelectParallelAsync(
@@ -300,12 +281,12 @@ public sealed class LifecycleHooksTests
         {
             OnStartItemAsync = async idx =>
             {
-                await Task.Delay(10);
+                await Task.Delay(10, CancellationToken.None);
                 asyncWorkDone.Add(idx);
             },
             OnCompleteItemAsync = async idx =>
             {
-                await Task.Delay(10);
+                await Task.Delay(10, CancellationToken.None);
                 asyncWorkDone.Add(idx);
             }
         };

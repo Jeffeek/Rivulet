@@ -321,7 +321,7 @@ public class SqlBulkCopyExtensionsTests
         ex.ParamName.ShouldBe("columnMappings");
     }
 
-    private record TestRecord(int Id, string Name, string Email);
+    private sealed record TestRecord(int Id, string Name, string Email);
 
     // Note: Tests for null connection factory return and null DataReader in source
     // are not included here because exceptions thrown inside parallel operations

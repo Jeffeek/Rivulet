@@ -4,7 +4,7 @@ using Rivulet.Core.Observability;
 namespace Rivulet.Diagnostics.Tests;
 
 [Collection(TestCollections.SerialEventSource)]
-public class MetricsAggregatorTests
+public sealed class MetricsAggregatorTests
 {
     [Fact]
     public async Task MetricsAggregator_ShouldAggregateMetrics_OverTimeWindow()
@@ -32,7 +32,7 @@ public class MetricsAggregatorTests
             .ToListAsync();
 
         // Wait for EventCounters to poll and write metrics, then for aggregation window to fire
-        await Task.Delay(5000);
+        await Task.Delay(5000, CancellationToken.None);
 
         // Take a thread-safe snapshot to avoid race conditions
         IReadOnlyList<AggregatedMetrics> lastAggregation;
@@ -44,7 +44,7 @@ public class MetricsAggregatorTests
 
         lastAggregation.ShouldNotBeEmpty();
 
-        var itemsStartedMetric = lastAggregation.FirstOrDefault(m => m.Name == RivuletMetricsConstants.CounterNames.ItemsStarted);
+        var itemsStartedMetric = lastAggregation.FirstOrDefault(static m => m.Name == RivuletMetricsConstants.CounterNames.ItemsStarted);
         itemsStartedMetric.ShouldNotBeNull();
         itemsStartedMetric.Min.ShouldBeGreaterThanOrEqualTo(0);
         itemsStartedMetric.Max.ShouldBeGreaterThanOrEqualTo(itemsStartedMetric.Min);
@@ -80,7 +80,7 @@ public class MetricsAggregatorTests
             .ToListAsync();
 
         // Wait for at least 2x the aggregation window to ensure timer fires reliably
-        await Task.Delay(3000); // Fixed delay for timer-based aggregation
+        await Task.Delay(3000, CancellationToken.None); // Fixed delay for timer-based aggregation
 
         // Take a thread-safe snapshot of the list to avoid race conditions
         List<IReadOnlyList<AggregatedMetrics>> snapshot;
@@ -129,7 +129,7 @@ public class MetricsAggregatorTests
             .ToListAsync();
 
         // Wait for EventCounters to poll (~1s interval) + aggregation timer to fire
-        await Task.Delay(2000); // Fixed delay for timer-based aggregation
+        await Task.Delay(2000, CancellationToken.None); // Fixed delay for timer-based aggregation
 
         // Take a thread-safe snapshot for initial checks
         IReadOnlyList<AggregatedMetrics> firstAggregation;
@@ -143,7 +143,7 @@ public class MetricsAggregatorTests
 
         // Wait for another aggregation window to potentially expire samples
         // This verifies that the aggregator handles sample expiration gracefully
-        await Task.Delay(2000);
+        await Task.Delay(2000, CancellationToken.None);
 
         // Take a thread-safe snapshot for final checks
         List<IReadOnlyList<AggregatedMetrics>> snapshot;

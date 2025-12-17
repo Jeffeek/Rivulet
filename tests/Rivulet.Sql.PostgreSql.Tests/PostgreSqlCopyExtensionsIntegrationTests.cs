@@ -9,7 +9,7 @@ namespace Rivulet.Sql.PostgreSql.Tests;
 ///     Requires Docker Desktop to be running.
 /// </summary>
 [Trait("Category", "Integration")]
-public class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
+public sealed class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
 {
     private string? _connectionString;
     private PostgreSqlContainer? _container;
@@ -28,12 +28,14 @@ public class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
         await connection.OpenAsync();
 
         await using var command = connection.CreateCommand();
-        command.CommandText = @"
-            CREATE TABLE ""TestTable"" (
-                ""Id"" INT NOT NULL,
-                ""Name"" VARCHAR(100) NOT NULL,
-                ""Email"" VARCHAR(100) NOT NULL
-            )";
+        command.CommandText = """
+
+                                          CREATE TABLE "TestTable" (
+                                              "Id" INT NOT NULL,
+                                              "Name" VARCHAR(100) NOT NULL,
+                                              "Email" VARCHAR(100) NOT NULL
+                                          )
+                              """;
         await command.ExecuteNonQueryAsync();
     }
 
@@ -113,8 +115,7 @@ public class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
         var records = new[] { new TestRecord(1, "Test", "test@example.com") };
         var columns = new[] { "Id", "Name", "Email" };
 
-        var act = async () => await records.BulkInsertUsingCopyAsync(
-            () => null!,
+        var act = () => records.BulkInsertUsingCopyAsync(static () => null!,
             "TestTable",
             columns,
             MapToRow);
@@ -129,7 +130,7 @@ public class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
         var records = new[] { new TestRecord(1, "Test", "test@example.com") };
         var columns = new[] { "Id", "Name", "Email" };
 
-        var act = async () => await records.BulkInsertUsingCopyAsync(
+        var act = () => records.BulkInsertUsingCopyAsync(
             CreateConnection,
             "NonExistentTable",
             columns,
@@ -223,8 +224,7 @@ public class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
         var csvLines = new[] { "1,Test,test@example.com" };
         var columns = new[] { "Id", "Name", "Email" };
 
-        var act = async () => await csvLines.BulkInsertUsingCopyCsvAsync(
-            () => null!,
+        var act = () => csvLines.BulkInsertUsingCopyCsvAsync(static () => null!,
             "TestTable",
             columns);
 
@@ -290,8 +290,7 @@ public class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
         var textLines = new[] { "1\tTest\ttest@example.com" };
         var columns = new[] { "Id", "Name", "Email" };
 
-        var act = async () => await textLines.BulkInsertUsingCopyTextAsync(
-            () => null!,
+        var act = () => textLines.BulkInsertUsingCopyTextAsync(static () => null!,
             "TestTable",
             columns);
 
@@ -299,5 +298,5 @@ public class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
         await act.ShouldThrowAsync<OperationCanceledException>();
     }
 
-    private record TestRecord(int Id, string Name, string Email);
+    private sealed record TestRecord(int Id, string Name, string Email);
 }

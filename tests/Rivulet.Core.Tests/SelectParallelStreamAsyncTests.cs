@@ -96,7 +96,7 @@ public sealed class SelectParallelStreamAsyncTests
                            options))
         {
             results.Add(item);
-            await Task.Delay(1);
+            await Task.Delay(1, CancellationToken.None);
         }
 
         results.Count.ShouldBe(100);
@@ -136,7 +136,7 @@ public sealed class SelectParallelStreamAsyncTests
             .ToListAsync();
 
         results.Count.ShouldBe(20);
-        results.Count(r => r.Item2).ShouldBe(10);
+        results.Count(static r => r.Item2).ShouldBe(10);
     }
 
     [Fact]
@@ -160,11 +160,11 @@ public sealed class SelectParallelStreamAsyncTests
         results.OrderBy(static x => x).ShouldBe([2, 4, 6, 8, 10]);
         return;
 
-        async IAsyncEnumerable<int> SlowProducer()
+        static async IAsyncEnumerable<int> SlowProducer()
         {
             for (var i = 1; i <= 5; i++)
             {
-                await Task.Delay(50);
+                await Task.Delay(50, CancellationToken.None);
                 yield return i;
             }
         }

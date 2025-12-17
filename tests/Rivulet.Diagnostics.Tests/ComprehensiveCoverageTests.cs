@@ -7,7 +7,7 @@ namespace Rivulet.Diagnostics.Tests;
 ///     Comprehensive tests to achieve 100% code coverage for edge cases.
 /// </summary>
 [Collection(TestCollections.SerialEventSource)]
-public class ComprehensiveCoverageTests
+public sealed class ComprehensiveCoverageTests
 {
     [Fact]
     public async Task EventListenerBase_ShouldHandleEarlyReturnCases()
@@ -16,7 +16,7 @@ public class ComprehensiveCoverageTests
         // without performing any operations, even when metrics may be flowing from other tests
         var listener = new TestRivuletEventListener();
 
-        await Task.Delay(100);
+        await Task.Delay(100, CancellationToken.None);
 
         // Should not throw when disposed
         var act = () => listener.Dispose();
@@ -52,7 +52,7 @@ public class ComprehensiveCoverageTests
         // Wait for at least 2x the aggregation window to ensure timer fires and EventSource counters are received
         await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddMilliseconds(2000),
-            () => Task.Delay(100),
+            static () => Task.Delay(100),
             () => !callbackInvoked);
 
         callbackInvoked.ShouldBeTrue();
@@ -80,11 +80,11 @@ public class ComprehensiveCoverageTests
                     .ToListAsync();
 
                 // Wait for EventSource counters to fire and be written to file
-                await Task.Delay(2000);
+                await Task.Delay(2000, CancellationToken.None);
             }
 
             // Brief wait for file handle release
-            await Task.Delay(100);
+            await Task.Delay(100, CancellationToken.None);
 
             File.Exists(testFile).ShouldBeTrue();
         }

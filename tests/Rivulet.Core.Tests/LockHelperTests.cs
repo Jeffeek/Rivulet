@@ -24,9 +24,9 @@ public sealed class LockHelperTests
     [Fact]
     public void LockHelper_ExecuteFunc_ReturnsExpectedValue()
     {
-        var expectedValue = 42;
+        const int expectedValue = 42;
 
-        var result = LockHelper.Execute(_lock, () => expectedValue);
+        var result = LockHelper.Execute(_lock, static () => expectedValue);
 
         result.ShouldBe(expectedValue);
     }
@@ -34,9 +34,9 @@ public sealed class LockHelperTests
     [Fact]
     public void LockHelper_ExecuteFunc_ReturnsComputedValue()
     {
-        var value = 10;
+        const int value = 10;
 
-        var result = LockHelper.Execute(_lock, () => (value * 2) + 3);
+        var result = LockHelper.Execute(_lock, static () => value * 2 + 3);
 
         result.ShouldBe(23);
     }
@@ -81,16 +81,19 @@ public sealed class LockHelperTests
     {
         var expectedException = new InvalidOperationException("Test exception");
 
-        var func = () => LockHelper.Execute(_lock,
-            () =>
-            {
-                throw expectedException;
+        void Func()
+        {
+            LockHelper.Execute(_lock,
+                () =>
+                {
+                    throw expectedException;
 #pragma warning disable CS0162 // Unreachable code detected
-                return 42;
+                    return 42;
 #pragma warning restore CS0162 // Unreachable code detected
-            });
+                });
+        }
 
-        Action act = () => func();
+        var act = Func;
         var ex = act.ShouldThrow<InvalidOperationException>();
         ex.Message.ShouldContain("Test exception");
     }
@@ -99,8 +102,8 @@ public sealed class LockHelperTests
     public void LockHelper_ExecuteAction_ThreadSafety_NoRaceConditions()
     {
         var counter = 0;
-        var threadCount = 100;
-        var incrementsPerThread = 100;
+        const int threadCount = 100;
+        const int incrementsPerThread = 100;
         var tasks = new Task[threadCount];
 
         for (var i = 0; i < threadCount; i++)
@@ -122,7 +125,7 @@ public sealed class LockHelperTests
     public void LockHelper_ExecuteFunc_ThreadSafety_ConsistentReads()
     {
         var counter = 0;
-        var threadCount = 50;
+        const int threadCount = 50;
         var results = new ConcurrentBag<int>();
         var tasks = new Task[threadCount];
 
@@ -152,7 +155,7 @@ public sealed class LockHelperTests
         counter.ShouldBe(threadCount / 2);
         results.ShouldNotBeEmpty();
         // All read values should be between 0 and threadCount/2
-        results.ShouldAllBe(value => value >= 0 && value <= threadCount / 2);
+        results.ShouldAllBe(static value => value >= 0 && value <= threadCount / 2);
     }
 
     [Fact]
@@ -208,10 +211,10 @@ public sealed class LockHelperTests
     public void LockHelper_ExecuteFunc_WithNullableReturnType()
     {
         string? nullValue = null;
-        var nonNullValue = "test";
+        const string nonNullValue = "test";
 
         var result1 = LockHelper.Execute(_lock, () => nullValue);
-        var result2 = LockHelper.Execute(_lock, () => nonNullValue);
+        var result2 = LockHelper.Execute(_lock, static () => nonNullValue);
 
         result1.ShouldBeNull();
         result2.ShouldBe("test");
@@ -223,7 +226,7 @@ public sealed class LockHelperTests
         var executionOrder = new ConcurrentBag<int>();
         var activeCount = 0;
         var maxActiveCount = 0;
-        var threadCount = 10;
+        const int threadCount = 10;
         var tasks = new Task[threadCount];
 
         for (var i = 0; i < threadCount; i++)
@@ -259,9 +262,9 @@ public sealed class LockHelperTests
     [Fact]
     public void LockHelper_ExecuteFunc_WithBooleanReturn()
     {
-        var condition = true;
+        const bool condition = true;
 
-        var result = LockHelper.Execute(_lock, () => condition);
+        var result = LockHelper.Execute(_lock, static () => condition);
 
         result.ShouldBeTrue();
     }
@@ -336,9 +339,9 @@ public sealed class LockHelperTests
     [Fact]
     public async Task LockHelper_ExecuteFunc_WorksWithAsyncContext()
     {
-        var value = 42;
+        const int value = 42;
 
-        var result = await Task.Run(() => LockHelper.Execute(_lock, () => value * 2));
+        var result = await Task.Run(() => LockHelper.Execute(_lock, static () => value * 2));
 
         result.ShouldBe(84);
     }
@@ -358,8 +361,8 @@ public sealed class LockHelperTests
     public void LockHelper_ExecuteAction_StressTest_HighContention()
     {
         var counter = 0;
-        var threadCount = 200;
-        var incrementsPerThread = 50;
+        const int threadCount = 200;
+        const int incrementsPerThread = 50;
         var tasks = new Task[threadCount];
 
         for (var i = 0; i < threadCount; i++)
@@ -377,7 +380,7 @@ public sealed class LockHelperTests
         counter.ShouldBe(threadCount * incrementsPerThread);
     }
 
-    private class Person
+    private sealed class Person
     {
         public string Name { get; init; } = string.Empty;
         public int Age { get; init; }

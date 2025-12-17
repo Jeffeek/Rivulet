@@ -8,14 +8,14 @@ namespace Rivulet.Diagnostics.OpenTelemetry.Tests;
 ///     Tests specifically designed to cover edge cases and improve code coverage.
 /// </summary>
 [Collection(TestCollections.ActivitySource)]
-public class EdgeCaseCoverageTests
+public sealed class EdgeCaseCoverageTests
 {
     [Fact]
     public async Task WithOpenTelemetryTracing_ShouldHandleNullOperationName()
     {
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
-        listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
+        listener.ShouldListenTo = static source => source.Name == RivuletSharedConstants.RivuletCore;
+        listener.Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = static _ => { };
         ActivitySource.AddActivityListener(listener);
 
@@ -36,8 +36,8 @@ public class EdgeCaseCoverageTests
     public async Task WithOpenTelemetryTracing_ShouldHandleEmptyOperationName()
     {
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
-        listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
+        listener.ShouldListenTo = static source => source.Name == RivuletSharedConstants.RivuletCore;
+        listener.Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = static _ => { };
         ActivitySource.AddActivityListener(listener);
 
@@ -60,8 +60,8 @@ public class EdgeCaseCoverageTests
         var activities = new List<Activity?>();
 
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
-        listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
+        listener.ShouldListenTo = static source => source.Name == RivuletSharedConstants.RivuletCore;
+        listener.Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = activity => activities.Add(activity);
         ActivitySource.AddActivityListener(listener);
 
@@ -79,9 +79,9 @@ public class EdgeCaseCoverageTests
         result.Count.ShouldBe(5);
 
         var retryEvents = activities
-            .Where(a => a?.Events != null)
-            .SelectMany(a => a!.Events)
-            .Where(e => e.Name == RivuletOpenTelemetryConstants.EventNames.Retry)
+            .Where(static a => a?.Events != null)
+            .SelectMany(static a => a!.Events)
+            .Where(static e => e.Name == RivuletOpenTelemetryConstants.EventNames.Retry)
             .ToList();
 
         retryEvents.ShouldBeEmpty();
@@ -95,8 +95,8 @@ public class EdgeCaseCoverageTests
         var onErrorCalled = 0;
 
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
-        listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
+        listener.ShouldListenTo = static source => source.Name == RivuletSharedConstants.RivuletCore;
+        listener.Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         ActivitySource.AddActivityListener(listener);
 
         var options = new ParallelOptionsRivulet
@@ -127,9 +127,7 @@ public class EdgeCaseCoverageTests
                 .SelectParallelAsync(static async (x, ct) =>
                     {
                         await Task.Delay(10, ct);
-                        if (x == 3) throw new InvalidOperationException("Test");
-
-                        return x;
+                        return x == 3 ? throw new InvalidOperationException("Test") : x;
                     },
                     options);
         }
@@ -138,7 +136,7 @@ public class EdgeCaseCoverageTests
             // Expected - test intentionally throws
         }
 
-        await Task.Delay(100);
+        await Task.Delay(100, CancellationToken.None);
 
         onStartCalled.ShouldBeGreaterThan(0);
         onCompleteCalled.ShouldBeGreaterThan(0);
@@ -166,7 +164,7 @@ public class EdgeCaseCoverageTests
     {
         using var exporter = new RivuletMetricsExporter();
 
-        await Task.Delay(100);
+        await Task.Delay(100, CancellationToken.None);
 
         await Enumerable.Range(1, 5)
             .ToAsyncEnumerable()
@@ -178,7 +176,7 @@ public class EdgeCaseCoverageTests
                 new())
             .ToListAsync();
 
-        await Task.Delay(100);
+        await Task.Delay(100, CancellationToken.None);
     }
 
     [Fact]
@@ -188,8 +186,8 @@ public class EdgeCaseCoverageTests
         var activities = new ConcurrentBag<Activity>();
 
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
-        listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
+        listener.ShouldListenTo = static source => source.Name == RivuletSharedConstants.RivuletCore;
+        listener.Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = activity => activities.Add(activity);
         ActivitySource.AddActivityListener(listener);
 
@@ -212,8 +210,8 @@ public class EdgeCaseCoverageTests
         var activities = new List<Activity?>();
 
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
-        listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
+        listener.ShouldListenTo = static source => source.Name == RivuletSharedConstants.RivuletCore;
+        listener.Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = activity => activities.Add(activity);
         ActivitySource.AddActivityListener(listener);
 
@@ -226,9 +224,7 @@ public class EdgeCaseCoverageTests
                 .SelectParallelAsync(static async (x, ct) =>
                     {
                         await Task.Delay(1, ct);
-                        if (x % 3 == 0) throw new InvalidOperationException($"Failed {x}");
-
-                        return x;
+                        return x % 3 == 0 ? throw new InvalidOperationException($"Failed {x}") : x;
                     },
                     options);
         }
@@ -239,11 +235,11 @@ public class EdgeCaseCoverageTests
 
         // Wait for all activities to be captured by the listener
         // On slower systems (CI/CD), activities may take longer to be recorded
-        await Task.Delay(300);
+        await Task.Delay(300, CancellationToken.None);
 
         // Filter out null activities (can happen during async callback execution)
-        var successActivities = activities.Where(a => a?.Status == ActivityStatusCode.Ok).ToList();
-        var errorActivities = activities.Where(a => a?.Status == ActivityStatusCode.Error).ToList();
+        var successActivities = activities.Where(static a => a?.Status == ActivityStatusCode.Ok).ToList();
+        var errorActivities = activities.Where(static a => a?.Status == ActivityStatusCode.Error).ToList();
 
         successActivities.ShouldNotBeEmpty();
         errorActivities.ShouldNotBeEmpty();
@@ -255,14 +251,14 @@ public class EdgeCaseCoverageTests
         var activities = new List<Activity?>();
 
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
-        listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
+        listener.ShouldListenTo = static source => source.Name == RivuletSharedConstants.RivuletCore;
+        listener.Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = activity => activities.Add(activity);
         ActivitySource.AddActivityListener(listener);
 
         var options = new ParallelOptionsRivulet
         {
-            MaxRetries = 2, IsTransient = ex => ex.Message.Contains("transient"), ErrorMode = ErrorMode.CollectAndContinue
+            MaxRetries = 2, IsTransient = static ex => ex.Message.Contains("transient"), ErrorMode = ErrorMode.CollectAndContinue
         }.WithOpenTelemetryTracingAndRetries("ErrorClassification");
 
         try
@@ -273,9 +269,7 @@ public class EdgeCaseCoverageTests
                         await Task.Delay(1, ct);
                         if (x % 3 == 0) throw new InvalidOperationException("transient error");
 
-                        if (x % 2 == 0) throw new InvalidOperationException("permanent error");
-
-                        return x;
+                        return x % 2 == 0 ? throw new InvalidOperationException("permanent error") : x;
                     },
                     options);
         }
@@ -286,10 +280,10 @@ public class EdgeCaseCoverageTests
 
         // Wait for all activities to be captured by the listener
         // On slower systems (CI/CD), activities may take longer to be recorded
-        await Task.Delay(300);
+        await Task.Delay(300, CancellationToken.None);
 
         // Filter out null activities (can happen during async callback execution)
-        var errorActivities = activities.Where(a => a?.Status == ActivityStatusCode.Error).ToList();
+        var errorActivities = activities.Where(static a => a?.Status == ActivityStatusCode.Error).ToList();
         errorActivities.ShouldNotBeEmpty();
     }
 

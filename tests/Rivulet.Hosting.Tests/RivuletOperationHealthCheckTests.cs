@@ -23,7 +23,7 @@ public class RivuletOperationHealthCheckTests
         var healthCheck = new RivuletOperationHealthCheck(options);
 
         // Wait for stalled threshold to pass
-        await Task.Delay(1100);
+        await Task.Delay(1100, CancellationToken.None);
 
         var result = await healthCheck.CheckHealthAsync(new());
 
@@ -90,7 +90,7 @@ public class RivuletOperationHealthCheckTests
         var healthCheck = new RivuletOperationHealthCheck(options);
 
         // Wait for stalled threshold
-        await Task.Delay(150);
+        await Task.Delay(150, CancellationToken.None);
 
         var result = await healthCheck.CheckHealthAsync(new());
 
@@ -164,7 +164,7 @@ public class RivuletOperationHealthCheckTests
         for (var i = 0; i < 3; i++) healthCheck.RecordFailure();
 
         // Wait for stalled threshold
-        await Task.Delay(50);
+        await Task.Delay(50, CancellationToken.None);
 
         var result = await healthCheck.CheckHealthAsync(new());
 
@@ -182,7 +182,7 @@ public class RivuletOperationHealthCheckTests
         var healthCheck = new RivuletOperationHealthCheck(options);
 
         // Wait then record success
-        await Task.Delay(50);
+        await Task.Delay(50, CancellationToken.None);
         healthCheck.RecordSuccess();
 
         var result = await healthCheck.CheckHealthAsync(new());

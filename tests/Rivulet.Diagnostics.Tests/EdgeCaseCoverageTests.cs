@@ -7,7 +7,7 @@ namespace Rivulet.Diagnostics.Tests;
 ///     Tests specifically designed to cover edge cases and improve code coverage.
 /// </summary>
 [Collection(TestCollections.SerialEventSource)]
-public class EdgeCaseCoverageTests
+public sealed class EdgeCaseCoverageTests
 {
     [Fact]
     public async Task HealthCheck_ShouldHandleZeroItemsStarted()
@@ -15,7 +15,7 @@ public class EdgeCaseCoverageTests
         using var exporter = new PrometheusExporter();
         var healthCheck = new RivuletHealthCheck(exporter);
 
-        await Task.Delay(100);
+        await Task.Delay(100, CancellationToken.None);
 
         var context = new HealthCheckContext();
         var result = await healthCheck.CheckHealthAsync(context);
@@ -36,9 +36,7 @@ public class EdgeCaseCoverageTests
                 .SelectParallelStreamAsync(static async (x, ct) =>
                     {
                         await Task.Delay(5, ct);
-                        if (x <= 90) throw new InvalidOperationException("Test failure");
-
-                        return x;
+                        return x <= 90 ? throw new InvalidOperationException("Test failure") : x;
                     },
                     new() { MaxDegreeOfParallelism = 8, ErrorMode = ErrorMode.CollectAndContinue })
                 .ToListAsync();
@@ -50,7 +48,7 @@ public class EdgeCaseCoverageTests
 
         // Wait for EventSource counters to fire (1s default interval)
         // Increased from 1100ms to 2000ms to handle CI/CD timing variability
-        await Task.Delay(2000);
+        await Task.Delay(2000, CancellationToken.None);
 
         var context = new HealthCheckContext();
         var result = await healthCheck.CheckHealthAsync(context);
@@ -91,13 +89,10 @@ public class EdgeCaseCoverageTests
                     .ToAsyncEnumerable()
                     .SelectParallelStreamAsync(async (x, ct) =>
                         {
-                            if (++attemptCount <= 2)
-                            {
-                                await Task.Delay(1, ct);
-                                throw new InvalidOperationException("Retry");
-                            }
+                            if (++attemptCount > 2) return x;
 
-                            return x;
+                            await Task.Delay(1, ct);
+                            throw new InvalidOperationException("Retry");
                         },
                         new() { MaxRetries = 2, IsTransient = static _ => true, MaxDegreeOfParallelism = 1 })
                     .ToListAsync();
@@ -109,7 +104,7 @@ public class EdgeCaseCoverageTests
 
             // Wait for EventSource counters to fire (1s default interval)
             // Increased from 1100ms to 2000ms to handle CI/CD timing variability
-            await Task.Delay(2000);
+            await Task.Delay(2000, CancellationToken.None);
         }
         finally
         {
@@ -156,10 +151,10 @@ public class EdgeCaseCoverageTests
                 }
 
                 // Wait for EventSource counters to fire
-                await Task.Delay(1500);
+                await Task.Delay(1500, CancellationToken.None);
             }
 
-            await Task.Delay(100);
+            await Task.Delay(100, CancellationToken.None);
 
             File.Exists(testFile).ShouldBeTrue();
             var content = await File.ReadAllTextAsync(testFile);
@@ -193,10 +188,10 @@ public class EdgeCaseCoverageTests
                     .ToListAsync();
 
                 // Wait for EventSource counters to fire (1s default interval)
-                await Task.Delay(1500);
+                await Task.Delay(1500, CancellationToken.None);
             }
 
-            await Task.Delay(100);
+            await Task.Delay(100, CancellationToken.None);
 
             File.Exists(testFile).ShouldBeTrue();
             var jsonContent = await File.ReadAllTextAsync(testFile);
@@ -229,7 +224,7 @@ public class EdgeCaseCoverageTests
 
             // Wait for EventSource counters to fire (1s default interval)
             // Increased from 1100ms to 2000ms to handle CI/CD timing variability
-            await Task.Delay(1500);
+            await Task.Delay(1500, CancellationToken.None);
 
             listener.ReceivedCounters.ShouldNotBeEmpty();
         }
@@ -258,7 +253,7 @@ public class EdgeCaseCoverageTests
 
         // Wait for EventSource counters to fire (1s default interval)
         // Increased from 1100ms to 2000ms to handle CI/CD timing variability
-        await Task.Delay(1500);
+        await Task.Delay(1500, CancellationToken.None);
     }
 
     [Fact]
@@ -270,7 +265,7 @@ public class EdgeCaseCoverageTests
             _ = true;
         };
 
-        await Task.Delay(1000);
+        await Task.Delay(1000, CancellationToken.None);
     }
 
     [Fact]
@@ -281,7 +276,7 @@ public class EdgeCaseCoverageTests
         for (var i = 0; i < 5; i++)
         {
             _ = exporter.ExportDictionary();
-            await Task.Delay(10);
+            await Task.Delay(10, CancellationToken.None);
         }
 
         // Operations must run long enough for EventCounter polling (1 second interval)
@@ -297,7 +292,7 @@ public class EdgeCaseCoverageTests
             .ToListAsync();
 
         // Wait for EventSource counters to fire (1s default interval)
-        await Task.Delay(1500);
+        await Task.Delay(1500, CancellationToken.None);
 
         var finalMetrics = exporter.ExportDictionary();
         finalMetrics.ShouldNotBeEmpty();

@@ -77,17 +77,17 @@ public sealed class EdgeCaseCoverageTests
         };
 
         await Enumerable.Range(1, 10)
-            .SelectParallelAsync<int, int>(async (_, ct) =>
+            .SelectParallelAsync<int, int>(static async (_, ct) =>
                 {
                     await Task.Delay(10, ct);
                     throw new InvalidOperationException("Always fails");
                 },
                 options);
 
-        await Task.Delay(150);
+        await Task.Delay(150, CancellationToken.None);
 
         await Enumerable.Range(1, 2)
-            .SelectParallelAsync<int, int>(async (_, ct) =>
+            .SelectParallelAsync<int, int>(static async (_, ct) =>
                 {
                     await Task.Delay(10, ct);
                     throw new InvalidOperationException("Still failing");
@@ -119,7 +119,7 @@ public sealed class EdgeCaseCoverageTests
                 MaxConcurrency = 10,
                 TargetLatency = TimeSpan.FromMilliseconds(50),
                 SampleInterval = TimeSpan.FromMilliseconds(20),
-                OnConcurrencyChange = async (oldValue, newValue) =>
+                OnConcurrencyChange = static async (oldValue, newValue) =>
                 {
                     await Task.CompletedTask;
                     if (newValue > oldValue) throw new InvalidOperationException("Callback exception");
@@ -181,13 +181,11 @@ public sealed class EdgeCaseCoverageTests
             .SelectParallelAsync(static async (x, ct) =>
                 {
                     await Task.Delay(1, ct);
-                    if (x % 3 == 0) throw new InvalidOperationException($"Failed on {x}");
-
-                    return x;
+                    return x % 3 == 0 ? throw new InvalidOperationException($"Failed on {x}") : x;
                 },
                 options);
 
-        result.ShouldNotContain(x => x % 3 == 0);
+        result.ShouldNotContain(static x => x % 3 == 0);
         result.Count.ShouldBeLessThan(10);
     }
 
@@ -200,7 +198,7 @@ public sealed class EdgeCaseCoverageTests
             BaseDelay = TimeSpan.FromMilliseconds(10),
             BackoffStrategy = BackoffStrategy.ExponentialJitter,
             IsTransient = static _ => true,
-            OnRetryAsync = async (_, _, _) =>
+            OnRetryAsync = static async (_, _, _) =>
             {
                 await Task.CompletedTask;
             }
@@ -272,7 +270,7 @@ public sealed class EdgeCaseCoverageTests
                 },
                 options);
 
-        await Task.Delay(50);
+        await Task.Delay(50, CancellationToken.None);
 
         var result = await task;
 

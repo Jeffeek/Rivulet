@@ -5,21 +5,23 @@ using Rivulet.Core;
 
 namespace Rivulet.Diagnostics.OpenTelemetry.Tests;
 
-[Collection(TestCollections.ActivitySource)]
-[SuppressMessage("ReSharper", "AccessToDisposedClosure")]
-public class ParallelOptionsRivuletExtensionsTests
+[
+    Collection(TestCollections.ActivitySource),
+    SuppressMessage("ReSharper", "AccessToDisposedClosure")
+]
+public sealed class ParallelOptionsRivuletExtensionsTests
 {
     [Fact]
     public async Task WithOpenTelemetryTracing_ShouldCreateActivitiesForEachItem()
     {
         var activities = new ConcurrentBag<Activity>();
         var activityCount = 0;
-        var expectedCount = 5;
+        const int expectedCount = 5;
         using var allActivitiesStarted = new ManualResetEventSlim(false);
 
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
-        listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
+        listener.ShouldListenTo = static source => source.Name == RivuletSharedConstants.RivuletCore;
+        listener.Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         listener.ActivityStarted = activity =>
         {
             activities.Add(activity);
@@ -40,11 +42,11 @@ public class ParallelOptionsRivuletExtensionsTests
 
         // Wait for all activities to be started and added
         allActivitiesStarted.Wait(TimeSpan.FromSeconds(2));
-        await Task.Delay(50); // Extra buffer
+        await Task.Delay(50, CancellationToken.None); // Extra buffer
 
         results.Count.ShouldBe(5);
         activities.Count.ShouldBe(5, "should have one activity per item");
-        activities.All(a => a.OperationName == "Rivulet.TestOperation.Item").ShouldBeTrue();
+        activities.All(static a => a.OperationName == "Rivulet.TestOperation.Item").ShouldBeTrue();
     }
 
     [Fact]
@@ -56,8 +58,8 @@ public class ParallelOptionsRivuletExtensionsTests
         using var allActivitiesStopped = new ManualResetEventSlim(false);
 
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
-        listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
+        listener.ShouldListenTo = static source => source.Name == RivuletSharedConstants.RivuletCore;
+        listener.Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = activity =>
         {
             activities.Add(activity);
@@ -78,14 +80,14 @@ public class ParallelOptionsRivuletExtensionsTests
 
         // Wait for all activities to be stopped and added
         allActivitiesStopped.Wait(TimeSpan.FromSeconds(2));
-        await Task.Delay(50); // Extra buffer
+        await Task.Delay(50, CancellationToken.None); // Extra buffer
 
         results.Count.ShouldBe(3);
 
-        var successActivities = activities.Where(a => a.OperationName == "Rivulet.SuccessOperation.Item").ToList();
+        var successActivities = activities.Where(static a => a.OperationName == "Rivulet.SuccessOperation.Item").ToList();
         successActivities.Count.ShouldBe(3);
-        successActivities.All(a => a.Status == ActivityStatusCode.Ok).ShouldBeTrue();
-        successActivities.All(a => (int)a.GetTagItem("rivulet.items_processed")! == 1).ShouldBeTrue();
+        successActivities.All(static a => a.Status == ActivityStatusCode.Ok).ShouldBeTrue();
+        successActivities.All(static a => (int)a.GetTagItem("rivulet.items_processed")! == 1).ShouldBeTrue();
     }
 
 
@@ -94,12 +96,12 @@ public class ParallelOptionsRivuletExtensionsTests
     {
         var activities = new ConcurrentBag<Activity>();
         var activityCount = 0;
-        var expectedCount = 3;
+        const int expectedCount = 3;
         using var allActivitiesStopped = new ManualResetEventSlim(false);
 
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
-        listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
+        listener.ShouldListenTo = static source => source.Name == RivuletSharedConstants.RivuletCore;
+        listener.Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = activity =>
         {
             activities.Add(activity);
@@ -127,11 +129,11 @@ public class ParallelOptionsRivuletExtensionsTests
 
         // Wait for all activities to be stopped and added
         allActivitiesStopped.Wait(TimeSpan.FromSeconds(2));
-        await Task.Delay(50); // Extra buffer
+        await Task.Delay(50, CancellationToken.None); // Extra buffer
 
-        var errorActivities = activities.Where(a => a.OperationName == "Rivulet.ErrorOperation.Item").ToList();
+        var errorActivities = activities.Where(static a => a.OperationName == "Rivulet.ErrorOperation.Item").ToList();
         errorActivities.Count.ShouldBe(3);
-        errorActivities.All(a => a.Status == ActivityStatusCode.Error).ShouldBeTrue();
+        errorActivities.All(static a => a.Status == ActivityStatusCode.Error).ShouldBeTrue();
     }
 
 
@@ -140,8 +142,8 @@ public class ParallelOptionsRivuletExtensionsTests
     {
         var activities = new List<Activity>();
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
-        listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
+        listener.ShouldListenTo = static source => source.Name == RivuletSharedConstants.RivuletCore;
+        listener.Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = activity => activities.Add(activity);
         ActivitySource.AddActivityListener(listener);
 
@@ -164,14 +166,14 @@ public class ParallelOptionsRivuletExtensionsTests
 
         results.Count.ShouldBe(1);
 
-        var retryActivities = activities.Where(a => a.OperationName == "Rivulet.RetryOperation.Item").ToList();
+        var retryActivities = activities.Where(static a => a.OperationName == "Rivulet.RetryOperation.Item").ToList();
         retryActivities.Count.ShouldBe(1);
 
         var activity = retryActivities[0];
         activity.Status.ShouldBe(ActivityStatusCode.Ok);
 
         // Should have 2 retry events (attempt 1 and 2, then success on attempt 3)
-        var retryEvents = activity.Events.Where(e => e.Name == "retry").ToList();
+        var retryEvents = activity.Events.Where(static e => e.Name == "retry").ToList();
         retryEvents.Count.ShouldBeGreaterThanOrEqualTo(1);
     }
 
@@ -183,8 +185,8 @@ public class ParallelOptionsRivuletExtensionsTests
         var onErrorCalled = 0;
 
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
-        listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
+        listener.ShouldListenTo = static source => source.Name == RivuletSharedConstants.RivuletCore;
+        listener.Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         ActivitySource.AddActivityListener(listener);
 
         var items = Enumerable.Range(1, 3);
@@ -231,8 +233,8 @@ public class ParallelOptionsRivuletExtensionsTests
         var failureCount = 0;
 
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
-        listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
+        listener.ShouldListenTo = static source => source.Name == RivuletSharedConstants.RivuletCore;
+        listener.Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = activity => activities.Add(activity);
         ActivitySource.AddActivityListener(listener);
 
@@ -249,7 +251,7 @@ public class ParallelOptionsRivuletExtensionsTests
                 {
                     stateChanged.Set();
                     // Add delay to ensure state change is recorded while activities are still active
-                    await Task.Delay(50); // Reduced from 200ms for faster tests
+                    await Task.Delay(50, CancellationToken.None); // Reduced from 200ms for faster tests
                 }
             }
         }.WithOpenTelemetryTracing("CircuitBreakerOperation");
@@ -283,12 +285,12 @@ public class ParallelOptionsRivuletExtensionsTests
         // Give time for event to be recorded on activity and for activities to complete
         // Need to wait for the in-flight activities to complete so they're captured
         // Activities stop asynchronously after the operation completes
-        await Task.Delay(1000); // Reduced from 10000ms for faster tests
+        await Task.Delay(1000, CancellationToken.None); // Reduced from 10000ms for faster tests
 
         // Some activities should have circuit breaker state change events
         // Filter out null activities and those with null Events collections
         var activitiesWithCbEvents = activities
-            .Where(a => a?.Events.Any(e => e.Name == "circuit_breaker_state_change") ?? false)
+            .Where(static a => a?.Events.Any(static e => e.Name == "circuit_breaker_state_change") ?? false)
             .ToList();
 
         activitiesWithCbEvents.ShouldNotBeEmpty("circuit breaker state changed and should be recorded on activities");
@@ -299,8 +301,8 @@ public class ParallelOptionsRivuletExtensionsTests
     {
         var activities = new List<Activity>();
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
-        listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
+        listener.ShouldListenTo = static source => source.Name == RivuletSharedConstants.RivuletCore;
+        listener.Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = activity => activities.Add(activity);
         ActivitySource.AddActivityListener(listener);
 
@@ -337,7 +339,7 @@ public class ParallelOptionsRivuletExtensionsTests
 
         // Wait for all activities to be stopped and events to be recorded
         // Activities are stopped asynchronously after the operation completes
-        await Task.Delay(100);
+        await Task.Delay(100, CancellationToken.None);
 
         // Adaptive concurrency integration is verified:
         // 1. Activities are created and tracked
@@ -346,8 +348,8 @@ public class ParallelOptionsRivuletExtensionsTests
         // 2. If concurrency changes occur (timing-dependent), they are recorded on activities
         if (concurrencyChanged)
         {
-            var activitiesWithConcurrencyEvents = activities.Where(a =>
-                    a.Events.Any(e => e.Name == "adaptive_concurrency_change"))
+            var activitiesWithConcurrencyEvents = activities.Where(static a =>
+                    a.Events.Any(static e => e.Name == "adaptive_concurrency_change"))
                 .ToList();
 
             // When changes DO occur, verify they're properly recorded
@@ -365,12 +367,12 @@ public class ParallelOptionsRivuletExtensionsTests
     {
         var activities = new ConcurrentBag<Activity>();
         var activityCount = 0;
-        var expectedCount = 3;
+        const int expectedCount = 3;
         using var allActivitiesStopped = new ManualResetEventSlim(false);
 
         using var listener = new ActivityListener();
-        listener.ShouldListenTo = source => source.Name == RivuletSharedConstants.RivuletCore;
-        listener.Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
+        listener.ShouldListenTo = static source => source.Name == RivuletSharedConstants.RivuletCore;
+        listener.Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = activity =>
         {
             activities.Add(activity);
@@ -391,13 +393,13 @@ public class ParallelOptionsRivuletExtensionsTests
 
         // Wait for all activities to be stopped and added to the collection
         allActivitiesStopped.Wait(TimeSpan.FromSeconds(2));
-        await Task.Delay(50); // Extra buffer for activity processing
+        await Task.Delay(50, CancellationToken.None); // Extra buffer for activity processing
 
-        var indexActivities = activities.Where(a => a.OperationName == "Rivulet.IndexTagsOperation.Item").ToList();
+        var indexActivities = activities.Where(static a => a.OperationName == "Rivulet.IndexTagsOperation.Item").ToList();
         indexActivities.Count.ShouldBe(3, "should have one activity per item");
 
         // Each activity should have its item index
-        var indices = indexActivities.Select(a => (int)a.GetTagItem("rivulet.item_index")!).OrderBy(i => i).ToList();
+        var indices = indexActivities.Select(static a => (int)a.GetTagItem("rivulet.item_index")!).OrderBy(static i => i).ToList();
         indices.ShouldBe([0, 1, 2], "each item should have its sequential index");
     }
 
@@ -407,7 +409,7 @@ public class ParallelOptionsRivuletExtensionsTests
         var items = Enumerable.Range(1, 5);
         var options = new ParallelOptionsRivulet().WithOpenTelemetryTracing("NoListenerOperation");
 
-        var act = async () => await items.SelectParallelAsync(
+        var act = () => items.SelectParallelAsync(
             static async (x, ct) =>
             {
                 await Task.Delay(1, ct);

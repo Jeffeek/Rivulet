@@ -3,7 +3,7 @@ using Rivulet.Base.Tests;
 
 namespace Rivulet.IO.Tests;
 
-public class FileParallelExtensionsTests : TempDirectoryFixture
+public sealed class FileParallelExtensionsTests : TempDirectoryFixture
 {
     [Fact]
     public async Task ReadAllTextParallelAsync_WithMultipleFiles_ShouldReadAllCorrectly()
@@ -32,7 +32,7 @@ public class FileParallelExtensionsTests : TempDirectoryFixture
     public async Task ReadAllTextParallelAsync_WithNullFilePaths_ShouldThrow()
     {
         // Act
-        var act = async () => await ((IEnumerable<string>)null!).ReadAllTextParallelAsync();
+        var act = static () => ((IEnumerable<string>)null!).ReadAllTextParallelAsync();
 
         // Assert
         await act.ShouldThrowAsync<ArgumentNullException>();
@@ -115,7 +115,7 @@ public class FileParallelExtensionsTests : TempDirectoryFixture
         var options = new FileOperationOptions { OverwriteExisting = false };
 
         // Act
-        var act = async () => await writes.WriteAllTextParallelAsync(options);
+        var act = () => writes.WriteAllTextParallelAsync(options);
 
         // Assert
         await act.ShouldThrowAsync<IOException>();
@@ -278,7 +278,7 @@ public class FileParallelExtensionsTests : TempDirectoryFixture
     {
         // Arrange
         var filePath = Path.Join(TestDirectory, "encoding.txt");
-        var content = "Test with encoding: Привет мир";
+        const string content = "Test with encoding: Привет мир";
 
         await File.WriteAllTextAsync(filePath, content, Encoding.UTF8);
 

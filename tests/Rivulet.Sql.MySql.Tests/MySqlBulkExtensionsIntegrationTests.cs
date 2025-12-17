@@ -32,12 +32,14 @@ public class MySqlBulkExtensionsIntegrationTests : IAsyncLifetime
         await connection.OpenAsync();
 
         await using var command = connection.CreateCommand();
-        command.CommandText = @"
-            CREATE TABLE TestTable (
-                Id INT NOT NULL,
-                Name VARCHAR(100) NOT NULL,
-                Email VARCHAR(100) NOT NULL
-            )";
+        command.CommandText = """
+
+                                          CREATE TABLE TestTable (
+                                              Id INT NOT NULL,
+                                              Name VARCHAR(100) NOT NULL,
+                                              Email VARCHAR(100) NOT NULL
+                                          )
+                              """;
         await command.ExecuteNonQueryAsync();
     }
 
@@ -132,8 +134,7 @@ public class MySqlBulkExtensionsIntegrationTests : IAsyncLifetime
         var csvLines = new[] { "1,Test,test@example.com" };
         var columnNames = new[] { "Id", "Name", "Email" };
 
-        var act = async () => await csvLines.BulkInsertUsingMySqlBulkLoaderAsync(
-            () => null!,
+        var act = () => csvLines.BulkInsertUsingMySqlBulkLoaderAsync(static () => null!,
             "TestTable",
             columnNames);
 
@@ -147,7 +148,7 @@ public class MySqlBulkExtensionsIntegrationTests : IAsyncLifetime
         var csvLines = new[] { "1,Test,test@example.com" };
         var columnNames = new[] { "Id", "Name", "Email" };
 
-        var act = async () => await csvLines.BulkInsertUsingMySqlBulkLoaderAsync(
+        var act = () => csvLines.BulkInsertUsingMySqlBulkLoaderAsync(
             CreateConnection,
             "NonExistentTable",
             columnNames);
@@ -211,8 +212,7 @@ public class MySqlBulkExtensionsIntegrationTests : IAsyncLifetime
             var filePaths = new[] { tempFile };
             var columnNames = new[] { "Id", "Name", "Email" };
 
-            var act = async () => await filePaths.BulkInsertFromFilesUsingMySqlBulkLoaderAsync(
-                () => null!,
+            var act = () => filePaths.BulkInsertFromFilesUsingMySqlBulkLoaderAsync(static () => null!,
                 "TestTable",
                 columnNames);
 
@@ -228,10 +228,10 @@ public class MySqlBulkExtensionsIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task BulkInsertFromFilesUsingMySqlBulkLoaderAsync_WithNonExistentFile_ShouldThrow()
     {
-        var filePaths = new[] { "C:\\NonExistent\\File.csv" };
+        var filePaths = new[] { @"C:\NonExistent\File.csv" };
         var columnNames = new[] { "Id", "Name", "Email" };
 
-        var act = async () => await filePaths.BulkInsertFromFilesUsingMySqlBulkLoaderAsync(
+        var act = () => filePaths.BulkInsertFromFilesUsingMySqlBulkLoaderAsync(
             CreateConnection,
             "TestTable",
             columnNames);
