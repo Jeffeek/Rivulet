@@ -52,7 +52,7 @@ jobs:
          output: linter-reports/resharper-report.xml
          format: Xml
          jobs: 0
-         verbosity: WARN
-         severity: WARN
+         verbosity: WARNING
+         severity: WARNING
          no-build: True
          properties: Configuration=Release
