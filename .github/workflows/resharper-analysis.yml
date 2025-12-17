@@ -55,4 +55,7 @@ jobs:
          verbosity: WARN
          severity: WARNING
          no-build: True
+         build: False
          properties: Configuration=Release
+         no-swea: True
+         swea: False
