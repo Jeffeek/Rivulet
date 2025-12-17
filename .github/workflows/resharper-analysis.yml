@@ -53,7 +53,7 @@ jobs:
          output: linter-reports/resharper-report.xml
          format: Xml
          jobs: 0
-         exclude: **/obj/**;**/bin/**;**/TestResults/**;**/samples/**;**/tests/**
+         exclude: "**/obj/**;**/bin/**;**/TestResults/**;**/samples/**;**/tests/**"
          verbosity: WARN
          severity: WARN
          no-build: True
