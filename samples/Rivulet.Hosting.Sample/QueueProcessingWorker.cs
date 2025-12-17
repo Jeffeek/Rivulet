@@ -5,9 +5,9 @@ using Rivulet.Core;
 namespace Rivulet.Hosting.Sample;
 
 /// <summary>
-/// Example background service that processes items from a channel using Rivulet
+///     Example background service that processes items from a channel using Rivulet
 /// </summary>
-public class QueueProcessingWorker : ParallelBackgroundService<string>
+public sealed class QueueProcessingWorker : ParallelBackgroundService<string>
 {
     private readonly Channel<string> _queue;
 
@@ -57,8 +57,6 @@ public class QueueProcessingWorker : ParallelBackgroundService<string>
 
         // Simulate occasional failures
         if (Random.Shared.Next(0, 100) < 5) // 5% error rate
-        {
             throw new InvalidOperationException($"Failed to process {item}");
-        }
     }
 }

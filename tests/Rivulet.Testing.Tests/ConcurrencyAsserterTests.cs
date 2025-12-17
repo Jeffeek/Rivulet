@@ -1,6 +1,6 @@
 ﻿namespace Rivulet.Testing.Tests;
 
-public class ConcurrencyAsserterTests
+public sealed class ConcurrencyAsserterTests
 {
     [Fact]
     public void Constructor_ShouldInitializeWithZeroValues()
@@ -60,11 +60,13 @@ public class ConcurrencyAsserterTests
     {
         var asserter = new ConcurrencyAsserter();
 
-        var tasks = Enumerable.Range(0, 10).Select(async _ =>
-        {
-            using var scope = asserter.Enter();
-            await Task.Delay(50);
-        }).ToArray();
+        var tasks = Enumerable.Range(0, 10)
+            .Select(async _ =>
+            {
+                using var scope = asserter.Enter();
+                await Task.Delay(50, CancellationToken.None);
+            })
+            .ToArray();
 
         await Task.WhenAll(tasks);
 
@@ -92,11 +94,13 @@ public class ConcurrencyAsserterTests
     {
         var asserter = new ConcurrencyAsserter();
 
-        var tasks = Enumerable.Range(0, 1000).Select(async _ =>
-        {
-            using var scope = asserter.Enter();
-            await Task.Delay(1);
-        }).ToArray();
+        var tasks = Enumerable.Range(0, 1000)
+            .Select(async _ =>
+            {
+                using var scope = asserter.Enter();
+                await Task.Delay(1, CancellationToken.None);
+            })
+            .ToArray();
 
         await Task.WhenAll(tasks);
 
@@ -149,24 +153,22 @@ public class ConcurrencyAsserterTests
         var maxObserved = 0;
         var lockObj = new object();
 
-        var tasks = Enumerable.Range(0, 50).Select(async _ =>
-        {
-            using var scope = asserter.Enter();
-
-            lock (lockObj)
+        var tasks = Enumerable.Range(0, 50)
+            .Select(async _ =>
             {
-                concurrentExecutions++;
-                if (concurrentExecutions > maxObserved)
-                    maxObserved = concurrentExecutions;
-            }
+                using var scope = asserter.Enter();
 
-            await Task.Delay(10);
+                lock (lockObj)
+                {
+                    concurrentExecutions++;
+                    if (concurrentExecutions > maxObserved) maxObserved = concurrentExecutions;
+                }
 
-            lock (lockObj)
-            {
-                concurrentExecutions--;
-            }
-        }).ToArray();
+                await Task.Delay(10, CancellationToken.None);
+
+                lock (lockObj) concurrentExecutions--;
+            })
+            .ToArray();
 
         await Task.WhenAll(tasks);
 
@@ -180,10 +182,7 @@ public class ConcurrencyAsserterTests
     {
         var asserter = new ConcurrencyAsserter();
 
-        using (asserter.Enter())
-        {
-            asserter.CurrentConcurrency.ShouldBe(1);
-        }
+        using (asserter.Enter()) asserter.CurrentConcurrency.ShouldBe(1);
 
         asserter.CurrentConcurrency.ShouldBe(0);
     }
@@ -201,10 +200,7 @@ public class ConcurrencyAsserterTests
             {
                 asserter.CurrentConcurrency.ShouldBe(2);
 
-                using (asserter.Enter())
-                {
-                    asserter.CurrentConcurrency.ShouldBe(3);
-                }
+                using (asserter.Enter()) asserter.CurrentConcurrency.ShouldBe(3);
 
                 asserter.CurrentConcurrency.ShouldBe(2);
             }
@@ -224,15 +220,17 @@ public class ConcurrencyAsserterTests
         var asserter = new ConcurrencyAsserter();
         var startSignal = new TaskCompletionSource<bool>();
 
-        var tasks = Enumerable.Range(0, 100).Select(_ => Task.Run(async () =>
-        {
-            await startSignal.Task; // Wait for signal to start all at once
-            using var scope = asserter.Enter();
-            await Task.Delay(1);
-        })).ToArray();
+        var tasks = Enumerable.Range(0, 100)
+            .Select(_ => Task.Run(async () =>
+            {
+                await startSignal.Task; // Wait for signal to start all at once
+                using var scope = asserter.Enter();
+                await Task.Delay(1, CancellationToken.None);
+            }))
+            .ToArray();
 
         // Give threads time to all reach the wait point
-        await Task.Delay(50);
+        await Task.Delay(50, CancellationToken.None);
 
         // Release all threads at once to create maximum contention
         startSignal.SetResult(true);
@@ -273,7 +271,7 @@ public class ConcurrencyAsserterTests
         {
             using (asserter.Enter())
             {
-                await Task.Delay(1);
+                await Task.Delay(1, CancellationToken.None);
                 asserter.CurrentConcurrency.ShouldBe(1);
                 asserter.MaxConcurrency.ShouldBe(1);
             }
@@ -309,11 +307,13 @@ public class ConcurrencyAsserterTests
         var asserter = new ConcurrencyAsserter();
 
         // Rapidly enter and exit without any delays
-        var tasks = Enumerable.Range(0, 1000).Select(_ => Task.Run(() =>
-        {
-            using var scope = asserter.Enter();
-            // No delay - immediate exit
-        })).ToArray();
+        var tasks = Enumerable.Range(0, 1000)
+            .Select(_ => Task.Run(() =>
+            {
+                using var scope = asserter.Enter();
+                // No delay - immediate exit
+            }))
+            .ToArray();
 
         await Task.WhenAll(tasks);
 

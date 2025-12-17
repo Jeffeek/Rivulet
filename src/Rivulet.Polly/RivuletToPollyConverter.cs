@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Polly;
 using Polly.Timeout;
 using Rivulet.Core;
@@ -7,25 +8,27 @@ using PollyCircuitBreaker = Polly.CircuitBreaker;
 namespace Rivulet.Polly;
 
 /// <summary>
-/// Converts Rivulet resilience options to Polly resilience pipelines.
+///     Converts Rivulet resilience options to Polly resilience pipelines.
 /// </summary>
+[SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public static class RivuletToPollyConverter
 {
     /// <summary>
-    /// Converts ParallelOptionsRivulet retry configuration to a Polly retry pipeline.
+    ///     Converts ParallelOptionsRivulet retry configuration to a Polly retry pipeline.
     /// </summary>
     /// <remarks>
-    /// The returned pipeline uses ThreadLocal storage for DecorrelatedJitter state,
-    /// making it safe to reuse across concurrent operations.
+    ///     The returned pipeline uses ThreadLocal storage for DecorrelatedJitter state,
+    ///     making it safe to reuse across concurrent operations.
     /// </remarks>
     public static ResiliencePipeline ToPollyRetryPipeline(this ParallelOptionsRivulet options)
     {
         ArgumentNullException.ThrowIfNull(options);
 
-        if (options.MaxRetries == 0)
-            return ResiliencePipeline.Empty;
+        if (options.MaxRetries == 0) return ResiliencePipeline.Empty;
 
-        var previousDelayLocal = new ThreadLocal<TimeSpan>(() => TimeSpan.Zero);
+#pragma warning disable CA2000 // ThreadLocal is intentionally not disposed - its lifetime is tied to the pipeline
+        var previousDelayLocal = new ThreadLocal<TimeSpan>(static () => TimeSpan.Zero);
+#pragma warning restore CA2000
 
         return new ResiliencePipelineBuilder()
             .AddRetry(new()
@@ -46,8 +49,8 @@ public static class RivuletToPollyConverter
                 },
                 OnRetry = args =>
                 {
-                    if (args.AttemptNumber >= options.MaxRetries)
-                        previousDelayLocal.Value = TimeSpan.Zero;
+                    if (args.AttemptNumber >= options.MaxRetries) previousDelayLocal.Value = TimeSpan.Zero;
+
                     return default;
                 }
             })
@@ -55,12 +58,12 @@ public static class RivuletToPollyConverter
     }
 
     /// <summary>
-    /// Converts Rivulet timeout configuration to a Polly timeout pipeline.
+    ///     Converts Rivulet timeout configuration to a Polly timeout pipeline.
     /// </summary>
     /// <param name="timeout">The timeout duration.</param>
     /// <returns>A Polly resilience pipeline with timeout strategy.</returns>
     /// <example>
-    /// <code>
+    ///     <code>
     /// var timeoutPipeline = TimeSpan.FromSeconds(5).ToPollyTimeoutPipeline();
     /// var result = await timeoutPipeline.ExecuteAsync(async ct => await LongRunningOperation(ct));
     /// </code>
@@ -71,15 +74,12 @@ public static class RivuletToPollyConverter
             throw new ArgumentOutOfRangeException(nameof(timeout), "Timeout must be positive");
 
         return new ResiliencePipelineBuilder()
-            .AddTimeout(new TimeoutStrategyOptions
-            {
-                Timeout = timeout
-            })
+            .AddTimeout(new TimeoutStrategyOptions { Timeout = timeout })
             .Build();
     }
 
     /// <summary>
-    /// Converts Rivulet circuit breaker options to a Polly circuit breaker pipeline.
+    ///     Converts Rivulet circuit breaker options to a Polly circuit breaker pipeline.
     /// </summary>
     public static ResiliencePipeline ToPollyCircuitBreakerPipeline(this CircuitBreakerOptions options)
     {
@@ -92,11 +92,11 @@ public static class RivuletToPollyConverter
     }
 
     /// <summary>
-    /// Converts ParallelOptionsRivulet to a complete Polly pipeline with all configured resilience strategies.
+    ///     Converts ParallelOptionsRivulet to a complete Polly pipeline with all configured resilience strategies.
     /// </summary>
     /// <remarks>
-    /// Creates a pipeline combining Timeout, Circuit Breaker, and Retry (in that order, innermost to outermost).
-    /// Uses ThreadLocal storage for DecorrelatedJitter state, making it thread-safe.
+    ///     Creates a pipeline combining Timeout, Circuit Breaker, and Retry (in that order, innermost to outermost).
+    ///     Uses ThreadLocal storage for DecorrelatedJitter state, making it thread-safe.
     /// </remarks>
     public static ResiliencePipeline ToPollyPipeline(this ParallelOptionsRivulet options)
     {
@@ -118,39 +118,41 @@ public static class RivuletToPollyConverter
             hasAnyStrategy = true;
         }
 
-        if (options.MaxRetries > 0)
-        {
-            var previousDelayLocal = new ThreadLocal<TimeSpan>(() => TimeSpan.Zero);
+        if (options.MaxRetries <= 0) return hasAnyStrategy ? builder.Build() : ResiliencePipeline.Empty;
 
-            builder.AddRetry(new()
+#pragma warning disable CA2000 // ThreadLocal is intentionally not disposed - its lifetime is tied to the pipeline
+        var previousDelayLocal = new ThreadLocal<TimeSpan>(static () => TimeSpan.Zero);
+#pragma warning restore CA2000
+
+        builder.AddRetry(new()
+        {
+            MaxRetryAttempts = options.MaxRetries,
+            ShouldHandle = new PredicateBuilder().Handle<Exception>(ex => options.IsTransient?.Invoke(ex) ?? false),
+            DelayGenerator = args =>
             {
-                MaxRetryAttempts = options.MaxRetries,
-                ShouldHandle = new PredicateBuilder().Handle<Exception>(ex => options.IsTransient?.Invoke(ex) ?? false),
-                DelayGenerator = args =>
-                {
-                    var prev = previousDelayLocal.Value;
-                    var delay = BackoffCalculator.CalculateDelay(
-                        options.BackoffStrategy,
-                        options.BaseDelay,
-                        args.AttemptNumber + 1,
-                        ref prev);
-                    previousDelayLocal.Value = prev;
-                    return new(delay);
-                },
-                OnRetry = args =>
-                {
-                    if (args.AttemptNumber >= options.MaxRetries)
-                        previousDelayLocal.Value = TimeSpan.Zero;
-                    return default;
-                }
-            });
-            hasAnyStrategy = true;
-        }
+                var prev = previousDelayLocal.Value;
+                var delay = BackoffCalculator.CalculateDelay(
+                    options.BackoffStrategy,
+                    options.BaseDelay,
+                    args.AttemptNumber + 1,
+                    ref prev);
+                previousDelayLocal.Value = prev;
+                return new(delay);
+            },
+            OnRetry = args =>
+            {
+                if (args.AttemptNumber >= options.MaxRetries) previousDelayLocal.Value = TimeSpan.Zero;
+
+                return default;
+            }
+        });
+        hasAnyStrategy = true;
 
         return hasAnyStrategy ? builder.Build() : ResiliencePipeline.Empty;
     }
 
-    private static PollyCircuitBreaker.CircuitBreakerStrategyOptions CreateCircuitBreakerOptions(CircuitBreakerOptions options) =>
+    private static PollyCircuitBreaker.CircuitBreakerStrategyOptions CreateCircuitBreakerOptions(
+        CircuitBreakerOptions options) =>
         new()
         {
             FailureRatio = 1.0,
@@ -159,18 +161,18 @@ public static class RivuletToPollyConverter
             ShouldHandle = new PredicateBuilder().Handle<Exception>(),
             OnOpened = _ =>
             {
-                options.OnStateChange?.Invoke(CircuitBreakerState.Closed, CircuitBreakerState.Open);
-                return default;
+                var unused = options.OnStateChange?.Invoke(CircuitBreakerState.Closed, CircuitBreakerState.Open);
+                return ValueTask.CompletedTask;
             },
             OnClosed = _ =>
             {
-                options.OnStateChange?.Invoke(CircuitBreakerState.HalfOpen, CircuitBreakerState.Closed);
-                return default;
+                var unused = options.OnStateChange?.Invoke(CircuitBreakerState.HalfOpen, CircuitBreakerState.Closed);
+                return ValueTask.CompletedTask;
             },
             OnHalfOpened = _ =>
             {
-                options.OnStateChange?.Invoke(CircuitBreakerState.Open, CircuitBreakerState.HalfOpen);
-                return default;
+                var unused = options.OnStateChange?.Invoke(CircuitBreakerState.Open, CircuitBreakerState.HalfOpen);
+                return ValueTask.CompletedTask;
             }
         };
 }

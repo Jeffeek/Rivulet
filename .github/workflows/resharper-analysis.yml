@@ -6,21 +6,17 @@ on:
     branches:
       - "master"
       - "release/**"
-    paths:
-      - "**.cs"
-      - "**.csproj"
-      - ".editorconfig"
-      - ".github/workflows/resharper-analysis.yml"
 
 permissions:
   contents: read
-  pull-requests: write
 
 jobs:
-  resharper-inspect:
+  inspect-code:
     name: ReSharper InspectCode
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      security-events: write
 
     steps:
     - name: Harden the runner (Audit all outbound calls)
@@ -31,12 +27,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
       with:
-        fetch-depth: 0
-
-    - name: Setup .NET 9.0.x
-      uses: actions/setup-dotnet@2016bd2012dba4e32de620c46fe006a3ac9f0602 # v5.0.1
-      with:
-        dotnet-version: 9.0.x
+        submodules: recursive
 
     - name: Cache NuGet packages
       uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
@@ -46,151 +37,25 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-nuget-
 
-    - name: Install ReSharper CLI Tools
-      run: |
-        dotnet new tool-manifest --force
-        dotnet tool install JetBrains.ReSharper.GlobalTools --version 2025.3.0.4
-        dotnet tool restore
-
     - name: Restore dependencies
       run: dotnet restore
 
     - name: Build solution
       run: dotnet build -c Release --no-restore
 
-    - name: Run ReSharper InspectCode
-      run: |
-        dotnet jb inspectcode Rivulet.sln \
-          --output=resharper-report.xml \
-          --format=Xml \
-          --no-build \
-          --properties:Configuration=Release \
-          --severity=WARNING \
-          --exclude=**/obj/**;**/bin/**;**/TestResults/**;**/samples/**;**/tests/** \
-          --verbosity=WARN
-      continue-on-error: true
-
-    - name: Parse ReSharper Report
-      id: parse-report
-      run: |
-        if [ ! -f resharper-report.xml ]; then
-          echo "No ReSharper report generated"
-          echo "issues_found=0" >> $GITHUB_OUTPUT
-          exit 0
-        fi
-
-        # Count issues (excluding INFO severity)
-        ISSUES_COUNT=$(grep -c '<Issue ' resharper-report.xml || echo "0")
-        echo "issues_found=$ISSUES_COUNT" >> $GITHUB_OUTPUT
-
-        # Extract summary
-        echo "## ReSharper Code Analysis Summary" > resharper-summary.md
-        echo "" >> resharper-summary.md
-
-        if [ "$ISSUES_COUNT" -eq "0" ]; then
-          echo "✅ No issues found! Code quality is excellent." >> resharper-summary.md
-        else
-          echo "⚠️ Found **$ISSUES_COUNT** issue(s) that need attention." >> resharper-summary.md
-          echo "" >> resharper-summary.md
-          echo "### Top Issues" >> resharper-summary.md
-
-          # Extract first 10 issues
-          grep '<Issue ' resharper-report.xml | head -10 | while IFS= read -r line; do
-            TYPE=$(echo "$line" | sed -n 's/.*TypeId="\([^"]*\)".*/\1/p')
-            FILE=$(echo "$line" | sed -n 's/.*File="\([^"]*\)".*/\1/p' | sed 's/.*\///')
-            LINE_NUM=$(echo "$line" | sed -n 's/.*Line="\([^"]*\)".*/\1/p')
-            MESSAGE=$(echo "$line" | sed -n 's/.*Message="\([^"]*\)".*/\1/p')
-
-            if [ ! -z "$TYPE" ]; then
-              echo "- **$TYPE** in \`$FILE:$LINE_NUM\`" >> resharper-summary.md
-              if [ ! -z "$MESSAGE" ]; then
-                echo "  - $MESSAGE" >> resharper-summary.md
-              fi
-            fi
-          done
-
-          if [ "$ISSUES_COUNT" -gt "10" ]; then
-            echo "" >> resharper-summary.md
-            echo "_... and $(($ISSUES_COUNT - 10)) more issues. See the full report for details._" >> resharper-summary.md
-          fi
-        fi
-
-        echo "" >> resharper-summary.md
-        echo "---" >> resharper-summary.md
-        echo "📊 **Analysis Tool**: JetBrains ReSharper 2024.3.6" >> resharper-summary.md
-        echo "🔍 **Severity Level**: WARNING and above" >> resharper-summary.md
-
-    - name: Upload ReSharper Report
-      if: always()
-      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+    - name: Lint
+      uses: JetBrains/ReSharper-InspectCode@v0.11
       with:
-        name: resharper-report
-        path: |
-          resharper-report.xml
-          resharper-summary.md
-        retention-days: 7
+         solution: ./Rivulet.sln
+         tool-version: 2025.3.0.3
+         output: linter-reports/resharper-report.xml
+         format: Xml
+         severity: WARNING
+         no-build: True
+         build: False
 
-    - name: Comment PR with Results
-      if: github.event_name == 'pull_request' && always()
-      uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+    - name: Upload InspectCode Report
+      uses: actions/upload-artifact@v4
       with:
-        script: |
-          const fs = require('fs');
-
-          let summary = '## ReSharper Code Analysis\n\nℹ️ Analysis report not available.';
-
-          try {
-            if (fs.existsSync('resharper-summary.md')) {
-              summary = fs.readFileSync('resharper-summary.md', 'utf8');
-            }
-          } catch (error) {
-            console.log('Could not read summary file:', error);
-          }
-
-          // Find existing comment
-          const { data: comments } = await github.rest.issues.listComments({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            issue_number: context.issue.number,
-          });
-
-          const botComment = comments.find(comment =>
-            comment.user.type === 'Bot' &&
-            comment.body.includes('ReSharper Code Analysis')
-          );
-
-          const commentBody = summary;
-
-          if (botComment) {
-            // Update existing comment
-            await github.rest.issues.updateComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              comment_id: botComment.id,
-              body: commentBody
-            });
-          } else {
-            // Create new comment
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: commentBody
-            });
-          }
-
-    - name: Check Analysis Results
-      run: |
-        ISSUES_COUNT="${{ steps.parse-report.outputs.issues_found }}"
-
-        if [ "$ISSUES_COUNT" -eq "0" ]; then
-          echo "✅ ReSharper analysis passed - no issues found!"
-          exit 0
-        else
-          echo "⚠️ ReSharper found $ISSUES_COUNT issue(s)."
-          echo "Review the issues above and fix them to improve code quality."
-          echo ""
-          echo "Note: This is a warning, not a failure. The workflow will pass."
-          echo "Consider fixing these issues to maintain high code quality standards."
-          exit 0
-        fi
+          name: resharper-report
+          path: linter-reports/resharper-report.xml

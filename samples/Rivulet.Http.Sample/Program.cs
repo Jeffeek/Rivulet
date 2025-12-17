@@ -1,4 +1,8 @@
+using System.Text;
+using System.Text.Json;
 using Rivulet.Core;
+
+// ReSharper disable ArrangeObjectCreationWhenTypeNotEvident
 
 Console.WriteLine("=== Rivulet.Http Sample ===\n");
 
@@ -26,28 +30,26 @@ var responses = await urls.SelectParallelAsync(
     {
         MaxDegreeOfParallelism = 4,
         MaxRetries = 3,
-        IsTransient = ex => ex is HttpRequestException
+        IsTransient = static ex => ex is HttpRequestException
     });
 
 Console.WriteLine($"✓ Fetched {responses.Count} URLs successfully");
-foreach (var (url, status, length) in responses)
-{
-    Console.WriteLine($"  {url}: {status} ({length} bytes)");
-}
+foreach (var (url, status, length) in responses) Console.WriteLine($"  {url}: {status} ({length} bytes)");
+
 Console.WriteLine();
 
 // Sample 2: POST requests with JSON payload
 Console.WriteLine("2. POST requests with JSON - Send data to API");
 
 var postData = Enumerable.Range(1, 3)
-    .Select(i => new { id = i, title = $"Post {i}", body = $"Content {i}" })
+    .Select(static i => new { id = i, title = $"Post {i}", body = $"Content {i}" })
     .ToList();
 
 var postResults = await postData.SelectParallelAsync(
     async (data, ct) =>
     {
-        var json = System.Text.Json.JsonSerializer.Serialize(data);
-        using var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+        var json = JsonSerializer.Serialize(data);
+        using var content = new StringContent(json, Encoding.UTF8, "application/json");
         using var response = await httpClient.PostAsync("https://httpbin.org/post", content, ct);
         return (data.id, statusCode: (int)response.StatusCode);
     },
@@ -57,10 +59,8 @@ var postResults = await postData.SelectParallelAsync(
     });
 
 Console.WriteLine($"✓ Posted {postResults.Count} items");
-foreach (var (id, status) in postResults)
-{
-    Console.WriteLine($"  Post {id}: HTTP {status}");
-}
+foreach (var (id, status) in postResults) Console.WriteLine($"  Post {id}: HTTP {status}");
+
 Console.WriteLine();
 
 // Sample 3: Download files
@@ -88,10 +88,8 @@ var downloadResults = await fileUrls.SelectParallelAsync(
     });
 
 Console.WriteLine($"✓ Downloaded {downloadResults.Count} files");
-foreach (var (_, path, size) in downloadResults)
-{
-    Console.WriteLine($"  {Path.GetFileName(path)}: {size} bytes");
-}
+foreach (var (_, path, size) in downloadResults) Console.WriteLine($"  {Path.GetFileName(path)}: {size} bytes");
+
 Console.WriteLine();
 
 // Cleanup
@@ -106,8 +104,8 @@ Console.WriteLine("4. HTTP requests with retry - Handle transient failures");
 
 var unreliableUrls = new[]
 {
-    "https://httpbin.org/status/500",  // Will fail
-    "https://httpbin.org/status/200"   // Will succeed
+    "https://httpbin.org/status/500", // Will fail
+    "https://httpbin.org/status/200"  // Will succeed
 };
 
 var retryResults = await unreliableUrls.SelectParallelAsync(
@@ -127,9 +125,8 @@ var retryResults = await unreliableUrls.SelectParallelAsync(
 
 Console.WriteLine($"✓ Processed {retryResults.Count} requests with retry");
 foreach (var (url, status, success) in retryResults)
-{
     Console.WriteLine($"  {url}: HTTP {status} {(success ? "✓" : "✗")}");
-}
+
 Console.WriteLine();
 
 Console.WriteLine("=== Sample Complete ===");

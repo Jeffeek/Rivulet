@@ -1,6 +1,6 @@
 namespace Rivulet.Diagnostics.Tests;
 
-public static class TestCleanupHelper
+internal static class TestCleanupHelper
 {
     public static void RetryDeleteFile(string filePath)
     {
@@ -8,17 +8,18 @@ public static class TestCleanupHelper
         {
             try
             {
-                if (File.Exists(filePath))
-                {
-                    File.Delete(filePath);
-                }
+                if (File.Exists(filePath)) File.Delete(filePath);
+
                 return; // Success
             }
             catch (IOException)
             {
                 Thread.Sleep(50);
             }
-            catch { /* Ignore other errors */ }
+            catch
+            {
+                /* Ignore other errors */
+            }
         }
     }
 
@@ -28,17 +29,18 @@ public static class TestCleanupHelper
         {
             try
             {
-                if (Directory.Exists(directoryPath))
-                {
-                    Directory.Delete(directoryPath, true);
-                }
+                if (Directory.Exists(directoryPath)) Directory.Delete(directoryPath, true);
+
                 return; // Success
             }
             catch (IOException)
             {
                 Thread.Sleep(50);
             }
-            catch { /* Ignore other errors */ }
+            catch
+            {
+                /* Ignore other errors */
+            }
         }
     }
 }

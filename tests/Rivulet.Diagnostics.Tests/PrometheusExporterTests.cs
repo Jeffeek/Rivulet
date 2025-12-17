@@ -5,7 +5,7 @@ using Rivulet.Core.Observability;
 namespace Rivulet.Diagnostics.Tests;
 
 [Collection(TestCollections.SerialEventSource)]
-public class PrometheusExporterTests
+public sealed class PrometheusExporterTests
 {
     [Fact]
     public async Task PrometheusExporter_ShouldExportMetrics_InPrometheusFormat()
@@ -16,14 +16,12 @@ public class PrometheusExporterTests
         // 10 items * 200ms / 2 parallelism = 1000ms (1 second) minimum operation time
         await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
-            .SelectParallelStreamAsync(async (x, ct) =>
-            {
-                await Task.Delay(200, ct);
-                return x * 2;
-            }, new()
-            {
-                MaxDegreeOfParallelism = 2
-            })
+            .SelectParallelStreamAsync(static async (x, ct) =>
+                {
+                    await Task.Delay(200, ct);
+                    return x * 2;
+                },
+                new() { MaxDegreeOfParallelism = 2 })
             .ToListAsync();
 
         // Wait for EventCounters to fire
@@ -32,7 +30,7 @@ public class PrometheusExporterTests
         // Must wait for BOTH items_started AND items_completed to be present
         await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddMilliseconds(4000),
-            () => Task.Delay(100),
+            static () => Task.Delay(100),
             () =>
             {
                 var export = exporter.Export();
@@ -58,13 +56,8 @@ public class PrometheusExporterTests
         // 10 items * 200ms / 2 parallelism = 1000ms (1 second) minimum operation time
         await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
-            .ForEachParallelAsync(async (_, ct) =>
-            {
-                await Task.Delay(200, ct);
-            }, new()
-            {
-                MaxDegreeOfParallelism = 2
-            });
+            .ForEachParallelAsync(static async (_, ct) => { await Task.Delay(200, ct); },
+                new() { MaxDegreeOfParallelism = 2 });
 
         // Wait for EventCounters to fire
         // Increased from 2000ms → 5000ms for Windows CI/CD reliability (3/180 failures)
@@ -72,7 +65,7 @@ public class PrometheusExporterTests
         // Must wait for BOTH items_started AND items_completed keys to be present
         await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddMilliseconds(4000),
-            () => Task.Delay(100),
+            static () => Task.Delay(100),
             () =>
             {
                 var dict = exporter.ExportDictionary();
@@ -95,7 +88,7 @@ public class PrometheusExporterTests
 
         var prometheusText = exporter.Export();
         prometheusText.ShouldContain("# Rivulet.Core Metrics");
-        
+
         var metrics = exporter.ExportDictionary();
         metrics.ShouldBeEmpty();
     }

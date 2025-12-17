@@ -4,10 +4,14 @@ using Rivulet.Core;
 
 namespace Rivulet.Benchmarks;
 
-[SimpleJob(RuntimeMoniker.Net80)]
-[SimpleJob(RuntimeMoniker.Net90)]
-[MemoryDiagnoser]
-[MarkdownExporter]
+[
+    SimpleJob(RuntimeMoniker.Net80),
+    SimpleJob(RuntimeMoniker.Net90),
+    MemoryDiagnoser,
+    MarkdownExporter
+]
+// ReSharper disable once ClassCanBeSealed.Global
+// ReSharper disable once MemberCanBeFileLocal
 public class CoreOperatorsBenchmarks
 {
     private const int ItemCount = 1000;
@@ -17,59 +21,47 @@ public class CoreOperatorsBenchmarks
     public void Setup() => _source = Enumerable.Range(1, ItemCount);
 
     [Benchmark(Description = "SelectParallelAsync - CPU-bound (light)")]
-    public async Task<List<int>> SelectParallel_CpuBound_Light()
-    {
-        return await _source.SelectParallelAsync(
-            (x, _) => new ValueTask<int>(x * 2),
+    public Task<List<int>> SelectParallel_CpuBound_Light() =>
+        _source.SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2),
             new() { MaxDegreeOfParallelism = 8 });
-    }
 
     [Benchmark(Description = "SelectParallelAsync - I/O simulation")]
-    public async Task<List<int>> SelectParallel_IoSimulation()
-    {
-        return await _source.SelectParallelAsync(
-            async (x, ct) =>
+    public Task<List<int>> SelectParallel_IoSimulation() =>
+        _source.SelectParallelAsync(static async (x, ct) =>
             {
                 await Task.Delay(1, ct);
                 return x * 2;
             },
             new() { MaxDegreeOfParallelism = 32 });
-    }
 
     [Benchmark(Description = "SelectParallelAsync - Ordered output")]
-    public async Task<List<int>> SelectParallel_OrderedOutput()
-    {
-        return await _source.SelectParallelAsync(
-            async (x, ct) =>
+    public Task<List<int>> SelectParallel_OrderedOutput() =>
+        _source.SelectParallelAsync(static async (x, ct) =>
             {
                 await Task.Delay(1, ct);
                 return x * 2;
             },
-            new()
-            {
-                MaxDegreeOfParallelism = 32,
-                OrderedOutput = true
-            });
-    }
+            new() { MaxDegreeOfParallelism = 32, OrderedOutput = true });
 
     [Benchmark(Description = "SelectParallelStreamAsync - Streaming results")]
     public async Task<int> SelectParallelStream_Streaming() =>
         await _source
-              .ToAsyncEnumerable()
-              .SelectParallelStreamAsync((x, _) => new ValueTask<int>(x * 2), new() { MaxDegreeOfParallelism = 8 })
-              .CountAsync();
+            .ToAsyncEnumerable()
+            .SelectParallelStreamAsync(static (x, _) => new ValueTask<int>(x * 2), new() { MaxDegreeOfParallelism = 8 })
+            .CountAsync();
 
     [Benchmark(Description = "ForEachParallelAsync - Side effects")]
-    public async Task ForEachParallel_SideEffects()
+    public Task ForEachParallel_SideEffects()
     {
         var sum = 0;
-        await _source.ToAsyncEnumerable().ForEachParallelAsync(
-            (x, _) =>
-            {
-                Interlocked.Add(ref sum, x);
-                return ValueTask.CompletedTask;
-            },
-            new() { MaxDegreeOfParallelism = 8 });
+        return _source.ToAsyncEnumerable()
+            .ForEachParallelAsync(
+                (x, _) =>
+                {
+                    Interlocked.Add(ref sum, x);
+                    return ValueTask.CompletedTask;
+                },
+                new() { MaxDegreeOfParallelism = 8 });
     }
 
     [Benchmark(Baseline = true, Description = "Baseline - Sequential processing")]
@@ -78,20 +70,21 @@ public class CoreOperatorsBenchmarks
         var results = new List<int>();
         foreach (var item in _source)
         {
-            await Task.Delay(1);
+            await Task.Delay(1, CancellationToken.None);
             results.Add(item * 2);
         }
+
         return results;
     }
 
     [Benchmark(Description = "Baseline - Task.WhenAll (unbounded)")]
-    public async Task<int[]> Baseline_TaskWhenAll()
+    public Task<int[]> Baseline_TaskWhenAll()
     {
-        var tasks = _source.Select(async x =>
+        var tasks = _source.Select(static async x =>
         {
-            await Task.Delay(1);
+            await Task.Delay(1, CancellationToken.None);
             return x * 2;
         });
-        return await Task.WhenAll(tasks);
+        return Task.WhenAll(tasks);
     }
 }

@@ -1,13 +1,13 @@
 namespace Rivulet.Core.Internal;
 
 /// <summary>
-/// Helper class for cross-platform locking that supports both .NET 9+ Lock and traditional object locks.
+///     Helper class for cross-platform locking that supports both .NET 9+ Lock and traditional object locks.
 /// </summary>
 internal static class LockHelper
 {
 #if NET9_0_OR_GREATER
     /// <summary>
-    /// Executes an action within a lock scope using .NET 9+ Lock.
+    ///     Executes an action within a lock scope using .NET 9+ Lock.
     /// </summary>
     /// <param name="lock">The Lock instance to use for synchronization.</param>
     /// <param name="action">The action to execute while holding the lock.</param>
@@ -25,7 +25,7 @@ internal static class LockHelper
     }
 
     /// <summary>
-    /// Executes a function within a lock scope using .NET 9+ Lock and returns a result.
+    ///     Executes a function within a lock scope using .NET 9+ Lock and returns a result.
     /// </summary>
     /// <typeparam name="T">The return type.</typeparam>
     /// <param name="lock">The Lock instance to use for synchronization.</param>
@@ -51,10 +51,7 @@ internal static class LockHelper
     /// <param name="action">The action to execute while holding the lock.</param>
     public static void Execute(object @lock, Action action)
     {
-        lock (@lock)
-        {
-            action();
-        }
+        lock (@lock) action();
     }
 
     /// <summary>
@@ -66,10 +63,7 @@ internal static class LockHelper
     /// <returns>The result of the function.</returns>
     public static T Execute<T>(object @lock, Func<T> func)
     {
-        lock (@lock)
-        {
-            return func();
-        }
+        lock (@lock) return func();
     }
 #endif
 }

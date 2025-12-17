@@ -1,22 +1,20 @@
-﻿using Microsoft.Data.SqlClient;
-using Testcontainers.MsSql;
-using System.Data;
+﻿using System.Data;
+using Microsoft.Data.SqlClient;
 using Rivulet.Base.Tests;
+using Testcontainers.MsSql;
 
 namespace Rivulet.Sql.SqlServer.Tests;
 
 /// <summary>
-/// Integration tests for SqlBulkCopyExtensions using Testcontainers.
-/// Uses per-test-class container for isolation (IAsyncLifetime).
-/// For shared containers across test classes, use [Collection(TestCollections.SqlServer)] with SqlServerFixture.
+///     Integration tests for SqlBulkCopyExtensions using Testcontainers.
+///     Uses per-test-class container for isolation (IAsyncLifetime).
+///     For shared containers across test classes, use [Collection(TestCollections.SqlServer)] with SqlServerFixture.
 /// </summary>
 [Trait("Category", "Integration")]
-public class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
+public sealed class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
 {
-    private MsSqlContainer? _container;
     private string? _connectionString;
-
-    private record TestRecord(int Id, string Name, string Email);
+    private MsSqlContainer? _container;
 
     public async Task InitializeAsync()
     {
@@ -32,21 +30,20 @@ public class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
         await connection.OpenAsync();
 
         await using var command = connection.CreateCommand();
-        command.CommandText = @"
-            CREATE TABLE TestTable (
-                Id INT NOT NULL,
-                Name NVARCHAR(100) NOT NULL,
-                Email NVARCHAR(100) NOT NULL
-            )";
+        command.CommandText = """
+
+                                          CREATE TABLE TestTable (
+                                              Id INT NOT NULL,
+                                              Name NVARCHAR(100) NOT NULL,
+                                              Email NVARCHAR(100) NOT NULL
+                                          )
+                              """;
         await command.ExecuteNonQueryAsync();
     }
 
     public async Task DisposeAsync()
     {
-        if (_container != null)
-        {
-            await _container.DisposeAsync();
-        }
+        if (_container != null) await _container.DisposeAsync();
     }
 
     private SqlConnection CreateConnection() => new(_connectionString!);
@@ -58,10 +55,7 @@ public class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
         table.Columns.Add("Name", typeof(string));
         table.Columns.Add("Email", typeof(string));
 
-        foreach (var record in records)
-        {
-            table.Rows.Add(record.Id, record.Name, record.Email);
-        }
+        foreach (var record in records) table.Rows.Add(record.Id, record.Name, record.Email);
 
         return table;
     }
@@ -100,7 +94,7 @@ public class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
     {
         // Arrange
         var records = Enumerable.Range(1, 10)
-            .Select(i => new TestRecord(i, $"User{i}", $"user{i}@example.com"))
+            .Select(static i => new TestRecord(i, $"User{i}", $"user{i}@example.com"))
             .ToArray();
 
         // Act
@@ -126,17 +120,9 @@ public class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
     {
         // Arrange
         var records = new[]
-        {
-            new TestRecord(100, "Dave", "dave@example.com"),
-            new TestRecord(101, "Eve", "eve@example.com")
-        };
+            { new TestRecord(100, "Dave", "dave@example.com"), new TestRecord(101, "Eve", "eve@example.com") };
 
-        var columnMappings = new Dictionary<string, string>
-        {
-            ["Id"] = "Id",
-            ["Name"] = "Name",
-            ["Email"] = "Email"
-        };
+        var columnMappings = new Dictionary<string, string> { ["Id"] = "Id", ["Name"] = "Name", ["Email"] = "Email" };
 
         // Act
         await records.BulkInsertUsingSqlBulkCopyAsync(
@@ -162,12 +148,13 @@ public class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
     {
         var records = new[] { new TestRecord(1, "Test", "test@example.com") };
 
-        var act = async () => await records.BulkInsertUsingSqlBulkCopyAsync(
-            () => null!,
-            "TestTable",
-            MapToDataTable);
+        await Should.ThrowAsync<OperationCanceledException>(((Func<Task>?)Act)!);
+        return;
 
-        await Should.ThrowAsync<OperationCanceledException>(act);
+        Task Act() =>
+            records.BulkInsertUsingSqlBulkCopyAsync(static () => null!,
+                "TestTable",
+                MapToDataTable);
     }
 
     [Fact]
@@ -175,12 +162,13 @@ public class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
     {
         var records = new[] { new TestRecord(1, "Test", "test@example.com") };
 
-        var act = async () => await records.BulkInsertUsingSqlBulkCopyAsync(
-            CreateConnection,
-            "NonExistentTable",
-            MapToDataTable);
+        await Should.ThrowAsync<OperationCanceledException>(((Func<Task>?)Act)!);
+        return;
 
-        await Should.ThrowAsync<OperationCanceledException>(act);
+        Task Act() =>
+            records.BulkInsertUsingSqlBulkCopyAsync(CreateConnection,
+                "NonExistentTable",
+                MapToDataTable);
     }
 
     [Fact]
@@ -189,23 +177,21 @@ public class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
         var records = new[] { new TestRecord(1, "Test", "test@example.com") };
         var mappings = new Dictionary<string, string> { ["Id"] = "Id" };
 
-        var act = async () => await records.BulkInsertUsingSqlBulkCopyAsync(
-            () => null!,
-            "TestTable",
-            MapToDataTable,
-            mappings);
+        await Should.ThrowAsync<OperationCanceledException>(((Func<Task>?)Act)!);
+        return;
 
-        await Should.ThrowAsync<OperationCanceledException>(act);
+        Task Act() =>
+            records.BulkInsertUsingSqlBulkCopyAsync(static () => null!,
+                "TestTable",
+                MapToDataTable,
+                mappings);
     }
 
     [Fact]
     public async Task BulkInsertUsingSqlBulkCopyAsync_WithCustomBulkCopyOptions_ShouldWork()
     {
         // Arrange
-        var records = new[]
-        {
-            new TestRecord(200, "Frank", "frank@example.com")
-        };
+        var records = new[] { new TestRecord(200, "Frank", "frank@example.com") };
 
         // Act
         await records.BulkInsertUsingSqlBulkCopyAsync(
@@ -257,17 +243,15 @@ public class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task BulkInsertUsingSqlBulkCopyAsync_DataReader_WithNullConnectionFactoryResult_ShouldThrow()
     {
-        var rows = new List<Dictionary<string, object>>
-        {
-            new() { ["Id"] = 1, ["Name"] = "Test" }
-        };
+        var rows = new List<Dictionary<string, object>> { new() { ["Id"] = 1, ["Name"] = "Test" } };
         var readers = new[] { new TestDataReader(rows) };
 
-        var act = async () => await readers.BulkInsertUsingSqlBulkCopyAsync(
-            () => null!,
-            "TestTable");
+        await Should.ThrowAsync<OperationCanceledException>((Func<Task>)Act);
+        return;
 
-        await Should.ThrowAsync<OperationCanceledException>(act);
+        Task Act() =>
+            readers.BulkInsertUsingSqlBulkCopyAsync(static () => null!,
+                "TestTable");
     }
 
     [Fact]
@@ -275,13 +259,16 @@ public class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
     {
         // Use non-nullable IDataReader collection with OfType to filter nulls at runtime
         var readers = new IDataReader[] { new TestDataReader([]) }
-            .Select(_ => (IDataReader?)null!)
-            .Where(r => r == null!); // This will fail when enumerated
+            .Select(static _ => (IDataReader?)null!)
+            .Where(static r => r == null!); // This will fail when enumerated
 
-        var act = async () => await readers.BulkInsertUsingSqlBulkCopyAsync(
-            CreateConnection,
-            "TestTable");
+        await Should.ThrowAsync<Exception>(((Func<Task>?)Act)!);
+        return;
 
-        await Should.ThrowAsync<Exception>(act);
+        Task Act() =>
+            readers.BulkInsertUsingSqlBulkCopyAsync(CreateConnection,
+                "TestTable");
     }
+
+    private sealed record TestRecord(int Id, string Name, string Email);
 }

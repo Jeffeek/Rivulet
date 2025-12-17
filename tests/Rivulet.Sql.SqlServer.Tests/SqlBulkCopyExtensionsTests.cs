@@ -1,19 +1,15 @@
-﻿using Microsoft.Data.SqlClient;
-using System.Data;
+﻿using System.Data;
+using Microsoft.Data.SqlClient;
 using Rivulet.Base.Tests;
 
 namespace Rivulet.Sql.SqlServer.Tests;
 
-public class SqlBulkCopyExtensionsTests
+public sealed class SqlBulkCopyExtensionsTests
 {
-    private record TestRecord(int Id, string Name, string Email);
-
-    private static SqlConnection CreateMockConnection()
-    {
-        // Note: This creates a real SqlConnection object but we won't actually use it
+    private static SqlConnection CreateMockConnection() =>
+        // Note: This creates a real SqlConnection object, but we won't actually use it
         // In real tests, SqlBulkCopy will be mocked or replaced
-        return new("Server=(local);Database=TestDb;Integrated Security=true;");
-    }
+        new("Server=(local);Database=TestDb;Integrated Security=true;");
 
     private static DataTable MapToDataTable(IEnumerable<TestRecord> records)
     {
@@ -22,10 +18,7 @@ public class SqlBulkCopyExtensionsTests
         table.Columns.Add("Name", typeof(string));
         table.Columns.Add("Email", typeof(string));
 
-        foreach (var record in records)
-        {
-            table.Rows.Add(record.Id, record.Name, record.Email);
-        }
+        foreach (var record in records) table.Rows.Add(record.Id, record.Name, record.Email);
 
         return table;
     }
@@ -35,7 +28,7 @@ public class SqlBulkCopyExtensionsTests
     {
         IEnumerable<TestRecord>? source = null;
 
-        var act = async () => await source!.BulkInsertUsingSqlBulkCopyAsync(
+        var act = () => source!.BulkInsertUsingSqlBulkCopyAsync(
             CreateMockConnection,
             "TestTable",
             MapToDataTable);
@@ -48,7 +41,7 @@ public class SqlBulkCopyExtensionsTests
     {
         var source = new[] { new TestRecord(1, "Test", "test@example.com") };
 
-        var act = async () => await source.BulkInsertUsingSqlBulkCopyAsync(
+        var act = () => source.BulkInsertUsingSqlBulkCopyAsync(
             null!,
             "TestTable",
             MapToDataTable);
@@ -61,7 +54,7 @@ public class SqlBulkCopyExtensionsTests
     {
         var source = new[] { new TestRecord(1, "Test", "test@example.com") };
 
-        var act = async () => await source.BulkInsertUsingSqlBulkCopyAsync(
+        var act = () => source.BulkInsertUsingSqlBulkCopyAsync(
             CreateMockConnection,
             null!,
             MapToDataTable);
@@ -74,7 +67,7 @@ public class SqlBulkCopyExtensionsTests
     {
         var source = new[] { new TestRecord(1, "Test", "test@example.com") };
 
-        var act = async () => await source.BulkInsertUsingSqlBulkCopyAsync(
+        var act = () => source.BulkInsertUsingSqlBulkCopyAsync(
             CreateMockConnection,
             "",
             MapToDataTable);
@@ -87,7 +80,7 @@ public class SqlBulkCopyExtensionsTests
     {
         var source = new[] { new TestRecord(1, "Test", "test@example.com") };
 
-        var act = async () => await source.BulkInsertUsingSqlBulkCopyAsync(
+        var act = () => source.BulkInsertUsingSqlBulkCopyAsync(
             CreateMockConnection,
             "   ",
             MapToDataTable);
@@ -100,7 +93,7 @@ public class SqlBulkCopyExtensionsTests
     {
         var source = new[] { new TestRecord(1, "Test", "test@example.com") };
 
-        var act = async () => await source.BulkInsertUsingSqlBulkCopyAsync(
+        var act = () => source.BulkInsertUsingSqlBulkCopyAsync(
             CreateMockConnection,
             "TestTable",
             null!);
@@ -113,7 +106,7 @@ public class SqlBulkCopyExtensionsTests
     {
         var source = new[] { new TestRecord(1, "Test", "test@example.com") };
 
-        var act = async () => await source.BulkInsertUsingSqlBulkCopyAsync(
+        var act = () => source.BulkInsertUsingSqlBulkCopyAsync(
             CreateMockConnection,
             "TestTable",
             MapToDataTable,
@@ -127,7 +120,7 @@ public class SqlBulkCopyExtensionsTests
     {
         var source = new[] { new TestRecord(1, "Test", "test@example.com") };
 
-        var act = async () => await source.BulkInsertUsingSqlBulkCopyAsync(
+        var act = () => source.BulkInsertUsingSqlBulkCopyAsync(
             CreateMockConnection,
             "TestTable",
             MapToDataTable,
@@ -141,7 +134,7 @@ public class SqlBulkCopyExtensionsTests
     {
         var source = new[] { new TestRecord(1, "Test", "test@example.com") };
 
-        var act = async () => await source.BulkInsertUsingSqlBulkCopyAsync(
+        var act = () => source.BulkInsertUsingSqlBulkCopyAsync(
             CreateMockConnection,
             "TestTable",
             MapToDataTable,
@@ -151,12 +144,12 @@ public class SqlBulkCopyExtensionsTests
     }
 
     [Fact]
-    public async Task BulkInsertUsingSqlBulkCopyAsync_WithEmptySource_ShouldComplete()
+    public Task BulkInsertUsingSqlBulkCopyAsync_WithEmptySource_ShouldComplete()
     {
         var source = Array.Empty<TestRecord>();
 
         // Should not throw, just complete quickly
-        await source.BulkInsertUsingSqlBulkCopyAsync(
+        return source.BulkInsertUsingSqlBulkCopyAsync(
             CreateMockConnection,
             "TestTable",
             MapToDataTable);
@@ -167,7 +160,7 @@ public class SqlBulkCopyExtensionsTests
     {
         var source = new[] { new TestRecord(1, "Test", "test@example.com") };
 
-        var act = async () => await source.BulkInsertUsingSqlBulkCopyAsync(
+        var act = () => source.BulkInsertUsingSqlBulkCopyAsync(
             CreateMockConnection,
             "TestTable",
             MapToDataTable,
@@ -177,17 +170,13 @@ public class SqlBulkCopyExtensionsTests
     }
 
     [Fact]
-    public async Task BulkInsertUsingSqlBulkCopyAsync_WithColumnMappings_WithEmptySource_ShouldComplete()
+    public Task BulkInsertUsingSqlBulkCopyAsync_WithColumnMappings_WithEmptySource_ShouldComplete()
     {
         var source = Array.Empty<TestRecord>();
-        var mappings = new Dictionary<string, string>
-        {
-            ["Id"] = "UserId",
-            ["Name"] = "UserName"
-        };
+        var mappings = new Dictionary<string, string> { ["Id"] = "UserId", ["Name"] = "UserName" };
 
         // Should not throw, just complete quickly
-        await source.BulkInsertUsingSqlBulkCopyAsync(
+        return source.BulkInsertUsingSqlBulkCopyAsync(
             CreateMockConnection,
             "TestTable",
             MapToDataTable,
@@ -199,7 +188,7 @@ public class SqlBulkCopyExtensionsTests
     {
         IEnumerable<IDataReader>? source = null;
 
-        var act = async () => await source!.BulkInsertUsingSqlBulkCopyAsync(
+        var act = () => source!.BulkInsertUsingSqlBulkCopyAsync(
             CreateMockConnection,
             "TestTable");
 
@@ -209,13 +198,10 @@ public class SqlBulkCopyExtensionsTests
     [Fact]
     public async Task BulkInsertUsingSqlBulkCopyAsync_DataReader_WithNullConnectionFactory_ShouldThrow()
     {
-        var rows = new List<Dictionary<string, object>>
-        {
-            new() { ["Id"] = 1, ["Name"] = "Test" }
-        };
+        var rows = new List<Dictionary<string, object>> { new() { ["Id"] = 1, ["Name"] = "Test" } };
         var source = new[] { new TestDataReader(rows) };
 
-        var act = async () => await source.BulkInsertUsingSqlBulkCopyAsync(
+        var act = () => source.BulkInsertUsingSqlBulkCopyAsync(
             null!,
             "TestTable");
 
@@ -225,13 +211,10 @@ public class SqlBulkCopyExtensionsTests
     [Fact]
     public async Task BulkInsertUsingSqlBulkCopyAsync_DataReader_WithNullDestinationTable_ShouldThrow()
     {
-        var rows = new List<Dictionary<string, object>>
-        {
-            new() { ["Id"] = 1, ["Name"] = "Test" }
-        };
+        var rows = new List<Dictionary<string, object>> { new() { ["Id"] = 1, ["Name"] = "Test" } };
         var source = new[] { new TestDataReader(rows) };
 
-        var act = async () => await source.BulkInsertUsingSqlBulkCopyAsync(
+        var act = () => source.BulkInsertUsingSqlBulkCopyAsync(
             CreateMockConnection,
             null!);
 
@@ -241,13 +224,10 @@ public class SqlBulkCopyExtensionsTests
     [Fact]
     public async Task BulkInsertUsingSqlBulkCopyAsync_DataReader_WithEmptyDestinationTable_ShouldThrow()
     {
-        var rows = new List<Dictionary<string, object>>
-        {
-            new() { ["Id"] = 1, ["Name"] = "Test" }
-        };
+        var rows = new List<Dictionary<string, object>> { new() { ["Id"] = 1, ["Name"] = "Test" } };
         var source = new[] { new TestDataReader(rows) };
 
-        var act = async () => await source.BulkInsertUsingSqlBulkCopyAsync(
+        var act = () => source.BulkInsertUsingSqlBulkCopyAsync(
             CreateMockConnection,
             "");
 
@@ -257,13 +237,10 @@ public class SqlBulkCopyExtensionsTests
     [Fact]
     public async Task BulkInsertUsingSqlBulkCopyAsync_DataReader_WithZeroBatchSize_ShouldThrow()
     {
-        var rows = new List<Dictionary<string, object>>
-        {
-            new() { ["Id"] = 1, ["Name"] = "Test" }
-        };
+        var rows = new List<Dictionary<string, object>> { new() { ["Id"] = 1, ["Name"] = "Test" } };
         var source = new[] { new TestDataReader(rows) };
 
-        var act = async () => await source.BulkInsertUsingSqlBulkCopyAsync(
+        var act = () => source.BulkInsertUsingSqlBulkCopyAsync(
             CreateMockConnection,
             "TestTable",
             batchSize: 0);
@@ -274,13 +251,10 @@ public class SqlBulkCopyExtensionsTests
     [Fact]
     public async Task BulkInsertUsingSqlBulkCopyAsync_DataReader_WithNegativeBatchSize_ShouldThrow()
     {
-        var rows = new List<Dictionary<string, object>>
-        {
-            new() { ["Id"] = 1, ["Name"] = "Test" }
-        };
+        var rows = new List<Dictionary<string, object>> { new() { ["Id"] = 1, ["Name"] = "Test" } };
         var source = new[] { new TestDataReader(rows) };
 
-        var act = async () => await source.BulkInsertUsingSqlBulkCopyAsync(
+        var act = () => source.BulkInsertUsingSqlBulkCopyAsync(
             CreateMockConnection,
             "TestTable",
             batchSize: -1);
@@ -291,13 +265,10 @@ public class SqlBulkCopyExtensionsTests
     [Fact]
     public async Task BulkInsertUsingSqlBulkCopyAsync_DataReader_WithNegativeTimeout_ShouldThrow()
     {
-        var rows = new List<Dictionary<string, object>>
-        {
-            new() { ["Id"] = 1, ["Name"] = "Test" }
-        };
+        var rows = new List<Dictionary<string, object>> { new() { ["Id"] = 1, ["Name"] = "Test" } };
         var source = new[] { new TestDataReader(rows) };
 
-        var act = async () => await source.BulkInsertUsingSqlBulkCopyAsync(
+        var act = () => source.BulkInsertUsingSqlBulkCopyAsync(
             CreateMockConnection,
             "TestTable",
             bulkCopyTimeout: -1);
@@ -306,12 +277,12 @@ public class SqlBulkCopyExtensionsTests
     }
 
     [Fact]
-    public async Task BulkInsertUsingSqlBulkCopyAsync_DataReader_WithEmptySource_ShouldComplete()
+    public Task BulkInsertUsingSqlBulkCopyAsync_DataReader_WithEmptySource_ShouldComplete()
     {
         var source = Array.Empty<IDataReader>();
 
         // Should not throw, just complete quickly
-        await source.BulkInsertUsingSqlBulkCopyAsync(
+        return source.BulkInsertUsingSqlBulkCopyAsync(
             CreateMockConnection,
             "TestTable");
     }
@@ -320,10 +291,7 @@ public class SqlBulkCopyExtensionsTests
     public void MapToDataTable_Helper_ShouldCreateValidDataTable()
     {
         var records = new[]
-        {
-            new TestRecord(1, "Alice", "alice@example.com"),
-            new TestRecord(2, "Bob", "bob@example.com")
-        };
+            { new TestRecord(1, "Alice", "alice@example.com"), new TestRecord(2, "Bob", "bob@example.com") };
 
         var dataTable = MapToDataTable(records);
 
@@ -343,7 +311,7 @@ public class SqlBulkCopyExtensionsTests
         var source = new[] { new TestRecord(1, "Test", "test@example.com") };
         var emptyMappings = new Dictionary<string, string>();
 
-        var act = async () => await source.BulkInsertUsingSqlBulkCopyAsync(
+        var act = () => source.BulkInsertUsingSqlBulkCopyAsync(
             CreateMockConnection,
             "TestTable",
             MapToDataTable,
@@ -353,6 +321,8 @@ public class SqlBulkCopyExtensionsTests
         ex.Message.ShouldContain("Column mappings dictionary cannot be empty");
         ex.ParamName.ShouldBe("columnMappings");
     }
+
+    private sealed record TestRecord(int Id, string Name, string Email);
 
     // Note: Tests for null connection factory return and null DataReader in source
     // are not included here because exceptions thrown inside parallel operations

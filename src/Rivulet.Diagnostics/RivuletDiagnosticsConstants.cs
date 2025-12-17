@@ -1,12 +1,12 @@
 namespace Rivulet.Diagnostics;
 
 /// <summary>
-/// Constants used throughout the Rivulet.Diagnostics package for consistency and maintainability.
+///     Constants used throughout the Rivulet.Diagnostics package for consistency and maintainability.
 /// </summary>
 internal static class RivuletDiagnosticsConstants
 {
     /// <summary>
-    /// EventCounter configuration and metadata keys.
+    ///     EventCounter configuration and metadata keys.
     /// </summary>
     public static class EventCounterKeys
     {
@@ -19,33 +19,33 @@ internal static class RivuletDiagnosticsConstants
     }
 
     /// <summary>
-    /// DateTime format strings for consistent timestamp formatting.
+    ///     DateTime format strings for consistent timestamp formatting.
     /// </summary>
     public static class DateTimeFormats
     {
         /// <summary>
-        /// Format for console output: yyyy-MM-dd HH:mm:ss
+        ///     Format for console output: yyyy-MM-dd HH:mm:ss
         /// </summary>
         public const string Console = "yyyy-MM-dd HH:mm:ss";
 
         /// <summary>
-        /// Format for file output with milliseconds: yyyy-MM-dd HH:mm:ss.fff
+        ///     Format for file output with milliseconds: yyyy-MM-dd HH:mm:ss.fff
         /// </summary>
         public const string File = "yyyy-MM-dd HH:mm:ss.fff";
 
         /// <summary>
-        /// Format for file rotation timestamps: yyyyMMdd-HHmmss
+        ///     Format for file rotation timestamps: yyyyMMdd-HHmmss
         /// </summary>
         public const string FileRotation = "yyyyMMdd-HHmmss";
 
         /// <summary>
-        /// Format for Prometheus comments: yyyy-MM-dd HH:mm:ss
+        ///     Format for Prometheus comments: yyyy-MM-dd HH:mm:ss
         /// </summary>
         public const string Prometheus = "yyyy-MM-dd HH:mm:ss";
     }
 
     /// <summary>
-    /// Prometheus export format strings.
+    ///     Prometheus export format strings.
     /// </summary>
     public static class PrometheusFormats
     {
@@ -57,7 +57,7 @@ internal static class RivuletDiagnosticsConstants
     }
 
     /// <summary>
-    /// Health check data dictionary keys.
+    ///     Health check data dictionary keys.
     /// </summary>
     public static class HealthCheckKeys
     {
@@ -69,7 +69,7 @@ internal static class RivuletDiagnosticsConstants
     }
 
     /// <summary>
-    /// Health check status messages.
+    ///     Health check status messages.
     /// </summary>
     public static class HealthCheckMessages
     {

@@ -1,30 +1,28 @@
 using System.Collections.Concurrent;
+using System.Diagnostics.Tracing;
 using Rivulet.Core.Observability;
 
 namespace Rivulet.Core.Tests;
 
 /// <summary>
-/// Tests for EventSource metrics that must run sequentially.
-/// EventSource is a singleton, so these tests cannot run in parallel with each other.
+///     Tests for EventSource metrics that must run sequentially.
+///     EventSource is a singleton, so these tests cannot run in parallel with each other.
 /// </summary>
 [Collection(TestCollections.EventSourceSequential)]
-public class EventSourceTests
+public sealed class EventSourceTests
 {
     [Fact]
     public async Task EventCounters_AreExposedAndIncremented()
     {
         var source = Enumerable.Range(1, 50);
 
-        var options = new ParallelOptionsRivulet
-        {
-            MaxDegreeOfParallelism = 4
-        };
+        var options = new ParallelOptionsRivulet { MaxDegreeOfParallelism = 4 };
 
         var initialStarted = RivuletEventSource.Log.GetItemsStarted();
         var initialCompleted = RivuletEventSource.Log.GetItemsCompleted();
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(5, ct);
                 return x * 2;
@@ -45,21 +43,15 @@ public class EventSourceTests
     {
         var source = Enumerable.Range(1, 30);
 
-        var options = new ParallelOptionsRivulet
-        {
-            MaxDegreeOfParallelism = 4,
-            ErrorMode = ErrorMode.BestEffort
-        };
+        var options = new ParallelOptionsRivulet { MaxDegreeOfParallelism = 4, ErrorMode = ErrorMode.BestEffort };
 
         var initialFailures = RivuletEventSource.Log.GetTotalFailures();
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(5, ct);
-                if (x % 5 == 0)
-                    throw new InvalidOperationException("Error");
-                return x * 2;
+                return x % 5 == 0 ? throw new InvalidOperationException("Error") : x * 2;
             },
             options);
 
@@ -78,9 +70,7 @@ public class EventSourceTests
 
         var options = new ParallelOptionsRivulet
         {
-            MaxDegreeOfParallelism = 4,
-            MaxRetries = 2,
-            IsTransient = ex => ex is InvalidOperationException
+            MaxDegreeOfParallelism = 4, MaxRetries = 2, IsTransient = static ex => ex is InvalidOperationException
         };
 
         var initialRetries = RivuletEventSource.Log.GetTotalRetries();
@@ -89,9 +79,9 @@ public class EventSourceTests
             async (x, ct) =>
             {
                 await Task.Delay(5, ct);
-                var attemptCount = attempts.AddOrUpdate(x, 1, (_, count) => count + 1);
-                if (attemptCount < 2)
-                    throw new InvalidOperationException("Transient");
+                var attemptCount = attempts.AddOrUpdate(x, 1, static (_, count) => count + 1);
+                if (attemptCount < 2) throw new InvalidOperationException("Transient");
+
                 return x * 2;
             },
             options);
@@ -107,8 +97,9 @@ public class EventSourceTests
     public void EventSource_WithEventListener_CreatesCountersAndDisposes()
     {
         using var listener = new TestEventListener();
-        listener.EnableEvents(RivuletEventSource.Log, System.Diagnostics.Tracing.EventLevel.Verbose,
-            System.Diagnostics.Tracing.EventKeywords.All);
+        listener.EnableEvents(RivuletEventSource.Log,
+            EventLevel.Verbose,
+            EventKeywords.All);
 
         RivuletEventSource.Log.IncrementItemsStarted();
         RivuletEventSource.Log.IncrementItemsCompleted();
@@ -127,13 +118,13 @@ public class EventSourceTests
         listener.DisableEvents(RivuletEventSource.Log);
     }
 
-    private class TestEventListener : System.Diagnostics.Tracing.EventListener
+    private sealed class TestEventListener : EventListener
     {
         // ReSharper disable once RedundantOverriddenMember
-        protected override void OnEventSourceCreated(System.Diagnostics.Tracing.EventSource eventSource) =>
+        protected override void OnEventSourceCreated(EventSource eventSource) =>
             base.OnEventSourceCreated(eventSource);
 
-        protected override void OnEventWritten(System.Diagnostics.Tracing.EventWrittenEventArgs eventData)
+        protected override void OnEventWritten(EventWrittenEventArgs eventData)
         {
             // No-op, just need to listen
         }

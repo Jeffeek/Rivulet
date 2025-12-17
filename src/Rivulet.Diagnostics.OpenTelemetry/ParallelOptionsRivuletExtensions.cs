@@ -1,35 +1,39 @@
-using System.Diagnostics;
 using Rivulet.Core;
 using Rivulet.Core.Resilience;
+using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Rivulet.Diagnostics.OpenTelemetry;
 
 /// <summary>
-/// Extension methods for integrating OpenTelemetry with Rivulet parallel operations.
+///     Extension methods for integrating OpenTelemetry with Rivulet parallel operations.
 /// </summary>
+[SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public static class ParallelOptionsRivuletExtensions
 {
     /// <summary>
-    /// Adds OpenTelemetry distributed tracing to Rivulet parallel operations.
+    ///     Adds OpenTelemetry distributed tracing to Rivulet parallel operations.
     /// </summary>
     public static ParallelOptionsRivulet WithOpenTelemetryTracing(
         this ParallelOptionsRivulet options,
-        string operationName) => CreateTracingOptions(options, operationName, trackRetries: false);
+        string operationName) => CreateTracingOptions(options, operationName, false);
 
     /// <summary>
-    /// Adds OpenTelemetry distributed tracing with retry tracking to Rivulet parallel operations.
+    ///     Adds OpenTelemetry distributed tracing with retry tracking to Rivulet parallel operations.
     /// </summary>
     public static ParallelOptionsRivulet WithOpenTelemetryTracingAndRetries(
         this ParallelOptionsRivulet options,
         string operationName,
-        bool trackRetries = true) => CreateTracingOptions(options, operationName, trackRetries && options.MaxRetries > 0);
+        bool trackRetries = true) =>
+        CreateTracingOptions(options, operationName, trackRetries && options.MaxRetries > 0);
 
     private static ParallelOptionsRivulet CreateTracingOptions(
         ParallelOptionsRivulet options,
         string operationName,
         bool trackRetries)
     {
-        var itemActivities = new System.Collections.Concurrent.ConcurrentDictionary<int, Activity>();
+        var itemActivities = new ConcurrentDictionary<int, Activity>();
         var asyncLocalActivity = new AsyncLocal<Activity?>();
 
         return new()
@@ -48,47 +52,41 @@ public static class ParallelOptionsRivuletExtensions
             RateLimit = options.RateLimit,
             OnThrottleAsync = options.OnThrottleAsync,
             OnDrainAsync = options.OnDrainAsync,
-            OnStartItemAsync = async index =>
+            OnStartItemAsync = index =>
             {
                 if (!itemActivities.ContainsKey(index))
                 {
                     var activity = RivuletActivitySource.StartItemActivity(operationName, index);
-                    if (activity is not null)
-                    {
-                        itemActivities[index] = activity;
-                        asyncLocalActivity.Value = activity;
-                    }
+                    if (activity is null)
+                        return options.OnStartItemAsync?.Invoke(index) ?? ValueTask.CompletedTask;
+
+                    itemActivities[index] = activity;
+                    asyncLocalActivity.Value = activity;
                 }
                 else
-                {
                     asyncLocalActivity.Value = itemActivities.GetValueOrDefault(index);
-                }
 
-                if (options.OnStartItemAsync is not null)
-                    await options.OnStartItemAsync(index).ConfigureAwait(false);
+                return options.OnStartItemAsync?.Invoke(index) ?? ValueTask.CompletedTask;
             },
-            OnCompleteItemAsync = async index =>
+            OnCompleteItemAsync = index =>
             {
-                if (itemActivities.TryRemove(index, out var activity))
-                {
-                    RivuletActivitySource.RecordSuccess(activity, 1);
-                    activity.Stop();
-                    activity.Dispose();
-                    asyncLocalActivity.Value = null;
-                }
+                if (!itemActivities.TryRemove(index, out var activity))
+                    return options.OnCompleteItemAsync?.Invoke(index) ?? ValueTask.CompletedTask;
 
-                if (options.OnCompleteItemAsync is not null)
-                    await options.OnCompleteItemAsync(index).ConfigureAwait(false);
+                RivuletActivitySource.RecordSuccess(activity, 1);
+                activity.Stop();
+                activity.Dispose();
+                asyncLocalActivity.Value = null;
+
+                return options.OnCompleteItemAsync?.Invoke(index) ?? ValueTask.CompletedTask;
             },
             OnRetryAsync = trackRetries
-                ? async (index, attemptNumber, exception) =>
+                ? (index, attemptNumber, exception) =>
                 {
                     var activity = asyncLocalActivity.Value ?? itemActivities.GetValueOrDefault(index);
-                    if (activity is not null)
-                        RivuletActivitySource.RecordRetry(activity, attemptNumber, exception);
+                    if (activity is not null) RivuletActivitySource.RecordRetry(activity, attemptNumber, exception);
 
-                    if (options.OnRetryAsync is not null)
-                        await options.OnRetryAsync(index, attemptNumber, exception).ConfigureAwait(false);
+                    return options.OnRetryAsync?.Invoke(index, attemptNumber, exception) ?? ValueTask.CompletedTask;
                 }
                 : options.OnRetryAsync,
             OnErrorAsync = async (index, exception) =>
@@ -110,10 +108,17 @@ public static class ParallelOptionsRivuletExtensions
                     if (willRetry || !itemActivities.TryRemove(index, out _))
                         return options.OnErrorAsync is null || await options.OnErrorAsync(index, exception).ConfigureAwait(false);
 
-                    try { activity.Stop(); }
-                    finally { asyncLocalActivity.Value = null; }
+                    try
+                    {
+                        activity.Stop();
+                    }
+                    finally
+                    {
+                        asyncLocalActivity.Value = null;
+                    }
 
-                    return options.OnErrorAsync is null || await options.OnErrorAsync(index, exception).ConfigureAwait(false);
+                    return options.OnErrorAsync is null ||
+                           await options.OnErrorAsync(index, exception).ConfigureAwait(false);
                 }
                 finally
                 {
@@ -121,43 +126,43 @@ public static class ParallelOptionsRivuletExtensions
                 }
             },
             CircuitBreaker = CreateCircuitBreakerOptions(options.CircuitBreaker, itemActivities, asyncLocalActivity),
-            AdaptiveConcurrency = CreateAdaptiveConcurrencyOptions(options.AdaptiveConcurrency, itemActivities, asyncLocalActivity)
+            AdaptiveConcurrency =
+                CreateAdaptiveConcurrencyOptions(options.AdaptiveConcurrency, itemActivities, asyncLocalActivity)
         };
     }
 
     private static CircuitBreakerOptions? CreateCircuitBreakerOptions(
         CircuitBreakerOptions? sourceOptions,
-        System.Collections.Concurrent.ConcurrentDictionary<int, Activity> itemActivities,
+        ConcurrentDictionary<int, Activity> itemActivities,
         AsyncLocal<Activity?> asyncLocalActivity)
     {
         if (sourceOptions is null) return null;
 
-        return new CircuitBreakerOptions
+        return new()
         {
             FailureThreshold = sourceOptions.FailureThreshold,
             SuccessThreshold = sourceOptions.SuccessThreshold,
             OpenTimeout = sourceOptions.OpenTimeout,
             SamplingDuration = sourceOptions.SamplingDuration,
-            OnStateChange = async (oldState, newState) =>
+            OnStateChange = (oldState, newState) =>
             {
                 var currentActivity = asyncLocalActivity.Value ?? Activity.Current
                     ?? itemActivities.Values.FirstOrDefault();
                 RivuletActivitySource.RecordCircuitBreakerStateChange(currentActivity, newState.ToString());
 
-                if (sourceOptions.OnStateChange is not null)
-                    await sourceOptions.OnStateChange(oldState, newState).ConfigureAwait(false);
+                return sourceOptions.OnStateChange?.Invoke(oldState, newState) ?? ValueTask.CompletedTask;
             }
         };
     }
 
     private static AdaptiveConcurrencyOptions? CreateAdaptiveConcurrencyOptions(
         AdaptiveConcurrencyOptions? sourceOptions,
-        System.Collections.Concurrent.ConcurrentDictionary<int, Activity> itemActivities,
+        ConcurrentDictionary<int, Activity> itemActivities,
         AsyncLocal<Activity?> asyncLocalActivity)
     {
         if (sourceOptions is null) return null;
 
-        return new AdaptiveConcurrencyOptions
+        return new()
         {
             MinConcurrency = sourceOptions.MinConcurrency,
             MaxConcurrency = sourceOptions.MaxConcurrency,
@@ -167,14 +172,13 @@ public static class ParallelOptionsRivuletExtensions
             MinSuccessRate = sourceOptions.MinSuccessRate,
             IncreaseStrategy = sourceOptions.IncreaseStrategy,
             DecreaseStrategy = sourceOptions.DecreaseStrategy,
-            OnConcurrencyChange = async (oldValue, newValue) =>
+            OnConcurrencyChange = (oldValue, newValue) =>
             {
                 var currentActivity = asyncLocalActivity.Value ?? Activity.Current
                     ?? itemActivities.Values.FirstOrDefault();
                 RivuletActivitySource.RecordConcurrencyChange(currentActivity, oldValue, newValue);
 
-                if (sourceOptions.OnConcurrencyChange is not null)
-                    await sourceOptions.OnConcurrencyChange(oldValue, newValue).ConfigureAwait(false);
+                return sourceOptions.OnConcurrencyChange?.Invoke(oldValue, newValue) ?? ValueTask.CompletedTask;
             }
         };
     }

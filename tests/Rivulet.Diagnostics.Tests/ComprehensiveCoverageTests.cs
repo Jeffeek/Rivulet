@@ -4,10 +4,10 @@ using Rivulet.Core;
 namespace Rivulet.Diagnostics.Tests;
 
 /// <summary>
-/// Comprehensive tests to achieve 100% code coverage for edge cases.
+///     Comprehensive tests to achieve 100% code coverage for edge cases.
 /// </summary>
 [Collection(TestCollections.SerialEventSource)]
-public class ComprehensiveCoverageTests
+public sealed class ComprehensiveCoverageTests
 {
     [Fact]
     public async Task EventListenerBase_ShouldHandleEarlyReturnCases()
@@ -16,7 +16,7 @@ public class ComprehensiveCoverageTests
         // without performing any operations, even when metrics may be flowing from other tests
         var listener = new TestRivuletEventListener();
 
-        await Task.Delay(100);
+        await Task.Delay(100, CancellationToken.None);
 
         // Should not throw when disposed
         var act = () => listener.Dispose();
@@ -34,28 +34,25 @@ public class ComprehensiveCoverageTests
         await using var aggregator = new MetricsAggregator(TimeSpan.FromSeconds(1));
         aggregator.OnAggregation += metrics =>
         {
-            if (metrics.Count > 0)
-                callbackInvoked = true;
+            if (metrics.Count > 0) callbackInvoked = true;
         };
 
         // Operations must run long enough for EventCounter polling (1 second interval)
         // 10 items * 200ms / 2 parallelism = 1000ms (1 second) minimum operation time
         await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
-            .SelectParallelStreamAsync(async (x, ct) =>
-            {
-                await Task.Delay(200, ct);
-                return x;
-            }, new()
-            {
-                MaxDegreeOfParallelism = 2
-            })
+            .SelectParallelStreamAsync(static async (x, ct) =>
+                {
+                    await Task.Delay(200, ct);
+                    return x;
+                },
+                new() { MaxDegreeOfParallelism = 2 })
             .ToListAsync();
 
         // Wait for at least 2x the aggregation window to ensure timer fires and EventSource counters are received
         await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddMilliseconds(2000),
-            () => Task.Delay(100),
+            static () => Task.Delay(100),
             () => !callbackInvoked);
 
         callbackInvoked.ShouldBeTrue();
@@ -74,22 +71,20 @@ public class ComprehensiveCoverageTests
                 // 5 items * 400ms / 2 parallelism = 1000ms (1 second) minimum operation time
                 await Enumerable.Range(1, 5)
                     .ToAsyncEnumerable()
-                    .SelectParallelStreamAsync(async (x, ct) =>
-                    {
-                        await Task.Delay(400, ct);
-                        return x;
-                    }, new()
-                    {
-                        MaxDegreeOfParallelism = 2
-                    })
+                    .SelectParallelStreamAsync(static async (x, ct) =>
+                        {
+                            await Task.Delay(400, ct);
+                            return x;
+                        },
+                        new() { MaxDegreeOfParallelism = 2 })
                     .ToListAsync();
 
                 // Wait for EventSource counters to fire and be written to file
-                await Task.Delay(2000);
+                await Task.Delay(2000, CancellationToken.None);
             }
 
             // Brief wait for file handle release
-            await Task.Delay(100);
+            await Task.Delay(100, CancellationToken.None);
 
             File.Exists(testFile).ShouldBeTrue();
         }
@@ -105,7 +100,10 @@ public class ComprehensiveCoverageTests
         // ReSharper disable once CollectionNeverQueried.Local
         private List<string> ReceivedMetrics { get; } = new();
 
-        protected override void OnCounterReceived(string name, string displayName, double value, string displayUnits) =>
+        protected override void OnCounterReceived(string name,
+            string displayName,
+            double value,
+            string displayUnits) =>
             ReceivedMetrics.Add(name);
     }
 }

@@ -1,14 +1,16 @@
 ﻿using System.Net;
 using Rivulet.Base.Tests;
+using Rivulet.Core;
 
 namespace Rivulet.Http.Tests;
 
 /// <summary>
-/// Additional tests to improve branch coverage for HTTP parallel extensions.
+///     Additional tests to improve branch coverage for HTTP parallel extensions.
 /// </summary>
-public class HttpParallelExtensionsAdditionalTests
+public sealed class HttpParallelExtensionsAdditionalTests
 {
-    private static HttpClient CreateTestClient(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> handler)
+    private static HttpClient CreateTestClient(
+        Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> handler)
         => TestHttpClientFactory.CreateTestClient(handler);
 
     [Fact]
@@ -21,10 +23,7 @@ public class HttpParallelExtensionsAdditionalTests
         {
             attemptCount++;
             if (attemptCount != 1)
-                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
-                {
-                    Content = new StringContent("Success after retry")
-                });
+                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("Success after retry") });
 
             var response = new HttpResponseMessage(HttpStatusCode.TooManyRequests);
             response.Headers.RetryAfter = new(TimeSpan.FromMilliseconds(50));
@@ -34,11 +33,7 @@ public class HttpParallelExtensionsAdditionalTests
         var options = new HttpOptions
         {
             RespectRetryAfterHeader = true,
-            ParallelOptions = new()
-            {
-                MaxRetries = 3,
-                BaseDelay = TimeSpan.FromMilliseconds(10)
-            }
+            ParallelOptions = new() { MaxRetries = 3, BaseDelay = TimeSpan.FromMilliseconds(10) }
         };
 
         var results = await uris.GetParallelAsync(httpClient, options);
@@ -47,10 +42,7 @@ public class HttpParallelExtensionsAdditionalTests
         results.Count.ShouldBe(1);
         results[0].StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        foreach (var response in results)
-        {
-            response.Dispose();
-        }
+        foreach (var response in results) response.Dispose();
     }
 
     [Fact]
@@ -62,23 +54,17 @@ public class HttpParallelExtensionsAdditionalTests
         using var httpClient = CreateTestClient((_, _) =>
         {
             attemptCount++;
-            if (attemptCount != 1)
-                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK));
+            if (attemptCount != 1) return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK));
 
             var response = new HttpResponseMessage(HttpStatusCode.TooManyRequests);
             response.Headers.RetryAfter = new(TimeSpan.FromSeconds(10));
             return Task.FromResult(response);
-
         });
 
         var options = new HttpOptions
         {
             RespectRetryAfterHeader = false,
-            ParallelOptions = new()
-            {
-                MaxRetries = 3,
-                BaseDelay = TimeSpan.FromMilliseconds(10)
-            }
+            ParallelOptions = new() { MaxRetries = 3, BaseDelay = TimeSpan.FromMilliseconds(10) }
         };
 
         var results = await uris.GetParallelAsync(httpClient, options);
@@ -86,39 +72,29 @@ public class HttpParallelExtensionsAdditionalTests
         attemptCount.ShouldBe(2);
         results[0].StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        foreach (var response in results)
-        {
-            response.Dispose();
-        }
+        foreach (var response in results) response.Dispose();
     }
 
     [Fact]
     public async Task GetParallelAsync_WithRetryAfterDate_ShouldHandle()
     {
-
         var uris = new[] { new Uri("http://test.local/rate-limited") };
         var attemptCount = 0;
 
         using var httpClient = CreateTestClient((_, _) =>
         {
             attemptCount++;
-            if (attemptCount != 1)
-                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK));
+            if (attemptCount != 1) return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK));
 
             var response = new HttpResponseMessage(HttpStatusCode.ServiceUnavailable);
             response.Headers.RetryAfter = new(DateTimeOffset.UtcNow.AddSeconds(1));
             return Task.FromResult(response);
-
         });
 
         var options = new HttpOptions
         {
             RespectRetryAfterHeader = true,
-            ParallelOptions = new()
-            {
-                MaxRetries = 3,
-                BaseDelay = TimeSpan.FromMilliseconds(10)
-            }
+            ParallelOptions = new() { MaxRetries = 3, BaseDelay = TimeSpan.FromMilliseconds(10) }
         };
 
         var results = await uris.GetParallelAsync(httpClient, options);
@@ -126,10 +102,7 @@ public class HttpParallelExtensionsAdditionalTests
         attemptCount.ShouldBe(2);
         results[0].StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        foreach (var response in results)
-        {
-            response.Dispose();
-        }
+        foreach (var response in results) response.Dispose();
     }
 
     [Fact]
@@ -139,7 +112,8 @@ public class HttpParallelExtensionsAdditionalTests
         Uri? callbackUri = null;
         HttpStatusCode? callbackStatus = null;
 
-        using var httpClient = CreateTestClient((_, _) => throw new HttpRequestException("Network error", null, HttpStatusCode.BadGateway));
+        using var httpClient = CreateTestClient(static (_, _) =>
+            throw new HttpRequestException("Network error", null, HttpStatusCode.BadGateway));
 
         var options = new HttpOptions
         {
@@ -149,11 +123,7 @@ public class HttpParallelExtensionsAdditionalTests
                 callbackStatus = status;
                 return ValueTask.CompletedTask;
             },
-            ParallelOptions = new()
-            {
-                ErrorMode = Core.ErrorMode.BestEffort,
-                MaxRetries = 0
-            }
+            ParallelOptions = new() { ErrorMode = ErrorMode.BestEffort, MaxRetries = 0 }
         };
 
         await uris.GetParallelAsync(httpClient, options);
@@ -168,10 +138,9 @@ public class HttpParallelExtensionsAdditionalTests
         var uris = new[] { new Uri("http://test.local/notfound") };
         var callbackInvoked = false;
 
-        using var httpClient = CreateTestClient((_, _) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound)
-        {
-            Content = new StringContent("Not found")
-        }));
+        using var httpClient = CreateTestClient(static (_, _) =>
+            Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound)
+                { Content = new StringContent("Not found") }));
 
         var options = new HttpOptions
         {
@@ -180,11 +149,7 @@ public class HttpParallelExtensionsAdditionalTests
                 callbackInvoked = true;
                 return ValueTask.CompletedTask;
             },
-            ParallelOptions = new()
-            {
-                ErrorMode = Core.ErrorMode.BestEffort,
-                MaxRetries = 0
-            }
+            ParallelOptions = new() { ErrorMode = ErrorMode.BestEffort, MaxRetries = 0 }
         };
 
         await uris.GetParallelAsync(httpClient, options);
@@ -196,14 +161,11 @@ public class HttpParallelExtensionsAdditionalTests
     public async Task DownloadToStreamAsync_WithoutContentLength_ShouldStillDownload()
     {
         var uri = new Uri("http://test.local/no-length.txt");
-        var expectedContent = "Content without length";
+        const string expectedContent = "Content without length";
 
-        using var httpClient = CreateTestClient((_, _) =>
+        using var httpClient = CreateTestClient(static (_, _) =>
         {
-            var response = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(expectedContent)
-            };
+            var response = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(expectedContent) };
             // Explicitly remove Content-Length header
             response.Content.Headers.ContentLength = null;
             return Task.FromResult(response);
@@ -211,10 +173,7 @@ public class HttpParallelExtensionsAdditionalTests
 
         using var destination = new MemoryStream();
 
-        var options = new StreamingDownloadOptions
-        {
-            ValidateContentLength = false
-        };
+        var options = new StreamingDownloadOptions { ValidateContentLength = false };
 
         var bytesDownloaded = await HttpStreamingExtensions.DownloadToStreamAsync(
             uri,
@@ -240,26 +199,17 @@ public class HttpParallelExtensionsAdditionalTests
             var filePath = Path.Join(tempDir, "overwrite.txt");
             await File.WriteAllTextAsync(filePath, "Old content");
 
-            var downloads = new[]
-            {
-                (uri: new Uri("http://test.local/file.txt"), destinationPath: filePath)
-            };
+            var downloads = new[] { (uri: new Uri("http://test.local/file.txt"), destinationPath: filePath) };
 
-            using var httpClient = CreateTestClient((_, _) =>
+            using var httpClient = CreateTestClient(static (_, _) =>
             {
                 var response = new HttpResponseMessage(HttpStatusCode.OK)
-                {
-                    Content = new StringContent("New content")
-                };
+                    { Content = new StringContent("New content") };
                 response.Content.Headers.ContentLength = 11;
                 return Task.FromResult(response);
             });
 
-            var options = new StreamingDownloadOptions
-            {
-                OverwriteExisting = true,
-                EnableResume = false
-            };
+            var options = new StreamingDownloadOptions { OverwriteExisting = true, EnableResume = false };
 
             var results = await downloads.DownloadParallelAsync(httpClient, options);
 
@@ -269,17 +219,13 @@ public class HttpParallelExtensionsAdditionalTests
         }
         finally
         {
-            if (Directory.Exists(tempDir))
-            {
-                Directory.Delete(tempDir, true);
-            }
+            if (Directory.Exists(tempDir)) Directory.Delete(tempDir, true);
         }
     }
 
     [Fact]
     public async Task DownloadParallelAsync_WithServerNotSupportingResume_ShouldStartOver()
     {
-
         var tempDir = Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(tempDir);
 
@@ -290,10 +236,7 @@ public class HttpParallelExtensionsAdditionalTests
             await File.WriteAllTextAsync(filePath, partialContent);
             const string fullContent = "Partial is wrong - start over";
 
-            var downloads = new[]
-            {
-                (uri: new Uri("http://test.local/file.txt"), destinationPath: filePath)
-            };
+            var downloads = new[] { (uri: new Uri("http://test.local/file.txt"), destinationPath: filePath) };
 
             var headCalled = false;
 
@@ -308,18 +251,12 @@ public class HttpParallelExtensionsAdditionalTests
                 }
 
                 // Server doesn't support range, so always return full content
-                var response = new HttpResponseMessage(HttpStatusCode.OK)
-                {
-                    Content = new StringContent(fullContent)
-                };
+                var response = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(fullContent) };
                 response.Content.Headers.ContentLength = fullContent.Length;
                 return Task.FromResult(response);
             });
 
-            var options = new StreamingDownloadOptions
-            {
-                EnableResume = true
-            };
+            var options = new StreamingDownloadOptions { EnableResume = true };
 
             var results = await downloads.DownloadParallelAsync(httpClient, options);
 
@@ -330,10 +267,7 @@ public class HttpParallelExtensionsAdditionalTests
         }
         finally
         {
-            if (Directory.Exists(tempDir))
-            {
-                Directory.Delete(tempDir, true);
-            }
+            if (Directory.Exists(tempDir)) Directory.Delete(tempDir, true);
         }
     }
 }

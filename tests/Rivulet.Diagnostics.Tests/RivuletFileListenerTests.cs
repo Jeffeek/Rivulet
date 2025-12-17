@@ -3,9 +3,20 @@
 namespace Rivulet.Diagnostics.Tests;
 
 [Collection(TestCollections.SerialEventSource)]
-public class RivuletFileListenerTests : IDisposable
+public sealed class RivuletFileListenerTests : IDisposable
 {
     private readonly string _testFilePath = Path.Join(Path.GetTempPath(), $"rivulet-test-{Guid.NewGuid()}.log");
+
+    public void Dispose()
+    {
+        TestCleanupHelper.RetryDeleteFile(_testFilePath);
+
+        var directory = Path.GetDirectoryName(_testFilePath) ?? string.Empty;
+        var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(_testFilePath);
+        var rotatedFiles = Directory.GetFiles(directory, $"{fileNameWithoutExtension}-*");
+
+        foreach (var file in rotatedFiles) TestCleanupHelper.RetryDeleteFile(file);
+    }
 
     [Fact]
     public async Task FileListener_ShouldWriteMetricsToFile_WhenOperationsRun()
@@ -17,23 +28,21 @@ public class RivuletFileListenerTests : IDisposable
             // 10 items * 300ms / 2 parallelism = 1500ms of operation time
             await Enumerable.Range(1, 10)
                 .ToAsyncEnumerable()
-                .SelectParallelStreamAsync(async (x, ct) =>
-                {
-                    await Task.Delay(300, ct);
-                    return x * 2;
-                }, new()
-                {
-                    MaxDegreeOfParallelism = 2
-                })
+                .SelectParallelStreamAsync(static async (x, ct) =>
+                    {
+                        await Task.Delay(300, ct);
+                        return x * 2;
+                    },
+                    new() { MaxDegreeOfParallelism = 2 })
                 .ToListAsync();
 
             // Wait for EventCounters to poll and write metrics after operation completes
             // Polling interval is ~1 second, wait 2 seconds for CI/CD reliability
-            await Task.Delay(2000);
+            await Task.Delay(2000, CancellationToken.None);
         } // Dispose listener to flush and close file
 
         // Wait for file handle to be fully released
-        await Task.Delay(500);
+        await Task.Delay(500, CancellationToken.None);
 
         File.Exists(_testFilePath).ShouldBeTrue();
         var content = await File.ReadAllTextAsync(_testFilePath);
@@ -55,22 +64,20 @@ public class RivuletFileListenerTests : IDisposable
             // 10 items * 300ms / 2 parallelism = 1500ms of operation time per iteration
             await Enumerable.Range(1, 10)
                 .ToAsyncEnumerable()
-                .SelectParallelStreamAsync(async (x, ct) =>
-                {
-                    await Task.Delay(300, ct);
-                    return x;
-                }, new()
-                {
-                    MaxDegreeOfParallelism = 2
-                })
+                .SelectParallelStreamAsync(static async (x, ct) =>
+                    {
+                        await Task.Delay(300, ct);
+                        return x;
+                    },
+                    new() { MaxDegreeOfParallelism = 2 })
                 .ToListAsync();
 
             // Wait for EventCounters to fire and write to file
-            await Task.Delay(1500);
+            await Task.Delay(1500, CancellationToken.None);
         }
 
         // Wait for final flush and rotation to complete
-        await Task.Delay(1000);
+        await Task.Delay(1000, CancellationToken.None);
 
         var directory = Path.GetDirectoryName(_testFilePath) ?? string.Empty;
         var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(_testFilePath);
@@ -82,7 +89,7 @@ public class RivuletFileListenerTests : IDisposable
     [Fact]
     public void FileListener_ShouldThrow_WhenFilePathIsNull()
     {
-        var act = () => new RivuletFileListener(null!);
+        var act = static () => new RivuletFileListener(null!);
         act.ShouldThrow<ArgumentNullException>().ParamName.ShouldBe("filePath");
     }
 
@@ -97,19 +104,5 @@ public class RivuletFileListenerTests : IDisposable
         Directory.Exists(directory).ShouldBeTrue();
 
         TestCleanupHelper.RetryDeleteDirectory(directory);
-    }
-
-    public void Dispose()
-    {
-        TestCleanupHelper.RetryDeleteFile(_testFilePath);
-
-        var directory = Path.GetDirectoryName(_testFilePath) ?? string.Empty;
-        var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(_testFilePath);
-        var rotatedFiles = Directory.GetFiles(directory, $"{fileNameWithoutExtension}-*");
-        
-        foreach (var file in rotatedFiles)
-        {
-            TestCleanupHelper.RetryDeleteFile(file);
-        }
     }
 }

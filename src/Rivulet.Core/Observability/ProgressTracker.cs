@@ -4,16 +4,16 @@ namespace Rivulet.Core.Observability;
 
 internal sealed class ProgressTracker : IAsyncDisposable
 {
-    private readonly int? _totalItems;
     private readonly ProgressOptions _options;
-    private readonly Stopwatch _stopwatch;
     private readonly CancellationTokenSource _reporterCts;
     private readonly Task _reporterTask;
+    private readonly Stopwatch _stopwatch;
+    private readonly int? _totalItems;
+    private bool _disposed;
+    private int _errorCount;
+    private int _itemsCompleted;
 
     private int _itemsStarted;
-    private int _itemsCompleted;
-    private int _errorCount;
-    private bool _disposed;
 
     public ProgressTracker(int? totalItems, ProgressOptions options, CancellationToken cancellationToken)
     {
@@ -23,6 +23,34 @@ internal sealed class ProgressTracker : IAsyncDisposable
         _reporterCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
         _reporterTask = Task.Run(ReportProgressPeriodically, _reporterCts.Token);
+    }
+
+    private static TimeSpan DisposeWait => TimeSpan.FromSeconds(5);
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_disposed) return;
+
+        _disposed = true;
+
+        // Cancel the background reporter task
+        // The ReportProgressPeriodically loop will catch OperationCanceledException
+        // and execute one final progress report before exiting
+        await _reporterCts.CancelAsync().ConfigureAwait(false);
+
+        // Wait briefly for the reporter task to complete its final report
+        // Use a timeout to allow final callback execution without indefinite blocking
+        try
+        {
+            await _reporterTask.WaitAsync(DisposeWait).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is AggregateException or OperationCanceledException)
+        {
+            // Task was cancelled or faulted, which is expected
+        }
+
+        _reporterCts.Dispose();
+        _stopwatch.Stop();
     }
 
     public void IncrementStarted() => Interlocked.Increment(ref _itemsStarted);
@@ -50,8 +78,7 @@ internal sealed class ProgressTracker : IAsyncDisposable
 
     private async Task ReportProgress()
     {
-        if (_options.OnProgress is null)
-            return;
+        if (_options.OnProgress is null) return;
 
         Thread.MemoryBarrier();
 
@@ -69,9 +96,7 @@ internal sealed class ProgressTracker : IAsyncDisposable
         {
             var remaining = _totalItems.Value - completed;
             if (itemsPerSecond > 0 && remaining > 0)
-            {
                 estimatedTimeRemaining = TimeSpan.FromSeconds(remaining / itemsPerSecond);
-            }
 
             percentComplete = (double)completed / _totalItems.Value * 100.0;
         }
@@ -98,34 +123,5 @@ internal sealed class ProgressTracker : IAsyncDisposable
         }
 
         Thread.MemoryBarrier();
-    }
-
-    private static TimeSpan DisposeWait => TimeSpan.FromSeconds(5);
-
-    public async ValueTask DisposeAsync()
-    {
-        if (_disposed)
-            return;
-
-        _disposed = true;
-
-        // Cancel the background reporter task
-        // The ReportProgressPeriodically loop will catch OperationCanceledException
-        // and execute one final progress report before exiting
-        await _reporterCts.CancelAsync().ConfigureAwait(false);
-
-        // Wait briefly for the reporter task to complete its final report
-        // Use a timeout to allow final callback execution without indefinite blocking
-        try
-        {
-            await _reporterTask.WaitAsync(DisposeWait).ConfigureAwait(false);
-        }
-        catch (Exception ex) when (ex is AggregateException or OperationCanceledException)
-        {
-            // Task was cancelled or faulted, which is expected
-        }
-
-        _reporterCts.Dispose();
-        _stopwatch.Stop();
     }
 }

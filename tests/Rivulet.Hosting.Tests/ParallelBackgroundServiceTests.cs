@@ -1,34 +1,13 @@
+using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Rivulet.Base.Tests;
 using Rivulet.Core;
-using System.Collections.Concurrent;
 
 namespace Rivulet.Hosting.Tests;
 
-public class ParallelBackgroundServiceTests
+public sealed class ParallelBackgroundServiceTests
 {
-    private class TestBackgroundService(
-        ILogger<TestBackgroundService> logger,
-        IAsyncEnumerable<int> items,
-        ParallelOptionsRivulet? options = null) : ParallelBackgroundService<int>(logger, options)
-    {
-        public ConcurrentBag<int> ProcessedItems { get; } = new();
-        public int ProcessCallCount => _processCallCount;
-        private int _processCallCount;
-
-        protected override IAsyncEnumerable<int> GetItemsAsync(CancellationToken cancellationToken) =>
-            items;
-
-        protected override ValueTask ProcessItemAsync(int item, CancellationToken cancellationToken)
-        {
-            Interlocked.Increment(ref _processCallCount);
-            ProcessedItems.Add(item);
-            return ValueTask.CompletedTask;
-        }
-    }
-
-
     [Fact]
     public async Task StartAsync_ShouldProcessAllItems()
     {
@@ -47,7 +26,7 @@ public class ParallelBackgroundServiceTests
         await service.StopAsync(CancellationToken.None);
 
         service.ProcessedItems.Count.ShouldBe(5);
-        service.ProcessedItems.OrderBy(x => x).ShouldBe([1, 2, 3, 4, 5]);
+        service.ProcessedItems.OrderBy(static x => x).ShouldBe([1, 2, 3, 4, 5]);
     }
 
     [Fact]
@@ -142,17 +121,9 @@ public class ParallelBackgroundServiceTests
     [Fact]
     public async Task ExecuteAsync_WhenCancelled_ShouldLogInformationAndExitGracefully()
     {
-        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Information));
+        var loggerFactory =
+            LoggerFactory.Create(static builder => builder.AddConsole().SetMinimumLevel(LogLevel.Information));
         var logger = loggerFactory.CreateLogger<TestBackgroundService>();
-
-        async IAsyncEnumerable<int> SlowGenerateItems()
-        {
-            for (var i = 1; i <= 100; i++)
-            {
-                await Task.Delay(50); // Slow enough to get cancelled
-                yield return i;
-            }
-        }
 
         var service = new TestBackgroundService(logger, SlowGenerateItems());
 
@@ -160,18 +131,29 @@ public class ParallelBackgroundServiceTests
 
         // Act
         await service.StartAsync(cts.Token);
-        await Task.Delay(20); // Let it start
-        await cts.CancelAsync(); // Cancel it
+        await Task.Delay(20, CancellationToken.None); // Let it start
+        await cts.CancelAsync();                      // Cancel it
         await service.StopAsync(CancellationToken.None);
 
         // Assert - should exit gracefully without throwing
         service.ProcessedItems.Count.ShouldBeLessThan(100);
+        return;
+
+        static async IAsyncEnumerable<int> SlowGenerateItems()
+        {
+            for (var i = 1; i <= 100; i++)
+            {
+                await Task.Delay(50, CancellationToken.None); // Slow enough to get cancelled
+                yield return i;
+            }
+        }
     }
 
     [Fact]
     public async Task ExecuteAsync_WhenProcessThrowsException_ShouldLogErrorAndRethrow()
     {
-        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Error));
+        var loggerFactory =
+            LoggerFactory.Create(static builder => builder.AddConsole().SetMinimumLevel(LogLevel.Error));
         var logger = loggerFactory.CreateLogger<ThrowingBackgroundService>();
 
         var items = TestDataGenerators.GenerateItemsAsync(3);
@@ -193,7 +175,8 @@ public class ParallelBackgroundServiceTests
     [Fact]
     public async Task ExecuteAsync_WhenGetItemsAsyncThrowsException_ShouldLogErrorAndHandleGracefully()
     {
-        var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Error));
+        var loggerFactory =
+            LoggerFactory.Create(static builder => builder.AddConsole().SetMinimumLevel(LogLevel.Error));
         var logger = loggerFactory.CreateLogger<FatalErrorBackgroundService>();
 
         var service = new FatalErrorBackgroundService(logger);
@@ -212,28 +195,47 @@ public class ParallelBackgroundServiceTests
         // No unhandled exception should crash the test
     }
 
-    private class ThrowingBackgroundService(
-        ILogger<ThrowingBackgroundService> logger,
-        IAsyncEnumerable<int> items) : ParallelBackgroundService<int>(logger)
+    private sealed class TestBackgroundService(
+        ILogger<TestBackgroundService> logger,
+        IAsyncEnumerable<int> items,
+        ParallelOptionsRivulet? options = null
+    ) : ParallelBackgroundService<int>(logger, options)
     {
-        protected override IAsyncEnumerable<int> GetItemsAsync(CancellationToken cancellationToken) => items;
+        private int _processCallCount;
+        public ConcurrentBag<int> ProcessedItems { get; } = new();
+        public int ProcessCallCount => _processCallCount;
+
+        protected override IAsyncEnumerable<int> GetItemsAsync(CancellationToken cancellationToken) =>
+            items;
 
         protected override ValueTask ProcessItemAsync(int item, CancellationToken cancellationToken)
         {
-            // Simulate an unhandled exception
-            throw new InvalidOperationException($"Test exception for item {item}");
+            Interlocked.Increment(ref _processCallCount);
+            ProcessedItems.Add(item);
+            return ValueTask.CompletedTask;
         }
     }
 
-    private class FatalErrorBackgroundService(ILogger<FatalErrorBackgroundService> logger)
+    private sealed class ThrowingBackgroundService(
+        ILogger<ThrowingBackgroundService> logger,
+        IAsyncEnumerable<int> items
+    ) : ParallelBackgroundService<int>(logger)
+    {
+        protected override IAsyncEnumerable<int> GetItemsAsync(CancellationToken cancellationToken) => items;
+
+        protected override ValueTask ProcessItemAsync(int item, CancellationToken cancellationToken) => throw
+            // Simulate an unhandled exception
+            new InvalidOperationException($"Test exception for item {item}");
+    }
+
+    private sealed class FatalErrorBackgroundService(ILogger<FatalErrorBackgroundService> logger)
         : ParallelBackgroundService<int>(logger)
     {
-        protected override IAsyncEnumerable<int> GetItemsAsync(CancellationToken cancellationToken)
-        {
+        protected override IAsyncEnumerable<int> GetItemsAsync(CancellationToken cancellationToken) => throw
             // Throw from GetItemsAsync to hit the exception path in ExecuteAsync
-            throw new InvalidOperationException("Fatal error in GetItemsAsync");
-        }
+            new InvalidOperationException("Fatal error in GetItemsAsync");
 
-        protected override ValueTask ProcessItemAsync(int item, CancellationToken cancellationToken) => ValueTask.CompletedTask;
+        protected override ValueTask ProcessItemAsync(int item, CancellationToken cancellationToken) =>
+            ValueTask.CompletedTask;
     }
 }

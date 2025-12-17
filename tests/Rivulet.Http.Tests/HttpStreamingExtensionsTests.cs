@@ -3,9 +3,10 @@ using Rivulet.Base.Tests;
 
 namespace Rivulet.Http.Tests;
 
-public class HttpStreamingExtensionsTests
+public sealed class HttpStreamingExtensionsTests
 {
-    private static HttpClient CreateTestClient(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> handler)
+    private static HttpClient CreateTestClient(
+        Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> handler)
         => TestHttpClientFactory.CreateTestClient(handler);
 
     [Fact]
@@ -14,12 +15,9 @@ public class HttpStreamingExtensionsTests
         var uri = new Uri("http://test.local/file.txt");
         const string expectedContent = "Test file content";
 
-        using var httpClient = CreateTestClient((_, _) =>
+        using var httpClient = CreateTestClient(static (_, _) =>
         {
-            var response = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(expectedContent)
-            };
+            var response = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(expectedContent) };
             response.Content.Headers.ContentLength = expectedContent.Length;
             return Task.FromResult(response);
         });
@@ -44,11 +42,10 @@ public class HttpStreamingExtensionsTests
         using var httpClient = new HttpClient();
         using var destination = new MemoryStream();
 
-        await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await HttpStreamingExtensions.DownloadToStreamAsync(
-                null!,
-                destination,
-                httpClient));
+        await Assert.ThrowsAsync<ArgumentNullException>(async () => await HttpStreamingExtensions.DownloadToStreamAsync(
+            null!,
+            destination,
+            httpClient));
     }
 
     [Fact]
@@ -57,11 +54,10 @@ public class HttpStreamingExtensionsTests
         var uri = new Uri("http://test.local/file.txt");
         using var httpClient = new HttpClient();
 
-        await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await HttpStreamingExtensions.DownloadToStreamAsync(
-                uri,
-                null!,
-                httpClient));
+        await Assert.ThrowsAsync<ArgumentNullException>(async () => await HttpStreamingExtensions.DownloadToStreamAsync(
+            uri,
+            null!,
+            httpClient));
     }
 
     [Fact]
@@ -76,10 +72,7 @@ public class HttpStreamingExtensionsTests
 
         using var httpClient = CreateTestClient((_, _) =>
         {
-            var response = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new ByteArrayContent(fileContent)
-            };
+            var response = new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(fileContent) };
             response.Content.Headers.ContentLength = fileSize;
             return Task.FromResult(response);
         });
@@ -113,28 +106,22 @@ public class HttpStreamingExtensionsTests
     public async Task DownloadToStreamAsync_WithContentLengthMismatch_ShouldThrowHttpRequestException()
     {
         var uri = new Uri("http://test.local/corrupted.txt");
-        var actualContent = "Short content";
-        var claimedLength = 1000L;
+        const string actualContent = "Short content";
+        const long claimedLength = 1000L;
 
-        using var httpClient = CreateTestClient((_, _) =>
+        using var httpClient = CreateTestClient(static (_, _) =>
         {
-            var response = new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(actualContent)
-            };
+            var response = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(actualContent) };
             response.Content.Headers.ContentLength = claimedLength; // Lie about content length
             return Task.FromResult(response);
         });
 
         using var destination = new MemoryStream();
 
-        var options = new StreamingDownloadOptions
-        {
-            ValidateContentLength = true
-        };
+        var options = new StreamingDownloadOptions { ValidateContentLength = true };
 
-        var exception = await Assert.ThrowsAsync<HttpRequestException>(
-            async () => await HttpStreamingExtensions.DownloadToStreamAsync(
+        var exception = await Assert.ThrowsAsync<HttpRequestException>(async () =>
+            await HttpStreamingExtensions.DownloadToStreamAsync(
                 uri,
                 destination,
                 httpClient,
@@ -157,13 +144,10 @@ public class HttpStreamingExtensionsTests
                 (uri: new Uri("http://test.local/file2.txt"), destinationPath: Path.Join(tempDir, "file2.txt"))
             };
 
-            using var httpClient = CreateTestClient((request, _) =>
+            using var httpClient = CreateTestClient(static (request, _) =>
             {
                 var content = $"Content for {request.RequestUri!.AbsolutePath}";
-                var response = new HttpResponseMessage(HttpStatusCode.OK)
-                {
-                    Content = new StringContent(content)
-                };
+                var response = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(content) };
                 response.Content.Headers.ContentLength = content.Length;
                 return Task.FromResult(response);
             });
@@ -171,7 +155,7 @@ public class HttpStreamingExtensionsTests
             var results = await downloads.DownloadParallelAsync(httpClient);
 
             results.Count.ShouldBe(2);
-            results.ShouldAllBe(r => r.bytesDownloaded > 0);
+            results.ShouldAllBe(static r => r.bytesDownloaded > 0);
 
             File.Exists(Path.Join(tempDir, "file1.txt")).ShouldBeTrue();
             File.Exists(Path.Join(tempDir, "file2.txt")).ShouldBeTrue();
@@ -181,10 +165,7 @@ public class HttpStreamingExtensionsTests
         }
         finally
         {
-            if (Directory.Exists(tempDir))
-            {
-                Directory.Delete(tempDir, true);
-            }
+            if (Directory.Exists(tempDir)) Directory.Delete(tempDir, true);
         }
     }
 
@@ -199,35 +180,23 @@ public class HttpStreamingExtensionsTests
             var filePath = Path.Join(tempDir, "existing.txt");
             await File.WriteAllTextAsync(filePath, "Existing content");
 
-            var downloads = new[]
-            {
-                (uri: new Uri("http://test.local/file.txt"), destinationPath: filePath)
-            };
+            var downloads = new[] { (uri: new Uri("http://test.local/file.txt"), destinationPath: filePath) };
 
-            using var httpClient = CreateTestClient((_, _) =>
+            using var httpClient = CreateTestClient(static (_, _) =>
             {
                 var response = new HttpResponseMessage(HttpStatusCode.OK)
-                {
-                    Content = new StringContent("New content")
-                };
+                    { Content = new StringContent("New content") };
                 return Task.FromResult(response);
             });
 
-            var options = new StreamingDownloadOptions
-            {
-                OverwriteExisting = false,
-                EnableResume = false
-            };
+            var options = new StreamingDownloadOptions { OverwriteExisting = false, EnableResume = false };
 
-            await Assert.ThrowsAsync<IOException>(
-                async () => await downloads.DownloadParallelAsync(httpClient, options));
+            await Assert.ThrowsAsync<IOException>(async () =>
+                await downloads.DownloadParallelAsync(httpClient, options));
         }
         finally
         {
-            if (Directory.Exists(tempDir))
-            {
-                Directory.Delete(tempDir, true);
-            }
+            if (Directory.Exists(tempDir)) Directory.Delete(tempDir, true);
         }
     }
 
@@ -246,10 +215,7 @@ public class HttpStreamingExtensionsTests
             const string fullContent = "Partial content";
             const string remainingContent = "content";
 
-            var downloads = new[]
-            {
-                (uri: new Uri("http://test.local/file.txt"), destinationPath: filePath)
-            };
+            var downloads = new[] { (uri: new Uri("http://test.local/file.txt"), destinationPath: filePath) };
 
             var headCalled = false;
             var getRangeCalled = false;
@@ -275,18 +241,12 @@ public class HttpStreamingExtensionsTests
                     return Task.FromResult(rangeResponse);
                 }
 
-                var response = new HttpResponseMessage(HttpStatusCode.OK)
-                {
-                    Content = new StringContent(fullContent)
-                };
+                var response = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(fullContent) };
                 response.Content.Headers.ContentLength = fullContent.Length;
                 return Task.FromResult(response);
             });
 
-            var options = new StreamingDownloadOptions
-            {
-                EnableResume = true
-            };
+            var options = new StreamingDownloadOptions { EnableResume = true };
 
             var results = await downloads.DownloadParallelAsync(httpClient, options);
 
@@ -299,10 +259,7 @@ public class HttpStreamingExtensionsTests
         }
         finally
         {
-            if (Directory.Exists(tempDir))
-            {
-                Directory.Delete(tempDir, true);
-            }
+            if (Directory.Exists(tempDir)) Directory.Delete(tempDir, true);
         }
     }
 
@@ -318,12 +275,9 @@ public class HttpStreamingExtensionsTests
             const string content = "Complete file";
             await File.WriteAllTextAsync(filePath, content);
 
-            var downloads = new[]
-            {
-                (uri: new Uri("http://test.local/file.txt"), destinationPath: filePath)
-            };
+            var downloads = new[] { (uri: new Uri("http://test.local/file.txt"), destinationPath: filePath) };
 
-            using var httpClient = CreateTestClient((request, _) =>
+            using var httpClient = CreateTestClient(static (request, _) =>
             {
                 if (request.Method == HttpMethod.Head)
                 {
@@ -333,21 +287,13 @@ public class HttpStreamingExtensionsTests
                 }
 
                 if (request.Headers.Range != null)
-                {
                     return Task.FromResult(new HttpResponseMessage(HttpStatusCode.RequestedRangeNotSatisfiable));
-                }
 
-                var response = new HttpResponseMessage(HttpStatusCode.OK)
-                {
-                    Content = new StringContent(content)
-                };
+                var response = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(content) };
                 return Task.FromResult(response);
             });
 
-            var options = new StreamingDownloadOptions
-            {
-                EnableResume = true
-            };
+            var options = new StreamingDownloadOptions { EnableResume = true };
 
             var results = await downloads.DownloadParallelAsync(httpClient, options);
 
@@ -356,10 +302,7 @@ public class HttpStreamingExtensionsTests
         }
         finally
         {
-            if (Directory.Exists(tempDir))
-            {
-                Directory.Delete(tempDir, true);
-            }
+            if (Directory.Exists(tempDir)) Directory.Delete(tempDir, true);
         }
     }
 
@@ -372,17 +315,11 @@ public class HttpStreamingExtensionsTests
         try
         {
             var filePath = Path.Join(tempDir, "callback.txt");
-            var downloads = new[]
-            {
-                (uri: new Uri("http://test.local/file.txt"), destinationPath: filePath)
-            };
+            var downloads = new[] { (uri: new Uri("http://test.local/file.txt"), destinationPath: filePath) };
 
-            using var httpClient = CreateTestClient((_, _) =>
+            using var httpClient = CreateTestClient(static (_, _) =>
             {
-                var response = new HttpResponseMessage(HttpStatusCode.OK)
-                {
-                    Content = new StringContent("Content")
-                };
+                var response = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("Content") };
                 response.Content.Headers.ContentLength = 7;
                 return Task.FromResult(response);
             });
@@ -412,10 +349,7 @@ public class HttpStreamingExtensionsTests
         }
         finally
         {
-            if (Directory.Exists(tempDir))
-            {
-                Directory.Delete(tempDir, true);
-            }
+            if (Directory.Exists(tempDir)) Directory.Delete(tempDir, true);
         }
     }
 }

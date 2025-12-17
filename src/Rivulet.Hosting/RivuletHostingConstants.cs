@@ -1,17 +1,17 @@
 namespace Rivulet.Hosting;
 
 /// <summary>
-/// Constants used throughout the Rivulet.Hosting package for consistency and maintainability.
+///     Constants used throughout the Rivulet.Hosting package for consistency and maintainability.
 /// </summary>
 internal static class RivuletHostingConstants
 {
     /// <summary>
-    /// Configuration section name for Rivulet settings in appsettings.json.
+    ///     Configuration section name for Rivulet settings in appsettings.json.
     /// </summary>
     public const string ConfigurationSectionName = "Rivulet";
 
     /// <summary>
-    /// Health check data dictionary keys for operation health checks.
+    ///     Health check data dictionary keys for operation health checks.
     /// </summary>
     public static class HealthCheckKeys
     {
@@ -20,12 +20,11 @@ internal static class RivuletHostingConstants
     }
 
     /// <summary>
-    /// Health check status messages.
+    ///     Health check status messages.
     /// </summary>
     public static class HealthCheckMessages
     {
         public const string OperationHealthy = "Operation healthy";
-        public const string NoSuccessfulOperationsFormat = "No successful operations for {0}";
         public const string ConsecutiveFailuresFormat = "Operation has failed {0} consecutive times";
     }
 }

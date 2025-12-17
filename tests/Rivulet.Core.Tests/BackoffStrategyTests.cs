@@ -1,15 +1,15 @@
-﻿using Rivulet.Core.Resilience;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
+using Rivulet.Core.Resilience;
 
 namespace Rivulet.Core.Tests;
 
-public class BackoffStrategyTests
+[SuppressMessage("ReSharper", "AccessToDisposedClosure")]
+public sealed class BackoffStrategyTests
 {
     [Fact]
     public async Task BackoffStrategy_Exponential_RetriesSuccessfully()
     {
-
         var attemptCounts = new ConcurrentDictionary<int, int>();
 
         var options = new ParallelOptionsRivulet
@@ -17,16 +17,16 @@ public class BackoffStrategyTests
             MaxRetries = 3,
             BaseDelay = TimeSpan.FromMilliseconds(10),
             BackoffStrategy = BackoffStrategy.Exponential,
-            IsTransient = _ => true
+            IsTransient = static _ => true
         };
 
 
         var results = await new[] { 1, 2, 3 }.SelectParallelAsync(
             (x, _) =>
             {
-                var attempts = attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
-                if (x == 2 && attempts <= 2)
-                    throw new InvalidOperationException("Transient error");
+                var attempts = attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
+                if (x == 2 && attempts <= 2) throw new InvalidOperationException("Transient error");
+
                 return new ValueTask<int>(x * 2);
             },
             options);
@@ -44,15 +44,15 @@ public class BackoffStrategyTests
             MaxRetries = 3,
             BaseDelay = TimeSpan.FromMilliseconds(10),
             BackoffStrategy = BackoffStrategy.ExponentialJitter,
-            IsTransient = _ => true
+            IsTransient = static _ => true
         };
 
         var results = await new[] { 1, 2, 3 }.SelectParallelAsync(
             (x, _) =>
             {
-                var attempts = attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
-                if (x == 2 && attempts <= 2)
-                    throw new InvalidOperationException("Transient error");
+                var attempts = attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
+                if (x == 2 && attempts <= 2) throw new InvalidOperationException("Transient error");
+
                 return new ValueTask<int>(x * 2);
             },
             options);
@@ -70,15 +70,15 @@ public class BackoffStrategyTests
             MaxRetries = 3,
             BaseDelay = TimeSpan.FromMilliseconds(10),
             BackoffStrategy = BackoffStrategy.DecorrelatedJitter,
-            IsTransient = _ => true
+            IsTransient = static _ => true
         };
 
         var results = await new[] { 1, 2, 3 }.SelectParallelAsync(
             (x, _) =>
             {
-                var attempts = attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
-                if (x == 2 && attempts <= 2)
-                    throw new InvalidOperationException("Transient error");
+                var attempts = attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
+                if (x == 2 && attempts <= 2) throw new InvalidOperationException("Transient error");
+
                 return new ValueTask<int>(x * 2);
             },
             options);
@@ -97,15 +97,15 @@ public class BackoffStrategyTests
             MaxRetries = 3,
             BaseDelay = TimeSpan.FromMilliseconds(10),
             BackoffStrategy = BackoffStrategy.Linear,
-            IsTransient = _ => true
+            IsTransient = static _ => true
         };
 
         var results = await new[] { 1, 2, 3 }.SelectParallelAsync(
             (x, _) =>
             {
-                var attempts = attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
-                if (x == 2 && attempts <= 2)
-                    throw new InvalidOperationException("Transient error");
+                var attempts = attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
+                if (x == 2 && attempts <= 2) throw new InvalidOperationException("Transient error");
+
                 return new ValueTask<int>(x * 2);
             },
             options);
@@ -124,15 +124,15 @@ public class BackoffStrategyTests
             MaxRetries = 3,
             BaseDelay = TimeSpan.FromMilliseconds(10),
             BackoffStrategy = BackoffStrategy.LinearJitter,
-            IsTransient = _ => true
+            IsTransient = static _ => true
         };
 
         var results = await new[] { 1, 2, 3 }.SelectParallelAsync(
             (x, _) =>
             {
-                var attempts = attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
-                if (x == 2 && attempts <= 2)
-                    throw new InvalidOperationException("Transient error");
+                var attempts = attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
+                if (x == 2 && attempts <= 2) throw new InvalidOperationException("Transient error");
+
                 return new ValueTask<int>(x * 2);
             },
             options);
@@ -159,26 +159,26 @@ public class BackoffStrategyTests
             MaxRetries = 2,
             BaseDelay = TimeSpan.FromMilliseconds(10),
             BackoffStrategy = BackoffStrategy.ExponentialJitter,
-            IsTransient = _ => true,
+            IsTransient = static _ => true,
             ErrorMode = ErrorMode.BestEffort
         };
 
         var results = await source.SelectParallelStreamAsync(
-            (x, _) =>
-            {
-                var attempts = attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
-                if (x == 5 && attempts <= 2)
-                    throw new InvalidOperationException("Transient error");
-                return new ValueTask<int>(x * 2);
-            },
-            options).ToListAsync();
+                (x, _) =>
+                {
+                    var attempts = attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
+                    if (x == 5 && attempts <= 2) throw new InvalidOperationException("Transient error");
+
+                    return new ValueTask<int>(x * 2);
+                },
+                options)
+            .ToListAsync();
 
         results.Count.ShouldBe(10);
         attemptCounts[5].ShouldBe(3);
     }
 
     [Fact]
-    [SuppressMessage("ReSharper", "AccessToDisposedClosure")]
     public async Task BackoffStrategy_CancellationDuringDelay_ThrowsOperationCanceledException()
     {
         using var cts = new CancellationTokenSource();
@@ -189,19 +189,23 @@ public class BackoffStrategyTests
             MaxRetries = 5,
             BaseDelay = TimeSpan.FromSeconds(10),
             BackoffStrategy = BackoffStrategy.Exponential,
-            IsTransient = _ => true
+            IsTransient = static _ => true
         };
 
-        var act = async () => await new[] { 1 }.SelectParallelAsync<int, int>(
+        var act = () => new[] { 1 }.SelectParallelAsync<int, int>(
             (_, _) =>
             {
                 attemptCount++;
                 if (attemptCount == 1)
+                {
                     Task.Run(async () =>
-                    {
-                        await Task.Delay(100, cts.Token);
-                        await cts.CancelAsync();
-                    }, cts.Token);
+                        {
+                            await Task.Delay(100, cts.Token);
+                            await cts.CancelAsync();
+                        },
+                        cts.Token);
+                }
+
                 throw new InvalidOperationException("Transient error");
             },
             options,
@@ -223,21 +227,21 @@ public class BackoffStrategyTests
             MaxRetries = 2,
             BaseDelay = TimeSpan.FromMilliseconds(10),
             BackoffStrategy = BackoffStrategy.DecorrelatedJitter,
-            IsTransient = _ => true
+            IsTransient = static _ => true
         };
 
         var results = await source.SelectParallelAsync(
             (x, _) =>
             {
-                var attempts = attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
-                if (attempts <= 2)
-                    throw new InvalidOperationException($"Transient error for {x}");
-                return new ValueTask<int>(x * 2);
+                var attempts = attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
+                return attempts <= 2
+                    ? throw new InvalidOperationException($"Transient error for {x}")
+                    : new ValueTask<int>(x * 2);
             },
             options);
 
         results.Count.ShouldBe(5);
-        attemptCounts.Values.ShouldAllBe(count => count == 3);
+        attemptCounts.Values.ShouldAllBe(static count => count == 3);
     }
 
     [Fact]
@@ -251,17 +255,15 @@ public class BackoffStrategyTests
             MaxRetries = 2,
             BaseDelay = TimeSpan.FromMilliseconds(10),
             BackoffStrategy = BackoffStrategy.Linear,
-            IsTransient = _ => true,
+            IsTransient = static _ => true,
             ErrorMode = ErrorMode.CollectAndContinue
         };
 
-        var act = async () => await source.SelectParallelAsync(
+        var act = () => source.SelectParallelAsync(
             (x, _) =>
             {
-                attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
-                if (x == 2)
-                    throw new InvalidOperationException("Always fails");
-                return new ValueTask<int>(x * 2);
+                attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
+                return x == 2 ? throw new InvalidOperationException("Always fails") : new ValueTask<int>(x * 2);
             },
             options);
 
@@ -270,21 +272,19 @@ public class BackoffStrategyTests
     }
 
     [Fact]
-    public void BackoffStrategy_AllEnumValuesDefined()
-    {
-        Enum.GetValues<BackoffStrategy>().ShouldBe([
-            BackoffStrategy.Exponential,
-            BackoffStrategy.ExponentialJitter,
-            BackoffStrategy.DecorrelatedJitter,
-            BackoffStrategy.Linear,
-            BackoffStrategy.LinearJitter
-        ]);
-    }
+    public void BackoffStrategy_AllEnumValuesDefined() =>
+        Enum.GetValues<BackoffStrategy>()
+            .ShouldBe([
+                BackoffStrategy.Exponential,
+                BackoffStrategy.ExponentialJitter,
+                BackoffStrategy.DecorrelatedJitter,
+                BackoffStrategy.Linear,
+                BackoffStrategy.LinearJitter
+            ]);
 
     [Fact]
     public async Task BackoffStrategy_WithForEachParallelAsync_RetriesCorrectly()
     {
-
         var source = Enumerable.Range(1, 10).ToAsyncEnumerable();
         var processedCount = 0;
         var attemptCounts = new ConcurrentDictionary<int, int>();
@@ -294,16 +294,16 @@ public class BackoffStrategyTests
             MaxRetries = 2,
             BaseDelay = TimeSpan.FromMilliseconds(10),
             BackoffStrategy = BackoffStrategy.ExponentialJitter,
-            IsTransient = _ => true,
+            IsTransient = static _ => true,
             ErrorMode = ErrorMode.BestEffort
         };
 
         await source.ForEachParallelAsync(
             (x, _) =>
             {
-                var attempts = attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
-                if (x == 5 && attempts <= 2)
-                    throw new InvalidOperationException("Transient error");
+                var attempts = attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
+                if (x == 5 && attempts <= 2) throw new InvalidOperationException("Transient error");
+
                 Interlocked.Increment(ref processedCount);
                 return ValueTask.CompletedTask;
             },
@@ -320,18 +320,14 @@ public class BackoffStrategyTests
 
         var options = new ParallelOptionsRivulet
         {
-            MaxRetries = 2,
-            BaseDelay = TimeSpan.FromMilliseconds(10),
-            IsTransient = _ => true
+            MaxRetries = 2, BaseDelay = TimeSpan.FromMilliseconds(10), IsTransient = static _ => true
         };
 
         var results = await new[] { 1 }.SelectParallelAsync(
             (x, _) =>
             {
-                var attempts = attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
-                if (attempts <= 2)
-                    throw new InvalidOperationException("Transient error");
-                return new ValueTask<int>(x);
+                var attempts = attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
+                return attempts <= 2 ? throw new InvalidOperationException("Transient error") : new ValueTask<int>(x);
             },
             options);
 
@@ -358,19 +354,17 @@ public class BackoffStrategyTests
 
             var options = new ParallelOptionsRivulet
             {
-                MaxRetries = 2,
-                BaseDelay = TimeSpan.FromMilliseconds(5),
-                BackoffStrategy = strategy,
-                IsTransient = _ => true
+                MaxRetries = 2, BaseDelay = TimeSpan.FromMilliseconds(5), BackoffStrategy = strategy,
+                IsTransient = static _ => true
             };
 
             var results = await new[] { 1 }.SelectParallelAsync(
                 (x, _) =>
                 {
-                    var attempts = attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
-                    if (attempts <= 2)
-                        throw new InvalidOperationException($"Test {strategy}");
-                    return new ValueTask<int>(x);
+                    var attempts = attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
+                    return attempts <= 2
+                        ? throw new InvalidOperationException($"Test {strategy}")
+                        : new ValueTask<int>(x);
                 },
                 options);
 
@@ -389,19 +383,20 @@ public class BackoffStrategyTests
             MaxRetries = 2,
             BaseDelay = TimeSpan.FromMilliseconds(10),
             BackoffStrategy = BackoffStrategy.ExponentialJitter,
-            IsTransient = _ => true,
+            IsTransient = static _ => true,
             OrderedOutput = true
         };
 
-        var results = await Enumerable.Range(1, 5).SelectParallelAsync(
-            (x, _) =>
-            {
-                var attempts = attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
-                if (x == 3 && attempts <= 2)
-                    throw new InvalidOperationException("Transient error");
-                return new ValueTask<int>(x * 2);
-            },
-            options);
+        var results = await Enumerable.Range(1, 5)
+            .SelectParallelAsync(
+                (x, _) =>
+                {
+                    var attempts = attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
+                    if (x == 3 && attempts <= 2) throw new InvalidOperationException("Transient error");
+
+                    return new ValueTask<int>(x * 2);
+                },
+                options);
 
         results.ShouldBe([2, 4, 6, 8, 10]);
         attemptCounts[3].ShouldBe(3);
@@ -417,16 +412,14 @@ public class BackoffStrategyTests
             MaxRetries = 2,
             BaseDelay = TimeSpan.FromMilliseconds(10),
             BackoffStrategy = (BackoffStrategy)999,
-            IsTransient = _ => true
+            IsTransient = static _ => true
         };
 
         var results = await new[] { 1 }.SelectParallelAsync(
             (x, _) =>
             {
-                var attempts = attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
-                if (attempts <= 2)
-                    throw new InvalidOperationException("Transient error");
-                return new ValueTask<int>(x);
+                var attempts = attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
+                return attempts <= 2 ? throw new InvalidOperationException("Transient error") : new ValueTask<int>(x);
             },
             options);
 
@@ -454,19 +447,17 @@ public class BackoffStrategyTests
 
             var options = new ParallelOptionsRivulet
             {
-                MaxRetries = 1,
-                BaseDelay = TimeSpan.FromMilliseconds(5),
-                BackoffStrategy = strategy,
-                IsTransient = _ => true
+                MaxRetries = 1, BaseDelay = TimeSpan.FromMilliseconds(5), BackoffStrategy = strategy,
+                IsTransient = static _ => true
             };
 
             var results = await new[] { 1 }.SelectParallelAsync(
                 (x, _) =>
                 {
-                    var attempts = attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
-                    if (attempts <= 1)
-                        throw new InvalidOperationException($"Test {strategy}");
-                    return new ValueTask<int>(x);
+                    var attempts = attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
+                    return attempts <= 1
+                        ? throw new InvalidOperationException($"Test {strategy}")
+                        : new ValueTask<int>(x);
                 },
                 options);
 

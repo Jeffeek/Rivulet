@@ -1,11 +1,16 @@
-﻿using Rivulet.Core;
+using Rivulet.Core;
+
+// ReSharper disable ArrangeObjectCreationWhenTypeNotEvident
 
 Console.WriteLine("=== Rivulet.Core Sample ===\n");
 
 // Sample 1: SelectParallelAsync - Process items and collect results
 Console.WriteLine("1. SelectParallelAsync - HTTP requests with retry logic");
 using var http = new HttpClient();
-var urls = Enumerable.Range(0, 50).Select(i => $"https://httpbin.org/status/200?id={i}").ToArray();
+var urls = Enumerable
+    .Range(0, 50)
+    .Select(static i => $"https://httpbin.org/status/200?id={i}")
+    .ToArray();
 
 var results = await urls.SelectParallelAsync(
     async (url, ct) =>
@@ -17,7 +22,7 @@ var results = await urls.SelectParallelAsync(
     {
         MaxDegreeOfParallelism = 32,
         MaxRetries = 3,
-        IsTransient = ex => ex is HttpRequestException or TaskCanceledException,
+        IsTransient = static ex => ex is HttpRequestException or TaskCanceledException,
         BaseDelay = TimeSpan.FromMilliseconds(200),
         ErrorMode = ErrorMode.CollectAndContinue
     });
@@ -28,11 +33,12 @@ Console.WriteLine($"✓ Processed {results.Count} URLs\n");
 Console.WriteLine("2. SelectParallelStreamAsync - Stream processing");
 var numbers = Enumerable.Range(1, 20);
 var streamResults = await numbers.ToAsyncEnumerable()
-    .SelectParallelStreamAsync(async (num, ct) =>
-    {
-        await Task.Delay(Random.Shared.Next(10, 50), ct);
-        return num * num;
-    }, new ParallelOptionsRivulet { MaxDegreeOfParallelism = 5, OrderedOutput = false })
+    .SelectParallelStreamAsync(static async (num, ct) =>
+        {
+            await Task.Delay(Random.Shared.Next(10, 50), ct);
+            return num * num;
+        },
+        new ParallelOptionsRivulet { MaxDegreeOfParallelism = 5, OrderedOutput = false })
     .ToListAsync();
 
 Console.WriteLine($"✓ Streamed {streamResults.Count} results\n");
@@ -41,8 +47,7 @@ Console.WriteLine($"✓ Streamed {streamResults.Count} results\n");
 Console.WriteLine("3. ForEachParallelAsync - Fire and forget");
 var items = Enumerable.Range(1, 10).ToAsyncEnumerable();
 
-await items.ForEachParallelAsync(
-    async (item, ct) =>
+await items.ForEachParallelAsync(static async (item, ct) =>
     {
         await Task.Delay(100, ct);
         Console.WriteLine($"  Processed item {item}");
@@ -57,7 +62,7 @@ var batchItems = Enumerable.Range(1, 100);
 
 var batches = await batchItems.BatchParallelAsync(
     10,
-    async (batch, ct) =>
+    static async (batch, ct) =>
     {
         await Task.Delay(50, ct);
         return batch.Sum();
@@ -72,12 +77,10 @@ var faultyItems = Enumerable.Range(1, 20);
 
 try
 {
-    await faultyItems.SelectParallelAsync(
-        async (item, ct) =>
+    await faultyItems.SelectParallelAsync(static async (item, ct) =>
         {
             await Task.Delay(10, ct);
-            if (item == 10) throw new InvalidOperationException($"Simulated error at item {item}");
-            return item;
+            return item == 10 ? throw new InvalidOperationException($"Simulated error at item {item}") : item;
         },
         new ParallelOptionsRivulet
         {

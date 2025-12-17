@@ -1,17 +1,19 @@
 using System.Data;
 using System.Data.Common;
+using System.Diagnostics.CodeAnalysis;
 using Rivulet.Core;
 
 namespace Rivulet.Sql;
 
 /// <summary>
-/// Extension methods for bulk SQL operations (inserts, updates, deletes).
+///     Extension methods for bulk SQL operations (inserts, updates, deletes).
 /// </summary>
+[SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public static class SqlBulkExtensions
 {
     /// <summary>
-    /// Executes bulk insert operations in parallel batches.
-    /// Items are grouped into batches and executed with bounded parallelism.
+    ///     Executes bulk insert operations in parallel batches.
+    ///     Items are grouped into batches and executed with bounded parallelism.
     /// </summary>
     /// <typeparam name="T">The type of items to insert.</typeparam>
     /// <param name="items">The items to insert.</param>
@@ -20,7 +22,7 @@ public static class SqlBulkExtensions
     /// <param name="options">Bulk operation options.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Total number of rows affected across all batches.</returns>
-    public static async Task<int> BulkInsertAsync<T>(
+    public static Task<int> BulkInsertAsync<T>(
         this IEnumerable<T> items,
         Func<IDbConnection> connectionFactory,
         Func<IReadOnlyList<T>, IDbCommand, CancellationToken, ValueTask> commandBuilder,
@@ -33,16 +35,16 @@ public static class SqlBulkExtensions
 
         options ??= new();
 
-        return await ExecuteBulkOperationAsync(
+        return ExecuteBulkOperationAsync(
             items,
             connectionFactory,
             commandBuilder,
             options,
-            cancellationToken).ConfigureAwait(false);
+            cancellationToken);
     }
 
     /// <summary>
-    /// Executes bulk update operations in parallel batches.
+    ///     Executes bulk update operations in parallel batches.
     /// </summary>
     /// <typeparam name="T">The type of items to update.</typeparam>
     /// <param name="items">The items to update.</param>
@@ -51,7 +53,7 @@ public static class SqlBulkExtensions
     /// <param name="options">Bulk operation options.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Total number of rows affected across all batches.</returns>
-    public static async Task<int> BulkUpdateAsync<T>(
+    public static Task<int> BulkUpdateAsync<T>(
         this IEnumerable<T> items,
         Func<IDbConnection> connectionFactory,
         Func<IReadOnlyList<T>, IDbCommand, CancellationToken, ValueTask> commandBuilder,
@@ -64,16 +66,16 @@ public static class SqlBulkExtensions
 
         options ??= new();
 
-        return await ExecuteBulkOperationAsync(
+        return ExecuteBulkOperationAsync(
             items,
             connectionFactory,
             commandBuilder,
             options,
-            cancellationToken).ConfigureAwait(false);
+            cancellationToken);
     }
 
     /// <summary>
-    /// Executes bulk delete operations in parallel batches.
+    ///     Executes bulk delete operations in parallel batches.
     /// </summary>
     /// <typeparam name="T">The type of items to delete.</typeparam>
     /// <param name="items">The items to delete.</param>
@@ -82,7 +84,7 @@ public static class SqlBulkExtensions
     /// <param name="options">Bulk operation options.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Total number of rows affected across all batches.</returns>
-    public static async Task<int> BulkDeleteAsync<T>(
+    public static Task<int> BulkDeleteAsync<T>(
         this IEnumerable<T> items,
         Func<IDbConnection> connectionFactory,
         Func<IReadOnlyList<T>, IDbCommand, CancellationToken, ValueTask> commandBuilder,
@@ -95,12 +97,12 @@ public static class SqlBulkExtensions
 
         options ??= new();
 
-        return await ExecuteBulkOperationAsync(
+        return ExecuteBulkOperationAsync(
             items,
             connectionFactory,
             commandBuilder,
             options,
-            cancellationToken).ConfigureAwait(false);
+            cancellationToken);
     }
 
     private static async Task<int> ExecuteBulkOperationAsync<T>(
@@ -114,15 +116,15 @@ public static class SqlBulkExtensions
         var parallelOptions = sqlOptions.GetMergedParallelOptions();
 
         var batches = items
-            .Select((item, index) => (item, index))
+            .Select(static (item, index) => (item, index))
             .GroupBy(x => x.index / options.BatchSize)
-            .Select(IReadOnlyList<T> (g) => g.Select(x => x.item).ToList())
+            .Select(static g => g.Select(static x => x.item).ToList())
             .ToList();
 
+#pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements in ExecuteBatchAsync
         var batchResults = await batches
-            .Select((batch, index) => (batch, index))
-            .SelectParallelAsync(
-                async (item, ct) => await ExecuteBatchAsync(
+            .Select(static (batch, index) => (batch, index))
+            .SelectParallelAsync((item, ct) => ExecuteBatchAsync(
                     item.batch,
                     connectionFactory,
                     commandBuilder,
@@ -130,7 +132,9 @@ public static class SqlBulkExtensions
                     item.index,
                     ct),
                 parallelOptions,
-                cancellationToken).ConfigureAwait(false);
+                cancellationToken)
+            .ConfigureAwait(false);
+#pragma warning restore CA2007
 
         return batchResults.Sum();
     }
@@ -144,9 +148,7 @@ public static class SqlBulkExtensions
         CancellationToken cancellationToken)
     {
         if (options.OnBatchStartAsync != null)
-        {
             await options.OnBatchStartAsync(batch.Cast<object>().ToList(), batchNumber).ConfigureAwait(false);
-        }
 
         var connection = connectionFactory();
         var sqlOptions = options.SqlOptions ?? new SqlOptions();
@@ -156,9 +158,7 @@ public static class SqlBulkExtensions
             try
             {
                 if (sqlOptions.AutoManageConnection && connection.State != ConnectionState.Open)
-                {
                     await OpenConnectionAsync(connection, cancellationToken).ConfigureAwait(false);
-                }
 
                 var transaction = options.UseTransaction
                     ? connection.BeginTransaction(sqlOptions.IsolationLevel)
@@ -171,10 +171,7 @@ public static class SqlBulkExtensions
                         using var command = connection.CreateCommand();
                         command.CommandTimeout = sqlOptions.CommandTimeout;
 
-                        if (transaction != null)
-                        {
-                            command.Transaction = transaction;
-                        }
+                        if (transaction != null) command.Transaction = transaction;
 
                         await commandBuilder(batch, command, cancellationToken).ConfigureAwait(false);
 
@@ -184,7 +181,8 @@ public static class SqlBulkExtensions
 
                         if (options.OnBatchCompleteAsync != null)
                         {
-                            await options.OnBatchCompleteAsync(batch.Cast<object>().ToList(), batchNumber, affectedRows).ConfigureAwait(false);
+                            await options.OnBatchCompleteAsync(batch.Cast<object>().ToList(), batchNumber, affectedRows)
+                                .ConfigureAwait(false);
                         }
 
                         return affectedRows;
@@ -194,9 +192,7 @@ public static class SqlBulkExtensions
                         transaction?.Rollback();
 
                         if (options.OnBatchErrorAsync != null)
-                        {
                             await options.OnBatchErrorAsync(batch.Cast<object>().ToList(), batchNumber, ex).ConfigureAwait(false);
-                        }
 
                         throw;
                     }
@@ -204,10 +200,7 @@ public static class SqlBulkExtensions
             }
             finally
             {
-                if (sqlOptions.AutoManageConnection && connection.State == ConnectionState.Open)
-                {
-                    connection.Close();
-                }
+                if (sqlOptions.AutoManageConnection && connection.State == ConnectionState.Open) connection.Close();
             }
         }
     }
@@ -215,21 +208,15 @@ public static class SqlBulkExtensions
     private static async ValueTask OpenConnectionAsync(IDbConnection connection, CancellationToken cancellationToken)
     {
         if (connection is DbConnection dbConnection)
-        {
             await dbConnection.OpenAsync(cancellationToken).ConfigureAwait(false);
-        }
         else
-        {
             await Task.Run(connection.Open, cancellationToken).ConfigureAwait(false);
-        }
     }
 
     private static async ValueTask<int> ExecuteNonQueryAsync(IDbCommand command, CancellationToken cancellationToken)
     {
         if (command is DbCommand dbCommand)
-        {
             return await dbCommand.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-        }
 
         return await Task.Run(command.ExecuteNonQuery, cancellationToken).ConfigureAwait(false);
     }

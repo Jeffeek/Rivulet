@@ -1,15 +1,18 @@
+using System.Diagnostics.CodeAnalysis;
 using Polly;
 using Rivulet.Core;
 
 namespace Rivulet.Polly;
 
 /// <summary>
-/// Advanced Polly features integrated with Rivulet parallel processing.
+///     Advanced Polly features integrated with Rivulet parallel processing.
 /// </summary>
+[SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public static class PollyAdvancedExtensions
 {
     /// <summary>
-    /// Processes items in parallel with hedging strategy - sends parallel requests and returns the first successful result.
+    ///     Processes items in parallel with hedging strategy - sends parallel requests and returns the first successful
+    ///     result.
     /// </summary>
     /// <typeparam name="TSource">The type of source items.</typeparam>
     /// <typeparam name="TResult">The type of result items.</typeparam>
@@ -21,12 +24,12 @@ public static class PollyAdvancedExtensions
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The results of the parallel operation with hedging applied.</returns>
     /// <remarks>
-    /// Hedging sends multiple parallel requests for the same operation and uses the first successful result.
-    /// This is useful for reducing tail latency when calling unreliable services.
-    /// If the first request is slow, a hedged request is sent after the delay.
+    ///     Hedging sends multiple parallel requests for the same operation and uses the first successful result.
+    ///     This is useful for reducing tail latency when calling unreliable services.
+    ///     If the first request is slow, a hedged request is sent after the delay.
     /// </remarks>
     /// <example>
-    /// <code>
+    ///     <code>
     /// // If first API call is slow, send a hedged request after 100ms
     /// var results = await urls.SelectParallelWithHedgingAsync(
     ///     async (url, ct) => await httpClient.GetAsync(url, ct),
@@ -34,7 +37,7 @@ public static class PollyAdvancedExtensions
     ///     hedgingDelay: TimeSpan.FromMilliseconds(100));
     /// </code>
     /// </example>
-    public static async Task<List<TResult>> SelectParallelWithHedgingAsync<TSource, TResult>(
+    public static Task<List<TResult>> SelectParallelWithHedgingAsync<TSource, TResult>(
         this IEnumerable<TSource> source,
         Func<TSource, CancellationToken, ValueTask<TResult>> selector,
         int maxHedgedAttempts = 2,
@@ -50,8 +53,7 @@ public static class PollyAdvancedExtensions
 
         var delay = hedgingDelay ?? TimeSpan.FromMilliseconds(100);
 
-        return await source.SelectParallelAsync(
-            async (item, ct) =>
+        return source.SelectParallelAsync((item, ct) =>
             {
                 // Create a hedging pipeline specifically for this item
                 // Note: We need to create per-item because the ActionGenerator must capture 'item'
@@ -64,23 +66,21 @@ public static class PollyAdvancedExtensions
                         {
                             // Create a hedged action that executes the selector with the captured item
                             return async () =>
-                            {
-                                return Outcome.FromResult(await selector(item, args.ActionContext.CancellationToken).ConfigureAwait(false));
-                            };
+                                Outcome.FromResult(await selector(item, args.ActionContext.CancellationToken)
+                                    .ConfigureAwait(false));
                         }
                     })
                     .Build();
 
-                return await pipeline.ExecuteAsync(
-                    async token => await selector(item, token).ConfigureAwait(false),
-                    ct).ConfigureAwait(false);
+                return pipeline.ExecuteAsync(token => selector(item, token),
+                    ct);
             },
             options,
-            cancellationToken).ConfigureAwait(false);
+            cancellationToken);
     }
 
     /// <summary>
-    /// Processes items in parallel with result-based retry - retries based on the returned value, not just exceptions.
+    ///     Processes items in parallel with result-based retry - retries based on the returned value, not just exceptions.
     /// </summary>
     /// <typeparam name="TSource">The type of source items.</typeparam>
     /// <typeparam name="TResult">The type of result items.</typeparam>
@@ -93,11 +93,11 @@ public static class PollyAdvancedExtensions
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The results of the parallel operation with result-based retry applied.</returns>
     /// <remarks>
-    /// Unlike exception-based retry, this allows retrying when the operation succeeds but returns an undesirable result.
-    /// Useful for APIs that return error status codes in the response body rather than throwing exceptions.
+    ///     Unlike exception-based retry, this allows retrying when the operation succeeds but returns an undesirable result.
+    ///     Useful for APIs that return error status codes in the response body rather than throwing exceptions.
     /// </remarks>
     /// <example>
-    /// <code>
+    ///     <code>
     /// // Retry if API returns 429 (TooManyRequests) status code
     /// var results = await urls.SelectParallelWithResultRetryAsync(
     ///     async (url, ct) => await httpClient.GetAsync(url, ct),
@@ -106,7 +106,7 @@ public static class PollyAdvancedExtensions
     ///     delayBetweenRetries: TimeSpan.FromSeconds(1));
     /// </code>
     /// </example>
-    public static async Task<List<TResult>> SelectParallelWithResultRetryAsync<TSource, TResult>(
+    public static Task<List<TResult>> SelectParallelWithResultRetryAsync<TSource, TResult>(
         this IEnumerable<TSource> source,
         Func<TSource, CancellationToken, ValueTask<TResult>> selector,
         Func<TResult, bool> shouldRetry,
@@ -119,8 +119,7 @@ public static class PollyAdvancedExtensions
         ArgumentNullException.ThrowIfNull(selector);
         ArgumentNullException.ThrowIfNull(shouldRetry);
 
-        if (maxRetries < 0)
-            throw new ArgumentOutOfRangeException(nameof(maxRetries), "Must be non-negative");
+        if (maxRetries < 0) throw new ArgumentOutOfRangeException(nameof(maxRetries), "Must be non-negative");
 
         var delay = delayBetweenRetries ?? TimeSpan.FromMilliseconds(100);
 
@@ -136,19 +135,17 @@ public static class PollyAdvancedExtensions
             })
             .Build();
 
-        return await source.SelectParallelAsync(
-            async (item, ct) =>
+        return source.SelectParallelAsync((item, ct) =>
             {
-                return await pipeline.ExecuteAsync(
-                    async token => await selector(item, token).ConfigureAwait(false),
-                    ct).ConfigureAwait(false);
+                return pipeline.ExecuteAsync(token => selector(item, token),
+                    ct);
             },
             options,
-            cancellationToken).ConfigureAwait(false);
+            cancellationToken);
     }
 
     /// <summary>
-    /// Processes items in parallel with exponential result-based retry.
+    ///     Processes items in parallel with exponential result-based retry.
     /// </summary>
     /// <typeparam name="TSource">The type of source items.</typeparam>
     /// <typeparam name="TResult">The type of result items.</typeparam>
@@ -161,7 +158,7 @@ public static class PollyAdvancedExtensions
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The results of the parallel operation with exponential result-based retry applied.</returns>
     /// <example>
-    /// <code>
+    ///     <code>
     /// // Retry with exponential backoff if result is null
     /// var results = await ids.SelectParallelWithExponentialResultRetryAsync(
     ///     async (id, ct) => await FetchDataAsync(id, ct),
@@ -170,7 +167,7 @@ public static class PollyAdvancedExtensions
     ///     baseDelay: TimeSpan.FromMilliseconds(100));
     /// </code>
     /// </example>
-    public static async Task<List<TResult>> SelectParallelWithExponentialResultRetryAsync<TSource, TResult>(
+    public static Task<List<TResult>> SelectParallelWithExponentialResultRetryAsync<TSource, TResult>(
         this IEnumerable<TSource> source,
         Func<TSource, CancellationToken, ValueTask<TResult>> selector,
         Func<TResult, bool> shouldRetry,
@@ -183,8 +180,7 @@ public static class PollyAdvancedExtensions
         ArgumentNullException.ThrowIfNull(selector);
         ArgumentNullException.ThrowIfNull(shouldRetry);
 
-        if (maxRetries < 0)
-            throw new ArgumentOutOfRangeException(nameof(maxRetries), "Must be non-negative");
+        if (maxRetries < 0) throw new ArgumentOutOfRangeException(nameof(maxRetries), "Must be non-negative");
 
         var delay = baseDelay ?? TimeSpan.FromMilliseconds(100);
 
@@ -201,14 +197,12 @@ public static class PollyAdvancedExtensions
             })
             .Build();
 
-        return await source.SelectParallelAsync(
-            async (item, ct) =>
+        return source.SelectParallelAsync((item, ct) =>
             {
-                return await pipeline.ExecuteAsync(
-                    async token => await selector(item, token).ConfigureAwait(false),
-                    ct).ConfigureAwait(false);
+                return pipeline.ExecuteAsync(token => selector(item, token),
+                    ct);
             },
             options,
-            cancellationToken).ConfigureAwait(false);
+            cancellationToken);
     }
 }

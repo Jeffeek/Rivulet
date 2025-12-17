@@ -5,27 +5,28 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Rivulet.Base.Tests;
 
-public class TestDbConnection(
+public sealed class TestDbConnection(
     Func<IDbCommand, object?>? executeScalarFunc = null,
     Func<IDbCommand, int>? executeNonQueryFunc = null,
-    Func<IDbCommand, IDataReader>? executeReaderFunc = null)
-    : DbConnection
+    Func<IDbCommand, IDataReader>? executeReaderFunc = null
+) : DbConnection
 {
     private ConnectionState _state = ConnectionState.Closed;
 
     [AllowNull]
     public override string ConnectionString { get; set; }
+
     public override string Database => "TestDatabase";
     public override string DataSource => "TestDataSource";
     public override string ServerVersion => "1.0.0";
+
+    // ReSharper disable once ConvertToAutoPropertyWithPrivateSetter
     public override ConnectionState State => _state;
 
     protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel) =>
         new TestDbTransaction(this, isolationLevel);
 
-    public override void ChangeDatabase(string databaseName)
-    {
-    }
+    public override void ChangeDatabase(string databaseName) { }
 
     public override void Close() => _state = ConnectionState.Closed;
 
@@ -37,17 +38,19 @@ public class TestDbConnection(
         return Task.CompletedTask;
     }
 
-    protected override DbCommand CreateDbCommand() => new TestDbCommand(executeScalarFunc, executeNonQueryFunc, executeReaderFunc);
+    protected override DbCommand CreateDbCommand() =>
+        new TestDbCommand(executeScalarFunc, executeNonQueryFunc, executeReaderFunc);
 }
 
-public class TestDbCommand(
+internal sealed class TestDbCommand(
     Func<IDbCommand, object?>? executeScalarFunc,
     Func<IDbCommand, int>? executeNonQueryFunc,
-    Func<IDbCommand, IDataReader>? executeReaderFunc)
-    : DbCommand
+    Func<IDbCommand, IDataReader>? executeReaderFunc
+) : DbCommand
 {
     [AllowNull]
     public override string CommandText { get; set; }
+
     public override int CommandTimeout { get; set; }
     public override CommandType CommandType { get; set; }
     public override bool DesignTimeVisible { get; set; }
@@ -56,21 +59,19 @@ public class TestDbCommand(
     protected override DbTransaction? DbTransaction { get; set; }
     protected override DbParameterCollection DbParameterCollection { get; } = new TestDbParameterCollection();
 
-    public override void Cancel()
-    {
-    }
+    public override void Cancel() { }
 
     public override int ExecuteNonQuery() => executeNonQueryFunc?.Invoke(this) ?? 0;
 
-    public override Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken) => Task.FromResult(ExecuteNonQuery());
+    public override Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken) =>
+        Task.FromResult(ExecuteNonQuery());
 
     public override object? ExecuteScalar() => executeScalarFunc?.Invoke(this);
 
-    public override Task<object?> ExecuteScalarAsync(CancellationToken cancellationToken) => Task.FromResult(ExecuteScalar());
+    public override Task<object?> ExecuteScalarAsync(CancellationToken cancellationToken) =>
+        Task.FromResult(ExecuteScalar());
 
-    public override void Prepare()
-    {
-    }
+    public override void Prepare() { }
 
     protected override DbParameter CreateDbParameter() => new TestDbParameter();
 
@@ -80,10 +81,12 @@ public class TestDbCommand(
         return (DbDataReader)reader;
     }
 
-    protected override Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken) => Task.FromResult(ExecuteDbDataReader(behavior));
+    protected override Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior,
+        CancellationToken cancellationToken) =>
+        Task.FromResult(ExecuteDbDataReader(behavior));
 }
 
-public class TestDbTransaction(TestDbConnection connection, IsolationLevel isolationLevel) : DbTransaction
+public sealed class TestDbTransaction(DbConnection connection, IsolationLevel isolationLevel) : DbTransaction
 {
     public override IsolationLevel IsolationLevel { get; } = isolationLevel;
     protected override DbConnection DbConnection => connection;
@@ -95,7 +98,7 @@ public class TestDbTransaction(TestDbConnection connection, IsolationLevel isola
     public override void Rollback() => IsRolledBack = true;
 }
 
-public class TestDbParameterCollection : DbParameterCollection
+internal sealed class TestDbParameterCollection : DbParameterCollection
 {
     private readonly List<object> _parameters = [];
 
@@ -110,10 +113,7 @@ public class TestDbParameterCollection : DbParameterCollection
 
     public override void AddRange(Array values)
     {
-        foreach (var value in values)
-        {
-            _parameters.Add(value);
-        }
+        foreach (var value in values) _parameters.Add(value);
     }
 
     public override void Clear() => _parameters.Clear();
@@ -136,9 +136,7 @@ public class TestDbParameterCollection : DbParameterCollection
 
     public override void RemoveAt(int index) => _parameters.RemoveAt(index);
 
-    public override void RemoveAt(string parameterName)
-    {
-    }
+    public override void RemoveAt(string parameterName) { }
 
     protected override DbParameter GetParameter(int index) => (DbParameter)_parameters[index];
 
@@ -146,37 +144,40 @@ public class TestDbParameterCollection : DbParameterCollection
 
     protected override void SetParameter(int index, DbParameter value) => _parameters[index] = value;
 
-    protected override void SetParameter(string parameterName, DbParameter value)
-    {
-    }
+    protected override void SetParameter(string parameterName, DbParameter value) { }
 }
 
-public class TestDbParameter : DbParameter
+internal sealed class TestDbParameter : DbParameter
 {
     public override DbType DbType { get; set; }
     public override ParameterDirection Direction { get; set; }
     public override bool IsNullable { get; set; }
+
     [AllowNull]
     public override string ParameterName { get; set; } = string.Empty;
+
     public override int Size { get; set; }
+
     [AllowNull]
     public override string SourceColumn { get; set; } = string.Empty;
+
     public override bool SourceColumnNullMapping { get; set; }
     public override object? Value { get; set; }
 
-    public override void ResetDbType()
-    {
-    }
+    public override void ResetDbType() { }
 }
 
-public class TestDataReader(List<Dictionary<string, object>> rows) : DbDataReader
+public sealed class TestDataReader(List<Dictionary<string, object>> rows) : DbDataReader
 {
     private int _currentRow = -1;
     private bool _isClosed;
 
     public override int FieldCount => rows.Count > 0 ? rows[0].Count : 0;
     public override bool HasRows => rows.Count > 0;
+
+    // ReSharper disable once ConvertToAutoPropertyWithPrivateSetter
     public override bool IsClosed => _isClosed;
+
     public override int RecordsAffected => rows.Count;
     public override int Depth => 0;
 
@@ -185,9 +186,21 @@ public class TestDataReader(List<Dictionary<string, object>> rows) : DbDataReade
 
     public override bool GetBoolean(int ordinal) => (bool)GetValue(ordinal);
     public override byte GetByte(int ordinal) => (byte)GetValue(ordinal);
-    public override long GetBytes(int ordinal, long dataOffset, byte[]? buffer, int bufferOffset, int length) => 0;
+
+    public override long GetBytes(int ordinal,
+        long dataOffset,
+        byte[]? buffer,
+        int bufferOffset,
+        int length) => 0;
+
     public override char GetChar(int ordinal) => (char)GetValue(ordinal);
-    public override long GetChars(int ordinal, long dataOffset, char[]? buffer, int bufferOffset, int length) => 0;
+
+    public override long GetChars(int ordinal,
+        long dataOffset,
+        char[]? buffer,
+        int bufferOffset,
+        int length) => 0;
+
     public override string GetDataTypeName(int ordinal) => GetValue(ordinal).GetType().Name;
     public override DateTime GetDateTime(int ordinal) => (DateTime)GetValue(ordinal);
     public override decimal GetDecimal(int ordinal) => (decimal)GetValue(ordinal);
@@ -199,22 +212,12 @@ public class TestDataReader(List<Dictionary<string, object>> rows) : DbDataReade
     public override int GetInt32(int ordinal) => (int)GetValue(ordinal);
     public override long GetInt64(int ordinal) => (long)GetValue(ordinal);
 
-    public override string GetName(int ordinal)
-    {
-        if (rows.Count == 0)
-        {
-            throw new InvalidOperationException("No rows available");
-        }
-
-        return rows[0].Keys.ElementAt(ordinal);
-    }
+    public override string GetName(int ordinal) =>
+        rows.Count == 0 ? throw new InvalidOperationException("No rows available") : rows[0].Keys.ElementAt(ordinal);
 
     public override int GetOrdinal(string name)
     {
-        if (rows.Count == 0)
-        {
-            throw new InvalidOperationException("No rows available");
-        }
+        if (rows.Count == 0) throw new InvalidOperationException("No rows available");
 
         var keys = rows[0].Keys.ToList();
         return keys.IndexOf(name);
@@ -222,22 +225,14 @@ public class TestDataReader(List<Dictionary<string, object>> rows) : DbDataReade
 
     public override string GetString(int ordinal) => (string)GetValue(ordinal);
 
-    public override object GetValue(int ordinal)
-    {
-        if (_currentRow < 0 || _currentRow >= rows.Count)
-        {
-            throw new InvalidOperationException("No current row");
-        }
-
-        return rows[_currentRow].Values.ElementAt(ordinal);
-    }
+    public override object GetValue(int ordinal) =>
+        _currentRow < 0 || _currentRow >= rows.Count
+            ? throw new InvalidOperationException("No current row")
+            : rows[_currentRow].Values.ElementAt(ordinal);
 
     public override int GetValues(object[] values)
     {
-        if (_currentRow < 0 || _currentRow >= rows.Count)
-        {
-            return 0;
-        }
+        if (_currentRow < 0 || _currentRow >= rows.Count) return 0;
 
         var rowValues = rows[_currentRow].Values.ToArray();
         var count = Math.Min(values.Length, rowValues.Length);
@@ -261,8 +256,7 @@ public class TestDataReader(List<Dictionary<string, object>> rows) : DbDataReade
 
     public override DataTable? GetSchemaTable()
     {
-        if (rows.Count == 0)
-            return null;
+        if (rows.Count == 0) return null;
 
         var schemaTable = new DataTable("SchemaTable");
         schemaTable.Columns.Add("ColumnName", typeof(string));
@@ -286,48 +280,50 @@ public class TestDataReader(List<Dictionary<string, object>> rows) : DbDataReade
 }
 
 /// <summary>
-/// A test connection that implements IDbConnection directly (not DbConnection)
-/// to test the Task.Run fallback paths in SqlParallelExtensions.
+///     A test connection that implements IDbConnection directly (not DbConnection)
+///     to test the Task.Run fallback paths in SqlParallelExtensions.
 /// </summary>
-public class NonDbConnection(
+public sealed class NonDbConnection(
     Func<IDbCommand, object?>? executeScalarFunc = null,
     Func<IDbCommand, int>? executeNonQueryFunc = null,
-    Func<IDbCommand, IDataReader>? executeReaderFunc = null)
-    : IDbConnection
+    Func<IDbCommand, IDataReader>? executeReaderFunc = null
+) : IDbConnection
 {
-    private ConnectionState _state = ConnectionState.Closed;
-
     [AllowNull]
     public string ConnectionString { get; set; } = string.Empty;
+
     public int ConnectionTimeout => 30;
     public string Database => "TestDatabase";
-    public ConnectionState State => _state;
+    public ConnectionState State { get; private set; } = ConnectionState.Closed;
 
-    public IDbTransaction BeginTransaction() => new TestDbTransaction(new(), IsolationLevel.Unspecified);
-    public IDbTransaction BeginTransaction(IsolationLevel il) => new TestDbTransaction(new(), il);
+    public IDbTransaction BeginTransaction() =>
+        new TestDbTransaction(new TestDbConnection(), IsolationLevel.Unspecified);
+
+    public IDbTransaction BeginTransaction(IsolationLevel il) => new TestDbTransaction(new TestDbConnection(), il);
     public void ChangeDatabase(string databaseName) { }
 
-    public void Close() => _state = ConnectionState.Closed;
+    public void Close() => State = ConnectionState.Closed;
 
-    public void Open() => _state = ConnectionState.Open;
+    public void Open() => State = ConnectionState.Open;
 
     public IDbCommand CreateCommand() => new NonDbCommand(executeScalarFunc, executeNonQueryFunc, executeReaderFunc);
 
-    public void Dispose() => _state = ConnectionState.Closed;
+    public void Dispose() => State = ConnectionState.Closed;
 }
 
 /// <summary>
-/// A test command that implements IDbCommand directly (not DbCommand)
-/// to test the Task.Run fallback paths in SqlParallelExtensions.
+///     A test command that implements IDbCommand directly (not DbCommand)
+///     to test the Task.Run fallback paths in SqlParallelExtensions.
 /// </summary>
-public class NonDbCommand(
+internal sealed class NonDbCommand(
     Func<IDbCommand, object?>? executeScalarFunc,
     Func<IDbCommand, int>? executeNonQueryFunc,
-    Func<IDbCommand, IDataReader>? executeReaderFunc)
-    : IDbCommand
+    Func<IDbCommand, IDataReader>? executeReaderFunc
+) : IDbCommand
 {
     [AllowNull]
     public string CommandText { get; set; } = string.Empty;
+
     public int CommandTimeout { get; set; } = 30;
     public CommandType CommandType { get; set; }
     public IDbConnection? Connection { get; set; }

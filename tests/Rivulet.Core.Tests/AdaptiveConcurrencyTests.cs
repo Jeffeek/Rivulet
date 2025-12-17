@@ -5,31 +5,27 @@ using Rivulet.Core.Resilience;
 namespace Rivulet.Core.Tests;
 
 [SuppressMessage("ReSharper", "AccessToDisposedClosure")]
-public class AdaptiveConcurrencyTests
+public sealed class AdaptiveConcurrencyTests
 {
     [Fact]
     public void AdaptiveConcurrencyOptions_Validation_ThrowsOnInvalidMinConcurrency()
     {
-        var act = () => new AdaptiveConcurrencyOptions { MinConcurrency = 0 }.Validate();
+        var act = static () => new AdaptiveConcurrencyOptions { MinConcurrency = 0 }.Validate();
         act.ShouldThrow<ArgumentException>().Message.ShouldContain("MinConcurrency");
     }
 
     [Fact]
     public void AdaptiveConcurrencyOptions_Validation_ThrowsWhenMaxLessThanMin()
     {
-        var act = () => new AdaptiveConcurrencyOptions { MinConcurrency = 10, MaxConcurrency = 5 }.Validate();
+        var act = static () => new AdaptiveConcurrencyOptions { MinConcurrency = 10, MaxConcurrency = 5 }.Validate();
         act.ShouldThrow<ArgumentException>().Message.ShouldContain("MaxConcurrency");
     }
 
     [Fact]
     public void AdaptiveConcurrencyOptions_Validation_ThrowsOnInvalidInitialConcurrency()
     {
-        var act = () => new AdaptiveConcurrencyOptions
-        {
-            MinConcurrency = 5,
-            MaxConcurrency = 10,
-            InitialConcurrency = 15
-        }.Validate();
+        var act = static () => new AdaptiveConcurrencyOptions
+            { MinConcurrency = 5, MaxConcurrency = 10, InitialConcurrency = 15 }.Validate();
 
         act.ShouldThrow<ArgumentException>().Message.ShouldContain("InitialConcurrency");
     }
@@ -37,28 +33,28 @@ public class AdaptiveConcurrencyTests
     [Fact]
     public void AdaptiveConcurrencyOptions_Validation_ThrowsOnInvalidSampleInterval()
     {
-        var act = () => new AdaptiveConcurrencyOptions { SampleInterval = TimeSpan.Zero }.Validate();
+        var act = static () => new AdaptiveConcurrencyOptions { SampleInterval = TimeSpan.Zero }.Validate();
         act.ShouldThrow<ArgumentException>().Message.ShouldContain("SampleInterval");
     }
 
     [Fact]
     public void AdaptiveConcurrencyOptions_Validation_ThrowsOnInvalidTargetLatency()
     {
-        var act = () => new AdaptiveConcurrencyOptions { TargetLatency = TimeSpan.Zero }.Validate();
+        var act = static () => new AdaptiveConcurrencyOptions { TargetLatency = TimeSpan.Zero }.Validate();
         act.ShouldThrow<ArgumentException>().Message.ShouldContain("TargetLatency");
     }
 
     [Fact]
     public void AdaptiveConcurrencyOptions_Validation_ThrowsOnInvalidMinSuccessRate()
     {
-        var act = () => new AdaptiveConcurrencyOptions { MinSuccessRate = 1.5 }.Validate();
+        var act = static () => new AdaptiveConcurrencyOptions { MinSuccessRate = 1.5 }.Validate();
         act.ShouldThrow<ArgumentException>().Message.ShouldContain("MinSuccessRate");
     }
 
     [Fact]
     public void AdaptiveConcurrencyController_Constructor_ThrowsOnNullOptions()
     {
-        var act = () => new AdaptiveConcurrencyController(null!);
+        var act = static () => new AdaptiveConcurrencyController(null!);
         act.ShouldThrow<ArgumentNullException>().Message.ShouldContain("options");
     }
 
@@ -67,9 +63,7 @@ public class AdaptiveConcurrencyTests
     {
         await using var controller = new AdaptiveConcurrencyController(new()
         {
-            MinConcurrency = 5,
-            MaxConcurrency = 20,
-            InitialConcurrency = 10
+            MinConcurrency = 5, MaxConcurrency = 20, InitialConcurrency = 10
         });
 
         controller.CurrentConcurrency.ShouldBe(10);
@@ -78,11 +72,8 @@ public class AdaptiveConcurrencyTests
     [Fact]
     public async Task AdaptiveConcurrencyController_InitialConcurrency_DefaultsToMin()
     {
-        await using var controller = new AdaptiveConcurrencyController(new()
-        {
-            MinConcurrency = 5,
-            MaxConcurrency = 20
-        });
+        await using var controller =
+            new AdaptiveConcurrencyController(new() { MinConcurrency = 5, MaxConcurrency = 20 });
 
         controller.CurrentConcurrency.ShouldBe(5);
     }
@@ -104,17 +95,14 @@ public class AdaptiveConcurrencyTests
                 MinSuccessRate = 0.5,
                 OnConcurrencyChange = (_, @new) =>
                 {
-                    lock (concurrencyLevels)
-                    {
-                        concurrencyLevels.Add(@new);
-                    }
+                    lock (concurrencyLevels) concurrencyLevels.Add(@new);
+
                     return ValueTask.CompletedTask;
                 }
             }
         };
 
-        var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+        var results = await source.SelectParallelAsync(static async (x, ct) =>
             {
                 await Task.Delay(10, ct);
                 return x * 2;
@@ -126,7 +114,7 @@ public class AdaptiveConcurrencyTests
         // Poll for callbacks with timeout
         await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddSeconds(2),
-            () => Task.Delay(50),
+            static () => Task.Delay(50),
             () => concurrencyLevels.Count == 0);
 
         // Should have increased concurrency at least once
@@ -155,17 +143,14 @@ public class AdaptiveConcurrencyTests
                 MinSuccessRate = 0.5,
                 OnConcurrencyChange = (_, @new) =>
                 {
-                    lock (concurrencyLevels)
-                    {
-                        concurrencyLevels.Add(@new);
-                    }
+                    lock (concurrencyLevels) concurrencyLevels.Add(@new);
+
                     return ValueTask.CompletedTask;
                 }
             }
         };
 
-        var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+        var results = await source.SelectParallelAsync(static async (x, ct) =>
             {
                 await Task.Delay(50, ct); // Slow operations exceeding target latency
                 return x * 2;
@@ -177,7 +162,7 @@ public class AdaptiveConcurrencyTests
         // Poll for callbacks with timeout
         await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddSeconds(2),
-            () => Task.Delay(50),
+            static () => Task.Delay(50),
             () => concurrencyLevels.Count == 0);
 
         // Should have decreased concurrency
@@ -205,23 +190,20 @@ public class AdaptiveConcurrencyTests
                 MinSuccessRate = 0.8,
                 OnConcurrencyChange = (_, @new) =>
                 {
-                    lock (concurrencyLevels)
-                    {
-                        concurrencyLevels.Add(@new);
-                    }
+                    lock (concurrencyLevels) concurrencyLevels.Add(@new);
+
                     return ValueTask.CompletedTask;
                 }
             },
             ErrorMode = ErrorMode.BestEffort
         };
 
-        var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+        var results = await source.SelectParallelAsync(static async (x, ct) =>
             {
                 await Task.Delay(10, ct); // Longer delay to ensure operations span multiple sample intervals
                 // 50% failure rate
-                if (x % 2 == 0)
-                    throw new InvalidOperationException("Test failure");
+                if (x % 2 == 0) throw new InvalidOperationException("Test failure");
+
                 return x * 2;
             },
             options);
@@ -232,7 +214,7 @@ public class AdaptiveConcurrencyTests
         // Poll for callbacks with timeout
         await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddSeconds(2),
-            () => Task.Delay(50),
+            static () => Task.Delay(50),
             () => concurrencyLevels.Count == 0);
 
         // Should have decreased concurrency due to low success rate
@@ -260,17 +242,14 @@ public class AdaptiveConcurrencyTests
                 MinSuccessRate = 0.5,
                 OnConcurrencyChange = (_, @new) =>
                 {
-                    lock (concurrencyLevels)
-                    {
-                        concurrencyLevels.Add(@new);
-                    }
+                    lock (concurrencyLevels) concurrencyLevels.Add(@new);
+
                     return ValueTask.CompletedTask;
                 }
             }
         };
 
-        var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+        var results = await source.SelectParallelAsync(static async (x, ct) =>
             {
                 await Task.Delay(10, ct);
                 return x * 2;
@@ -280,12 +259,9 @@ public class AdaptiveConcurrencyTests
         results.Count.ShouldBe(200);
 
         // Poll for callbacks with timeout (may not change if already optimal)
-        await Task.Delay(500);
+        await Task.Delay(500, CancellationToken.None);
 
-        lock (concurrencyLevels)
-        {
-            concurrencyLevels.ShouldAllBe(c => c >= 3 && c <= 5);
-        }
+        lock (concurrencyLevels) concurrencyLevels.ShouldAllBe(static c => c >= 3 && c <= 5);
     }
 
     [Fact]
@@ -305,35 +281,30 @@ public class AdaptiveConcurrencyTests
                 MinSuccessRate = 0.5,
                 OnConcurrencyChange = (_, @new) =>
                 {
-                    lock (concurrencyLevels)
-                    {
-                        concurrencyLevels.Add(@new);
-                    }
+                    lock (concurrencyLevels) concurrencyLevels.Add(@new);
+
                     return ValueTask.CompletedTask;
                 }
             }
         };
 
-        var count = await source.SelectParallelStreamAsync(
-            async (x, ct) =>
-            {
-                await Task.Delay(10, ct);
-                return x * 2;
-            },
-            options).CountAsync();
+        var count = await source.SelectParallelStreamAsync(static async (x, ct) =>
+                {
+                    await Task.Delay(10, ct);
+                    return x * 2;
+                },
+                options)
+            .CountAsync();
 
         count.ShouldBe(150);
 
         // Poll for callbacks with timeout
         await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddSeconds(2),
-            () => Task.Delay(50),
+            static () => Task.Delay(50),
             () => concurrencyLevels.Count == 0);
 
-        lock (concurrencyLevels)
-        {
-            concurrencyLevels.ShouldNotBeEmpty();
-        }
+        lock (concurrencyLevels) concurrencyLevels.ShouldNotBeEmpty();
     }
 
     [Fact]
@@ -354,8 +325,7 @@ public class AdaptiveConcurrencyTests
             }
         };
 
-        var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+        var results = await source.SelectParallelAsync(static async (x, ct) =>
             {
                 await Task.Delay(Random.Shared.Next(1, 10), ct);
                 return x * 2;
@@ -364,7 +334,7 @@ public class AdaptiveConcurrencyTests
 
         results.Count.ShouldBe(30);
         results.ShouldBeInOrder();
-        results.ShouldBe(Enumerable.Range(1, 30).Select(x => x * 2));
+        results.ShouldBe(Enumerable.Range(1, 30).Select(static x => x * 2));
     }
 
     [Fact]
@@ -394,9 +364,7 @@ public class AdaptiveConcurrencyTests
 
                 // Cancel only once, deterministically
                 if (count == 10 && cancelRequested == 0 && Interlocked.CompareExchange(ref cancelRequested, 1, 0) == 0)
-                {
                     await cts.CancelAsync();
-                }
 
                 // Longer delay to ensure cancellation propagates
                 await Task.Delay(20, ct);
@@ -418,9 +386,7 @@ public class AdaptiveConcurrencyTests
     {
         var controller = new AdaptiveConcurrencyController(new()
         {
-            MinConcurrency = 1,
-            MaxConcurrency = 10,
-            SampleInterval = TimeSpan.FromMilliseconds(10)
+            MinConcurrency = 1, MaxConcurrency = 10, SampleInterval = TimeSpan.FromMilliseconds(10)
         });
 
         await controller.DisposeAsync();
@@ -448,17 +414,14 @@ public class AdaptiveConcurrencyTests
                 DecreaseStrategy = AdaptiveConcurrencyStrategy.Aggressive,
                 OnConcurrencyChange = (_, @new) =>
                 {
-                    lock (concurrencyLevels)
-                    {
-                        concurrencyLevels.Add(@new);
-                    }
+                    lock (concurrencyLevels) concurrencyLevels.Add(@new);
+
                     return ValueTask.CompletedTask;
                 }
             }
         };
 
-        var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+        var results = await source.SelectParallelAsync(static async (x, ct) =>
             {
                 await Task.Delay(10, ct);
                 return x * 2;
@@ -469,7 +432,7 @@ public class AdaptiveConcurrencyTests
 
         await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddSeconds(3),
-            () => Task.Delay(50),
+            static () => Task.Delay(50),
             () => concurrencyLevels.Count == 0);
 
         lock (concurrencyLevels)
@@ -500,17 +463,14 @@ public class AdaptiveConcurrencyTests
                 DecreaseStrategy = AdaptiveConcurrencyStrategy.Gradual,
                 OnConcurrencyChange = (_, @new) =>
                 {
-                    lock (concurrencyLevels)
-                    {
-                        concurrencyLevels.Add(@new);
-                    }
+                    lock (concurrencyLevels) concurrencyLevels.Add(@new);
+
                     return ValueTask.CompletedTask;
                 }
             }
         };
 
-        var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+        var results = await source.SelectParallelAsync(static async (x, ct) =>
             {
                 await Task.Delay(50, ct); // High latency
                 return x * 2;
@@ -521,7 +481,7 @@ public class AdaptiveConcurrencyTests
 
         await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddSeconds(3),
-            () => Task.Delay(50),
+            static () => Task.Delay(50),
             () => concurrencyLevels.Count == 0);
 
         lock (concurrencyLevels)
@@ -555,8 +515,7 @@ public class AdaptiveConcurrencyTests
             }
         };
 
-        var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+        var results = await source.SelectParallelAsync(static async (x, ct) =>
             {
                 await Task.Delay(10, ct);
                 return x * 2;
@@ -565,7 +524,7 @@ public class AdaptiveConcurrencyTests
 
         results.Count.ShouldBe(100);
         // Operation should complete despite callback exceptions
-        await Task.Delay(500);
+        await Task.Delay(500, CancellationToken.None);
         callbackCount.ShouldBeGreaterThan(0);
     }
 
@@ -574,9 +533,7 @@ public class AdaptiveConcurrencyTests
     {
         await using var controller = new AdaptiveConcurrencyController(new()
         {
-            MinConcurrency = 1,
-            MaxConcurrency = 10,
-            InitialConcurrency = 5,
+            MinConcurrency = 1, MaxConcurrency = 10, InitialConcurrency = 5,
             SampleInterval = TimeSpan.FromMilliseconds(5)
         });
 
@@ -584,9 +541,9 @@ public class AdaptiveConcurrencyTests
         await controller.AcquireAsync();
         controller.Release(TimeSpan.FromMilliseconds(10), true);
 
-        await Task.Delay(20); // Let sampling happen
+        await Task.Delay(20, CancellationToken.None); // Let sampling happen
 
         // Should not throw
-        await Task.Delay(50);
+        await Task.Delay(50, CancellationToken.None);
     }
 }

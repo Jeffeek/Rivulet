@@ -4,33 +4,29 @@ using Rivulet.Base.Tests;
 
 namespace Rivulet.Sql.Tests;
 
-public class SqlParallelExtensionsTests
+[SuppressMessage("ReSharper", "AccessToDisposedClosure")]
+public sealed class SqlParallelExtensionsTests
 {
     [Fact]
     public async Task ExecuteQueriesParallelAsync_WithValidQueries_ShouldReturnResults()
     {
         var queries = new[]
         {
-            "SELECT * FROM Users WHERE Id = 1",
-            "SELECT * FROM Users WHERE Id = 2",
-            "SELECT * FROM Users WHERE Id = 3"
+            "SELECT * FROM Users WHERE Id = 1", "SELECT * FROM Users WHERE Id = 2", "SELECT * FROM Users WHERE Id = 3"
         };
 
-        var results = await queries.ExecuteQueriesParallelAsync(
-            () => new TestDbConnection(
-                executeReaderFunc: _ => new TestDataReader([new() { ["Id"] = 1, ["Name"] = "User1" }])),
-            reader =>
+        var results = await queries.ExecuteQueriesParallelAsync(static () => new TestDbConnection(
+                executeReaderFunc: static _ => new TestDataReader([new() { ["Id"] = 1, ["Name"] = "User1" }])),
+            static reader =>
             {
                 var items = new List<string>();
-                while (reader.Read())
-                {
-                    items.Add(reader.GetString(1));
-                }
+                while (reader.Read()) items.Add(reader.GetString(1));
+
                 return items;
             });
 
         results.Count.ShouldBe(3);
-        results.ShouldAllBe(r => r.Count == 1);
+        results.ShouldAllBe(static r => r.Count == 1);
     }
 
     [Fact]
@@ -38,10 +34,9 @@ public class SqlParallelExtensionsTests
     {
         IEnumerable<string> queries = null!;
 
-        await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await queries.ExecuteQueriesParallelAsync(
-                () => new TestDbConnection(),
-                _ => new List<string>()));
+        await Assert.ThrowsAsync<ArgumentNullException>(async () => await queries.ExecuteQueriesParallelAsync(
+            static () => new TestDbConnection(),
+            static _ => new List<string>()));
     }
 
     [Fact]
@@ -49,10 +44,9 @@ public class SqlParallelExtensionsTests
     {
         var queries = new[] { "SELECT 1" };
 
-        await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await queries.ExecuteQueriesParallelAsync(
-                null!,
-                _ => new List<string>()));
+        await Assert.ThrowsAsync<ArgumentNullException>(async () => await queries.ExecuteQueriesParallelAsync(
+            null!,
+            static _ => new List<string>()));
     }
 
     [Fact]
@@ -60,10 +54,9 @@ public class SqlParallelExtensionsTests
     {
         var queries = new[] { "SELECT 1" };
 
-        await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await queries.ExecuteQueriesParallelAsync<string>(
-                () => new TestDbConnection(),
-                null!));
+        await Assert.ThrowsAsync<ArgumentNullException>(async () => await queries.ExecuteQueriesParallelAsync<string>(
+            static () => new TestDbConnection(),
+            null!));
     }
 
     [Fact]
@@ -75,18 +68,17 @@ public class SqlParallelExtensionsTests
         {
             (query: "SELECT * FROM Users WHERE Id = @id", configureParams: (Action<IDbCommand>)(cmd =>
             {
-                lock (lockObj) { commandsReceived.Add(cmd.CommandText); }
+                lock (lockObj) commandsReceived.Add(cmd.CommandText);
             })),
             (query: "SELECT * FROM Products WHERE Id = @id", configureParams: (Action<IDbCommand>)(cmd =>
             {
-                lock (lockObj) { commandsReceived.Add(cmd.CommandText); }
+                lock (lockObj) commandsReceived.Add(cmd.CommandText);
             }))
         };
 
-        var results = await queriesWithParams.ExecuteQueriesParallelAsync(
-            () => new TestDbConnection(
-                executeReaderFunc: _ => new TestDataReader([new() { ["Id"] = 1 }])),
-            _ => new List<int> { 1 });
+        var results = await queriesWithParams.ExecuteQueriesParallelAsync(static () => new TestDbConnection(
+                executeReaderFunc: static _ => new TestDataReader([new() { ["Id"] = 1 }])),
+            static _ => new List<int> { 1 });
 
         results.Count.ShouldBe(2);
         commandsReceived.Count.ShouldBe(2);
@@ -104,11 +96,12 @@ public class SqlParallelExtensionsTests
             "INSERT INTO Users (Name) VALUES ('User3')"
         };
 
-        var results = await commands.ExecuteCommandsParallelAsync(
-            () => new TestDbConnection(executeNonQueryFunc: _ => 1));
+        var results =
+            await commands.ExecuteCommandsParallelAsync(static () =>
+                new TestDbConnection(executeNonQueryFunc: static _ => 1));
 
         results.Count.ShouldBe(3);
-        results.ShouldAllBe(r => r == 1);
+        results.ShouldAllBe(static r => r == 1);
     }
 
     [Fact]
@@ -116,8 +109,8 @@ public class SqlParallelExtensionsTests
     {
         IEnumerable<string> commands = null!;
 
-        await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await commands.ExecuteCommandsParallelAsync(() => new TestDbConnection()));
+        await Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            await commands.ExecuteCommandsParallelAsync(static () => new TestDbConnection()));
     }
 
     [Fact]
@@ -129,16 +122,16 @@ public class SqlParallelExtensionsTests
         {
             (command: "UPDATE Users SET Name = @name WHERE Id = @id", configureParams: cmd =>
             {
-                lock (lockObj) { commandsReceived.Add(cmd.CommandText); }
+                lock (lockObj) commandsReceived.Add(cmd.CommandText);
             }),
             (command: "DELETE FROM Users WHERE Id = @id", configureParams: (Action<IDbCommand>)(cmd =>
             {
-                lock (lockObj) { commandsReceived.Add(cmd.CommandText); }
+                lock (lockObj) commandsReceived.Add(cmd.CommandText);
             }))
         };
 
-        var results = await commandsWithParams.ExecuteCommandsParallelAsync(
-            () => new TestDbConnection(executeNonQueryFunc: _ => 1));
+        var results = await commandsWithParams.ExecuteCommandsParallelAsync(static () =>
+            new TestDbConnection(executeNonQueryFunc: static _ => 1));
 
         results.Count.ShouldBe(2);
         commandsReceived.Count.ShouldBe(2);
@@ -149,18 +142,13 @@ public class SqlParallelExtensionsTests
     [Fact]
     public async Task ExecuteScalarParallelAsync_WithValidQueries_ShouldReturnScalarValues()
     {
-        var queries = new[]
-        {
-            "SELECT COUNT(*) FROM Users",
-            "SELECT MAX(Id) FROM Users",
-            "SELECT MIN(Id) FROM Users"
-        };
+        var queries = new[] { "SELECT COUNT(*) FROM Users", "SELECT MAX(Id) FROM Users", "SELECT MIN(Id) FROM Users" };
 
         var values = new[] { 10, 100, 1 };
         var index = -1; // Start at -1 because Interlocked.Increment happens before indexing
 
-        var results = await queries.ExecuteScalarParallelAsync<int>(
-            () => new TestDbConnection(executeScalarFunc: _ => values[Interlocked.Increment(ref index) % values.Length]));
+        var results = await queries.ExecuteScalarParallelAsync<int>(() =>
+            new TestDbConnection(_ => values[Interlocked.Increment(ref index) % values.Length]));
 
         results.Count.ShouldBe(3);
         results.ShouldContain(10);
@@ -173,8 +161,8 @@ public class SqlParallelExtensionsTests
     {
         IEnumerable<string> queries = null!;
 
-        await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await queries.ExecuteScalarParallelAsync<int>(() => new TestDbConnection()));
+        await Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            await queries.ExecuteScalarParallelAsync<int>(static () => new TestDbConnection()));
     }
 
     [Fact]
@@ -182,8 +170,8 @@ public class SqlParallelExtensionsTests
     {
         var queries = new[] { "SELECT NULL" };
 
-        var results = await queries.ExecuteScalarParallelAsync<int>(
-            () => new TestDbConnection(executeScalarFunc: _ => DBNull.Value));
+        var results =
+            await queries.ExecuteScalarParallelAsync<int>(static () => new TestDbConnection(static _ => DBNull.Value));
 
         results.Count.ShouldBe(1);
         results[0].ShouldBe(0);
@@ -195,14 +183,12 @@ public class SqlParallelExtensionsTests
         var commandsReceived = new List<string>();
         var queriesWithParams = new[]
         {
-            (query: "SELECT COUNT(*) FROM Users WHERE Active = @active", configureParams: (Action<IDbCommand>)(cmd =>
-            {
-                commandsReceived.Add(cmd.CommandText);
-            }))
+            (query: "SELECT COUNT(*) FROM Users WHERE Active = @active",
+                configureParams: (Action<IDbCommand>)(cmd => { commandsReceived.Add(cmd.CommandText); }))
         };
 
-        var results = await queriesWithParams.ExecuteScalarParallelAsync<int>(
-            () => new TestDbConnection(executeScalarFunc: _ => 42));
+        var results =
+            await queriesWithParams.ExecuteScalarParallelAsync<int>(static () => new TestDbConnection(static _ => 42));
 
         results.Count.ShouldBe(1);
         results[0].ShouldBe(42);
@@ -213,14 +199,7 @@ public class SqlParallelExtensionsTests
     public async Task ExecuteQueriesParallelAsync_WithOptions_ShouldUseOptions()
     {
         var queries = new[] { "SELECT 1" };
-        var options = new SqlOptions
-        {
-            CommandTimeout = 60,
-            ParallelOptions = new()
-            {
-                MaxDegreeOfParallelism = 5
-            }
-        };
+        var options = new SqlOptions { CommandTimeout = 60, ParallelOptions = new() { MaxDegreeOfParallelism = 5 } };
 
         var commandTimeout = 0;
         var results = await queries.ExecuteQueriesParallelAsync(
@@ -230,7 +209,7 @@ public class SqlParallelExtensionsTests
                     commandTimeout = cmd.CommandTimeout;
                     return new TestDataReader([]);
                 }),
-            _ => 1,
+            static _ => 1,
             options);
 
         commandTimeout.ShouldBe(60);
@@ -247,21 +226,9 @@ public class SqlParallelExtensionsTests
             () => new TestDbConnection(executeNonQueryFunc: _ =>
             {
                 attemptCount++;
-                if (attemptCount < 2)
-                {
-                    throw new TimeoutException("Timeout occurred");
-                }
-
-                return 1;
+                return attemptCount < 2 ? throw new TimeoutException("Timeout occurred") : 1;
             }),
-            new()
-            {
-                ParallelOptions = new()
-                {
-                    MaxRetries = 3,
-                    BaseDelay = TimeSpan.FromMilliseconds(10)
-                }
-            });
+            new() { ParallelOptions = new() { MaxRetries = 3, BaseDelay = TimeSpan.FromMilliseconds(10) } });
 
         attemptCount.ShouldBe(2);
         results.Count.ShouldBe(1);
@@ -277,10 +244,9 @@ public class SqlParallelExtensionsTests
         int? callbackRetryAttempt = null;
 
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
-            await queries.ExecuteQueriesParallelAsync(
-                () => new TestDbConnection(
-                    executeReaderFunc: _ => throw new InvalidOperationException("Test error")),
-                _ => 1,
+            await queries.ExecuteQueriesParallelAsync(static () => new TestDbConnection(
+                    executeReaderFunc: static _ => throw new InvalidOperationException("Test error")),
+                static _ => 1,
                 new()
                 {
                     OnSqlErrorAsync = (item, ex, retry) =>
@@ -290,10 +256,7 @@ public class SqlParallelExtensionsTests
                         callbackRetryAttempt = retry;
                         return ValueTask.CompletedTask;
                     },
-                    ParallelOptions = new()
-                    {
-                        MaxRetries = 0
-                    }
+                    ParallelOptions = new() { MaxRetries = 0 }
                 }));
 
         callbackItem.ShouldNotBeNull();
@@ -303,22 +266,20 @@ public class SqlParallelExtensionsTests
     }
 
     [Fact]
-    [SuppressMessage("ReSharper", "AccessToDisposedClosure")]
     public async Task ExecuteCommandsParallelAsync_WithCancellation_ShouldThrowOperationCanceledException()
     {
-        var commands = Enumerable.Range(1, 100).Select(i => $"INSERT INTO Users (Id) VALUES ({i})");
+        var commands = Enumerable.Range(1, 100).Select(static i => $"INSERT INTO Users (Id) VALUES ({i})");
         using var cts = new CancellationTokenSource();
 
         cts.CancelAfter(50);
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(
-            async () => await commands.ExecuteCommandsParallelAsync(
-                () => new TestDbConnection(executeNonQueryFunc: _ =>
-                {
-                    Task.Delay(100, cts.Token).Wait(cts.Token);
-                    return 1;
-                }),
-                cancellationToken: cts.Token));
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => await commands.ExecuteCommandsParallelAsync(
+            () => new TestDbConnection(executeNonQueryFunc: _ =>
+            {
+                Task.Delay(100, cts.Token).Wait(cts.Token);
+                return 1;
+            }),
+            cancellationToken: cts.Token));
     }
 
     [Fact]
@@ -331,11 +292,11 @@ public class SqlParallelExtensionsTests
             () =>
             {
                 var conn = new TestDbConnection(
-                    executeReaderFunc: _ => new TestDataReader([]));
+                    executeReaderFunc: static _ => new TestDataReader([]));
                 capturedConnection = conn;
                 return conn;
             },
-            _ => 1,
+            static _ => 1,
             new() { AutoManageConnection = true });
 
         results.Count.ShouldBe(1);
@@ -345,7 +306,7 @@ public class SqlParallelExtensionsTests
     [Fact]
     public async Task ExecuteCommandsParallelAsync_WithCustomParallelism_ShouldRespectConcurrencyLimit()
     {
-        var commands = Enumerable.Range(1, 50).Select(i => $"INSERT INTO Users (Id) VALUES ({i})");
+        var commands = Enumerable.Range(1, 50).Select(static i => $"INSERT INTO Users (Id) VALUES ({i})");
         var maxConcurrent = 0;
         var currentConcurrent = 0;
         var lockObj = new object();
@@ -361,20 +322,11 @@ public class SqlParallelExtensionsTests
 
                 Task.Delay(50, CancellationToken.None).Wait();
 
-                lock (lockObj)
-                {
-                    currentConcurrent--;
-                }
+                lock (lockObj) currentConcurrent--;
 
                 return 1;
             }),
-            new()
-            {
-                ParallelOptions = new()
-                {
-                    MaxDegreeOfParallelism = 5
-                }
-            });
+            new() { ParallelOptions = new() { MaxDegreeOfParallelism = 5 } });
 
         results.Count.ShouldBe(50);
         maxConcurrent.ShouldBeLessThanOrEqualTo(5);
@@ -384,14 +336,14 @@ public class SqlParallelExtensionsTests
     public async Task ExecuteQueriesParallelAsync_WithAutoManageConnectionFalse_ShouldNotManageConnection()
     {
         var connection = new TestDbConnection(
-            executeReaderFunc: _ => new TestDataReader([new() { ["Value"] = 1 }]));
+            executeReaderFunc: static _ => new TestDataReader([new() { ["Value"] = 1 }]));
         connection.Open(); // Manually open
 
         var queries = new[] { "SELECT 1", "SELECT 2" };
 
         var results = await queries.ExecuteQueriesParallelAsync(
             () => connection,
-            reader =>
+            static reader =>
             {
                 reader.Read();
                 return reader.GetInt32(0);
@@ -406,7 +358,7 @@ public class SqlParallelExtensionsTests
     [Fact]
     public async Task ExecuteCommandsParallelAsync_WithAutoManageConnectionFalse_ShouldNotManageConnection()
     {
-        var connection = new TestDbConnection(executeNonQueryFunc: _ => 1);
+        var connection = new TestDbConnection(executeNonQueryFunc: static _ => 1);
         connection.Open();
 
         var commands = new[] { "INSERT 1", "INSERT 2" };
@@ -415,7 +367,7 @@ public class SqlParallelExtensionsTests
             () => connection,
             new() { AutoManageConnection = false });
 
-        results.ShouldAllBe(r => r == 1);
+        results.ShouldAllBe(static r => r == 1);
         connection.State.ShouldBe(ConnectionState.Open); // Should still be open
         connection.Close();
     }
@@ -424,7 +376,7 @@ public class SqlParallelExtensionsTests
     public async Task ExecuteScalarParallelAsync_WithAutoManageConnectionFalse_ShouldNotManageConnection()
     {
         var callCount = 0;
-        var connection = new TestDbConnection(executeScalarFunc: _ => ++callCount);
+        var connection = new TestDbConnection(_ => ++callCount);
         connection.Open();
 
         var queries = new[] { "SELECT 42", "SELECT 99" };
@@ -457,8 +409,10 @@ public class SqlParallelExtensionsTests
 
         await Assert.ThrowsAnyAsync<Exception>(async () =>
             await queries.ExecuteQueriesParallelAsync(
-                () => new TestDbConnection(executeReaderFunc: _ => throw new InvalidOperationException("SQL Error")),
-                reader => reader.GetInt32(0),
+                static () =>
+                    new TestDbConnection(
+                        executeReaderFunc: static _ => throw new InvalidOperationException("SQL Error")),
+                static reader => reader.GetInt32(0),
                 options));
 
         capturedQuery.ShouldBe("INVALID SQL QUERY");
@@ -484,7 +438,9 @@ public class SqlParallelExtensionsTests
 
         await Assert.ThrowsAnyAsync<Exception>(async () =>
             await commands.ExecuteCommandsParallelAsync(
-                () => new TestDbConnection(executeNonQueryFunc: _ => throw new InvalidOperationException("SQL Error")),
+                static () =>
+                    new TestDbConnection(executeNonQueryFunc: static _ =>
+                        throw new InvalidOperationException("SQL Error")),
                 options));
 
         capturedCommand.ShouldBe("INVALID SQL");
@@ -510,7 +466,7 @@ public class SqlParallelExtensionsTests
 
         await Assert.ThrowsAnyAsync<Exception>(async () =>
             await queries.ExecuteScalarParallelAsync<int>(
-                () => new TestDbConnection(executeScalarFunc: _ => throw new InvalidOperationException("SQL Error")),
+                static () => new TestDbConnection(static _ => throw new InvalidOperationException("SQL Error")),
                 options));
 
         capturedQuery.ShouldBe("INVALID SQL");
@@ -520,12 +476,11 @@ public class SqlParallelExtensionsTests
     [Fact]
     public async Task ExecuteScalarParallelAsync_WithNullResult_ShouldReturnDefault()
     {
-        var connection = new TestDbConnection(executeScalarFunc: _ => null);
+        var connection = new TestDbConnection(static _ => null);
 
         var queries = new[] { "SELECT NULL" };
 
-        var results = await queries.ExecuteScalarParallelAsync<string>(
-            () => connection);
+        var results = await queries.ExecuteScalarParallelAsync<string>(() => connection);
 
         results.ShouldHaveSingleItem();
         results[0].ShouldBeNull();
@@ -534,12 +489,11 @@ public class SqlParallelExtensionsTests
     [Fact]
     public async Task ExecuteScalarParallelAsync_WithDBNullValue_ShouldReturnDefault()
     {
-        var connection = new TestDbConnection(executeScalarFunc: _ => DBNull.Value);
+        var connection = new TestDbConnection(static _ => DBNull.Value);
 
         var queries = new[] { "SELECT NULL" };
 
-        var results = await queries.ExecuteScalarParallelAsync<int?>(
-            () => connection);
+        var results = await queries.ExecuteScalarParallelAsync<int?>(() => connection);
 
         results.ShouldHaveSingleItem();
         results[0].ShouldBeNull();
@@ -550,37 +504,28 @@ public class SqlParallelExtensionsTests
     {
         IEnumerable<(string query, Action<IDbCommand> configureParams)> queriesWithParams = null!;
 
-        await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await queriesWithParams.ExecuteQueriesParallelAsync(
-                () => new TestDbConnection(),
-                _ => new List<string>()));
+        await Assert.ThrowsAsync<ArgumentNullException>(async () => await queriesWithParams.ExecuteQueriesParallelAsync(
+            static () => new TestDbConnection(),
+            static _ => new List<string>()));
     }
 
     [Fact]
     public async Task ExecuteQueriesParallelAsync_WithNullConnectionFactoryWithParams_ShouldThrowArgumentNullException()
     {
-        var queriesWithParams = new[]
-        {
-            (query: "SELECT 1", configureParams: (Action<IDbCommand>)(_ => { }))
-        };
+        var queriesWithParams = new[] { (query: "SELECT 1", configureParams: (Action<IDbCommand>)(static _ => { })) };
 
-        await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await queriesWithParams.ExecuteQueriesParallelAsync(
-                null!,
-                _ => new List<string>()));
+        await Assert.ThrowsAsync<ArgumentNullException>(async () => await queriesWithParams.ExecuteQueriesParallelAsync(
+            null!,
+            static _ => new List<string>()));
     }
 
     [Fact]
     public async Task ExecuteQueriesParallelAsync_WithNullReaderMapperWithParams_ShouldThrowArgumentNullException()
     {
-        var queriesWithParams = new[]
-        {
-            (query: "SELECT 1", configureParams: (Action<IDbCommand>)(_ => { }))
-        };
+        var queriesWithParams = new[] { (query: "SELECT 1", configureParams: (Action<IDbCommand>)(static _ => { })) };
 
-        await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await queriesWithParams.ExecuteQueriesParallelAsync<string>(
-                () => new TestDbConnection(),
+        await Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            await queriesWithParams.ExecuteQueriesParallelAsync<string>(static () => new TestDbConnection(),
                 null!));
     }
 
@@ -589,8 +534,7 @@ public class SqlParallelExtensionsTests
     {
         var commands = new[] { "INSERT 1" };
 
-        await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await commands.ExecuteCommandsParallelAsync(null!));
+        await Assert.ThrowsAsync<ArgumentNullException>(async () => await commands.ExecuteCommandsParallelAsync(null!));
     }
 
     [Fact]
@@ -598,20 +542,19 @@ public class SqlParallelExtensionsTests
     {
         IEnumerable<(string command, Action<IDbCommand> configureParams)> commandsWithParams = null!;
 
-        await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await commandsWithParams.ExecuteCommandsParallelAsync(() => new TestDbConnection()));
+        await Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            await commandsWithParams.ExecuteCommandsParallelAsync(static () => new TestDbConnection()));
     }
 
     [Fact]
-    public async Task ExecuteCommandsParallelAsync_WithNullConnectionFactoryWithParams_ShouldThrowArgumentNullException()
+    public async Task
+        ExecuteCommandsParallelAsync_WithNullConnectionFactoryWithParams_ShouldThrowArgumentNullException()
     {
         var commandsWithParams = new[]
-        {
-            (command: "INSERT 1", configureParams: (Action<IDbCommand>)(_ => { }))
-        };
+            { (command: "INSERT 1", configureParams: (Action<IDbCommand>)(static _ => { })) };
 
-        await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await commandsWithParams.ExecuteCommandsParallelAsync(null!));
+        await Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            await commandsWithParams.ExecuteCommandsParallelAsync(null!));
     }
 
     [Fact]
@@ -619,8 +562,8 @@ public class SqlParallelExtensionsTests
     {
         var queries = new[] { "SELECT 1" };
 
-        await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await queries.ExecuteScalarParallelAsync<int>(null!));
+        await Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            await queries.ExecuteScalarParallelAsync<int>(null!));
     }
 
     [Fact]
@@ -628,20 +571,17 @@ public class SqlParallelExtensionsTests
     {
         IEnumerable<(string query, Action<IDbCommand> configureParams)> queriesWithParams = null!;
 
-        await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await queriesWithParams.ExecuteScalarParallelAsync<int>(() => new TestDbConnection()));
+        await Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            await queriesWithParams.ExecuteScalarParallelAsync<int>(static () => new TestDbConnection()));
     }
 
     [Fact]
     public async Task ExecuteScalarParallelAsync_WithNullConnectionFactoryWithParams_ShouldThrowArgumentNullException()
     {
-        var queriesWithParams = new[]
-        {
-            (query: "SELECT 1", configureParams: (Action<IDbCommand>)(_ => { }))
-        };
+        var queriesWithParams = new[] { (query: "SELECT 1", configureParams: (Action<IDbCommand>)(static _ => { })) };
 
-        await Assert.ThrowsAsync<ArgumentNullException>(
-            async () => await queriesWithParams.ExecuteScalarParallelAsync<int>(null!));
+        await Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            await queriesWithParams.ExecuteScalarParallelAsync<int>(null!));
     }
 
     [Fact]
@@ -650,10 +590,9 @@ public class SqlParallelExtensionsTests
         // Use a custom IDbConnection that's not DbConnection to test Task.Run fallback
         var queries = new[] { "SELECT 1" };
 
-        var results = await queries.ExecuteQueriesParallelAsync(
-            () => new NonDbConnection(
-                executeReaderFunc: _ => new TestDataReader([new() { ["Value"] = 1 }])),
-            reader =>
+        var results = await queries.ExecuteQueriesParallelAsync(static () => new NonDbConnection(
+                executeReaderFunc: static _ => new TestDataReader([new() { ["Value"] = 1 }])),
+            static reader =>
             {
                 reader.Read();
                 return reader.GetInt32(0);
@@ -669,8 +608,9 @@ public class SqlParallelExtensionsTests
         // Use a custom IDbConnection that's not DbConnection to test Task.Run fallback
         var commands = new[] { "INSERT 1" };
 
-        var results = await commands.ExecuteCommandsParallelAsync(
-            () => new NonDbConnection(executeNonQueryFunc: _ => 1));
+        var results =
+            await commands.ExecuteCommandsParallelAsync(static () =>
+                new NonDbConnection(executeNonQueryFunc: static _ => 1));
 
         results.Count.ShouldBe(1);
         results[0].ShouldBe(1);
@@ -682,8 +622,7 @@ public class SqlParallelExtensionsTests
         // Use a custom IDbConnection that's not DbConnection to test Task.Run fallback
         var queries = new[] { "SELECT 42" };
 
-        var results = await queries.ExecuteScalarParallelAsync<int>(
-            () => new NonDbConnection(executeScalarFunc: _ => 42));
+        var results = await queries.ExecuteScalarParallelAsync<int>(static () => new NonDbConnection(static _ => 42));
 
         results.Count.ShouldBe(1);
         results[0].ShouldBe(42);
@@ -702,10 +641,10 @@ public class SqlParallelExtensionsTests
                     commandTimeouts.Add(cmd.CommandTimeout);
                     return new TestDataReader([]);
                 }),
-            _ => 1);
+            static _ => 1);
 
         results.Count.ShouldBe(2);
-        commandTimeouts.ShouldAllBe(timeout => timeout == 30); // Default timeout
+        commandTimeouts.ShouldAllBe(static timeout => timeout == 30); // Default timeout
     }
 
     [Fact]
@@ -714,15 +653,14 @@ public class SqlParallelExtensionsTests
         var commands = new[] { "INSERT 1", "INSERT 2" };
         var commandTimeouts = new List<int>();
 
-        var results = await commands.ExecuteCommandsParallelAsync(
-            () => new TestDbConnection(executeNonQueryFunc: cmd =>
-            {
-                commandTimeouts.Add(cmd.CommandTimeout);
-                return 1;
-            }));
+        var results = await commands.ExecuteCommandsParallelAsync(() => new TestDbConnection(executeNonQueryFunc: cmd =>
+        {
+            commandTimeouts.Add(cmd.CommandTimeout);
+            return 1;
+        }));
 
         results.Count.ShouldBe(2);
-        commandTimeouts.ShouldAllBe(timeout => timeout == 30); // Default timeout
+        commandTimeouts.ShouldAllBe(static timeout => timeout == 30); // Default timeout
     }
 
     [Fact]
@@ -731,14 +669,13 @@ public class SqlParallelExtensionsTests
         var queries = new[] { "SELECT 1", "SELECT 2" };
         var commandTimeouts = new List<int>();
 
-        var results = await queries.ExecuteScalarParallelAsync<int>(
-            () => new TestDbConnection(executeScalarFunc: cmd =>
-            {
-                commandTimeouts.Add(cmd.CommandTimeout);
-                return 42;
-            }));
+        var results = await queries.ExecuteScalarParallelAsync<int>(() => new TestDbConnection(cmd =>
+        {
+            commandTimeouts.Add(cmd.CommandTimeout);
+            return 42;
+        }));
 
         results.Count.ShouldBe(2);
-        commandTimeouts.ShouldAllBe(timeout => timeout == 30); // Default timeout
+        commandTimeouts.ShouldAllBe(static timeout => timeout == 30); // Default timeout
     }
 }

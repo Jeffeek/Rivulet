@@ -1,24 +1,24 @@
-using System.Diagnostics;
 using Rivulet.Core;
+using System.Diagnostics;
 
 namespace Rivulet.Diagnostics.OpenTelemetry;
 
 /// <summary>
-/// ActivitySource for Rivulet parallel operations, enabling distributed tracing via OpenTelemetry.
+///     ActivitySource for Rivulet parallel operations, enabling distributed tracing via OpenTelemetry.
 /// </summary>
 /// <remarks>
-/// This ActivitySource creates spans for parallel operations, allowing correlation across
-/// distributed systems. Use with OpenTelemetry.Instrumentation.* packages to export traces
-/// to Jaeger, Zipkin, Azure Monitor, etc.
+///     This ActivitySource creates spans for parallel operations, allowing correlation across
+///     distributed systems. Use with OpenTelemetry.Instrumentation.* packages to export traces
+///     to Jaeger, Zipkin, Azure Monitor, etc.
 /// </remarks>
 /// <example>
-/// <code>
+///     <code>
 /// // Configure OpenTelemetry at startup
 /// using var tracerProvider = Sdk.CreateTracerProviderBuilder()
 ///     .AddSource(RivuletActivitySource.SourceName)
 ///     .AddJaegerExporter()
 ///     .Build();
-///
+/// 
 /// // Use Rivulet with automatic tracing
 /// var results = await urls.SelectParallelAsync(
 ///     async (url, ct) => await httpClient.GetAsync(url, ct),
@@ -31,12 +31,14 @@ namespace Rivulet.Diagnostics.OpenTelemetry;
 public static class RivuletActivitySource
 {
     /// <summary>
-    /// The ActivitySource instance for creating activities.
+    ///     The ActivitySource instance for creating activities.
     /// </summary>
-    public static readonly ActivitySource Source = new(RivuletSharedConstants.RivuletCore, RivuletOpenTelemetryConstants.InstrumentationVersion);
+    // ReSharper disable once MemberCanBeInternal
+    public static readonly ActivitySource Source = new(RivuletSharedConstants.RivuletCore,
+        RivuletOpenTelemetryConstants.InstrumentationVersion);
 
     /// <summary>
-    /// Creates an Activity for a parallel operation.
+    ///     Creates an Activity for a parallel operation.
     /// </summary>
     /// <param name="operationName">The name of the operation (e.g., "SelectParallelAsync").</param>
     /// <param name="totalItems">The total number of items to process, if known.</param>
@@ -47,15 +49,13 @@ public static class RivuletActivitySource
         var activity = Source.StartActivity($"Rivulet.{operationName}", ActivityKind.Internal);
 
         if (activity is not null && totalItems.HasValue)
-        {
             activity.SetTag(RivuletOpenTelemetryConstants.TagNames.TotalItems, totalItems.Value);
-        }
 
         return activity;
     }
 
     /// <summary>
-    /// Creates an Activity for processing a single item.
+    ///     Creates an Activity for processing a single item.
     /// </summary>
     /// <param name="operationName">The name of the operation (e.g., "ProcessItem").</param>
     /// <param name="itemIndex">The index of the item being processed.</param>
@@ -71,7 +71,7 @@ public static class RivuletActivitySource
     }
 
     /// <summary>
-    /// Records a retry attempt on the current activity.
+    ///     Records a retry attempt on the current activity.
     /// </summary>
     /// <param name="activity">The activity to annotate.</param>
     /// <param name="attemptNumber">The retry attempt number (1-based).</param>
@@ -92,7 +92,7 @@ public static class RivuletActivitySource
     }
 
     /// <summary>
-    /// Records an error on the current activity.
+    ///     Records an error on the current activity.
     /// </summary>
     /// <param name="activity">The activity to annotate.</param>
     /// <param name="exception">The exception that occurred.</param>
@@ -107,7 +107,7 @@ public static class RivuletActivitySource
     }
 
     /// <summary>
-    /// Records successful completion on the current activity.
+    ///     Records successful completion on the current activity.
     /// </summary>
     /// <param name="activity">The activity to annotate.</param>
     /// <param name="itemsProcessed">The number of items successfully processed.</param>
@@ -120,21 +120,16 @@ public static class RivuletActivitySource
     }
 
     /// <summary>
-    /// Records circuit breaker state change on the current activity.
+    ///     Records circuit breaker state change on the current activity.
     /// </summary>
     /// <param name="activity">The activity to annotate.</param>
     /// <param name="state">The new circuit breaker state.</param>
-    public static void RecordCircuitBreakerStateChange(Activity? activity, string state)
-    {
+    public static void RecordCircuitBreakerStateChange(Activity? activity, string state) =>
         activity?.AddEvent(new(RivuletOpenTelemetryConstants.EventNames.CircuitBreakerStateChange,
-            tags: new()
-            {
-                { RivuletOpenTelemetryConstants.TagNames.CircuitBreakerState, state }
-            }));
-    }
+            tags: new() { { RivuletOpenTelemetryConstants.TagNames.CircuitBreakerState, state } }));
 
     /// <summary>
-    /// Records adaptive concurrency change on the current activity.
+    ///     Records adaptive concurrency change on the current activity.
     /// </summary>
     /// <param name="activity">The activity to annotate.</param>
     /// <param name="oldConcurrency">The previous concurrency level.</param>

@@ -2,7 +2,7 @@
 
 namespace Rivulet.IO.Tests;
 
-public class DirectoryInfoExtensionsTests : TempDirectoryFixture
+public sealed class DirectoryInfoExtensionsTests : TempDirectoryFixture
 {
     [Fact]
     public async Task ProcessFilesParallelAsync_WithDirectoryInfo_ShouldProcessAllFiles()
@@ -15,8 +15,7 @@ public class DirectoryInfoExtensionsTests : TempDirectoryFixture
         await File.WriteAllTextAsync(Path.Join(TestDirectory, "file3.txt"), "Content3");
 
         // Act
-        var results = await directory.ProcessFilesParallelAsync(
-            async (filePath, ct) =>
+        var results = await directory.ProcessFilesParallelAsync(static async (filePath, ct) =>
             {
                 var content = await File.ReadAllTextAsync(filePath, ct);
                 return content.Length;
@@ -25,7 +24,7 @@ public class DirectoryInfoExtensionsTests : TempDirectoryFixture
 
         // Assert
         results.Count.ShouldBe(3);
-        results.ShouldAllBe(r => r > 0);
+        results.ShouldAllBe(static r => r > 0);
     }
 
     [Fact]
@@ -66,7 +65,7 @@ public class DirectoryInfoExtensionsTests : TempDirectoryFixture
 
         // Assert
         files.Count.ShouldBe(2);
-        files.ShouldAllBe(f => f.Extension == ".txt");
+        files.ShouldAllBe(static f => f.Extension == ".txt");
     }
 
     [Fact]
@@ -82,7 +81,7 @@ public class DirectoryInfoExtensionsTests : TempDirectoryFixture
         // Act
         var results = await sourceDirectory.TransformFilesParallelAsync(
             destDirectory,
-            async (_, content) => await ValueTask.FromResult(content.ToUpperInvariant()),
+            static (_, content) => ValueTask.FromResult(content.ToUpperInvariant()),
             "*.txt");
 
         // Assert
@@ -174,7 +173,7 @@ public class DirectoryInfoExtensionsTests : TempDirectoryFixture
         // Act
         var results = await directories.ProcessMultipleDirectoriesParallelAsync(
             "*.txt",
-            async (filePath, ct) =>
+            static async (filePath, ct) =>
             {
                 var content = await File.ReadAllTextAsync(filePath, ct);
                 return content.Length;
@@ -182,7 +181,7 @@ public class DirectoryInfoExtensionsTests : TempDirectoryFixture
 
         // Assert
         results.Count.ShouldBe(2);
-        results.ShouldAllBe(r => r > 0);
+        results.ShouldAllBe(static r => r > 0);
     }
 
     [Fact]
@@ -192,8 +191,7 @@ public class DirectoryInfoExtensionsTests : TempDirectoryFixture
         var directory = new DirectoryInfo(Path.Join(TestDirectory, "nonexistent"));
 
         // Act
-        var act = async () => await directory.ProcessFilesParallelAsync(
-            async (filePath, _) => await ValueTask.FromResult(filePath),
+        var act = () => directory.ProcessFilesParallelAsync(static (filePath, _) => ValueTask.FromResult(filePath),
             "*.txt");
 
         // Assert
@@ -251,7 +249,7 @@ public class DirectoryInfoExtensionsTests : TempDirectoryFixture
         // Act
         await sourceDirectory.TransformFilesParallelAsync(
             destDirectory,
-            async (_, content) => await ValueTask.FromResult(content),
+            static (_, content) => ValueTask.FromResult(content),
             "*.txt",
             SearchOption.TopDirectoryOnly,
             options);

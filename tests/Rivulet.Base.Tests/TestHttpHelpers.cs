@@ -1,21 +1,24 @@
 namespace Rivulet.Base.Tests;
 
 /// <summary>
-/// Test helper for mocking HTTP message handlers.
+///     Test helper for mocking HTTP message handlers.
 /// </summary>
-public class TestHttpMessageHandler(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> handler) : HttpMessageHandler
+public sealed class TestHttpMessageHandler(
+    Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> handler
+) : HttpMessageHandler
 {
-    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
+        CancellationToken cancellationToken) =>
         handler(request, cancellationToken);
 }
 
 /// <summary>
-/// Factory methods for creating test HTTP clients.
+///     Factory methods for creating test HTTP clients.
 /// </summary>
 public static class TestHttpClientFactory
 {
     /// <summary>
-    /// Creates an HttpClient with a custom message handler for testing.
+    ///     Creates an HttpClient with a custom message handler for testing.
     /// </summary>
     public static HttpClient CreateTestClient(
         Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> handler,
@@ -24,10 +27,7 @@ public static class TestHttpClientFactory
         var messageHandler = new TestHttpMessageHandler(handler);
         var client = new HttpClient(messageHandler);
 
-        if (baseAddress != null)
-        {
-            client.BaseAddress = new Uri(baseAddress);
-        }
+        if (baseAddress != null) client.BaseAddress = new(baseAddress);
 
         return client;
     }

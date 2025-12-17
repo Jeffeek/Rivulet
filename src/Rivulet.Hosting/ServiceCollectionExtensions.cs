@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Rivulet.Core;
@@ -5,34 +6,40 @@ using Rivulet.Core;
 namespace Rivulet.Hosting;
 
 /// <summary>
-/// Extension methods for registering Rivulet services with dependency injection.
+///     Extension methods for registering Rivulet services with dependency injection.
 /// </summary>
+[SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public static class ServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers default ParallelOptionsRivulet configuration from IConfiguration.
+    ///     Registers default ParallelOptionsRivulet configuration from IConfiguration.
     /// </summary>
     public static IServiceCollection AddRivulet(this IServiceCollection services, IConfiguration configuration)
     {
-        services.Configure<ParallelOptionsRivulet>(configuration.GetSection(RivuletHostingConstants.ConfigurationSectionName));
+        services.Configure<ParallelOptionsRivulet>(
+            configuration.GetSection(RivuletHostingConstants.ConfigurationSectionName));
         return services;
     }
 
     /// <summary>
-    /// Registers default ParallelOptionsRivulet configuration with a custom setup action.
+    ///     Registers default ParallelOptionsRivulet configuration with a custom setup action.
     /// </summary>
-    public static IServiceCollection AddRivulet(this IServiceCollection services, Action<ParallelOptionsRivulet> configure)
+    public static IServiceCollection AddRivulet(this IServiceCollection services,
+        Action<ParallelOptionsRivulet> configure)
     {
         services.Configure(configure);
         return services;
     }
 
     /// <summary>
-    /// Registers a named ParallelOptionsRivulet configuration.
+    ///     Registers a named ParallelOptionsRivulet configuration.
     /// </summary>
-    public static IServiceCollection AddRivulet(this IServiceCollection services, string name, IConfiguration configuration)
+    public static IServiceCollection AddRivulet(this IServiceCollection services,
+        string name,
+        IConfiguration configuration)
     {
-        services.Configure<ParallelOptionsRivulet>(name, configuration.GetSection($"{RivuletHostingConstants.ConfigurationSectionName}:{name}"));
+        services.Configure<ParallelOptionsRivulet>(name,
+            configuration.GetSection($"{RivuletHostingConstants.ConfigurationSectionName}:{name}"));
         return services;
     }
 }

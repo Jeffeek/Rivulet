@@ -5,9 +5,11 @@ using Rivulet.Core.Observability;
 
 namespace Rivulet.Core.Tests;
 
-[Collection(TestCollections.EventSourceSequential)]
-[SuppressMessage("ReSharper", "AccessToDisposedClosure")]
-public class ProgressReportingTests
+[
+    Collection(TestCollections.EventSourceSequential),
+    SuppressMessage("ReSharper", "AccessToDisposedClosure")
+]
+public sealed class ProgressReportingTests
 {
     [Fact]
     public async Task ProgressReporting_SelectParallelAsync_ReportsProgress()
@@ -30,7 +32,7 @@ public class ProgressReportingTests
         };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(10, ct);
                 return x * 2;
@@ -40,12 +42,13 @@ public class ProgressReportingTests
         results.Count.ShouldBe(100);
         snapshots.ShouldNotBeEmpty();
 
-        var maxCompleted = snapshots.Max(s => s.ItemsCompleted);
+        var maxCompleted = snapshots.Max(static s => s.ItemsCompleted);
         maxCompleted.ShouldBeGreaterThan(50);
 
-        snapshots.All(s => s.TotalItems == 100).ShouldBeTrue();
-        snapshots.Where(s => s.ItemsCompleted > 0).All(s => s.ItemsPerSecond > 0).ShouldBeTrue();
-        snapshots.Where(s => s.ItemsCompleted > 0).All(s => s.PercentComplete is >= 0 and <= 100).ShouldBeTrue();
+        snapshots.All(static s => s.TotalItems == 100).ShouldBeTrue();
+        snapshots.Where(static s => s.ItemsCompleted > 0).All(static s => s.ItemsPerSecond > 0).ShouldBeTrue();
+        snapshots.Where(static s => s.ItemsCompleted > 0).All(static s => s.PercentComplete is >= 0 and <= 100)
+            .ShouldBeTrue();
     }
 
     [Fact]
@@ -69,22 +72,23 @@ public class ProgressReportingTests
         };
 
         var results = await source.SelectParallelStreamAsync(
-            async (x, ct) =>
-            {
-                await Task.Delay(10, ct);
-                return x * 2;
-            },
-            options).ToListAsync();
+                static async (x, ct) =>
+                {
+                    await Task.Delay(10, ct);
+                    return x * 2;
+                },
+                options)
+            .ToListAsync();
 
         results.Count.ShouldBe(50);
         snapshots.ShouldNotBeEmpty();
 
-        var maxCompleted = snapshots.Max(s => s.ItemsCompleted);
+        var maxCompleted = snapshots.Max(static s => s.ItemsCompleted);
         maxCompleted.ShouldBeGreaterThan(10);
 
-        snapshots.All(s => s.TotalItems == null).ShouldBeTrue();
-        snapshots.All(s => s.PercentComplete == null).ShouldBeTrue();
-        snapshots.Where(s => s.ItemsCompleted > 0).All(s => s.ItemsPerSecond > 0).ShouldBeTrue();
+        snapshots.All(static s => s.TotalItems == null).ShouldBeTrue();
+        snapshots.All(static s => s.PercentComplete == null).ShouldBeTrue();
+        snapshots.Where(static s => s.ItemsCompleted > 0).All(static s => s.ItemsPerSecond > 0).ShouldBeTrue();
     }
 
     [Fact]
@@ -110,13 +114,13 @@ public class ProgressReportingTests
         };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 // Increased delay to ensure operation spans multiple timer intervals
                 // This gives the timer adequate time to capture all error states
                 await Task.Delay(15, ct);
-                if (x % 5 == 0)
-                    throw new InvalidOperationException($"Error on {x}");
+                if (x % 5 == 0) throw new InvalidOperationException($"Error on {x}");
+
                 return x * 2;
             },
             options);
@@ -125,19 +129,20 @@ public class ProgressReportingTests
 
         await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddMilliseconds(2000),
-            () => Task.Delay(50),
+            static () => Task.Delay(50),
             () =>
             {
                 if (!snapshots.Any()) return true;
-                var currentMaxErrors = snapshots.Max(s => s.ErrorCount);
-                var currentMaxCompleted = snapshots.Max(s => s.ItemsCompleted);
+
+                var currentMaxErrors = snapshots.Max(static s => s.ErrorCount);
+                var currentMaxCompleted = snapshots.Max(static s => s.ItemsCompleted);
                 return currentMaxErrors != 4 || currentMaxCompleted != 16;
             });
 
         results.Count.ShouldBe(16, "20 items minus 4 failures (items 5,10,15,20) equals 16 successful results");
 
-        var maxErrors = snapshots.Max(s => s.ErrorCount);
-        var maxCompleted = snapshots.Max(s => s.ItemsCompleted);
+        var maxErrors = snapshots.Max(static s => s.ErrorCount);
+        var maxCompleted = snapshots.Max(static s => s.ItemsCompleted);
 
         maxErrors.ShouldBe(4, "items 5,10,15,20 should have failed (4 total errors)");
         maxCompleted.ShouldBe(16, "all 16 non-failing items should have completed successfully");
@@ -164,7 +169,7 @@ public class ProgressReportingTests
         };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(20, ct);
                 return x;
@@ -174,9 +179,9 @@ public class ProgressReportingTests
         results.Count.ShouldBe(50);
         snapshots.ShouldNotBeEmpty();
 
-        var progressWithItems = snapshots.Where(s => s.ItemsCompleted > 0).ToList();
+        var progressWithItems = snapshots.Where(static s => s.ItemsCompleted > 0).ToList();
         progressWithItems.ShouldNotBeEmpty();
-        progressWithItems.All(s => s.ItemsPerSecond > 0).ShouldBeTrue();
+        progressWithItems.All(static s => s.ItemsPerSecond > 0).ShouldBeTrue();
     }
 
     [Fact]
@@ -193,15 +198,15 @@ public class ProgressReportingTests
                 ReportInterval = TimeSpan.FromMilliseconds(50),
                 OnProgress = snapshot =>
                 {
-                    if (snapshot.EstimatedTimeRemaining.HasValue)
-                        snapshotsWithEta.Add(snapshot);
+                    if (snapshot.EstimatedTimeRemaining.HasValue) snapshotsWithEta.Add(snapshot);
+
                     return ValueTask.CompletedTask;
                 }
             }
         };
 
         await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(10, ct);
                 return x;
@@ -209,7 +214,7 @@ public class ProgressReportingTests
             options);
 
         snapshotsWithEta.ShouldNotBeEmpty();
-        snapshotsWithEta.All(s => s.EstimatedTimeRemaining.HasValue).ShouldBeTrue();
+        snapshotsWithEta.All(static s => s.EstimatedTimeRemaining.HasValue).ShouldBeTrue();
     }
 
     [Fact]
@@ -233,7 +238,7 @@ public class ProgressReportingTests
         };
 
         await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(10, ct);
                 return x;
@@ -241,9 +246,9 @@ public class ProgressReportingTests
             options);
 
         snapshots.ShouldNotBeEmpty();
-        var progressSnapshots = snapshots.Where(s => s.PercentComplete.HasValue).ToList();
+        var progressSnapshots = snapshots.Where(static s => s.PercentComplete.HasValue).ToList();
         progressSnapshots.ShouldNotBeEmpty();
-        progressSnapshots.All(s => s.PercentComplete is >= 0 and <= 100).ShouldBeTrue();
+        progressSnapshots.All(static s => s.PercentComplete is >= 0 and <= 100).ShouldBeTrue();
     }
 
     [Fact]
@@ -251,13 +256,10 @@ public class ProgressReportingTests
     {
         var source = Enumerable.Range(1, 10);
 
-        var options = new ParallelOptionsRivulet
-        {
-            Progress = null
-        };
+        var options = new ParallelOptionsRivulet { Progress = null };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(5, ct);
                 return x * 2;
@@ -288,7 +290,7 @@ public class ProgressReportingTests
         };
 
         await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(20, ct);
                 return x;
@@ -296,7 +298,7 @@ public class ProgressReportingTests
             options);
 
         snapshots.ShouldNotBeEmpty();
-        snapshots.All(s => s.ItemsStarted >= s.ItemsCompleted).ShouldBeTrue();
+        snapshots.All(static s => s.ItemsStarted >= s.ItemsCompleted).ShouldBeTrue();
     }
 
     [Fact]
@@ -321,16 +323,16 @@ public class ProgressReportingTests
         };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(10, ct);
                 return x * 2;
             },
             options);
 
-        results.ShouldBe(Enumerable.Range(1, 40).Select(x => x * 2));
+        results.ShouldBe(Enumerable.Range(1, 40).Select(static x => x * 2));
         snapshots.ShouldNotBeEmpty();
-        snapshots.Max(s => s.ItemsCompleted).ShouldBeGreaterThan(20);
+        snapshots.Max(static s => s.ItemsCompleted).ShouldBeGreaterThan(20);
     }
 
     [Fact]
@@ -364,7 +366,7 @@ public class ProgressReportingTests
 
         processedCount.ShouldBe(30);
         snapshots.ShouldNotBeEmpty();
-        snapshots.Max(s => s.ItemsCompleted).ShouldBeGreaterThan(10);
+        snapshots.Max(static s => s.ItemsCompleted).ShouldBeGreaterThan(10);
     }
 
     [Fact]
@@ -387,7 +389,7 @@ public class ProgressReportingTests
         };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(5, ct);
                 return x * 2;
@@ -418,7 +420,7 @@ public class ProgressReportingTests
         };
 
         await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(10, ct);
                 return x;
@@ -426,11 +428,9 @@ public class ProgressReportingTests
             options);
 
         snapshots.ShouldNotBeEmpty();
-        var orderedSnapshots = snapshots.OrderBy(s => s.Elapsed).ToList();
+        var orderedSnapshots = snapshots.OrderBy(static s => s.Elapsed).ToList();
         for (var i = 1; i < orderedSnapshots.Count; i++)
-        {
             orderedSnapshots[i].Elapsed.ShouldBeGreaterThanOrEqualTo(orderedSnapshots[i - 1].Elapsed);
-        }
     }
 
     [Fact]
@@ -455,16 +455,17 @@ public class ProgressReportingTests
         };
 
         var results = await source.SelectParallelStreamAsync(
-            async (x, ct) =>
-            {
-                await Task.Delay(10, ct);
-                return x * 2;
-            },
-            options).ToListAsync();
+                static async (x, ct) =>
+                {
+                    await Task.Delay(10, ct);
+                    return x * 2;
+                },
+                options)
+            .ToListAsync();
 
-        results.ShouldBe(Enumerable.Range(1, 30).Select(x => x * 2));
+        results.ShouldBe(Enumerable.Range(1, 30).Select(static x => x * 2));
         snapshots.ShouldNotBeEmpty();
-        snapshots.Max(s => s.ItemsCompleted).ShouldBeGreaterThan(10);
+        snapshots.Max(static s => s.ItemsCompleted).ShouldBeGreaterThan(10);
     }
 
     [Fact]
@@ -489,18 +490,16 @@ public class ProgressReportingTests
         };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(5, ct);
-                if (x % 5 == 0)
-                    throw new InvalidOperationException("Permanent error");
-                return x;
+                return x % 5 == 0 ? throw new InvalidOperationException("Permanent error") : x;
             },
             options);
 
         results.Count.ShouldBe(12);
         snapshots.ShouldNotBeEmpty();
-        var maxErrors = snapshots.Max(s => s.ErrorCount);
+        var maxErrors = snapshots.Max(static s => s.ErrorCount);
         maxErrors.ShouldBeGreaterThanOrEqualTo(1);
     }
 
@@ -556,15 +555,15 @@ public class ProgressReportingTests
                 OnProgress = snapshot =>
                 {
                     snapshots.Add(snapshot);
-                    if (snapshot.ItemsCompleted >= 20)
-                        cts.Cancel();
+                    if (snapshot.ItemsCompleted >= 20) cts.Cancel();
+
                     return ValueTask.CompletedTask;
                 }
             }
         };
 
-        var act = async () => await source.SelectParallelAsync(
-            async (x, ct) =>
+        var act = () => source.SelectParallelAsync(
+            static async (x, ct) =>
             {
                 await Task.Delay(10, ct);
                 return x;
@@ -582,16 +581,10 @@ public class ProgressReportingTests
         var source = Enumerable.Range(1, 20);
 
         var options = new ParallelOptionsRivulet
-        {
-            Progress = new()
-            {
-                ReportInterval = TimeSpan.FromMilliseconds(50),
-                OnProgress = null
-            }
-        };
+            { Progress = new() { ReportInterval = TimeSpan.FromMilliseconds(50), OnProgress = null } };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(5, ct);
                 return x * 2;
@@ -616,14 +609,14 @@ public class ProgressReportingTests
                 OnProgress = snapshot =>
                 {
                     if (!firstReport || snapshot.Elapsed.TotalSeconds > 0) return ValueTask.CompletedTask;
+
                     firstReport = false;
                     return ValueTask.CompletedTask;
                 }
             }
         };
 
-        await source.SelectParallelAsync(
-            async (x, _) =>
+        await source.SelectParallelAsync(static async (x, _) =>
             {
                 await Task.CompletedTask;
                 return x;
@@ -651,7 +644,7 @@ public class ProgressReportingTests
         };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(5, ct);
                 return x * 2;
@@ -675,13 +668,13 @@ public class ProgressReportingTests
                 OnProgress = async _ =>
                 {
                     callbackExecuted = true;
-                    await Task.Delay(100);
+                    await Task.Delay(100, CancellationToken.None);
                 }
             }
         };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(5, ct);
                 return x;
@@ -697,21 +690,16 @@ public class ProgressReportingTests
     {
         var source = Enumerable.Range(1, 10).ToAsyncEnumerable();
 
-        var options = new ParallelOptionsRivulet
-        {
-            Progress = new()
-            {
-                OnProgress = null
-            }
-        };
+        var options = new ParallelOptionsRivulet { Progress = new() { OnProgress = null } };
 
         var results = await source.SelectParallelStreamAsync(
-            async (x, ct) =>
-            {
-                await Task.Delay(5, ct);
-                return x * 2;
-            },
-            options).ToListAsync();
+                static async (x, ct) =>
+                {
+                    await Task.Delay(5, ct);
+                    return x * 2;
+                },
+                options)
+            .ToListAsync();
 
         results.Count.ShouldBe(10);
     }
@@ -725,16 +713,13 @@ public class ProgressReportingTests
         var options = new ParallelOptionsRivulet
         {
             Progress = new()
-            {
-                ReportInterval = TimeSpan.FromMilliseconds(10),
-                OnProgress = _ => ValueTask.CompletedTask
-            }
+                { ReportInterval = TimeSpan.FromMilliseconds(10), OnProgress = static _ => ValueTask.CompletedTask }
         };
 
         await cts.CancelAsync();
 
-        var act = async () => await source.SelectParallelAsync(
-            async (x, ct) =>
+        var act = () => source.SelectParallelAsync(
+            static async (x, ct) =>
             {
                 await Task.Delay(100, ct);
                 return x;
@@ -765,7 +750,7 @@ public class ProgressReportingTests
         };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(5, ct);
                 return x;
@@ -787,19 +772,17 @@ public class ProgressReportingTests
             Progress = new()
             {
                 ReportInterval = TimeSpan.FromMilliseconds(1),
-                OnProgress = snapshot =>
+                OnProgress = static snapshot =>
                 {
                     if (snapshot.Elapsed.TotalMilliseconds < 10)
-                    {
                         snapshot.ItemsPerSecond.ShouldBeGreaterThanOrEqualTo(0);
-                    }
+
                     return ValueTask.CompletedTask;
                 }
             }
         };
 
-        await source.SelectParallelAsync(
-            (x, _) => ValueTask.FromResult(x),
+        await source.SelectParallelAsync(static (x, _) => ValueTask.FromResult(x),
             options);
     }
 
@@ -825,7 +808,7 @@ public class ProgressReportingTests
         for (var i = 0; i < 3; i++)
         {
             var results = await source.SelectParallelAsync(
-                async (x, ct) =>
+                static async (x, ct) =>
                 {
                     await Task.Delay(2, ct);
                     return x;

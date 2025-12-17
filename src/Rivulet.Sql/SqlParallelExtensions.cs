@@ -1,17 +1,19 @@
 using System.Data;
 using System.Data.Common;
+using System.Diagnostics.CodeAnalysis;
 using Rivulet.Core;
 
 namespace Rivulet.Sql;
 
 /// <summary>
-/// Extension methods for parallel SQL query and command execution.
+///     Extension methods for parallel SQL query and command execution.
 /// </summary>
+[SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public static class SqlParallelExtensions
 {
     /// <summary>
-    /// Executes SQL queries in parallel and returns results mapped by the provided function.
-    /// Automatically manages connection state unless disabled in options.
+    ///     Executes SQL queries in parallel and returns results mapped by the provided function.
+    ///     Automatically manages connection state unless disabled in options.
     /// </summary>
     /// <typeparam name="TResult">The result type from each query.</typeparam>
     /// <param name="queries">The SQL queries to execute.</param>
@@ -20,7 +22,7 @@ public static class SqlParallelExtensions
     /// <param name="options">SQL execution options.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of query results.</returns>
-    public static async Task<List<TResult>> ExecuteQueriesParallelAsync<TResult>(
+    public static Task<List<TResult>> ExecuteQueriesParallelAsync<TResult>(
         this IEnumerable<string> queries,
         Func<IDbConnection> connectionFactory,
         Func<IDataReader, TResult> readerMapper,
@@ -34,23 +36,26 @@ public static class SqlParallelExtensions
         options ??= new();
         var parallelOptions = options.GetMergedParallelOptions();
 
-        return await queries.SelectParallelAsync(
-            async (query, ct) => await ExecuteQueryAsync(query, connectionFactory, readerMapper, options, ct),
+        return queries.SelectParallelAsync(
+            (query, ct) => ExecuteQueryAsync(query, connectionFactory, readerMapper, options, ct),
             parallelOptions,
-            cancellationToken).ConfigureAwait(false);
+            cancellationToken);
     }
 
     /// <summary>
-    /// Executes SQL queries in parallel with parameters and returns results mapped by the provided function.
+    ///     Executes SQL queries in parallel with parameters and returns results mapped by the provided function.
     /// </summary>
     /// <typeparam name="TResult">The result type from each query.</typeparam>
-    /// <param name="queriesWithParams">The SQL queries with their parameters. Use the string overload if parameters are not needed.</param>
+    /// <param name="queriesWithParams">
+    ///     The SQL queries with their parameters. Use the string overload if parameters are not
+    ///     needed.
+    /// </param>
     /// <param name="connectionFactory">Factory function to create database connections.</param>
     /// <param name="readerMapper">Function to map IDataReader to TResult.</param>
     /// <param name="options">SQL execution options.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of query results.</returns>
-    public static async Task<List<TResult>> ExecuteQueriesParallelAsync<TResult>(
+    public static Task<List<TResult>> ExecuteQueriesParallelAsync<TResult>(
         this IEnumerable<(string query, Action<IDbCommand> configureParams)> queriesWithParams,
         Func<IDbConnection> connectionFactory,
         Func<IDataReader, TResult> readerMapper,
@@ -64,21 +69,25 @@ public static class SqlParallelExtensions
         options ??= new();
         var parallelOptions = options.GetMergedParallelOptions();
 
-        return await queriesWithParams.SelectParallelAsync(
-            async (item, ct) => await ExecuteQueryAsync(item.query, connectionFactory, readerMapper, options, ct, item.configureParams),
+        return queriesWithParams.SelectParallelAsync((item, ct) => ExecuteQueryAsync(item.query,
+                connectionFactory,
+                readerMapper,
+                options,
+                ct,
+                item.configureParams),
             parallelOptions,
-            cancellationToken).ConfigureAwait(false);
+            cancellationToken);
     }
 
     /// <summary>
-    /// Executes SQL commands in parallel (INSERT, UPDATE, DELETE, etc.) and returns the number of affected rows.
+    ///     Executes SQL commands in parallel (INSERT, UPDATE, DELETE, etc.) and returns the number of affected rows.
     /// </summary>
     /// <param name="commands">The SQL commands to execute.</param>
     /// <param name="connectionFactory">Factory function to create database connections.</param>
     /// <param name="options">SQL execution options.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of affected row counts.</returns>
-    public static async Task<List<int>> ExecuteCommandsParallelAsync(
+    public static Task<List<int>> ExecuteCommandsParallelAsync(
         this IEnumerable<string> commands,
         Func<IDbConnection> connectionFactory,
         SqlOptions? options = null,
@@ -90,21 +99,21 @@ public static class SqlParallelExtensions
         options ??= new();
         var parallelOptions = options.GetMergedParallelOptions();
 
-        return await commands.SelectParallelAsync(
-            async (command, ct) => await ExecuteCommandAsync(command, connectionFactory, options, ct),
+        return commands.SelectParallelAsync(
+            (command, ct) => ExecuteCommandAsync(command, connectionFactory, options, ct),
             parallelOptions,
-            cancellationToken).ConfigureAwait(false);
+            cancellationToken);
     }
 
     /// <summary>
-    /// Executes SQL commands in parallel with parameters and returns the number of affected rows.
+    ///     Executes SQL commands in parallel with parameters and returns the number of affected rows.
     /// </summary>
     /// <param name="commandsWithParams">The SQL commands with their parameters.</param>
     /// <param name="connectionFactory">Factory function to create database connections.</param>
     /// <param name="options">SQL execution options.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of affected row counts.</returns>
-    public static async Task<List<int>> ExecuteCommandsParallelAsync(
+    public static Task<List<int>> ExecuteCommandsParallelAsync(
         this IEnumerable<(string command, Action<IDbCommand> configureParams)> commandsWithParams,
         Func<IDbConnection> connectionFactory,
         SqlOptions? options = null,
@@ -116,14 +125,14 @@ public static class SqlParallelExtensions
         options ??= new();
         var parallelOptions = options.GetMergedParallelOptions();
 
-        return await commandsWithParams.SelectParallelAsync(
-            async (item, ct) => await ExecuteCommandAsync(item.command, connectionFactory, options, ct, item.configureParams),
+        return commandsWithParams.SelectParallelAsync(
+            (item, ct) => ExecuteCommandAsync(item.command, connectionFactory, options, ct, item.configureParams),
             parallelOptions,
-            cancellationToken).ConfigureAwait(false);
+            cancellationToken);
     }
 
     /// <summary>
-    /// Executes scalar SQL queries in parallel (e.g., SELECT COUNT, SELECT MAX, etc.).
+    ///     Executes scalar SQL queries in parallel (e.g., SELECT COUNT, SELECT MAX, etc.).
     /// </summary>
     /// <typeparam name="TResult">The scalar result type.</typeparam>
     /// <param name="queries">The SQL queries to execute.</param>
@@ -131,7 +140,7 @@ public static class SqlParallelExtensions
     /// <param name="options">SQL execution options.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of scalar results.</returns>
-    public static async Task<List<TResult?>> ExecuteScalarParallelAsync<TResult>(
+    public static Task<List<TResult?>> ExecuteScalarParallelAsync<TResult>(
         this IEnumerable<string> queries,
         Func<IDbConnection> connectionFactory,
         SqlOptions? options = null,
@@ -143,14 +152,16 @@ public static class SqlParallelExtensions
         options ??= new();
         var parallelOptions = options.GetMergedParallelOptions();
 
-        return await queries.SelectParallelAsync(
-            async (query, ct) => await ExecuteScalarAsync<TResult>(query, connectionFactory, options, ct),
+#pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements in ExecuteScalarAsync
+        return queries.SelectParallelAsync(
+            (query, ct) => ExecuteScalarAsync<TResult>(query, connectionFactory, options, ct),
             parallelOptions,
-            cancellationToken).ConfigureAwait(false);
+            cancellationToken);
+#pragma warning restore CA2007
     }
 
     /// <summary>
-    /// Executes scalar SQL queries in parallel with parameters.
+    ///     Executes scalar SQL queries in parallel with parameters.
     /// </summary>
     /// <typeparam name="TResult">The scalar result type.</typeparam>
     /// <param name="queriesWithParams">The SQL queries with their parameters.</param>
@@ -158,7 +169,7 @@ public static class SqlParallelExtensions
     /// <param name="options">SQL execution options.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of scalar results.</returns>
-    public static async Task<List<TResult?>> ExecuteScalarParallelAsync<TResult>(
+    public static Task<List<TResult?>> ExecuteScalarParallelAsync<TResult>(
         this IEnumerable<(string query, Action<IDbCommand> configureParams)> queriesWithParams,
         Func<IDbConnection> connectionFactory,
         SqlOptions? options = null,
@@ -170,10 +181,12 @@ public static class SqlParallelExtensions
         options ??= new();
         var parallelOptions = options.GetMergedParallelOptions();
 
-        return await queriesWithParams.SelectParallelAsync(
-            async (item, ct) => await ExecuteScalarAsync<TResult>(item.query, connectionFactory, options, ct, item.configureParams),
+#pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements in ExecuteScalarAsync
+        return queriesWithParams.SelectParallelAsync(
+            (item, ct) => ExecuteScalarAsync<TResult>(item.query, connectionFactory, options, ct, item.configureParams),
             parallelOptions,
-            cancellationToken).ConfigureAwait(false);
+            cancellationToken);
+#pragma warning restore CA2007
     }
 
     private static async ValueTask<TResult> ExecuteQueryAsync<TResult>(
@@ -190,9 +203,7 @@ public static class SqlParallelExtensions
             try
             {
                 if (options.AutoManageConnection && connection.State != ConnectionState.Open)
-                {
                     await OpenConnectionAsync(connection, cancellationToken).ConfigureAwait(false);
-                }
 
                 using var command = connection.CreateCommand();
                 command.CommandText = query;
@@ -205,19 +216,13 @@ public static class SqlParallelExtensions
             }
             catch (Exception ex)
             {
-                if (options.OnSqlErrorAsync != null)
-                {
-                    await options.OnSqlErrorAsync(query, ex, 0).ConfigureAwait(false);
-                }
+                if (options.OnSqlErrorAsync != null) await options.OnSqlErrorAsync(query, ex, 0).ConfigureAwait(false);
 
                 throw;
             }
             finally
             {
-                if (options.AutoManageConnection && connection.State == ConnectionState.Open)
-                {
-                    connection.Close();
-                }
+                if (options.AutoManageConnection && connection.State == ConnectionState.Open) connection.Close();
             }
         }
     }
@@ -235,9 +240,7 @@ public static class SqlParallelExtensions
             try
             {
                 if (options.AutoManageConnection && connection.State != ConnectionState.Open)
-                {
                     await OpenConnectionAsync(connection, cancellationToken).ConfigureAwait(false);
-                }
 
                 using var command = connection.CreateCommand();
                 command.CommandText = commandText;
@@ -250,18 +253,13 @@ public static class SqlParallelExtensions
             catch (Exception ex)
             {
                 if (options.OnSqlErrorAsync != null)
-                {
                     await options.OnSqlErrorAsync(commandText, ex, 0).ConfigureAwait(false);
-                }
 
                 throw;
             }
             finally
             {
-                if (options.AutoManageConnection && connection.State == ConnectionState.Open)
-                {
-                    connection.Close();
-                }
+                if (options.AutoManageConnection && connection.State == ConnectionState.Open) connection.Close();
             }
         }
     }
@@ -279,9 +277,7 @@ public static class SqlParallelExtensions
             try
             {
                 if (options.AutoManageConnection && connection.State != ConnectionState.Open)
-                {
                     await OpenConnectionAsync(connection, cancellationToken).ConfigureAwait(false);
-                }
 
                 using var command = connection.CreateCommand();
                 command.CommandText = query;
@@ -291,28 +287,19 @@ public static class SqlParallelExtensions
 
                 var result = await ExecuteScalarInternalAsync(command, cancellationToken).ConfigureAwait(false);
 
-                if (result == null || result == DBNull.Value)
-                {
-                    return default;
-                }
+                if (result == null || result == DBNull.Value) return default;
 
                 return (TResult)Convert.ChangeType(result, typeof(TResult));
             }
             catch (Exception ex)
             {
-                if (options.OnSqlErrorAsync != null)
-                {
-                    await options.OnSqlErrorAsync(query, ex, 0).ConfigureAwait(false);
-                }
+                if (options.OnSqlErrorAsync != null) await options.OnSqlErrorAsync(query, ex, 0).ConfigureAwait(false);
 
                 throw;
             }
             finally
             {
-                if (options.AutoManageConnection && connection.State == ConnectionState.Open)
-                {
-                    connection.Close();
-                }
+                if (options.AutoManageConnection && connection.State == ConnectionState.Open) connection.Close();
             }
         }
     }
@@ -320,21 +307,16 @@ public static class SqlParallelExtensions
     private static async ValueTask OpenConnectionAsync(IDbConnection connection, CancellationToken cancellationToken)
     {
         if (connection is DbConnection dbConnection)
-        {
             await dbConnection.OpenAsync(cancellationToken).ConfigureAwait(false);
-        }
         else
-        {
             await Task.Run(connection.Open, cancellationToken).ConfigureAwait(false);
-        }
     }
 
-    private static async ValueTask<IDataReader> ExecuteReaderAsync(IDbCommand command, CancellationToken cancellationToken)
+    private static async ValueTask<IDataReader> ExecuteReaderAsync(IDbCommand command,
+        CancellationToken cancellationToken)
     {
         if (command is DbCommand dbCommand)
-        {
             return await dbCommand.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-        }
 
         return await Task.Run(command.ExecuteReader, cancellationToken).ConfigureAwait(false);
     }
@@ -342,19 +324,16 @@ public static class SqlParallelExtensions
     private static async ValueTask<int> ExecuteNonQueryAsync(IDbCommand command, CancellationToken cancellationToken)
     {
         if (command is DbCommand dbCommand)
-        {
             return await dbCommand.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-        }
 
         return await Task.Run(command.ExecuteNonQuery, cancellationToken).ConfigureAwait(false);
     }
 
-    private static async ValueTask<object?> ExecuteScalarInternalAsync(IDbCommand command, CancellationToken cancellationToken)
+    private static async ValueTask<object?> ExecuteScalarInternalAsync(IDbCommand command,
+        CancellationToken cancellationToken)
     {
         if (command is DbCommand dbCommand)
-        {
             return await dbCommand.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
-        }
 
         return await Task.Run(command.ExecuteScalar, cancellationToken).ConfigureAwait(false);
     }

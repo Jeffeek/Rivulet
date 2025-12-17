@@ -5,7 +5,7 @@ using Rivulet.Core;
 
 namespace Rivulet.Hosting.Tests;
 
-public class ServiceCollectionExtensionsTests
+public sealed class ServiceCollectionExtensionsTests
 {
     [Fact]
     public void AddRivulet_WithConfiguration_ShouldRegisterOptions()
@@ -13,8 +13,7 @@ public class ServiceCollectionExtensionsTests
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["Rivulet:MaxDegreeOfParallelism"] = "4",
-                ["Rivulet:ChannelCapacity"] = "100"
+                ["Rivulet:MaxDegreeOfParallelism"] = "4", ["Rivulet:ChannelCapacity"] = "100"
             })
             .Build();
 
@@ -32,7 +31,7 @@ public class ServiceCollectionExtensionsTests
     public void AddRivulet_WithConfigureAction_ShouldRegisterOptions()
     {
         var services = new ServiceCollection();
-        services.AddRivulet(_ =>
+        services.AddRivulet(static _ =>
         {
             // Configuration action is called - we can't test the values directly
             // because MaxDegreeOfParallelism is init-only
@@ -51,8 +50,7 @@ public class ServiceCollectionExtensionsTests
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["Rivulet:Worker1:MaxDegreeOfParallelism"] = "2",
-                ["Rivulet:Worker1:ChannelCapacity"] = "50"
+                ["Rivulet:Worker1:MaxDegreeOfParallelism"] = "2", ["Rivulet:Worker1:ChannelCapacity"] = "50"
             })
             .Build();
 
@@ -83,7 +81,7 @@ public class ServiceCollectionExtensionsTests
     {
         var services = new ServiceCollection();
 
-        var result = services.AddRivulet(_ => { });
+        var result = services.AddRivulet(static _ => { });
 
         result.ShouldBeSameAs(services);
     }

@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace Rivulet.Core.Tests;
 
 [SuppressMessage("ReSharper", "AccessToDisposedClosure")]
-public class CancellationAndTimeoutTests
+public sealed class CancellationAndTimeoutTests
 {
     [Fact]
     public async Task SelectParallelAsync_Cancellation_ThrowsOperationCanceledException()
@@ -13,20 +13,22 @@ public class CancellationAndTimeoutTests
         using var cts = new CancellationTokenSource();
         var processedCount = 0;
 
-        async Task<List<int>> Act() =>
-            await source.SelectParallelAsync(async (x, ct) =>
-            {
-                Interlocked.Increment(ref processedCount);
-                await Task.Delay(100, ct);
-                return x * 2;
-            }, cancellationToken: cts.Token);
-
         var task = Act();
         await Task.Delay(50, cts.Token);
         await cts.CancelAsync();
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => task);
         processedCount.ShouldBeLessThan(100);
+        return;
+
+        Task<List<int>> Act() =>
+            source.SelectParallelAsync(async (x, ct) =>
+                {
+                    Interlocked.Increment(ref processedCount);
+                    await Task.Delay(100, ct);
+                    return x * 2;
+                },
+                cancellationToken: cts.Token);
     }
 
     [Fact]
@@ -36,24 +38,24 @@ public class CancellationAndTimeoutTests
         using var cts = new CancellationTokenSource();
         var results = new List<int>();
 
-        async Task Act()
-        {
-            await foreach (var item in source.SelectParallelStreamAsync(async (x, ct) =>
-                           {
-                               await Task.Delay(100, ct);
-                               return x * 2;
-                           }, cancellationToken: cts.Token))
-            {
-                results.Add(item);
-            }
-        }
-
         var task = Act();
         await Task.Delay(50, cts.Token);
         await cts.CancelAsync();
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => task);
         results.Count.ShouldBeLessThan(100);
+        return;
+
+        async Task Act()
+        {
+            await foreach (var item in source.SelectParallelStreamAsync(static async (x, ct) =>
+                               {
+                                   await Task.Delay(100, ct);
+                                   return x * 2;
+                               },
+                               cancellationToken: cts.Token))
+                results.Add(item);
+        }
     }
 
     [Fact]
@@ -63,19 +65,21 @@ public class CancellationAndTimeoutTests
         using var cts = new CancellationTokenSource();
         var processedCount = 0;
 
-        async Task Act() =>
-            await source.ForEachParallelAsync(async (_, ct) =>
-            {
-                Interlocked.Increment(ref processedCount);
-                await Task.Delay(100, ct);
-            }, cancellationToken: cts.Token);
-
         var task = Act();
         await Task.Delay(50, cts.Token);
         await cts.CancelAsync();
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => task);
         processedCount.ShouldBeLessThan(100);
+        return;
+
+        Task Act() =>
+            source.ForEachParallelAsync(async (_, ct) =>
+                {
+                    Interlocked.Increment(ref processedCount);
+                    await Task.Delay(100, ct);
+                },
+                cancellationToken: cts.Token);
     }
 
     [Fact]
@@ -84,18 +88,17 @@ public class CancellationAndTimeoutTests
         var source = Enumerable.Range(1, 5);
         var options = new ParallelOptionsRivulet
         {
-            PerItemTimeout = TimeSpan.FromMilliseconds(2000),
-            ErrorMode = ErrorMode.BestEffort,
+            PerItemTimeout = TimeSpan.FromMilliseconds(2000), ErrorMode = ErrorMode.BestEffort,
             MaxDegreeOfParallelism = 2
         };
 
-        var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+        var results = await source.SelectParallelAsync(static async (x, ct) =>
             {
                 if (x == 3)
                     await Task.Delay(10000, ct);
                 else
                     await Task.Delay(1, ct);
+
                 return x * 2;
             },
             options);
@@ -108,13 +111,9 @@ public class CancellationAndTimeoutTests
     public async Task PerItemTimeout_AllItemsWithinTimeout_Succeeds()
     {
         var source = Enumerable.Range(1, 10);
-        var options = new ParallelOptionsRivulet
-        {
-            PerItemTimeout = TimeSpan.FromMilliseconds(2000)
-        };
+        var options = new ParallelOptionsRivulet { PerItemTimeout = TimeSpan.FromMilliseconds(2000) };
 
-        var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+        var results = await source.SelectParallelAsync(static async (x, ct) =>
             {
                 await Task.Delay(50, ct);
                 return x * 2;
@@ -128,13 +127,9 @@ public class CancellationAndTimeoutTests
     public async Task PerItemTimeout_NullTimeout_NoTimeoutEnforced()
     {
         var source = Enumerable.Range(1, 3);
-        var options = new ParallelOptionsRivulet
-        {
-            PerItemTimeout = null
-        };
+        var options = new ParallelOptionsRivulet { PerItemTimeout = null };
 
-        var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+        var results = await source.SelectParallelAsync(static async (x, ct) =>
             {
                 await Task.Delay(200, ct);
                 return x * 2;
@@ -154,7 +149,7 @@ public class CancellationAndTimeoutTests
             PerItemTimeout = TimeSpan.FromMilliseconds(100),
             MaxRetries = 2,
             BaseDelay = TimeSpan.FromMilliseconds(10),
-            IsTransient = ex => ex is OperationCanceledException,
+            IsTransient = static ex => ex is OperationCanceledException,
             ErrorMode = ErrorMode.BestEffort
         };
 
@@ -176,19 +171,18 @@ public class CancellationAndTimeoutTests
     {
         var source = Enumerable.Range(1, 5).ToAsyncEnumerable();
         var options = new ParallelOptionsRivulet
-        {
-            PerItemTimeout = TimeSpan.FromMilliseconds(200),
-            ErrorMode = ErrorMode.BestEffort
-        };
+            { PerItemTimeout = TimeSpan.FromMilliseconds(200), ErrorMode = ErrorMode.BestEffort };
 
-        var results = await source.SelectParallelStreamAsync(async (x, ct) =>
-            {
-                if (x == 3)
-                    await Task.Delay(1000, ct);
-                else
-                    await Task.Delay(5, ct);
-                return x * 2;
-            }, options)
+        var results = await source.SelectParallelStreamAsync(static async (x, ct) =>
+                {
+                    if (x == 3)
+                        await Task.Delay(1000, ct);
+                    else
+                        await Task.Delay(5, ct);
+
+                    return x * 2;
+                },
+                options)
             .ToListAsync();
 
         results.Count.ShouldBe(4);
@@ -200,15 +194,17 @@ public class CancellationAndTimeoutTests
         var source = Enumerable.Range(1, 200);
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(50));
 
-        async Task<List<int>> Act() =>
-            await source.SelectParallelAsync(async (x, ct) =>
-            {
-                await Task.Delay(20, ct);
-                ct.ThrowIfCancellationRequested();
-                return x * 2;
-            }, cancellationToken: cts.Token);
-
         await Assert.ThrowsAnyAsync<OperationCanceledException>((Func<Task<List<int>>>)Act);
+        return;
+
+        Task<List<int>> Act() =>
+            source.SelectParallelAsync(static async (x, ct) =>
+                {
+                    await Task.Delay(20, ct);
+                    ct.ThrowIfCancellationRequested();
+                    return x * 2;
+                },
+                cancellationToken: cts.Token);
     }
 
     [Fact]
@@ -218,9 +214,11 @@ public class CancellationAndTimeoutTests
         using var cts = new CancellationTokenSource();
         await cts.CancelAsync();
 
-        async Task<List<int>> Act() => await source.SelectParallelAsync((x, _) => new ValueTask<int>(x * 2), cancellationToken: cts.Token);
-
         await Assert.ThrowsAnyAsync<OperationCanceledException>((Func<Task<List<int>>>)Act);
+        return;
+
+        Task<List<int>> Act() =>
+            source.SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2), cancellationToken: cts.Token);
     }
 
     [Fact]
@@ -229,15 +227,14 @@ public class CancellationAndTimeoutTests
         var source = Enumerable.Range(1, 5);
         var tokensPassed = new ConcurrentBag<bool>();
 
-        var results = await source.SelectParallelAsync(
-            (x, ct) =>
-            {
-                tokensPassed.Add(ct != CancellationToken.None);
-                return new ValueTask<int>(x * 2);
-            });
+        var results = await source.SelectParallelAsync((x, ct) =>
+        {
+            tokensPassed.Add(ct != CancellationToken.None);
+            return new ValueTask<int>(x * 2);
+        });
 
         results.Count.ShouldBe(5);
-        tokensPassed.ShouldAllBe(token => token);
+        tokensPassed.ShouldAllBe(static token => token);
     }
 
     [Fact]
@@ -246,22 +243,23 @@ public class CancellationAndTimeoutTests
         var source = Enumerable.Range(1, 10);
         var options = new ParallelOptionsRivulet
         {
-            PerItemTimeout = TimeSpan.FromMilliseconds(50),
-            ErrorMode = ErrorMode.FailFast,
-            MaxDegreeOfParallelism = 1
+            PerItemTimeout = TimeSpan.FromMilliseconds(50), ErrorMode = ErrorMode.FailFast, MaxDegreeOfParallelism = 1
         };
 
-        async Task<List<int>> Act() =>
-            await source.SelectParallelAsync(async (x, ct) =>
-            {
-                if (x == 5)
-                    await Task.Delay(500, ct);
-                else
-                    await Task.Delay(10, ct);
-                return x * 2;
-            }, options);
-
         await Assert.ThrowsAnyAsync<OperationCanceledException>((Func<Task<List<int>>>)Act);
+        return;
+
+        Task<List<int>> Act() =>
+            source.SelectParallelAsync(static async (x, ct) =>
+                {
+                    if (x == 5)
+                        await Task.Delay(500, ct);
+                    else
+                        await Task.Delay(10, ct);
+
+                    return x * 2;
+                },
+                options);
     }
 
     [Fact]
@@ -270,24 +268,26 @@ public class CancellationAndTimeoutTests
         var source = Enumerable.Range(1, 10);
         var options = new ParallelOptionsRivulet
         {
-            PerItemTimeout = TimeSpan.FromMilliseconds(50),
-            ErrorMode = ErrorMode.CollectAndContinue,
+            PerItemTimeout = TimeSpan.FromMilliseconds(50), ErrorMode = ErrorMode.CollectAndContinue,
             MaxDegreeOfParallelism = 1
         };
 
-        async Task<List<int>> Act() =>
-            await source.SelectParallelAsync(async (x, ct) =>
-            {
-                if (x is 3 or 7)
-                    await Task.Delay(300, ct);
-                else
-                    await Task.Delay(5, ct);
-                return x * 2;
-            }, options);
-
         var exception = await Assert.ThrowsAsync<AggregateException>(((Func<Task<List<int>>>?)Act)!);
         exception.InnerExceptions.Count.ShouldBeGreaterThanOrEqualTo(1);
-        exception.InnerExceptions.ShouldAllBe(x => x is OperationCanceledException);
+        exception.InnerExceptions.ShouldAllBe(static x => x is OperationCanceledException);
+        return;
+
+        Task<List<int>> Act() =>
+            source.SelectParallelAsync(static async (x, ct) =>
+                {
+                    if (x is 3 or 7)
+                        await Task.Delay(300, ct);
+                    else
+                        await Task.Delay(5, ct);
+
+                    return x * 2;
+                },
+                options);
     }
 
     [Fact]
@@ -297,13 +297,10 @@ public class CancellationAndTimeoutTests
         using var cts = new CancellationTokenSource();
         var options = new ParallelOptionsRivulet
         {
-            PerItemTimeout = TimeSpan.FromMilliseconds(20),
-            ErrorMode = ErrorMode.BestEffort,
-            MaxDegreeOfParallelism = 2
+            PerItemTimeout = TimeSpan.FromMilliseconds(20), ErrorMode = ErrorMode.BestEffort, MaxDegreeOfParallelism = 2
         };
 
-        var task = source.SelectParallelAsync(
-            async (x, ct) =>
+        var task = source.SelectParallelAsync(static async (x, ct) =>
             {
                 await Task.Delay(1000, ct);
                 return x * 2;
@@ -316,7 +313,8 @@ public class CancellationAndTimeoutTests
 
         var results = await task;
 
-        results.Count.ShouldBeLessThanOrEqualTo(2, "with 20ms timeout and 1000ms delays, plus cancellation after 10ms, at most 2 items should complete");
+        results.Count.ShouldBeLessThanOrEqualTo(2,
+            "with 20ms timeout and 1000ms delays, plus cancellation after 10ms, at most 2 items should complete");
     }
 
     [Fact]
@@ -326,16 +324,18 @@ public class CancellationAndTimeoutTests
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
         var processedCount = 0;
 
-        async Task<List<int>> Act() =>
-            await source.SelectParallelAsync(async (x, ct) =>
-            {
-                Interlocked.Increment(ref processedCount);
-                await Task.Delay(10, ct);
-                return x * 2;
-            }, cancellationToken: cts.Token);
-
         await Assert.ThrowsAnyAsync<OperationCanceledException>((Func<Task<List<int>>>)Act);
         processedCount.ShouldBeLessThan(1000);
+        return;
+
+        Task<List<int>> Act() =>
+            source.SelectParallelAsync(async (x, ct) =>
+                {
+                    Interlocked.Increment(ref processedCount);
+                    await Task.Delay(10, ct);
+                    return x * 2;
+                },
+                cancellationToken: cts.Token);
     }
 
     [Fact]
@@ -345,18 +345,20 @@ public class CancellationAndTimeoutTests
         using var cts = new CancellationTokenSource();
         var consumedCount = 0;
 
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(Act);
+        consumedCount.ShouldBeGreaterThanOrEqualTo(10);
+        consumedCount.ShouldBeLessThan(1000);
+        return;
+
         async Task Act()
         {
             // ReSharper disable once PossibleMultipleEnumeration
-            await foreach (var _ in source.SelectParallelStreamAsync((x, _) => new ValueTask<int>(x * 2), cancellationToken: cts.Token))
+            await foreach (var _ in source.SelectParallelStreamAsync(static (x, _) => new ValueTask<int>(x * 2),
+                               cancellationToken: cts.Token))
             {
                 consumedCount++;
                 if (consumedCount == 10) await cts.CancelAsync();
             }
         }
-
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(Act);
-        consumedCount.ShouldBeGreaterThanOrEqualTo(10);
-        consumedCount.ShouldBeLessThan(1000);
     }
 }

@@ -1,17 +1,18 @@
-﻿using Rivulet.Core;
+﻿using System.Collections.Concurrent;
+using Rivulet.Core;
 
 namespace Rivulet.Diagnostics.Tests;
 
 /// <summary>
-/// Tests that use EventSource and manipulate Console.Out must run serially.
-/// EventSource is a process-wide singleton, so parallel tests interfere with each other.
+///     Tests that use EventSource and manipulate Console.Out must run serially.
+///     EventSource is a process-wide singleton, so parallel tests interfere with each other.
 /// </summary>
 [Collection(TestCollections.SerialEventSource)]
-public class DiagnosticsBuilderTests : IDisposable
+public sealed class DiagnosticsBuilderTests : IDisposable
 {
-    private readonly string _testFilePath;
-    private readonly StringWriter _stringWriter;
     private readonly TextWriter _originalOutput;
+    private readonly StringWriter _stringWriter;
+    private readonly string _testFilePath;
 
     public DiagnosticsBuilderTests()
     {
@@ -21,13 +22,21 @@ public class DiagnosticsBuilderTests : IDisposable
         Console.SetOut(_stringWriter);
     }
 
+    public void Dispose()
+    {
+        Console.SetOut(_originalOutput);
+        _stringWriter.Dispose();
+
+        TestCleanupHelper.RetryDeleteFile(_testFilePath);
+    }
+
     [Fact]
     public async Task DiagnosticsBuilder_ShouldConfigureMultipleListeners()
     {
-        var aggregatedMetrics = new System.Collections.Concurrent.ConcurrentBag<IReadOnlyList<AggregatedMetrics>>();
+        var aggregatedMetrics = new ConcurrentBag<IReadOnlyList<AggregatedMetrics>>();
 
         await using (new DiagnosticsBuilder()
-                         .AddConsoleListener(useColors: false)
+                         .AddConsoleListener(false)
                          .AddFileListener(_testFilePath)
                          .AddMetricsAggregator(TimeSpan.FromSeconds(2), metrics => aggregatedMetrics.Add(metrics))
                          .Build())
@@ -35,21 +44,19 @@ public class DiagnosticsBuilderTests : IDisposable
             // Operations must run long enough for EventCounter polling (1 second interval)
             // 10 items * 100ms / 2 parallelism = 500ms of operation time
             await Enumerable.Range(1, 10)
-                .SelectParallelAsync(async (x, ct) =>
-                {
-                    await Task.Delay(100, ct);
-                    return x * 2;
-                }, new()
-                {
-                    MaxDegreeOfParallelism = 2
-                });
+                .SelectParallelAsync(static async (x, ct) =>
+                    {
+                        await Task.Delay(100, ct);
+                        return x * 2;
+                    },
+                    new() { MaxDegreeOfParallelism = 2 });
 
             // Wait for at least 2x the aggregation interval to ensure timer fires reliably
-            await Task.Delay(2000);
+            await Task.Delay(2000, CancellationToken.None);
         } // Dispose to flush all listeners
 
         // Wait for file handle to be released and final aggregations to complete
-        await Task.Delay(500);
+        await Task.Delay(500, CancellationToken.None);
 
         // Note: Console output timing is unreliable in parallel tests due to async flushing,
         // so we verify metrics through file output and aggregated metrics instead
@@ -72,18 +79,16 @@ public class DiagnosticsBuilderTests : IDisposable
         // 10 items * 100ms / 2 parallelism = 500ms of operation time
         await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
-            .SelectParallelStreamAsync(async (x, ct) =>
-            {
-                await Task.Delay(100, ct);
-                return x * 2;
-            }, new()
-            {
-                MaxDegreeOfParallelism = 2
-            })
+            .SelectParallelStreamAsync(static async (x, ct) =>
+                {
+                    await Task.Delay(100, ct);
+                    return x * 2;
+                },
+                new() { MaxDegreeOfParallelism = 2 })
             .ToListAsync();
 
         // Wait for EventCounters to fire - increased for CI/CD reliability
-        await Task.Delay(2000);
+        await Task.Delay(2000, CancellationToken.None);
 
         var prometheusText = exporter.Export();
         prometheusText.ShouldContain("rivulet_items_started");
@@ -102,21 +107,19 @@ public class DiagnosticsBuilderTests : IDisposable
             // 10 items * 100ms / 2 parallelism = 1000ms of operation time
             await Enumerable.Range(1, 10)
                 .ToAsyncEnumerable()
-                .SelectParallelStreamAsync(async (x, ct) =>
-                {
-                    await Task.Delay(100, ct);
-                    return x;
-                }, new()
-                {
-                    MaxDegreeOfParallelism = 2
-                })
+                .SelectParallelStreamAsync(static async (x, ct) =>
+                    {
+                        await Task.Delay(100, ct);
+                        return x;
+                    },
+                    new() { MaxDegreeOfParallelism = 2 })
                 .ToListAsync();
 
             // Wait for EventCounters to fire - increased for CI/CD reliability
-            await Task.Delay(2000);
+            await Task.Delay(2000, CancellationToken.None);
         }
 
-        await Task.Delay(200);
+        await Task.Delay(200, CancellationToken.None);
 
         File.Exists(logFile).ShouldBeTrue();
         TestCleanupHelper.RetryDeleteFile(logFile);
@@ -127,29 +130,23 @@ public class DiagnosticsBuilderTests : IDisposable
     {
         await using var diagnostics = new DiagnosticsBuilder()
             .AddPrometheusExporter(out var exporter)
-            .AddHealthCheck(exporter, new()
-            {
-                ErrorRateThreshold = 0.5,
-                FailureCountThreshold = 100
-            })
+            .AddHealthCheck(exporter, new() { ErrorRateThreshold = 0.5, FailureCountThreshold = 100 })
             .Build();
 
         // Operations must run long enough for EventCounter polling (1 second interval)
         // 10 items * 100ms / 2 parallelism = 500ms of operation time
         await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
-            .SelectParallelStreamAsync(async (x, ct) =>
-            {
-                await Task.Delay(100, ct);
-                return x;
-            }, new()
-            {
-                MaxDegreeOfParallelism = 2
-            })
+            .SelectParallelStreamAsync(static async (x, ct) =>
+                {
+                    await Task.Delay(100, ct);
+                    return x;
+                },
+                new() { MaxDegreeOfParallelism = 2 })
             .ToListAsync();
 
         // Wait for EventCounters to be polled and metrics to be available - increased for CI/CD reliability
-        await Task.Delay(2000);
+        await Task.Delay(2000, CancellationToken.None);
 
         var prometheusText = exporter.Export();
         prometheusText.ShouldContain("rivulet_items_started");
@@ -169,7 +166,7 @@ public class DiagnosticsBuilderTests : IDisposable
     [Fact]
     public async Task DiagnosticsBuilder_ShouldSupportStructuredLogWithAction()
     {
-        var loggedLines = new System.Collections.Concurrent.ConcurrentBag<string>();
+        var loggedLines = new ConcurrentBag<string>();
 
         await using var diagnostics = new DiagnosticsBuilder()
             .AddStructuredLogListener(loggedLines.Add)
@@ -179,18 +176,16 @@ public class DiagnosticsBuilderTests : IDisposable
         // 10 items * 100ms / 2 parallelism = 500ms of operation time
         await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
-            .SelectParallelStreamAsync(async (x, ct) =>
-            {
-                await Task.Delay(100, ct);
-                return x;
-            }, new()
-            {
-                MaxDegreeOfParallelism = 2
-            })
+            .SelectParallelStreamAsync(static async (x, ct) =>
+                {
+                    await Task.Delay(100, ct);
+                    return x;
+                },
+                new() { MaxDegreeOfParallelism = 2 })
             .ToListAsync();
 
         // Wait for EventCounters to fire - increased for CI/CD reliability
-        await Task.Delay(2000);
+        await Task.Delay(2000, CancellationToken.None);
 
         loggedLines.ShouldNotBeEmpty();
     }
@@ -205,7 +200,7 @@ public class DiagnosticsBuilderTests : IDisposable
             .Build();
 
         var task = Enumerable.Range(1, 3)
-            .SelectParallelAsync((x, _) => ValueTask.FromResult(x), new());
+            .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x), new());
 #pragma warning disable xUnit1031
         task.Wait();
 #pragma warning restore xUnit1031
@@ -223,14 +218,14 @@ public class DiagnosticsBuilderTests : IDisposable
         var loggedLines = new List<string>();
 
         var diagnostics = new DiagnosticsBuilder()
-            .AddFileListener(logFile) // IAsyncDisposable
+            .AddFileListener(logFile)                  // IAsyncDisposable
             .AddStructuredLogListener(loggedLines.Add) // IAsyncDisposable
-            .AddConsoleListener() // IDisposable
+            .AddConsoleListener()                      // IDisposable
             .Build();
 
         // Run operation
         var task = Enumerable.Range(1, 3)
-            .SelectParallelAsync((x, _) => ValueTask.FromResult(x), new());
+            .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x), new());
 #pragma warning disable xUnit1031
         task.Wait();
 #pragma warning restore xUnit1031
@@ -252,7 +247,7 @@ public class DiagnosticsBuilderTests : IDisposable
             .Build();
 
         await Enumerable.Range(1, 3)
-            .SelectParallelAsync((x, _) => ValueTask.FromResult(x), new());
+            .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x), new());
 
         await diagnostics.DisposeAsync();
 
@@ -270,7 +265,7 @@ public class DiagnosticsBuilderTests : IDisposable
 
         // Run minimal operation
         var task = Enumerable.Range(1, 1)
-            .SelectParallelAsync((x, _) => ValueTask.FromResult(x), new());
+            .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x), new());
 #pragma warning disable xUnit1031
         task.Wait();
 #pragma warning restore xUnit1031
@@ -301,14 +296,6 @@ public class DiagnosticsBuilderTests : IDisposable
         TestCleanupHelper.RetryDeleteFile(logFile);
     }
 
-    public void Dispose()
-    {
-        Console.SetOut(_originalOutput);
-        _stringWriter.Dispose();
-
-        TestCleanupHelper.RetryDeleteFile(_testFilePath);
-    }
-
     [Fact]
     public void DiagnosticsBuilder_WithEmptyBuilder_ShouldBuildSuccessfully()
     {
@@ -320,13 +307,13 @@ public class DiagnosticsBuilderTests : IDisposable
     }
 
     [Fact]
-    public async Task DiagnosticsBuilder_WithEmptyBuilder_ShouldDisposeAsyncSuccessfully()
+    public Task DiagnosticsBuilder_WithEmptyBuilder_ShouldDisposeAsyncSuccessfully()
     {
         var diagnostics = new DiagnosticsBuilder().Build();
         diagnostics.ShouldNotBeNull();
 
         var act = async () => await diagnostics.DisposeAsync();
-        await act.ShouldNotThrowAsync();
+        return act.ShouldNotThrowAsync();
     }
 
     [Fact]
@@ -337,11 +324,11 @@ public class DiagnosticsBuilderTests : IDisposable
         var loggedLines = new List<string>();
 
         var diagnostics = new DiagnosticsBuilder()
-            .AddConsoleListener(useColors: true)
+            .AddConsoleListener()
             .AddFileListener(logFile)
             .AddStructuredLogListener(structuredFile)
             .AddStructuredLogListener(loggedLines.Add)
-            .AddMetricsAggregator(TimeSpan.FromSeconds(5), _ => { })
+            .AddMetricsAggregator(TimeSpan.FromSeconds(5), static _ => { })
             .AddPrometheusExporter(out var exporter)
             .AddHealthCheck(exporter)
             .Build();
@@ -358,7 +345,7 @@ public class DiagnosticsBuilderTests : IDisposable
     public void DiagnosticsBuilder_WithColoredConsoleListener_ShouldNotThrow()
     {
         var diagnostics = new DiagnosticsBuilder()
-            .AddConsoleListener(useColors: true)
+            .AddConsoleListener()
             .Build();
 
         diagnostics.ShouldNotBeNull();
@@ -370,7 +357,7 @@ public class DiagnosticsBuilderTests : IDisposable
     {
         var logFile = Path.Join(Path.GetTempPath(), $"rivulet-custom-{Guid.NewGuid()}.log");
         var diagnostics = new DiagnosticsBuilder()
-            .AddFileListener(logFile, maxFileSizeBytes: 5 * 1024 * 1024) // 5 MB
+            .AddFileListener(logFile, 5 * 1024 * 1024) // 5 MB
             .Build();
 
         diagnostics.ShouldNotBeNull();
@@ -383,11 +370,7 @@ public class DiagnosticsBuilderTests : IDisposable
     {
         var diagnostics = new DiagnosticsBuilder()
             .AddPrometheusExporter(out var exporter)
-            .AddHealthCheck(exporter, new()
-            {
-                ErrorRateThreshold = 0.2,
-                FailureCountThreshold = 50
-            })
+            .AddHealthCheck(exporter, new() { ErrorRateThreshold = 0.2, FailureCountThreshold = 50 })
             .Build();
 
         diagnostics.ShouldNotBeNull();

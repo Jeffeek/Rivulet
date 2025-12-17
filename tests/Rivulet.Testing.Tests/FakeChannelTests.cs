@@ -4,7 +4,7 @@ using System.Threading.Channels;
 namespace Rivulet.Testing.Tests;
 
 [SuppressMessage("ReSharper", "AccessToDisposedClosure")]
-public class FakeChannelTests
+public sealed class FakeChannelTests
 {
     [Fact]
     public void Constructor_ShouldInitializeWithZeroCounts()
@@ -156,10 +156,7 @@ public class FakeChannelTests
     {
         using var channel = new FakeChannel<int>();
 
-        for (var i = 0; i < 100; i++)
-        {
-            await channel.WriteAsync(i);
-        }
+        for (var i = 0; i < 100; i++) await channel.WriteAsync(i);
 
         var readTasks = Enumerable.Range(0, 100)
             .Select(_ => Task.Run(async () => await channel.ReadAsync()))
@@ -173,14 +170,14 @@ public class FakeChannelTests
     [Fact]
     public async Task WithBoundedCapacity_ShouldRespectCapacity()
     {
-        using var channel = new FakeChannel<int>(boundedCapacity: 2);
+        using var channel = new FakeChannel<int>(2);
 
         await channel.WriteAsync(1);
         await channel.WriteAsync(2);
 
         var writeTask = channel.WriteAsync(3);
 
-        await Task.Delay(100);
+        await Task.Delay(100, CancellationToken.None);
         writeTask.IsCompleted.ShouldBeFalse();
 
         await channel.ReadAsync();
@@ -195,17 +192,11 @@ public class FakeChannelTests
     {
         using var channel = new FakeChannel<int>();
 
-        for (var i = 0; i < 10000; i++)
-        {
-            await channel.WriteAsync(i);
-        }
+        for (var i = 0; i < 10000; i++) await channel.WriteAsync(i);
 
         channel.WriteCount.ShouldBe(10000);
 
-        for (var i = 0; i < 10000; i++)
-        {
-            await channel.ReadAsync();
-        }
+        for (var i = 0; i < 10000; i++) await channel.ReadAsync();
 
         channel.ReadCount.ShouldBe(10000);
     }
@@ -257,10 +248,7 @@ public class FakeChannelTests
         channel.Complete();
 
         var results = new List<int>();
-        await foreach (var item in channel.Reader.ReadAllAsync())
-        {
-            results.Add(item);
-        }
+        await foreach (var item in channel.Reader.ReadAllAsync()) results.Add(item);
 
         results.ShouldBe(new[] { 1, 2, 3 });
     }

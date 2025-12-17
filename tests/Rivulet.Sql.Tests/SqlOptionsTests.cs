@@ -2,10 +2,12 @@
 using System.Reflection;
 using System.Reflection.Emit;
 using Rivulet.Core;
+using Rivulet.Core.Observability;
+using Rivulet.Core.Resilience;
 
 namespace Rivulet.Sql.Tests;
 
-public class SqlOptionsTests
+public sealed class SqlOptionsTests
 {
     [Fact]
     public void SqlOptions_DefaultValues_ShouldBeCorrect()
@@ -20,7 +22,7 @@ public class SqlOptionsTests
     }
 
     [Fact]
-    public void SqlOptions_WithInitProperties_ShouldSetCorrectly()
+    public async Task SqlOptions_WithInitProperties_ShouldSetCorrectly()
     {
         var errorCallbackInvoked = false;
         var options = new SqlOptions
@@ -28,10 +30,7 @@ public class SqlOptionsTests
             CommandTimeout = 60,
             AutoManageConnection = false,
             IsolationLevel = IsolationLevel.Serializable,
-            ParallelOptions = new()
-            {
-                MaxDegreeOfParallelism = 10
-            },
+            ParallelOptions = new() { MaxDegreeOfParallelism = 10 },
             OnSqlErrorAsync = (_, _, _) =>
             {
                 errorCallbackInvoked = true;
@@ -46,7 +45,7 @@ public class SqlOptionsTests
         options.ParallelOptions!.MaxDegreeOfParallelism.ShouldBe(10);
         options.OnSqlErrorAsync.ShouldNotBeNull();
 
-        options.OnSqlErrorAsync!.Invoke(null, new(), 0);
+        await options.OnSqlErrorAsync!.Invoke(null, new(), 0);
         errorCallbackInvoked.ShouldBeTrue();
     }
 
@@ -72,11 +71,7 @@ public class SqlOptionsTests
             ErrorMode = ErrorMode.CollectAndContinue
         };
 
-        var options = new SqlOptions
-        {
-            ParallelOptions = customParallelOptions,
-            CommandTimeout = 45
-        };
+        var options = new SqlOptions { ParallelOptions = customParallelOptions, CommandTimeout = 45 };
 
         var mergedOptions = options.GetMergedParallelOptions();
 
@@ -122,10 +117,7 @@ public class SqlOptionsTests
             }
         };
 
-        var options = new SqlOptions
-        {
-            ParallelOptions = customParallelOptions
-        };
+        var options = new SqlOptions { ParallelOptions = customParallelOptions };
 
         var mergedOptions = options.GetMergedParallelOptions();
         var customException = new InvalidOperationException();
@@ -138,36 +130,48 @@ public class SqlOptionsTests
     [Fact]
     public void GetMergedParallelOptions_WithZeroMaxRetries_ShouldDefaultToThree()
     {
-        var options = new SqlOptions
-        {
-            ParallelOptions = new()
-            {
-                MaxRetries = 0
-            }
-        };
+        var options = new SqlOptions { ParallelOptions = new() { MaxRetries = 0 } };
 
         var mergedOptions = options.GetMergedParallelOptions();
 
         mergedOptions.MaxRetries.ShouldBe(SqlOptions.DefaultRetryCount);
     }
 
-    [Theory]
-    [InlineData(-2, true)]   // Timeout
-    [InlineData(-1, true)]   // Connection broken
-    [InlineData(2, true)]    // Connection timeout
-    [InlineData(53, true)]   // Connection does not exist
-    [InlineData(64, true)]   // Error on server
-    [InlineData(233, true)]  // Connection initialization failed
-    [InlineData(10053, true)] // Transport-level error
-    [InlineData(10054, true)] // Connection reset by peer
-    [InlineData(10060, true)] // Network timeout
-    [InlineData(40197, true)] // Service unavailable
-    [InlineData(40501, true)] // Service busy
-    [InlineData(40613, true)] // Database unavailable
-    [InlineData(49918, true)] // Cannot process request
-    [InlineData(49919, true)] // Cannot process create or update
-    [InlineData(49920, true)] // Cannot process more than requests
-    [InlineData(9999, false)] // Non-transient error code
+    [
+        Theory,
+        InlineData(-2, true),
+        InlineData(-1, true),
+        InlineData(2, true),
+        InlineData(53, true),
+        InlineData(64, true),
+        InlineData(233, true),
+        InlineData(10053, true),
+        InlineData(10054, true),
+        InlineData(10060, true),
+        InlineData(40197, true),
+        InlineData(40501, true),
+        InlineData(40613, true),
+        InlineData(49918, true),
+        InlineData(49919, true),
+        InlineData(49920, true),
+        InlineData(9999, false)
+    ]
+    // Timeout
+    // Connection broken
+    // Connection timeout
+    // Connection does not exist
+    // Error on server
+    // Connection initialization failed
+    // Transport-level error
+    // Connection reset by peer
+    // Network timeout
+    // Service unavailable
+    // Service busy
+    // Database unavailable
+    // Cannot process request
+    // Cannot process create or update
+    // Cannot process more than requests
+    // Non-transient error code
     public void GetMergedParallelOptions_IsTransient_SqlServerErrors(int errorNumber, bool expectedTransient)
     {
         var options = new SqlOptions();
@@ -179,17 +183,29 @@ public class SqlOptionsTests
         mergedOptions.IsTransient!.Invoke(sqlException).ShouldBe(expectedTransient);
     }
 
-    [Theory]
-    [InlineData("08000", true)]  // Connection exception
-    [InlineData("08003", true)]  // Connection does not exist
-    [InlineData("08006", true)]  // Connection failure
-    [InlineData("08001", true)]  // Unable to establish connection
-    [InlineData("08004", true)]  // Server rejected connection
-    [InlineData("53300", true)]  // Too many connections
-    [InlineData("57P03", true)]  // Cannot connect now
-    [InlineData("58000", true)]  // System error
-    [InlineData("58030", true)]  // IO error
-    [InlineData("23505", false)] // Non-transient error (unique violation)
+    [
+        Theory,
+        InlineData("08000", true),
+        InlineData("08003", true),
+        InlineData("08006", true),
+        InlineData("08001", true),
+        InlineData("08004", true),
+        InlineData("53300", true),
+        InlineData("57P03", true),
+        InlineData("58000", true),
+        InlineData("58030", true),
+        InlineData("23505", false)
+    ]
+    // Connection exception
+    // Connection does not exist
+    // Connection failure
+    // Unable to establish connection
+    // Server rejected connection
+    // Too many connections
+    // Cannot connect now
+    // System error
+    // IO error
+    // Non-transient error (unique violation)
     public void GetMergedParallelOptions_IsTransient_PostgreSqlErrors(string sqlState, bool expectedTransient)
     {
         var options = new SqlOptions();
@@ -201,16 +217,27 @@ public class SqlOptionsTests
         mergedOptions.IsTransient!.Invoke(npgsqlException).ShouldBe(expectedTransient);
     }
 
-    [Theory]
-    [InlineData(1040, true)]  // Too many connections
-    [InlineData(1205, true)]  // Lock wait timeout
-    [InlineData(1213, true)]  // Deadlock found
-    [InlineData(1226, true)]  // User has exceeded resource limit
-    [InlineData(2002, true)]  // Can't connect to server
-    [InlineData(2003, true)]  // Can't connect to server
-    [InlineData(2006, true)]  // Server has gone away
-    [InlineData(2013, true)]  // Lost connection during query
-    [InlineData(1062, false)] // Non-transient error (duplicate entry)
+    [
+        Theory,
+        InlineData(1040, true),
+        InlineData(1205, true),
+        InlineData(1213, true),
+        InlineData(1226, true),
+        InlineData(2002, true),
+        InlineData(2003, true),
+        InlineData(2006, true),
+        InlineData(2013, true),
+        InlineData(1062, false)
+    ]
+    // Too many connections
+    // Lock wait timeout
+    // Deadlock found
+    // User has exceeded resource limit
+    // Can't connect to server
+    // Can't connect to server
+    // Server has gone away
+    // Lost connection during query
+    // Non-transient error (duplicate entry)
     public void GetMergedParallelOptions_IsTransient_MySqlErrors(int errorNumber, bool expectedTransient)
     {
         var options = new SqlOptions();
@@ -258,10 +285,7 @@ public class SqlOptionsTests
             }
         };
 
-        var options = new SqlOptions
-        {
-            ParallelOptions = customParallelOptions
-        };
+        var options = new SqlOptions { ParallelOptions = customParallelOptions };
 
         var mergedOptions = options.GetMergedParallelOptions();
 
@@ -278,13 +302,10 @@ public class SqlOptionsTests
     {
         var customParallelOptions = new ParallelOptionsRivulet
         {
-            IsTransient = ex => ex is ArgumentException // User defines ArgumentException as transient
+            IsTransient = static ex => ex is ArgumentException // User defines ArgumentException as transient
         };
 
-        var options = new SqlOptions
-        {
-            ParallelOptions = customParallelOptions
-        };
+        var options = new SqlOptions { ParallelOptions = customParallelOptions };
 
         var mergedOptions = options.GetMergedParallelOptions();
 
@@ -301,21 +322,21 @@ public class SqlOptionsTests
     [Fact]
     public void GetMergedParallelOptions_ShouldPreserveAllBaseOptions()
     {
-        var progress = new Core.Observability.ProgressOptions();
-        var metrics = new Core.Observability.MetricsOptions();
-        var circuitBreaker = new Core.Resilience.CircuitBreakerOptions();
-        var rateLimit = new Core.Resilience.RateLimitOptions();
-        var adaptiveConcurrency = new Core.Resilience.AdaptiveConcurrencyOptions();
+        var progress = new ProgressOptions();
+        var metrics = new MetricsOptions();
+        var circuitBreaker = new CircuitBreakerOptions();
+        var rateLimit = new RateLimitOptions();
+        var adaptiveConcurrency = new AdaptiveConcurrencyOptions();
 
         var baseOptions = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 42,
             BaseDelay = TimeSpan.FromSeconds(2),
-            BackoffStrategy = Core.Resilience.BackoffStrategy.LinearJitter,
+            BackoffStrategy = BackoffStrategy.LinearJitter,
             ErrorMode = ErrorMode.BestEffort,
-            OnStartItemAsync = _ => ValueTask.CompletedTask,
-            OnCompleteItemAsync = _ => ValueTask.CompletedTask,
-            OnErrorAsync = (_, _) => ValueTask.FromResult(true),
+            OnStartItemAsync = static _ => ValueTask.CompletedTask,
+            OnCompleteItemAsync = static _ => ValueTask.CompletedTask,
+            OnErrorAsync = static (_, _) => ValueTask.FromResult(true),
             CircuitBreaker = circuitBreaker,
             RateLimit = rateLimit,
             Progress = progress,
@@ -329,7 +350,7 @@ public class SqlOptionsTests
 
         merged.MaxDegreeOfParallelism.ShouldBe(42);
         merged.BaseDelay.ShouldBe(TimeSpan.FromSeconds(2));
-        merged.BackoffStrategy.ShouldBe(Core.Resilience.BackoffStrategy.LinearJitter);
+        merged.BackoffStrategy.ShouldBe(BackoffStrategy.LinearJitter);
         merged.ErrorMode.ShouldBe(ErrorMode.BestEffort);
         merged.OnStartItemAsync.ShouldBeSameAs(baseOptions.OnStartItemAsync);
         merged.OnCompleteItemAsync.ShouldBeSameAs(baseOptions.OnCompleteItemAsync);
@@ -346,8 +367,8 @@ public class SqlOptionsTests
     private static Exception CreateMockSqlException(int errorNumber)
     {
         var exceptionType = AssemblyBuilder.DefineDynamicAssembly(
-            new("DynamicAssembly"),
-            AssemblyBuilderAccess.Run)
+                new("DynamicAssembly"),
+                AssemblyBuilderAccess.Run)
             .DefineDynamicModule("DynamicModule")
             .DefineType("SqlException", TypeAttributes.Public, typeof(Exception));
 
@@ -356,7 +377,8 @@ public class SqlOptionsTests
 
         var numberGetter = exceptionType.DefineMethod("get_Number",
             MethodAttributes.Public | MethodAttributes.Virtual,
-            typeof(int), Type.EmptyTypes);
+            typeof(int),
+            Type.EmptyTypes);
 
         var getterIl = numberGetter.GetILGenerator();
         getterIl.Emit(OpCodes.Ldarg_0);
@@ -377,8 +399,8 @@ public class SqlOptionsTests
     private static Exception CreateMockNpgsqlException(string sqlState)
     {
         var exceptionType = AssemblyBuilder.DefineDynamicAssembly(
-            new("DynamicAssembly2"),
-            AssemblyBuilderAccess.Run)
+                new("DynamicAssembly2"),
+                AssemblyBuilderAccess.Run)
             .DefineDynamicModule("DynamicModule")
             .DefineType("NpgsqlException", TypeAttributes.Public, typeof(Exception));
 
@@ -387,7 +409,8 @@ public class SqlOptionsTests
 
         var sqlStateGetter = exceptionType.DefineMethod("get_SqlState",
             MethodAttributes.Public | MethodAttributes.Virtual,
-            typeof(string), Type.EmptyTypes);
+            typeof(string),
+            Type.EmptyTypes);
 
         var getterIl = sqlStateGetter.GetILGenerator();
         getterIl.Emit(OpCodes.Ldarg_0);
@@ -408,8 +431,8 @@ public class SqlOptionsTests
     private static Exception CreateMockMySqlException(int errorNumber)
     {
         var exceptionType = AssemblyBuilder.DefineDynamicAssembly(
-            new("DynamicAssembly3"),
-            AssemblyBuilderAccess.Run)
+                new("DynamicAssembly3"),
+                AssemblyBuilderAccess.Run)
             .DefineDynamicModule("DynamicModule")
             .DefineType("MySqlException", TypeAttributes.Public, typeof(Exception));
 
@@ -418,7 +441,8 @@ public class SqlOptionsTests
 
         var numberGetter = exceptionType.DefineMethod("get_Number",
             MethodAttributes.Public | MethodAttributes.Virtual,
-            typeof(int), Type.EmptyTypes);
+            typeof(int),
+            Type.EmptyTypes);
 
         var getterIl = numberGetter.GetILGenerator();
         getterIl.Emit(OpCodes.Ldarg_0);
@@ -440,8 +464,8 @@ public class SqlOptionsTests
     {
         var assemblyName = $"DynamicAssembly_{Guid.NewGuid():N}";
         var exceptionType = AssemblyBuilder.DefineDynamicAssembly(
-            new(assemblyName),
-            AssemblyBuilderAccess.Run)
+                new(assemblyName),
+                AssemblyBuilderAccess.Run)
             .DefineDynamicModule("DynamicModule")
             .DefineType(typeName, TypeAttributes.Public, typeof(Exception));
 
@@ -452,7 +476,8 @@ public class SqlOptionsTests
 
             var numberGetter = exceptionType.DefineMethod("get_Number",
                 MethodAttributes.Public | MethodAttributes.Virtual,
-                typeof(int), Type.EmptyTypes);
+                typeof(int),
+                Type.EmptyTypes);
 
             var getterIl = numberGetter.GetILGenerator();
             getterIl.Emit(OpCodes.Ldarg_0);
@@ -465,11 +490,10 @@ public class SqlOptionsTests
         var createdType = exceptionType.CreateType();
         var instance = Activator.CreateInstance(createdType);
 
-        if (number.HasValue)
-        {
-            var field = createdType.GetField("_number", BindingFlags.NonPublic | BindingFlags.Instance);
-            field!.SetValue(instance, number.Value);
-        }
+        if (!number.HasValue) return (Exception)instance!;
+
+        var field = createdType.GetField("_number", BindingFlags.NonPublic | BindingFlags.Instance);
+        field!.SetValue(instance, number.Value);
 
         return (Exception)instance!;
     }

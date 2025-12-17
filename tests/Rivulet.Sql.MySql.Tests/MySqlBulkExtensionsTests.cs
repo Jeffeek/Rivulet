@@ -2,21 +2,19 @@
 
 namespace Rivulet.Sql.MySql.Tests;
 
-public class MySqlBulkExtensionsTests
+public sealed class MySqlBulkExtensionsTests
 {
-    private static MySqlConnection CreateMockConnection()
-    {
+    private static MySqlConnection CreateMockConnection() =>
         // Note: This creates a real MySqlConnection object but we won't actually use it
         // In real tests, the connection would be mocked or replaced
-        return new("Server=localhost;Database=testdb;User=test;Password=test;");
-    }
+        new("Server=localhost;Database=testdb;User=test;Password=test;");
 
     [Fact]
     public async Task BulkInsertUsingMySqlBulkLoaderAsync_WithNullSource_ShouldThrow()
     {
         IEnumerable<string>? source = null;
 
-        var act = async () => await source!.BulkInsertUsingMySqlBulkLoaderAsync(
+        var act = () => source!.BulkInsertUsingMySqlBulkLoaderAsync(
             CreateMockConnection,
             "test_table",
             ["id", "name", "email"]);
@@ -29,7 +27,7 @@ public class MySqlBulkExtensionsTests
     {
         var source = new[] { "1,Test,test@example.com" };
 
-        var act = async () => await source.BulkInsertUsingMySqlBulkLoaderAsync(
+        var act = () => source.BulkInsertUsingMySqlBulkLoaderAsync(
             null!,
             "test_table",
             ["id", "name", "email"]);
@@ -42,7 +40,7 @@ public class MySqlBulkExtensionsTests
     {
         var source = new[] { "1,Test,test@example.com" };
 
-        var act = async () => await source.BulkInsertUsingMySqlBulkLoaderAsync(
+        var act = () => source.BulkInsertUsingMySqlBulkLoaderAsync(
             CreateMockConnection,
             null!,
             ["id", "name", "email"]);
@@ -55,7 +53,7 @@ public class MySqlBulkExtensionsTests
     {
         var source = new[] { "1,Test,test@example.com" };
 
-        var act = async () => await source.BulkInsertUsingMySqlBulkLoaderAsync(
+        var act = () => source.BulkInsertUsingMySqlBulkLoaderAsync(
             CreateMockConnection,
             "",
             ["id", "name", "email"]);
@@ -68,7 +66,7 @@ public class MySqlBulkExtensionsTests
     {
         var source = new[] { "1,Test,test@example.com" };
 
-        var act = async () => await source.BulkInsertUsingMySqlBulkLoaderAsync(
+        var act = () => source.BulkInsertUsingMySqlBulkLoaderAsync(
             CreateMockConnection,
             "test_table",
             null!);
@@ -81,7 +79,7 @@ public class MySqlBulkExtensionsTests
     {
         var source = new[] { "1,Test,test@example.com" };
 
-        var act = async () => await source.BulkInsertUsingMySqlBulkLoaderAsync(
+        var act = () => source.BulkInsertUsingMySqlBulkLoaderAsync(
             CreateMockConnection,
             "test_table",
             []);
@@ -94,7 +92,7 @@ public class MySqlBulkExtensionsTests
     {
         var source = new[] { "1,Test,test@example.com" };
 
-        var act = async () => await source.BulkInsertUsingMySqlBulkLoaderAsync(
+        var act = () => source.BulkInsertUsingMySqlBulkLoaderAsync(
             CreateMockConnection,
             "test_table",
             ["id", "name", "email"],
@@ -108,7 +106,7 @@ public class MySqlBulkExtensionsTests
     {
         var source = new[] { "1,Test,test@example.com" };
 
-        var act = async () => await source.BulkInsertUsingMySqlBulkLoaderAsync(
+        var act = () => source.BulkInsertUsingMySqlBulkLoaderAsync(
             CreateMockConnection,
             "test_table",
             ["id", "name", "email"],
@@ -122,7 +120,7 @@ public class MySqlBulkExtensionsTests
     {
         var source = new[] { "1,Test,test@example.com" };
 
-        var act = async () => await source.BulkInsertUsingMySqlBulkLoaderAsync(
+        var act = () => source.BulkInsertUsingMySqlBulkLoaderAsync(
             CreateMockConnection,
             "test_table",
             ["id", "name", "email"],
@@ -136,7 +134,7 @@ public class MySqlBulkExtensionsTests
     {
         var source = new[] { "1,Test,test@example.com" };
 
-        var act = async () => await source.BulkInsertUsingMySqlBulkLoaderAsync(
+        var act = () => source.BulkInsertUsingMySqlBulkLoaderAsync(
             CreateMockConnection,
             "test_table",
             ["id", "name", "email"],
@@ -150,7 +148,7 @@ public class MySqlBulkExtensionsTests
     {
         var source = new[] { "1,Test,test@example.com" };
 
-        var act = async () => await source.BulkInsertUsingMySqlBulkLoaderAsync(
+        var act = () => source.BulkInsertUsingMySqlBulkLoaderAsync(
             CreateMockConnection,
             "test_table",
             ["id", "name", "email"],
@@ -164,7 +162,7 @@ public class MySqlBulkExtensionsTests
     {
         var source = new[] { "1,Test,test@example.com" };
 
-        var act = async () => await source.BulkInsertUsingMySqlBulkLoaderAsync(
+        var act = () => source.BulkInsertUsingMySqlBulkLoaderAsync(
             CreateMockConnection,
             "test_table",
             ["id", "name", "email"],
@@ -174,12 +172,12 @@ public class MySqlBulkExtensionsTests
     }
 
     [Fact]
-    public async Task BulkInsertUsingMySqlBulkLoaderAsync_WithEmptySource_ShouldComplete()
+    public Task BulkInsertUsingMySqlBulkLoaderAsync_WithEmptySource_ShouldComplete()
     {
         var source = Array.Empty<string>();
 
         // Should not throw, just complete quickly
-        await source.BulkInsertUsingMySqlBulkLoaderAsync(
+        return source.BulkInsertUsingMySqlBulkLoaderAsync(
             CreateMockConnection,
             "test_table",
             ["id", "name", "email"]);
@@ -190,7 +188,7 @@ public class MySqlBulkExtensionsTests
     {
         IEnumerable<string>? source = null;
 
-        var act = async () => await source!.BulkInsertFromFilesUsingMySqlBulkLoaderAsync(
+        var act = () => source!.BulkInsertFromFilesUsingMySqlBulkLoaderAsync(
             CreateMockConnection,
             "test_table",
             ["id", "name", "email"]);
@@ -203,7 +201,7 @@ public class MySqlBulkExtensionsTests
     {
         var source = new[] { "data.csv" };
 
-        var act = async () => await source.BulkInsertFromFilesUsingMySqlBulkLoaderAsync(
+        var act = () => source.BulkInsertFromFilesUsingMySqlBulkLoaderAsync(
             null!,
             "test_table",
             ["id", "name", "email"]);
@@ -216,7 +214,7 @@ public class MySqlBulkExtensionsTests
     {
         var source = new[] { "data.csv" };
 
-        var act = async () => await source.BulkInsertFromFilesUsingMySqlBulkLoaderAsync(
+        var act = () => source.BulkInsertFromFilesUsingMySqlBulkLoaderAsync(
             CreateMockConnection,
             null!,
             ["id", "name", "email"]);
@@ -229,7 +227,7 @@ public class MySqlBulkExtensionsTests
     {
         var source = new[] { "data.csv" };
 
-        var act = async () => await source.BulkInsertFromFilesUsingMySqlBulkLoaderAsync(
+        var act = () => source.BulkInsertFromFilesUsingMySqlBulkLoaderAsync(
             CreateMockConnection,
             "",
             ["id", "name", "email"]);
@@ -242,7 +240,7 @@ public class MySqlBulkExtensionsTests
     {
         var source = new[] { "data.csv" };
 
-        var act = async () => await source.BulkInsertFromFilesUsingMySqlBulkLoaderAsync(
+        var act = () => source.BulkInsertFromFilesUsingMySqlBulkLoaderAsync(
             CreateMockConnection,
             "test_table",
             null!);
@@ -255,7 +253,7 @@ public class MySqlBulkExtensionsTests
     {
         var source = new[] { "data.csv" };
 
-        var act = async () => await source.BulkInsertFromFilesUsingMySqlBulkLoaderAsync(
+        var act = () => source.BulkInsertFromFilesUsingMySqlBulkLoaderAsync(
             CreateMockConnection,
             "test_table",
             []);
@@ -268,7 +266,7 @@ public class MySqlBulkExtensionsTests
     {
         var source = new[] { "data.csv" };
 
-        var act = async () => await source.BulkInsertFromFilesUsingMySqlBulkLoaderAsync(
+        var act = () => source.BulkInsertFromFilesUsingMySqlBulkLoaderAsync(
             CreateMockConnection,
             "test_table",
             ["id", "name", "email"],
@@ -282,7 +280,7 @@ public class MySqlBulkExtensionsTests
     {
         var source = new[] { "data.csv" };
 
-        var act = async () => await source.BulkInsertFromFilesUsingMySqlBulkLoaderAsync(
+        var act = () => source.BulkInsertFromFilesUsingMySqlBulkLoaderAsync(
             CreateMockConnection,
             "test_table",
             ["id", "name", "email"],
@@ -296,7 +294,7 @@ public class MySqlBulkExtensionsTests
     {
         var source = new[] { "data.csv" };
 
-        var act = async () => await source.BulkInsertFromFilesUsingMySqlBulkLoaderAsync(
+        var act = () => source.BulkInsertFromFilesUsingMySqlBulkLoaderAsync(
             CreateMockConnection,
             "test_table",
             ["id", "name", "email"],
@@ -310,7 +308,7 @@ public class MySqlBulkExtensionsTests
     {
         var source = new[] { "data.csv" };
 
-        var act = async () => await source.BulkInsertFromFilesUsingMySqlBulkLoaderAsync(
+        var act = () => source.BulkInsertFromFilesUsingMySqlBulkLoaderAsync(
             CreateMockConnection,
             "test_table",
             ["id", "name", "email"],
@@ -320,12 +318,12 @@ public class MySqlBulkExtensionsTests
     }
 
     [Fact]
-    public async Task BulkInsertFromFilesUsingMySqlBulkLoaderAsync_WithEmptySource_ShouldComplete()
+    public Task BulkInsertFromFilesUsingMySqlBulkLoaderAsync_WithEmptySource_ShouldComplete()
     {
         var source = Array.Empty<string>();
 
         // Should not throw, just complete quickly
-        await source.BulkInsertFromFilesUsingMySqlBulkLoaderAsync(
+        return source.BulkInsertFromFilesUsingMySqlBulkLoaderAsync(
             CreateMockConnection,
             "test_table",
             ["id", "name", "email"]);

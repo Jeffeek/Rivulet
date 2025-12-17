@@ -1,22 +1,27 @@
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using Rivulet.Core;
 
 namespace Rivulet.Http;
 
 /// <summary>
-/// Provides streaming download operations with resume support and parallel processing.
+///     Provides streaming download operations with resume support and parallel processing.
 /// </summary>
+[SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public static class HttpStreamingExtensions
 {
     /// <summary>
-    /// Downloads files from multiple URIs in parallel with resume support and progress tracking.
+    ///     Downloads files from multiple URIs in parallel with resume support and progress tracking.
     /// </summary>
     /// <param name="downloads">The collection of download requests containing source URI and destination file path.</param>
     /// <param name="httpClient">The HttpClient instance to use for downloads.</param>
     /// <param name="options">Configuration options for streaming downloads. If null, defaults are used.</param>
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-    /// <returns>A task representing the asynchronous operation, containing a list of download results with URIs and bytes downloaded.</returns>
+    /// <returns>
+    ///     A task representing the asynchronous operation, containing a list of download results with URIs and bytes
+    ///     downloaded.
+    /// </returns>
     /// <exception cref="ArgumentNullException">Thrown when downloads or httpClient is null.</exception>
     /// <exception cref="IOException">Thrown when file operations fail or EnableResume is false and file exists.</exception>
     /// <exception cref="HttpRequestException">Thrown when HTTP requests fail and retries are exhausted.</exception>
@@ -34,24 +39,26 @@ public static class HttpStreamingExtensions
         var parallelOptions = httpOptions.GetMergedParallelOptions();
 
         return await downloads.SelectParallelAsync(
-            async (download, ct) =>
-            {
-                var (uri, destinationPath) = download;
-                var bytesDownloaded = await DownloadFileAsync(
-                    uri,
-                    destinationPath,
-                    httpClient,
-                    options,
-                    ct).ConfigureAwait(false);
+                async (download, ct) =>
+                {
+                    var (uri, destinationPath) = download;
+                    var bytesDownloaded = await DownloadFileAsync(
+                            uri,
+                            destinationPath,
+                            httpClient,
+                            options,
+                            ct)
+                        .ConfigureAwait(false);
 
-                return (uri, destinationPath, bytesDownloaded);
-            },
-            parallelOptions,
-            cancellationToken).ConfigureAwait(false);
+                    return (uri, destinationPath, bytesDownloaded);
+                },
+                parallelOptions,
+                cancellationToken)
+            .ConfigureAwait(false);
     }
 
     /// <summary>
-    /// Streams download content to a provided stream for a single URI.
+    ///     Streams download content to a provided stream for a single URI.
     /// </summary>
     /// <param name="uri">The URI to download from.</param>
     /// <param name="destination">The destination stream to write the downloaded content.</param>
@@ -76,15 +83,19 @@ public static class HttpStreamingExtensions
         using var request = new HttpRequestMessage(HttpMethod.Get, uri);
 
         using var response = await httpClient.SendAsync(
-            request,
-            HttpCompletionOption.ResponseHeadersRead,
-            cancellationToken).ConfigureAwait(false);
+                request,
+                HttpCompletionOption.ResponseHeadersRead,
+                cancellationToken)
+            .ConfigureAwait(false);
 
         response.EnsureSuccessStatusCode();
 
         var totalBytes = response.Content.Headers.ContentLength;
 
-        await using var contentStream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+#pragma warning disable CA2007 // ConfigureAwait not applicable to await using declarations
+        await using var contentStream =
+            await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+#pragma warning restore CA2007
 
         var bytesDownloaded = 0L;
         var buffer = new byte[options.BufferSize];
@@ -98,12 +109,10 @@ public static class HttpStreamingExtensions
             bytesDownloaded += bytesRead;
 
             // Report progress if callback is provided and interval has elapsed
-            if (options.OnProgressAsync is null)
-                continue;
+            if (options.OnProgressAsync is null) continue;
 
             var elapsed = Stopwatch.GetTimestamp() - lastProgressReport;
-            if (elapsed < progressIntervalTicks * (Stopwatch.Frequency / TimeSpan.TicksPerSecond))
-                continue;
+            if (elapsed < progressIntervalTicks * (Stopwatch.Frequency / TimeSpan.TicksPerSecond)) continue;
 
             await options.OnProgressAsync(uri, bytesDownloaded, totalBytes).ConfigureAwait(false);
             lastProgressReport = Stopwatch.GetTimestamp();
@@ -111,9 +120,7 @@ public static class HttpStreamingExtensions
 
         // Final progress report
         if (options.OnProgressAsync is not null)
-        {
             await options.OnProgressAsync(uri, bytesDownloaded, totalBytes).ConfigureAwait(false);
-        }
 
         // Validate content length if requested
         if (options.ValidateContentLength && totalBytes.HasValue && bytesDownloaded != totalBytes.Value)
@@ -126,7 +133,7 @@ public static class HttpStreamingExtensions
     }
 
     /// <summary>
-    /// Downloads a single file with resume support.
+    ///     Downloads a single file with resume support.
     /// </summary>
     private static async ValueTask<long> DownloadFileAsync(
         Uri uri,
@@ -137,10 +144,7 @@ public static class HttpStreamingExtensions
     {
         // Ensure directory exists
         var directory = Path.GetDirectoryName(destinationPath);
-        if (!string.IsNullOrEmpty(directory))
-        {
-            Directory.CreateDirectory(directory);
-        }
+        if (!string.IsNullOrEmpty(directory)) Directory.CreateDirectory(directory);
 
         var existingFileSize = 0L;
         var fileMode = FileMode.Create;
@@ -160,9 +164,7 @@ public static class HttpStreamingExtensions
                 {
                     fileMode = FileMode.Append;
                     if (options.OnResumeAsync is not null)
-                    {
                         await options.OnResumeAsync(uri, existingFileSize).ConfigureAwait(false);
-                    }
                 }
                 else
                 {
@@ -172,31 +174,26 @@ public static class HttpStreamingExtensions
             }
         }
         else if (File.Exists(destinationPath) && !options.OverwriteExisting)
-        {
             throw new IOException($"File already exists at '{destinationPath}' and OverwriteExisting is false");
-        }
 
         using var request = new HttpRequestMessage(HttpMethod.Get, uri);
 
         // Add Range header for resume
-        if (existingFileSize > 0)
-        {
-            request.Headers.Range = new(existingFileSize, null);
-        }
+        if (existingFileSize > 0) request.Headers.Range = new(existingFileSize, null);
 
         using var response = await httpClient.SendAsync(
-            request,
-            HttpCompletionOption.ResponseHeadersRead,
-            cancellationToken).ConfigureAwait(false);
+                request,
+                HttpCompletionOption.ResponseHeadersRead,
+                cancellationToken)
+            .ConfigureAwait(false);
 
         // Handle response based on status code
         if (response.StatusCode == HttpStatusCode.RequestedRangeNotSatisfiable)
         {
             // File is already complete
             if (options.OnCompleteAsync is not null)
-            {
                 await options.OnCompleteAsync(uri, destinationPath, existingFileSize).ConfigureAwait(false);
-            }
+
             return existingFileSize;
         }
 
@@ -204,15 +201,18 @@ public static class HttpStreamingExtensions
 
         var totalBytes = existingFileSize + (response.Content.Headers.ContentLength ?? 0);
 
+#pragma warning disable CA2007 // ConfigureAwait not applicable to await using declarations
         await using var fileStream = new FileStream(
             destinationPath,
             fileMode,
             FileAccess.Write,
             FileShare.None,
             options.BufferSize,
-            useAsync: true);
+            true);
 
-        await using var contentStream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+        await using var contentStream =
+            await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+#pragma warning restore CA2007
 
         var bytesDownloaded = existingFileSize;
         var buffer = new byte[options.BufferSize];
@@ -231,7 +231,12 @@ public static class HttpStreamingExtensions
             var elapsed = Stopwatch.GetTimestamp() - lastProgressReport;
             if (elapsed < progressIntervalTicks * (Stopwatch.Frequency / TimeSpan.TicksPerSecond)) continue;
 
-            await options.OnProgressAsync(uri, bytesDownloaded, response.StatusCode == HttpStatusCode.PartialContent ? totalBytes : response.Content.Headers.ContentLength).ConfigureAwait(false);
+            await options.OnProgressAsync(uri,
+                    bytesDownloaded,
+                    response.StatusCode == HttpStatusCode.PartialContent
+                        ? totalBytes
+                        : response.Content.Headers.ContentLength)
+                .ConfigureAwait(false);
             lastProgressReport = Stopwatch.GetTimestamp();
         }
 
@@ -241,7 +246,12 @@ public static class HttpStreamingExtensions
         // Final progress report
         if (options.OnProgressAsync is not null)
         {
-            await options.OnProgressAsync(uri, bytesDownloaded, response.StatusCode == HttpStatusCode.PartialContent ? totalBytes : response.Content.Headers.ContentLength).ConfigureAwait(false);
+            await options.OnProgressAsync(uri,
+                    bytesDownloaded,
+                    response.StatusCode == HttpStatusCode.PartialContent
+                        ? totalBytes
+                        : response.Content.Headers.ContentLength)
+                .ConfigureAwait(false);
         }
 
         // Validate content length if requested
@@ -260,19 +270,17 @@ public static class HttpStreamingExtensions
 
         // Invoke completion callback
         if (options.OnCompleteAsync is not null)
-        {
             await options.OnCompleteAsync(uri, destinationPath, bytesDownloaded).ConfigureAwait(false);
-        }
 
         return bytesDownloaded;
     }
 
     /// <summary>
-    /// Checks if the server supports HTTP Range requests (resume capability).
+    ///     Checks if the server supports HTTP Range requests (resume capability).
     /// </summary>
     private static async ValueTask<bool> CheckRangeSupport(
         Uri uri,
-        HttpClient httpClient,
+        HttpMessageInvoker httpClient,
         CancellationToken cancellationToken)
     {
         try

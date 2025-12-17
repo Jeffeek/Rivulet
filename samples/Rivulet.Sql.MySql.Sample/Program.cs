@@ -2,6 +2,10 @@ using MySqlConnector;
 using Rivulet.Core;
 using Rivulet.Sql.MySql;
 
+// ReSharper disable ArrangeObjectCreationWhenTypeNotEvident
+// ReSharper disable ArgumentsStyleLiteral
+// ReSharper disable ArgumentsStyleStringLiteral
+
 Console.WriteLine("=== Rivulet.Sql.MySql Sample ===\n");
 Console.WriteLine("NOTE: Configure connection string before running!\n");
 
@@ -15,13 +19,13 @@ try
 
     // Create sample CSV data (10,000 records)
     var csvLines = Enumerable.Range(1, 10000)
-        .Select(i => $"{i},User{i},user{i}@test.com,{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}")
+        .Select(static i => $"{i},User{i},user{i}@test.com,{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}")
         .ToList();
 
     var startTime = DateTime.UtcNow;
 
     await csvLines.BulkInsertUsingMySqlBulkLoaderAsync(
-        () => new MySqlConnection(connectionString),
+        static () => new MySqlConnection(connectionString),
         "Users",
         ["Id", "Name", "Email", "CreatedAt"],
         new ParallelOptionsRivulet
@@ -41,11 +45,10 @@ try
     Console.WriteLine("2. BulkInsert with tab-separated values");
 
     var tsvLines = Enumerable.Range(1, 1000)
-        .Select(i => $"{i + 10000}\tCustomUser{i}\tcustom{i}@test.com")
+        .Select(static i => $"{i + 10000}\tCustomUser{i}\tcustom{i}@test.com")
         .ToList();
 
-    await tsvLines.BulkInsertUsingMySqlBulkLoaderAsync(
-        () => new MySqlConnection(connectionString),
+    await tsvLines.BulkInsertUsingMySqlBulkLoaderAsync(static () => new MySqlConnection(connectionString),
         "AlternateUsers",
         ["UserId", "FullName", "EmailAddress"],
         new ParallelOptionsRivulet
@@ -56,17 +59,17 @@ try
         fieldSeparator: "\t",
         lineTerminator: "\n");
 
-    Console.WriteLine($"✓ Inserted 1,000 records with tab-separated values\n");
+    Console.WriteLine("✓ Inserted 1,000 records with tab-separated values\n");
 
     // Sample 3: Parallel bulk inserts with batching
     Console.WriteLine("3. Parallel bulk inserts - Processing multiple batches");
 
     var largeBatches = Enumerable.Range(0, 5)
-        .SelectMany(batchIndex =>
+        .SelectMany(static batchIndex =>
             Enumerable.Range(0, 2000)
                 .Select(i =>
                 {
-                    var id = (batchIndex * 2000) + i + 1;
+                    var id = batchIndex * 2000 + i + 1;
                     return $"{id},Batch{batchIndex}_Item{i},{i}.99";
                 }))
         .ToList();
@@ -74,7 +77,7 @@ try
     startTime = DateTime.UtcNow;
 
     await largeBatches.BulkInsertUsingMySqlBulkLoaderAsync(
-        () => new MySqlConnection(connectionString),
+        static () => new MySqlConnection(connectionString),
         "Transactions",
         ["Id", "Name", "Value"],
         new ParallelOptionsRivulet
@@ -93,18 +96,18 @@ try
 
     // Create temporary CSV files
     var tempFiles = Enumerable.Range(1, 3)
-        .Select(fileIndex =>
+        .Select(static fileIndex =>
         {
             var filePath = Path.Join(Path.GetTempPath(), $"mysql_bulk_{fileIndex}.csv");
             var lines = Enumerable.Range(1, 500)
-                .Select(i => $"{(fileIndex * 500) + i},Product_{(fileIndex * 500) + i},{i * 9.99:F2}");
+                .Select(i => $"{fileIndex * 500 + i},Product_{fileIndex * 500 + i},{i * 9.99:F2}");
             File.WriteAllLines(filePath, lines);
             return filePath;
         })
         .ToList();
 
     await tempFiles.BulkInsertFromFilesUsingMySqlBulkLoaderAsync(
-        () => new MySqlConnection(connectionString),
+        static () => new MySqlConnection(connectionString),
         "Products",
         ["Id", "ProductName", "Price"],
         new ParallelOptionsRivulet
@@ -117,16 +120,13 @@ try
     Console.WriteLine($"✓ Loaded {tempFiles.Count} CSV files (1,500 total rows)\n");
 
     // Cleanup temp files
-    foreach (var file in tempFiles.Where(File.Exists))
-    {
-        File.Delete(file);
-    }
+    foreach (var file in tempFiles.Where(File.Exists)) File.Delete(file);
 
     // Sample 5: Bulk insert from object collection (convert to CSV)
     Console.WriteLine("5. Bulk insert from object collections");
 
     var products = Enumerable.Range(1, 500)
-        .Select(i => new
+        .Select(static i => new
         {
             Id = i + 2000,
             ProductName = $"Product_{i}",
@@ -138,11 +138,11 @@ try
 
     // Convert objects to CSV lines
     var productCsvLines = products
-        .Select(p => $"{p.Id},{p.ProductName},{p.Category},{p.Price:F2},{(p.InStock ? 1 : 0)}")
+        .Select(static p => $"{p.Id},{p.ProductName},{p.Category},{p.Price:F2},{(p.InStock ? 1 : 0)}")
         .ToList();
 
     await productCsvLines.BulkInsertUsingMySqlBulkLoaderAsync(
-        () => new MySqlConnection(connectionString),
+        static () => new MySqlConnection(connectionString),
         "ProductCatalog",
         ["Id", "ProductName", "Category", "Price", "InStock"],
         new ParallelOptionsRivulet
@@ -157,11 +157,11 @@ try
     Console.WriteLine("6. Custom CSV format - Pipe-separated values");
 
     var pipeLines = Enumerable.Range(1, 100)
-        .Select(i => $"{i}|Order-{i:D6}|{i * 49.99:F2}|{DateTime.UtcNow:yyyy-MM-dd}")
+        .Select(static i => $"{i}|Order-{i:D6}|{i * 49.99:F2}|{DateTime.UtcNow:yyyy-MM-dd}")
         .ToList();
 
     await pipeLines.BulkInsertUsingMySqlBulkLoaderAsync(
-        () => new MySqlConnection(connectionString),
+        static () => new MySqlConnection(connectionString),
         "Orders",
         ["Id", "OrderNumber", "Amount", "OrderDate"],
         new ParallelOptionsRivulet

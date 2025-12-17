@@ -1,17 +1,19 @@
+using System.Data;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Data.SqlClient;
 using Rivulet.Core;
-using System.Data;
 
 namespace Rivulet.Sql.SqlServer;
 
 /// <summary>
-/// Extension methods for SQL Server-specific bulk operations using SqlBulkCopy.
-/// Provides 10-100x performance improvement over standard batched inserts.
+///     Extension methods for SQL Server-specific bulk operations using SqlBulkCopy.
+///     Provides 10-100x performance improvement over standard batched inserts.
 /// </summary>
+[SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public static class SqlBulkCopyExtensions
 {
     /// <summary>
-    /// Performs parallel bulk insert operations using SqlBulkCopy for maximum performance.
+    ///     Performs parallel bulk insert operations using SqlBulkCopy for maximum performance.
     /// </summary>
     /// <typeparam name="T">The type of items to insert</typeparam>
     /// <param name="source">Source collection of items</param>
@@ -24,7 +26,7 @@ public static class SqlBulkCopyExtensions
     /// <param name="bulkCopyTimeout">Timeout in seconds for SqlBulkCopy operations (defaults to 30)</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Task representing the async operation</returns>
-    public static async Task BulkInsertUsingSqlBulkCopyAsync<T>(
+    public static Task BulkInsertUsingSqlBulkCopyAsync<T>(
         this IEnumerable<T> source,
         Func<SqlConnection> connectionFactory,
         string destinationTable,
@@ -42,55 +44,55 @@ public static class SqlBulkCopyExtensions
 
         if (batchSize <= 0)
             throw new ArgumentOutOfRangeException(nameof(batchSize), "Batch size must be greater than 0");
+
         if (bulkCopyTimeout < 0)
             throw new ArgumentOutOfRangeException(nameof(bulkCopyTimeout), "Timeout must be non-negative");
 
         options ??= new();
 
-        await source
+        return source
             .Chunk(batchSize)
             .ForEachParallelAsync(async (batch, ct) =>
-            {
-                using var dataTable = mapToDataTable(batch);
-
-                var connection = connectionFactory();
-                if (connection == null)
-                    throw new InvalidOperationException("Connection factory returned null");
-
-                await using (connection)
                 {
-                    await connection.OpenAsync(ct).ConfigureAwait(false);
+                    using var dataTable = mapToDataTable(batch);
 
-                    using var bulkCopy = new SqlBulkCopy(connection, bulkCopyOptions, null);
-                    bulkCopy.DestinationTableName = destinationTable;
-                    bulkCopy.BatchSize = batchSize;
-                    bulkCopy.BulkCopyTimeout = bulkCopyTimeout;
+                    var connection = connectionFactory();
+                    if (connection == null) throw new InvalidOperationException("Connection factory returned null");
 
-                    // Map columns automatically if not specified
-                    if (bulkCopy.ColumnMappings.Count == 0)
+                    await using (connection)
                     {
-                        foreach (DataColumn column in dataTable.Columns)
+                        await connection.OpenAsync(ct).ConfigureAwait(false);
+
+                        using var bulkCopy = new SqlBulkCopy(connection, bulkCopyOptions, null);
+                        bulkCopy.DestinationTableName = destinationTable;
+                        bulkCopy.BatchSize = batchSize;
+                        bulkCopy.BulkCopyTimeout = bulkCopyTimeout;
+
+                        // Map columns automatically if not specified
+                        if (bulkCopy.ColumnMappings.Count == 0)
                         {
-                            bulkCopy.ColumnMappings.Add(column.ColumnName, column.ColumnName);
+                            foreach (DataColumn column in dataTable.Columns)
+                                bulkCopy.ColumnMappings.Add(column.ColumnName, column.ColumnName);
+                        }
+
+                        try
+                        {
+                            await bulkCopy.WriteToServerAsync(dataTable, ct).ConfigureAwait(false);
+                        }
+                        catch (Exception ex)
+                        {
+                            throw new InvalidOperationException(
+                                $"Failed to bulk insert batch of {batch.Length} rows to table '{destinationTable}'",
+                                ex);
                         }
                     }
-
-                    try
-                    {
-                        await bulkCopy.WriteToServerAsync(dataTable, ct).ConfigureAwait(false);
-                    }
-                    catch (Exception ex)
-                    {
-                        throw new InvalidOperationException(
-                            $"Failed to bulk insert batch of {batch.Length} rows to table '{destinationTable}'", ex);
-                    }
-                }
-            }, options, cancellationToken)
-            .ConfigureAwait(false);
+                },
+                options,
+                cancellationToken);
     }
 
     /// <summary>
-    /// Performs parallel bulk insert operations using SqlBulkCopy with explicit column mappings.
+    ///     Performs parallel bulk insert operations using SqlBulkCopy with explicit column mappings.
     /// </summary>
     /// <typeparam name="T">The type of items to insert</typeparam>
     /// <param name="source">Source collection of items</param>
@@ -104,7 +106,7 @@ public static class SqlBulkCopyExtensions
     /// <param name="bulkCopyTimeout">Timeout in seconds for SqlBulkCopy operations (defaults to 30)</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Task representing the async operation</returns>
-    public static async Task BulkInsertUsingSqlBulkCopyAsync<T>(
+    public static Task BulkInsertUsingSqlBulkCopyAsync<T>(
         this IEnumerable<T> source,
         Func<SqlConnection> connectionFactory,
         string destinationTable,
@@ -131,47 +133,46 @@ public static class SqlBulkCopyExtensions
 
         options ??= new();
 
-        await source
+        return source
             .Chunk(batchSize)
             .ForEachParallelAsync(async (batch, ct) =>
-            {
-                using var dataTable = mapToDataTable(batch);
-
-                var connection = connectionFactory();
-                if (connection == null)
-                    throw new InvalidOperationException("Connection factory returned null");
-
-                await using (connection)
                 {
-                    await connection.OpenAsync(ct).ConfigureAwait(false);
+                    using var dataTable = mapToDataTable(batch);
 
-                    using var bulkCopy = new SqlBulkCopy(connection, bulkCopyOptions, null);
-                    bulkCopy.DestinationTableName = destinationTable;
-                    bulkCopy.BatchSize = batchSize;
-                    bulkCopy.BulkCopyTimeout = bulkCopyTimeout;
+                    var connection = connectionFactory();
+                    if (connection == null) throw new InvalidOperationException("Connection factory returned null");
 
-                    // Apply explicit column mappings
-                    foreach (var (sourceColumn, destColumn) in columnMappings)
+                    await using (connection)
                     {
-                        bulkCopy.ColumnMappings.Add(sourceColumn, destColumn);
-                    }
+                        await connection.OpenAsync(ct).ConfigureAwait(false);
 
-                    try
-                    {
-                        await bulkCopy.WriteToServerAsync(dataTable, ct).ConfigureAwait(false);
+                        using var bulkCopy = new SqlBulkCopy(connection, bulkCopyOptions, null);
+                        bulkCopy.DestinationTableName = destinationTable;
+                        bulkCopy.BatchSize = batchSize;
+                        bulkCopy.BulkCopyTimeout = bulkCopyTimeout;
+
+                        // Apply explicit column mappings
+                        foreach (var (sourceColumn, destColumn) in columnMappings)
+                            bulkCopy.ColumnMappings.Add(sourceColumn, destColumn);
+
+                        try
+                        {
+                            await bulkCopy.WriteToServerAsync(dataTable, ct).ConfigureAwait(false);
+                        }
+                        catch (Exception ex)
+                        {
+                            throw new InvalidOperationException(
+                                $"Failed to bulk insert batch of {batch.Length} rows to table '{destinationTable}'",
+                                ex);
+                        }
                     }
-                    catch (Exception ex)
-                    {
-                        throw new InvalidOperationException(
-                            $"Failed to bulk insert batch of {batch.Length} rows to table '{destinationTable}'", ex);
-                    }
-                }
-            }, options, cancellationToken)
-            .ConfigureAwait(false);
+                },
+                options,
+                cancellationToken);
     }
 
     /// <summary>
-    /// Performs parallel bulk insert operations using SqlBulkCopy with a DataReader source.
+    ///     Performs parallel bulk insert operations using SqlBulkCopy with a DataReader source.
     /// </summary>
     /// <param name="source">Source collection of DataReaders</param>
     /// <param name="connectionFactory">Factory to create SQL Server connections</param>
@@ -183,10 +184,10 @@ public static class SqlBulkCopyExtensions
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Task representing the async operation</returns>
     /// <remarks>
-    /// IMPORTANT: The caller is responsible for disposing DataReaders in the source collection.
-    /// This method does not take ownership of or dispose the DataReaders.
+    ///     IMPORTANT: The caller is responsible for disposing DataReaders in the source collection.
+    ///     This method does not take ownership of or dispose the DataReaders.
     /// </remarks>
-    public static async Task BulkInsertUsingSqlBulkCopyAsync(
+    public static Task BulkInsertUsingSqlBulkCopyAsync(
         this IEnumerable<IDataReader> source,
         Func<SqlConnection> connectionFactory,
         string destinationTable,
@@ -202,41 +203,43 @@ public static class SqlBulkCopyExtensions
 
         if (batchSize <= 0)
             throw new ArgumentOutOfRangeException(nameof(batchSize), "Batch size must be greater than 0");
+
         if (bulkCopyTimeout < 0)
             throw new ArgumentOutOfRangeException(nameof(bulkCopyTimeout), "Timeout must be non-negative");
 
         options ??= new();
 
-        await source
+        return source
             .ForEachParallelAsync(async (reader, ct) =>
-            {
-                if (reader == null)
-                    throw new InvalidOperationException("Source collection contains a null DataReader");
-
-                var connection = connectionFactory();
-                if (connection == null)
-                    throw new InvalidOperationException("Connection factory returned null");
-
-                await using (connection)
                 {
-                    await connection.OpenAsync(ct).ConfigureAwait(false);
+                    if (reader == null)
+                        throw new InvalidOperationException("Source collection contains a null DataReader");
 
-                    using var bulkCopy = new SqlBulkCopy(connection, bulkCopyOptions, null);
-                    bulkCopy.DestinationTableName = destinationTable;
-                    bulkCopy.BatchSize = batchSize;
-                    bulkCopy.BulkCopyTimeout = bulkCopyTimeout;
+                    var connection = connectionFactory();
+                    if (connection == null) throw new InvalidOperationException("Connection factory returned null");
 
-                    try
+                    await using (connection)
                     {
-                        await bulkCopy.WriteToServerAsync(reader, ct).ConfigureAwait(false);
+                        await connection.OpenAsync(ct).ConfigureAwait(false);
+
+                        using var bulkCopy = new SqlBulkCopy(connection, bulkCopyOptions, null);
+                        bulkCopy.DestinationTableName = destinationTable;
+                        bulkCopy.BatchSize = batchSize;
+                        bulkCopy.BulkCopyTimeout = bulkCopyTimeout;
+
+                        try
+                        {
+                            await bulkCopy.WriteToServerAsync(reader, ct).ConfigureAwait(false);
+                        }
+                        catch (Exception ex)
+                        {
+                            throw new InvalidOperationException(
+                                $"Failed to bulk insert from DataReader to table '{destinationTable}'",
+                                ex);
+                        }
                     }
-                    catch (Exception ex)
-                    {
-                        throw new InvalidOperationException(
-                            $"Failed to bulk insert from DataReader to table '{destinationTable}'", ex);
-                    }
-                }
-            }, options, cancellationToken)
-            .ConfigureAwait(false);
+                },
+                options,
+                cancellationToken);
     }
 }

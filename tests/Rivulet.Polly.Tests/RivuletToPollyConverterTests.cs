@@ -5,15 +5,12 @@ using Rivulet.Core.Resilience;
 
 namespace Rivulet.Polly.Tests;
 
-public class RivuletToPollyConverterTests
+public sealed class RivuletToPollyConverterTests
 {
     [Fact]
     public void ToPollyRetryPipeline_NoRetries_ReturnsEmptyPipeline()
     {
-        var options = new ParallelOptionsRivulet
-        {
-            MaxRetries = 0
-        };
+        var options = new ParallelOptionsRivulet { MaxRetries = 0 };
 
         var pipeline = options.ToPollyRetryPipeline();
 
@@ -26,7 +23,7 @@ public class RivuletToPollyConverterTests
         var options = new ParallelOptionsRivulet
         {
             MaxRetries = 3,
-            IsTransient = ex => ex is InvalidOperationException,
+            IsTransient = static ex => ex is InvalidOperationException,
             BackoffStrategy = BackoffStrategy.Exponential,
             BaseDelay = TimeSpan.FromMilliseconds(10)
         };
@@ -37,11 +34,9 @@ public class RivuletToPollyConverterTests
         var result = await pipeline.ExecuteAsync(_ =>
         {
             attemptCount++;
-            if (attemptCount <= 2)
-            {
-                throw new InvalidOperationException("Transient failure");
-            }
-            return ValueTask.FromResult(42);
+            return attemptCount <= 2
+                ? throw new InvalidOperationException("Transient failure")
+                : ValueTask.FromResult(42);
         });
 
         result.ShouldBe(42);
@@ -54,7 +49,7 @@ public class RivuletToPollyConverterTests
         var options = new ParallelOptionsRivulet
         {
             MaxRetries = 3,
-            IsTransient = ex => ex is InvalidOperationException,
+            IsTransient = static ex => ex is InvalidOperationException,
             BackoffStrategy = BackoffStrategy.Exponential,
             BaseDelay = TimeSpan.FromMilliseconds(10)
         };
@@ -78,7 +73,7 @@ public class RivuletToPollyConverterTests
         var options = new ParallelOptionsRivulet
         {
             MaxRetries = 3,
-            IsTransient = ex => ex is InvalidOperationException,
+            IsTransient = static ex => ex is InvalidOperationException,
             BackoffStrategy = BackoffStrategy.ExponentialJitter,
             BaseDelay = TimeSpan.FromMilliseconds(100)
         };
@@ -89,11 +84,9 @@ public class RivuletToPollyConverterTests
         var result = await pipeline.ExecuteAsync(_ =>
         {
             attemptTimes.Add(DateTime.UtcNow);
-            if (attemptTimes.Count <= 2)
-            {
-                throw new InvalidOperationException("Transient failure");
-            }
-            return ValueTask.FromResult(42);
+            return attemptTimes.Count <= 2
+                ? throw new InvalidOperationException("Transient failure")
+                : ValueTask.FromResult(42);
         });
 
         result.ShouldBe(42);
@@ -107,7 +100,7 @@ public class RivuletToPollyConverterTests
         var options = new ParallelOptionsRivulet
         {
             MaxRetries = 3,
-            IsTransient = ex => ex is InvalidOperationException,
+            IsTransient = static ex => ex is InvalidOperationException,
             BackoffStrategy = BackoffStrategy.DecorrelatedJitter,
             BaseDelay = TimeSpan.FromMilliseconds(50)
         };
@@ -118,11 +111,9 @@ public class RivuletToPollyConverterTests
         var result = await pipeline.ExecuteAsync(_ =>
         {
             attemptCount++;
-            if (attemptCount <= 2)
-            {
-                throw new InvalidOperationException("Transient failure");
-            }
-            return ValueTask.FromResult(42);
+            return attemptCount <= 2
+                ? throw new InvalidOperationException("Transient failure")
+                : ValueTask.FromResult(42);
         });
 
         result.ShouldBe(42);
@@ -135,7 +126,7 @@ public class RivuletToPollyConverterTests
         var options = new ParallelOptionsRivulet
         {
             MaxRetries = 3,
-            IsTransient = ex => ex is InvalidOperationException,
+            IsTransient = static ex => ex is InvalidOperationException,
             BackoffStrategy = BackoffStrategy.Linear,
             BaseDelay = TimeSpan.FromMilliseconds(50)
         };
@@ -146,11 +137,9 @@ public class RivuletToPollyConverterTests
         var result = await pipeline.ExecuteAsync(_ =>
         {
             attemptCount++;
-            if (attemptCount <= 2)
-            {
-                throw new InvalidOperationException("Transient failure");
-            }
-            return ValueTask.FromResult(42);
+            return attemptCount <= 2
+                ? throw new InvalidOperationException("Transient failure")
+                : ValueTask.FromResult(42);
         });
 
         result.ShouldBe(42);
@@ -164,7 +153,7 @@ public class RivuletToPollyConverterTests
 
         var act = () => options!.ToPollyRetryPipeline();
 
-(        act.ShouldThrow<ArgumentNullException>()).ParamName.ShouldBe("options");
+        act.ShouldThrow<ArgumentNullException>().ParamName.ShouldBe("options");
     }
 
     [Fact]
@@ -183,7 +172,7 @@ public class RivuletToPollyConverterTests
         var timeout = TimeSpan.FromSeconds(1);
         var pipeline = timeout.ToPollyTimeoutPipeline();
 
-        var result = await pipeline.ExecuteAsync(async ct =>
+        var result = await pipeline.ExecuteAsync(static async ct =>
         {
             await Task.Delay(10, ct);
             return 42;
@@ -199,7 +188,7 @@ public class RivuletToPollyConverterTests
 
         var act = () => timeout.ToPollyTimeoutPipeline();
 
-(        act.ShouldThrow<ArgumentOutOfRangeException>()).ParamName.ShouldBe("timeout");
+        act.ShouldThrow<ArgumentOutOfRangeException>().ParamName.ShouldBe("timeout");
     }
 
     [Fact]
@@ -209,7 +198,7 @@ public class RivuletToPollyConverterTests
 
         var act = () => timeout.ToPollyTimeoutPipeline();
 
-(        act.ShouldThrow<ArgumentOutOfRangeException>()).ParamName.ShouldBe("timeout");
+        act.ShouldThrow<ArgumentOutOfRangeException>().ParamName.ShouldBe("timeout");
     }
 
     [Fact]
@@ -220,10 +209,7 @@ public class RivuletToPollyConverterTests
             FailureThreshold = 3,
             SuccessThreshold = 2,
             OpenTimeout = TimeSpan.FromSeconds(1),
-            OnStateChange = async (_, _) =>
-            {
-                await ValueTask.CompletedTask;
-            }
+            OnStateChange = static (_, _) => ValueTask.CompletedTask
         };
 
         var pipeline = options.ToPollyCircuitBreakerPipeline();
@@ -238,7 +224,7 @@ public class RivuletToPollyConverterTests
 
         var act = () => options!.ToPollyCircuitBreakerPipeline();
 
-(        act.ShouldThrow<ArgumentNullException>()).ParamName.ShouldBe("options");
+        act.ShouldThrow<ArgumentNullException>().ParamName.ShouldBe("options");
     }
 
     [Fact]
@@ -257,12 +243,7 @@ public class RivuletToPollyConverterTests
     [Fact]
     public void ToPollyPipeline_NoStrategies_ReturnsEmptyPipeline()
     {
-        var options = new ParallelOptionsRivulet
-        {
-            MaxRetries = 0,
-            PerItemTimeout = null,
-            CircuitBreaker = null
-        };
+        var options = new ParallelOptionsRivulet { MaxRetries = 0, PerItemTimeout = null, CircuitBreaker = null };
 
         var pipeline = options.ToPollyPipeline();
 
@@ -274,8 +255,7 @@ public class RivuletToPollyConverterTests
     {
         var options = new ParallelOptionsRivulet
         {
-            MaxRetries = 2,
-            IsTransient = ex => ex is InvalidOperationException,
+            MaxRetries = 2, IsTransient = static ex => ex is InvalidOperationException,
             BaseDelay = TimeSpan.FromMilliseconds(10)
         };
 
@@ -285,11 +265,9 @@ public class RivuletToPollyConverterTests
         var result = await pipeline.ExecuteAsync(_ =>
         {
             attemptCount++;
-            if (attemptCount <= 1)
-            {
-                throw new InvalidOperationException("Transient failure");
-            }
-            return ValueTask.FromResult(42);
+            return attemptCount <= 1
+                ? throw new InvalidOperationException("Transient failure")
+                : ValueTask.FromResult(42);
         });
 
         result.ShouldBe(42);
@@ -299,15 +277,11 @@ public class RivuletToPollyConverterTests
     [Fact]
     public async Task ToPollyPipeline_WithTimeoutOnly_AppliesTimeout()
     {
-        var options = new ParallelOptionsRivulet
-        {
-            MaxRetries = 0,
-            PerItemTimeout = TimeSpan.FromSeconds(1)
-        };
+        var options = new ParallelOptionsRivulet { MaxRetries = 0, PerItemTimeout = TimeSpan.FromSeconds(1) };
 
         var pipeline = options.ToPollyPipeline();
 
-        var result = await pipeline.ExecuteAsync(async ct =>
+        var result = await pipeline.ExecuteAsync(static async ct =>
         {
             await Task.Delay(10, ct);
             return 42;
@@ -321,12 +295,7 @@ public class RivuletToPollyConverterTests
     {
         var options = new ParallelOptionsRivulet
         {
-            MaxRetries = 0,
-            CircuitBreaker = new()
-            {
-                FailureThreshold = 2,
-                OpenTimeout = TimeSpan.FromSeconds(1)
-            }
+            MaxRetries = 0, CircuitBreaker = new() { FailureThreshold = 2, OpenTimeout = TimeSpan.FromSeconds(1) }
         };
 
         var pipeline = options.ToPollyPipeline();
@@ -340,14 +309,10 @@ public class RivuletToPollyConverterTests
         var options = new ParallelOptionsRivulet
         {
             MaxRetries = 2,
-            IsTransient = ex => ex is InvalidOperationException,
+            IsTransient = static ex => ex is InvalidOperationException,
             BaseDelay = TimeSpan.FromMilliseconds(10),
             PerItemTimeout = TimeSpan.FromSeconds(1),
-            CircuitBreaker = new()
-            {
-                FailureThreshold = 5,
-                OpenTimeout = TimeSpan.FromSeconds(1)
-            }
+            CircuitBreaker = new() { FailureThreshold = 5, OpenTimeout = TimeSpan.FromSeconds(1) }
         };
 
         var pipeline = options.ToPollyPipeline();
@@ -355,7 +320,7 @@ public class RivuletToPollyConverterTests
         pipeline.ShouldNotBeSameAs(ResiliencePipeline.Empty);
 
         // Verify it works with a successful operation
-        var result = await pipeline.ExecuteAsync(async ct =>
+        var result = await pipeline.ExecuteAsync(static async ct =>
         {
             await Task.Delay(10, ct);
             return 42;
@@ -371,7 +336,7 @@ public class RivuletToPollyConverterTests
 
         var act = () => options!.ToPollyPipeline();
 
-(        act.ShouldThrow<ArgumentNullException>()).ParamName.ShouldBe("options");
+        act.ShouldThrow<ArgumentNullException>().ParamName.ShouldBe("options");
     }
 
     [Fact]
@@ -420,7 +385,7 @@ public class RivuletToPollyConverterTests
         var options = new ParallelOptionsRivulet
         {
             MaxRetries = 2,
-            IsTransient = ex => ex is InvalidOperationException,
+            IsTransient = static ex => ex is InvalidOperationException,
             BackoffStrategy = BackoffStrategy.DecorrelatedJitter,
             BaseDelay = TimeSpan.FromMilliseconds(10)
         };
@@ -473,7 +438,7 @@ public class RivuletToPollyConverterTests
         var options = new ParallelOptionsRivulet
         {
             MaxRetries = 2,
-            IsTransient = ex => ex is InvalidOperationException,
+            IsTransient = static ex => ex is InvalidOperationException,
             BackoffStrategy = BackoffStrategy.DecorrelatedJitter,
             BaseDelay = TimeSpan.FromMilliseconds(10)
         };
@@ -505,10 +470,7 @@ public class RivuletToPollyConverterTests
             FailureThreshold = 2,
             SuccessThreshold = 1,
             OpenTimeout = TimeSpan.FromSeconds(1), // Polly requires min 500ms
-            OnStateChange = async (_, _) =>
-            {
-                await ValueTask.CompletedTask;
-            }
+            OnStateChange = static (_, _) => ValueTask.CompletedTask
         };
 
         var pipeline = options.ToPollyCircuitBreakerPipeline();
@@ -529,10 +491,7 @@ public class RivuletToPollyConverterTests
                 FailureThreshold = 2,
                 SuccessThreshold = 1,
                 OpenTimeout = TimeSpan.FromSeconds(1), // Polly requires min 500ms
-                OnStateChange = async (_, _) =>
-                {
-                    await ValueTask.CompletedTask;
-                }
+                OnStateChange = static (_, _) => ValueTask.CompletedTask
             }
         };
 
@@ -550,7 +509,7 @@ public class RivuletToPollyConverterTests
         var timeout = TimeSpan.FromMilliseconds(50);
         var pipeline = timeout.ToPollyTimeoutPipeline();
 
-        var act = async () => await pipeline.ExecuteAsync(async ct =>
+        var act = async () => await pipeline.ExecuteAsync(static async ct =>
         {
             await Task.Delay(5000, ct); // Much longer than timeout
             return 42;
@@ -568,10 +527,10 @@ public class RivuletToPollyConverterTests
             FailureThreshold = 3,
             SuccessThreshold = 1,
             OpenTimeout = TimeSpan.FromMilliseconds(500),
-            OnStateChange = async (from, to) =>
+            OnStateChange = (from, to) =>
             {
                 stateChanges.Add((from, to));
-                await ValueTask.CompletedTask;
+                return ValueTask.CompletedTask;
             }
         };
 
@@ -582,7 +541,7 @@ public class RivuletToPollyConverterTests
         {
             try
             {
-                await pipeline.ExecuteAsync(_ => throw new InvalidOperationException("Test failure"));
+                await pipeline.ExecuteAsync(static _ => throw new InvalidOperationException("Test failure"));
             }
             catch (InvalidOperationException)
             {
@@ -591,20 +550,22 @@ public class RivuletToPollyConverterTests
         }
 
         // Circuit should be open now
-        stateChanges.ShouldHaveSingleItem().ShouldSatisfyAllConditions(
-            sc => sc.From.ShouldBe(CircuitBreakerState.Closed),
-            sc => sc.To.ShouldBe(CircuitBreakerState.Open));
+        stateChanges.ShouldHaveSingleItem()
+            .ShouldSatisfyAllConditions(static sc => sc.From.ShouldBe(CircuitBreakerState.Closed),
+                static sc => sc.To.ShouldBe(CircuitBreakerState.Open));
 
         // Wait for circuit to transition to HalfOpen
-        await Task.Delay(600);
+        await Task.Delay(600, CancellationToken.None);
 
         // Next call should trigger HalfOpen -> Closed transition on success
-        var result = await pipeline.ExecuteAsync(_ => ValueTask.FromResult(42));
+        var result = await pipeline.ExecuteAsync(static _ => ValueTask.FromResult(42));
         result.ShouldBe(42);
 
         // Verify all state transitions occurred
-        stateChanges.ShouldContain(sc => sc.From == CircuitBreakerState.Open && sc.To == CircuitBreakerState.HalfOpen);
-        stateChanges.ShouldContain(sc => sc.From == CircuitBreakerState.HalfOpen && sc.To == CircuitBreakerState.Closed);
+        stateChanges.ShouldContain(static sc =>
+            sc.From == CircuitBreakerState.Open && sc.To == CircuitBreakerState.HalfOpen);
+        stateChanges.ShouldContain(static sc =>
+            sc.From == CircuitBreakerState.HalfOpen && sc.To == CircuitBreakerState.Closed);
     }
 
     [Fact]
@@ -619,10 +580,10 @@ public class RivuletToPollyConverterTests
                 FailureThreshold = 3,
                 SuccessThreshold = 1,
                 OpenTimeout = TimeSpan.FromMilliseconds(500),
-                OnStateChange = async (from, to) =>
+                OnStateChange = (from, to) =>
                 {
                     stateChanges.Add((from, to));
-                    await ValueTask.CompletedTask;
+                    return ValueTask.CompletedTask;
                 }
             }
         };
@@ -634,7 +595,7 @@ public class RivuletToPollyConverterTests
         {
             try
             {
-                await pipeline.ExecuteAsync(_ => throw new InvalidOperationException("Test failure"));
+                await pipeline.ExecuteAsync(static _ => throw new InvalidOperationException("Test failure"));
             }
             catch (InvalidOperationException)
             {
@@ -643,20 +604,21 @@ public class RivuletToPollyConverterTests
         }
 
         // Circuit should be open
-        stateChanges.ShouldHaveSingleItem().ShouldSatisfyAllConditions(
-            sc => sc.From.ShouldBe(CircuitBreakerState.Closed),
-            sc => sc.To.ShouldBe(CircuitBreakerState.Open));
+        stateChanges.ShouldHaveSingleItem()
+            .ShouldSatisfyAllConditions(static sc => sc.From.ShouldBe(CircuitBreakerState.Closed),
+                static sc => sc.To.ShouldBe(CircuitBreakerState.Open));
 
         // Wait for circuit to transition to HalfOpen
-        await Task.Delay(600);
+        await Task.Delay(600, CancellationToken.None);
 
         // Success should trigger HalfOpen -> Closed
-        var result = await pipeline.ExecuteAsync(_ => ValueTask.FromResult(42));
+        var result = await pipeline.ExecuteAsync(static _ => ValueTask.FromResult(42));
         result.ShouldBe(42);
 
         // Verify state transitions
-        stateChanges.ShouldContain(sc => sc.From == CircuitBreakerState.Open && sc.To == CircuitBreakerState.HalfOpen);
-        stateChanges.ShouldContain(sc => sc.From == CircuitBreakerState.HalfOpen && sc.To == CircuitBreakerState.Closed);
+        stateChanges.ShouldContain(static sc =>
+            sc.From == CircuitBreakerState.Open && sc.To == CircuitBreakerState.HalfOpen);
+        stateChanges.ShouldContain(static sc =>
+            sc.From == CircuitBreakerState.HalfOpen && sc.To == CircuitBreakerState.Closed);
     }
-
 }

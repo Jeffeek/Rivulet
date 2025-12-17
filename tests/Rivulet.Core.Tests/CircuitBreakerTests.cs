@@ -1,51 +1,52 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using Rivulet.Base.Tests;
 using Rivulet.Core.Resilience;
 
 namespace Rivulet.Core.Tests;
 
 [SuppressMessage("ReSharper", "AccessToDisposedClosure")]
-public class CircuitBreakerTests
+public sealed class CircuitBreakerTests
 {
     [Fact]
     public void CircuitBreakerOptions_Validation_ThrowsOnInvalidFailureThreshold()
     {
-        var act = () => new CircuitBreakerOptions { FailureThreshold = 0 }.Validate();
+        var act = static () => new CircuitBreakerOptions { FailureThreshold = 0 }.Validate();
         act.ShouldThrow<ArgumentException>().Message.ShouldContain("FailureThreshold");
     }
 
     [Fact]
     public void CircuitBreakerOptions_Validation_ThrowsOnInvalidSuccessThreshold()
     {
-        var act = () => new CircuitBreakerOptions { SuccessThreshold = 0 }.Validate();
+        var act = static () => new CircuitBreakerOptions { SuccessThreshold = 0 }.Validate();
         act.ShouldThrow<ArgumentException>().Message.ShouldContain("SuccessThreshold");
     }
 
     [Fact]
     public void CircuitBreakerOptions_Validation_ThrowsOnInvalidOpenTimeout()
     {
-        var act = () => new CircuitBreakerOptions { OpenTimeout = TimeSpan.Zero }.Validate();
+        var act = static () => new CircuitBreakerOptions { OpenTimeout = TimeSpan.Zero }.Validate();
         act.ShouldThrow<ArgumentException>().Message.ShouldContain("OpenTimeout");
     }
 
     [Fact]
     public void CircuitBreakerOptions_Validation_ThrowsOnInvalidSamplingDuration()
     {
-        var act = () => new CircuitBreakerOptions { SamplingDuration = TimeSpan.Zero }.Validate();
+        var act = static () => new CircuitBreakerOptions { SamplingDuration = TimeSpan.Zero }.Validate();
         act.ShouldThrow<ArgumentException>().Message.ShouldContain("SamplingDuration");
     }
 
     [Fact]
     public void CircuitBreaker_Constructor_ThrowsOnNullOptions()
     {
-        var act = () => new CircuitBreaker(null!);
+        var act = static () => new CircuitBreaker(null!);
         act.ShouldThrow<ArgumentNullException>().Message.ShouldContain("options");
     }
 
     [Fact]
     public void CircuitBreaker_Constructor_ValidatesOptions()
     {
-        var act = () => new CircuitBreaker(new() { FailureThreshold = 0 });
+        var act = static () => new CircuitBreaker(new() { FailureThreshold = 0 });
         act.ShouldThrow<ArgumentException>().Message.ShouldContain("FailureThreshold");
     }
 
@@ -60,11 +61,7 @@ public class CircuitBreakerTests
     public async Task CircuitBreaker_Opens_AfterFailureThreshold()
     {
         // Circuit should open after 3 consecutive failures
-        var cb = new CircuitBreaker(new()
-        {
-            FailureThreshold = 3,
-            OpenTimeout = TimeSpan.FromSeconds(1)
-        });
+        var cb = new CircuitBreaker(new() { FailureThreshold = 3, OpenTimeout = TimeSpan.FromSeconds(1) });
 
         var failureCount = 0;
 
@@ -73,9 +70,9 @@ public class CircuitBreakerTests
         {
             try
             {
-                await cb.ExecuteAsync(async () =>
+                await cb.ExecuteAsync(static async () =>
                 {
-                    await Task.Delay(1);
+                    await Task.Delay(1, CancellationToken.None);
                     throw new InvalidOperationException("Test failure");
 #pragma warning disable CS0162 // Unreachable code detected
                     return 0;
@@ -94,9 +91,9 @@ public class CircuitBreakerTests
         cb.State.ShouldBe(CircuitBreakerState.Open);
 
         // Next call should fail fast without executing
-        var act = async () => await cb.ExecuteAsync(async () =>
+        var act = async () => await cb.ExecuteAsync(static async () =>
         {
-            await Task.Delay(1);
+            await Task.Delay(1, CancellationToken.None);
             return 1;
         });
 
@@ -106,38 +103,37 @@ public class CircuitBreakerTests
     [Fact]
     public async Task CircuitBreaker_TransitionsToHalfOpen_AfterTimeout()
     {
-        var cb = new CircuitBreaker(new()
-        {
-            FailureThreshold = 2,
-            OpenTimeout = TimeSpan.FromMilliseconds(100)
-        });
+        var cb = new CircuitBreaker(new() { FailureThreshold = 2, OpenTimeout = TimeSpan.FromMilliseconds(100) });
 
         // Cause 2 failures to open circuit
         for (var i = 0; i < 2; i++)
         {
             try
             {
-                await cb.ExecuteAsync(async () =>
+                await cb.ExecuteAsync(static async () =>
                 {
-                    await Task.Delay(1);
+                    await Task.Delay(1, CancellationToken.None);
                     throw new InvalidOperationException("Test failure");
 #pragma warning disable CS0162 // Unreachable code detected
                     return 0;
 #pragma warning restore CS0162 // Unreachable code detected
                 });
             }
-            catch (InvalidOperationException) { /* Expected - test intentionally throws */ }
+            catch (InvalidOperationException)
+            {
+                /* Expected - test intentionally throws */
+            }
         }
 
         cb.State.ShouldBe(CircuitBreakerState.Open);
 
         // Wait for timeout
-        await Task.Delay(150);
+        await Task.Delay(150, CancellationToken.None);
 
         // Next execution attempt should transition to HalfOpen
-        var result = await cb.ExecuteAsync(async () =>
+        var result = await cb.ExecuteAsync(static async () =>
         {
-            await Task.Delay(1);
+            await Task.Delay(1, CancellationToken.None);
             return 42;
         });
 
@@ -149,32 +145,32 @@ public class CircuitBreakerTests
     public async Task CircuitBreaker_ClosesFromHalfOpen_AfterSuccessThreshold()
     {
         var cb = new CircuitBreaker(new()
-        {
-            FailureThreshold = 2,
-            SuccessThreshold = 2,
-            OpenTimeout = TimeSpan.FromMilliseconds(100)
-        });
+            { FailureThreshold = 2, SuccessThreshold = 2, OpenTimeout = TimeSpan.FromMilliseconds(100) });
 
         for (var i = 0; i < 2; i++)
         {
             try
             {
-                await cb.ExecuteAsync(() => ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")));
+                await cb.ExecuteAsync(static () =>
+                    ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")));
             }
-            catch (InvalidOperationException) { /* Expected - test intentionally throws */ }
+            catch (InvalidOperationException)
+            {
+                /* Expected - test intentionally throws */
+            }
         }
 
         cb.State.ShouldBe(CircuitBreakerState.Open);
 
         // Wait and transition to HalfOpen
-        await Task.Delay(150);
+        await Task.Delay(150, CancellationToken.None);
 
         // Execute 2 successful operations
         for (var i = 0; i < 2; i++)
         {
             var result = await cb.ExecuteAsync(async () =>
             {
-                await Task.Delay(1);
+                await Task.Delay(1, CancellationToken.None);
                 return i;
             });
             result.ShouldBe(i);
@@ -187,29 +183,29 @@ public class CircuitBreakerTests
     public async Task CircuitBreaker_ReopensFromHalfOpen_OnFailure()
     {
         var cb = new CircuitBreaker(new()
-        {
-            FailureThreshold = 2,
-            SuccessThreshold = 2,
-            OpenTimeout = TimeSpan.FromMilliseconds(100)
-        });
+            { FailureThreshold = 2, SuccessThreshold = 2, OpenTimeout = TimeSpan.FromMilliseconds(100) });
 
         // Open the circuit
         for (var i = 0; i < 2; i++)
         {
             try
             {
-                await cb.ExecuteAsync(() => ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")));
+                await cb.ExecuteAsync(static () =>
+                    ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")));
             }
-            catch (InvalidOperationException) { /* Expected - test intentionally throws */ }
+            catch (InvalidOperationException)
+            {
+                /* Expected - test intentionally throws */
+            }
         }
 
         // Wait and transition to HalfOpen
-        await Task.Delay(150);
+        await Task.Delay(150, CancellationToken.None);
 
         // Execute one successful operation
-        await cb.ExecuteAsync(async () =>
+        await cb.ExecuteAsync(static async () =>
         {
-            await Task.Delay(1);
+            await Task.Delay(1, CancellationToken.None);
             return 1;
         });
 
@@ -218,7 +214,8 @@ public class CircuitBreakerTests
         // Execute one failed operation - should reopen circuit
         try
         {
-            await cb.ExecuteAsync(() => ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")));
+            await cb.ExecuteAsync(static () =>
+                ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")));
         }
         catch (InvalidOperationException)
         {
@@ -233,8 +230,7 @@ public class CircuitBreakerTests
     {
         var cb = new CircuitBreaker(new()
         {
-            FailureThreshold = 3,
-            SamplingDuration = TimeSpan.FromMilliseconds(200),
+            FailureThreshold = 3, SamplingDuration = TimeSpan.FromMilliseconds(200),
             OpenTimeout = TimeSpan.FromSeconds(1)
         });
 
@@ -243,15 +239,19 @@ public class CircuitBreakerTests
         {
             try
             {
-                await cb.ExecuteAsync(() => ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")));
+                await cb.ExecuteAsync(static () =>
+                    ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")));
             }
-            catch (InvalidOperationException) { /* Expected - test intentionally throws */ }
+            catch (InvalidOperationException)
+            {
+                /* Expected - test intentionally throws */
+            }
         }
 
         cb.State.ShouldBe(CircuitBreakerState.Closed);
 
         // Wait for sampling window to expire
-        await Task.Delay(250);
+        await Task.Delay(250, CancellationToken.None);
 
         // Old failures should be outside window, circuit should remain closed
         // Execute 2 more failures (total 2 in current window)
@@ -259,9 +259,13 @@ public class CircuitBreakerTests
         {
             try
             {
-                await cb.ExecuteAsync(() => ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")));
+                await cb.ExecuteAsync(static () =>
+                    ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")));
             }
-            catch (InvalidOperationException) { /* Expected - test intentionally throws */ }
+            catch (InvalidOperationException)
+            {
+                /* Expected - test intentionally throws */
+            }
         }
 
         cb.State.ShouldBe(CircuitBreakerState.Closed);
@@ -269,7 +273,8 @@ public class CircuitBreakerTests
         // One more failure (3 in window) should open circuit
         try
         {
-            await cb.ExecuteAsync(() => ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")));
+            await cb.ExecuteAsync(static () =>
+                ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")));
         }
         catch (InvalidOperationException)
         {
@@ -294,10 +299,8 @@ public class CircuitBreakerTests
             {
                 stateChanges.Add((from, to));
                 // Signal when we have all expected transitions
-                if (stateChanges.Count >= 3)
-                {
-                    allTransitionsComplete.TrySetResult(true);
-                }
+                if (stateChanges.Count >= 3) allTransitionsComplete.TrySetResult(true);
+
                 return ValueTask.CompletedTask;
             }
         });
@@ -307,18 +310,22 @@ public class CircuitBreakerTests
         {
             try
             {
-                await cb.ExecuteAsync(() => ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")));
+                await cb.ExecuteAsync(static () =>
+                    ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")));
             }
-            catch (InvalidOperationException) { /* Expected - test intentionally throws */ }
+            catch (InvalidOperationException)
+            {
+                /* Expected - test intentionally throws */
+            }
         }
 
         // Wait long enough for HalfOpen timeout (100ms + buffer)
-        await Task.Delay(200);
+        await Task.Delay(200, CancellationToken.None);
 
         // Execute successful operation - this triggers HalfOpen transition and then closes circuit
-        await cb.ExecuteAsync(async () =>
+        await cb.ExecuteAsync(static async () =>
         {
-            await Task.Delay(1);
+            await Task.Delay(1, CancellationToken.None);
             return 1;
         });
 
@@ -337,20 +344,20 @@ public class CircuitBreakerTests
     [Fact]
     public async Task CircuitBreaker_Reset_ClosesCircuit()
     {
-        var cb = new CircuitBreaker(new()
-        {
-            FailureThreshold = 2,
-            OpenTimeout = TimeSpan.FromSeconds(10)
-        });
+        var cb = new CircuitBreaker(new() { FailureThreshold = 2, OpenTimeout = TimeSpan.FromSeconds(10) });
 
         // Open the circuit
         for (var i = 0; i < 2; i++)
         {
             try
             {
-                await cb.ExecuteAsync(() => ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")));
+                await cb.ExecuteAsync(static () =>
+                    ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")));
             }
-            catch (InvalidOperationException) { /* Expected - test intentionally throws */ }
+            catch (InvalidOperationException)
+            {
+                /* Expected - test intentionally throws */
+            }
         }
 
         cb.State.ShouldBe(CircuitBreakerState.Open);
@@ -361,9 +368,9 @@ public class CircuitBreakerTests
         cb.State.ShouldBe(CircuitBreakerState.Closed);
 
         // Should execute normally
-        var result = await cb.ExecuteAsync(async () =>
+        var result = await cb.ExecuteAsync(static async () =>
         {
-            await Task.Delay(1);
+            await Task.Delay(1, CancellationToken.None);
             return 42;
         });
 
@@ -377,21 +384,17 @@ public class CircuitBreakerTests
         var options = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 1, // Sequential to ensure predictable failure order
-            CircuitBreaker = new()
-            {
-                FailureThreshold = 3,
-                OpenTimeout = TimeSpan.FromSeconds(1)
-            },
+            CircuitBreaker = new() { FailureThreshold = 3, OpenTimeout = TimeSpan.FromSeconds(1) },
             ErrorMode = ErrorMode.BestEffort
         };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(1, ct);
                 // Fail for items 1, 2, 3
-                if (x <= 3)
-                    throw new InvalidOperationException($"Item {x} failed");
+                if (x <= 3) throw new InvalidOperationException($"Item {x} failed");
+
                 return x * 2;
             },
             options);
@@ -410,23 +413,20 @@ public class CircuitBreakerTests
         {
             MaxDegreeOfParallelism = 1,
             CircuitBreaker = new()
-            {
-                FailureThreshold = 5,
-                SuccessThreshold = 2,
-                OpenTimeout = TimeSpan.FromMilliseconds(100)
-            },
+                { FailureThreshold = 5, SuccessThreshold = 2, OpenTimeout = TimeSpan.FromMilliseconds(100) },
             ErrorMode = ErrorMode.BestEffort
         };
 
-        var results = await source.SelectParallelStreamAsync(async (x, ct) =>
-            {
-                await Task.Delay(1, ct);
+        var results = await source.SelectParallelStreamAsync(static async (x, ct) =>
+                {
+                    await Task.Delay(1, ct);
 
-                // Fail for items 1-3, then succeed
-                if (x <= 3) throw new InvalidOperationException($"Item {x} failed");
+                    // Fail for items 1-3, then succeed
+                    if (x <= 3) throw new InvalidOperationException($"Item {x} failed");
 
-                return x * 2;
-            }, options)
+                    return x * 2;
+                },
+                options)
             .ToListAsync();
 
         // Should have successful results (items 4-20)
@@ -438,13 +438,13 @@ public class CircuitBreakerTests
     public async Task CircuitBreaker_WithRetries_OpensAfterExhaustedRetries()
     {
         var source = Enumerable.Range(1, 5);
-        var attemptCounts = new System.Collections.Concurrent.ConcurrentDictionary<int, int>();
+        var attemptCounts = new ConcurrentDictionary<int, int>();
 
         var options = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 1,
             MaxRetries = 2,
-            IsTransient = ex => ex is InvalidOperationException,
+            IsTransient = static ex => ex is InvalidOperationException,
             CircuitBreaker = new()
             {
                 FailureThreshold = 2, // Open after 2 items fully fail (after retries)
@@ -456,12 +456,11 @@ public class CircuitBreakerTests
         var results = await source.SelectParallelAsync(
             async (x, ct) =>
             {
-                attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
+                attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
                 await Task.Delay(1, ct);
 
                 // Always fail for items 1 and 2
-                if (x <= 2)
-                    throw new InvalidOperationException($"Item {x} failed");
+                if (x <= 2) throw new InvalidOperationException($"Item {x} failed");
 
                 return x * 2;
             },
@@ -484,11 +483,7 @@ public class CircuitBreakerTests
         var options = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 1,
-            CircuitBreaker = new()
-            {
-                FailureThreshold = 50,
-                OpenTimeout = TimeSpan.FromSeconds(1)
-            }
+            CircuitBreaker = new() { FailureThreshold = 50, OpenTimeout = TimeSpan.FromSeconds(1) }
         };
 
         var processedCount = 0;
@@ -497,8 +492,7 @@ public class CircuitBreakerTests
             async (x, ct) =>
             {
                 Interlocked.Increment(ref processedCount);
-                if (processedCount >= 5)
-                    await cts.CancelAsync();
+                if (processedCount >= 5) await cts.CancelAsync();
 
                 await Task.Delay(1, ct);
                 return x * 2;
@@ -527,7 +521,7 @@ public class CircuitBreakerTests
         };
 
         var results = await source.SelectParallelAsync(
-            async (x, ct) =>
+            static async (x, ct) =>
             {
                 await Task.Delay(Random.Shared.Next(1, 10), ct);
                 return x * 2;
@@ -536,7 +530,7 @@ public class CircuitBreakerTests
 
         results.Count.ShouldBe(10);
         results.ShouldBeInOrder();
-        results.ShouldBe(Enumerable.Range(1, 10).Select(x => x * 2));
+        results.ShouldBe(Enumerable.Range(1, 10).Select(static x => x * 2));
     }
 
     [Fact]
@@ -575,9 +569,13 @@ public class CircuitBreakerTests
         {
             try
             {
-                await cb.ExecuteAsync<int>(() => throw new InvalidOperationException("Test"), CancellationToken.None);
+                await cb.ExecuteAsync<int>(static () => throw new InvalidOperationException("Test"),
+                    CancellationToken.None);
             }
-            catch (InvalidOperationException) { /* Expected - test intentionally throws */ }
+            catch (InvalidOperationException)
+            {
+                /* Expected - test intentionally throws */
+            }
         }
 
         cb.State.ShouldBe(CircuitBreakerState.Open);
@@ -587,7 +585,7 @@ public class CircuitBreakerTests
         // Poll for up to 2 seconds to ensure callback has been invoked
         await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddMilliseconds(2000),
-            () => Task.Delay(50),
+            static () => Task.Delay(50),
             () => callbackInvoked == 0);
 
         callbackInvoked.ShouldBeGreaterThan(0);
@@ -604,10 +602,8 @@ public class CircuitBreakerTests
             OpenTimeout = TimeSpan.FromMilliseconds(50),
             OnStateChange = (oldState, newState) =>
             {
-                lock (transitions)
-                {
-                    transitions.Add((oldState, newState));
-                }
+                lock (transitions) transitions.Add((oldState, newState));
+
                 return ValueTask.CompletedTask;
             }
         });
@@ -617,7 +613,7 @@ public class CircuitBreakerTests
         {
             try
             {
-                await cb.ExecuteAsync<int>(() => throw new InvalidOperationException(), CancellationToken.None);
+                await cb.ExecuteAsync<int>(static () => throw new InvalidOperationException(), CancellationToken.None);
             }
             catch
             {
@@ -625,35 +621,37 @@ public class CircuitBreakerTests
             }
         }
 
-        await Task.Delay(100);
+        await Task.Delay(100, CancellationToken.None);
         cb.State.ShouldBe(CircuitBreakerState.Open);
 
         // Open -> HalfOpen (after timeout)
-        await Task.Delay(100);
+        await Task.Delay(100, CancellationToken.None);
         cb.State.ShouldBe(CircuitBreakerState.Open);
 
         // Trigger HalfOpen by successful execution after timeout
-        await Task.Delay(50);
-        await cb.ExecuteAsync(() => ValueTask.FromResult(1), CancellationToken.None);
+        await Task.Delay(50, CancellationToken.None);
+        await cb.ExecuteAsync(static () => ValueTask.FromResult(1), CancellationToken.None);
 
         // Poll for expected transitions to be captured (state changes may be delayed in CI)
         await DeadlineExtensions.ApplyDeadlineAsync(
             DateTime.UtcNow.AddMilliseconds(500),
-            () => Task.Delay(20),
+            static () => Task.Delay(20),
             () =>
             {
                 lock (transitions)
                 {
-                    var hasOpen = transitions.Any(t => t.Item2 == CircuitBreakerState.Open);
-                    var hasOther = transitions.Any(t => t.Item2 == CircuitBreakerState.HalfOpen || t.Item2 == CircuitBreakerState.Closed);
+                    var hasOpen = transitions.Any(static t => t.Item2 == CircuitBreakerState.Open);
+                    var hasOther = transitions.Any(static t =>
+                        t.Item2 is CircuitBreakerState.HalfOpen or CircuitBreakerState.Closed);
                     return !hasOpen || !hasOther;
                 }
             });
 
         lock (transitions)
         {
-            transitions.ShouldContain(t => t.Item2 == CircuitBreakerState.Open);
-            transitions.ShouldContain(t => t.Item2 == CircuitBreakerState.HalfOpen || t.Item2 == CircuitBreakerState.Closed);
+            transitions.ShouldContain(static t => t.Item2 == CircuitBreakerState.Open);
+            transitions.ShouldContain(static t =>
+                t.Item2 == CircuitBreakerState.HalfOpen || t.Item2 == CircuitBreakerState.Closed);
         }
     }
 }

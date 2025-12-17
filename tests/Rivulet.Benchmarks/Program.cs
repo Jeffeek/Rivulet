@@ -3,7 +3,8 @@ using BenchmarkDotNet.Running;
 
 namespace Rivulet.Benchmarks;
 
-public class Program
+// ReSharper disable once MemberCanBeInternal
+public sealed class Program
 {
     public static void Main(string[] args)
     {

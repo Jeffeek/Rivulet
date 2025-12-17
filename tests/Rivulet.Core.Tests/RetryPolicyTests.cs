@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace Rivulet.Core.Tests;
 
 [SuppressMessage("ReSharper", "AccessToDisposedClosure")]
-public class RetryPolicyTests
+public sealed class RetryPolicyTests
 {
     [Fact]
     public async Task NoRetryPolicy_ErrorsAreNotRetried()
@@ -12,19 +12,13 @@ public class RetryPolicyTests
         var source = Enumerable.Range(1, 5);
         var attemptCounts = new ConcurrentDictionary<int, int>();
         var options = new ParallelOptionsRivulet
-        {
-            ErrorMode = ErrorMode.BestEffort,
-            MaxRetries = 0,
-            IsTransient = _ => true
-        };
+            { ErrorMode = ErrorMode.BestEffort, MaxRetries = 0, IsTransient = static _ => true };
 
         var results = await source.SelectParallelAsync(
             (x, _) =>
             {
-                attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
-                if (x == 3)
-                    throw new InvalidOperationException("Transient error");
-                return new ValueTask<int>(x * 2);
+                attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
+                return x == 3 ? throw new InvalidOperationException("Transient error") : new ValueTask<int>(x * 2);
             },
             options);
 
@@ -42,16 +36,16 @@ public class RetryPolicyTests
             ErrorMode = ErrorMode.BestEffort,
             MaxRetries = 3,
             BaseDelay = TimeSpan.FromMilliseconds(10),
-            IsTransient = ex => ex is InvalidOperationException
+            IsTransient = static ex => ex is InvalidOperationException
         };
 
         var results = await source.SelectParallelAsync(
             (x, _) =>
             {
-                var attempts = attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
-                if (x == 3 && attempts <= 2)
-                    throw new InvalidOperationException("Transient error");
-                return new ValueTask<int>(x * 2);
+                var attempts = attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
+                return x == 3 && attempts <= 2
+                    ? throw new InvalidOperationException("Transient error")
+                    : new ValueTask<int>(x * 2);
             },
             options);
 
@@ -69,16 +63,14 @@ public class RetryPolicyTests
             ErrorMode = ErrorMode.BestEffort,
             MaxRetries = 3,
             BaseDelay = TimeSpan.FromMilliseconds(10),
-            IsTransient = ex => ex is TimeoutException
+            IsTransient = static ex => ex is TimeoutException
         };
 
         var results = await source.SelectParallelAsync(
             (x, _) =>
             {
-                attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
-                if (x == 3)
-                    throw new InvalidOperationException("Non-transient error");
-                return new ValueTask<int>(x * 2);
+                attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
+                return x == 3 ? throw new InvalidOperationException("Non-transient error") : new ValueTask<int>(x * 2);
             },
             options);
 
@@ -93,19 +85,17 @@ public class RetryPolicyTests
         var attemptTimestamps = new List<DateTime>();
         var options = new ParallelOptionsRivulet
         {
-            ErrorMode = ErrorMode.BestEffort,
-            MaxRetries = 3,
-            BaseDelay = TimeSpan.FromMilliseconds(100),
-            IsTransient = _ => true
+            ErrorMode = ErrorMode.BestEffort, MaxRetries = 3, BaseDelay = TimeSpan.FromMilliseconds(100),
+            IsTransient = static _ => true
         };
 
         _ = await source.SelectParallelAsync(
             (x, _) =>
             {
                 attemptTimestamps.Add(DateTime.UtcNow);
-                if (attemptTimestamps.Count < 4)
-                    throw new InvalidOperationException("Transient error");
-                return new ValueTask<int>(x * 2);
+                return attemptTimestamps.Count < 4
+                    ? throw new InvalidOperationException("Transient error")
+                    : new ValueTask<int>(x * 2);
             },
             options);
 
@@ -127,21 +117,20 @@ public class RetryPolicyTests
         var attemptCount = 0;
         var options = new ParallelOptionsRivulet
         {
-            ErrorMode = ErrorMode.FailFast,
-            MaxRetries = 2,
-            BaseDelay = TimeSpan.FromMilliseconds(10),
-            IsTransient = _ => true
+            ErrorMode = ErrorMode.FailFast, MaxRetries = 2, BaseDelay = TimeSpan.FromMilliseconds(10),
+            IsTransient = static _ => true
         };
 
-        async Task<List<int>> Act() =>
-            await source.SelectParallelAsync((x, _) =>
-            {
-                attemptCount++;
-                throw new InvalidOperationException("Always fails");
+        Task<List<int>> Act() =>
+            source.SelectParallelAsync((x, _) =>
+                {
+                    attemptCount++;
+                    throw new InvalidOperationException("Always fails");
 #pragma warning disable CS0162 // Unreachable code detected
-                return new ValueTask<int>(x);
+                    return new ValueTask<int>(x);
 #pragma warning restore CS0162 // Unreachable code detected
-            }, options);
+                },
+                options);
 
         await Assert.ThrowsAsync<InvalidOperationException>(((Func<Task<List<int>>>?)Act)!);
         attemptCount.ShouldBe(3);
@@ -157,15 +146,17 @@ public class RetryPolicyTests
             ErrorMode = ErrorMode.BestEffort,
             MaxRetries = 2,
             BaseDelay = TimeSpan.FromMilliseconds(10),
-            IsTransient = ex => ex is InvalidOperationException
+            IsTransient = static ex => ex is InvalidOperationException
         };
 
         var results = await source.SelectParallelStreamAsync((x, _) =>
-            {
-                var attempts = attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
-                if (x == 3 && attempts == 1) throw new InvalidOperationException("Transient error");
-                return new ValueTask<int>(x * 2);
-            }, options)
+                {
+                    var attempts = attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
+                    if (x == 3 && attempts == 1) throw new InvalidOperationException("Transient error");
+
+                    return new ValueTask<int>(x * 2);
+                },
+                options)
             .ToListAsync();
 
         results.Count.ShouldBe(5);
@@ -180,18 +171,16 @@ public class RetryPolicyTests
         var processedItems = new ConcurrentBag<int>();
         var options = new ParallelOptionsRivulet
         {
-            ErrorMode = ErrorMode.BestEffort,
-            MaxRetries = 2,
-            BaseDelay = TimeSpan.FromMilliseconds(10),
-            IsTransient = _ => true
+            ErrorMode = ErrorMode.BestEffort, MaxRetries = 2, BaseDelay = TimeSpan.FromMilliseconds(10),
+            IsTransient = static _ => true
         };
 
         await source.ForEachParallelAsync(
             (x, _) =>
             {
-                var attempts = attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
-                if (x == 3 && attempts == 1)
-                    throw new InvalidOperationException("Transient error");
+                var attempts = attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
+                if (x == 3 && attempts == 1) throw new InvalidOperationException("Transient error");
+
                 processedItems.Add(x);
                 return ValueTask.CompletedTask;
             },
@@ -208,9 +197,7 @@ public class RetryPolicyTests
         var attemptCount = 0;
         var options = new ParallelOptionsRivulet
         {
-            ErrorMode = ErrorMode.BestEffort,
-            MaxRetries = 3,
-            BaseDelay = TimeSpan.FromMilliseconds(10),
+            ErrorMode = ErrorMode.BestEffort, MaxRetries = 3, BaseDelay = TimeSpan.FromMilliseconds(10),
             IsTransient = null
         };
 
@@ -218,9 +205,7 @@ public class RetryPolicyTests
             (x, _) =>
             {
                 attemptCount++;
-                if (attemptCount == 1)
-                    throw new InvalidOperationException("Error");
-                return new ValueTask<int>(x * 2);
+                return attemptCount == 1 ? throw new InvalidOperationException("Error") : new ValueTask<int>(x * 2);
             },
             options);
 
@@ -235,20 +220,20 @@ public class RetryPolicyTests
         using var cts = new CancellationTokenSource();
         var options = new ParallelOptionsRivulet
         {
-            ErrorMode = ErrorMode.FailFast,
-            MaxRetries = 5,
-            BaseDelay = TimeSpan.FromMilliseconds(500),
-            IsTransient = _ => true
+            ErrorMode = ErrorMode.FailFast, MaxRetries = 5, BaseDelay = TimeSpan.FromMilliseconds(500),
+            IsTransient = static _ => true
         };
 
-        async Task<List<int>> Act() =>
-            await source.SelectParallelAsync((x, _) =>
-            {
-                throw new InvalidOperationException("Transient error");
+        Task<List<int>> Act() =>
+            source.SelectParallelAsync(static (x, _) =>
+                {
+                    throw new InvalidOperationException("Transient error");
 #pragma warning disable CS0162
-                return new ValueTask<int>(x);
+                    return new ValueTask<int>(x);
 #pragma warning restore CS0162
-            }, options, cts.Token);
+                },
+                options,
+                cts.Token);
 
         var task = Act();
         await Task.Delay(100, cts.Token);
@@ -267,13 +252,13 @@ public class RetryPolicyTests
             ErrorMode = ErrorMode.BestEffort,
             MaxRetries = 2,
             BaseDelay = TimeSpan.FromMilliseconds(10),
-            IsTransient = ex => ex is TimeoutException
+            IsTransient = static ex => ex is TimeoutException
         };
 
         var results = await source.SelectParallelAsync(
             (x, _) =>
             {
-                attemptCounts.AddOrUpdate(x, 1, (_, count) => count + 1);
+                attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
 
                 return x switch
                 {

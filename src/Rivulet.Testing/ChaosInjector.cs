@@ -1,15 +1,15 @@
 namespace Rivulet.Testing;
 
 /// <summary>
-/// Injects chaos (failures, delays, timeouts) for resilience testing.
+///     Injects chaos (failures, delays, timeouts) for resilience testing.
 /// </summary>
 public sealed class ChaosInjector
 {
-    private readonly double _failureRate;
     private readonly TimeSpan? _artificialDelay;
+    private readonly double _failureRate;
 
     /// <summary>
-    /// Initializes a new chaos injector.
+    ///     Initializes a new chaos injector.
     /// </summary>
     /// <param name="failureRate">Probability of failure (0.0 to 1.0).</param>
     /// <param name="artificialDelay">Optional delay to inject before each operation.</param>
@@ -23,37 +23,33 @@ public sealed class ChaosInjector
     }
 
     /// <summary>
-    /// Executes an action with chaos injection.
+    ///     Executes an action with chaos injection.
     /// </summary>
     public async Task<T> ExecuteAsync<T>(Func<Task<T>> action, CancellationToken cancellationToken = default)
     {
         if (_artificialDelay.HasValue)
-        {
-            await Task.Delay(_artificialDelay.Value, cancellationToken);
-        }
+            await Task.Delay(_artificialDelay.Value, cancellationToken).ConfigureAwait(false);
 
-        if (ShouldFail())
-        {
-            throw new ChaosException("Chaos injected failure");
-        }
+        if (ShouldFail()) throw new ChaosException("Chaos injected failure");
 
-        return await action();
+        return await action().ConfigureAwait(false);
     }
 
     /// <summary>
-    /// Determines if the current operation should fail based on the failure rate.
+    ///     Determines if the current operation should fail based on the failure rate.
     /// </summary>
     public bool ShouldFail() => Random.Shared.NextDouble() < _failureRate;
 }
 
 /// <summary>
-/// Exception thrown by chaos injector.
+///     Exception thrown by chaos injector.
 /// </summary>
 public sealed class ChaosException : Exception
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="ChaosException"/> class.
+    ///     Initializes a new instance of the <see cref="ChaosException" /> class.
     /// </summary>
     /// <param name="message">The error message.</param>
-    public ChaosException(string message) : base(message) { }
+    public ChaosException(string message)
+        : base(message) { }
 }

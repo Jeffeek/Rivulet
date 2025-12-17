@@ -4,15 +4,15 @@ using Testcontainers.MySql;
 namespace Rivulet.Sql.MySql.Tests;
 
 /// <summary>
-/// Integration tests for MySqlBulkExtensions using Testcontainers.
-/// Uses per-test-class container for isolation (IAsyncLifetime).
-/// Requires Docker Desktop to be running.
+///     Integration tests for MySqlBulkExtensions using Testcontainers.
+///     Uses per-test-class container for isolation (IAsyncLifetime).
+///     Requires Docker Desktop to be running.
 /// </summary>
 [Trait("Category", "Integration")]
-public class MySqlBulkExtensionsIntegrationTests : IAsyncLifetime
+public sealed class MySqlBulkExtensionsIntegrationTests : IAsyncLifetime
 {
-    private MySqlContainer? _container;
     private string? _connectionString;
+    private MySqlContainer? _container;
 
     public async Task InitializeAsync()
     {
@@ -32,21 +32,20 @@ public class MySqlBulkExtensionsIntegrationTests : IAsyncLifetime
         await connection.OpenAsync();
 
         await using var command = connection.CreateCommand();
-        command.CommandText = @"
-            CREATE TABLE TestTable (
-                Id INT NOT NULL,
-                Name VARCHAR(100) NOT NULL,
-                Email VARCHAR(100) NOT NULL
-            )";
+        command.CommandText = """
+
+                                          CREATE TABLE TestTable (
+                                              Id INT NOT NULL,
+                                              Name VARCHAR(100) NOT NULL,
+                                              Email VARCHAR(100) NOT NULL
+                                          )
+                              """;
         await command.ExecuteNonQueryAsync();
     }
 
     public async Task DisposeAsync()
     {
-        if (_container != null)
-        {
-            await _container.DisposeAsync();
-        }
+        if (_container != null) await _container.DisposeAsync();
     }
 
     private MySqlConnection CreateConnection() => new(_connectionString!);
@@ -55,12 +54,7 @@ public class MySqlBulkExtensionsIntegrationTests : IAsyncLifetime
     public async Task BulkInsertUsingMySqlBulkLoaderAsync_WithValidData_ShouldInsertRecords()
     {
         // Arrange
-        var csvLines = new[]
-        {
-            "1,Alice,alice@example.com",
-            "2,Bob,bob@example.com",
-            "3,Charlie,charlie@example.com"
-        };
+        var csvLines = new[] { "1,Alice,alice@example.com", "2,Bob,bob@example.com", "3,Charlie,charlie@example.com" };
         var columnNames = new[] { "Id", "Name", "Email" };
 
         // Act
@@ -86,7 +80,7 @@ public class MySqlBulkExtensionsIntegrationTests : IAsyncLifetime
     {
         // Arrange
         var csvLines = Enumerable.Range(1, 10)
-            .Select(i => $"{i},User{i},user{i}@example.com")
+            .Select(static i => $"{i},User{i},user{i}@example.com")
             .ToArray();
         var columnNames = new[] { "Id", "Name", "Email" };
 
@@ -112,11 +106,7 @@ public class MySqlBulkExtensionsIntegrationTests : IAsyncLifetime
     public async Task BulkInsertUsingMySqlBulkLoaderAsync_WithCustomSeparators_ShouldWork()
     {
         // Arrange
-        var csvLines = new[]
-        {
-            "100|Dave|dave@example.com",
-            "101|Eve|eve@example.com"
-        };
+        var csvLines = new[] { "100|Dave|dave@example.com", "101|Eve|eve@example.com" };
         var columnNames = new[] { "Id", "Name", "Email" };
 
         // Act
@@ -144,8 +134,7 @@ public class MySqlBulkExtensionsIntegrationTests : IAsyncLifetime
         var csvLines = new[] { "1,Test,test@example.com" };
         var columnNames = new[] { "Id", "Name", "Email" };
 
-        var act = async () => await csvLines.BulkInsertUsingMySqlBulkLoaderAsync(
-            () => null!,
+        var act = () => csvLines.BulkInsertUsingMySqlBulkLoaderAsync(static () => null!,
             "TestTable",
             columnNames);
 
@@ -159,7 +148,7 @@ public class MySqlBulkExtensionsIntegrationTests : IAsyncLifetime
         var csvLines = new[] { "1,Test,test@example.com" };
         var columnNames = new[] { "Id", "Name", "Email" };
 
-        var act = async () => await csvLines.BulkInsertUsingMySqlBulkLoaderAsync(
+        var act = () => csvLines.BulkInsertUsingMySqlBulkLoaderAsync(
             CreateConnection,
             "NonExistentTable",
             columnNames);
@@ -176,11 +165,13 @@ public class MySqlBulkExtensionsIntegrationTests : IAsyncLifetime
         var tempFile2 = Path.GetTempFileName();
         try
         {
-            await File.WriteAllLinesAsync(tempFile1, [
+            await File.WriteAllLinesAsync(tempFile1,
+            [
                 "200,Frank,frank@example.com",
                 "201,Grace,grace@example.com"
             ]);
-            await File.WriteAllLinesAsync(tempFile2, [
+            await File.WriteAllLinesAsync(tempFile2,
+            [
                 "202,Hank,hank@example.com"
             ]);
 
@@ -206,6 +197,7 @@ public class MySqlBulkExtensionsIntegrationTests : IAsyncLifetime
         finally
         {
             if (File.Exists(tempFile1)) File.Delete(tempFile1);
+
             if (File.Exists(tempFile2)) File.Delete(tempFile2);
         }
     }
@@ -220,8 +212,7 @@ public class MySqlBulkExtensionsIntegrationTests : IAsyncLifetime
             var filePaths = new[] { tempFile };
             var columnNames = new[] { "Id", "Name", "Email" };
 
-            var act = async () => await filePaths.BulkInsertFromFilesUsingMySqlBulkLoaderAsync(
-                () => null!,
+            var act = () => filePaths.BulkInsertFromFilesUsingMySqlBulkLoaderAsync(static () => null!,
                 "TestTable",
                 columnNames);
 
@@ -237,10 +228,10 @@ public class MySqlBulkExtensionsIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task BulkInsertFromFilesUsingMySqlBulkLoaderAsync_WithNonExistentFile_ShouldThrow()
     {
-        var filePaths = new[] { "C:\\NonExistent\\File.csv" };
+        var filePaths = new[] { @"C:\NonExistent\File.csv" };
         var columnNames = new[] { "Id", "Name", "Email" };
 
-        var act = async () => await filePaths.BulkInsertFromFilesUsingMySqlBulkLoaderAsync(
+        var act = () => filePaths.BulkInsertFromFilesUsingMySqlBulkLoaderAsync(
             CreateConnection,
             "TestTable",
             columnNames);

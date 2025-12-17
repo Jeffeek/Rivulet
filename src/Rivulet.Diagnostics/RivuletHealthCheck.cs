@@ -4,11 +4,11 @@ using Rivulet.Core.Observability;
 namespace Rivulet.Diagnostics;
 
 /// <summary>
-/// Health check for monitoring Rivulet.Core metrics.
-/// Integrates with Microsoft.Extensions.Diagnostics.HealthChecks.
+///     Health check for monitoring Rivulet.Core metrics.
+///     Integrates with Microsoft.Extensions.Diagnostics.HealthChecks.
 /// </summary>
 /// <example>
-/// <code>
+///     <code>
 /// // In Startup.cs or Program.cs
 /// builder.Services.AddHealthChecks()
 ///     .AddCheck&lt;RivuletHealthCheck&gt;("rivulet", tags: new[] { "ready" });
@@ -23,11 +23,11 @@ namespace Rivulet.Diagnostics;
 /// </example>
 public sealed class RivuletHealthCheck : IHealthCheck, IDisposable
 {
-    private readonly RivuletHealthCheckOptions _options;
     private readonly PrometheusExporter _exporter;
+    private readonly RivuletHealthCheckOptions _options;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="RivuletHealthCheck"/> class.
+    ///     Initializes a new instance of the <see cref="RivuletHealthCheck" /> class.
     /// </summary>
     /// <param name="exporter">The PrometheusExporter instance to use for retrieving metrics.</param>
     /// <param name="options">Health check options.</param>
@@ -38,18 +38,22 @@ public sealed class RivuletHealthCheck : IHealthCheck, IDisposable
     }
 
     /// <summary>
-    /// Checks the health of Rivulet operations.
+    ///     Disposes the health check.
     /// </summary>
-    public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
+    public void Dispose() { }
+
+    /// <summary>
+    ///     Checks the health of Rivulet operations.
+    /// </summary>
+    public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context,
+        CancellationToken cancellationToken = default)
     {
         try
         {
             var metrics = _exporter.ExportDictionary();
 
             if (metrics.Count == 0)
-            {
                 return Task.FromResult(HealthCheckResult.Healthy(RivuletDiagnosticsConstants.HealthCheckMessages.NothingRunning));
-            }
 
             var itemsStarted = metrics.GetValueOrDefault(RivuletMetricsConstants.CounterNames.ItemsStarted, 0);
             var itemsCompleted = metrics.GetValueOrDefault(RivuletMetricsConstants.CounterNames.ItemsCompleted, 0);
@@ -85,40 +89,33 @@ public sealed class RivuletHealthCheck : IHealthCheck, IDisposable
 
             return Task.FromResult(HealthCheckResult.Healthy(
                 $"Rivulet operations healthy: {itemsCompleted}/{itemsStarted} completed, {totalFailures} failures",
-                data: data
+                data
             ));
         }
         catch (Exception ex)
         {
             return Task.FromResult(HealthCheckResult.Unhealthy(
                 "Failed to collect Rivulet metrics",
-                exception: ex
+                ex
             ));
         }
-    }
-
-    /// <summary>
-    /// Disposes the health check.
-    /// </summary>
-    public void Dispose()
-    {
     }
 }
 
 /// <summary>
-/// Options for configuring <see cref="RivuletHealthCheck"/>.
+///     Options for configuring <see cref="RivuletHealthCheck" />.
 /// </summary>
 public sealed class RivuletHealthCheckOptions
 {
     /// <summary>
-    /// Gets or sets the error rate threshold (0.0 to 1.0) above which the health check reports degraded status.
-    /// Default is 0.1 (10%).
+    ///     Gets or sets the error rate threshold (0.0 to 1.0) above which the health check reports degraded status.
+    ///     Default is 0.1 (10%).
     /// </summary>
-    public double ErrorRateThreshold { get; set; } = 0.1;
+    public double ErrorRateThreshold { get; init; } = 0.1;
 
     /// <summary>
-    /// Gets or sets the failure count threshold above which the health check reports unhealthy status.
-    /// Default is 1000.
+    ///     Gets or sets the failure count threshold above which the health check reports unhealthy status.
+    ///     Default is 1000.
     /// </summary>
-    public long FailureCountThreshold { get; set; } = 1000;
+    public long FailureCountThreshold { get; init; } = 1000;
 }

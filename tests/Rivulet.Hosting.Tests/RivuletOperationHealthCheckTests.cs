@@ -3,7 +3,7 @@ using Rivulet.Hosting.HealthChecks;
 
 namespace Rivulet.Hosting.Tests;
 
-public class RivuletOperationHealthCheckTests
+public sealed class RivuletOperationHealthCheckTests
 {
     [Fact]
     public async Task Constructor_WithNullOptions_ShouldUseDefaults()
@@ -19,15 +19,12 @@ public class RivuletOperationHealthCheckTests
     public async Task Constructor_WithCustomOptions_ShouldUseProvidedOptions()
     {
         var options = new RivuletOperationHealthCheckOptions
-        {
-            StalledThreshold = TimeSpan.FromSeconds(1),
-            UnhealthyFailureThreshold = 2
-        };
+            { StalledThreshold = TimeSpan.FromSeconds(1), UnhealthyFailureThreshold = 2 };
 
         var healthCheck = new RivuletOperationHealthCheck(options);
 
         // Wait for stalled threshold to pass
-        await Task.Delay(1100);
+        await Task.Delay(1100, CancellationToken.None);
 
         var result = await healthCheck.CheckHealthAsync(new());
 
@@ -52,7 +49,7 @@ public class RivuletOperationHealthCheckTests
         var result = await healthCheck.CheckHealthAsync(new());
 
         result.Status.ShouldBe(HealthStatus.Healthy);
-        result.Data["consecutive_failures"].ShouldBe(0);
+        result.Data[RivuletHostingConstants.HealthCheckKeys.ConsecutiveFailures].ShouldBe(0);
     }
 
     [Fact]
@@ -67,7 +64,7 @@ public class RivuletOperationHealthCheckTests
         var result = await healthCheck.CheckHealthAsync(new());
 
         result.Status.ShouldBe(HealthStatus.Healthy);
-        result.Data["consecutive_failures"].ShouldBe(3);
+        result.Data[RivuletHostingConstants.HealthCheckKeys.ConsecutiveFailures].ShouldBe(3);
     }
 
     [Fact]
@@ -81,94 +78,73 @@ public class RivuletOperationHealthCheckTests
 
         result.Status.ShouldBe(HealthStatus.Healthy);
         result.Description.ShouldNotBeNull();
-        result.Description.ShouldContain("Operation healthy");
-        result.Data.ContainsKey("consecutive_failures").ShouldBeTrue();
-        result.Data.ContainsKey("time_since_last_success").ShouldBeTrue();
+        result.Description.ShouldContain(RivuletHostingConstants.HealthCheckMessages.OperationHealthy);
+        result.Data.ContainsKey(RivuletHostingConstants.HealthCheckKeys.ConsecutiveFailures).ShouldBeTrue();
+        result.Data.ContainsKey(RivuletHostingConstants.HealthCheckKeys.TimeSinceLastSuccess).ShouldBeTrue();
     }
 
     [Fact]
     public async Task CheckHealthAsync_WhenStalled_ShouldReturnDegradedStatus()
     {
-        var options = new RivuletOperationHealthCheckOptions
-        {
-            StalledThreshold = TimeSpan.FromMilliseconds(100)
-        };
+        var options = new RivuletOperationHealthCheckOptions { StalledThreshold = TimeSpan.FromMilliseconds(100) };
 
         var healthCheck = new RivuletOperationHealthCheck(options);
 
         // Wait for stalled threshold
-        await Task.Delay(150);
+        await Task.Delay(150, CancellationToken.None);
 
         var result = await healthCheck.CheckHealthAsync(new());
 
         result.Status.ShouldBe(HealthStatus.Degraded);
         result.Description.ShouldNotBeNull();
         result.Description.ShouldContain("No successful operations");
-        result.Data["time_since_last_success"].ShouldBeOfType<TimeSpan>();
-        result.Data["consecutive_failures"].ShouldBe(0);
+        result.Data[RivuletHostingConstants.HealthCheckKeys.TimeSinceLastSuccess].ShouldBeOfType<TimeSpan>();
+        result.Data[RivuletHostingConstants.HealthCheckKeys.ConsecutiveFailures].ShouldBe(0);
     }
 
     [Fact]
     public async Task CheckHealthAsync_WithTooManyFailures_ShouldReturnUnhealthyStatus()
     {
-        var options = new RivuletOperationHealthCheckOptions
-        {
-            UnhealthyFailureThreshold = 5
-        };
+        var options = new RivuletOperationHealthCheckOptions { UnhealthyFailureThreshold = 5 };
 
         var healthCheck = new RivuletOperationHealthCheck(options);
 
         // Record enough failures to exceed threshold
-        for (var i = 0; i < 5; i++)
-        {
-            healthCheck.RecordFailure();
-        }
+        for (var i = 0; i < 5; i++) healthCheck.RecordFailure();
 
         var result = await healthCheck.CheckHealthAsync(new());
 
         result.Status.ShouldBe(HealthStatus.Unhealthy);
         result.Description.ShouldNotBeNull();
-        result.Description.ShouldContain("Operation has failed 5 consecutive times");
-        result.Data["consecutive_failures"].ShouldBe(5);
-        result.Data.ContainsKey("time_since_last_success").ShouldBeTrue();
+        result.Description.ShouldContain(string.Format(RivuletHostingConstants.HealthCheckMessages.ConsecutiveFailuresFormat, 5));
+        result.Data[RivuletHostingConstants.HealthCheckKeys.ConsecutiveFailures].ShouldBe(5);
+        result.Data.ContainsKey(RivuletHostingConstants.HealthCheckKeys.TimeSinceLastSuccess).ShouldBeTrue();
     }
 
     [Fact]
     public async Task CheckHealthAsync_WithJustBelowThreshold_ShouldStayHealthy()
     {
-        var options = new RivuletOperationHealthCheckOptions
-        {
-            UnhealthyFailureThreshold = 10
-        };
+        var options = new RivuletOperationHealthCheckOptions { UnhealthyFailureThreshold = 10 };
 
         var healthCheck = new RivuletOperationHealthCheck(options);
 
         // Record just below threshold
-        for (var i = 0; i < 9; i++)
-        {
-            healthCheck.RecordFailure();
-        }
+        for (var i = 0; i < 9; i++) healthCheck.RecordFailure();
 
         var result = await healthCheck.CheckHealthAsync(new());
 
         result.Status.ShouldBe(HealthStatus.Healthy);
-        result.Data["consecutive_failures"].ShouldBe(9);
+        result.Data[RivuletHostingConstants.HealthCheckKeys.ConsecutiveFailures].ShouldBe(9);
     }
 
     [Fact]
     public async Task CheckHealthAsync_WithExactThreshold_ShouldBeUnhealthy()
     {
-        var options = new RivuletOperationHealthCheckOptions
-        {
-            UnhealthyFailureThreshold = 3
-        };
+        var options = new RivuletOperationHealthCheckOptions { UnhealthyFailureThreshold = 3 };
 
         var healthCheck = new RivuletOperationHealthCheck(options);
 
-        for (var i = 0; i < 3; i++)
-        {
-            healthCheck.RecordFailure();
-        }
+        for (var i = 0; i < 3; i++) healthCheck.RecordFailure();
 
         var result = await healthCheck.CheckHealthAsync(new());
 
@@ -180,20 +156,16 @@ public class RivuletOperationHealthCheckTests
     {
         var options = new RivuletOperationHealthCheckOptions
         {
-            StalledThreshold = TimeSpan.FromMilliseconds(10),
-            UnhealthyFailureThreshold = 3
+            StalledThreshold = TimeSpan.FromMilliseconds(10), UnhealthyFailureThreshold = 3
         };
 
         var healthCheck = new RivuletOperationHealthCheck(options);
 
         // Record failures
-        for (var i = 0; i < 3; i++)
-        {
-            healthCheck.RecordFailure();
-        }
+        for (var i = 0; i < 3; i++) healthCheck.RecordFailure();
 
         // Wait for stalled threshold
-        await Task.Delay(50);
+        await Task.Delay(50, CancellationToken.None);
 
         var result = await healthCheck.CheckHealthAsync(new());
 
@@ -206,21 +178,18 @@ public class RivuletOperationHealthCheckTests
     [Fact]
     public async Task RecordSuccess_ShouldUpdateLastSuccessTime()
     {
-        var options = new RivuletOperationHealthCheckOptions
-        {
-            StalledThreshold = TimeSpan.FromMilliseconds(100)
-        };
+        var options = new RivuletOperationHealthCheckOptions { StalledThreshold = TimeSpan.FromMilliseconds(100) };
 
         var healthCheck = new RivuletOperationHealthCheck(options);
 
         // Wait then record success
-        await Task.Delay(50);
+        await Task.Delay(50, CancellationToken.None);
         healthCheck.RecordSuccess();
 
         var result = await healthCheck.CheckHealthAsync(new());
 
         result.Status.ShouldBe(HealthStatus.Healthy);
-        var timeSinceSuccess = (TimeSpan)result.Data["time_since_last_success"];
+        var timeSinceSuccess = (TimeSpan)result.Data[RivuletHostingConstants.HealthCheckKeys.TimeSinceLastSuccess];
         timeSinceSuccess.ShouldBeLessThan(TimeSpan.FromMilliseconds(100));
     }
 
@@ -232,15 +201,15 @@ public class RivuletOperationHealthCheckTests
         healthCheck.RecordFailure();
         healthCheck.RecordFailure();
         var result1 = await healthCheck.CheckHealthAsync(new());
-        result1.Data["consecutive_failures"].ShouldBe(2);
+        result1.Data[RivuletHostingConstants.HealthCheckKeys.ConsecutiveFailures].ShouldBe(2);
 
         healthCheck.RecordFailure();
         var result2 = await healthCheck.CheckHealthAsync(new());
-        result2.Data["consecutive_failures"].ShouldBe(3);
+        result2.Data[RivuletHostingConstants.HealthCheckKeys.ConsecutiveFailures].ShouldBe(3);
 
         healthCheck.RecordSuccess();
         var result3 = await healthCheck.CheckHealthAsync(new());
-        result3.Data["consecutive_failures"].ShouldBe(0);
+        result3.Data[RivuletHostingConstants.HealthCheckKeys.ConsecutiveFailures].ShouldBe(0);
     }
 
     [Fact]
@@ -268,10 +237,7 @@ public class RivuletOperationHealthCheckTests
     public void RivuletOperationHealthCheckOptions_ShouldAllowCustomValues()
     {
         var options = new RivuletOperationHealthCheckOptions
-        {
-            StalledThreshold = TimeSpan.FromSeconds(30),
-            UnhealthyFailureThreshold = 5
-        };
+            { StalledThreshold = TimeSpan.FromSeconds(30), UnhealthyFailureThreshold = 5 };
 
         options.StalledThreshold.ShouldBe(TimeSpan.FromSeconds(30));
         options.UnhealthyFailureThreshold.ShouldBe(5);
@@ -283,10 +249,7 @@ public class RivuletOperationHealthCheckTests
         var healthCheck = new RivuletOperationHealthCheck();
 
         // Record failures
-        for (var i = 0; i < 5; i++)
-        {
-            healthCheck.RecordFailure();
-        }
+        for (var i = 0; i < 5; i++) healthCheck.RecordFailure();
 
         // Concurrently record success
         var tasks = Enumerable.Range(0, 10)
@@ -297,7 +260,7 @@ public class RivuletOperationHealthCheckTests
 
         var result = await healthCheck.CheckHealthAsync(new());
 
-        result.Data["consecutive_failures"].ShouldBe(0);
+        result.Data[RivuletHostingConstants.HealthCheckKeys.ConsecutiveFailures].ShouldBe(0);
     }
 
     [Fact]
@@ -314,7 +277,7 @@ public class RivuletOperationHealthCheckTests
 
         var result = await healthCheck.CheckHealthAsync(new());
 
-        result.Data["consecutive_failures"].ShouldBe(100);
+        result.Data[RivuletHostingConstants.HealthCheckKeys.ConsecutiveFailures].ShouldBe(100);
     }
 
     [Fact]
@@ -327,8 +290,8 @@ public class RivuletOperationHealthCheckTests
 
         var result = await healthCheck.CheckHealthAsync(new());
 
-        result.Data.ContainsKey("consecutive_failures").ShouldBeTrue();
-        result.Data.ContainsKey("time_since_last_success").ShouldBeTrue();
+        result.Data.ContainsKey(RivuletHostingConstants.HealthCheckKeys.ConsecutiveFailures).ShouldBeTrue();
+        result.Data.ContainsKey(RivuletHostingConstants.HealthCheckKeys.TimeSinceLastSuccess).ShouldBeTrue();
         result.Data.Count.ShouldBe(2);
     }
 }

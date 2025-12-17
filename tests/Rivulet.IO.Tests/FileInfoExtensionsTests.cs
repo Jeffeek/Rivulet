@@ -1,8 +1,9 @@
-﻿using Rivulet.Base.Tests;
+﻿using System.Text;
+using Rivulet.Base.Tests;
 
 namespace Rivulet.IO.Tests;
 
-public class FileInfoExtensionsTests : TempDirectoryFixture
+public sealed class FileInfoExtensionsTests : TempDirectoryFixture
 {
     [Fact]
     public async Task ReadAllTextParallelAsync_WithMultipleFileInfos_ShouldReadCorrectly()
@@ -20,10 +21,7 @@ public class FileInfoExtensionsTests : TempDirectoryFixture
 
         // Act
         var results = await files.ReadAllTextParallelAsync(
-            new()
-            {
-                ParallelOptions = new() { OrderedOutput = true }
-            });
+            new() { ParallelOptions = new() { OrderedOutput = true } });
 
         // Assert
         results.Count.ShouldBe(3);
@@ -49,10 +47,7 @@ public class FileInfoExtensionsTests : TempDirectoryFixture
 
         // Act
         var results = await files.ReadAllBytesParallelAsync(
-            new()
-            {
-                ParallelOptions = new() { OrderedOutput = true }
-            });
+            new() { ParallelOptions = new() { OrderedOutput = true } });
 
         // Assert
         results.Count.ShouldBe(2);
@@ -114,7 +109,7 @@ public class FileInfoExtensionsTests : TempDirectoryFixture
         var options = new FileOperationOptions { OverwriteExisting = false };
 
         // Act
-        var act = async () => await file.WriteAllTextAsync("New content", options);
+        var act = () => file.WriteAllTextAsync("New content", options).AsTask();
 
         // Assert
         await act.ShouldThrowAsync<IOException>();
@@ -124,6 +119,7 @@ public class FileInfoExtensionsTests : TempDirectoryFixture
     public async Task WriteAllBytesAsync_ShouldWriteCorrectly()
     {
         // Arrange
+        // ReSharper disable once StringLiteralTypo
         var file = new FileInfo(Path.Join(TestDirectory, "writebytes.bin"));
         var data = "def"u8.ToArray();
 
@@ -166,7 +162,7 @@ public class FileInfoExtensionsTests : TempDirectoryFixture
         var options = new FileOperationOptions { OverwriteExisting = false };
 
         // Act
-        var act = async () => await sourceFile.CopyToAsync(destPath, options);
+        var act = () => sourceFile.CopyToAsync(destPath, options).AsTask();
 
         // Assert
         await act.ShouldThrowAsync<IOException>();
@@ -176,6 +172,7 @@ public class FileInfoExtensionsTests : TempDirectoryFixture
     public async Task DeleteAsync_ShouldDeleteFileCorrectly()
     {
         // Arrange
+        // ReSharper disable once StringLiteralTypo
         var file = new FileInfo(Path.Join(TestDirectory, "todelete.txt"));
         await File.WriteAllTextAsync(file.FullName, "Will be deleted");
 
@@ -192,7 +189,7 @@ public class FileInfoExtensionsTests : TempDirectoryFixture
         // Arrange
         var file = new FileInfo(Path.Join(TestDirectory, "encoding.txt"));
         const string content = "Special chars: ñ, é, ü";
-        var options = new FileOperationOptions { Encoding = System.Text.Encoding.Unicode };
+        var options = new FileOperationOptions { Encoding = Encoding.Unicode };
 
         // Act
         await file.WriteAllTextAsync(content, options);
@@ -254,7 +251,7 @@ public class FileInfoExtensionsTests : TempDirectoryFixture
         };
 
         // Act
-        var act = async () => await file.ReadAllTextAsync(options);
+        var act = () => file.ReadAllTextAsync(options).AsTask();
 
         // Assert
         await act.ShouldThrowAsync<FileNotFoundException>();

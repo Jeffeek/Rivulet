@@ -2,7 +2,7 @@
 
 namespace Rivulet.Sql.Tests;
 
-public class BulkOperationOptionsTests
+public sealed class BulkOperationOptionsTests
 {
     [Fact]
     public void BulkOperationOptions_DefaultValues_ShouldBeCorrect()
@@ -18,7 +18,7 @@ public class BulkOperationOptionsTests
     }
 
     [Fact]
-    public void BulkOperationOptions_WithInitProperties_ShouldSetCorrectly()
+    public async Task BulkOperationOptions_WithInitProperties_ShouldSetCorrectly()
     {
         var batchStartCalled = false;
         var batchCompleteCalled = false;
@@ -28,10 +28,7 @@ public class BulkOperationOptionsTests
         {
             BatchSize = 500,
             UseTransaction = false,
-            SqlOptions = new()
-            {
-                CommandTimeout = 60
-            },
+            SqlOptions = new() { CommandTimeout = 60 },
             OnBatchStartAsync = (_, _) =>
             {
                 batchStartCalled = true;
@@ -57,9 +54,9 @@ public class BulkOperationOptionsTests
         options.OnBatchCompleteAsync.ShouldNotBeNull();
         options.OnBatchErrorAsync.ShouldNotBeNull();
 
-        options.OnBatchStartAsync!.Invoke(new List<object>(), 0);
-        options.OnBatchCompleteAsync!.Invoke(new List<object>(), 0, 100);
-        options.OnBatchErrorAsync!.Invoke(new List<object>(), 0, new());
+        await options.OnBatchStartAsync!.Invoke(new List<object>(), 0);
+        await options.OnBatchCompleteAsync!.Invoke(new List<object>(), 0, 100);
+        await options.OnBatchErrorAsync!.Invoke(new List<object>(), 0, new());
 
         batchStartCalled.ShouldBeTrue();
         batchCompleteCalled.ShouldBeTrue();
@@ -72,11 +69,7 @@ public class BulkOperationOptionsTests
         var options = new BulkOperationOptions
         {
             SqlOptions = new()
-            {
-                CommandTimeout = 90,
-                IsolationLevel = IsolationLevel.Serializable,
-                AutoManageConnection = false
-            }
+                { CommandTimeout = 90, IsolationLevel = IsolationLevel.Serializable, AutoManageConnection = false }
         };
 
         options.SqlOptions.ShouldNotBeNull();

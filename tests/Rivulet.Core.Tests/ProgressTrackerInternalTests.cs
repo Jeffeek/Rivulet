@@ -5,20 +5,17 @@ using Rivulet.Core.Observability;
 namespace Rivulet.Core.Tests;
 
 /// <summary>
-/// Tests for internal ProgressTracker behavior that requires direct access.
-/// These tests access internal members via InternalsVisibleTo.
+///     Tests for internal ProgressTracker behavior that requires direct access.
+///     These tests access internal members via InternalsVisibleTo.
 /// </summary>
 [SuppressMessage("ReSharper", "AccessToDisposedClosure")]
-public class ProgressTrackerInternalTests
+public sealed class ProgressTrackerInternalTests
 {
     [Fact]
     public async Task ProgressTracker_DoubleDispose_DoesNotThrow()
     {
         var options = new ProgressOptions
-        {
-            ReportInterval = TimeSpan.FromMilliseconds(50),
-            OnProgress = _ => ValueTask.CompletedTask
-        };
+            { ReportInterval = TimeSpan.FromMilliseconds(50), OnProgress = static _ => ValueTask.CompletedTask };
 
         using var cts = new CancellationTokenSource();
         var tracker = new ProgressTracker(100, options, cts.Token);
@@ -40,11 +37,7 @@ public class ProgressTrackerInternalTests
     [Fact]
     public async Task ProgressTracker_WithNullCallback_DoesNotReport()
     {
-        var options = new ProgressOptions
-        {
-            ReportInterval = TimeSpan.FromMilliseconds(10),
-            OnProgress = null
-        };
+        var options = new ProgressOptions { ReportInterval = TimeSpan.FromMilliseconds(10), OnProgress = null };
 
         using var cts = new CancellationTokenSource();
         var tracker = new ProgressTracker(50, options, cts.Token);
@@ -62,10 +55,7 @@ public class ProgressTrackerInternalTests
     public async Task ProgressTracker_RapidCancellation_DisposesCleanly()
     {
         var options = new ProgressOptions
-        {
-            ReportInterval = TimeSpan.FromMilliseconds(10),
-            OnProgress = _ => ValueTask.CompletedTask
-        };
+            { ReportInterval = TimeSpan.FromMilliseconds(10), OnProgress = static _ => ValueTask.CompletedTask };
 
         using var cts = new CancellationTokenSource();
         var tracker = new ProgressTracker(100, options, cts.Token);
@@ -101,7 +91,8 @@ public class ProgressTrackerInternalTests
         tracker.IncrementCompleted();
 
         // Wait for callback to actually fire (with timeout for safety)
-        var completedInTime = await Task.WhenAny(callbackFired.Task, Task.Delay(500, CancellationToken.None)) == callbackFired.Task;
+        var completedInTime = await Task.WhenAny(callbackFired.Task, Task.Delay(500, CancellationToken.None)) ==
+                              callbackFired.Task;
         completedInTime.ShouldBeTrue("callback should fire within 500ms");
 
         var act = async () => await tracker.DisposeAsync();
@@ -167,7 +158,7 @@ public class ProgressTrackerInternalTests
             // Poll for snapshot to be captured (timer fires every 10ms but may be delayed in CI)
             await DeadlineExtensions.ApplyDeadlineAsync(
                 DateTime.UtcNow.AddMilliseconds(500),
-                () => Task.Delay(20, CancellationToken.None),
+                static () => Task.Delay(20, CancellationToken.None),
                 () => lastSnapshot == null);
 
             lastSnapshot.ShouldNotBeNull();
@@ -227,7 +218,7 @@ public class ProgressTrackerInternalTests
             // Poll for snapshot to capture all errors (timer fires every 10ms but may be delayed in CI)
             await DeadlineExtensions.ApplyDeadlineAsync(
                 DateTime.UtcNow.AddMilliseconds(1500),
-                () => Task.Delay(20, CancellationToken.None),
+                static () => Task.Delay(20, CancellationToken.None),
                 () => lastSnapshot is not { ErrorCount: 5 });
 
             lastSnapshot.ShouldNotBeNull();

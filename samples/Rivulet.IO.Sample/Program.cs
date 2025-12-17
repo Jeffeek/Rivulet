@@ -2,6 +2,9 @@ using Rivulet.Core;
 using Rivulet.Core.Observability;
 using Rivulet.IO;
 
+// ReSharper disable ArgumentsStyleLiteral
+// ReSharper disable ArrangeObjectCreationWhenTypeNotEvident
+
 Console.WriteLine("=== Rivulet.IO Sample ===\n");
 
 // Setup sample directories
@@ -43,11 +46,10 @@ try
     // Sample 3: Transform files in parallel
     Console.WriteLine("3. TransformFilesParallelAsync - Transform and save");
     var transformations = filePaths.Select(f =>
-        (f, Path.Join(outputDir, Path.GetFileName(f))))
+            (f, Path.Join(outputDir, Path.GetFileName(f))))
         .ToList();
 
-    await transformations.TransformFilesParallelAsync(
-        async (_, content) =>
+    await transformations.TransformFilesParallelAsync(static async (_, content) =>
         {
             await Task.Delay(10); // Simulate processing
             return content.ToUpperInvariant();
@@ -65,7 +67,7 @@ try
     var results = await DirectoryParallelExtensions.ProcessDirectoryFilesParallelAsync(
         inputDir,
         "*.txt",
-        async (filePath, ct) =>
+        static async (filePath, ct) =>
         {
             var content = await File.ReadAllTextAsync(filePath, ct);
             return (filePath, length: content.Length);
@@ -82,7 +84,7 @@ try
     Console.WriteLine("5. CopyFilesParallelAsync - Copy to backup");
     var backupDir = Path.Join(sampleDir, "backup");
     var copyPairs = filePaths.Select(f =>
-        (f, Path.Join(backupDir, Path.GetFileName(f))))
+            (f, Path.Join(backupDir, Path.GetFileName(f))))
         .ToList();
 
     await copyPairs.CopyFilesParallelAsync(
@@ -95,7 +97,7 @@ try
                 Progress = new ProgressOptions
                 {
                     ReportInterval = TimeSpan.FromMilliseconds(100),
-                    OnProgress = progress =>
+                    OnProgress = static progress =>
                     {
                         Console.WriteLine($"  Copied: {progress.ItemsCompleted}/{progress.TotalItems}");
                         return ValueTask.CompletedTask;
@@ -123,8 +125,5 @@ try
 finally
 {
     // Cleanup
-    if (Directory.Exists(sampleDir))
-    {
-        Directory.Delete(sampleDir, recursive: true);
-    }
+    if (Directory.Exists(sampleDir)) Directory.Delete(sampleDir, recursive: true);
 }
