@@ -51,11 +51,9 @@ jobs:
          version: 2025.3.0.3
          failOnIssue: '1'
          noBuild: true
-         cachesHome: /linter-cache
          solutionWideAnalysis: true
          minimumReportSeverity: WARNING
          minimumSeverity: warning
-         output: linter-reports/resharper-report.xml
          dotnetVersion: ${{ steps.setup-dotnet.outputs.dotnet-version }}
          include: |
            **.cs

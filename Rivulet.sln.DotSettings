@@ -239,7 +239,7 @@
 	<s:Boolean x:Key="/Default/CodeStyle/CodeFormatting/VBFormat/USE_INDENT_FROM_VS/@EntryValue">False</s:Boolean>
 	<s:Boolean x:Key="/Default/CodeStyle/CodeFormatting/XmlDocFormatter/USE_INDENT_FROM_VS/@EntryValue">False</s:Boolean>
 	<s:Boolean x:Key="/Default/CodeStyle/CodeFormatting/XmlFormatter/USE_INDENT_FROM_VS/@EntryValue">False</s:Boolean>
-	<s:Boolean x:Key="/Default/CodeStyle/CSharpVarKeywordUsage/UseRoslynLogicForEvidentTypes/@EntryValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/CodeStyle/CSharpVarKeywordUsage/UseRoslynLogicForEvidentTypes/@EntryValue">False</s:Boolean>
 	<s:Boolean x:Key="/Default/CodeStyle/EditorConfig/SyncToVisualStudio/@EntryValue">True</s:Boolean>
 	<s:String x:Key="/Default/CodeStyle/Naming/CSharpNaming/PredefinedNamingRules/=Interfaces/@EntryIndexedValue">&lt;Policy Inspect="True" Prefix="I" Suffix="" Style="AaBb" /&gt;</s:String>
 	<s:String x:Key="/Default/CodeStyle/Naming/CSharpNaming/PredefinedNamingRules/=TypeParameters/@EntryIndexedValue">&lt;Policy Inspect="True" Prefix="T" Suffix="" Style="AaBb" /&gt;</s:String>
