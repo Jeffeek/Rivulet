@@ -1,4 +1,4 @@
-﻿using System.Diagnostics.Tracing;
+using System.Diagnostics.Tracing;
 using Rivulet.Core.Observability;
 
 namespace Rivulet.Core.Tests;

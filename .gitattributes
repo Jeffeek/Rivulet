@@ -61,3 +61,15 @@
 #*.PDF   diff=astextplain
 #*.rtf   diff=astextplain
 #*.RTF   diff=astextplain
+
+# Force consistent line endings for C# code files to avoid ReSharper InspectCode
+# platform-specific differences between Windows (CRLF) and Linux (LF)
+*.cs text eol=lf
+*.csproj text eol=lf
+*.sln text eol=lf
+*.DotSettings text eol=lf
+.editorconfig text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.props text eol=lf
+*.targets text eol=lf

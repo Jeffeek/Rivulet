@@ -1,4 +1,4 @@
-﻿using Rivulet.Core.Resilience;
+using Rivulet.Core.Resilience;
 
 namespace Rivulet.Core.Tests;
 

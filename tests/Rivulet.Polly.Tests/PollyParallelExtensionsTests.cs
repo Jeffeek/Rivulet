@@ -1,4 +1,4 @@
-﻿using Polly;
+using Polly;
 
 namespace Rivulet.Polly.Tests;
 

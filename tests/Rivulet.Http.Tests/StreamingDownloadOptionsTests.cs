@@ -1,4 +1,4 @@
-﻿namespace Rivulet.Http.Tests;
+namespace Rivulet.Http.Tests;
 
 public sealed class StreamingDownloadOptionsTests
 {

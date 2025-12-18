@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using Rivulet.Base.Tests;
 
 namespace Rivulet.Http.Tests;
