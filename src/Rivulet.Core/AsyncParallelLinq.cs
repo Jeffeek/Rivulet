@@ -56,29 +56,10 @@ public static class AsyncParallelLinq
         var totalItems = sourceList.Count;
 
 #pragma warning disable CA2007
-        await using var progressTracker = options.Progress is not null
-            ? new ProgressTracker(totalItems, options.Progress, token)
-            : null;
-
-        await using var metricsTracker = MetricsTrackerBase.Create(options.Metrics, token);
+        await using var infrastructure = InitializeInfrastructure(options, totalItems, token);
 #pragma warning restore CA2007
 
-        var tokenBucket = options.RateLimit is not null
-            ? new TokenBucket(options.RateLimit)
-            : null;
-
-        var circuitBreaker = options.CircuitBreaker is not null
-            ? new CircuitBreaker(options.CircuitBreaker)
-            : null;
-
-#pragma warning disable CA2007
-        await using var adaptiveController = options.AdaptiveConcurrency is not null
-            ? new AdaptiveConcurrencyController(options.AdaptiveConcurrency)
-            : null;
-#pragma warning restore CA2007
-
-        var effectiveMaxWorkers = options.AdaptiveConcurrency?.MaxConcurrency ?? options.MaxDegreeOfParallelism;
-        metricsTracker.SetActiveWorkers(effectiveMaxWorkers);
+        var effectiveMaxWorkers = infrastructure.EffectiveMaxWorkers;
 
         var channel = Channel.CreateBounded<(int idx, TSource item)>(new BoundedChannelOptions(options.ChannelCapacity)
         {
@@ -99,7 +80,7 @@ public static class AsyncParallelLinq
                         if (i++ % effectiveMaxWorkers != 0 || options.OnThrottleAsync is null) continue;
 
                         // ReSharper disable once AccessToDisposedClosure
-                        metricsTracker.IncrementThrottleEvents();
+                        infrastructure.MetricsTracker.IncrementThrottleEvents();
                         await options.OnThrottleAsync(i).ConfigureAwait(false);
                     }
                 }
@@ -122,18 +103,21 @@ public static class AsyncParallelLinq
                         try
                         {
                             // ReSharper disable AccessToDisposedClosure
-                            if (adaptiveController is not null)
+                            if (infrastructure.AdaptiveController is not null)
                             {
-                                await adaptiveController.AcquireAsync(token).ConfigureAwait(false);
+                                await infrastructure.AdaptiveController.AcquireAsync(token).ConfigureAwait(false);
                                 // ReSharper restore AccessToDisposedClosure
                                 acquiredAdaptive = true;
                             }
 
-                            if (tokenBucket is not null) await tokenBucket.AcquireAsync(token).ConfigureAwait(false);
+                            // ReSharper disable AccessToDisposedClosure
+                            if (infrastructure.TokenBucket is not null)
+                                await infrastructure.TokenBucket.AcquireAsync(token).ConfigureAwait(false);
+                            // ReSharper restore AccessToDisposedClosure
 
                             // ReSharper disable AccessToDisposedClosure
-                            progressTracker?.IncrementStarted();
-                            metricsTracker.IncrementItemsStarted();
+                            infrastructure.ProgressTracker?.IncrementStarted();
+                            infrastructure.MetricsTracker.IncrementItemsStarted();
                             // ReSharper restore AccessToDisposedClosure
 
                             if (options.OnStartItemAsync is not null)
@@ -144,12 +128,14 @@ public static class AsyncParallelLinq
                                     taskSelector,
                                     options,
                                     // ReSharper disable once AccessToDisposedClosure
-                                    metricsTracker,
+                                    infrastructure.MetricsTracker,
                                     idx,
                                     token);
 
-                            var result = circuitBreaker is not null
-                                ? await circuitBreaker.ExecuteAsync(ToExecute, token).ConfigureAwait(false)
+                            // ReSharper disable AccessToDisposedClosure
+                            var result = infrastructure.CircuitBreaker is not null
+                                ? await infrastructure.CircuitBreaker.ExecuteAsync(ToExecute, token).ConfigureAwait(false)
+                                // ReSharper restore AccessToDisposedClosure
                                 : await ToExecute().ConfigureAwait(false);
 
                             if (options.OrderedOutput && orderedResults != null)
@@ -158,8 +144,8 @@ public static class AsyncParallelLinq
                                 results?.Add(result);
 
                             // ReSharper disable AccessToDisposedClosure
-                            progressTracker?.IncrementCompleted();
-                            metricsTracker.IncrementItemsCompleted();
+                            infrastructure.ProgressTracker?.IncrementCompleted();
+                            infrastructure.MetricsTracker.IncrementItemsCompleted();
                             // ReSharper restore AccessToDisposedClosure
 
                             if (options.OnCompleteItemAsync is not null)
@@ -169,35 +155,20 @@ public static class AsyncParallelLinq
                         }
                         catch (Exception ex)
                         {
-                            errors.Add(ex);
-                            // ReSharper disable AccessToDisposedClosure
-                            progressTracker?.IncrementErrors();
-                            metricsTracker.IncrementFailures();
-                            // ReSharper restore AccessToDisposedClosure
-
-                            if (options.OnErrorAsync is not null)
-                            {
-                                var cont = await options.OnErrorAsync(idx, ex).ConfigureAwait(false);
+                            // ReSharper disable once AccessToDisposedClosure
+                            await HandleProcessingErrorAsync(
+                                ex,
+                                idx,
+                                options,
+                                infrastructure,
                                 // ReSharper disable once AccessToDisposedClosure
-                                if (!cont) await cts.CancelAsync().ConfigureAwait(false);
-                            }
-
-                            if (options.ErrorMode == ErrorMode.FailFast)
-                            {
-                                // ReSharper disable once AccessToDisposedClosure
-                                await cts.CancelAsync().ConfigureAwait(false);
-                                throw;
-                            }
+                                cts,
+                                errors).ConfigureAwait(false);
                         }
                         finally
                         {
-                            // ReSharper disable AccessToDisposedClosure
-                            if (adaptiveController is not null && acquiredAdaptive)
-                            {
-                                var elapsed = Stopwatch.GetElapsedTime(startTime);
-                                adaptiveController.Release(elapsed, success);
-                                // ReSharper restore AccessToDisposedClosure
-                            }
+                            // ReSharper disable once AccessToDisposedClosure
+                            ReleaseAdaptiveController(infrastructure.AdaptiveController, acquiredAdaptive, startTime, success);
                         }
                     }
                 },
@@ -258,29 +229,10 @@ public static class AsyncParallelLinq
         var token = cts.Token;
 
 #pragma warning disable CA2007
-        await using var progressTracker = options.Progress is not null
-            ? new ProgressTracker(null, options.Progress, token)
-            : null;
-
-        await using var metricsTracker = MetricsTrackerBase.Create(options.Metrics, token);
+        await using var infrastructure = InitializeInfrastructure(options, null, token);
 #pragma warning restore CA2007
 
-        var tokenBucket = options.RateLimit is not null
-            ? new TokenBucket(options.RateLimit)
-            : null;
-
-        var circuitBreaker = options.CircuitBreaker is not null
-            ? new CircuitBreaker(options.CircuitBreaker)
-            : null;
-
-#pragma warning disable CA2007
-        await using var adaptiveController = options.AdaptiveConcurrency is not null
-            ? new AdaptiveConcurrencyController(options.AdaptiveConcurrency)
-            : null;
-#pragma warning restore CA2007
-
-        var effectiveMaxWorkers = options.AdaptiveConcurrency?.MaxConcurrency ?? options.MaxDegreeOfParallelism;
-        metricsTracker.SetActiveWorkers(effectiveMaxWorkers);
+        var effectiveMaxWorkers = infrastructure.EffectiveMaxWorkers;
 
         var input = Channel.CreateBounded<(int idx, TSource item)>(new BoundedChannelOptions(options.ChannelCapacity)
         {
@@ -320,16 +272,17 @@ public static class AsyncParallelLinq
 
                         try
                         {
-                            if (adaptiveController is not null)
+                            if (infrastructure.AdaptiveController is not null)
                             {
-                                await adaptiveController.AcquireAsync(token).ConfigureAwait(false);
+                                await infrastructure.AdaptiveController.AcquireAsync(token).ConfigureAwait(false);
                                 acquiredAdaptive = true;
                             }
 
-                            if (tokenBucket is not null) await tokenBucket.AcquireAsync(token).ConfigureAwait(false);
+                            if (infrastructure.TokenBucket is not null)
+                                await infrastructure.TokenBucket.AcquireAsync(token).ConfigureAwait(false);
 
-                            progressTracker?.IncrementStarted();
-                            metricsTracker.IncrementItemsStarted();
+                            infrastructure.ProgressTracker?.IncrementStarted();
+                            infrastructure.MetricsTracker.IncrementItemsStarted();
                             if (options.OnStartItemAsync is not null)
                                 await options.OnStartItemAsync(idx).ConfigureAwait(false);
 
@@ -337,17 +290,17 @@ public static class AsyncParallelLinq
                                 RetryPolicy.ExecuteWithRetry(item,
                                     taskSelector,
                                     options,
-                                    metricsTracker,
+                                    infrastructure.MetricsTracker,
                                     idx,
                                     token);
 
-                            var result = circuitBreaker is not null
-                                ? await circuitBreaker.ExecuteAsync(ToExecute, token).ConfigureAwait(false)
+                            var result = infrastructure.CircuitBreaker is not null
+                                ? await infrastructure.CircuitBreaker.ExecuteAsync(ToExecute, token).ConfigureAwait(false)
                                 : await ToExecute().ConfigureAwait(false);
 
                             await output.Writer.WriteAsync((idx, result), token).ConfigureAwait(false);
-                            progressTracker?.IncrementCompleted();
-                            metricsTracker.IncrementItemsCompleted();
+                            infrastructure.ProgressTracker?.IncrementCompleted();
+                            infrastructure.MetricsTracker.IncrementItemsCompleted();
                             if (options.OnCompleteItemAsync is not null)
                                 await options.OnCompleteItemAsync(idx).ConfigureAwait(false);
 
@@ -355,31 +308,17 @@ public static class AsyncParallelLinq
                         }
                         catch (Exception ex)
                         {
-                            progressTracker?.IncrementErrors();
-                            metricsTracker.IncrementFailures();
-
-                            if (options.OnErrorAsync is not null)
-                            {
-                                var cont = await options.OnErrorAsync(idx, ex).ConfigureAwait(false);
-                                if (!cont) await cts.CancelAsync().ConfigureAwait(false);
-                            }
-
-                            switch (options.ErrorMode)
-                            {
-                                case ErrorMode.FailFast:
-                                    await cts.CancelAsync().ConfigureAwait(false);
-                                    throw;
-                                case ErrorMode.CollectAndContinue or ErrorMode.BestEffort:
-                                break;
-                            }
+                            await HandleProcessingErrorAsync(
+                                ex,
+                                idx,
+                                options,
+                                infrastructure,
+                                cts,
+                                null).ConfigureAwait(false);
                         }
                         finally
                         {
-                            if (adaptiveController is not null && acquiredAdaptive)
-                            {
-                                var elapsed = Stopwatch.GetElapsedTime(startTime);
-                                adaptiveController.Release(elapsed, success);
-                            }
+                            ReleaseAdaptiveController(infrastructure.AdaptiveController, acquiredAdaptive, startTime, success);
                         }
                     }
                 },
@@ -635,5 +574,115 @@ public static class AsyncParallelLinq
 
             if (batch.Count > 0) yield return batch;
         }
+    }
+
+    /// <summary>
+    ///     Infrastructure components for parallel processing operations.
+    /// </summary>
+    private readonly record struct ParallelInfrastructure(
+        ProgressTracker? ProgressTracker,
+        MetricsTrackerBase MetricsTracker,
+        TokenBucket? TokenBucket,
+        CircuitBreaker? CircuitBreaker,
+        AdaptiveConcurrencyController? AdaptiveController,
+        int EffectiveMaxWorkers
+    ) : IAsyncDisposable
+    {
+        public async ValueTask DisposeAsync()
+        {
+            if (ProgressTracker is not null)
+                await ProgressTracker.DisposeAsync().ConfigureAwait(false);
+
+            await MetricsTracker.DisposeAsync().ConfigureAwait(false);
+
+            if (AdaptiveController is not null)
+                await AdaptiveController.DisposeAsync().ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>
+    ///     Initializes all infrastructure components needed for parallel processing.
+    /// </summary>
+    private static ParallelInfrastructure InitializeInfrastructure(
+        ParallelOptionsRivulet options,
+        int? totalItems,
+        CancellationToken token)
+    {
+        var progressTracker = options.Progress is not null
+            ? new ProgressTracker(totalItems, options.Progress, token)
+            : null;
+
+        var metricsTracker = MetricsTrackerBase.Create(options.Metrics, token);
+
+        var tokenBucket = options.RateLimit is not null
+            ? new TokenBucket(options.RateLimit)
+            : null;
+
+        var circuitBreaker = options.CircuitBreaker is not null
+            ? new CircuitBreaker(options.CircuitBreaker)
+            : null;
+
+        var adaptiveController = options.AdaptiveConcurrency is not null
+            ? new AdaptiveConcurrencyController(options.AdaptiveConcurrency)
+            : null;
+
+        var effectiveMaxWorkers = options.AdaptiveConcurrency?.MaxConcurrency
+                                  ?? options.MaxDegreeOfParallelism;
+        metricsTracker.SetActiveWorkers(effectiveMaxWorkers);
+
+        return new ParallelInfrastructure(
+            progressTracker,
+            metricsTracker,
+            tokenBucket,
+            circuitBreaker,
+            adaptiveController,
+            effectiveMaxWorkers);
+    }
+
+    /// <summary>
+    ///     Handles errors that occur during item processing.
+    /// </summary>
+    private static async ValueTask HandleProcessingErrorAsync(
+        Exception ex,
+        int idx,
+        ParallelOptionsRivulet options,
+        ParallelInfrastructure infrastructure,
+        CancellationTokenSource cts,
+        ConcurrentBag<Exception>? errors
+    )
+    {
+        errors?.Add(ex);
+
+        infrastructure.ProgressTracker?.IncrementErrors();
+        infrastructure.MetricsTracker.IncrementFailures();
+
+        if (options.OnErrorAsync is not null)
+        {
+            var cont = await options.OnErrorAsync(idx, ex).ConfigureAwait(false);
+            if (!cont) await cts.CancelAsync().ConfigureAwait(false);
+        }
+
+        if (options.ErrorMode == ErrorMode.FailFast)
+        {
+            await cts.CancelAsync().ConfigureAwait(false);
+            System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(ex).Throw();
+        }
+    }
+
+    /// <summary>
+    ///     Releases adaptive concurrency controller after item processing.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void ReleaseAdaptiveController(
+        AdaptiveConcurrencyController? controller,
+        bool acquired,
+        long startTime,
+        bool success)
+    {
+        if (controller is null || !acquired)
+            return;
+
+        var elapsed = Stopwatch.GetElapsedTime(startTime);
+        controller.Release(elapsed, success);
     }
 }
