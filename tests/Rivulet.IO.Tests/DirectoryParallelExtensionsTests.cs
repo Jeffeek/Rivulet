@@ -1,4 +1,4 @@
-﻿using Rivulet.Base.Tests;
+using Rivulet.Base.Tests;
 
 namespace Rivulet.IO.Tests;
 

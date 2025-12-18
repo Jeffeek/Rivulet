@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using Rivulet.Base.Tests;
 using Rivulet.Core.Observability;
@@ -119,9 +119,7 @@ public sealed class ProgressReportingTests
                 // Increased delay to ensure operation spans multiple timer intervals
                 // This gives the timer adequate time to capture all error states
                 await Task.Delay(15, ct);
-                if (x % 5 == 0) throw new InvalidOperationException($"Error on {x}");
-
-                return x * 2;
+                return x % 5 == 0 ? throw new InvalidOperationException($"Error on {x}") : x * 2;
             },
             options);
 

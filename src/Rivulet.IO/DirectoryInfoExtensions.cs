@@ -31,15 +31,15 @@ public static class DirectoryInfoExtensions
         ArgumentNullException.ThrowIfNull(directory);
         ArgumentNullException.ThrowIfNull(processFunc);
 
-        if (!directory.Exists) throw new DirectoryNotFoundException($"Directory not found: {directory.FullName}");
-
-        return DirectoryParallelExtensions.ProcessDirectoryFilesParallelAsync(
-            directory.FullName,
-            searchPattern,
-            processFunc,
-            searchOption,
-            options,
-            cancellationToken);
+        return !directory.Exists
+            ? throw new DirectoryNotFoundException($"Directory not found: {directory.FullName}")
+            : DirectoryParallelExtensions.ProcessDirectoryFilesParallelAsync(
+                directory.FullName,
+                searchPattern,
+                processFunc,
+                searchOption,
+                options,
+                cancellationToken);
     }
 
     /// <summary>
@@ -61,14 +61,14 @@ public static class DirectoryInfoExtensions
     {
         ArgumentNullException.ThrowIfNull(directory);
 
-        if (!directory.Exists) throw new DirectoryNotFoundException($"Directory not found: {directory.FullName}");
-
-        return DirectoryParallelExtensions.ReadDirectoryFilesParallelAsync(
-            directory.FullName,
-            searchPattern,
-            searchOption,
-            options,
-            cancellationToken);
+        return !directory.Exists
+            ? throw new DirectoryNotFoundException($"Directory not found: {directory.FullName}")
+            : DirectoryParallelExtensions.ReadDirectoryFilesParallelAsync(
+                directory.FullName,
+                searchPattern,
+                searchOption,
+                options,
+                cancellationToken);
     }
 
     /// <summary>
@@ -115,17 +115,16 @@ public static class DirectoryInfoExtensions
         ArgumentNullException.ThrowIfNull(sourceDirectory);
         ArgumentNullException.ThrowIfNull(transformFunc);
 
-        if (!sourceDirectory.Exists)
-            throw new DirectoryNotFoundException($"Source directory not found: {sourceDirectory.FullName}");
-
-        return DirectoryParallelExtensions.TransformDirectoryFilesParallelAsync(
-            sourceDirectory.FullName,
-            destinationDirectory,
-            searchPattern,
-            transformFunc,
-            searchOption,
-            options,
-            cancellationToken);
+        return !sourceDirectory.Exists
+            ? throw new DirectoryNotFoundException($"Source directory not found: {sourceDirectory.FullName}")
+            : DirectoryParallelExtensions.TransformDirectoryFilesParallelAsync(
+                sourceDirectory.FullName,
+                destinationDirectory,
+                searchPattern,
+                transformFunc,
+                searchOption,
+                options,
+                cancellationToken);
     }
 
     /// <summary>
@@ -149,16 +148,15 @@ public static class DirectoryInfoExtensions
     {
         ArgumentNullException.ThrowIfNull(sourceDirectory);
 
-        if (!sourceDirectory.Exists)
-            throw new DirectoryNotFoundException($"Source directory not found: {sourceDirectory.FullName}");
-
-        return DirectoryParallelExtensions.CopyDirectoryFilesParallelAsync(
-            sourceDirectory.FullName,
-            destinationDirectory,
-            searchPattern,
-            searchOption,
-            options,
-            cancellationToken);
+        return !sourceDirectory.Exists
+            ? throw new DirectoryNotFoundException($"Source directory not found: {sourceDirectory.FullName}")
+            : DirectoryParallelExtensions.CopyDirectoryFilesParallelAsync(
+                sourceDirectory.FullName,
+                destinationDirectory,
+                searchPattern,
+                searchOption,
+                options,
+                cancellationToken);
     }
 
     /// <summary>
@@ -180,14 +178,14 @@ public static class DirectoryInfoExtensions
     {
         ArgumentNullException.ThrowIfNull(directory);
 
-        if (!directory.Exists) throw new DirectoryNotFoundException($"Directory not found: {directory.FullName}");
-
-        return DirectoryParallelExtensions.DeleteDirectoryFilesParallelAsync(
-            directory.FullName,
-            searchPattern,
-            searchOption,
-            options,
-            cancellationToken);
+        return !directory.Exists
+            ? throw new DirectoryNotFoundException($"Directory not found: {directory.FullName}")
+            : DirectoryParallelExtensions.DeleteDirectoryFilesParallelAsync(
+                directory.FullName,
+                searchPattern,
+                searchOption,
+                options,
+                cancellationToken);
     }
 
     /// <summary>

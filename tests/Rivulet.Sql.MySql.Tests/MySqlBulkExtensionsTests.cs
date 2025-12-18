@@ -1,4 +1,4 @@
-﻿using MySqlConnector;
+using MySqlConnector;
 
 namespace Rivulet.Sql.MySql.Tests;
 

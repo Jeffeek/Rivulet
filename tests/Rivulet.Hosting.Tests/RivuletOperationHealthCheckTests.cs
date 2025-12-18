@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Rivulet.Hosting.HealthChecks;
 
 namespace Rivulet.Hosting.Tests;

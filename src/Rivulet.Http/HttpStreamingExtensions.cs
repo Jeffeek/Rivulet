@@ -123,13 +123,9 @@ public static class HttpStreamingExtensions
             await options.OnProgressAsync(uri, bytesDownloaded, totalBytes).ConfigureAwait(false);
 
         // Validate content length if requested
-        if (options.ValidateContentLength && totalBytes.HasValue && bytesDownloaded != totalBytes.Value)
-        {
-            throw new HttpRequestException(
-                $"Content length mismatch: expected {totalBytes.Value} bytes, but downloaded {bytesDownloaded} bytes");
-        }
-
-        return bytesDownloaded;
+        return options.ValidateContentLength && totalBytes.HasValue && bytesDownloaded != totalBytes.Value
+            ? throw new HttpRequestException($"Content length mismatch: expected {totalBytes.Value} bytes, but downloaded {bytesDownloaded} bytes")
+            : bytesDownloaded;
     }
 
     /// <summary>

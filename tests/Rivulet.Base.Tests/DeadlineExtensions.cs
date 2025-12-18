@@ -1,4 +1,4 @@
-﻿namespace Rivulet.Base.Tests;
+namespace Rivulet.Base.Tests;
 
 public static class DeadlineExtensions
 {

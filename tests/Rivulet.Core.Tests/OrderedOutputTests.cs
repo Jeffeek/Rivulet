@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 
 namespace Rivulet.Core.Tests;
 
@@ -196,9 +196,7 @@ public sealed class OrderedOutputTests
                     await Task.Delay(Random.Shared.Next(1, 5), ct);
                     var attempts = attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
 
-                    if (attempts == 1 && x % 3 == 0) throw new InvalidOperationException($"Transient error at {x}");
-
-                    return x * 2;
+                    return attempts == 1 && x % 3 == 0 ? throw new InvalidOperationException($"Transient error at {x}") : x * 2;
                 },
                 options)
             .ToListAsync();

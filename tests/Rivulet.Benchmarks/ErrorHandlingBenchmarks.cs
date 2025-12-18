@@ -38,9 +38,7 @@ public class ErrorHandlingBenchmarks
                 var attemptCount = attempts.AddOrUpdate(x, 1, static (_, count) => count + 1);
 
                 // 10% of items fail on first attempt
-                if (x % 10 == 0 && attemptCount == 1) throw new InvalidOperationException("Transient error");
-
-                return new ValueTask<int>(x * 2);
+                return x % 10 == 0 && attemptCount == 1 ? throw new InvalidOperationException("Transient error") : new ValueTask<int>(x * 2);
             },
             new()
             {
@@ -81,9 +79,7 @@ public class ErrorHandlingBenchmarks
             {
                 var attemptCount = attempts.AddOrUpdate(x, 1, static (_, count) => count + 1);
 
-                if (x % 20 == 0 && attemptCount <= 2) throw new InvalidOperationException("Transient error");
-
-                return new ValueTask<int>(x * 2);
+                return x % 20 == 0 && attemptCount <= 2 ? throw new InvalidOperationException("Transient error") : new ValueTask<int>(x * 2);
             },
             new()
             {
@@ -105,9 +101,7 @@ public class ErrorHandlingBenchmarks
             {
                 var attemptCount = attempts.AddOrUpdate(x, 1, static (_, count) => count + 1);
 
-                if (x % 20 == 0 && attemptCount <= 2) throw new InvalidOperationException("Transient error");
-
-                return new ValueTask<int>(x * 2);
+                return x % 20 == 0 && attemptCount <= 2 ? throw new InvalidOperationException("Transient error") : new ValueTask<int>(x * 2);
             },
             new()
             {

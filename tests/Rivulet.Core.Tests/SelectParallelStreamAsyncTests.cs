@@ -1,4 +1,4 @@
-﻿namespace Rivulet.Core.Tests;
+namespace Rivulet.Core.Tests;
 
 public sealed class SelectParallelStreamAsyncTests
 {

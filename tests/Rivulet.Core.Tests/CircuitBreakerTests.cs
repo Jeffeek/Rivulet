@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using Rivulet.Base.Tests;
 using Rivulet.Core.Resilience;
@@ -393,9 +393,7 @@ public sealed class CircuitBreakerTests
             {
                 await Task.Delay(1, ct);
                 // Fail for items 1, 2, 3
-                if (x <= 3) throw new InvalidOperationException($"Item {x} failed");
-
-                return x * 2;
+                return x <= 3 ? throw new InvalidOperationException($"Item {x} failed") : x * 2;
             },
             options);
 
@@ -422,9 +420,7 @@ public sealed class CircuitBreakerTests
                     await Task.Delay(1, ct);
 
                     // Fail for items 1-3, then succeed
-                    if (x <= 3) throw new InvalidOperationException($"Item {x} failed");
-
-                    return x * 2;
+                    return x <= 3 ? throw new InvalidOperationException($"Item {x} failed") : x * 2;
                 },
                 options)
             .ToListAsync();
@@ -460,9 +456,7 @@ public sealed class CircuitBreakerTests
                 await Task.Delay(1, ct);
 
                 // Always fail for items 1 and 2
-                if (x <= 2) throw new InvalidOperationException($"Item {x} failed");
-
-                return x * 2;
+                return x <= 2 ? throw new InvalidOperationException($"Item {x} failed") : x * 2;
             },
             options);
 

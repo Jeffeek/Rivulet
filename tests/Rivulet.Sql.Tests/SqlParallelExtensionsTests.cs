@@ -1,10 +1,8 @@
-﻿using System.Data;
-using System.Diagnostics.CodeAnalysis;
+using System.Data;
 using Rivulet.Base.Tests;
 
 namespace Rivulet.Sql.Tests;
 
-[SuppressMessage("ReSharper", "AccessToDisposedClosure")]
 public sealed class SqlParallelExtensionsTests
 {
     [Fact]
@@ -276,7 +274,9 @@ public sealed class SqlParallelExtensionsTests
         await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => await commands.ExecuteCommandsParallelAsync(
             () => new TestDbConnection(executeNonQueryFunc: _ =>
             {
+                // ReSharper disable AccessToDisposedClosure
                 Task.Delay(100, cts.Token).Wait(cts.Token);
+                // ReSharper restore AccessToDisposedClosure
                 return 1;
             }),
             cancellationToken: cts.Token));

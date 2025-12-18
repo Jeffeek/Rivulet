@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Rivulet.Core.Tests;
@@ -152,9 +152,7 @@ public sealed class RetryPolicyTests
         var results = await source.SelectParallelStreamAsync((x, _) =>
                 {
                     var attempts = attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
-                    if (x == 3 && attempts == 1) throw new InvalidOperationException("Transient error");
-
-                    return new ValueTask<int>(x * 2);
+                    return x == 3 && attempts == 1 ? throw new InvalidOperationException("Transient error") : new ValueTask<int>(x * 2);
                 },
                 options)
             .ToListAsync();

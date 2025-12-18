@@ -1,4 +1,4 @@
-﻿namespace Rivulet.Polly.Tests;
+namespace Rivulet.Polly.Tests;
 
 public sealed class PollyAdvancedExtensionsTests
 {
@@ -79,9 +79,7 @@ public sealed class PollyAdvancedExtensionsTests
                 await Task.Delay(1, ct).ConfigureAwait(false);
 
                 // Return -1 on first 2 attempts for item 3
-                if (item == 3 && attempts[item] <= 2) return -1;
-
-                return item * 2;
+                return item == 3 && attempts[item] <= 2 ? -1 : item * 2;
             },
             static result => result == -1,
             3,
@@ -171,9 +169,7 @@ public sealed class PollyAdvancedExtensionsTests
                 await Task.Delay(1, ct).ConfigureAwait(false);
 
                 // Return -1 on first 2 attempts
-                if (attempts.Count <= 2) return -1;
-
-                return item * 2;
+                return attempts.Count <= 2 ? -1 : item * 2;
             },
             static result => result == -1,
             3,

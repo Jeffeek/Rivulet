@@ -1,4 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.CodeAnalysis;
 using Rivulet.Base.Tests;
 using Rivulet.Core.Resilience;
 
@@ -202,9 +202,7 @@ public sealed class AdaptiveConcurrencyTests
             {
                 await Task.Delay(10, ct); // Longer delay to ensure operations span multiple sample intervals
                 // 50% failure rate
-                if (x % 2 == 0) throw new InvalidOperationException("Test failure");
-
-                return x * 2;
+                return x % 2 == 0 ? throw new InvalidOperationException("Test failure") : x * 2;
             },
             options);
 

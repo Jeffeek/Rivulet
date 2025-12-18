@@ -80,9 +80,7 @@ public sealed class EventSourceTests
             {
                 await Task.Delay(5, ct);
                 var attemptCount = attempts.AddOrUpdate(x, 1, static (_, count) => count + 1);
-                if (attemptCount < 2) throw new InvalidOperationException("Transient");
-
-                return x * 2;
+                return attemptCount < 2 ? throw new InvalidOperationException("Transient") : x * 2;
             },
             options);
 

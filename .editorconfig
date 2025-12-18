@@ -10,7 +10,7 @@ charset = utf-8
 indent_style = space
 indent_size = 4
 tab_width = 4
-end_of_line = crlf
+end_of_line = lf
 trim_trailing_whitespace = true
 insert_final_newline = true
 
@@ -290,7 +290,7 @@ resharper_arrange_default_value_when_type_not_evident_highlighting = warning
 resharper_arrange_local_function_body_highlighting = warning
 resharper_arrange_null_checking_pattern_highlighting = warning
 resharper_arrange_object_creation_when_type_evident_highlighting = warning
-resharper_arrange_object_creation_when_type_not_evident_highlighting = warning
+resharper_arrange_object_creation_when_type_not_evident_highlighting = none
 resharper_arrange_static_member_qualifier_highlighting = warning
 resharper_arrange_trailing_comma_in_multiline_lists_highlighting = warning
 resharper_arrange_trailing_comma_in_singleline_lists_highlighting = warning

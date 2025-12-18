@@ -1,4 +1,4 @@
-﻿using OpenTelemetry;
+using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using Rivulet.Core;
 using Rivulet.Core.Observability;

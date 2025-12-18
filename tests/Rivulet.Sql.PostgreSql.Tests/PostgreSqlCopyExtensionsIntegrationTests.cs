@@ -1,4 +1,4 @@
-﻿using Npgsql;
+using Npgsql;
 using Testcontainers.PostgreSql;
 
 namespace Rivulet.Sql.PostgreSql.Tests;

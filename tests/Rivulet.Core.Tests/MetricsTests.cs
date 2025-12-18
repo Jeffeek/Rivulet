@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using Rivulet.Base.Tests;
 using Rivulet.Core.Observability;
@@ -73,9 +73,7 @@ public sealed class MetricsTests
             static async (x, ct) =>
             {
                 await Task.Delay(5, ct);
-                if (x % 5 == 0) throw new InvalidOperationException("Error");
-
-                return x * 2;
+                return x % 5 == 0 ? throw new InvalidOperationException("Error") : x * 2;
             },
             options);
 
@@ -122,9 +120,7 @@ public sealed class MetricsTests
             {
                 await Task.Delay(5, ct);
                 var attemptCount = attempts.AddOrUpdate(x, 1, static (_, count) => count + 1);
-                if (attemptCount < 3) throw new InvalidOperationException("Transient error");
-
-                return x * 2;
+                return attemptCount < 3 ? throw new InvalidOperationException("Transient error") : x * 2;
             },
             options);
 
@@ -274,9 +270,7 @@ public sealed class MetricsTests
         var results = await source.SelectParallelStreamAsync(static async (x, ct) =>
                 {
                     await Task.Delay(5, ct);
-                    if (x % 3 == 0) throw new InvalidOperationException("Error");
-
-                    return x * 2;
+                    return x % 3 == 0 ? throw new InvalidOperationException("Error") : x * 2;
                 },
                 options)
             .ToListAsync();
@@ -409,9 +403,7 @@ public sealed class MetricsTests
             static async (x, ct) =>
             {
                 await Task.Delay(5, ct);
-                if (x == 10) throw new InvalidOperationException("Error");
-
-                return x * 2;
+                return x == 10 ? throw new InvalidOperationException("Error") : x * 2;
             },
             options);
 
@@ -779,9 +771,7 @@ public sealed class MetricsTests
                         static async (x, ct) =>
                         {
                             await Task.Delay(5, ct);
-                            if (x == 10) throw new InvalidOperationException("Error");
-
-                            return x * 2;
+                            return x == 10 ? throw new InvalidOperationException("Error") : x * 2;
                         },
                         options);
 
@@ -794,9 +784,7 @@ public sealed class MetricsTests
                         static async (x, ct) =>
                         {
                             await Task.Delay(5, ct);
-                            if (x % 5 == 0) throw new InvalidOperationException("Error");
-
-                            return x * 2;
+                            return x % 5 == 0 ? throw new InvalidOperationException("Error") : x * 2;
                         },
                         options);
 
@@ -810,9 +798,7 @@ public sealed class MetricsTests
                         static async (x, ct) =>
                         {
                             await Task.Delay(5, ct);
-                            if (x % 5 == 0) throw new InvalidOperationException("Error");
-
-                            return x * 2;
+                            return x % 5 == 0 ? throw new InvalidOperationException("Error") : x * 2;
                         },
                         options);
 
@@ -1010,9 +996,7 @@ public sealed class MetricsTests
                 await Task.Delay(10, ct);
                 var attempt = attempts.AddOrUpdate(x, 1, static (_, count) => count + 1);
 
-                if (x % 5 == 0 && attempt <= 1) throw new InvalidOperationException("Transient error");
-
-                return x * 2;
+                return x % 5 == 0 && attempt <= 1 ? throw new InvalidOperationException("Transient error") : x * 2;
             },
             options);
 
@@ -1047,9 +1031,7 @@ public sealed class MetricsTests
                 await Task.Delay(5, ct);
                 var attempt = attempts.AddOrUpdate(x, 1, static (_, count) => count + 1);
 
-                if (x % 5 == 0 && attempt <= 1) throw new InvalidOperationException("Transient error");
-
-                return x * 2;
+                return x % 5 == 0 && attempt <= 1 ? throw new InvalidOperationException("Transient error") : x * 2;
             },
             options);
 

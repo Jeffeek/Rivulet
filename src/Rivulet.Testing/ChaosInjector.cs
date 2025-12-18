@@ -30,9 +30,9 @@ public sealed class ChaosInjector
         if (_artificialDelay.HasValue)
             await Task.Delay(_artificialDelay.Value, cancellationToken).ConfigureAwait(false);
 
-        if (ShouldFail()) throw new ChaosException("Chaos injected failure");
-
-        return await action().ConfigureAwait(false);
+        return ShouldFail()
+            ? throw new ChaosException("Chaos injected failure")
+            : await action().ConfigureAwait(false);
     }
 
     /// <summary>

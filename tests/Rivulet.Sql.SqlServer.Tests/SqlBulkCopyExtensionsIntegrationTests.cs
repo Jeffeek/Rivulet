@@ -1,4 +1,4 @@
-﻿using System.Data;
+using System.Data;
 using Microsoft.Data.SqlClient;
 using Rivulet.Base.Tests;
 using Testcontainers.MsSql;

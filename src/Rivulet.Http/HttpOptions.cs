@@ -110,17 +110,13 @@ public sealed class HttpOptions
             AdaptiveConcurrency = baseOptions.AdaptiveConcurrency
         };
 
-        bool HttpIsTransient(Exception ex)
-        {
-            if (baseOptions.IsTransient?.Invoke(ex) == true) return true;
-
-            return ex switch
+        bool HttpIsTransient(Exception ex) =>
+            baseOptions.IsTransient?.Invoke(ex) == true || ex switch
             {
                 HttpRequestException { StatusCode: not null } httpEx => RetriableStatusCodes.Contains(httpEx.StatusCode
                     .Value),
                 TaskCanceledException => true,
                 _ => false
             };
-        }
     }
 }
