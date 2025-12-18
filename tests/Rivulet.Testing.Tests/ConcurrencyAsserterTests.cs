@@ -1,4 +1,4 @@
-﻿namespace Rivulet.Testing.Tests;
+namespace Rivulet.Testing.Tests;
 
 public sealed class ConcurrencyAsserterTests
 {

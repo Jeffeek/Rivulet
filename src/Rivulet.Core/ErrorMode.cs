@@ -1,4 +1,4 @@
-﻿namespace Rivulet.Core;
+namespace Rivulet.Core;
 
 /// <summary>
 ///     Defines how errors are handled during parallel async processing.

@@ -71,26 +71,20 @@ public sealed class RivuletHealthCheck : IHealthCheck, IDisposable
                 [RivuletDiagnosticsConstants.HealthCheckKeys.ErrorRate] = errorRate
             };
 
-            if (totalFailures >= _options.FailureCountThreshold)
-            {
-                return Task.FromResult(HealthCheckResult.Unhealthy(
+            return totalFailures >= _options.FailureCountThreshold
+                ? Task.FromResult(HealthCheckResult.Unhealthy(
                     $"Failure count ({totalFailures}) exceeds threshold ({_options.FailureCountThreshold})",
                     data: data
-                ));
-            }
-
-            if (errorRate >= _options.ErrorRateThreshold)
-            {
-                return Task.FromResult(HealthCheckResult.Degraded(
-                    $"Error rate ({errorRate:P2}) exceeds threshold ({_options.ErrorRateThreshold:P2})",
-                    data: data
-                ));
-            }
-
-            return Task.FromResult(HealthCheckResult.Healthy(
-                $"Rivulet operations healthy: {itemsCompleted}/{itemsStarted} completed, {totalFailures} failures",
-                data
-            ));
+                ))
+                : errorRate >= _options.ErrorRateThreshold
+                    ? Task.FromResult(HealthCheckResult.Degraded(
+                        $"Error rate ({errorRate:P2}) exceeds threshold ({_options.ErrorRateThreshold:P2})",
+                        data: data
+                    ))
+                    : Task.FromResult(HealthCheckResult.Healthy(
+                        $"Rivulet operations healthy: {itemsCompleted}/{itemsStarted} completed, {totalFailures} failures",
+                        data
+                    ));
         }
         catch (Exception ex)
         {

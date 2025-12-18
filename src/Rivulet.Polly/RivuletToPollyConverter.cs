@@ -68,15 +68,12 @@ public static class RivuletToPollyConverter
     /// var result = await timeoutPipeline.ExecuteAsync(async ct => await LongRunningOperation(ct));
     /// </code>
     /// </example>
-    public static ResiliencePipeline ToPollyTimeoutPipeline(this TimeSpan timeout)
-    {
-        if (timeout <= TimeSpan.Zero)
-            throw new ArgumentOutOfRangeException(nameof(timeout), "Timeout must be positive");
-
-        return new ResiliencePipelineBuilder()
-            .AddTimeout(new TimeoutStrategyOptions { Timeout = timeout })
-            .Build();
-    }
+    public static ResiliencePipeline ToPollyTimeoutPipeline(this TimeSpan timeout) =>
+        timeout <= TimeSpan.Zero
+            ? throw new ArgumentOutOfRangeException(nameof(timeout), "Timeout must be positive")
+            : new ResiliencePipelineBuilder()
+                .AddTimeout(new TimeoutStrategyOptions { Timeout = timeout })
+                .Build();
 
     /// <summary>
     ///     Converts Rivulet circuit breaker options to a Polly circuit breaker pipeline.

@@ -1,4 +1,4 @@
-﻿using Rivulet.Core.Observability;
+using Rivulet.Core.Observability;
 using Rivulet.Core.Resilience;
 using System.Diagnostics.CodeAnalysis;
 

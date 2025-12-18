@@ -1,4 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Channels;
 
 namespace Rivulet.Testing.Tests;

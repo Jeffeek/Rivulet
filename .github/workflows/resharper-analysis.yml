@@ -19,15 +19,16 @@ jobs:
       security-events: write
 
     steps:
-    - name: Harden the runner (Audit all outbound calls)
-      uses: step-security/harden-runner@20cf305ff2072d973412fa9b1e3a4f227bda3c76 # v2.14.0
-      with:
-        egress-policy: audit
-
     - name: Checkout
       uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         submodules: recursive
+
+    - name: Setup .NET
+      id: setup-dotnet
+      uses: actions/setup-dotnet@v5.0.1
+      with:
+          dotnet-version: '9.0.x'
 
     - name: Cache NuGet packages
       uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
@@ -43,19 +44,18 @@ jobs:
     - name: Build solution
       run: dotnet build -c Release --no-restore
 
-    - name: Lint
-      uses: JetBrains/ReSharper-InspectCode@v0.11
+    - name: ReSharper CLI InspectCode
+      uses: muno92/resharper_inspectcode@1.15.4
       with:
-         solution: ./Rivulet.sln
-         tool-version: 2025.3.0.3
-         output: linter-reports/resharper-report.xml
-         format: Xml
-         severity: WARNING
-         no-build: True
-         build: False
-
-    - name: Upload InspectCode Report
-      uses: actions/upload-artifact@v6
-      with:
-          name: resharper-report
-          path: linter-reports/resharper-report.xml
+         solutionPath: ./Rivulet.sln
+         version: 2025.3.1
+         failOnIssue: '1'
+         noBuild: true
+         solutionWideAnalysis: true
+         minimumReportSeverity: WARNING
+         minimumSeverity: warning
+         dotnetVersion: ${{ steps.setup-dotnet.outputs.dotnet-version }}
+         include: '**/**.cs'
+         exclude: '**/obj/**;**/bin/**;**/TestResults/**'
+         properties: 'Configuration=Release'
+            

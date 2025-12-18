@@ -1,4 +1,4 @@
-﻿namespace Rivulet.Core;
+namespace Rivulet.Core;
 
 /// <summary>
 /// </summary>

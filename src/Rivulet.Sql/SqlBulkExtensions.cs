@@ -213,11 +213,8 @@ public static class SqlBulkExtensions
             await Task.Run(connection.Open, cancellationToken).ConfigureAwait(false);
     }
 
-    private static async ValueTask<int> ExecuteNonQueryAsync(IDbCommand command, CancellationToken cancellationToken)
-    {
-        if (command is DbCommand dbCommand)
-            return await dbCommand.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-
-        return await Task.Run(command.ExecuteNonQuery, cancellationToken).ConfigureAwait(false);
-    }
+    private static async ValueTask<int> ExecuteNonQueryAsync(IDbCommand command, CancellationToken cancellationToken) =>
+        command is DbCommand dbCommand
+            ? await dbCommand.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false)
+            : await Task.Run(command.ExecuteNonQuery, cancellationToken).ConfigureAwait(false);
 }

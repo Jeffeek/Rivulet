@@ -59,9 +59,7 @@ try
             command.Parameters.AddWithValue("@UserId", userId);
 
             await using var reader = await command.ExecuteReaderAsync(ct);
-            if (await reader.ReadAsync(ct)) return new { Id = reader.GetInt32(0), Name = reader.GetString(1) };
-
-            return null;
+            return await reader.ReadAsync(ct) ? new { Id = reader.GetInt32(0), Name = reader.GetString(1) } : null;
         },
         new ParallelOptionsRivulet
         {

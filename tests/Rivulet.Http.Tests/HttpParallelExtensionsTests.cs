@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Text;
 using Rivulet.Base.Tests;
 using Rivulet.Core;

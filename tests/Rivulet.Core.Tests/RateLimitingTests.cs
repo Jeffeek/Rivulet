@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Rivulet.Core.Resilience;
@@ -266,9 +266,7 @@ public sealed class RateLimitingTests
                 var attemptCount = attempts.AddOrUpdate(x, 1, static (_, count) => count + 1);
 
                 // Fail first attempt
-                if (attemptCount < 2) throw new InvalidOperationException("Transient");
-
-                return x * 2;
+                return attemptCount < 2 ? throw new InvalidOperationException("Transient") : x * 2;
             },
             options);
 
@@ -388,9 +386,7 @@ public sealed class RateLimitingTests
             static async (x, ct) =>
             {
                 await Task.Delay(1, ct);
-                if (x % 5 == 0) throw new InvalidOperationException("Error");
-
-                return x * 2;
+                return x % 5 == 0 ? throw new InvalidOperationException("Error") : x * 2;
             },
             options);
 

@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Rivulet.Core;
 using Rivulet.Core.Resilience;

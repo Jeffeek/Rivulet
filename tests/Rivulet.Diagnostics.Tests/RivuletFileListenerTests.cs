@@ -1,4 +1,4 @@
-﻿using Rivulet.Core;
+using Rivulet.Core;
 
 namespace Rivulet.Diagnostics.Tests;
 

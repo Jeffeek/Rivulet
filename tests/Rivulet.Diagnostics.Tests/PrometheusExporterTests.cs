@@ -1,4 +1,4 @@
-﻿using Rivulet.Base.Tests;
+using Rivulet.Base.Tests;
 using Rivulet.Core;
 using Rivulet.Core.Observability;
 

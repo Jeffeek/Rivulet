@@ -34,35 +34,29 @@ public sealed class RivuletOperationHealthCheck : IHealthCheck
         var timeSinceLastSuccess = DateTime.UtcNow - lastSuccessTime;
         var failures = _consecutiveFailures;
 
-        if (failures >= _options.UnhealthyFailureThreshold)
-        {
-            return Task.FromResult(HealthCheckResult.Unhealthy(
+        return failures >= _options.UnhealthyFailureThreshold
+            ? Task.FromResult(HealthCheckResult.Unhealthy(
                 string.Format(RivuletHostingConstants.HealthCheckMessages.ConsecutiveFailuresFormat, failures),
                 data: new Dictionary<string, object>
                 {
                     [RivuletHostingConstants.HealthCheckKeys.ConsecutiveFailures] = failures,
                     [RivuletHostingConstants.HealthCheckKeys.TimeSinceLastSuccess] = timeSinceLastSuccess
-                }));
-        }
-
-        if (timeSinceLastSuccess > _options.StalledThreshold)
-        {
-            return Task.FromResult(HealthCheckResult.Degraded(
-                $"No successful operations in {timeSinceLastSuccess.TotalSeconds:F0} seconds",
-                data: new Dictionary<string, object>
-                {
-                    [RivuletHostingConstants.HealthCheckKeys.ConsecutiveFailures] = failures,
-                    [RivuletHostingConstants.HealthCheckKeys.TimeSinceLastSuccess] = timeSinceLastSuccess
-                }));
-        }
-
-        return Task.FromResult(HealthCheckResult.Healthy(
-            $"Operation healthy, {failures} recent failures",
-            new Dictionary<string, object>
-            {
-                [RivuletHostingConstants.HealthCheckKeys.ConsecutiveFailures] = failures,
-                [RivuletHostingConstants.HealthCheckKeys.TimeSinceLastSuccess] = timeSinceLastSuccess
-            }));
+                }))
+            : timeSinceLastSuccess > _options.StalledThreshold
+                ? Task.FromResult(HealthCheckResult.Degraded(
+                    $"No successful operations in {timeSinceLastSuccess.TotalSeconds:F0} seconds",
+                    data: new Dictionary<string, object>
+                    {
+                        [RivuletHostingConstants.HealthCheckKeys.ConsecutiveFailures] = failures,
+                        [RivuletHostingConstants.HealthCheckKeys.TimeSinceLastSuccess] = timeSinceLastSuccess
+                    }))
+                : Task.FromResult(HealthCheckResult.Healthy(
+                    $"Operation healthy, {failures} recent failures",
+                    new Dictionary<string, object>
+                    {
+                        [RivuletHostingConstants.HealthCheckKeys.ConsecutiveFailures] = failures,
+                        [RivuletHostingConstants.HealthCheckKeys.TimeSinceLastSuccess] = timeSinceLastSuccess
+                    }));
     }
 
     /// <summary>
