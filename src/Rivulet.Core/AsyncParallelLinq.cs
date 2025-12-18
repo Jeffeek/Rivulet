@@ -40,163 +40,137 @@ public static class AsyncParallelLinq
         ParallelOptionsRivulet? options = null,
         CancellationToken cancellationToken = default)
     {
-        options ??= new();
-        using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        var token = cts.Token;
+        (options, var cts, var token) = InitializeOptionsAndCancellation(options, cancellationToken);
+        using (cts)
+        {
+            var results = options.OrderedOutput
+                ? null
+                : new ConcurrentBag<TResult>();
+            var orderedResults = options.OrderedOutput
+                ? new ConcurrentDictionary<int, TResult>()
+                : null;
+            var errors = new ConcurrentBag<Exception>();
 
-        var results = options.OrderedOutput
-            ? null
-            : new ConcurrentBag<TResult>();
-        var orderedResults = options.OrderedOutput
-            ? new ConcurrentDictionary<int, TResult>()
-            : null;
-        var errors = new ConcurrentBag<Exception>();
-
-        var sourceList = source as ICollection<TSource> ?? [..source];
-        var totalItems = sourceList.Count;
+            var sourceList = source as ICollection<TSource> ?? [..source];
+            var totalItems = sourceList.Count;
 
 #pragma warning disable CA2007
-        await using var infrastructure = InitializeInfrastructure(options, totalItems, token);
+            await using var infrastructure = InitializeInfrastructure(options, totalItems, token);
 #pragma warning restore CA2007
 
-        var effectiveMaxWorkers = infrastructure.EffectiveMaxWorkers;
+            var effectiveMaxWorkers = infrastructure.EffectiveMaxWorkers;
 
-        var channel = Channel.CreateBounded<(int idx, TSource item)>(new BoundedChannelOptions(options.ChannelCapacity)
-        {
-            SingleReader = false, SingleWriter = true, FullMode = BoundedChannelFullMode.Wait
-        });
+            var channel = CreateBoundedInputChannel<(int idx, TSource item)>(options.ChannelCapacity);
 
-        var writerTask = Task.Run(async () =>
-            {
-                var i = 0;
-                try
+            var writerTask = Task.Run(async () =>
                 {
-                    foreach (var item in sourceList)
+                    var i = 0;
+                    try
                     {
-                        token.ThrowIfCancellationRequested();
-                        if (!await channel.Writer.WaitToWriteAsync(token).ConfigureAwait(false)) break;
+                        foreach (var item in sourceList)
+                        {
+                            token.ThrowIfCancellationRequested();
+                            if (!await channel.Writer.WaitToWriteAsync(token).ConfigureAwait(false)) break;
 
-                        await channel.Writer.WriteAsync((i, item), token).ConfigureAwait(false);
-                        if (i++ % effectiveMaxWorkers != 0 || options.OnThrottleAsync is null) continue;
+                            await channel.Writer.WriteAsync((i, item), token).ConfigureAwait(false);
+                            if (i++ % effectiveMaxWorkers != 0 || options.OnThrottleAsync is null) continue;
 
-                        // ReSharper disable once AccessToDisposedClosure
-                        infrastructure.MetricsTracker.IncrementThrottleEvents();
-                        await options.OnThrottleAsync(i).ConfigureAwait(false);
+                            // ReSharper disable once AccessToDisposedClosure
+                            infrastructure.MetricsTracker.IncrementThrottleEvents();
+                            await options.OnThrottleAsync(i).ConfigureAwait(false);
+                        }
                     }
-                }
-                finally
-                {
-                    channel.Writer.TryComplete();
-                }
-            },
-            token);
-
-        var workers = Enumerable.Range(0, effectiveMaxWorkers)
-            .Select(_ => Task.Run(async () =>
-                {
-                    await foreach (var (idx, item) in channel.Reader.ReadAllAsync(token).ConfigureAwait(false))
+                    finally
                     {
-                        var startTime = Stopwatch.GetTimestamp();
-                        var success = false;
-                        var acquiredAdaptive = false;
-
-                        try
-                        {
-                            // ReSharper disable AccessToDisposedClosure
-                            if (infrastructure.AdaptiveController is not null)
-                            {
-                                await infrastructure.AdaptiveController.AcquireAsync(token).ConfigureAwait(false);
-                                // ReSharper restore AccessToDisposedClosure
-                                acquiredAdaptive = true;
-                            }
-
-                            // ReSharper disable AccessToDisposedClosure
-                            if (infrastructure.TokenBucket is not null)
-                                await infrastructure.TokenBucket.AcquireAsync(token).ConfigureAwait(false);
-                            // ReSharper restore AccessToDisposedClosure
-
-                            // ReSharper disable AccessToDisposedClosure
-                            infrastructure.ProgressTracker?.IncrementStarted();
-                            infrastructure.MetricsTracker.IncrementItemsStarted();
-                            // ReSharper restore AccessToDisposedClosure
-
-                            if (options.OnStartItemAsync is not null)
-                                await options.OnStartItemAsync(idx).ConfigureAwait(false);
-
-                            ValueTask<TResult> ToExecute() =>
-                                RetryPolicy.ExecuteWithRetry(item,
-                                    taskSelector,
-                                    options,
-                                    // ReSharper disable once AccessToDisposedClosure
-                                    infrastructure.MetricsTracker,
-                                    idx,
-                                    token);
-
-                            // ReSharper disable AccessToDisposedClosure
-                            var result = infrastructure.CircuitBreaker is not null
-                                ? await infrastructure.CircuitBreaker.ExecuteAsync(ToExecute, token).ConfigureAwait(false)
-                                // ReSharper restore AccessToDisposedClosure
-                                : await ToExecute().ConfigureAwait(false);
-
-                            if (options.OrderedOutput && orderedResults != null)
-                                orderedResults[idx] = result;
-                            else
-                                results?.Add(result);
-
-                            // ReSharper disable AccessToDisposedClosure
-                            infrastructure.ProgressTracker?.IncrementCompleted();
-                            infrastructure.MetricsTracker.IncrementItemsCompleted();
-                            // ReSharper restore AccessToDisposedClosure
-
-                            if (options.OnCompleteItemAsync is not null)
-                                await options.OnCompleteItemAsync(idx).ConfigureAwait(false);
-
-                            success = true;
-                        }
-                        catch (Exception ex)
-                        {
-                            // ReSharper disable once AccessToDisposedClosure
-                            await HandleProcessingErrorAsync(
-                                ex,
-                                idx,
-                                options,
-                                infrastructure,
-                                // ReSharper disable once AccessToDisposedClosure
-                                cts,
-                                errors).ConfigureAwait(false);
-                        }
-                        finally
-                        {
-                            // ReSharper disable once AccessToDisposedClosure
-                            ReleaseAdaptiveController(infrastructure.AdaptiveController, acquiredAdaptive, startTime, success);
-                        }
+                        channel.Writer.TryComplete();
                     }
                 },
-                token))
-            .ToArray();
+                token);
 
-        try
-        {
-            await Task.WhenAll(workers.Prepend(writerTask)).ConfigureAwait(false);
+            var workers = Enumerable.Range(0, effectiveMaxWorkers)
+                .Select(_ => Task.Run(async () =>
+                    {
+                        await foreach (var (idx, item) in channel.Reader.ReadAllAsync(token).ConfigureAwait(false))
+                        {
+                            var startTime = Stopwatch.GetTimestamp();
+                            var success = false;
+                            var acquiredAdaptive = false;
+
+                            try
+                            {
+                                // ReSharper disable AccessToDisposedClosure
+                                // Acquire adaptive controller (must be in worker loop for proper finally cleanup)
+                                if (infrastructure.AdaptiveController is not null)
+                                {
+                                    await infrastructure.AdaptiveController.AcquireAsync(token).ConfigureAwait(false);
+                                    acquiredAdaptive = true;
+                                }
+
+                                // Process item
+                                var result = await ProcessItemCoreAsync(
+                                        item,
+                                        idx,
+                                        taskSelector,
+                                        options,
+                                        infrastructure,
+                                        token)
+                                    .ConfigureAwait(false);
+                                // ReSharper restore AccessToDisposedClosure
+
+                                // Store result (only difference between SelectParallelAsync and SelectParallelStreamAsync)
+                                if (options.OrderedOutput && orderedResults != null)
+                                    orderedResults[idx] = result;
+                                else
+                                    results?.Add(result);
+
+                                success = true;
+                            }
+                            catch (Exception ex)
+                            {
+                                await HandleProcessingErrorAsync(
+                                    ex,
+                                    idx,
+                                    options,
+                                    // ReSharper disable AccessToDisposedClosure
+                                    infrastructure,
+                                    cts,
+                                    // ReSharper restore AccessToDisposedClosure
+                                    errors).ConfigureAwait(false);
+                            }
+                            finally
+                            {
+                                // ReSharper disable once AccessToDisposedClosure
+                                ReleaseAdaptiveController(infrastructure.AdaptiveController, acquiredAdaptive, startTime, success);
+                            }
+                        }
+                    },
+                    token))
+                .ToArray();
+
+            try
+            {
+                await Task.WhenAll(workers.Prepend(writerTask)).ConfigureAwait(false);
+            }
+            catch when (options.ErrorMode != ErrorMode.FailFast)
+            {
+                // Errors are collected in the errors list and handled after cleanup
+            }
+
+            if (options.ErrorMode == ErrorMode.CollectAndContinue && !errors.IsEmpty)
+                throw new AggregateException(errors);
+
+            if (!options.OrderedOutput) return [.. results ?? []];
+
+            var result = new List<TResult>(totalItems);
+
+            for (var i = 0; i < totalItems; i++)
+            {
+                if (orderedResults is not null && orderedResults.TryGetValue(i, out var value))
+                    result.Add(value);
+            }
+
+            return result;
         }
-        catch when (options.ErrorMode != ErrorMode.FailFast)
-        {
-            // Errors are collected in the errors list and handled after cleanup
-        }
-
-        if (options.ErrorMode == ErrorMode.CollectAndContinue && !errors.IsEmpty) throw new AggregateException(errors);
-
-        if (!options.OrderedOutput) return [.. results ?? []];
-
-        var result = new List<TResult>(totalItems);
-
-        for (var i = 0; i < totalItems; i++)
-        {
-            if (orderedResults is not null && orderedResults.TryGetValue(i, out var value))
-                result.Add(value);
-        }
-
-        return result;
     }
 
     /// <summary>
@@ -224,151 +198,139 @@ public static class AsyncParallelLinq
         [EnumeratorCancellation]
         CancellationToken cancellationToken = default)
     {
-        options ??= new();
-        using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        var token = cts.Token;
-
+        (options, var cts, var token) = InitializeOptionsAndCancellation(options, cancellationToken);
+        using (cts)
+        {
 #pragma warning disable CA2007
-        await using var infrastructure = InitializeInfrastructure(options, null, token);
+            await using var infrastructure = InitializeInfrastructure(options, null, token);
 #pragma warning restore CA2007
 
-        var effectiveMaxWorkers = infrastructure.EffectiveMaxWorkers;
+            var effectiveMaxWorkers = infrastructure.EffectiveMaxWorkers;
 
-        var input = Channel.CreateBounded<(int idx, TSource item)>(new BoundedChannelOptions(options.ChannelCapacity)
-        {
-            SingleReader = false, SingleWriter = true, FullMode = BoundedChannelFullMode.Wait
-        });
-        var output = Channel.CreateBounded<(int idx, TResult result)>(new BoundedChannelOptions(options.ChannelCapacity)
-        {
-            SingleReader = true, SingleWriter = false, FullMode = BoundedChannelFullMode.Wait
-        });
-
-        var writer = Task.Run(async () =>
+            var input = CreateBoundedInputChannel<(int idx, TSource item)>(options.ChannelCapacity);
+            var output = Channel.CreateBounded<(int idx, TResult result)>(new BoundedChannelOptions(options.ChannelCapacity)
             {
-                var i = 0;
-                try
+                SingleReader = true,
+                SingleWriter = false,
+                FullMode = BoundedChannelFullMode.Wait
+            });
+
+            var writer = Task.Run(async () =>
                 {
-                    await foreach (var item in source.WithCancellation(token).ConfigureAwait(false))
+                    var i = 0;
+                    try
                     {
-                        token.ThrowIfCancellationRequested();
-                        await input.Writer.WriteAsync((i++, item), token).ConfigureAwait(false);
+                        await foreach (var item in source.WithCancellation(token).ConfigureAwait(false))
+                        {
+                            token.ThrowIfCancellationRequested();
+                            await input.Writer.WriteAsync((i++, item), token).ConfigureAwait(false);
+                        }
                     }
-                }
-                finally
-                {
-                    input.Writer.TryComplete();
-                }
-            },
-            token);
-
-        var workers = Enumerable.Range(0, effectiveMaxWorkers)
-            .Select(_ => Task.Run(async () =>
-                {
-                    await foreach (var (idx, item) in input.Reader.ReadAllAsync(token).ConfigureAwait(false))
+                    finally
                     {
-                        var startTime = Stopwatch.GetTimestamp();
-                        var success = false;
-                        var acquiredAdaptive = false;
-
-                        try
-                        {
-                            if (infrastructure.AdaptiveController is not null)
-                            {
-                                await infrastructure.AdaptiveController.AcquireAsync(token).ConfigureAwait(false);
-                                acquiredAdaptive = true;
-                            }
-
-                            if (infrastructure.TokenBucket is not null)
-                                await infrastructure.TokenBucket.AcquireAsync(token).ConfigureAwait(false);
-
-                            infrastructure.ProgressTracker?.IncrementStarted();
-                            infrastructure.MetricsTracker.IncrementItemsStarted();
-                            if (options.OnStartItemAsync is not null)
-                                await options.OnStartItemAsync(idx).ConfigureAwait(false);
-
-                            ValueTask<TResult> ToExecute() =>
-                                RetryPolicy.ExecuteWithRetry(item,
-                                    taskSelector,
-                                    options,
-                                    infrastructure.MetricsTracker,
-                                    idx,
-                                    token);
-
-                            var result = infrastructure.CircuitBreaker is not null
-                                ? await infrastructure.CircuitBreaker.ExecuteAsync(ToExecute, token).ConfigureAwait(false)
-                                : await ToExecute().ConfigureAwait(false);
-
-                            await output.Writer.WriteAsync((idx, result), token).ConfigureAwait(false);
-                            infrastructure.ProgressTracker?.IncrementCompleted();
-                            infrastructure.MetricsTracker.IncrementItemsCompleted();
-                            if (options.OnCompleteItemAsync is not null)
-                                await options.OnCompleteItemAsync(idx).ConfigureAwait(false);
-
-                            success = true;
-                        }
-                        catch (Exception ex)
-                        {
-                            await HandleProcessingErrorAsync(
-                                ex,
-                                idx,
-                                options,
-                                infrastructure,
-                                cts,
-                                null).ConfigureAwait(false);
-                        }
-                        finally
-                        {
-                            ReleaseAdaptiveController(infrastructure.AdaptiveController, acquiredAdaptive, startTime, success);
-                        }
+                        input.Writer.TryComplete();
                     }
                 },
-                token))
-            .ToArray();
+                token);
 
-        var reader = Task.Run(async () =>
+            var workers = Enumerable.Range(0, effectiveMaxWorkers)
+                .Select(_ => Task.Run(async () =>
+                    {
+                        await foreach (var (idx, item) in input.Reader.ReadAllAsync(token).ConfigureAwait(false))
+                        {
+                            var startTime = Stopwatch.GetTimestamp();
+                            var success = false;
+                            var acquiredAdaptive = false;
+
+                            try
+                            {
+                                // Acquire adaptive controller (must be in worker loop for proper finally cleanup)
+                                if (infrastructure.AdaptiveController is not null)
+                                {
+                                    await infrastructure.AdaptiveController.AcquireAsync(token).ConfigureAwait(false);
+                                    acquiredAdaptive = true;
+                                }
+
+                                // Process item
+                                var result = await ProcessItemCoreAsync(
+                                        item,
+                                        idx,
+                                        taskSelector,
+                                        options,
+                                        infrastructure,
+                                        token)
+                                    .ConfigureAwait(false);
+
+                                // Write result to output channel (only difference between SelectParallelAsync and SelectParallelStreamAsync)
+                                await output.Writer.WriteAsync((idx, result), token).ConfigureAwait(false);
+
+                                success = true;
+                            }
+                            catch (Exception ex)
+                            {
+                                await HandleProcessingErrorAsync(
+                                        ex,
+                                        idx,
+                                        options,
+                                        infrastructure,
+                                        cts,
+                                        null)
+                                    .ConfigureAwait(false);
+                            }
+                            finally
+                            {
+                                ReleaseAdaptiveController(infrastructure.AdaptiveController, acquiredAdaptive, startTime, success);
+                            }
+                        }
+                    },
+                    token))
+                .ToArray();
+
+            var reader = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await Task.WhenAll(workers).ConfigureAwait(false);
+                    }
+                    finally
+                    {
+                        output.Writer.TryComplete();
+                    }
+                },
+                token);
+
+            if (options.OrderedOutput)
             {
-                try
-                {
-                    await Task.WhenAll(workers).ConfigureAwait(false);
-                }
-                finally
-                {
-                    output.Writer.TryComplete();
-                }
-            },
-            token);
+                var buffer = new Dictionary<int, TResult>(options.ChannelCapacity);
+                var nextIndex = 0;
 
-        if (options.OrderedOutput)
-        {
-            var buffer = new Dictionary<int, TResult>(options.ChannelCapacity);
-            var nextIndex = 0;
+                await foreach (var (idx, result) in output.Reader.ReadAllAsync(token).ConfigureAwait(false))
+                {
+                    token.ThrowIfCancellationRequested();
 
-            await foreach (var (idx, result) in output.Reader.ReadAllAsync(token).ConfigureAwait(false))
+                    buffer[idx] = result;
+
+                    while (buffer.Remove(nextIndex, out var orderedResult))
+                    {
+                        yield return orderedResult;
+
+                        nextIndex++;
+                    }
+                }
+
+                foreach (var idx in buffer.Keys.OrderBy(static k => k)) yield return buffer[idx];
+            }
+            else
             {
-                token.ThrowIfCancellationRequested();
-
-                buffer[idx] = result;
-
-                while (buffer.Remove(nextIndex, out var orderedResult))
+                await foreach (var (_, result) in output.Reader.ReadAllAsync(token).ConfigureAwait(false))
                 {
-                    yield return orderedResult;
-
-                    nextIndex++;
+                    token.ThrowIfCancellationRequested();
+                    yield return result;
                 }
             }
 
-            foreach (var idx in buffer.Keys.OrderBy(static k => k)) yield return buffer[idx];
+            await Task.WhenAll(writer, reader).ConfigureAwait(false);
         }
-        else
-        {
-            await foreach (var (_, result) in output.Reader.ReadAllAsync(token).ConfigureAwait(false))
-            {
-                token.ThrowIfCancellationRequested();
-                yield return result;
-            }
-        }
-
-        await Task.WhenAll(writer, reader).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -520,45 +482,49 @@ public static class AsyncParallelLinq
 
         if (batchTimeout.HasValue)
         {
-            using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            var token = cts.Token;
-            var timeout = batchTimeout.Value;
-
-            var channel = Channel.CreateBounded<IReadOnlyList<TSource>>(new BoundedChannelOptions(16)
+            var (_, cts, token) = InitializeOptionsAndCancellation(null, cancellationToken);
+            using (cts)
             {
-                SingleReader = true, SingleWriter = false, FullMode = BoundedChannelFullMode.Wait
-            });
+                var timeout = batchTimeout.Value;
 
-            var producer = Task.Run(async () =>
+                var channel = Channel.CreateBounded<IReadOnlyList<TSource>>(new BoundedChannelOptions(16)
                 {
-                    try
-                    {
-                        var flushTimer = Task.Delay(timeout, token);
+                    SingleReader = true,
+                    SingleWriter = false,
+                    FullMode = BoundedChannelFullMode.Wait
+                });
 
-                        await foreach (var item in source.WithCancellation(token).ConfigureAwait(false))
+                var producer = Task.Run(async () =>
+                    {
+                        try
                         {
-                            batch.Add(item);
+                            var flushTimer = Task.Delay(timeout, token);
 
-                            if (batch.Count < batchSize && (!flushTimer.IsCompleted || batch.Count <= 0)) continue;
+                            await foreach (var item in source.WithCancellation(token).ConfigureAwait(false))
+                            {
+                                batch.Add(item);
 
-                            await channel.Writer.WriteAsync(batch, token).ConfigureAwait(false);
-                            batch = new(batchSize);
-                            flushTimer = Task.Delay(timeout, token);
+                                if (batch.Count < batchSize && (!flushTimer.IsCompleted || batch.Count <= 0)) continue;
+
+                                await channel.Writer.WriteAsync(batch, token).ConfigureAwait(false);
+                                batch = new(batchSize);
+                                flushTimer = Task.Delay(timeout, token);
+                            }
+
+                            if (batch.Count > 0) await channel.Writer.WriteAsync(batch, token).ConfigureAwait(false);
                         }
+                        finally
+                        {
+                            channel.Writer.TryComplete();
+                        }
+                    },
+                    token);
 
-                        if (batch.Count > 0) await channel.Writer.WriteAsync(batch, token).ConfigureAwait(false);
-                    }
-                    finally
-                    {
-                        channel.Writer.TryComplete();
-                    }
-                },
-                token);
+                await foreach (var batchResult in channel.Reader.ReadAllAsync(token).ConfigureAwait(false))
+                    yield return batchResult;
 
-            await foreach (var batchResult in channel.Reader.ReadAllAsync(token).ConfigureAwait(false))
-                yield return batchResult;
-
-            await producer.ConfigureAwait(false);
+                await producer.ConfigureAwait(false);
+            }
         }
         else
         {
@@ -626,8 +592,7 @@ public static class AsyncParallelLinq
             ? new AdaptiveConcurrencyController(options.AdaptiveConcurrency)
             : null;
 
-        var effectiveMaxWorkers = options.AdaptiveConcurrency?.MaxConcurrency
-                                  ?? options.MaxDegreeOfParallelism;
+        var effectiveMaxWorkers = options.AdaptiveConcurrency?.MaxConcurrency ?? options.MaxDegreeOfParallelism;
         metricsTracker.SetActiveWorkers(effectiveMaxWorkers);
 
         return new ParallelInfrastructure(
@@ -684,5 +649,98 @@ public static class AsyncParallelLinq
 
         var elapsed = Stopwatch.GetElapsedTime(startTime);
         controller.Release(elapsed, success);
+    }
+
+    /// <summary>
+    ///     Executes a task with retry policy and circuit breaker.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static ValueTask<TResult> ExecuteWithRetryAndCircuitBreakerAsync<TSource, TResult>(
+        TSource item,
+        Func<TSource, CancellationToken, ValueTask<TResult>> taskSelector,
+        ParallelOptionsRivulet options,
+        ParallelInfrastructure infrastructure,
+        int idx,
+        CancellationToken token)
+    {
+        return infrastructure.CircuitBreaker?.ExecuteAsync(Execute, token) ?? Execute();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        ValueTask<TResult> Execute() =>
+            RetryPolicy.ExecuteWithRetry(
+                item,
+                taskSelector,
+                options,
+                infrastructure.MetricsTracker,
+                idx,
+                token);
+    }
+
+    /// <summary>
+    ///     Processes a single item through the pipeline (without adaptive controller - handled by caller).
+    /// </summary>
+    private static async ValueTask<TResult> ProcessItemCoreAsync<TSource, TResult>(
+        TSource item,
+        int idx,
+        Func<TSource, CancellationToken, ValueTask<TResult>> taskSelector,
+        ParallelOptionsRivulet options,
+        ParallelInfrastructure infrastructure,
+        CancellationToken token)
+    {
+        // Acquire token bucket
+        if (infrastructure.TokenBucket is not null)
+            await infrastructure.TokenBucket.AcquireAsync(token).ConfigureAwait(false);
+
+        // Track start
+        infrastructure.ProgressTracker?.IncrementStarted();
+        infrastructure.MetricsTracker.IncrementItemsStarted();
+
+        if (options.OnStartItemAsync is not null)
+            await options.OnStartItemAsync(idx).ConfigureAwait(false);
+
+        // Execute with retry and circuit breaker
+        var result = await ExecuteWithRetryAndCircuitBreakerAsync(
+                item,
+                taskSelector,
+                options,
+                infrastructure,
+                idx,
+                token)
+            .ConfigureAwait(false);
+
+        // Track completion
+        infrastructure.ProgressTracker?.IncrementCompleted();
+        infrastructure.MetricsTracker.IncrementItemsCompleted();
+
+        if (options.OnCompleteItemAsync is not null)
+            await options.OnCompleteItemAsync(idx).ConfigureAwait(false);
+
+        return result;
+    }
+
+    /// <summary>
+    ///     Creates a bounded channel for input items with standard configuration.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Channel<T> CreateBoundedInputChannel<T>(int capacity) =>
+        Channel.CreateBounded<T>(new BoundedChannelOptions(capacity)
+        {
+            SingleReader = false,
+            SingleWriter = true,
+            FullMode = BoundedChannelFullMode.Wait
+        });
+
+    /// <summary>
+    ///     Initializes options and creates linked cancellation token source.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static (ParallelOptionsRivulet options, CancellationTokenSource cts, CancellationToken token)
+        InitializeOptionsAndCancellation(
+            ParallelOptionsRivulet? options,
+            CancellationToken cancellationToken)
+    {
+        options ??= new ParallelOptionsRivulet();
+        var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        return (options, cts, cts.Token);
     }
 }
