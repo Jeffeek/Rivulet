@@ -13,7 +13,7 @@ permissions:
 jobs:
   inspect-code:
     name: ReSharper InspectCode
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     timeout-minutes: 15
     permissions:
       security-events: write
