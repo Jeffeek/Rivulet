@@ -55,7 +55,7 @@ jobs:
          minimumReportSeverity: WARNING
          minimumSeverity: warning
          dotnetVersion: ${{ steps.setup-dotnet.outputs.dotnet-version }}
-         include: **.cs
-         exclude: **/obj/**;**/bin/**;**/TestResults/**;**/samples/**;**/tests/**
+         include: '**.cs'
+         exclude: '**/obj/**;**/bin/**;**/TestResults/**;**/samples/**;**/tests/**'
          properties: Configuration=Release
             
