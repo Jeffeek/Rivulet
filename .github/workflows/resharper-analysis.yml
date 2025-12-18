@@ -13,7 +13,7 @@ permissions:
 jobs:
   inspect-code:
     name: ReSharper InspectCode
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
       security-events: write
@@ -55,7 +55,7 @@ jobs:
          minimumReportSeverity: WARNING
          minimumSeverity: warning
          dotnetVersion: ${{ steps.setup-dotnet.outputs.dotnet-version }}
-         include: '"**/**.cs"'
-         exclude: '"**/obj/**;**/bin/**;**/TestResults/**;**/samples/**;**/tests/**"'
+         include: '**/**.cs'
+         exclude: '**/obj/**;**/bin/**;**/TestResults/**'
          properties: 'Configuration=Release'
             
