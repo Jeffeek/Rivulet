@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Rivulet.Core.Internal;
 
 namespace Rivulet.Core.Observability;
 
@@ -29,7 +30,7 @@ internal sealed class MetricsTracker : MetricsTrackerBase
         _stopwatch = Stopwatch.StartNew();
         _samplerCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
-        _samplerTask = Task.Run(SampleMetricsPeriodically, _samplerCts.Token);
+        _samplerTask = PeriodicTaskRunner.RunPeriodicAsync(SampleMetrics, _options.SampleInterval, _samplerCts.Token);
     }
 
     private static TimeSpan DisposeWait => TimeSpan.FromSeconds(2);
@@ -76,24 +77,7 @@ internal sealed class MetricsTracker : MetricsTrackerBase
     public override void SetQueueDepth(int depth) =>
         Interlocked.Exchange(ref _queueDepth, depth);
 
-    private async Task SampleMetricsPeriodically()
-    {
-        try
-        {
-            while (!_samplerCts.Token.IsCancellationRequested)
-            {
-                await Task.Delay(_options.SampleInterval, _samplerCts.Token).ConfigureAwait(false);
-                await SampleMetrics().ConfigureAwait(false);
-            }
-        }
-        catch (OperationCanceledException)
-        {
-            // Cancellation is expected during disposal - just exit cleanly
-            // Final sample will be taken synchronously in DisposeAsync to guarantee completion
-        }
-    }
-
-    private async Task SampleMetrics()
+    private async ValueTask SampleMetrics()
     {
         Thread.MemoryBarrier();
 
@@ -110,65 +94,42 @@ internal sealed class MetricsTracker : MetricsTrackerBase
         var itemsPerSecond = elapsed.TotalSeconds > 0 ? completed / elapsed.TotalSeconds : 0;
         var errorRate = started > 0 ? (double)failures / started : 0.0;
 
-        try
-        {
-            if (_options.OnMetricsSample != null)
-            {
-                await _options.OnMetricsSample(new()
-                    {
-                        ActiveWorkers = activeWorkers,
-                        QueueDepth = queueDepth,
-                        ItemsStarted = started,
-                        ItemsCompleted = completed,
-                        TotalRetries = retries,
-                        TotalFailures = failures,
-                        ThrottleEvents = throttles,
-                        DrainEvents = drains,
-                        Elapsed = elapsed,
-                        ItemsPerSecond = itemsPerSecond,
-                        ErrorRate = errorRate
-                    })
-                    .ConfigureAwait(false);
-            }
-        }
-        catch (Exception ex)
-        {
-            RivuletEventSource.Log.CallbackFailed(nameof(MetricsOptions.OnMetricsSample),
-                ex.GetType().Name,
-                ex.Message);
-        }
+        await CallbackHelper.InvokeSafelyAsync(_options.OnMetricsSample,
+                new MetricsSnapshot
+                {
+                    ActiveWorkers = activeWorkers,
+                    QueueDepth = queueDepth,
+                    ItemsStarted = started,
+                    ItemsCompleted = completed,
+                    TotalRetries = retries,
+                    TotalFailures = failures,
+                    ThrottleEvents = throttles,
+                    DrainEvents = drains,
+                    Elapsed = elapsed,
+                    ItemsPerSecond = itemsPerSecond,
+                    ErrorRate = errorRate
+                },
+                nameof(MetricsOptions.OnMetricsSample))
+            .ConfigureAwait(false);
 
         Thread.MemoryBarrier();
     }
 
-    public override async ValueTask DisposeAsync()
+    public override ValueTask DisposeAsync()
     {
-        if (_disposed) return;
+        if (_disposed) return ValueTask.CompletedTask;
 
         _disposed = true;
 
-        // Cancel the background periodic sampling loop
-        // The loop will exit cleanly without taking a final sample
-        await _samplerCts.CancelAsync().ConfigureAwait(false);
-
-        // Wait for the background loop to exit (should be fast - just exits on cancellation)
-        // Use a short timeout since the loop should exit immediately
-        try
-        {
-            await _samplerTask.WaitAsync(DisposeWait).ConfigureAwait(false);
-        }
-        catch (Exception ex) when (ex is AggregateException or OperationCanceledException or TimeoutException)
-        {
-            // Background loop is stuck or took too long - this is unexpected but don't block disposal
-            // The final sample will still be taken below
-        }
-
-        await Task.Delay(100).ConfigureAwait(false);
-
-        // Take final sample - this will always complete because it's in our disposal context
-        await SampleMetrics().ConfigureAwait(false);
-
-        _samplerCts.Dispose();
-        _stopwatch.Stop();
+        return DisposalHelper.DisposePeriodicTaskAsync(
+            _samplerCts,
+            _samplerTask,
+            DisposeWait,
+            _stopwatch,
+            async () =>
+            {
+                await Task.Delay(100).ConfigureAwait(false);
+                await SampleMetrics().ConfigureAwait(false);
+            });
     }
 }

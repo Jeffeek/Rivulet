@@ -9,18 +9,19 @@ internal static class LockHelper
     /// <summary>
     ///     Executes an action within a lock scope using .NET 9+ Lock.
     /// </summary>
-    /// <param name="lock">The Lock instance to use for synchronization.</param>
+    /// <param name="lock">The Lock instance (wrapped in object) to use for synchronization.</param>
     /// <param name="action">The action to execute while holding the lock.</param>
-    public static void Execute(Lock @lock, Action action)
+    public static void Execute(object @lock, Action action)
     {
-        @lock.Enter();
+        var lockObj = (Lock)@lock;
+        lockObj.Enter();
         try
         {
             action();
         }
         finally
         {
-            @lock.Exit();
+            lockObj.Exit();
         }
     }
 
@@ -28,19 +29,20 @@ internal static class LockHelper
     ///     Executes a function within a lock scope using .NET 9+ Lock and returns a result.
     /// </summary>
     /// <typeparam name="T">The return type.</typeparam>
-    /// <param name="lock">The Lock instance to use for synchronization.</param>
+    /// <param name="lock">The Lock instance (wrapped in object) to use for synchronization.</param>
     /// <param name="func">The function to execute while holding the lock.</param>
     /// <returns>The result of the function.</returns>
-    public static T Execute<T>(Lock @lock, Func<T> func)
+    public static T Execute<T>(object @lock, Func<T> func)
     {
-        @lock.Enter();
+        var lockObj = (Lock)@lock;
+        lockObj.Enter();
         try
         {
             return func();
         }
         finally
         {
-            @lock.Exit();
+            lockObj.Exit();
         }
     }
 #else

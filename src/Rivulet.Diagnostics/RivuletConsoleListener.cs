@@ -22,11 +22,7 @@ namespace Rivulet.Diagnostics;
 public sealed class RivuletConsoleListener : RivuletEventListenerBase
 {
     private readonly bool _useColors;
-#if NET9_0_OR_GREATER
-    private readonly Lock _lock = new();
-#else
-    private readonly object _lock = new();
-#endif
+    private readonly object _lock = LockFactory.CreateLock();
 
     /// <summary>
     ///     Initializes a new instance of the <see cref="RivuletConsoleListener" /> class.

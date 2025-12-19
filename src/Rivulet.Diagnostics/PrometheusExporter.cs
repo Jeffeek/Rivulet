@@ -25,11 +25,7 @@ namespace Rivulet.Diagnostics;
 public sealed class PrometheusExporter : RivuletEventListenerBase
 {
     private readonly Dictionary<string, (string DisplayName, double Value, string DisplayUnits)> _latestValues = new();
-#if NET9_0_OR_GREATER
-    private readonly Lock _lock = new();
-#else
-    private readonly object _lock = new();
-#endif
+    private readonly object _lock = LockFactory.CreateLock();
 
     /// <summary>
     ///     Called when a counter value is received.

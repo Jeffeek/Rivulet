@@ -5,11 +5,7 @@ namespace Rivulet.Core.Tests;
 
 public sealed class LockHelperTests
 {
-#if NET9_0_OR_GREATER
-    private readonly Lock _lock = new();
-#else
-    private readonly object _lock = new();
-#endif
+    private readonly object _lock = LockFactory.CreateLock();
 
     [Fact]
     public void LockHelper_ExecuteAction_ExecutesActionSuccessfully()

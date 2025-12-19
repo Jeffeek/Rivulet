@@ -26,11 +26,7 @@ public sealed class RivuletStructuredLogListener : RivuletEventListenerBase, IAs
     private readonly string? _filePath;
     private readonly Action<string>? _logAction;
     private readonly JsonSerializerOptions _jsonOptions;
-#if NET9_0_OR_GREATER
-    private readonly Lock _lock = new();
-#else
-    private readonly object _lock = new();
-#endif
+    private readonly object _lock = LockFactory.CreateLock();
     private StreamWriter? _writer;
 
     /// <summary>

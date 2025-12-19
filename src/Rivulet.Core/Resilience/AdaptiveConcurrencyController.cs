@@ -11,11 +11,7 @@ internal sealed class AdaptiveConcurrencyController : IAsyncDisposable
 {
     private readonly AdaptiveConcurrencyOptions _options;
     private readonly SemaphoreSlim _semaphore;
-#if NET9_0_OR_GREATER
-    private readonly Lock _lock = new();
-#else
-    private readonly object _lock = new();
-#endif
+    private readonly object _lock = LockFactory.CreateLock();
     private readonly Timer _samplingTimer;
     private readonly List<double> _latencySamples = [];
 
@@ -162,23 +158,10 @@ internal sealed class AdaptiveConcurrencyController : IAsyncDisposable
 
         _currentConcurrency = newConcurrency;
 
-        if (_options.OnConcurrencyChange is not null)
-        {
-            _ = Task.Run(async () =>
-                {
-                    try
-                    {
-                        await _options.OnConcurrencyChange(oldConcurrency, newConcurrency).ConfigureAwait(false);
-                    }
-                    catch (Exception ex)
-                    {
-                        RivuletEventSource.Log.CallbackFailed(nameof(AdaptiveConcurrencyOptions.OnConcurrencyChange),
-                            ex.GetType().Name,
-                            ex.Message);
-                    }
-                },
-                CancellationToken.None);
-        }
+        CallbackHelper.InvokeFireAndForget(_options.OnConcurrencyChange,
+            oldConcurrency,
+            newConcurrency,
+            nameof(AdaptiveConcurrencyOptions.OnConcurrencyChange));
     }
 
     public async ValueTask DisposeAsync()

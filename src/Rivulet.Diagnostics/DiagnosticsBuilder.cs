@@ -32,11 +32,7 @@ namespace Rivulet.Diagnostics;
 [SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public sealed class DiagnosticsBuilder : IDisposable, IAsyncDisposable
 {
-#if NET9_0_OR_GREATER
-    private readonly Lock _disposeLock = new();
-#else
-    private readonly object _disposeLock = new();
-#endif
+    private readonly object _disposeLock = LockFactory.CreateLock();
     private bool _disposed;
 
     private readonly List<IDisposable> _listeners = new();
