@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Rivulet.Core.Internal;
 
 namespace Rivulet.Core.Observability;
 
@@ -22,35 +23,27 @@ internal sealed class ProgressTracker : IAsyncDisposable
         _stopwatch = Stopwatch.StartNew();
         _reporterCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
-        _reporterTask = Task.Run(ReportProgressPeriodically, _reporterCts.Token);
+        _reporterTask = PeriodicTaskRunner.RunPeriodicAsync(
+            ReportProgress,
+            _options.ReportInterval,
+            _reporterCts.Token,
+            async () =>
+            {
+                await Task.Delay(100).ConfigureAwait(false);
+                await ReportProgress().ConfigureAwait(false);
+            });
     }
 
     private static TimeSpan DisposeWait => TimeSpan.FromSeconds(5);
 
-    public async ValueTask DisposeAsync()
+    public ValueTask DisposeAsync()
     {
-        if (_disposed) return;
+        if (_disposed)
+            return ValueTask.CompletedTask;
 
         _disposed = true;
 
-        // Cancel the background reporter task
-        // The ReportProgressPeriodically loop will catch OperationCanceledException
-        // and execute one final progress report before exiting
-        await _reporterCts.CancelAsync().ConfigureAwait(false);
-
-        // Wait briefly for the reporter task to complete its final report
-        // Use a timeout to allow final callback execution without indefinite blocking
-        try
-        {
-            await _reporterTask.WaitAsync(DisposeWait).ConfigureAwait(false);
-        }
-        catch (Exception ex) when (ex is AggregateException or OperationCanceledException)
-        {
-            // Task was cancelled or faulted, which is expected
-        }
-
-        _reporterCts.Dispose();
-        _stopwatch.Stop();
+        return DisposalHelper.DisposePeriodicTaskAsync(_reporterCts, _reporterTask, DisposeWait, _stopwatch);
     }
 
     public void IncrementStarted() => Interlocked.Increment(ref _itemsStarted);
@@ -59,24 +52,7 @@ internal sealed class ProgressTracker : IAsyncDisposable
 
     public void IncrementErrors() => Interlocked.Increment(ref _errorCount);
 
-    private async Task ReportProgressPeriodically()
-    {
-        try
-        {
-            while (!_reporterCts.Token.IsCancellationRequested)
-            {
-                await Task.Delay(_options.ReportInterval, _reporterCts.Token).ConfigureAwait(false);
-                await ReportProgress().ConfigureAwait(false);
-            }
-        }
-        catch (OperationCanceledException)
-        {
-            await Task.Delay(100).ConfigureAwait(false);
-            await ReportProgress().ConfigureAwait(false);
-        }
-    }
-
-    private async Task ReportProgress()
+    private async ValueTask ReportProgress()
     {
         if (_options.OnProgress is null) return;
 
@@ -113,14 +89,8 @@ internal sealed class ProgressTracker : IAsyncDisposable
             PercentComplete = percentComplete
         };
 
-        try
-        {
-            await _options.OnProgress(snapshot).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            RivuletEventSource.Log.CallbackFailed(nameof(ProgressOptions.OnProgress), ex.GetType().Name, ex.Message);
-        }
+        await CallbackHelper.InvokeSafelyAsync(_options.OnProgress, snapshot, nameof(ProgressOptions.OnProgress))
+            .ConfigureAwait(false);
 
         Thread.MemoryBarrier();
     }

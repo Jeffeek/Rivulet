@@ -22,11 +22,7 @@ public sealed class RivuletFileListener : RivuletEventListenerBase, IAsyncDispos
 {
     private readonly string _filePath;
     private readonly long _maxFileSizeBytes;
-#if NET9_0_OR_GREATER
-    private readonly Lock _lock = new();
-#else
-    private readonly object _lock = new();
-#endif
+    private readonly object _lock = LockFactory.CreateLock();
     private StreamWriter? _writer;
     private long _currentFileSize;
 

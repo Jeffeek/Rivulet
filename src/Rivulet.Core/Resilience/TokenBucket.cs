@@ -11,11 +11,7 @@ internal sealed class TokenBucket
 {
     private readonly RateLimitOptions _options;
     private readonly Stopwatch _stopwatch;
-#if NET9_0_OR_GREATER
-    private readonly Lock _lock = new();
-#else
-    private readonly object _lock = new();
-#endif
+    private readonly object _lock = LockFactory.CreateLock();
 
     private double _availableTokens;
     private long _lastRefillTicks;

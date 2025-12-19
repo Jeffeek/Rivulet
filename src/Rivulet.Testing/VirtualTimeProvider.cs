@@ -7,11 +7,7 @@ namespace Rivulet.Testing;
 /// </summary>
 public sealed class VirtualTimeProvider : IDisposable
 {
-#if NET9_0_OR_GREATER
-    private readonly Lock _lock = new();
-#else
-    private readonly object _lock = new();
-#endif
+    private readonly object _lock = LockFactory.CreateLock();
     private readonly PriorityQueue<TaskCompletionSource, TimeSpan> _scheduledTasks = new();
     private TimeSpan _currentTime = TimeSpan.Zero;
     private bool _disposed;
