@@ -83,15 +83,16 @@ public static class ParallelOptionsRivuletExtensions
             OnRetryAsync = trackRetries
                 ? (index, attemptNumber, exception) =>
                 {
-                    var activity = asyncLocalActivity.Value ?? itemActivities.GetValueOrDefault(index);
-                    if (activity is not null) RivuletActivitySource.RecordRetry(activity, attemptNumber, exception);
+                    var activity = GetItemActivity(asyncLocalActivity, itemActivities, index);
+                    if (activity is not null)
+                        RivuletActivitySource.RecordRetry(activity, attemptNumber, exception);
 
                     return options.OnRetryAsync?.Invoke(index, attemptNumber, exception) ?? ValueTask.CompletedTask;
                 }
                 : options.OnRetryAsync,
             OnErrorAsync = async (index, exception) =>
             {
-                var activity = asyncLocalActivity.Value ?? itemActivities.GetValueOrDefault(index);
+                var activity = GetItemActivity(asyncLocalActivity, itemActivities, index);
 
                 if (activity is null)
                     return options.OnErrorAsync is null || await options.OnErrorAsync(index, exception).ConfigureAwait(false);
@@ -117,8 +118,7 @@ public static class ParallelOptionsRivuletExtensions
                         asyncLocalActivity.Value = null;
                     }
 
-                    return options.OnErrorAsync is null ||
-                           await options.OnErrorAsync(index, exception).ConfigureAwait(false);
+                    return options.OnErrorAsync is null || await options.OnErrorAsync(index, exception).ConfigureAwait(false);
                 }
                 finally
                 {
@@ -126,8 +126,7 @@ public static class ParallelOptionsRivuletExtensions
                 }
             },
             CircuitBreaker = CreateCircuitBreakerOptions(options.CircuitBreaker, itemActivities, asyncLocalActivity),
-            AdaptiveConcurrency =
-                CreateAdaptiveConcurrencyOptions(options.AdaptiveConcurrency, itemActivities, asyncLocalActivity)
+            AdaptiveConcurrency = CreateAdaptiveConcurrencyOptions(options.AdaptiveConcurrency, itemActivities, asyncLocalActivity)
         };
     }
 
@@ -146,8 +145,7 @@ public static class ParallelOptionsRivuletExtensions
             SamplingDuration = sourceOptions.SamplingDuration,
             OnStateChange = (oldState, newState) =>
             {
-                var currentActivity = asyncLocalActivity.Value ?? Activity.Current
-                    ?? itemActivities.Values.FirstOrDefault();
+                var currentActivity = GetCurrentActivityForStateChange(asyncLocalActivity, itemActivities);
                 RivuletActivitySource.RecordCircuitBreakerStateChange(currentActivity, newState.ToString());
 
                 return sourceOptions.OnStateChange?.Invoke(oldState, newState) ?? ValueTask.CompletedTask;
@@ -160,7 +158,8 @@ public static class ParallelOptionsRivuletExtensions
         ConcurrentDictionary<int, Activity> itemActivities,
         AsyncLocal<Activity?> asyncLocalActivity)
     {
-        if (sourceOptions is null) return null;
+        if (sourceOptions is null)
+            return null;
 
         return new()
         {
@@ -174,12 +173,29 @@ public static class ParallelOptionsRivuletExtensions
             DecreaseStrategy = sourceOptions.DecreaseStrategy,
             OnConcurrencyChange = (oldValue, newValue) =>
             {
-                var currentActivity = asyncLocalActivity.Value ?? Activity.Current
-                    ?? itemActivities.Values.FirstOrDefault();
+                var currentActivity = GetCurrentActivityForStateChange(asyncLocalActivity, itemActivities);
                 RivuletActivitySource.RecordConcurrencyChange(currentActivity, oldValue, newValue);
 
                 return sourceOptions.OnConcurrencyChange?.Invoke(oldValue, newValue) ?? ValueTask.CompletedTask;
             }
         };
     }
+
+    /// <summary>
+    ///     Retrieves the current activity for an item, checking AsyncLocal first, then dictionary.
+    /// </summary>
+    private static Activity? GetItemActivity(
+        AsyncLocal<Activity?> asyncLocalActivity,
+        ConcurrentDictionary<int, Activity> itemActivities,
+        int index) =>
+        asyncLocalActivity.Value ?? itemActivities.GetValueOrDefault(index);
+
+    /// <summary>
+    ///     Retrieves the current activity for state changes, checking AsyncLocal first,
+    ///     then Activity.Current, then any activity from the dictionary.
+    /// </summary>
+    private static Activity? GetCurrentActivityForStateChange(
+        AsyncLocal<Activity?> asyncLocalActivity,
+        ConcurrentDictionary<int, Activity> itemActivities) =>
+        asyncLocalActivity.Value ?? Activity.Current ?? itemActivities.Values.FirstOrDefault();
 }
