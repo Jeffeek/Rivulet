@@ -271,4 +271,260 @@ public sealed class RetryPolicyTests
         attemptCounts[1].ShouldBe(3);
         attemptCounts[2].ShouldBe(1);
     }
+
+    [Fact]
+    public async Task WithRetryPolicy_PerItemTimeout_EnforcesTimeout()
+    {
+        var source = new[] { 1, 2, 3 };
+        var options = new ParallelOptionsRivulet
+        {
+            ErrorMode = ErrorMode.BestEffort,
+            PerItemTimeout = TimeSpan.FromMilliseconds(100),
+            MaxRetries = 0
+        };
+
+        var results = await source.SelectParallelAsync(static async (x, ct) =>
+            {
+                if (x == 2)
+                {
+                    // This should timeout
+                    await Task.Delay(TimeSpan.FromSeconds(10), ct);
+                }
+
+                return x * 2;
+            },
+            options);
+
+        // Item 2 should timeout and be excluded
+        results.Count.ShouldBe(2);
+        results.ShouldContain(2); // 1 * 2
+        results.ShouldContain(6); // 3 * 2
+    }
+
+    [Fact]
+    public async Task WithRetryPolicy_PerItemTimeout_WithSuccessfulCompletion()
+    {
+        var source = new[] { 1, 2, 3 };
+        var options = new ParallelOptionsRivulet
+        {
+            ErrorMode = ErrorMode.BestEffort,
+            PerItemTimeout = TimeSpan.FromSeconds(5),
+            MaxRetries = 0
+        };
+
+        var results = await source.SelectParallelAsync(static async (x, ct) =>
+            {
+                await Task.Delay(10, ct); // Short delay, well within timeout
+                return x * 2;
+            },
+            options);
+
+        // All items should complete successfully
+        results.Count.ShouldBe(3);
+    }
+
+    [Fact]
+    public async Task WithRetryPolicy_OnRetryAsync_IsCalledOnRetry()
+    {
+        var source = new[] { 1 };
+        var retryCallbacks = new List<(int itemIndex, int attemptNumber, Exception exception)>();
+        var options = new ParallelOptionsRivulet
+        {
+            ErrorMode = ErrorMode.BestEffort,
+            MaxRetries = 3,
+            BaseDelay = TimeSpan.FromMilliseconds(1),
+            IsTransient = static _ => true,
+            OnRetryAsync = (itemIndex, attemptNumber, exception) =>
+            {
+                retryCallbacks.Add((itemIndex, attemptNumber, exception));
+                return ValueTask.CompletedTask;
+            }
+        };
+
+        var attemptCount = 0;
+        var results = await source.SelectParallelAsync(
+            (x, _) =>
+            {
+                attemptCount++;
+                return attemptCount <= 2
+                    ? throw new InvalidOperationException($"Attempt {attemptCount}")
+                    : new ValueTask<int>(x * 2);
+            },
+            options);
+
+        results.Count.ShouldBe(1);
+        retryCallbacks.Count.ShouldBe(2); // First retry (attempt 2) and second retry (attempt 3)
+        retryCallbacks[0].itemIndex.ShouldBe(0);
+        retryCallbacks[0].attemptNumber.ShouldBe(1);
+        retryCallbacks[0].exception.Message.ShouldBe("Attempt 1");
+        retryCallbacks[1].attemptNumber.ShouldBe(2);
+        retryCallbacks[1].exception.Message.ShouldBe("Attempt 2");
+    }
+
+    [Fact]
+    public async Task WithRetryPolicy_OnFallback_ReturnsCorrectType()
+    {
+        var source = new[] { 1, 2, 3 };
+        var fallbackCalls = new ConcurrentBag<(int itemIndex, Exception exception)>();
+        var options = new ParallelOptionsRivulet
+        {
+            ErrorMode = ErrorMode.BestEffort,
+            MaxRetries = 1,
+            BaseDelay = TimeSpan.FromMilliseconds(1),
+            IsTransient = static _ => true,
+            OnFallback = (itemIndex, exception) =>
+            {
+                fallbackCalls.Add((itemIndex, exception));
+                return -1; // Fallback value
+            }
+        };
+
+        var results = await source.SelectParallelAsync(static (x, _) => x == 2
+                ? throw new InvalidOperationException("Always fails")
+                : new ValueTask<int>(x * 2),
+            options);
+
+        results.Count.ShouldBe(3);
+        results.ShouldContain(2); // 1 * 2
+        results.ShouldContain(-1); // Fallback value for 2
+        results.ShouldContain(6); // 3 * 2
+
+        fallbackCalls.Count.ShouldBe(1);
+        fallbackCalls.Single().exception.Message.ShouldBe("Always fails");
+    }
+
+    [Fact]
+    public async Task WithRetryPolicy_OnFallback_ReturnsNullForReferenceType()
+    {
+        var source = new[] { 1, 2, 3 };
+        var options = new ParallelOptionsRivulet
+        {
+            ErrorMode = ErrorMode.BestEffort,
+            MaxRetries = 1,
+            BaseDelay = TimeSpan.FromMilliseconds(1),
+            IsTransient = static _ => true,
+            OnFallback = static (_, _) => null // Null fallback value for reference type
+        };
+
+        var results = await source.SelectParallelAsync(static (x, _) => x == 2
+                ? throw new InvalidOperationException("Always fails")
+                : new ValueTask<string?>($"Item{x}"),
+            options);
+
+        results.Count.ShouldBe(3);
+        results.ShouldContain("Item1");
+        results.ShouldContain(null as string); // Null fallback value
+        results.ShouldContain("Item3");
+    }
+
+    [Fact]
+    public async Task WithRetryPolicy_OnFallback_WithWrongType_ThrowsInvalidOperationException()
+    {
+        var source = new[] { 1 };
+        var options = new ParallelOptionsRivulet
+        {
+            ErrorMode = ErrorMode.FailFast,
+            MaxRetries = 1,
+            BaseDelay = TimeSpan.FromMilliseconds(1),
+            IsTransient = static _ => true,
+            OnFallback = static (_, _) => "WrongType" // Returns string instead of int
+        };
+
+        var exception = await Should.ThrowAsync<InvalidOperationException>(Act);
+        exception.Message.ShouldContain("Fallback returned");
+        exception.Message.ShouldContain("String");
+        exception.Message.ShouldContain("Int32");
+        return;
+
+        Task<List<int>> Act() =>
+            source.SelectParallelAsync<int, int>(
+                static (_, _) => throw new InvalidOperationException("Always fails"),
+                options);
+    }
+
+    [Fact]
+    public async Task WithRetryPolicy_OnFallback_WithNullForValueType_ThrowsInvalidOperationException()
+    {
+        var source = new[] { 1 };
+        var options = new ParallelOptionsRivulet
+        {
+            ErrorMode = ErrorMode.FailFast,
+            MaxRetries = 1,
+            BaseDelay = TimeSpan.FromMilliseconds(1),
+            IsTransient = static _ => true,
+            OnFallback = static (_, _) => null // Returns null for value type (int)
+        };
+
+        var exception = await Should.ThrowAsync<InvalidOperationException>(Act);
+        exception.Message.ShouldContain("Fallback returned");
+        exception.Message.ShouldContain("null");
+        exception.Message.ShouldContain("Int32");
+        return;
+
+        Task<List<int>> Act() =>
+            source.SelectParallelAsync<int, int>(
+                static (_, _) => throw new InvalidOperationException("Always fails"),
+                options);
+    }
+
+    [Fact]
+    public async Task WithRetryPolicy_OnRetryAsync_WithAsyncWork()
+    {
+        var source = new[] { 1 };
+        var retryDelayMs = new List<long>();
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+        var options = new ParallelOptionsRivulet
+        {
+            ErrorMode = ErrorMode.BestEffort,
+            MaxRetries = 2,
+            BaseDelay = TimeSpan.FromMilliseconds(1),
+            IsTransient = static _ => true,
+            OnRetryAsync = async (_, _, _) =>
+            {
+                await Task.Delay(50);
+                retryDelayMs.Add(stopwatch.ElapsedMilliseconds);
+            }
+        };
+
+        var attemptCount = 0;
+        _ = await source.SelectParallelAsync(
+            (x, _) =>
+            {
+                attemptCount++;
+                return attemptCount <= 2
+                    ? throw new InvalidOperationException("Retry me")
+                    : new ValueTask<int>(x * 2);
+            },
+            options);
+
+        retryDelayMs.Count.ShouldBe(2);
+        // Verify async work was awaited by checking elapsed time
+        stopwatch.ElapsedMilliseconds.ShouldBeGreaterThanOrEqualTo(100); // 2 retries * 50ms each
+    }
+
+    [Fact]
+    public async Task WithRetryPolicy_NoPerItemTimeout_UsesRegularPath()
+    {
+        var source = new[] { 1, 2, 3 };
+        var options = new ParallelOptionsRivulet
+        {
+            ErrorMode = ErrorMode.BestEffort,
+            PerItemTimeout = null, // No timeout
+            MaxRetries = 0
+        };
+
+        var results = await source.SelectParallelAsync(static async (x, ct) =>
+            {
+                await Task.Delay(10, ct);
+                return x * 2;
+            },
+            options);
+
+        // All items should complete successfully
+        results.Count.ShouldBe(3);
+        results.ShouldContain(2);
+        results.ShouldContain(4);
+        results.ShouldContain(6);
+    }
 }
