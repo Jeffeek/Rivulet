@@ -34,8 +34,7 @@ public static class RivuletActivitySource
     ///     The ActivitySource instance for creating activities.
     /// </summary>
     // ReSharper disable once MemberCanBeInternal
-    public static readonly ActivitySource Source = new(RivuletSharedConstants.RivuletCore,
-        RivuletOpenTelemetryConstants.InstrumentationVersion);
+    public static readonly ActivitySource Source = new(RivuletSharedConstants.RivuletCore, RivuletOpenTelemetryConstants.InstrumentationVersion);
 
     /// <summary>
     ///     Creates an Activity for a parallel operation.
@@ -136,7 +135,8 @@ public static class RivuletActivitySource
     /// <param name="newConcurrency">The new concurrency level.</param>
     public static void RecordConcurrencyChange(Activity? activity, int oldConcurrency, int newConcurrency)
     {
-        if (activity is null) return;
+        if (activity is null)
+            return;
 
         activity.AddEvent(new(RivuletOpenTelemetryConstants.EventNames.AdaptiveConcurrencyChange,
             tags: new()

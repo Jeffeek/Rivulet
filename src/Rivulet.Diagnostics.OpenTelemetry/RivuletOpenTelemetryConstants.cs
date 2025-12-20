@@ -63,27 +63,27 @@ public static class RivuletOpenTelemetryConstants
     public static class MetricUnits
     {
         /// <summary>
-        ///     Unit for item counts: "{items}"
+        ///     Unit for item counts: {items}
         /// </summary>
         public const string Items = "{items}";
 
         /// <summary>
-        ///     Unit for retry counts: "{retries}"
+        ///     Unit for retry counts: {retries}
         /// </summary>
         public const string Retries = "{retries}";
 
         /// <summary>
-        ///     Unit for failure counts: "{failures}"
+        ///     Unit for failure counts: {failures}
         /// </summary>
         public const string Failures = "{failures}";
 
         /// <summary>
-        ///     Unit for event counts: "{events}"
+        ///     Unit for event counts: {events}
         /// </summary>
         public const string Events = "{events}";
 
         /// <summary>
-        ///     Unit for ratios: "{ratio}"
+        ///     Unit for ratios: {ratio}
         /// </summary>
         public const string Ratio = "{ratio}";
     }

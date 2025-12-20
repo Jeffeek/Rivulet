@@ -28,8 +28,7 @@ namespace Rivulet.Diagnostics.OpenTelemetry;
 /// </example>
 public sealed class RivuletMetricsExporter : IDisposable
 {
-    private static readonly Meter Meter = new(RivuletSharedConstants.RivuletCore,
-        RivuletOpenTelemetryConstants.InstrumentationVersion);
+    private static readonly Meter Meter = new(RivuletSharedConstants.RivuletCore, RivuletOpenTelemetryConstants.InstrumentationVersion);
 
     /// <summary>
     ///     Initializes a new instance of the <see cref="RivuletMetricsExporter" /> class.
@@ -38,43 +37,43 @@ public sealed class RivuletMetricsExporter : IDisposable
     {
         var eventSource = RivuletEventSource.Log;
 
-        _itemsStartedGauge = Meter.CreateObservableGauge(
+        _itemsStartedGauge = CreateMetricGauge(
             RivuletOpenTelemetryConstants.MetricNames.ItemsStarted,
             () => eventSource.GetItemsStarted(),
             RivuletOpenTelemetryConstants.MetricUnits.Items,
             RivuletOpenTelemetryConstants.MetricDescriptions.ItemsStarted);
 
-        _itemsCompletedGauge = Meter.CreateObservableGauge(
+        _itemsCompletedGauge = CreateMetricGauge(
             RivuletOpenTelemetryConstants.MetricNames.ItemsCompleted,
             () => eventSource.GetItemsCompleted(),
             RivuletOpenTelemetryConstants.MetricUnits.Items,
             RivuletOpenTelemetryConstants.MetricDescriptions.ItemsCompleted);
 
-        _totalRetriesGauge = Meter.CreateObservableGauge(
+        _totalRetriesGauge = CreateMetricGauge(
             RivuletOpenTelemetryConstants.MetricNames.RetriesTotal,
             () => eventSource.GetTotalRetries(),
             RivuletOpenTelemetryConstants.MetricUnits.Retries,
             RivuletOpenTelemetryConstants.MetricDescriptions.RetriesTotal);
 
-        _totalFailuresGauge = Meter.CreateObservableGauge(
+        _totalFailuresGauge = CreateMetricGauge(
             RivuletOpenTelemetryConstants.MetricNames.FailuresTotal,
             () => eventSource.GetTotalFailures(),
             RivuletOpenTelemetryConstants.MetricUnits.Failures,
             RivuletOpenTelemetryConstants.MetricDescriptions.FailuresTotal);
 
-        _throttleEventsGauge = Meter.CreateObservableGauge(
+        _throttleEventsGauge = CreateMetricGauge(
             RivuletOpenTelemetryConstants.MetricNames.ThrottleEvents,
             () => eventSource.GetThrottleEvents(),
             RivuletOpenTelemetryConstants.MetricUnits.Events,
             RivuletOpenTelemetryConstants.MetricDescriptions.ThrottleEvents);
 
-        _drainEventsGauge = Meter.CreateObservableGauge(
+        _drainEventsGauge = CreateMetricGauge(
             RivuletOpenTelemetryConstants.MetricNames.DrainEvents,
             () => eventSource.GetDrainEvents(),
             RivuletOpenTelemetryConstants.MetricUnits.Events,
             RivuletOpenTelemetryConstants.MetricDescriptions.DrainEvents);
 
-        _errorRateGauge = Meter.CreateObservableGauge(
+        _errorRateGauge = CreateMetricGauge(
             RivuletOpenTelemetryConstants.MetricNames.ErrorRate,
             () =>
             {
@@ -94,6 +93,23 @@ public sealed class RivuletMetricsExporter : IDisposable
         // ObservableGauges are automatically cleaned up when the meter is disposed
         // We keep the meter alive as a static singleton for the lifetime of the app
     }
+
+    /// <summary>
+    ///     Creates an observable gauge with the specified configuration.
+    /// </summary>
+    /// <typeparam name="T">The type of the measurement value.</typeparam>
+    /// <param name="name">The metric name.</param>
+    /// <param name="measurement">Function to retrieve the measurement value.</param>
+    /// <param name="unit">The measurement unit.</param>
+    /// <param name="description">The metric description.</param>
+    /// <returns>An observable gauge configured with the specified parameters.</returns>
+    private static ObservableGauge<T> CreateMetricGauge<T>(
+        string name,
+        Func<T> measurement,
+        string unit,
+        string description)
+        where T : struct =>
+        Meter.CreateObservableGauge(name, measurement, unit, description);
 
     /// <summary>
     ///     <see cref="Dispose" />
