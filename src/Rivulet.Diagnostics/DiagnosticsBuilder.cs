@@ -1,4 +1,5 @@
 using Rivulet.Core.Internal;
+using Rivulet.Diagnostics.Internal;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Rivulet.Diagnostics;
@@ -35,8 +36,8 @@ public sealed class DiagnosticsBuilder : IDisposable, IAsyncDisposable
     private readonly object _disposeLock = LockFactory.CreateLock();
     private bool _disposed;
 
-    private readonly List<IDisposable> _listeners = new();
-    private readonly List<IAsyncDisposable> _asyncListeners = new();
+    private readonly List<IDisposable> _listeners = [];
+    private readonly List<IAsyncDisposable> _asyncListeners = [];
 
     /// <summary>
     ///     Adds a console listener to the diagnostics pipeline.
@@ -141,39 +142,12 @@ public sealed class DiagnosticsBuilder : IDisposable, IAsyncDisposable
                 _disposed = true;
 
                 // Dispose synchronous listeners
-                foreach (var listener in _listeners)
-                {
-                    try
-                    {
-                        listener.Dispose();
-                    }
-#pragma warning disable CA1031 // Do not catch general exception types
-                    catch
-#pragma warning restore CA1031
-                    {
-                        // Swallow exceptions during disposal to ensure all listeners are disposed
-                    }
-                }
-
+                ListenerCollectionDisposalHelper.DisposeAll(_listeners);
                 _listeners.Clear();
 
                 // For async listeners, we can only dispose them synchronously (not ideal but necessary for IDisposable)
                 // Users should prefer DisposeAsync for proper async disposal
-                foreach (var listener in _asyncListeners)
-                {
-                    try
-                    {
-                        var valueTask = listener.DisposeAsync();
-                        if (!valueTask.IsCompleted) valueTask.AsTask().GetAwaiter().GetResult();
-                    }
-#pragma warning disable CA1031 // Do not catch general exception types
-                    catch
-#pragma warning restore CA1031
-                    {
-                        // Swallow exceptions during disposal to ensure all listeners are disposed
-                    }
-                }
-
+                ListenerCollectionDisposalHelper.DisposeAllAsyncBlocking(_asyncListeners);
                 _asyncListeners.Clear();
             });
 
@@ -197,33 +171,11 @@ public sealed class DiagnosticsBuilder : IDisposable, IAsyncDisposable
         if (!shouldDispose) return;
 
         // Dispose async listeners first (preferred)
-        foreach (var listener in _asyncListeners)
-        {
-            try
-            {
-                await listener.DisposeAsync().ConfigureAwait(false);
-            }
-            catch
-            {
-                // Swallow exceptions during disposal to ensure all listeners are disposed
-            }
-        }
-
+        await ListenerCollectionDisposalHelper.DisposeAllAsync(_asyncListeners).ConfigureAwait(false);
         _asyncListeners.Clear();
 
         // Then dispose synchronous listeners
-        foreach (var listener in _listeners)
-        {
-            try
-            {
-                listener.Dispose();
-            }
-            catch
-            {
-                // Swallow exceptions during disposal to ensure all listeners are disposed
-            }
-        }
-
+        ListenerCollectionDisposalHelper.DisposeAll(_listeners);
         _listeners.Clear();
     }
 }

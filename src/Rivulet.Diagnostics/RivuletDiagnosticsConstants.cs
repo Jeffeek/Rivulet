@@ -33,9 +33,11 @@ internal static class RivuletDiagnosticsConstants
         /// </summary>
         public const string File = "yyyy-MM-dd HH:mm:ss.fff";
 
+        // ReSharper disable CommentTypo
         /// <summary>
         ///     Format for file rotation timestamps: yyyyMMdd-HHmmss
         /// </summary>
+        // ReSharper restore CommentTypo
         public const string FileRotation = "yyyyMMdd-HHmmss";
 
         /// <summary>

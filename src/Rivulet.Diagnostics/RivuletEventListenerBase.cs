@@ -49,12 +49,10 @@ public abstract class RivuletEventListenerBase : EventListener
                 continue;
 
             var value = Convert.ToDouble(meanObj);
-            var displayName = eventPayload.TryGetValue(RivuletDiagnosticsConstants.EventCounterKeys.DisplayName,
-                out var displayNameObj)
+            var displayName = eventPayload.TryGetValue(RivuletDiagnosticsConstants.EventCounterKeys.DisplayName, out var displayNameObj)
                 ? displayNameObj.ToString()
                 : name;
-            var displayUnits = eventPayload.TryGetValue(RivuletDiagnosticsConstants.EventCounterKeys.DisplayUnits,
-                out var displayUnitsObj)
+            var displayUnits = eventPayload.TryGetValue(RivuletDiagnosticsConstants.EventCounterKeys.DisplayUnits, out var displayUnitsObj)
                 ? displayUnitsObj.ToString()
                 : string.Empty;
 
