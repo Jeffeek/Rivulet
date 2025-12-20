@@ -147,7 +147,9 @@ public sealed class DiagnosticsBuilder : IDisposable, IAsyncDisposable
                     {
                         listener.Dispose();
                     }
+#pragma warning disable CA1031 // Do not catch general exception types
                     catch
+#pragma warning restore CA1031
                     {
                         // Swallow exceptions during disposal to ensure all listeners are disposed
                     }
@@ -164,7 +166,9 @@ public sealed class DiagnosticsBuilder : IDisposable, IAsyncDisposable
                         var valueTask = listener.DisposeAsync();
                         if (!valueTask.IsCompleted) valueTask.AsTask().GetAwaiter().GetResult();
                     }
+#pragma warning disable CA1031 // Do not catch general exception types
                     catch
+#pragma warning restore CA1031
                     {
                         // Swallow exceptions during disposal to ensure all listeners are disposed
                     }

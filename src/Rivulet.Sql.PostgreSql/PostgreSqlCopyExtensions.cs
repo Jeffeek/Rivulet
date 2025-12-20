@@ -90,8 +90,11 @@ public static class PostgreSqlCopyExtensions
                             await writer.CompleteAsync(ct).ConfigureAwait(false);
                         }
                     }
+#pragma warning disable CA1031 // Do not catch general exception types
                     catch (Exception ex)
+#pragma warning restore CA1031
                     {
+                        // PostgreSQL COPY can throw various provider-specific exceptions - wrap all in InvalidOperationException
                         var detailMessage =
                             $"[PostgreSQL COPY] Failed to bulk insert batch of {batch.Length} rows to table '{tableName}'. " +
                             $"Copy command: {copyCommand}. " +
@@ -173,8 +176,11 @@ public static class PostgreSqlCopyExtensions
 #pragma warning restore CA2007
                             foreach (var line in batch) await writer.WriteLineAsync(line).ConfigureAwait(false);
                         }
+#pragma warning disable CA1031 // Do not catch general exception types
                         catch (Exception ex)
+#pragma warning restore CA1031
                         {
+                            // PostgreSQL COPY can throw various provider-specific exceptions - wrap all in InvalidOperationException
                             throw new InvalidOperationException(
                                 $"Failed to bulk insert CSV batch of {batch.Length} lines to table '{tableName}'",
                                 ex);
@@ -240,8 +246,11 @@ public static class PostgreSqlCopyExtensions
 #pragma warning restore CA2007
                             foreach (var line in batch) await writer.WriteLineAsync(line).ConfigureAwait(false);
                         }
+#pragma warning disable CA1031 // Do not catch general exception types
                         catch (Exception ex)
+#pragma warning restore CA1031
                         {
+                            // PostgreSQL COPY can throw various provider-specific exceptions - wrap all in InvalidOperationException
                             throw new InvalidOperationException(
                                 $"Failed to bulk insert text batch of {batch.Length} lines to table '{tableName}'",
                                 ex);

@@ -19,7 +19,9 @@ public static class RivuletToPollyConverter
     /// <remarks>
     ///     The returned pipeline uses ThreadLocal storage for DecorrelatedJitter state,
     ///     making it safe to reuse across concurrent operations.
+    ///     Note: ThreadLocal is not disposed as its lifetime is bound to the pipeline's closure.
     /// </remarks>
+    [SuppressMessage("IDisposableAnalyzers.Correctness", "IDISP001:Dispose created", Justification = "ThreadLocal lifetime is bound to ResiliencePipeline closure - no accessible disposal point")]
     public static ResiliencePipeline ToPollyRetryPipeline(this ParallelOptionsRivulet options)
     {
         ArgumentNullException.ThrowIfNull(options);
@@ -94,7 +96,9 @@ public static class RivuletToPollyConverter
     /// <remarks>
     ///     Creates a pipeline combining Timeout, Circuit Breaker, and Retry (in that order, innermost to outermost).
     ///     Uses ThreadLocal storage for DecorrelatedJitter state, making it thread-safe.
+    ///     Note: ThreadLocal is not disposed as its lifetime is bound to the pipeline's closure.
     /// </remarks>
+    [SuppressMessage("IDisposableAnalyzers.Correctness", "IDISP001:Dispose created", Justification = "ThreadLocal lifetime is bound to ResiliencePipeline closure - no accessible disposal point")]
     public static ResiliencePipeline ToPollyPipeline(this ParallelOptionsRivulet options)
     {
         ArgumentNullException.ThrowIfNull(options);

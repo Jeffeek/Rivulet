@@ -125,8 +125,11 @@ public static class AsyncParallelLinq
 
                                 success = true;
                             }
+#pragma warning disable CA1031 // Do not catch general exception types
                             catch (Exception ex)
+#pragma warning restore CA1031
                             {
+                                // User-provided selector can throw any exception type - must catch all and handle via error policy
                                 await HandleProcessingErrorAsync(
                                     ex,
                                     idx,
@@ -151,7 +154,9 @@ public static class AsyncParallelLinq
             {
                 await Task.WhenAll(workers.Prepend(writerTask)).ConfigureAwait(false);
             }
+#pragma warning disable CA1031 // Do not catch general exception types
             catch when (options.ErrorMode != ErrorMode.FailFast)
+#pragma warning restore CA1031
             {
                 // Errors are collected in the errors list and handled after cleanup
             }
@@ -159,13 +164,15 @@ public static class AsyncParallelLinq
             if (options.ErrorMode == ErrorMode.CollectAndContinue && !errors.IsEmpty)
                 throw new AggregateException(errors);
 
-            if (!options.OrderedOutput) return [.. results ?? []];
+            // If not ordered, results is guaranteed non-null (initialized at declaration)
+            if (!options.OrderedOutput) return [.. results!];
 
+            // If ordered, orderedResults is guaranteed non-null (initialized at declaration)
             var result = new List<TResult>(totalItems);
 
             for (var i = 0; i < totalItems; i++)
             {
-                if (orderedResults is not null && orderedResults.TryGetValue(i, out var value))
+                if (orderedResults!.TryGetValue(i, out var value))
                     result.Add(value);
             }
 
@@ -266,8 +273,11 @@ public static class AsyncParallelLinq
 
                                 success = true;
                             }
+#pragma warning disable CA1031 // Do not catch general exception types
                             catch (Exception ex)
+#pragma warning restore CA1031
                             {
+                                // User-provided selector can throw any exception type - must catch all and handle via error policy
                                 await HandleProcessingErrorAsync(
                                         ex,
                                         idx,

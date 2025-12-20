@@ -33,8 +33,11 @@ internal static class CallbackHelper
                 {
                     await callback(arg1, arg2).ConfigureAwait(false);
                 }
+#pragma warning disable CA1031 // Do not catch general exception types
                 catch (Exception ex)
+#pragma warning restore CA1031
                 {
+                    // User callbacks can throw any exception type - must catch all and log via EventSource
                     RivuletEventSource.Log.CallbackFailed(callbackName, ex.GetType().Name, ex.Message);
                 }
             },
@@ -61,8 +64,11 @@ internal static class CallbackHelper
         {
             await callback(arg).ConfigureAwait(false);
         }
+#pragma warning disable CA1031 // Do not catch general exception types
         catch (Exception ex)
+#pragma warning restore CA1031
         {
+            // User callbacks can throw any exception type - must catch all and log via EventSource
             RivuletEventSource.Log.CallbackFailed(callbackName, ex.GetType().Name, ex.Message);
         }
     }
