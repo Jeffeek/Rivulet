@@ -24,7 +24,8 @@ internal sealed class RivuletOptionsSetup(IConfiguration configuration) : IConfi
     public void Configure(ParallelOptionsRivulet options)
     {
         var section = _configuration.GetSection(RivuletHostingConstants.ConfigurationSectionName);
-        if (!section.Exists()) return;
+        if (!section.Exists())
+            return;
 
         // Use reflection to set init-only properties
         // This is necessary because IConfigureOptions<T> provides an already-constructed instance
@@ -37,11 +38,7 @@ internal sealed class RivuletOptionsSetup(IConfiguration configuration) : IConfi
         SetPropertyIfExists(options, type, section, nameof(ParallelOptionsRivulet.PerItemTimeout), TimeSpan.Parse);
         SetPropertyIfExists(options, type, section, nameof(ParallelOptionsRivulet.BaseDelay), TimeSpan.Parse);
         SetPropertyIfExists(options, type, section, nameof(ParallelOptionsRivulet.ErrorMode), Enum.Parse<ErrorMode>);
-        SetPropertyIfExists(options,
-            type,
-            section,
-            nameof(ParallelOptionsRivulet.BackoffStrategy),
-            Enum.Parse<BackoffStrategy>);
+        SetPropertyIfExists(options, type, section, nameof(ParallelOptionsRivulet.BackoffStrategy), Enum.Parse<BackoffStrategy>);
     }
 
     private static void SetPropertyIfExists<T>(
@@ -56,9 +53,11 @@ internal sealed class RivuletOptionsSetup(IConfiguration configuration) : IConfi
 
         try
         {
-            var value = parser(configValue);
             var property = type.GetProperty(propertyName);
-            if (property == null) return;
+            if (property == null)
+                return;
+
+            var value = parser(configValue);
 
             // Get the backing field for the init-only property
             // Init-only properties have a backing field named "<PropertyName>k__BackingField"

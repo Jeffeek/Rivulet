@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Rivulet.Core;
+using Rivulet.Hosting.Internal;
 
 namespace Rivulet.Hosting;
 
@@ -33,39 +34,34 @@ public abstract class ParallelWorkerService<TSource, TResult> : BackgroundServic
     /// </summary>
     /// <param name="stoppingToken">Cancellation token that triggers when the application is stopping.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation("Starting worker service {ServiceName} with MaxDegreeOfParallelism={Parallelism}",
             GetType().Name,
             Options.MaxDegreeOfParallelism);
 
-        try
-        {
-            var source = GetSourceItems(stoppingToken);
+        return BackgroundServiceExecutionHelper.ExecuteWithErrorHandlingAsync(
+            async ct =>
+            {
+                var source = GetSourceItems(ct);
 
-            await source.SelectParallelStreamAsync(
-                    async (item, ct) =>
-                    {
-                        var result = await ProcessAsync(item, ct).ConfigureAwait(false);
-                        await OnResultAsync(result, ct).ConfigureAwait(false);
-                        return result;
-                    },
-                    Options,
-                    stoppingToken)
-                .CountAsync(stoppingToken)
-                .ConfigureAwait(false);
+                await source.SelectParallelStreamAsync(
+                        async (item, itemCt) =>
+                        {
+                            var result = await ProcessAsync(item, itemCt).ConfigureAwait(false);
+                            await OnResultAsync(result, itemCt).ConfigureAwait(false);
+                            return result;
+                        },
+                        Options,
+                        ct)
+                    .CountAsync(ct)
+                    .ConfigureAwait(false);
 
-            _logger.LogInformation("Worker service {ServiceName} completed", GetType().Name);
-        }
-        catch (OperationCanceledException)
-        {
-            _logger.LogInformation("Worker service {ServiceName} is stopping", GetType().Name);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Fatal error in worker service {ServiceName}", GetType().Name);
-            throw;
-        }
+                _logger.LogInformation("Worker service {ServiceName} completed", GetType().Name);
+            },
+            $"Worker service {GetType().Name}",
+            _logger,
+            stoppingToken);
     }
 
     /// <summary>
