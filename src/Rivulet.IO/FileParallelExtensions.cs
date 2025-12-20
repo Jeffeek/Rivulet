@@ -263,13 +263,7 @@ public static class FileParallelExtensions
             filePath,
             async () =>
             {
-                await using var stream = new FileStream(
-                    filePath,
-                    FileMode.Open,
-                    FileAccess.Read,
-                    options.ReadFileShare,
-                    options.BufferSize,
-                    true);
+                await using var stream = FileOperationHelper.CreateReadStream(filePath, options);
 
                 using var reader = new StreamReader(stream, options.Encoding);
                 return await reader.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
@@ -289,13 +283,7 @@ public static class FileParallelExtensions
             filePath,
             async () =>
             {
-                await using var stream = new FileStream(
-                    filePath,
-                    FileMode.Open,
-                    FileAccess.Read,
-                    options.ReadFileShare,
-                    options.BufferSize,
-                    true);
+                await using var stream = FileOperationHelper.CreateReadStream(filePath, options);
 
                 var buffer = new byte[stream.Length];
                 _ = await stream.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
@@ -316,13 +304,7 @@ public static class FileParallelExtensions
             filePath,
             async () =>
             {
-                await using var stream = new FileStream(
-                    filePath,
-                    FileMode.Open,
-                    FileAccess.Read,
-                    options.ReadFileShare,
-                    options.BufferSize,
-                    true);
+                await using var stream = FileOperationHelper.CreateReadStream(filePath, options);
 
                 using var reader = new StreamReader(stream, options.Encoding);
                 var lines = new List<string>();
@@ -354,14 +336,7 @@ public static class FileParallelExtensions
                 FileOperationHelper.EnsureDirectoryExists(filePath, options);
                 FileOperationHelper.ValidateOverwrite(filePath, options);
 
-                await using var stream = new FileStream(
-                    filePath,
-                    FileMode.Create,
-                    FileAccess.Write,
-                    options.WriteFileShare,
-                    options.BufferSize,
-                    true);
-
+                await using var stream = FileOperationHelper.CreateWriteStream(filePath, options);
                 await using var writer = new StreamWriter(stream, options.Encoding);
                 await writer.WriteAsync(content.AsMemory(), cancellationToken).ConfigureAwait(false);
                 await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
@@ -387,13 +362,7 @@ public static class FileParallelExtensions
                 FileOperationHelper.EnsureDirectoryExists(filePath, options);
                 FileOperationHelper.ValidateOverwrite(filePath, options);
 
-                await using var stream = new FileStream(
-                    filePath,
-                    FileMode.Create,
-                    FileAccess.Write,
-                    options.WriteFileShare,
-                    options.BufferSize,
-                    true);
+                await using var stream = FileOperationHelper.CreateWriteStream(filePath, options);
 
                 await stream.WriteAsync(content, cancellationToken).ConfigureAwait(false);
                 await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
@@ -419,26 +388,15 @@ public static class FileParallelExtensions
                 FileOperationHelper.EnsureDirectoryExists(destinationPath, options);
                 FileOperationHelper.ValidateOverwrite(destinationPath, options);
 
-                await using var sourceStream = new FileStream(
-                    sourcePath,
-                    FileMode.Open,
-                    FileAccess.Read,
-                    options.ReadFileShare,
-                    options.BufferSize,
-                    true);
+                var (sourceStream, destStream) = FileOperationHelper.CreateCopyStreams(sourcePath, destinationPath, options);
+                await using (sourceStream)
+                await using (destStream)
+                {
+                    await sourceStream.CopyToAsync(destStream, options.BufferSize, cancellationToken).ConfigureAwait(false);
+                    await destStream.FlushAsync(cancellationToken).ConfigureAwait(false);
 
-                await using var destStream = new FileStream(
-                    destinationPath,
-                    FileMode.Create,
-                    FileAccess.Write,
-                    options.WriteFileShare,
-                    options.BufferSize,
-                    true);
-
-                await sourceStream.CopyToAsync(destStream, options.BufferSize, cancellationToken).ConfigureAwait(false);
-                await destStream.FlushAsync(cancellationToken).ConfigureAwait(false);
-
-                return sourceStream.Length;
+                    return sourceStream.Length;
+                }
             },
             options,
             static length => length);

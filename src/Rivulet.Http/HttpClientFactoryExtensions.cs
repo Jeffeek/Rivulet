@@ -1,6 +1,7 @@
 // HttpClient instances from IHttpClientFactory should NOT be disposed - the factory manages their lifecycle
 
 using System.Diagnostics.CodeAnalysis;
+using Rivulet.Http.Internal;
 
 #pragma warning disable CA2000 // Do not dispose objects before losing scope
 
@@ -35,9 +36,7 @@ public static class HttpClientFactoryExtensions
         ArgumentNullException.ThrowIfNull(uris);
         ArgumentNullException.ThrowIfNull(httpClientFactory);
 
-        var httpClient = string.IsNullOrEmpty(clientName)
-            ? httpClientFactory.CreateClient()
-            : httpClientFactory.CreateClient(clientName);
+        var httpClient = HttpHelper.CreateClient(httpClientFactory, clientName);
 
         return uris.GetParallelAsync(httpClient, options, cancellationToken);
     }
@@ -65,9 +64,7 @@ public static class HttpClientFactoryExtensions
         ArgumentNullException.ThrowIfNull(uris);
         ArgumentNullException.ThrowIfNull(httpClientFactory);
 
-        var httpClient = string.IsNullOrEmpty(clientName)
-            ? httpClientFactory.CreateClient()
-            : httpClientFactory.CreateClient(clientName);
+        var httpClient = HttpHelper.CreateClient(httpClientFactory, clientName);
 
         return uris.GetStringParallelAsync(httpClient, options, cancellationToken);
     }
@@ -95,9 +92,7 @@ public static class HttpClientFactoryExtensions
         ArgumentNullException.ThrowIfNull(uris);
         ArgumentNullException.ThrowIfNull(httpClientFactory);
 
-        var httpClient = string.IsNullOrEmpty(clientName)
-            ? httpClientFactory.CreateClient()
-            : httpClientFactory.CreateClient(clientName);
+        var httpClient = HttpHelper.CreateClient(httpClientFactory, clientName);
 
         return uris.GetByteArrayParallelAsync(httpClient, options, cancellationToken);
     }
@@ -127,9 +122,7 @@ public static class HttpClientFactoryExtensions
         ArgumentNullException.ThrowIfNull(requests);
         ArgumentNullException.ThrowIfNull(httpClientFactory);
 
-        var httpClient = string.IsNullOrEmpty(clientName)
-            ? httpClientFactory.CreateClient()
-            : httpClientFactory.CreateClient(clientName);
+        var httpClient = HttpHelper.CreateClient(httpClientFactory, clientName);
 
         return requests.PostParallelAsync(httpClient, options, cancellationToken);
     }
@@ -159,9 +152,7 @@ public static class HttpClientFactoryExtensions
         ArgumentNullException.ThrowIfNull(requests);
         ArgumentNullException.ThrowIfNull(httpClientFactory);
 
-        var httpClient = string.IsNullOrEmpty(clientName)
-            ? httpClientFactory.CreateClient()
-            : httpClientFactory.CreateClient(clientName);
+        var httpClient = HttpHelper.CreateClient(httpClientFactory, clientName);
 
         return requests.PutParallelAsync(httpClient, options, cancellationToken);
     }
@@ -189,9 +180,7 @@ public static class HttpClientFactoryExtensions
         ArgumentNullException.ThrowIfNull(uris);
         ArgumentNullException.ThrowIfNull(httpClientFactory);
 
-        var httpClient = string.IsNullOrEmpty(clientName)
-            ? httpClientFactory.CreateClient()
-            : httpClientFactory.CreateClient(clientName);
+        var httpClient = HttpHelper.CreateClient(httpClientFactory, clientName);
 
         return uris.DeleteParallelAsync(httpClient, options, cancellationToken);
     }
@@ -216,9 +205,7 @@ public static class HttpClientFactoryExtensions
         ArgumentNullException.ThrowIfNull(downloads);
         ArgumentNullException.ThrowIfNull(httpClientFactory);
 
-        var httpClient = string.IsNullOrEmpty(clientName)
-            ? httpClientFactory.CreateClient()
-            : httpClientFactory.CreateClient(clientName);
+        var httpClient = HttpHelper.CreateClient(httpClientFactory, clientName);
 
         return downloads.DownloadParallelAsync(httpClient, options, cancellationToken);
     }

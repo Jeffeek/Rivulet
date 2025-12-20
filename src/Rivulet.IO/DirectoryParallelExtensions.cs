@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Rivulet.Core;
+using Rivulet.IO.Internal;
 
 namespace Rivulet.IO;
 
@@ -175,8 +176,7 @@ public static class DirectoryParallelExtensions
 
         var filePairs = sourceFiles.Select(sourcePath =>
         {
-            var relativePath = Path.GetRelativePath(sourceDirectory, sourcePath);
-            var destPath = Path.Join(destinationDirectory, relativePath);
+            var destPath = FileOperationHelper.ComputeDestinationPath(sourcePath, sourceDirectory, destinationDirectory);
             return (sourcePath, destPath);
         });
 
@@ -211,8 +211,7 @@ public static class DirectoryParallelExtensions
 
         var filePairs = sourceFiles.Select(sourcePath =>
         {
-            var relativePath = Path.GetRelativePath(sourceDirectory, sourcePath);
-            var destPath = Path.Join(destinationDirectory, relativePath);
+            var destPath = FileOperationHelper.ComputeDestinationPath(sourcePath, sourceDirectory, destinationDirectory);
             return (sourcePath, destPath);
         });
 

@@ -54,4 +54,46 @@ internal static class FileOperationHelper
         if (!options.OverwriteExisting && File.Exists(filePath))
             throw new IOException($"File already exists: {filePath}");
     }
+
+    /// <summary>
+    ///     Creates a FileStream for reading with standard options.
+    /// </summary>
+    public static FileStream CreateReadStream(string filePath, FileOperationOptions options) =>
+        new(
+            filePath,
+            FileMode.Open,
+            FileAccess.Read,
+            options.ReadFileShare,
+            options.BufferSize,
+            true);
+
+    /// <summary>
+    ///     Creates a FileStream for writing with standard options.
+    /// </summary>
+    public static FileStream CreateWriteStream(string filePath, FileOperationOptions options) =>
+        new(
+            filePath,
+            FileMode.Create,
+            FileAccess.Write,
+            options.WriteFileShare,
+            options.BufferSize,
+            true);
+
+    /// <summary>
+    ///     Creates dual FileStreams for copy operations (source read + destination write).
+    /// </summary>
+    public static (FileStream sourceStream, FileStream destStream) CreateCopyStreams(
+        string sourcePath,
+        string destinationPath,
+        FileOperationOptions options) =>
+        (CreateReadStream(sourcePath, options), CreateWriteStream(destinationPath, options));
+
+    /// <summary>
+    ///     Computes destination path from source path and destination directory, preserving relative structure.
+    /// </summary>
+    public static string ComputeDestinationPath(string sourcePath, string sourceBaseDirectory, string destinationDirectory)
+    {
+        var relativePath = Path.GetRelativePath(sourceBaseDirectory, sourcePath);
+        return Path.Join(destinationDirectory, relativePath);
+    }
 }
