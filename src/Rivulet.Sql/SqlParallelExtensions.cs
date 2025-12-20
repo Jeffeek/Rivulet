@@ -1,7 +1,7 @@
 using System.Data;
-using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
 using Rivulet.Core;
+using Rivulet.Sql.Internal;
 
 namespace Rivulet.Sql;
 
@@ -197,32 +197,33 @@ public static class SqlParallelExtensions
         CancellationToken cancellationToken,
         Action<IDbCommand>? configureParams = null)
     {
-        var connection = connectionFactory();
+        var connection = SqlConnectionHelper.CreateAndValidate(connectionFactory);
         using (connection)
         {
             try
             {
-                if (options.AutoManageConnection && connection.State != ConnectionState.Open)
-                    await OpenConnectionAsync(connection, cancellationToken).ConfigureAwait(false);
+                await SqlConnectionHelper.OpenConnectionIfNeededAsync(connection, options, cancellationToken)
+                    .ConfigureAwait(false);
 
-                using var command = connection.CreateCommand();
-                command.CommandText = query;
-                command.CommandTimeout = options.CommandTimeout;
+                using var command = SqlConnectionHelper.CreateAndConfigureCommand(
+                    connection,
+                    query,
+                    options.CommandTimeout,
+                    configureParams);
 
-                configureParams?.Invoke(command);
-
-                using var reader = await ExecuteReaderAsync(command, cancellationToken).ConfigureAwait(false);
+                using var reader = await SqlConnectionHelper.ExecuteReaderAsync(command, cancellationToken)
+                    .ConfigureAwait(false);
                 return readerMapper(reader);
             }
             catch (Exception ex)
             {
-                if (options.OnSqlErrorAsync != null) await options.OnSqlErrorAsync(query, ex, 0).ConfigureAwait(false);
-
+                if (options.OnSqlErrorAsync != null)
+                    await options.OnSqlErrorAsync(query, ex, 0).ConfigureAwait(false);
                 throw;
             }
             finally
             {
-                if (options.AutoManageConnection && connection.State == ConnectionState.Open) connection.Close();
+                SqlConnectionHelper.CloseConnectionIfNeeded(connection, options);
             }
         }
     }
@@ -234,32 +235,32 @@ public static class SqlParallelExtensions
         CancellationToken cancellationToken,
         Action<IDbCommand>? configureParams = null)
     {
-        var connection = connectionFactory();
+        var connection = SqlConnectionHelper.CreateAndValidate(connectionFactory);
         using (connection)
         {
             try
             {
-                if (options.AutoManageConnection && connection.State != ConnectionState.Open)
-                    await OpenConnectionAsync(connection, cancellationToken).ConfigureAwait(false);
+                await SqlConnectionHelper.OpenConnectionIfNeededAsync(connection, options, cancellationToken)
+                    .ConfigureAwait(false);
 
-                using var command = connection.CreateCommand();
-                command.CommandText = commandText;
-                command.CommandTimeout = options.CommandTimeout;
+                using var command = SqlConnectionHelper.CreateAndConfigureCommand(
+                    connection,
+                    commandText,
+                    options.CommandTimeout,
+                    configureParams);
 
-                configureParams?.Invoke(command);
-
-                return await ExecuteNonQueryAsync(command, cancellationToken).ConfigureAwait(false);
+                return await SqlConnectionHelper.ExecuteNonQueryAsync(command, cancellationToken)
+                    .ConfigureAwait(false);
             }
             catch (Exception ex)
             {
                 if (options.OnSqlErrorAsync != null)
                     await options.OnSqlErrorAsync(commandText, ex, 0).ConfigureAwait(false);
-
                 throw;
             }
             finally
             {
-                if (options.AutoManageConnection && connection.State == ConnectionState.Open) connection.Close();
+                SqlConnectionHelper.CloseConnectionIfNeeded(connection, options);
             }
         }
     }
@@ -271,21 +272,22 @@ public static class SqlParallelExtensions
         CancellationToken cancellationToken,
         Action<IDbCommand>? configureParams = null)
     {
-        var connection = connectionFactory();
+        var connection = SqlConnectionHelper.CreateAndValidate(connectionFactory);
         using (connection)
         {
             try
             {
-                if (options.AutoManageConnection && connection.State != ConnectionState.Open)
-                    await OpenConnectionAsync(connection, cancellationToken).ConfigureAwait(false);
+                await SqlConnectionHelper.OpenConnectionIfNeededAsync(connection, options, cancellationToken)
+                    .ConfigureAwait(false);
 
-                using var command = connection.CreateCommand();
-                command.CommandText = query;
-                command.CommandTimeout = options.CommandTimeout;
+                using var command = SqlConnectionHelper.CreateAndConfigureCommand(
+                    connection,
+                    query,
+                    options.CommandTimeout,
+                    configureParams);
 
-                configureParams?.Invoke(command);
-
-                var result = await ExecuteScalarInternalAsync(command, cancellationToken).ConfigureAwait(false);
+                var result = await SqlConnectionHelper.ExecuteScalarAsync(command, cancellationToken)
+                    .ConfigureAwait(false);
 
                 return result == null || result == DBNull.Value
                     ? default
@@ -293,39 +295,14 @@ public static class SqlParallelExtensions
             }
             catch (Exception ex)
             {
-                if (options.OnSqlErrorAsync != null) await options.OnSqlErrorAsync(query, ex, 0).ConfigureAwait(false);
-
+                if (options.OnSqlErrorAsync != null)
+                    await options.OnSqlErrorAsync(query, ex, 0).ConfigureAwait(false);
                 throw;
             }
             finally
             {
-                if (options.AutoManageConnection && connection.State == ConnectionState.Open) connection.Close();
+                SqlConnectionHelper.CloseConnectionIfNeeded(connection, options);
             }
         }
     }
-
-    private static async ValueTask OpenConnectionAsync(IDbConnection connection, CancellationToken cancellationToken)
-    {
-        if (connection is DbConnection dbConnection)
-            await dbConnection.OpenAsync(cancellationToken).ConfigureAwait(false);
-        else
-            await Task.Run(connection.Open, cancellationToken).ConfigureAwait(false);
-    }
-
-    private static async ValueTask<IDataReader> ExecuteReaderAsync(IDbCommand command,
-        CancellationToken cancellationToken) =>
-        command is DbCommand dbCommand
-            ? await dbCommand.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false)
-            : await Task.Run(command.ExecuteReader, cancellationToken).ConfigureAwait(false);
-
-    private static async ValueTask<int> ExecuteNonQueryAsync(IDbCommand command, CancellationToken cancellationToken) =>
-        command is DbCommand dbCommand
-            ? await dbCommand.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false)
-            : await Task.Run(command.ExecuteNonQuery, cancellationToken).ConfigureAwait(false);
-
-    private static async ValueTask<object?> ExecuteScalarInternalAsync(IDbCommand command,
-        CancellationToken cancellationToken) =>
-        command is DbCommand dbCommand
-            ? await dbCommand.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false)
-            : await Task.Run(command.ExecuteScalar, cancellationToken).ConfigureAwait(false);
 }

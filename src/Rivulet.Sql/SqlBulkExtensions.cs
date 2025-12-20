@@ -1,7 +1,7 @@
 using System.Data;
-using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
 using Rivulet.Core;
+using Rivulet.Sql.Internal;
 
 namespace Rivulet.Sql;
 
@@ -150,15 +150,15 @@ public static class SqlBulkExtensions
         if (options.OnBatchStartAsync != null)
             await options.OnBatchStartAsync(batch.Cast<object>().ToList(), batchNumber).ConfigureAwait(false);
 
-        var connection = connectionFactory();
+        var connection = SqlConnectionHelper.CreateAndValidate(connectionFactory);
         var sqlOptions = options.SqlOptions ?? new SqlOptions();
 
         using (connection)
         {
             try
             {
-                if (sqlOptions.AutoManageConnection && connection.State != ConnectionState.Open)
-                    await OpenConnectionAsync(connection, cancellationToken).ConfigureAwait(false);
+                await SqlConnectionHelper.OpenConnectionIfNeededAsync(connection, sqlOptions, cancellationToken)
+                    .ConfigureAwait(false);
 
                 var transaction = options.UseTransaction
                     ? connection.BeginTransaction(sqlOptions.IsolationLevel)
@@ -175,7 +175,8 @@ public static class SqlBulkExtensions
 
                         await commandBuilder(batch, command, cancellationToken).ConfigureAwait(false);
 
-                        var affectedRows = await ExecuteNonQueryAsync(command, cancellationToken).ConfigureAwait(false);
+                        var affectedRows = await SqlConnectionHelper.ExecuteNonQueryAsync(command, cancellationToken)
+                            .ConfigureAwait(false);
 
                         transaction?.Commit();
 
@@ -200,21 +201,8 @@ public static class SqlBulkExtensions
             }
             finally
             {
-                if (sqlOptions.AutoManageConnection && connection.State == ConnectionState.Open) connection.Close();
+                SqlConnectionHelper.CloseConnectionIfNeeded(connection, sqlOptions);
             }
         }
     }
-
-    private static async ValueTask OpenConnectionAsync(IDbConnection connection, CancellationToken cancellationToken)
-    {
-        if (connection is DbConnection dbConnection)
-            await dbConnection.OpenAsync(cancellationToken).ConfigureAwait(false);
-        else
-            await Task.Run(connection.Open, cancellationToken).ConfigureAwait(false);
-    }
-
-    private static async ValueTask<int> ExecuteNonQueryAsync(IDbCommand command, CancellationToken cancellationToken) =>
-        command is DbCommand dbCommand
-            ? await dbCommand.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false)
-            : await Task.Run(command.ExecuteNonQuery, cancellationToken).ConfigureAwait(false);
 }

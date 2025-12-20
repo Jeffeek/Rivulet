@@ -1,5 +1,6 @@
 using MySqlConnector;
 using Rivulet.Core;
+using Rivulet.Sql.Internal;
 
 namespace Rivulet.Sql.MySql;
 
@@ -39,27 +40,17 @@ public static class MySqlBulkExtensions
         string lineTerminator = "\n",
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(source);
-        ArgumentNullException.ThrowIfNull(connectionFactory);
-        ArgumentException.ThrowIfNullOrWhiteSpace(tableName);
-        ArgumentNullException.ThrowIfNull(columnNames);
+        // ReSharper disable once PossibleMultipleEnumeration
+        SqlValidationHelper.ValidateCommonBulkParameters(source, connectionFactory, tableName, batchSize);
+        SqlValidationHelper.ValidateArrayNotEmpty(columnNames, nameof(columnNames));
         ArgumentNullException.ThrowIfNull(fieldSeparator);
         ArgumentNullException.ThrowIfNull(lineTerminator);
-
-        if (columnNames.Length == 0)
-            throw new ArgumentException("Column names array cannot be empty", nameof(columnNames));
-
-        if (batchSize <= 0)
-            throw new ArgumentOutOfRangeException(nameof(batchSize), "Batch size must be greater than 0");
-
-        if (string.IsNullOrEmpty(fieldSeparator))
-            throw new ArgumentException("Field separator cannot be empty", nameof(fieldSeparator));
-
-        if (string.IsNullOrEmpty(lineTerminator))
-            throw new ArgumentException("Line terminator cannot be empty", nameof(lineTerminator));
+        SqlValidationHelper.ValidateStringNotEmpty(fieldSeparator, nameof(fieldSeparator));
+        SqlValidationHelper.ValidateStringNotEmpty(lineTerminator, nameof(lineTerminator));
 
         options ??= new();
 
+        // ReSharper disable once PossibleMultipleEnumeration
         return source
             .Chunk(batchSize)
             .ForEachParallelAsync(async (batch, ct) =>
@@ -70,23 +61,19 @@ public static class MySqlBulkExtensions
                     {
                         await File.WriteAllLinesAsync(tempFile, batch, ct).ConfigureAwait(false);
 
-                        var connection = connectionFactory();
-                        if (connection == null) throw new InvalidOperationException("Connection factory returned null");
+                        var connection = SqlConnectionHelper.CreateAndValidate(connectionFactory);
 
                         await using (connection)
                         {
-                            await connection.OpenAsync(ct).ConfigureAwait(false);
+                            await SqlConnectionHelper.OpenConnectionAsync(connection, ct).ConfigureAwait(false);
 
-                            var bulkLoader = new MySqlBulkLoader(connection)
-                            {
-                                TableName = tableName,
-                                FileName = tempFile,
-                                FieldTerminator = fieldSeparator,
-                                LineTerminator = lineTerminator,
-                                Local = true
-                            };
-
-                            foreach (var columnName in columnNames) bulkLoader.Columns.Add(columnName);
+                            var bulkLoader = CreateAndConfigureBulkLoader(
+                                connection,
+                                tableName,
+                                tempFile,
+                                columnNames,
+                                fieldSeparator,
+                                lineTerminator);
 
                             try
                             {
@@ -96,27 +83,17 @@ public static class MySqlBulkExtensions
                             catch (Exception ex)
 #pragma warning restore CA1031
                             {
-                                // MySqlBulkLoader can throw various provider-specific exceptions - wrap all in InvalidOperationException
-                                throw new InvalidOperationException(
-                                    $"Failed to bulk load batch of {batch.Length} rows to table '{tableName}'",
-                                    ex);
+                                throw SqlErrorHelper.WrapBulkOperationException(
+                                    ex,
+                                    "bulk load",
+                                    batch.Length,
+                                    tableName);
                             }
                         }
                     }
                     finally
                     {
-                        // Prevent exception masking during cleanup
-                        try
-                        {
-                            if (File.Exists(tempFile)) File.Delete(tempFile);
-                        }
-#pragma warning disable CA1031 // Do not catch general exception types
-                        catch (Exception)
-#pragma warning restore CA1031
-                        {
-                            // Suppress cleanup exceptions to avoid masking the original exception
-                            // File will be cleaned up eventually by OS temp file cleanup
-                        }
+                        CleanupTempFile(tempFile);
                     }
                 },
                 options,
@@ -148,41 +125,30 @@ public static class MySqlBulkExtensions
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(connectionFactory);
         ArgumentException.ThrowIfNullOrWhiteSpace(tableName);
-        ArgumentNullException.ThrowIfNull(columnNames);
+        SqlValidationHelper.ValidateArrayNotEmpty(columnNames, nameof(columnNames));
         ArgumentNullException.ThrowIfNull(fieldSeparator);
         ArgumentNullException.ThrowIfNull(lineTerminator);
-
-        if (columnNames.Length == 0)
-            throw new ArgumentException("Column names array cannot be empty", nameof(columnNames));
-
-        if (string.IsNullOrEmpty(fieldSeparator))
-            throw new ArgumentException("Field separator cannot be empty", nameof(fieldSeparator));
-
-        if (string.IsNullOrEmpty(lineTerminator))
-            throw new ArgumentException("Line terminator cannot be empty", nameof(lineTerminator));
+        SqlValidationHelper.ValidateStringNotEmpty(fieldSeparator, nameof(fieldSeparator));
+        SqlValidationHelper.ValidateStringNotEmpty(lineTerminator, nameof(lineTerminator));
 
         options ??= new();
 
         return source
             .ForEachParallelAsync(async (filePath, ct) =>
                 {
-                    var connection = connectionFactory();
-                    if (connection == null) throw new InvalidOperationException("Connection factory returned null");
+                    var connection = SqlConnectionHelper.CreateAndValidate(connectionFactory);
 
                     await using (connection)
                     {
-                        await connection.OpenAsync(ct).ConfigureAwait(false);
+                        await SqlConnectionHelper.OpenConnectionAsync(connection, ct).ConfigureAwait(false);
 
-                        var bulkLoader = new MySqlBulkLoader(connection)
-                        {
-                            TableName = tableName,
-                            FileName = filePath,
-                            FieldTerminator = fieldSeparator,
-                            LineTerminator = lineTerminator,
-                            Local = true
-                        };
-
-                        foreach (var columnName in columnNames) bulkLoader.Columns.Add(columnName);
+                        var bulkLoader = CreateAndConfigureBulkLoader(
+                            connection,
+                            tableName,
+                            filePath,
+                            columnNames,
+                            fieldSeparator,
+                            lineTerminator);
 
                         try
                         {
@@ -197,7 +163,6 @@ public static class MySqlBulkExtensions
                         catch (Exception ex)
 #pragma warning restore CA1031
                         {
-                            // MySqlBulkLoader can throw various provider-specific exceptions - wrap all in InvalidOperationException
                             throw new InvalidOperationException(
                                 $"Failed to bulk load file '{filePath}' to table '{tableName}'",
                                 ex);
@@ -206,5 +171,50 @@ public static class MySqlBulkExtensions
                 },
                 options,
                 cancellationToken);
+    }
+
+    /// <summary>
+    ///     Creates and configures a MySqlBulkLoader instance.
+    /// </summary>
+    private static MySqlBulkLoader CreateAndConfigureBulkLoader(
+        MySqlConnection connection,
+        string tableName,
+        string fileName,
+        IEnumerable<string> columnNames,
+        string fieldSeparator,
+        string lineTerminator)
+    {
+        var bulkLoader = new MySqlBulkLoader(connection)
+        {
+            TableName = tableName,
+            FileName = fileName,
+            FieldTerminator = fieldSeparator,
+            LineTerminator = lineTerminator,
+            Local = true
+        };
+
+        foreach (var columnName in columnNames)
+            bulkLoader.Columns.Add(columnName);
+
+        return bulkLoader;
+    }
+
+    /// <summary>
+    ///     Cleans up temporary file with suppressed exceptions.
+    /// </summary>
+    private static void CleanupTempFile(string tempFile)
+    {
+        try
+        {
+            if (File.Exists(tempFile))
+                File.Delete(tempFile);
+        }
+#pragma warning disable CA1031 // Do not catch general exception types
+        catch (Exception)
+#pragma warning restore CA1031
+        {
+            // Suppress cleanup exceptions to avoid masking the original exception
+            // File will be cleaned up eventually by OS temp file cleanup
+        }
     }
 }

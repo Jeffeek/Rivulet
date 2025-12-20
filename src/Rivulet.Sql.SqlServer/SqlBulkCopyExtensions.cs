@@ -2,6 +2,7 @@ using System.Data;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.Data.SqlClient;
 using Rivulet.Core;
+using Rivulet.Sql.Internal;
 
 namespace Rivulet.Sql.SqlServer;
 
@@ -37,36 +38,32 @@ public static class SqlBulkCopyExtensions
         int bulkCopyTimeout = 30,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(source);
-        ArgumentNullException.ThrowIfNull(connectionFactory);
-        ArgumentException.ThrowIfNullOrWhiteSpace(destinationTable);
+        // ReSharper disable once PossibleMultipleEnumeration
+        SqlValidationHelper.ValidateCommonBulkParameters(source, connectionFactory, destinationTable, batchSize);
         ArgumentNullException.ThrowIfNull(mapToDataTable);
-
-        if (batchSize <= 0)
-            throw new ArgumentOutOfRangeException(nameof(batchSize), "Batch size must be greater than 0");
-
-        if (bulkCopyTimeout < 0)
-            throw new ArgumentOutOfRangeException(nameof(bulkCopyTimeout), "Timeout must be non-negative");
+        SqlValidationHelper.ValidateTimeout(bulkCopyTimeout, nameof(bulkCopyTimeout));
 
         options ??= new();
 
+        // ReSharper disable once PossibleMultipleEnumeration
         return source
             .Chunk(batchSize)
             .ForEachParallelAsync(async (batch, ct) =>
                 {
                     using var dataTable = mapToDataTable(batch);
 
-                    var connection = connectionFactory();
-                    if (connection == null) throw new InvalidOperationException("Connection factory returned null");
+                    var connection = SqlConnectionHelper.CreateAndValidate(connectionFactory);
 
                     await using (connection)
                     {
-                        await connection.OpenAsync(ct).ConfigureAwait(false);
+                        await SqlConnectionHelper.OpenConnectionAsync(connection, ct).ConfigureAwait(false);
 
-                        using var bulkCopy = new SqlBulkCopy(connection, bulkCopyOptions, null);
-                        bulkCopy.DestinationTableName = destinationTable;
-                        bulkCopy.BatchSize = batchSize;
-                        bulkCopy.BulkCopyTimeout = bulkCopyTimeout;
+                        using var bulkCopy = CreateAndConfigureBulkCopy(
+                            connection,
+                            destinationTable,
+                            bulkCopyOptions,
+                            batchSize,
+                            bulkCopyTimeout);
 
                         // Map columns automatically if not specified
                         if (bulkCopy.ColumnMappings.Count == 0)
@@ -83,10 +80,11 @@ public static class SqlBulkCopyExtensions
                         catch (Exception ex)
 #pragma warning restore CA1031
                         {
-                            // SqlBulkCopy can throw various provider-specific exceptions - wrap all in InvalidOperationException
-                            throw new InvalidOperationException(
-                                $"Failed to bulk insert batch of {batch.Length} rows to table '{destinationTable}'",
-                                ex);
+                            throw SqlErrorHelper.WrapBulkOperationException(
+                                ex,
+                                "bulk insert",
+                                batch.Length,
+                                destinationTable);
                         }
                     }
                 },
@@ -121,38 +119,36 @@ public static class SqlBulkCopyExtensions
         int bulkCopyTimeout = 30,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(source);
-        ArgumentNullException.ThrowIfNull(connectionFactory);
-        ArgumentException.ThrowIfNullOrWhiteSpace(destinationTable);
+        // ReSharper disable once PossibleMultipleEnumeration
+        SqlValidationHelper.ValidateCommonBulkParameters(source, connectionFactory, destinationTable, batchSize);
         ArgumentNullException.ThrowIfNull(mapToDataTable);
         ArgumentNullException.ThrowIfNull(columnMappings);
+        SqlValidationHelper.ValidateTimeout(bulkCopyTimeout, nameof(bulkCopyTimeout));
 
-        if (batchSize <= 0)
-            throw new ArgumentOutOfRangeException(nameof(batchSize), "Batch size must be greater than 0");
-        if (bulkCopyTimeout < 0)
-            throw new ArgumentOutOfRangeException(nameof(bulkCopyTimeout), "Timeout must be non-negative");
         if (columnMappings.Count == 0)
             throw new ArgumentException("Column mappings dictionary cannot be empty", nameof(columnMappings));
 
         options ??= new();
 
+        // ReSharper disable once PossibleMultipleEnumeration
         return source
             .Chunk(batchSize)
             .ForEachParallelAsync(async (batch, ct) =>
                 {
                     using var dataTable = mapToDataTable(batch);
 
-                    var connection = connectionFactory();
-                    if (connection == null) throw new InvalidOperationException("Connection factory returned null");
+                    var connection = SqlConnectionHelper.CreateAndValidate(connectionFactory);
 
                     await using (connection)
                     {
-                        await connection.OpenAsync(ct).ConfigureAwait(false);
+                        await SqlConnectionHelper.OpenConnectionAsync(connection, ct).ConfigureAwait(false);
 
-                        using var bulkCopy = new SqlBulkCopy(connection, bulkCopyOptions, null);
-                        bulkCopy.DestinationTableName = destinationTable;
-                        bulkCopy.BatchSize = batchSize;
-                        bulkCopy.BulkCopyTimeout = bulkCopyTimeout;
+                        using var bulkCopy = CreateAndConfigureBulkCopy(
+                            connection,
+                            destinationTable,
+                            bulkCopyOptions,
+                            batchSize,
+                            bulkCopyTimeout);
 
                         // Apply explicit column mappings
                         foreach (var (sourceColumn, destColumn) in columnMappings)
@@ -166,10 +162,11 @@ public static class SqlBulkCopyExtensions
                         catch (Exception ex)
 #pragma warning restore CA1031
                         {
-                            // SqlBulkCopy can throw various provider-specific exceptions - wrap all in InvalidOperationException
-                            throw new InvalidOperationException(
-                                $"Failed to bulk insert batch of {batch.Length} rows to table '{destinationTable}'",
-                                ex);
+                            throw SqlErrorHelper.WrapBulkOperationException(
+                                ex,
+                                "bulk insert",
+                                batch.Length,
+                                destinationTable);
                         }
                     }
                 },
@@ -206,12 +203,8 @@ public static class SqlBulkCopyExtensions
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(connectionFactory);
         ArgumentException.ThrowIfNullOrWhiteSpace(destinationTable);
-
-        if (batchSize <= 0)
-            throw new ArgumentOutOfRangeException(nameof(batchSize), "Batch size must be greater than 0");
-
-        if (bulkCopyTimeout < 0)
-            throw new ArgumentOutOfRangeException(nameof(bulkCopyTimeout), "Timeout must be non-negative");
+        SqlValidationHelper.ValidateBatchSize(batchSize);
+        SqlValidationHelper.ValidateTimeout(bulkCopyTimeout, nameof(bulkCopyTimeout));
 
         options ??= new();
 
@@ -221,17 +214,18 @@ public static class SqlBulkCopyExtensions
                     if (reader == null)
                         throw new InvalidOperationException("Source collection contains a null DataReader");
 
-                    var connection = connectionFactory();
-                    if (connection == null) throw new InvalidOperationException("Connection factory returned null");
+                    var connection = SqlConnectionHelper.CreateAndValidate(connectionFactory);
 
                     await using (connection)
                     {
-                        await connection.OpenAsync(ct).ConfigureAwait(false);
+                        await SqlConnectionHelper.OpenConnectionAsync(connection, ct).ConfigureAwait(false);
 
-                        using var bulkCopy = new SqlBulkCopy(connection, bulkCopyOptions, null);
-                        bulkCopy.DestinationTableName = destinationTable;
-                        bulkCopy.BatchSize = batchSize;
-                        bulkCopy.BulkCopyTimeout = bulkCopyTimeout;
+                        using var bulkCopy = CreateAndConfigureBulkCopy(
+                            connection,
+                            destinationTable,
+                            bulkCopyOptions,
+                            batchSize,
+                            bulkCopyTimeout);
 
                         try
                         {
@@ -241,7 +235,6 @@ public static class SqlBulkCopyExtensions
                         catch (Exception ex)
 #pragma warning restore CA1031
                         {
-                            // SqlBulkCopy can throw various provider-specific exceptions - wrap all in InvalidOperationException
                             throw new InvalidOperationException(
                                 $"Failed to bulk insert from DataReader to table '{destinationTable}'",
                                 ex);
@@ -250,5 +243,22 @@ public static class SqlBulkCopyExtensions
                 },
                 options,
                 cancellationToken);
+    }
+
+    /// <summary>
+    ///     Creates and configures a SqlBulkCopy instance with standard settings.
+    /// </summary>
+    private static SqlBulkCopy CreateAndConfigureBulkCopy(
+        SqlConnection connection,
+        string destinationTable,
+        SqlBulkCopyOptions bulkCopyOptions,
+        int batchSize,
+        int bulkCopyTimeout)
+    {
+        var bulkCopy = new SqlBulkCopy(connection, bulkCopyOptions, null);
+        bulkCopy.DestinationTableName = destinationTable;
+        bulkCopy.BatchSize = batchSize;
+        bulkCopy.BulkCopyTimeout = bulkCopyTimeout;
+        return bulkCopy;
     }
 }
