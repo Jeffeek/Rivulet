@@ -163,7 +163,7 @@ public sealed class RivuletEventListenerBaseTests : IDisposable
     {
         // This test ensures the null coalescing operator on line 61 for displayUnits is covered
         // When EventSource doesn't provide DisplayUnits, it should fall back to empty string
-        var listener = new TestEventListener();
+        using var listener = new TestEventListener();
 
         // Create an EventSource that sends counter data without DisplayUnits
         using var customSource = new RivuletTestEventSource();
@@ -171,8 +171,6 @@ public sealed class RivuletEventListenerBaseTests : IDisposable
 
         // Wait a bit for the event to be processed
         await Task.Delay(1000, CancellationToken.None);
-
-        listener.Dispose();
     }
 
     [Fact]
@@ -323,7 +321,7 @@ public sealed class RivuletEventListenerBaseTests : IDisposable
     public async Task EventListenerBase_ShouldHandleIncrementCounter()
     {
         // Ensure we cover the "Increment" key path (line 50) in addition to "Mean"
-        var listener = new TestEventListener();
+        using var listener = new TestEventListener();
 
         // Run operations to generate counters
         // 10 items * 300ms / 2 parallelism = 1500ms of operation time
@@ -343,8 +341,6 @@ public sealed class RivuletEventListenerBaseTests : IDisposable
             await Task.Delay(100, CancellationToken.None);
 
         listener.ReceivedCounters.ShouldNotBeEmpty();
-
-        listener.Dispose();
     }
 
     private sealed class TestEventListener : RivuletEventListenerBase

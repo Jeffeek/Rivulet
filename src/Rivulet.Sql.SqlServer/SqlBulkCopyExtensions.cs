@@ -79,8 +79,11 @@ public static class SqlBulkCopyExtensions
                         {
                             await bulkCopy.WriteToServerAsync(dataTable, ct).ConfigureAwait(false);
                         }
+#pragma warning disable CA1031 // Do not catch general exception types
                         catch (Exception ex)
+#pragma warning restore CA1031
                         {
+                            // SqlBulkCopy can throw various provider-specific exceptions - wrap all in InvalidOperationException
                             throw new InvalidOperationException(
                                 $"Failed to bulk insert batch of {batch.Length} rows to table '{destinationTable}'",
                                 ex);
@@ -159,8 +162,11 @@ public static class SqlBulkCopyExtensions
                         {
                             await bulkCopy.WriteToServerAsync(dataTable, ct).ConfigureAwait(false);
                         }
+#pragma warning disable CA1031 // Do not catch general exception types
                         catch (Exception ex)
+#pragma warning restore CA1031
                         {
+                            // SqlBulkCopy can throw various provider-specific exceptions - wrap all in InvalidOperationException
                             throw new InvalidOperationException(
                                 $"Failed to bulk insert batch of {batch.Length} rows to table '{destinationTable}'",
                                 ex);
@@ -231,8 +237,11 @@ public static class SqlBulkCopyExtensions
                         {
                             await bulkCopy.WriteToServerAsync(reader, ct).ConfigureAwait(false);
                         }
+#pragma warning disable CA1031 // Do not catch general exception types
                         catch (Exception ex)
+#pragma warning restore CA1031
                         {
+                            // SqlBulkCopy can throw various provider-specific exceptions - wrap all in InvalidOperationException
                             throw new InvalidOperationException(
                                 $"Failed to bulk insert from DataReader to table '{destinationTable}'",
                                 ex);

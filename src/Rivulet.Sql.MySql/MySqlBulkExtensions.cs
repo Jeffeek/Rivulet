@@ -92,8 +92,11 @@ public static class MySqlBulkExtensions
                             {
                                 await bulkLoader.LoadAsync(ct).ConfigureAwait(false);
                             }
+#pragma warning disable CA1031 // Do not catch general exception types
                             catch (Exception ex)
+#pragma warning restore CA1031
                             {
+                                // MySqlBulkLoader can throw various provider-specific exceptions - wrap all in InvalidOperationException
                                 throw new InvalidOperationException(
                                     $"Failed to bulk load batch of {batch.Length} rows to table '{tableName}'",
                                     ex);
@@ -107,7 +110,9 @@ public static class MySqlBulkExtensions
                         {
                             if (File.Exists(tempFile)) File.Delete(tempFile);
                         }
+#pragma warning disable CA1031 // Do not catch general exception types
                         catch (Exception)
+#pragma warning restore CA1031
                         {
                             // Suppress cleanup exceptions to avoid masking the original exception
                             // File will be cleaned up eventually by OS temp file cleanup
@@ -188,8 +193,11 @@ public static class MySqlBulkExtensions
                             // Re-throw FileNotFoundException with original detail
                             throw;
                         }
+#pragma warning disable CA1031 // Do not catch general exception types
                         catch (Exception ex)
+#pragma warning restore CA1031
                         {
+                            // MySqlBulkLoader can throw various provider-specific exceptions - wrap all in InvalidOperationException
                             throw new InvalidOperationException(
                                 $"Failed to bulk load file '{filePath}' to table '{tableName}'",
                                 ex);

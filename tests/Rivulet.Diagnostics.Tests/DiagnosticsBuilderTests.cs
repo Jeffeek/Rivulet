@@ -380,12 +380,11 @@ public sealed class DiagnosticsBuilderTests : IDisposable
     [Fact]
     public void DiagnosticsBuilder_WithHealthCheckNoOptions_ShouldUseDefaults()
     {
-        var diagnostics = new DiagnosticsBuilder()
+        using var diagnostics = new DiagnosticsBuilder()
             .AddPrometheusExporter(out var exporter)
             .AddHealthCheck(exporter)
             .Build();
 
         diagnostics.ShouldNotBeNull();
-        diagnostics.Dispose();
     }
 }
