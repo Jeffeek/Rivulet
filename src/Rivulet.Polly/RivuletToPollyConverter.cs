@@ -3,6 +3,7 @@ using Polly;
 using Polly.Timeout;
 using Rivulet.Core;
 using Rivulet.Core.Resilience;
+using Rivulet.Polly.Internal;
 using PollyCircuitBreaker = Polly.CircuitBreaker;
 
 namespace Rivulet.Polly;
@@ -33,29 +34,7 @@ public static class RivuletToPollyConverter
 #pragma warning restore CA2000
 
         return new ResiliencePipelineBuilder()
-            .AddRetry(new()
-            {
-                MaxRetryAttempts = options.MaxRetries,
-                ShouldHandle = new PredicateBuilder()
-                    .Handle<Exception>(ex => options.IsTransient?.Invoke(ex) ?? false),
-                DelayGenerator = args =>
-                {
-                    var prev = previousDelayLocal.Value;
-                    var delay = BackoffCalculator.CalculateDelay(
-                        options.BackoffStrategy,
-                        options.BaseDelay,
-                        args.AttemptNumber + 1,
-                        ref prev);
-                    previousDelayLocal.Value = prev;
-                    return new(delay);
-                },
-                OnRetry = args =>
-                {
-                    if (args.AttemptNumber >= options.MaxRetries) previousDelayLocal.Value = TimeSpan.Zero;
-
-                    return default;
-                }
-            })
+            .AddRetry(PollyHelper.CreateRetryOptions(options, previousDelayLocal))
             .Build();
     }
 
@@ -125,28 +104,7 @@ public static class RivuletToPollyConverter
         var previousDelayLocal = new ThreadLocal<TimeSpan>(static () => TimeSpan.Zero);
 #pragma warning restore CA2000
 
-        builder.AddRetry(new()
-        {
-            MaxRetryAttempts = options.MaxRetries,
-            ShouldHandle = new PredicateBuilder().Handle<Exception>(ex => options.IsTransient?.Invoke(ex) ?? false),
-            DelayGenerator = args =>
-            {
-                var prev = previousDelayLocal.Value;
-                var delay = BackoffCalculator.CalculateDelay(
-                    options.BackoffStrategy,
-                    options.BaseDelay,
-                    args.AttemptNumber + 1,
-                    ref prev);
-                previousDelayLocal.Value = prev;
-                return new(delay);
-            },
-            OnRetry = args =>
-            {
-                if (args.AttemptNumber >= options.MaxRetries) previousDelayLocal.Value = TimeSpan.Zero;
-
-                return default;
-            }
-        });
+        builder.AddRetry(PollyHelper.CreateRetryOptions(options, previousDelayLocal));
         hasAnyStrategy = true;
 
         return hasAnyStrategy ? builder.Build() : ResiliencePipeline.Empty;

@@ -71,13 +71,7 @@ public static class FileInfoExtensions
             async () =>
             {
 #pragma warning disable CA2007
-                await using var stream = new FileStream(
-                    file.FullName,
-                    FileMode.Open,
-                    FileAccess.Read,
-                    options.ReadFileShare,
-                    options.BufferSize,
-                    true);
+                await using var stream = FileOperationHelper.CreateReadStream(file.FullName, options);
 #pragma warning restore CA2007
 
                 using var reader = new StreamReader(stream, options.Encoding);
@@ -109,13 +103,7 @@ public static class FileInfoExtensions
             async () =>
             {
 #pragma warning disable CA2007
-                await using var stream = new FileStream(
-                    file.FullName,
-                    FileMode.Open,
-                    FileAccess.Read,
-                    options.ReadFileShare,
-                    options.BufferSize,
-                    true);
+                await using var stream = FileOperationHelper.CreateReadStream(file.FullName, options);
 #pragma warning restore CA2007
 
                 var buffer = new byte[stream.Length];
@@ -154,14 +142,7 @@ public static class FileInfoExtensions
                 FileOperationHelper.ValidateOverwrite(file.FullName, options);
 
 #pragma warning disable CA2007
-                await using var stream = new FileStream(
-                    file.FullName,
-                    FileMode.Create,
-                    FileAccess.Write,
-                    options.WriteFileShare,
-                    options.BufferSize,
-                    true);
-
+                await using var stream = FileOperationHelper.CreateWriteStream(file.FullName, options);
                 await using var writer = new StreamWriter(stream, options.Encoding);
 #pragma warning restore CA2007
                 await writer.WriteAsync(content.AsMemory(), cancellationToken).ConfigureAwait(false);
@@ -201,13 +182,7 @@ public static class FileInfoExtensions
                 FileOperationHelper.ValidateOverwrite(file.FullName, options);
 
 #pragma warning disable CA2007
-                await using var stream = new FileStream(
-                    file.FullName,
-                    FileMode.Create,
-                    FileAccess.Write,
-                    options.WriteFileShare,
-                    options.BufferSize,
-                    true);
+                await using var stream = FileOperationHelper.CreateWriteStream(file.FullName, options);
 #pragma warning restore CA2007
 
                 await stream.WriteAsync(content, cancellationToken).ConfigureAwait(false);
@@ -247,27 +222,16 @@ public static class FileInfoExtensions
                 FileOperationHelper.ValidateOverwrite(destinationPath, options);
 
 #pragma warning disable CA2007
-                await using var sourceStream = new FileStream(
-                    file.FullName,
-                    FileMode.Open,
-                    FileAccess.Read,
-                    options.ReadFileShare,
-                    options.BufferSize,
-                    true);
-
-                await using var destStream = new FileStream(
-                    destinationPath,
-                    FileMode.Create,
-                    FileAccess.Write,
-                    options.WriteFileShare,
-                    options.BufferSize,
-                    true);
+                var (sourceStream, destStream) = FileOperationHelper.CreateCopyStreams(file.FullName, destinationPath, options);
+                await using (sourceStream)
+                await using (destStream)
+                {
 #pragma warning restore CA2007
+                    await sourceStream.CopyToAsync(destStream, options.BufferSize, cancellationToken).ConfigureAwait(false);
+                    await destStream.FlushAsync(cancellationToken).ConfigureAwait(false);
 
-                await sourceStream.CopyToAsync(destStream, options.BufferSize, cancellationToken).ConfigureAwait(false);
-                await destStream.FlushAsync(cancellationToken).ConfigureAwait(false);
-
-                return sourceStream.Length;
+                    return sourceStream.Length;
+                }
             },
             options,
             static length => length);

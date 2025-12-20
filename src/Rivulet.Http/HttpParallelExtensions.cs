@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using Rivulet.Core;
+using Rivulet.Http.Internal;
 
 namespace Rivulet.Http;
 
@@ -33,8 +34,7 @@ public static class HttpParallelExtensions
         ArgumentNullException.ThrowIfNull(uris);
         ArgumentNullException.ThrowIfNull(httpClient);
 
-        options ??= new();
-        var parallelOptions = options.GetMergedParallelOptions();
+        (options, var parallelOptions) = HttpHelper.InitializeOptions(options);
 
         return uris.SelectParallelAsync((uri, ct) => ExecuteHttpRequestAsync(
                 uri,
@@ -66,8 +66,7 @@ public static class HttpParallelExtensions
         ArgumentNullException.ThrowIfNull(uris);
         ArgumentNullException.ThrowIfNull(httpClient);
 
-        options ??= new();
-        var parallelOptions = options.GetMergedParallelOptions();
+        (options, var parallelOptions) = HttpHelper.InitializeOptions(options);
 
         return uris.SelectParallelAsync(
             async (uri, ct) =>
@@ -106,8 +105,7 @@ public static class HttpParallelExtensions
         ArgumentNullException.ThrowIfNull(uris);
         ArgumentNullException.ThrowIfNull(httpClient);
 
-        options ??= new();
-        var parallelOptions = options.GetMergedParallelOptions();
+        (options, var parallelOptions) = HttpHelper.InitializeOptions(options);
 
         return uris.SelectParallelAsync(
             async (uri, ct) =>
@@ -148,8 +146,7 @@ public static class HttpParallelExtensions
         ArgumentNullException.ThrowIfNull(requests);
         ArgumentNullException.ThrowIfNull(httpClient);
 
-        options ??= new();
-        var parallelOptions = options.GetMergedParallelOptions();
+        (options, var parallelOptions) = HttpHelper.InitializeOptions(options);
 
         return requests.SelectParallelAsync((request, ct) => ExecuteHttpRequestAsync(
                 request.uri,
@@ -183,8 +180,7 @@ public static class HttpParallelExtensions
         ArgumentNullException.ThrowIfNull(requests);
         ArgumentNullException.ThrowIfNull(httpClient);
 
-        options ??= new();
-        var parallelOptions = options.GetMergedParallelOptions();
+        (options, var parallelOptions) = HttpHelper.InitializeOptions(options);
 
         return requests.SelectParallelAsync((request, ct) => ExecuteHttpRequestAsync(
                 request.uri,
@@ -216,8 +212,7 @@ public static class HttpParallelExtensions
         ArgumentNullException.ThrowIfNull(uris);
         ArgumentNullException.ThrowIfNull(httpClient);
 
-        options ??= new();
-        var parallelOptions = options.GetMergedParallelOptions();
+        (options, var parallelOptions) = HttpHelper.InitializeOptions(options);
 
         return uris.SelectParallelAsync((uri, ct) => ExecuteHttpRequestAsync(
                 uri,

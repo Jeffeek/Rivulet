@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using Rivulet.Core;
+using Rivulet.Http.Internal;
 
 namespace Rivulet.Http;
 
@@ -97,10 +98,8 @@ public static class HttpStreamingExtensions
             await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
 #pragma warning restore CA2007
 
-        var bytesDownloaded = 0L;
-        var buffer = new byte[options.BufferSize];
-        var lastProgressReport = Stopwatch.GetTimestamp();
-        var progressIntervalTicks = options.ProgressInterval.Ticks;
+        var (bytesDownloaded, buffer, lastProgressReport, progressIntervalTicks) =
+            HttpHelper.InitializeProgressTracking(options);
 
         int bytesRead;
         while ((bytesRead = await contentStream.ReadAsync(buffer, cancellationToken).ConfigureAwait(false)) > 0)
@@ -109,13 +108,13 @@ public static class HttpStreamingExtensions
             bytesDownloaded += bytesRead;
 
             // Report progress if callback is provided and interval has elapsed
-            if (options.OnProgressAsync is null) continue;
-
-            var elapsed = Stopwatch.GetTimestamp() - lastProgressReport;
-            if (elapsed < progressIntervalTicks * (Stopwatch.Frequency / TimeSpan.TicksPerSecond)) continue;
-
-            await options.OnProgressAsync(uri, bytesDownloaded, totalBytes).ConfigureAwait(false);
-            lastProgressReport = Stopwatch.GetTimestamp();
+            lastProgressReport = await HttpHelper.ReportProgressIfNeededAsync(
+                options,
+                uri,
+                bytesDownloaded,
+                totalBytes,
+                lastProgressReport,
+                progressIntervalTicks).ConfigureAwait(false);
         }
 
         // Final progress report
@@ -210,10 +209,8 @@ public static class HttpStreamingExtensions
             await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
 #pragma warning restore CA2007
 
-        var bytesDownloaded = existingFileSize;
-        var buffer = new byte[options.BufferSize];
-        var lastProgressReport = Stopwatch.GetTimestamp();
-        var progressIntervalTicks = options.ProgressInterval.Ticks;
+        var (bytesDownloaded, buffer, lastProgressReport, progressIntervalTicks) =
+            HttpHelper.InitializeProgressTracking(options, existingFileSize);
 
         int bytesRead;
         while ((bytesRead = await contentStream.ReadAsync(buffer, cancellationToken).ConfigureAwait(false)) > 0)
