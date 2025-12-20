@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json;
 using Rivulet.Core;
 using Rivulet.Core.Internal;
+using Rivulet.Diagnostics.Internal;
 
 namespace Rivulet.Diagnostics;
 
@@ -98,15 +99,12 @@ public sealed class RivuletStructuredLogListener : RivuletEventListenerBase, IAs
     /// </summary>
     public override void Dispose()
     {
-        LockHelper.Execute(_lock,
+        StreamWriterDisposalHelper.ExtractAndDispose(_lock,
             () =>
             {
-                if (_writer == null) return;
-
-                _writer.Flush();
-                _writer.Close();
-                _writer.Dispose();
+                var w = _writer;
                 _writer = null;
+                return w;
             });
 
         base.Dispose();
@@ -117,22 +115,14 @@ public sealed class RivuletStructuredLogListener : RivuletEventListenerBase, IAs
     /// </summary>
     public async ValueTask DisposeAsync()
     {
-        // Extract writer under lock to ensure thread-safety
-        var writer = LockHelper.Execute(_lock,
+        // Extract writer under lock to ensure thread-safety and dispose outside lock to avoid holding lock during async I/O
+        await StreamWriterDisposalHelper.ExtractAndDisposeAsync(_lock,
             () =>
             {
                 var w = _writer;
                 _writer = null;
                 return w;
-            });
-
-        // Dispose outside lock to avoid holding lock during async I/O
-        if (writer != null)
-        {
-            await writer.FlushAsync().ConfigureAwait(false);
-            writer.Close();
-            await writer.DisposeAsync().ConfigureAwait(false);
-        }
+            }).ConfigureAwait(false);
 
         base.Dispose();
     }

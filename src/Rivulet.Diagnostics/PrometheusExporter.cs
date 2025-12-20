@@ -24,7 +24,7 @@ namespace Rivulet.Diagnostics;
 /// </example>
 public sealed class PrometheusExporter : RivuletEventListenerBase
 {
-    private readonly Dictionary<string, (string DisplayName, double Value, string DisplayUnits)> _latestValues = new();
+    private readonly Dictionary<string, (string DisplayName, double Value, string DisplayUnits)> _latestValues = [];
     private readonly object _lock = LockFactory.CreateLock();
 
     /// <summary>
@@ -46,8 +46,7 @@ public sealed class PrometheusExporter : RivuletEventListenerBase
             {
                 var sb = new StringBuilder();
                 sb.AppendLine(RivuletDiagnosticsConstants.PrometheusFormats.HeaderComment);
-                sb.AppendLine(string.Format(RivuletDiagnosticsConstants.PrometheusFormats.GeneratedAtCommentFormat,
-                    DateTime.UtcNow.ToString(RivuletDiagnosticsConstants.DateTimeFormats.Prometheus)));
+                sb.AppendLine(string.Format(RivuletDiagnosticsConstants.PrometheusFormats.GeneratedAtCommentFormat, DateTime.UtcNow.ToString(RivuletDiagnosticsConstants.DateTimeFormats.Prometheus)));
                 sb.AppendLine();
 
                 foreach (var kvp in _latestValues)
@@ -55,13 +54,9 @@ public sealed class PrometheusExporter : RivuletEventListenerBase
                     var metricName = SanitizeMetricName(kvp.Key);
                     var (displayName, value, _) = kvp.Value;
 
-                    sb.AppendLine(string.Format(RivuletDiagnosticsConstants.PrometheusFormats.HelpFormat,
-                        metricName,
-                        displayName));
+                    sb.AppendLine(string.Format(RivuletDiagnosticsConstants.PrometheusFormats.HelpFormat, metricName, displayName));
                     sb.AppendLine(string.Format(RivuletDiagnosticsConstants.PrometheusFormats.TypeFormat, metricName));
-                    sb.AppendLine(string.Format(RivuletDiagnosticsConstants.PrometheusFormats.MetricFormat,
-                        metricName,
-                        value));
+                    sb.AppendLine(string.Format(RivuletDiagnosticsConstants.PrometheusFormats.MetricFormat, metricName, value));
                     sb.AppendLine();
                 }
 
