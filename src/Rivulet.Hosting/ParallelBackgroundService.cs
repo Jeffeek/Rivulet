@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Rivulet.Core;
+using Rivulet.Hosting.Internal;
 
 namespace Rivulet.Hosting;
 
@@ -28,24 +29,15 @@ public abstract class ParallelBackgroundService<T> : BackgroundService
     /// </summary>
     /// <param name="stoppingToken">Cancellation token that triggers when the application is stopping.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation("Starting {ServiceName}", GetType().Name);
 
-        try
-        {
-            await GetItemsAsync(stoppingToken).ForEachParallelAsync(ProcessItemAsync, _options, stoppingToken)
-                .ConfigureAwait(false);
-        }
-        catch (OperationCanceledException)
-        {
-            _logger.LogInformation("{ServiceName} is stopping", GetType().Name);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unhandled exception in {ServiceName}", GetType().Name);
-            throw;
-        }
+        return BackgroundServiceExecutionHelper.ExecuteWithErrorHandlingAsync(
+            ct => GetItemsAsync(ct).ForEachParallelAsync(ProcessItemAsync, _options, ct),
+            GetType().Name,
+            _logger,
+            stoppingToken);
     }
 
     /// <summary>

@@ -37,26 +37,14 @@ public sealed class RivuletOperationHealthCheck : IHealthCheck
         return failures >= _options.UnhealthyFailureThreshold
             ? Task.FromResult(HealthCheckResult.Unhealthy(
                 string.Format(RivuletHostingConstants.HealthCheckMessages.ConsecutiveFailuresFormat, failures),
-                data: new Dictionary<string, object>
-                {
-                    [RivuletHostingConstants.HealthCheckKeys.ConsecutiveFailures] = failures,
-                    [RivuletHostingConstants.HealthCheckKeys.TimeSinceLastSuccess] = timeSinceLastSuccess
-                }))
+                data: HealthCheckDataBuilder.CreateOperationData(failures, timeSinceLastSuccess)))
             : timeSinceLastSuccess > _options.StalledThreshold
                 ? Task.FromResult(HealthCheckResult.Degraded(
                     $"No successful operations in {timeSinceLastSuccess.TotalSeconds:F0} seconds",
-                    data: new Dictionary<string, object>
-                    {
-                        [RivuletHostingConstants.HealthCheckKeys.ConsecutiveFailures] = failures,
-                        [RivuletHostingConstants.HealthCheckKeys.TimeSinceLastSuccess] = timeSinceLastSuccess
-                    }))
+                    data: HealthCheckDataBuilder.CreateOperationData(failures, timeSinceLastSuccess)))
                 : Task.FromResult(HealthCheckResult.Healthy(
                     $"Operation healthy, {failures} recent failures",
-                    new Dictionary<string, object>
-                    {
-                        [RivuletHostingConstants.HealthCheckKeys.ConsecutiveFailures] = failures,
-                        [RivuletHostingConstants.HealthCheckKeys.TimeSinceLastSuccess] = timeSinceLastSuccess
-                    }));
+                    HealthCheckDataBuilder.CreateOperationData(failures, timeSinceLastSuccess)));
     }
 
     /// <summary>
@@ -71,8 +59,7 @@ public sealed class RivuletOperationHealthCheck : IHealthCheck
     /// <summary>
     ///     Records a failed operation.
     /// </summary>
-    public void RecordFailure() =>
-        Interlocked.Increment(ref _consecutiveFailures);
+    public void RecordFailure() => Interlocked.Increment(ref _consecutiveFailures);
 }
 
 /// <summary>
