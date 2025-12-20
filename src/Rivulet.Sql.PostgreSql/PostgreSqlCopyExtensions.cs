@@ -1,5 +1,6 @@
 using Npgsql;
 using Rivulet.Core;
+using Rivulet.Sql.Internal;
 
 namespace Rivulet.Sql.PostgreSql;
 
@@ -32,24 +33,18 @@ public static class PostgreSqlCopyExtensions
         int batchSize = 5000,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(source);
-        ArgumentNullException.ThrowIfNull(connectionFactory);
-        ArgumentException.ThrowIfNullOrWhiteSpace(tableName);
-        ArgumentNullException.ThrowIfNull(columns);
+        // ReSharper disable once PossibleMultipleEnumeration
+        SqlValidationHelper.ValidateCommonBulkParameters(source, connectionFactory, tableName, batchSize);
+        SqlValidationHelper.ValidateArrayNotEmpty(columns, nameof(columns));
         ArgumentNullException.ThrowIfNull(mapToRow);
-
-        if (columns.Length == 0) throw new ArgumentException("Columns array cannot be empty", nameof(columns));
-
-        if (batchSize <= 0)
-            throw new ArgumentOutOfRangeException(nameof(batchSize), "Batch size must be greater than 0");
 
         options ??= new();
 
-        // Escape table name to prevent SQL injection
-        var escapedTableName = $"\"{tableName.Replace("\"", "\"\"")}\"";
-        var columnList = string.Join(", ", columns.Select(static c => $"\"{c.Replace("\"", "\"\"")}\""));
+        // Escape table name and columns to prevent SQL injection
+        var (escapedTableName, columnList) = EscapeTableAndColumns(tableName, columns);
         var copyCommand = $"COPY {escapedTableName} ({columnList}) FROM STDIN (FORMAT BINARY)";
 
+        // ReSharper disable once PossibleMultipleEnumeration
         return source
             .Chunk(batchSize)
             .ForEachParallelAsync(async (batch, ct) =>
@@ -70,12 +65,11 @@ public static class PostgreSqlCopyExtensions
                             validatedRows.Add((item, rowData));
                         }
 
-                        var connection = connectionFactory();
-                        if (connection == null) throw new InvalidOperationException("Connection factory returned null");
+                        var connection = SqlConnectionHelper.CreateAndValidate(connectionFactory);
 
                         await using (connection)
                         {
-                            await connection.OpenAsync(ct).ConfigureAwait(false);
+                            await SqlConnectionHelper.OpenConnectionAsync(connection, ct).ConfigureAwait(false);
 
 #pragma warning disable CA2007 // ConfigureAwait not applicable to await using declarations
                             await using var writer = await connection.BeginBinaryImportAsync(copyCommand, ct);
@@ -94,18 +88,12 @@ public static class PostgreSqlCopyExtensions
                     catch (Exception ex)
 #pragma warning restore CA1031
                     {
-                        // PostgreSQL COPY can throw various provider-specific exceptions - wrap all in InvalidOperationException
-                        var detailMessage =
-                            $"[PostgreSQL COPY] Failed to bulk insert batch of {batch.Length} rows to table '{tableName}'. " +
-                            $"Copy command: {copyCommand}. " +
-                            $"Exception: {ex.GetType().FullName} - {ex.Message}";
-                        if (ex.InnerException != null)
-                            detailMessage += $" | InnerException: {ex.InnerException.GetType().FullName} - {ex.InnerException.Message}";
-
-                        if (ex.StackTrace != null)
-                            detailMessage += $" | StackTrace: {ex.StackTrace[..Math.Min(500, ex.StackTrace.Length)]}";
-
-                        throw new InvalidOperationException(detailMessage, ex);
+                        throw SqlErrorHelper.WrapBulkOperationExceptionWithDetails(
+                            ex,
+                            "PostgreSQL COPY",
+                            batch.Length,
+                            tableName,
+                            copyCommand);
                     }
                 },
                 options,
@@ -136,21 +124,14 @@ public static class PostgreSqlCopyExtensions
         char delimiter = ',',
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(source);
-        ArgumentNullException.ThrowIfNull(connectionFactory);
-        ArgumentException.ThrowIfNullOrWhiteSpace(tableName);
-        ArgumentNullException.ThrowIfNull(columns);
-
-        if (columns.Length == 0) throw new ArgumentException("Columns array cannot be empty", nameof(columns));
-
-        if (batchSize <= 0)
-            throw new ArgumentOutOfRangeException(nameof(batchSize), "Batch size must be greater than 0");
+        // ReSharper disable once PossibleMultipleEnumeration
+        SqlValidationHelper.ValidateCommonBulkParameters(source, connectionFactory, tableName, batchSize);
+        SqlValidationHelper.ValidateArrayNotEmpty(columns, nameof(columns));
 
         options ??= new();
 
         // Escape table name and columns to prevent SQL injection
-        var escapedTableName = $"\"{tableName.Replace("\"", "\"\"")}\"";
-        var columnList = string.Join(", ", columns.Select(static c => $"\"{c.Replace("\"", "\"\"")}\""));
+        var (escapedTableName, columnList) = EscapeTableAndColumns(tableName, columns);
 
         // Escape delimiter (handle single quotes)
         var escapedDelimiter = delimiter.ToString().Replace("'", "''");
@@ -158,16 +139,16 @@ public static class PostgreSqlCopyExtensions
         var copyCommand =
             $"COPY {escapedTableName} ({columnList}) FROM STDIN (FORMAT CSV, DELIMITER '{escapedDelimiter}'{headerOption})";
 
+        // ReSharper disable once PossibleMultipleEnumeration
         return source
             .Chunk(batchSize)
             .ForEachParallelAsync(async (batch, ct) =>
                 {
-                    var connection = connectionFactory();
-                    if (connection == null) throw new InvalidOperationException("Connection factory returned null");
+                    var connection = SqlConnectionHelper.CreateAndValidate(connectionFactory);
 
                     await using (connection)
                     {
-                        await connection.OpenAsync(ct).ConfigureAwait(false);
+                        await SqlConnectionHelper.OpenConnectionAsync(connection, ct).ConfigureAwait(false);
 
                         try
                         {
@@ -180,10 +161,11 @@ public static class PostgreSqlCopyExtensions
                         catch (Exception ex)
 #pragma warning restore CA1031
                         {
-                            // PostgreSQL COPY can throw various provider-specific exceptions - wrap all in InvalidOperationException
-                            throw new InvalidOperationException(
-                                $"Failed to bulk insert CSV batch of {batch.Length} lines to table '{tableName}'",
-                                ex);
+                            throw SqlErrorHelper.WrapBulkOperationException(
+                                ex,
+                                "bulk insert CSV",
+                                batch.Length,
+                                tableName);
                         }
                     }
                 },
@@ -211,33 +193,26 @@ public static class PostgreSqlCopyExtensions
         int batchSize = 5000,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(source);
-        ArgumentNullException.ThrowIfNull(connectionFactory);
-        ArgumentException.ThrowIfNullOrWhiteSpace(tableName);
-        ArgumentNullException.ThrowIfNull(columns);
-
-        if (columns.Length == 0) throw new ArgumentException("Columns array cannot be empty", nameof(columns));
-
-        if (batchSize <= 0)
-            throw new ArgumentOutOfRangeException(nameof(batchSize), "Batch size must be greater than 0");
+        // ReSharper disable once PossibleMultipleEnumeration
+        SqlValidationHelper.ValidateCommonBulkParameters(source, connectionFactory, tableName, batchSize);
+        SqlValidationHelper.ValidateArrayNotEmpty(columns, nameof(columns));
 
         options ??= new();
 
         // Escape table name and columns to prevent SQL injection
-        var escapedTableName = $"\"{tableName.Replace("\"", "\"\"")}\"";
-        var columnList = string.Join(", ", columns.Select(static c => $"\"{c.Replace("\"", "\"\"")}\""));
+        var (escapedTableName, columnList) = EscapeTableAndColumns(tableName, columns);
         var copyCommand = $"COPY {escapedTableName} ({columnList}) FROM STDIN";
 
+        // ReSharper disable once PossibleMultipleEnumeration
         return source
             .Chunk(batchSize)
             .ForEachParallelAsync(async (batch, ct) =>
                 {
-                    var connection = connectionFactory();
-                    if (connection == null) throw new InvalidOperationException("Connection factory returned null");
+                    var connection = SqlConnectionHelper.CreateAndValidate(connectionFactory);
 
                     await using (connection)
                     {
-                        await connection.OpenAsync(ct).ConfigureAwait(false);
+                        await SqlConnectionHelper.OpenConnectionAsync(connection, ct).ConfigureAwait(false);
 
                         try
                         {
@@ -250,14 +225,39 @@ public static class PostgreSqlCopyExtensions
                         catch (Exception ex)
 #pragma warning restore CA1031
                         {
-                            // PostgreSQL COPY can throw various provider-specific exceptions - wrap all in InvalidOperationException
-                            throw new InvalidOperationException(
-                                $"Failed to bulk insert text batch of {batch.Length} lines to table '{tableName}'",
-                                ex);
+                            throw SqlErrorHelper.WrapBulkOperationException(
+                                ex,
+                                "bulk insert text",
+                                batch.Length,
+                                tableName);
                         }
                     }
                 },
                 options,
                 cancellationToken);
+    }
+
+    /// <summary>
+    ///     Escapes PostgreSQL identifier (table or column name) to prevent SQL injection.
+    /// </summary>
+    private static string EscapeIdentifier(string identifier) =>
+        $"\"{identifier.Replace("\"", "\"\"")}\"";
+
+    /// <summary>
+    ///     Builds escaped column list for COPY command.
+    /// </summary>
+    private static string BuildColumnList(IEnumerable<string> columns) =>
+        string.Join(", ", columns.Select(EscapeIdentifier));
+
+    /// <summary>
+    ///     Builds COPY command with escaped table and column names.
+    /// </summary>
+    private static (string escapedTableName, string columnList) EscapeTableAndColumns(
+        string tableName,
+        IEnumerable<string> columns)
+    {
+        var escapedTableName = EscapeIdentifier(tableName);
+        var columnList = BuildColumnList(columns);
+        return (escapedTableName, columnList);
     }
 }
