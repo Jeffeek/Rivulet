@@ -1,0 +1,67 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/samples/">
+    <Project Path="samples/Rivulet.Console.Sample/Rivulet.Console.Sample.csproj" />
+    <Project Path="samples/Rivulet.Diagnostics.Sample/Rivulet.Diagnostics.Sample.csproj" />
+    <Project Path="samples/Rivulet.Hosting.Sample/Rivulet.Hosting.Sample.csproj" />
+    <Project Path="samples/Rivulet.Http.Sample/Rivulet.Http.Sample.csproj" />
+    <Project Path="samples/Rivulet.IO.Sample/Rivulet.IO.Sample.csproj" />
+    <Project Path="samples/Rivulet.OpenTelemetry.Sample/Rivulet.OpenTelemetry.Sample.csproj" />
+    <Project Path="samples/Rivulet.Polly.Sample/Rivulet.Polly.Sample.csproj" />
+    <Project Path="samples/Rivulet.Sql.MySql.Sample/Rivulet.Sql.MySql.Sample.csproj" />
+    <Project Path="samples/Rivulet.Sql.PostgreSql.Sample/Rivulet.Sql.PostgreSql.Sample.csproj" />
+    <Project Path="samples/Rivulet.Sql.Sample/Rivulet.Sql.Sample.csproj" />
+    <Project Path="samples/Rivulet.Sql.SqlServer.Sample/Rivulet.Sql.SqlServer.Sample.csproj" />
+    <Project Path="samples/Rivulet.Testing.Sample/Rivulet.Testing.Sample.csproj" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path=".gitattributes" />
+    <File Path=".github/ISSUE_TEMPLATE/bug_report.md" />
+    <File Path=".github/ISSUE_TEMPLATE/feature_request.md" />
+    <File Path=".gitignore" />
+    <File Path="CODE_OF_CONDUCT.md" />
+    <File Path="CONTRIBUTING.md" />
+    <File Path="LICENSE.txt" />
+    <File Path="README-RESHARPER.md" />
+    <File Path="README.md" />
+    <File Path="Rivulet.sln.DotSettings" />
+    <File Path="Rivulet.sln.DotSettings.user" />
+    <File Path="ROADMAP.md" />
+    <File Path="SECURITY.md" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Rivulet.Core/Rivulet.Core.csproj" />
+    <Project Path="src/Rivulet.Diagnostics.OpenTelemetry/Rivulet.Diagnostics.OpenTelemetry.csproj" />
+    <Project Path="src/Rivulet.Diagnostics/Rivulet.Diagnostics.csproj" />
+    <Project Path="src/Rivulet.Hosting/Rivulet.Hosting.csproj" />
+    <Project Path="src/Rivulet.Http/Rivulet.Http.csproj" />
+    <Project Path="src/Rivulet.IO/Rivulet.IO.csproj" />
+    <Project Path="src/Rivulet.Polly/Rivulet.Polly.csproj" />
+    <Project Path="src/Rivulet.Sql.MySql/Rivulet.Sql.MySql.csproj" />
+    <Project Path="src/Rivulet.Sql.PostgreSql/Rivulet.Sql.PostgreSql.csproj" />
+    <Project Path="src/Rivulet.Sql.SqlServer/Rivulet.Sql.SqlServer.csproj" />
+    <Project Path="src/Rivulet.Sql/Rivulet.Sql.csproj" />
+    <Project Path="src/Rivulet.Testing/Rivulet.Testing.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Rivulet.Base.Tests/Rivulet.Base.Tests.csproj" />
+    <Project Path="tests/Rivulet.Benchmarks/Rivulet.Benchmarks.csproj" />
+    <Project Path="tests/Rivulet.Core.Tests/Rivulet.Core.Tests.csproj" />
+    <Project Path="tests/Rivulet.Diagnostics.OpenTelemetry.Tests/Rivulet.Diagnostics.OpenTelemetry.Tests.csproj" />
+    <Project Path="tests/Rivulet.Diagnostics.Tests/Rivulet.Diagnostics.Tests.csproj" />
+    <Project Path="tests/Rivulet.Hosting.Tests/Rivulet.Hosting.Tests.csproj" />
+    <Project Path="tests/Rivulet.Http.Tests/Rivulet.Http.Tests.csproj" />
+    <Project Path="tests/Rivulet.IO.Tests/Rivulet.IO.Tests.csproj" />
+    <Project Path="tests/Rivulet.Polly.Tests/Rivulet.Polly.Tests.csproj" />
+    <Project Path="tests/Rivulet.Sql.MySql.Tests/Rivulet.Sql.MySql.Tests.csproj" />
+    <Project Path="tests/Rivulet.Sql.PostgreSql.Tests/Rivulet.Sql.PostgreSql.Tests.csproj" />
+    <Project Path="tests/Rivulet.Sql.SqlServer.Tests/Rivulet.Sql.SqlServer.Tests.csproj" />
+    <Project Path="tests/Rivulet.Sql.Tests/Rivulet.Sql.Tests.csproj" />
+    <Project Path="tests/Rivulet.Testing.Tests/Rivulet.Testing.Tests.csproj" />
+  </Folder>
+</Solution>

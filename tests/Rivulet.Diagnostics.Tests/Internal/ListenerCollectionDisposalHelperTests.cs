@@ -36,14 +36,8 @@ public sealed class ListenerCollectionDisposalHelperTests
     }
 
     [Fact]
-    public void DisposeAll_WithEmptyCollection_ShouldNotThrow()
-    {
-        var listeners = new List<IDisposable>();
-
-        ListenerCollectionDisposalHelper.DisposeAll(listeners);
-
-        // Should complete without throwing
-    }
+    public void DisposeAll_WithEmptyCollection_ShouldNotThrow() =>
+        ListenerCollectionDisposalHelper.DisposeAll([]);
 
     [Fact]
     public void DisposeAll_WithSingleListener_ShouldDispose()
@@ -101,14 +95,7 @@ public sealed class ListenerCollectionDisposalHelperTests
     }
 
     [Fact]
-    public async Task DisposeAllAsync_WithEmptyCollection_ShouldNotThrow()
-    {
-        var listeners = new List<IAsyncDisposable>();
-
-        await ListenerCollectionDisposalHelper.DisposeAllAsync(listeners);
-
-        // Should complete without throwing
-    }
+    public ValueTask DisposeAllAsync_WithEmptyCollection_ShouldNotThrow() => ListenerCollectionDisposalHelper.DisposeAllAsync([]);
 
     [Fact]
     public async Task DisposeAllAsync_WithSingleListener_ShouldDispose()
@@ -183,14 +170,7 @@ public sealed class ListenerCollectionDisposalHelperTests
     }
 
     [Fact]
-    public void DisposeAllAsyncBlocking_WithEmptyCollection_ShouldNotThrow()
-    {
-        var listeners = new List<IAsyncDisposable>();
-
-        ListenerCollectionDisposalHelper.DisposeAllAsyncBlocking(listeners);
-
-        // Should complete without throwing
-    }
+    public void DisposeAllAsyncBlocking_WithEmptyCollection_ShouldNotThrow() => ListenerCollectionDisposalHelper.DisposeAllAsyncBlocking([]);
 
     [Fact]
     public void DisposeAllAsyncBlocking_WithSingleListener_ShouldDispose()

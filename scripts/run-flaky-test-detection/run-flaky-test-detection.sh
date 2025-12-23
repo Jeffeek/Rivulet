@@ -77,7 +77,7 @@ set -e
 # Restore dependencies (unless skipped - useful when using pipeline cache)
 if [ "$SKIP_RESTORE" = false ]; then
     echo -e "${GRAY}Restoring NuGet packages...${NC}"
-    dotnet restore
+    dotnet restore Rivulet.slnx
 else
     echo -e "${GRAY}Skipping restore (using cached packages)${NC}"
 fi
@@ -86,9 +86,9 @@ fi
 if [ "$SKIP_BUILD" = false ]; then
     echo -e "${GRAY}Building solution in Release mode...${NC}"
     if [ "$SKIP_RESTORE" = true ]; then
-        dotnet build -c Release
+        dotnet build Rivulet.slnx -c Release
     else
-        dotnet build -c Release --no-restore
+        dotnet build Rivulet.slnx -c Release --no-restore
     fi
 else
     echo -e "${GRAY}Skipping build (using cached binaries)${NC}"

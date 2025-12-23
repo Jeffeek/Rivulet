@@ -28,7 +28,7 @@ Write-Host "  Step 1/4: Cleaning solution..." -ForegroundColor Yellow
 Write-Host "======================================" -ForegroundColor Yellow
 Write-Host ""
 
-dotnet clean -c $Configuration
+dotnet clean Rivulet.slnx -c $Configuration
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host ""
@@ -46,7 +46,7 @@ Write-Host "  Step 2/4: Restoring dependencies..." -ForegroundColor Yellow
 Write-Host "======================================" -ForegroundColor Yellow
 Write-Host ""
 
-dotnet restore
+dotnet restore Rivulet.slnx
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host ""
@@ -64,7 +64,7 @@ Write-Host "  Step 3/4: Building solution..." -ForegroundColor Yellow
 Write-Host "======================================" -ForegroundColor Yellow
 Write-Host ""
 
-dotnet build -c $Configuration --no-restore
+dotnet build Rivulet.slnx -c $Configuration --no-restore
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host ""
@@ -83,7 +83,7 @@ if (-not $SkipTests) {
     Write-Host "======================================" -ForegroundColor Yellow
     Write-Host ""
 
-    dotnet test -c $Configuration --no-build --verbosity normal
+    dotnet test Rivulet.slnx -c $Configuration --no-build --verbosity normal
 
     if ($LASTEXITCODE -ne 0) {
         Write-Host ""
