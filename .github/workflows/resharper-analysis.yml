@@ -44,15 +44,15 @@ jobs:
           ${{ runner.os }}-nuget-
 
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore Rivulet.slnx
 
     - name: Build solution
-      run: dotnet build -c Release --no-restore
+      run: dotnet build Rivulet.slnx -c Release --no-restore
 
     - name: ReSharper CLI InspectCode
       uses: muno92/resharper_inspectcode@a63335b1d72c215c2be11aea8c318eda74259c1e # 1.15.5
       with:
-         solutionPath: ./Rivulet.sln
+         solutionPath: ./Rivulet.slnx
          version: 2025.3.1
          failOnIssue: '1'
          noBuild: true

@@ -61,7 +61,7 @@ echo -e "${YELLOW}  Step 1/4: Cleaning solution...${NC}"
 echo -e "${YELLOW}======================================${NC}"
 echo ""
 
-if ! dotnet clean -c "$CONFIGURATION"; then
+if ! dotnet clean Rivulet.slnx -c "$CONFIGURATION"; then
     echo ""
     echo -e "${RED}Error: Clean failed!${NC}"
     exit 1
@@ -77,7 +77,7 @@ echo -e "${YELLOW}  Step 2/4: Restoring dependencies...${NC}"
 echo -e "${YELLOW}======================================${NC}"
 echo ""
 
-if ! dotnet restore; then
+if ! dotnet restore Rivulet.slnx; then
     echo ""
     echo -e "${RED}Error: Restore failed!${NC}"
     exit 1
@@ -93,7 +93,7 @@ echo -e "${YELLOW}  Step 3/4: Building solution...${NC}"
 echo -e "${YELLOW}======================================${NC}"
 echo ""
 
-if ! dotnet build -c "$CONFIGURATION" --no-restore; then
+if ! dotnet build Rivulet.slnx -c "$CONFIGURATION" --no-restore; then
     echo ""
     echo -e "${RED}Error: Build failed!${NC}"
     exit 1

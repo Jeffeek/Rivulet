@@ -55,9 +55,9 @@ if (-not $SkipRestore) {
 if (-not $SkipBuild) {
     Write-Host "Building solution in Release mode..." -ForegroundColor Gray
     if ($SkipRestore) {
-        dotnet build -c Release
+        dotnet build Rivulet.slnx -c Release
     } else {
-        dotnet build -c Release --no-restore
+        dotnet build Rivulet.slnx -c Release --no-restore
     }
 } else {
     Write-Host "Skipping build (using cached binaries)" -ForegroundColor DarkGray
@@ -79,7 +79,7 @@ for ($i = 1; $i -le $Iterations; $i++) {
     $job = Start-Job -ScriptBlock {
         param($dir)
         Set-Location $dir
-        dotnet test -c Release --filter "Category!=Integration" 2>&1 | Out-String
+        dotnet test Rivulet.slnx -c Release --filter "Category!=Integration" 2>&1 | Out-String
     } -ArgumentList $currentDir
 
     $completed = Wait-Job -Job $job -Timeout 300 # 5 minutes

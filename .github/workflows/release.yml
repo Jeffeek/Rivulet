@@ -52,10 +52,10 @@ jobs:
       run: dotnet restore
 
     - name: Build (Release)
-      run: dotnet build -c Release --no-restore
+      run: dotnet build Rivulet.slnx -c Release --no-restore
 
     - name: Run tests
-      run: dotnet test -c Release --no-build --verbosity normal
+      run: dotnet test Rivulet.slnx -c Release --no-build --verbosity normal
       timeout-minutes: 5
 
     - name: Pack NuGet packages

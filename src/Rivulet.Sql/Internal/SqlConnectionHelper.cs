@@ -37,13 +37,10 @@ internal static class SqlConnectionHelper
     internal static ValueTask OpenConnectionIfNeededAsync(
         IDbConnection connection,
         SqlOptions options,
-        CancellationToken cancellationToken)
-    {
-        if (options.AutoManageConnection && connection.State != ConnectionState.Open)
-            return OpenConnectionAsync(connection, cancellationToken);
-
-        return ValueTask.CompletedTask;
-    }
+        CancellationToken cancellationToken) =>
+        options.AutoManageConnection && connection.State != ConnectionState.Open
+            ? OpenConnectionAsync(connection, cancellationToken)
+            : ValueTask.CompletedTask;
 
     /// <summary>
     ///     Conditionally closes connection based on AutoManageConnection setting.
