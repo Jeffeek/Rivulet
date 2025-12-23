@@ -95,7 +95,8 @@ public sealed class ListenerCollectionDisposalHelperTests
     }
 
     [Fact]
-    public ValueTask DisposeAllAsync_WithEmptyCollection_ShouldNotThrow() => ListenerCollectionDisposalHelper.DisposeAllAsync([]);
+    public Task DisposeAllAsync_WithEmptyCollection_ShouldNotThrow() =>
+        ListenerCollectionDisposalHelper.DisposeAllAsync([]).AsTask();
 
     [Fact]
     public async Task DisposeAllAsync_WithSingleListener_ShouldDispose()
@@ -170,7 +171,8 @@ public sealed class ListenerCollectionDisposalHelperTests
     }
 
     [Fact]
-    public void DisposeAllAsyncBlocking_WithEmptyCollection_ShouldNotThrow() => ListenerCollectionDisposalHelper.DisposeAllAsyncBlocking([]);
+    public void DisposeAllAsyncBlocking_WithEmptyCollection_ShouldNotThrow() =>
+        ListenerCollectionDisposalHelper.DisposeAllAsyncBlocking([]);
 
     [Fact]
     public void DisposeAllAsyncBlocking_WithSingleListener_ShouldDispose()
