@@ -36,6 +36,7 @@
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/Rivulet.Core/Rivulet.Core.csproj" />
+    <Project Path="src/Rivulet.Csv/Rivulet.Csv.csproj" />
     <Project Path="src/Rivulet.Diagnostics.OpenTelemetry/Rivulet.Diagnostics.OpenTelemetry.csproj" />
     <Project Path="src/Rivulet.Diagnostics/Rivulet.Diagnostics.csproj" />
     <Project Path="src/Rivulet.Hosting/Rivulet.Hosting.csproj" />
@@ -52,6 +53,7 @@
     <Project Path="tests/Rivulet.Base.Tests/Rivulet.Base.Tests.csproj" />
     <Project Path="tests/Rivulet.Benchmarks/Rivulet.Benchmarks.csproj" />
     <Project Path="tests/Rivulet.Core.Tests/Rivulet.Core.Tests.csproj" />
+    <Project Path="tests/Rivulet.Csv.Tests/Rivulet.Csv.Tests.csproj" />
     <Project Path="tests/Rivulet.Diagnostics.OpenTelemetry.Tests/Rivulet.Diagnostics.OpenTelemetry.Tests.csproj" />
     <Project Path="tests/Rivulet.Diagnostics.Tests/Rivulet.Diagnostics.Tests.csproj" />
     <Project Path="tests/Rivulet.Hosting.Tests/Rivulet.Hosting.Tests.csproj" />

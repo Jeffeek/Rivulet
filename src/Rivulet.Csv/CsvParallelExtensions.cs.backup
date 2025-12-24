@@ -1,0 +1,516 @@
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
+using CsvHelper;
+using CsvHelper.Configuration;
+using Rivulet.Core;
+using Rivulet.Csv.Internal;
+
+namespace Rivulet.Csv;
+
+/// <summary>
+///     Extension methods for parallel CSV parsing and writing operations with bounded concurrency and resilience.
+/// </summary>
+[SuppressMessage("ReSharper", "MemberCanBeInternal")]
+public static class CsvParallelExtensions
+{
+    private static readonly Action<CsvContext> NoOpConfigure = static _ => { };
+
+    #region Parse - With ClassMap Support
+
+    /// <summary>
+    ///     Parses multiple CSV files in parallel using a single ClassMap for all files.
+    /// </summary>
+    /// <typeparam name="T">The type of record to parse from CSV files.</typeparam>
+    /// <typeparam name="TMap">The ClassMap type to use for all files.</typeparam>
+    /// <param name="filePaths">The collection of CSV file paths to parse.</param>
+    /// <param name="options">CSV operation options. If null, defaults are used.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    /// <returns>A list where each element contains all records parsed from a CSV file.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when filePaths is null.</exception>
+    public static Task<IReadOnlyList<IReadOnlyList<T>>> ParseCsvParallelAsync<T, TMap>(
+        this IEnumerable<string> filePaths,
+        CsvOperationOptions? options = null,
+        CancellationToken cancellationToken = default)
+        where TMap : ClassMap
+    {
+        ArgumentNullException.ThrowIfNull(filePaths);
+
+        return filePaths.ParseCsvParallelAsync<T>(
+            new CsvConfiguration(options?.Culture ?? CultureInfo.InvariantCulture) {  },
+            options,
+            cancellationToken);
+    }
+
+    /// <summary>
+    ///     Parses multiple CSV files in parallel with per-file CsvHelper configuration.
+    /// </summary>
+    /// <typeparam name="T">The type of record to parse from CSV files.</typeparam>
+    /// <param name="filePaths">The collection of CSV file paths to parse.</param>
+    /// <param name="readerConfiguration">Action to configure CsvHelper settings (ClassMaps, etc.) for each file.</param>
+    /// <param name="options">CSV operation options. If null, defaults are used.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    /// <returns>A list where each element contains all records parsed from a CSV file.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when filePaths or configureContext is null.</exception>
+    /// <remarks>
+    ///     The configureContext action receives the file path and CsvContext, allowing different
+    ///     configurations per file (e.g., different ClassMaps based on file name).
+    /// </remarks>
+    public static async Task<IReadOnlyList<IReadOnlyList<T>>> ParseCsvParallelAsync<T>(
+        this IEnumerable<string> filePaths,
+        IReaderConfiguration readerConfiguration,
+        CsvOperationOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(filePaths);
+        ArgumentNullException.ThrowIfNull(readerConfiguration);
+
+        options ??= new();
+        var parallelOptions = options.GetMergedParallelOptions();
+
+        return await filePaths.SelectParallelAsync(
+                (filePath, ct) => ParseCsvFileAsync<T>(filePath, options, readerConfiguration, ct),
+                parallelOptions,
+                cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    ///     Parses multiple CSV files in parallel with per-file CsvHelper configuration based on file path.
+    /// </summary>
+    /// <typeparam name="T">The type of record to parse from CSV files.</typeparam>
+    /// <param name="filePaths">The collection of CSV file paths to parse.</param>
+    /// <param name="readerConfiguration">Function to configure CsvHelper settings based on file path.</param>
+    /// <param name="options">CSV operation options. If null, defaults are used.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    /// <returns>A list where each element contains all records parsed from a CSV file.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when filePaths or configureContext is null.</exception>
+    /// <remarks>
+    ///     Allows conditional configuration based on file path, such as applying different ClassMaps
+    ///     to different files in a single batch operation.
+    /// </remarks>
+    public static async Task<IReadOnlyList<IReadOnlyList<T>>> ParseCsvParallelAsync<T>(
+        this IEnumerable<string> filePaths,
+        Func<string, IReaderConfiguration> readerConfiguration,
+        CsvOperationOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(filePaths);
+        ArgumentNullException.ThrowIfNull(readerConfiguration);
+
+        options ??= new();
+        var parallelOptions = options.GetMergedParallelOptions();
+
+        return await filePaths.SelectParallelAsync(
+                (filePath, ct) =>
+                {
+                    var configure = readerConfiguration(filePath);
+                    return ParseCsvFileAsync<T>(filePath, options, configure, ct);
+                },
+                parallelOptions,
+                cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    ///     Parses multiple CSV files in parallel with explicit per-file configuration.
+    /// </summary>
+    /// <typeparam name="T">The type of record to parse from CSV files.</typeparam>
+    /// <param name="fileConfigs">Collection of file configurations specifying path and CsvHelper settings for each file.</param>
+    /// <param name="options">CSV operation options. If null, defaults are used.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    /// <returns>A list where each element contains all records parsed from a CSV file.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when fileConfigs is null.</exception>
+    /// <remarks>
+    ///     This overload provides maximum flexibility, allowing each file to have its own ClassMap
+    ///     and configuration. Ideal for processing multiple files with different schemas.
+    /// </remarks>
+    /// <example>
+    ///     <code>
+    /// var configs = new[]
+    /// {
+    ///     new CsvFileConfig&lt;Product&gt;("products.csv", ctx => ctx.RegisterClassMap&lt;ProductMap&gt;()),
+    ///     new CsvFileConfig&lt;Product&gt;("legacy.csv", ctx => ctx.RegisterClassMap&lt;LegacyProductMap&gt;())
+    /// };
+    /// var results = await configs.ParseCsvParallelAsync();
+    ///     </code>
+    /// </example>
+    public static async Task<IReadOnlyList<IReadOnlyList<T>>> ParseCsvParallelAsync<T>(
+        this IEnumerable<CsvFileConfig<T>> fileConfigs,
+        CsvOperationOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(fileConfigs);
+
+        options ??= new();
+        var parallelOptions = options.GetMergedParallelOptions();
+
+        return await fileConfigs.SelectParallelAsync(
+                (config, ct) =>
+                {
+                    var configure = config.ReaderConfiguration ?? new CsvConfiguration(options.Culture);
+                    return ParseCsvFileAsync<T>(config.FilePath, options, configure, ct);
+                },
+                parallelOptions,
+                cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    #endregion
+
+    /// <summary>
+    ///     Parses multiple CSV files in parallel and returns their contents as strongly-typed records.
+    /// </summary>
+    /// <typeparam name="T">The type of record to parse from CSV files.</typeparam>
+    /// <param name="filePaths">The collection of CSV file paths to parse.</param>
+    /// <param name="options">CSV operation options. If null, defaults are used.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    /// <returns>A list where each element contains all records parsed from a CSV file.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when filePaths is null.</exception>
+    /// <exception cref="FileNotFoundException">Thrown when a CSV file is not found.</exception>
+    /// <exception cref="IOException">Thrown when file operations fail.</exception>
+    /// <exception cref="CsvHelper.HeaderValidationException">Thrown when CSV headers don't match the expected type.</exception>
+    public static async Task<IReadOnlyList<IReadOnlyList<T>>> ParseCsvParallelAsync<T>(
+        this IEnumerable<string> filePaths,
+        CsvOperationOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(filePaths);
+
+        options ??= new();
+        var parallelOptions = options.GetMergedParallelOptions();
+
+        return await filePaths.SelectParallelAsync(
+                (filePath, ct) => ParseCsvFileAsync<T>(filePath, options, ct),
+                parallelOptions,
+                cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    ///     Writes collections of records to multiple CSV files in parallel.
+    /// </summary>
+    /// <typeparam name="T">The type of record to write to CSV files.</typeparam>
+    /// <param name="fileWrites">Collection of tuples containing file path and records to write.</param>
+    /// <param name="options">CSV operation options. If null, defaults are used.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    /// <returns>A list of file paths that were written successfully.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when fileWrites is null.</exception>
+    /// <exception cref="IOException">Thrown when file write operations fail.</exception>
+    public static async Task<IReadOnlyList<string>> WriteCsvParallelAsync<T>(
+        this IEnumerable<(string filePath, IEnumerable<T> records)> fileWrites,
+        CsvOperationOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(fileWrites);
+
+        options ??= new();
+        var parallelOptions = options.GetMergedParallelOptions();
+
+        return await fileWrites.SelectParallelAsync(
+                async (write, ct) =>
+                {
+                    await WriteCsvFileAsync(write.filePath, write.records, options, new CsvConfiguration(options.Culture), ct);
+                    return write.filePath;
+                },
+                parallelOptions,
+                cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    #region Write - With ClassMap Support
+
+    /// <summary>
+    ///     Writes collections of records to multiple CSV files in parallel using a single ClassMap for all files.
+    /// </summary>
+    /// <typeparam name="T">The type of record to write to CSV files.</typeparam>
+    /// <typeparam name="TMap">The ClassMap type to use for all files.</typeparam>
+    /// <param name="fileWrites">Collection of tuples containing file path and records to write.</param>
+    /// <param name="options">CSV operation options. If null, defaults are used.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    /// <returns>A list of file paths that were written successfully.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when fileWrites is null.</exception>
+    public static Task<IReadOnlyList<string>> WriteCsvParallelAsync<T, TMap>(
+        this IEnumerable<(string filePath, IEnumerable<T> records)> fileWrites,
+        CsvOperationOptions? options = null,
+        CancellationToken cancellationToken = default)
+        where TMap : ClassMap
+    {
+        ArgumentNullException.ThrowIfNull(fileWrites);
+
+        return fileWrites.Select(static w => (w.filePath, w.records, (Action<CsvContext>)(static ctx => ctx.RegisterClassMap<TMap>())))
+            .WriteCsvParallelAsync(options, cancellationToken);
+    }
+
+    /// <summary>
+    ///     Writes collections of records to multiple CSV files in parallel with CsvHelper configuration.
+    /// </summary>
+    /// <typeparam name="T">The type of record to write to CSV files.</typeparam>
+    /// <param name="fileWrites">Collection of tuples containing file path and records to write.</param>
+    /// <param name="writerConfiguration">Action to configure CsvHelper settings (ClassMaps, etc.).</param>
+    /// <param name="options">CSV operation options. If null, defaults are used.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    /// <returns>A list of file paths that were written successfully.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when fileWrites or configureContext is null.</exception>
+    public static async Task<IReadOnlyList<string>> WriteCsvParallelAsync<T>(
+        this IEnumerable<(string filePath, IEnumerable<T> records)> fileWrites,
+        IWriterConfiguration writerConfiguration,
+        CsvOperationOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(fileWrites);
+        ArgumentNullException.ThrowIfNull(writerConfiguration);
+
+        options ??= new();
+        var parallelOptions = options.GetMergedParallelOptions();
+
+        return await fileWrites.SelectParallelAsync(
+                async (write, ct) =>
+                {
+                    await WriteCsvFileAsync(write.filePath, write.records, options, writerConfiguration, ct);
+                    return write.filePath;
+                },
+                parallelOptions,
+                cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    ///     Writes collections of records to multiple CSV files in parallel with per-file CsvHelper configuration.
+    /// </summary>
+    /// <typeparam name="T">The type of record to write to CSV files.</typeparam>
+    /// <param name="fileWrites">Collection of tuples containing file path, records, and configuration action.</param>
+    /// <param name="options">CSV operation options. If null, defaults are used.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    /// <returns>A list of file paths that were written successfully.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when fileWrites is null.</exception>
+    /// <remarks>
+    ///     Allows different CsvHelper configurations (ClassMaps, etc.) for each file in a single batch operation.
+    /// </remarks>
+    public static async Task<IReadOnlyList<string>> WriteCsvParallelAsync<T>(
+        this IEnumerable<(string filePath, IEnumerable<T> records, IWriterConfiguration writerConfiguration)> fileWrites,
+        CsvOperationOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(fileWrites);
+
+        options ??= new();
+        var parallelOptions = options.GetMergedParallelOptions();
+
+        return await fileWrites.SelectParallelAsync(
+                async (write, ct) =>
+                {
+                    await WriteCsvFileAsync(write.filePath, write.records, options, write.writerConfiguration, ct);
+                    return write.filePath;
+                },
+                parallelOptions,
+                cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    ///     Writes collections of records to multiple CSV files in parallel with explicit per-file configuration.
+    /// </summary>
+    /// <typeparam name="T">The type of record to write to CSV files.</typeparam>
+    /// <param name="fileConfigs">Collection of file configurations specifying path, records, and CsvHelper settings.</param>
+    /// <param name="options">CSV operation options. If null, defaults are used.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    /// <returns>A list of file paths that were written successfully.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when fileConfigs is null.</exception>
+    /// <example>
+    ///     <code>
+    /// var configs = new[]
+    /// {
+    ///     CsvFileConfig&lt;Product&gt;.ForWrite("products.csv", products, ctx => ctx.RegisterClassMap&lt;ProductMap&gt;()),
+    ///     CsvFileConfig&lt;Product&gt;.ForWrite("legacy.csv", legacyProducts, ctx => ctx.RegisterClassMap&lt;LegacyMap&gt;())
+    /// };
+    /// await configs.WriteCsvParallelAsync();
+    ///     </code>
+    /// </example>
+    public static async Task<IReadOnlyList<string>> WriteCsvParallelAsync<T>(
+        this IEnumerable<CsvFileConfig<T>> fileConfigs,
+        CsvOperationOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(fileConfigs);
+
+        options ??= new();
+        var parallelOptions = options.GetMergedParallelOptions();
+
+        return await fileConfigs.SelectParallelAsync(
+                async (config, ct) =>
+                {
+                    if (config.Records == null)
+                        throw new InvalidOperationException($"CsvFileConfig for '{config.FilePath}' does not contain records. Use CsvFileConfig.ForWrite() to create write configurations.");
+
+                    var configure = config.WriterConfiguration ?? new CsvConfiguration(options.Culture);
+                    await WriteCsvFileAsync(config.FilePath, config.Records, options, configure, ct);
+                    return config.FilePath;
+                },
+                parallelOptions,
+                cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    #endregion
+
+    #region Transform
+
+    /// <summary>
+    ///     Transforms CSV files in parallel using ClassMaps for both input parsing and output writing.
+    /// </summary>
+    /// <typeparam name="TIn">The type of record to parse from source CSV files.</typeparam>
+    /// <typeparam name="TOut">The type of record to write to destination CSV files.</typeparam>
+    /// <typeparam name="TInMap">The ClassMap type for parsing input CSV files.</typeparam>
+    /// <typeparam name="TOutMap">The ClassMap type for writing output CSV files.</typeparam>
+    /// <param name="files">Collection of source and destination file path pairs.</param>
+    /// <param name="transformFunc">Function that transforms records (source file path, records) => transformed records.</param>
+    /// <param name="options">CSV operation options. If null, defaults are used.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    /// <returns>A list of destination file paths that were written successfully.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when files or transformFunc is null.</exception>
+    public static Task<IReadOnlyList<string>> TransformCsvParallelAsync<TIn, TOut, TInMap, TOutMap>(
+        this IEnumerable<(string sourcePath, string destinationPath)> files,
+        Func<string, IReadOnlyList<TIn>, ValueTask<IEnumerable<TOut>>> transformFunc,
+        CsvOperationOptions? options = null,
+        CancellationToken cancellationToken = default)
+        where TInMap : ClassMap
+        where TOutMap : ClassMap
+    {
+        ArgumentNullException.ThrowIfNull(files);
+        ArgumentNullException.ThrowIfNull(transformFunc);
+
+        return files.TransformCsvParallelAsync(
+            transformFunc,
+            static ctx => ctx.RegisterClassMap<TInMap>(),
+            static ctx => ctx.RegisterClassMap<TOutMap>(),
+            options,
+            cancellationToken);
+    }
+
+    /// <summary>
+    ///     Transforms CSV files in parallel with separate CsvHelper configuration for input and output.
+    /// </summary>
+    /// <typeparam name="TIn">The type of record to parse from source CSV files.</typeparam>
+    /// <typeparam name="TOut">The type of record to write to destination CSV files.</typeparam>
+    /// <param name="files">Collection of source and destination file path pairs.</param>
+    /// <param name="transformFunc">Function that transforms records (source file path, records) => transformed records.</param>
+    /// <param name="csvReaderConfiguration">Action to configure input CSV parsing (ClassMaps, delimiter, etc.).</param>
+    /// <param name="csvWriterConfiguration">Action to configure output CSV writing (ClassMaps, delimiter, etc.).</param>
+    /// <param name="options">CSV operation options. If null, defaults are used.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    /// <returns>A list of destination file paths that were written successfully.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when files, transformFunc, configureInputContext, or configureOutputContext is null.</exception>
+    public static async Task<IReadOnlyList<string>> TransformCsvParallelAsync<TIn, TOut>(
+        this IEnumerable<(string sourcePath, string destinationPath)> files,
+        Func<string, IReadOnlyList<TIn>, ValueTask<IEnumerable<TOut>>> transformFunc,
+        IReaderConfiguration csvReaderConfiguration,
+        IWriterConfiguration csvWriterConfiguration,
+        CsvOperationOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(files);
+        ArgumentNullException.ThrowIfNull(transformFunc);
+        ArgumentNullException.ThrowIfNull(csvReaderConfiguration);
+        ArgumentNullException.ThrowIfNull(csvWriterConfiguration);
+
+        options ??= new();
+        var parallelOptions = options.GetMergedParallelOptions();
+
+        return await files.SelectParallelAsync(
+                async (file, ct) =>
+                {
+                    var records = await ParseCsvFileAsync<TIn>(file.sourcePath, options, csvReaderConfiguration, ct);
+                    var transformed = await transformFunc(file.sourcePath, records);
+                    await WriteCsvFileAsync(file.destinationPath, transformed, options, csvWriterConfiguration, ct);
+                    return file.destinationPath;
+                },
+                parallelOptions,
+                cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    ///     Transforms CSV files in parallel by parsing, applying a transformation function, and writing to new files.
+    /// </summary>
+    /// <typeparam name="TIn">The type of record to parse from source CSV files.</typeparam>
+    /// <typeparam name="TOut">The type of record to write to destination CSV files.</typeparam>
+    /// <param name="files">Collection of source and destination file path pairs.</param>
+    /// <param name="transformFunc">Function that transforms records (source file path, records) => transformed records.</param>
+    /// <param name="options">CSV operation options. If null, defaults are used.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    /// <returns>A list of destination file paths that were written successfully.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when files or transformFunc is null.</exception>
+    public static async Task<IReadOnlyList<string>> TransformCsvParallelAsync<TIn, TOut>(
+        this IEnumerable<(string sourcePath, string destinationPath)> files,
+        Func<string, IReadOnlyList<TIn>, ValueTask<IEnumerable<TOut>>> transformFunc,
+        CsvOperationOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(files);
+        ArgumentNullException.ThrowIfNull(transformFunc);
+
+        options ??= new();
+        var parallelOptions = options.GetMergedParallelOptions();
+
+        return await files.SelectParallelAsync(
+                async (file, ct) =>
+                {
+                    var records = await ParseCsvFileAsync<TIn>(file.sourcePath, options, ct);
+                    var transformed = await transformFunc(file.sourcePath, records);
+                    await WriteCsvFileAsync(file.destinationPath, transformed, options, ct);
+                    return file.destinationPath;
+                },
+                parallelOptions,
+                cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    #endregion
+
+    private static ValueTask<IReadOnlyList<T>> ParseCsvFileAsync<T>(
+        string filePath,
+        CsvOperationOptions options,
+        IReaderConfiguration csvConfiguration,
+        CancellationToken cancellationToken) =>
+        CsvOperationHelper.ExecuteCsvOperationAsync(
+            filePath,
+            async () =>
+            {
+                await using var stream = CsvOperationHelper.CreateReadStream(filePath, options);
+                using var reader = new StreamReader(stream, options.Encoding);
+                using var csv = new CsvReader(reader, csvConfiguration);
+
+                var records = new List<T>();
+                await foreach (var record in csv.GetRecordsAsync<T>(cancellationToken))
+                    records.Add(record);
+
+                return (IReadOnlyList<T>)records;
+            },
+            options,
+            static records => records.Count);
+
+    private static ValueTask WriteCsvFileAsync<T>(
+        string filePath,
+        IEnumerable<T> records,
+        CsvOperationOptions options,
+        IWriterConfiguration csvConfiguration,
+        CancellationToken cancellationToken) =>
+        CsvOperationHelper.ExecuteCsvOperationAsync(
+            filePath,
+            async () =>
+            {
+                CsvOperationHelper.EnsureDirectoryExists(filePath, options);
+                CsvOperationHelper.ValidateOverwrite(filePath, options);
+
+                await using var stream = CsvOperationHelper.CreateWriteStream(filePath, options);
+                await using var writer = new StreamWriter(stream, options.Encoding);
+                await using var csv = new CsvWriter(writer, csvConfiguration);
+
+                var array = records as T[] ?? records.ToArray();
+                await csv.WriteRecordsAsync(array, cancellationToken);
+                await writer.FlushAsync(cancellationToken);
+
+                return array.Length;
+            },
+            options);
+}

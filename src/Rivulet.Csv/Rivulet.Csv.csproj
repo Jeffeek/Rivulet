@@ -8,12 +8,12 @@
   	<GenerateDocumentationFile>true</GenerateDocumentationFile>
   	<IncludeSymbols>true</IncludeSymbols>
     <!-- NuGet settings -->
-    <Version>1.3.0</Version>
+    <Version>1.4.0</Version>
   	<SymbolPackageFormat>snupkg</SymbolPackageFormat>
-  	<PackageId>Rivulet.IO</PackageId>
-  	<Title>Rivulet.IO</Title>
-  	<Description>Parallel file and directory operations for Rivulet with bounded concurrency, resilience, and streaming support for efficient I/O processing.</Description>
-  	<PackageTags>async;io;parallel;file;directory;dotnet;resilience;streaming</PackageTags>
+  	<PackageId>Rivulet.Csv</PackageId>
+  	<Title>Rivulet.Csv</Title>
+  	<Description>Parallel CSV parsing and writing for Rivulet with CsvHelper integration, bounded concurrency, and batching support for high-throughput data processing.</Description>
+  	<PackageTags>async;csv;parallel;parsing;writing;csvhelper;dotnet;etl;data-processing;batching</PackageTags>
   	<PackageIcon>nuget_logo.png</PackageIcon>
   	<PackageReadmeFile>README.md</PackageReadmeFile>
   	<Authors>Jeffeek</Authors>
@@ -26,11 +26,12 @@
   	<None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
   <ItemGroup>
-  	<InternalsVisibleTo Include="Rivulet.IO.Tests" />
-  	<InternalsVisibleTo Include="Rivulet.Csv" />
   	<InternalsVisibleTo Include="Rivulet.Csv.Tests" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Rivulet.Core\Rivulet.Core.csproj" />
+    <PackageReference Include="CsvHelper" Version="33.1.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Rivulet.IO\Rivulet.IO.csproj" />
   </ItemGroup>
 </Project>

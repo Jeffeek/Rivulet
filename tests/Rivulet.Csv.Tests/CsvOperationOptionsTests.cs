@@ -1,0 +1,335 @@
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
+using System.Text;
+
+namespace Rivulet.Csv.Tests;
+
+public sealed class CsvOperationOptionsTests : IDisposable
+{
+    private readonly string _testDirectory;
+
+    public CsvOperationOptionsTests()
+    {
+        _testDirectory = Path.Combine(Path.GetTempPath(), $"RivuletCsvOptionsTests_{Guid.NewGuid()}");
+        Directory.CreateDirectory(_testDirectory);
+    }
+
+    public void Dispose()
+    {
+        if (Directory.Exists(_testDirectory))
+            // ReSharper disable once ArgumentsStyleLiteral
+            Directory.Delete(_testDirectory, recursive: true);
+    }
+
+    [Fact]
+    public async Task ParseCsvParallelAsync_WithTrimWhitespace_ShouldTrimFields()
+    {
+        // Arrange
+        var csvPath = Path.Combine(_testDirectory, "whitespace.csv");
+        // ReSharper disable once GrammarMistakeInStringLiteral
+        const string csvContent = """
+                                  Id,Name,Price
+                                  1,  Product A  ,10.50
+                                  2,  Product B  ,20.00
+                                  """;
+        await File.WriteAllTextAsync(csvPath, csvContent);
+
+        // Act
+        var results = await new[] { csvPath }.ParseCsvParallelAsync<Product>(
+            new CsvOperationOptions
+            {
+                TrimWhitespace = true
+            });
+
+        // Assert
+        results[0][0].Name.ShouldBe("Product A");
+        results[0][1].Name.ShouldBe("Product B");
+    }
+
+    [Fact]
+    public async Task ParseCsvParallelAsync_WithoutTrimWhitespace_ShouldPreserveWhitespace()
+    {
+        // Arrange
+        var csvPath = Path.Combine(_testDirectory, "whitespace.csv");
+        // ReSharper disable once GrammarMistakeInStringLiteral
+        const string csvContent = """
+                                  Id,Name,Price
+                                  1,  Product A  ,10.50
+                                  """;
+        await File.WriteAllTextAsync(csvPath, csvContent);
+
+        // Act
+        var results = await new[] { csvPath }.ParseCsvParallelAsync<Product>(
+            new CsvOperationOptions
+            {
+                TrimWhitespace = false
+            });
+
+        // Assert
+        results[0][0].Name.ShouldBe("  Product A  ");
+    }
+
+    [Fact]
+    public async Task ParseCsvParallelAsync_WithDifferentEncoding_ShouldParseCorrectly()
+    {
+        // Arrange
+        var csvPath = Path.Combine(_testDirectory, "utf16.csv");
+        // ReSharper disable once StringLiteralTypo
+        const string csvContent = """
+                                  Id,Name,Price
+                                  1,Prøduct Â,10.50
+                                  2,Prödüct B,20.00
+                                  """;
+        await File.WriteAllTextAsync(csvPath, csvContent, Encoding.Unicode);
+
+        // Act
+        var results = await new[] { csvPath }.ParseCsvParallelAsync<Product>(
+            new CsvOperationOptions
+            {
+                Encoding = Encoding.Unicode
+            });
+
+        // Assert
+        // ReSharper disable once StringLiteralTypo
+        results[0][0].Name.ShouldBe("Prøduct Â");
+        results[0][1].Name.ShouldBe("Prödüct B");
+    }
+
+    [Fact]
+    public async Task ParseCsvParallelAsync_WithDifferentCulture_ShouldParseDecimalsCorrectly()
+    {
+        // Arrange
+        var csvPath = Path.Combine(_testDirectory, "culture.csv");
+        // ReSharper disable once GrammarMistakeInStringLiteral
+        const string csvContent = """
+                                  Id,Name,Price
+                                  1,Product A,10.50
+                                  2,Product B,20.00
+                                  """;
+        await File.WriteAllTextAsync(csvPath, csvContent);
+
+        // Act
+        var results = await new[] { csvPath }.ParseCsvParallelAsync<Product>(
+            new CsvOperationOptions
+            {
+                Culture = CultureInfo.InvariantCulture
+            });
+
+        // Assert
+        results[0][0].Price.ShouldBe(10.50m);
+        results[0][1].Price.ShouldBe(20.00m);
+    }
+
+    [Fact]
+    public async Task ParseCsvParallelAsync_WithBlankLines_ShouldIgnoreByDefault()
+    {
+        // Arrange
+        var csvPath = Path.Combine(_testDirectory, "blank_lines.csv");
+        // ReSharper disable once GrammarMistakeInStringLiteral
+        const string csvContent = """
+                                  Id,Name,Price
+                                  1,Product A,10.50
+
+                                  2,Product B,20.00
+
+                                  """;
+        await File.WriteAllTextAsync(csvPath, csvContent);
+
+        // Act
+        var results = await new[] { csvPath }.ParseCsvParallelAsync<Product>(
+            new CsvOperationOptions
+            {
+                IgnoreBlankLines = true
+            });
+
+        // Assert
+        results[0].Count.ShouldBe(2);
+    }
+
+    [Fact]
+    public async Task WriteCsvParallelAsync_WithDifferentEncoding_ShouldWriteCorrectly()
+    {
+        // Arrange
+        var products = new[]
+        {
+            // ReSharper disable once StringLiteralTypo
+            new Product { Id = 1, Name = "Prøduct Â", Price = 10.50m },
+            new Product { Id = 2, Name = "Prödüct B", Price = 20.00m }
+        };
+
+        var csvPath = Path.Combine(_testDirectory, "utf16-output.csv");
+        var fileWrites = new[] { (csvPath, (IEnumerable<Product>)products) };
+
+        // Act
+        await fileWrites.WriteCsvParallelAsync(
+            new CsvOperationOptions
+            {
+                Encoding = Encoding.Unicode,
+                OverwriteExisting = true
+            });
+
+        // Assert
+        var content = await File.ReadAllTextAsync(csvPath, Encoding.Unicode);
+        // ReSharper disable once StringLiteralTypo
+        content.ShouldContain("Prøduct Â");
+        content.ShouldContain("Prödüct B");
+    }
+
+    [Fact]
+    public async Task WriteCsvParallelAsync_WithTabDelimiter_ShouldWriteTSV()
+    {
+        // Arrange
+        var products = new[]
+        {
+            new Product { Id = 1, Name = "Product A", Price = 10.50m }
+        };
+
+        var csvPath = Path.Combine(_testDirectory, "output.tsv");
+        var fileWrites = new[] { (csvPath, (IEnumerable<Product>)products) };
+
+        // Act
+        await fileWrites.WriteCsvParallelAsync(static ctx =>
+            {
+                ctx.Configuration.Delimiter = "\t";
+                ctx.Configuration.HasHeaderRecord = true;
+            },
+            new CsvOperationOptions
+            {
+                OverwriteExisting = true
+            });
+
+        // Assert
+        var content = await File.ReadAllTextAsync(csvPath);
+        content.ShouldContain("Id\tName\tPrice");
+        content.ShouldContain("1\tProduct A\t10.50");
+    }
+
+    [Fact]
+    public async Task ParseCsvParallelAsync_WithoutHeaders_ShouldParseByPosition()
+    {
+        // Arrange
+        var csvPath = Path.Combine(_testDirectory, "no_header.csv");
+        const string csvContent = """
+                                  1,Product A,10.50
+                                  2,Product B,20.00
+                                  """;
+        await File.WriteAllTextAsync(csvPath, csvContent);
+
+        // Act
+        var results = await new[] { csvPath }.ParseCsvParallelAsync<Product>(
+            new CsvOperationOptions
+            {
+                HasHeaderRecord = false
+            });
+
+        // Assert
+        results[0].Count.ShouldBe(2);
+        results[0][0].Id.ShouldBe(1);
+        results[0][0].Name.ShouldBe("Product A");
+    }
+
+    [Fact]
+    public async Task WriteCsvParallelAsync_WithoutHeaders_ShouldWriteDataOnly()
+    {
+        // Arrange
+        var products = new[]
+        {
+            new Product { Id = 1, Name = "Product A", Price = 10.50m }
+        };
+
+        var csvPath = Path.Combine(_testDirectory, "no_header-output.csv");
+        var fileWrites = new[] { (csvPath, (IEnumerable<Product>)products) };
+
+        // Act
+        await fileWrites.WriteCsvParallelAsync(static ctx =>
+            {
+                ctx.Configuration.HasHeaderRecord = false;
+            },
+            new CsvOperationOptions
+            {
+                OverwriteExisting = true
+            });
+
+        // Assert
+        var content = await File.ReadAllTextAsync(csvPath);
+        content.ShouldNotContain("Id,Name,Price");
+        content.ShouldContain("1,Product A,10.50");
+    }
+
+    [Fact]
+    public async Task ParseCsvParallelAsync_WithBufferSize_ShouldUseCustomBuffer()
+    {
+        // Arrange
+        var csvPath = Path.Combine(_testDirectory, "buffer.csv");
+        const string csvContent = """
+                                  Id,Name,Price
+                                  1,Product A,10.50
+                                  """;
+        await File.WriteAllTextAsync(csvPath, csvContent);
+
+        // Act
+        var results = await new[] { csvPath }.ParseCsvParallelAsync<Product>(
+            new CsvOperationOptions
+            {
+                BufferSize = 4096 // Small buffer
+            });
+
+        // Assert
+        results[0].Count.ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task WriteCsvParallelAsync_WithCreateDirectories_ShouldCreatePath()
+    {
+        // Arrange
+        var products = new[]
+        {
+            new Product { Id = 1, Name = "Product A", Price = 10.50m }
+        };
+
+        var csvPath = Path.Combine(_testDirectory, "sub_dir1", "sub_dir2", "output.csv");
+        var fileWrites = new[] { (csvPath, (IEnumerable<Product>)products) };
+
+        // Act
+        await fileWrites.WriteCsvParallelAsync(
+            new CsvOperationOptions
+            {
+                CreateDirectoriesIfNotExist = true,
+                OverwriteExisting = true
+            });
+
+        // Assert
+        File.Exists(csvPath).ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task WriteCsvParallelAsync_WithoutCreateDirectories_ShouldThrowIfMissing()
+    {
+        // Arrange
+        var products = new[]
+        {
+            new Product { Id = 1, Name = "Product A", Price = 10.50m }
+        };
+
+        var csvPath = Path.Combine(_testDirectory, "nonexistent", "output.csv");
+        var fileWrites = new[] { (csvPath, (IEnumerable<Product>)products) };
+
+        // Act & Assert
+        await Should.ThrowAsync<DirectoryNotFoundException>(async () =>
+        {
+            await fileWrites.WriteCsvParallelAsync(
+                new CsvOperationOptions
+                {
+                    CreateDirectoriesIfNotExist = false
+                });
+        });
+    }
+
+    [SuppressMessage("ReSharper", "PropertyCanBeMadeInitOnly.Local")]
+    private sealed class Product
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+    }
+}
