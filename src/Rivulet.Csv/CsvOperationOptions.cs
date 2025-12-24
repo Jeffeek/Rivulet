@@ -1,9 +1,21 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.Runtime.CompilerServices;
+using CsvHelper;
+using CsvHelper.Configuration;
 using Rivulet.Core;
 using Rivulet.IO.Internal;
 
 namespace Rivulet.Csv;
+
+public struct CsvFileConfiguration
+{
+    public Action<IReaderConfiguration>? ReaderConfigurationAction { get; init; }
+
+    public Action<IWriterConfiguration>? WriterConfigurationAction { get; init; }
+
+    public Action<CsvContext>? CsvContextAction { get; init; }
+}
 
 /// <summary>
 ///     Configuration options for CSV operations with Rivulet.Csv.
@@ -12,34 +24,12 @@ namespace Rivulet.Csv;
 public sealed class CsvOperationOptions : BaseFileOperationOptions
 {
     /// <summary>
-    ///     Gets or sets whether the CSV file has a header record.
-    ///     Default is true.
-    /// </summary>
-    public bool HasHeaderRecord { get; init; } = true;
-
-    /// <summary>
-    ///     Gets or sets the field delimiter character.
-    ///     Default is "," (comma).
-    /// </summary>
-    public string Delimiter { get; init; } = ",";
-
-    /// <summary>
     ///     Gets or sets the culture info to use for parsing and formatting values.
     ///     Default is InvariantCulture.
     /// </summary>
     public CultureInfo Culture { get; init; } = CultureInfo.InvariantCulture;
 
-    /// <summary>
-    ///     Gets or sets whether to trim whitespace from fields.
-    ///     Default is false.
-    /// </summary>
-    public bool TrimWhitespace { get; init; }
-
-    /// <summary>
-    ///     Gets or sets whether to ignore blank lines in CSV files.
-    ///     Default is true.
-    /// </summary>
-    public bool IgnoreBlankLines { get; init; } = true;
+    public CsvFileConfiguration FileConfiguration { get; init; } = new();
 
     /// <summary>
     ///     Creates a merged ParallelOptionsRivulet by combining CsvOperationOptions.ParallelOptions with CSV-specific defaults.
@@ -50,8 +40,8 @@ public sealed class CsvOperationOptions : BaseFileOperationOptions
 
         return new()
         {
-            MaxRetries = baseOptions.MaxRetries > 0 ? baseOptions.MaxRetries : 3,
             IsTransient = ex => (baseOptions.IsTransient?.Invoke(ex) ?? false) || IsCsvTransientError(ex),
+            MaxRetries = baseOptions.MaxRetries,
             MaxDegreeOfParallelism = baseOptions.MaxDegreeOfParallelism,
             BaseDelay = baseOptions.BaseDelay,
             BackoffStrategy = baseOptions.BackoffStrategy,
@@ -73,6 +63,7 @@ public sealed class CsvOperationOptions : BaseFileOperationOptions
             ChannelCapacity = baseOptions.ChannelCapacity
         };
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static bool IsCsvTransientError(Exception ex) =>
             ex is IOException or TimeoutException or UnauthorizedAccessException;
     }

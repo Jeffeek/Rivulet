@@ -26,5 +26,5 @@ public sealed class FileOperationOptions : BaseFileOperationOptions
     ///     Creates a merged ParallelOptionsRivulet by combining FileOperationOptions.ParallelOptions with defaults.
     /// </summary>
     internal ParallelOptionsRivulet GetMergedParallelOptions() =>
-        ParallelOptions ?? new ParallelOptionsRivulet();
+        ParallelOptions ?? new();
 }
