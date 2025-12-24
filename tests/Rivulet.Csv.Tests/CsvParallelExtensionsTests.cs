@@ -37,12 +37,11 @@ public sealed class CsvParallelExtensionsTests : IDisposable
         // Act
         var results = await new[] { csvPath }.ParseCsvParallelAsync<Product>();
 
-        // Assert
-        results.Count.ShouldBe(1);
-        results[0].Count.ShouldBe(3);
-        results[0][0].Id.ShouldBe(1);
-        results[0][0].Name.ShouldBe("Product A");
-        results[0][0].Price.ShouldBe(10.50m);
+        // Assert - order-independent
+        results.Count.ShouldBe(3);
+        results.ShouldContain(p => p.Id == 1 && p.Name == "Product A" && p.Price == 10.50m);
+        results.ShouldContain(p => p.Id == 2 && p.Name == "Product B" && p.Price == 20.00m);
+        results.ShouldContain(p => p.Id == 3 && p.Name == "Product C" && p.Price == 15.75m);
     }
 
     [Fact]
@@ -82,10 +81,13 @@ public sealed class CsvParallelExtensionsTests : IDisposable
                 }
             });
 
-        // Assert
-        results.Count.ShouldBe(2);
-        results[0].Count.ShouldBe(2);
-        results[1].Count.ShouldBe(3);
+        // Assert - order-independent
+        results.Count.ShouldBe(5); // Total records from both files
+        results.ShouldContain(p => p.Id == 1);
+        results.ShouldContain(p => p.Id == 2);
+        results.ShouldContain(p => p.Id == 3);
+        results.ShouldContain(p => p.Id == 4);
+        results.ShouldContain(p => p.Id == 5);
     }
 
     [Fact]
@@ -105,7 +107,14 @@ public sealed class CsvParallelExtensionsTests : IDisposable
         await fileWrites.WriteCsvParallelAsync(
             new CsvOperationOptions
             {
-                HasHeaderRecord = true,
+                FileConfiguration = new CsvFileConfiguration
+                {
+                    WriterConfigurationAction = cfg =>
+                    {
+                        if (cfg is CsvHelper.Configuration.CsvConfiguration csvConfig)
+                            csvConfig.HasHeaderRecord = true;
+                    }
+                },
                 OverwriteExisting = true
             });
 
@@ -167,16 +176,12 @@ public sealed class CsvParallelExtensionsTests : IDisposable
         var transformations = new[] { (inputPath, outputPath) };
 
         // Act
-        await transformations.TransformCsvParallelAsync<Product, EnrichedProduct>(static async (_, products) =>
+        await transformations.TransformCsvParallelAsync<Product, EnrichedProduct>(static p => new EnrichedProduct
             {
-                await Task.CompletedTask;
-                return products.Select(static p => new EnrichedProduct
-                {
-                    Id = p.Id,
-                    Name = p.Name,
-                    OriginalPrice = p.Price,
-                    PriceWithTax = p.Price * 1.2m
-                });
+                Id = p.Id,
+                Name = p.Name,
+                OriginalPrice = p.Price,
+                PriceWithTax = p.Price * 1.2m
             },
             new CsvOperationOptions
             {
@@ -208,12 +213,20 @@ public sealed class CsvParallelExtensionsTests : IDisposable
         var results = await new[] { csvPath }.ParseCsvParallelAsync<Product>(
             new CsvOperationOptions
             {
-                Delimiter = ";"
+                FileConfiguration = new CsvFileConfiguration
+                {
+                    ReaderConfigurationAction = cfg =>
+                    {
+                        if (cfg is CsvHelper.Configuration.CsvConfiguration csvConfig)
+                            csvConfig.Delimiter = ";";
+                    }
+                }
             });
 
-        // Assert
-        results[0].Count.ShouldBe(2);
-        results[0][0].Name.ShouldBe("Product A");
+        // Assert - order-independent
+        results.Count.ShouldBe(2);
+        results.ShouldContain(p => p.Name == "Product A");
+        results.ShouldContain(p => p.Name == "Product B");
     }
 
     [Fact]
@@ -226,15 +239,34 @@ public sealed class CsvParallelExtensionsTests : IDisposable
         var products = new[] { new Product { Id = 1, Name = "Test", Price = 10m } };
         var fileWrites = new[] { (csvPath, (IEnumerable<Product>)products) };
 
-        // Act & Assert
-        await Should.ThrowAsync<IOException>(async () =>
+        // Act & Assert - handle exception wrapping in parallel operations
+        try
         {
             await fileWrites.WriteCsvParallelAsync(
                 new CsvOperationOptions
                 {
                     OverwriteExisting = false
                 });
-        });
+
+            // If we get here, the test should fail
+            throw new InvalidOperationException("Expected an exception but none was thrown");
+        }
+        catch (Exception ex) when (ex is not InvalidOperationException)
+        {
+            // The expected exception or one of its inner exceptions should be IOException
+            var actualException = ex;
+            var found = false;
+            while (actualException != null)
+            {
+                if (actualException is IOException)
+                {
+                    found = true;
+                    break;
+                }
+                actualException = actualException.InnerException;
+            }
+            found.ShouldBeTrue("Expected IOException in exception chain");
+        }
     }
 
     [Fact]

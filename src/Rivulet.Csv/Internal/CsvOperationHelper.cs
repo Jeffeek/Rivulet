@@ -1,42 +1,22 @@
+using Rivulet.IO.Internal;
+
 namespace Rivulet.Csv.Internal;
 
 /// <summary>
 ///     Internal helper for CSV file operations with lifecycle callbacks.
+///     Delegates common operations to FileOperationHelper for DRY compliance.
 /// </summary>
 internal static class CsvOperationHelper
 {
     /// <summary>
     ///     Executes a CSV file operation with lifecycle callbacks (OnFileStartAsync, OnFileCompleteAsync, OnFileErrorAsync).
     /// </summary>
-    internal static async ValueTask<TResult> ExecuteCsvOperationAsync<TResult>(
+    internal static ValueTask<TResult> ExecuteCsvOperationAsync<TResult>(
         string filePath,
         Func<ValueTask<TResult>> operation,
         CsvOperationOptions options,
-        Func<TResult, long> getRecordCount)
-    {
-        try
-        {
-            if (options.OnFileStartAsync != null)
-                await options.OnFileStartAsync(filePath).ConfigureAwait(false);
-
-            var result = await operation().ConfigureAwait(false);
-
-            if (options.OnFileCompleteAsync == null)
-                return result;
-
-            var recordCount = getRecordCount(result);
-            await options.OnFileCompleteAsync(filePath, recordCount).ConfigureAwait(false);
-
-            return result;
-        }
-        catch (Exception ex)
-        {
-            if (options.OnFileErrorAsync != null)
-                await options.OnFileErrorAsync(filePath, ex).ConfigureAwait(false);
-
-            throw;
-        }
-    }
+        Func<TResult, long> getRecordCount) =>
+        FileOperationHelper.ExecuteFileOperationAsync(filePath, operation, options, getRecordCount);
 
     /// <summary>
     ///     Executes a CSV file operation without a return value.
@@ -46,52 +26,24 @@ internal static class CsvOperationHelper
         Func<ValueTask<long>> operation,
         CsvOperationOptions options)
     {
-        try
-        {
-            if (options.OnFileStartAsync != null)
-                await options.OnFileStartAsync(filePath).ConfigureAwait(false);
-
-            var recordCount = await operation().ConfigureAwait(false);
-
-            if (options.OnFileCompleteAsync != null)
-                await options.OnFileCompleteAsync(filePath, recordCount).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            if (options.OnFileErrorAsync != null)
-                await options.OnFileErrorAsync(filePath, ex).ConfigureAwait(false);
-
-            throw;
-        }
+        await FileOperationHelper.ExecuteFileOperationAsync(
+            filePath,
+            operation,
+            options,
+            static count => count).ConfigureAwait(false);
     }
 
     /// <summary>
     ///     Ensures the directory for the given file path exists if CreateDirectoriesIfNotExist is true.
     /// </summary>
-    internal static void EnsureDirectoryExists(string filePath, CsvOperationOptions options)
-    {
-        if (!options.CreateDirectoriesIfNotExist)
-            return;
-
-        var directory = Path.GetDirectoryName(filePath);
-        if (string.IsNullOrEmpty(directory))
-            return;
-
-        if (!Directory.Exists(directory))
-            Directory.CreateDirectory(directory);
-    }
+    internal static void EnsureDirectoryExists(string filePath, CsvOperationOptions options) =>
+        FileOperationHelper.EnsureDirectoryExists(filePath, options);
 
     /// <summary>
     ///     Validates whether a file can be overwritten based on options.
     /// </summary>
-    internal static void ValidateOverwrite(string filePath, CsvOperationOptions options)
-    {
-        if (!File.Exists(filePath))
-            return;
-
-        if (!options.OverwriteExisting)
-            throw new IOException($"File already exists and OverwriteExisting is false: {filePath}");
-    }
+    internal static void ValidateOverwrite(string filePath, CsvOperationOptions options) =>
+        FileOperationHelper.ValidateOverwrite(filePath, options);
 
     /// <summary>
     ///     Creates a read stream for CSV file operations.

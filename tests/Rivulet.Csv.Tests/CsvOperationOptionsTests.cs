@@ -38,12 +38,20 @@ public sealed class CsvOperationOptionsTests : IDisposable
         var results = await new[] { csvPath }.ParseCsvParallelAsync<Product>(
             new CsvOperationOptions
             {
-                TrimWhitespace = true
+                FileConfiguration = new CsvFileConfiguration
+                {
+                    ReaderConfigurationAction = cfg =>
+                    {
+                        if (cfg is CsvHelper.Configuration.CsvConfiguration csvConfig)
+                            csvConfig.TrimOptions = CsvHelper.Configuration.TrimOptions.Trim;
+                    }
+                }
             });
 
-        // Assert
-        results[0][0].Name.ShouldBe("Product A");
-        results[0][1].Name.ShouldBe("Product B");
+        // Assert - order-independent
+        results.Count.ShouldBe(2);
+        results.ShouldContain(p => p.Name == "Product A");
+        results.ShouldContain(p => p.Name == "Product B");
     }
 
     [Fact]
@@ -62,11 +70,18 @@ public sealed class CsvOperationOptionsTests : IDisposable
         var results = await new[] { csvPath }.ParseCsvParallelAsync<Product>(
             new CsvOperationOptions
             {
-                TrimWhitespace = false
+                FileConfiguration = new CsvFileConfiguration
+                {
+                    ReaderConfigurationAction = cfg =>
+                    {
+                        if (cfg is CsvHelper.Configuration.CsvConfiguration csvConfig)
+                            csvConfig.TrimOptions = CsvHelper.Configuration.TrimOptions.None;
+                    }
+                }
             });
 
         // Assert
-        results[0][0].Name.ShouldBe("  Product A  ");
+        results[0].Name.ShouldBe("  Product A  ");
     }
 
     [Fact]
@@ -89,10 +104,11 @@ public sealed class CsvOperationOptionsTests : IDisposable
                 Encoding = Encoding.Unicode
             });
 
-        // Assert
+        // Assert - order-independent
+        results.Count.ShouldBe(2);
         // ReSharper disable once StringLiteralTypo
-        results[0][0].Name.ShouldBe("Prøduct Â");
-        results[0][1].Name.ShouldBe("Prödüct B");
+        results.ShouldContain(p => p.Name == "Prøduct Â");
+        results.ShouldContain(p => p.Name == "Prödüct B");
     }
 
     [Fact]
@@ -115,9 +131,10 @@ public sealed class CsvOperationOptionsTests : IDisposable
                 Culture = CultureInfo.InvariantCulture
             });
 
-        // Assert
-        results[0][0].Price.ShouldBe(10.50m);
-        results[0][1].Price.ShouldBe(20.00m);
+        // Assert - order-independent
+        results.Count.ShouldBe(2);
+        results.ShouldContain(p => p.Price == 10.50m);
+        results.ShouldContain(p => p.Price == 20.00m);
     }
 
     [Fact]
@@ -139,11 +156,18 @@ public sealed class CsvOperationOptionsTests : IDisposable
         var results = await new[] { csvPath }.ParseCsvParallelAsync<Product>(
             new CsvOperationOptions
             {
-                IgnoreBlankLines = true
+                FileConfiguration = new CsvFileConfiguration
+                {
+                    ReaderConfigurationAction = cfg =>
+                    {
+                        if (cfg is CsvHelper.Configuration.CsvConfiguration csvConfig)
+                            csvConfig.IgnoreBlankLines = true;
+                    }
+                }
             });
 
         // Assert
-        results[0].Count.ShouldBe(2);
+        results.Count.ShouldBe(2);
     }
 
     [Fact]
@@ -185,14 +209,20 @@ public sealed class CsvOperationOptionsTests : IDisposable
         };
 
         var csvPath = Path.Combine(_testDirectory, "output.tsv");
-        var fileWrites = new[] { (csvPath, (IEnumerable<Product>)products) };
+        var fileWrites = new[] { (csvPath, (IEnumerable<Product>)products, new CsvFileConfiguration
+        {
+            WriterConfigurationAction = cfg =>
+            {
+                if (cfg is CsvHelper.Configuration.CsvConfiguration csvConfig)
+                {
+                    csvConfig.Delimiter = "\t";
+                    csvConfig.HasHeaderRecord = true;
+                }
+            }
+        }) };
 
         // Act
-        await fileWrites.WriteCsvParallelAsync(static ctx =>
-            {
-                ctx.Configuration.Delimiter = "\t";
-                ctx.Configuration.HasHeaderRecord = true;
-            },
+        await fileWrites.WriteCsvParallelAsync(
             new CsvOperationOptions
             {
                 OverwriteExisting = true
@@ -219,13 +249,20 @@ public sealed class CsvOperationOptionsTests : IDisposable
         var results = await new[] { csvPath }.ParseCsvParallelAsync<Product>(
             new CsvOperationOptions
             {
-                HasHeaderRecord = false
+                FileConfiguration = new CsvFileConfiguration
+                {
+                    ReaderConfigurationAction = cfg =>
+                    {
+                        if (cfg is CsvHelper.Configuration.CsvConfiguration csvConfig)
+                            csvConfig.HasHeaderRecord = false;
+                    }
+                }
             });
 
-        // Assert
-        results[0].Count.ShouldBe(2);
-        results[0][0].Id.ShouldBe(1);
-        results[0][0].Name.ShouldBe("Product A");
+        // Assert - order-independent
+        results.Count.ShouldBe(2);
+        results.ShouldContain(p => p.Id == 1 && p.Name == "Product A");
+        results.ShouldContain(p => p.Id == 2 && p.Name == "Product B");
     }
 
     [Fact]
@@ -238,13 +275,17 @@ public sealed class CsvOperationOptionsTests : IDisposable
         };
 
         var csvPath = Path.Combine(_testDirectory, "no_header-output.csv");
-        var fileWrites = new[] { (csvPath, (IEnumerable<Product>)products) };
+        var fileWrites = new[] { (csvPath, (IEnumerable<Product>)products, new CsvFileConfiguration
+        {
+            WriterConfigurationAction = cfg =>
+            {
+                if (cfg is CsvHelper.Configuration.CsvConfiguration csvConfig)
+                    csvConfig.HasHeaderRecord = false;
+            }
+        }) };
 
         // Act
-        await fileWrites.WriteCsvParallelAsync(static ctx =>
-            {
-                ctx.Configuration.HasHeaderRecord = false;
-            },
+        await fileWrites.WriteCsvParallelAsync(
             new CsvOperationOptions
             {
                 OverwriteExisting = true
@@ -275,7 +316,7 @@ public sealed class CsvOperationOptionsTests : IDisposable
             });
 
         // Assert
-        results[0].Count.ShouldBe(1);
+        results.Count.ShouldBe(1);
     }
 
     [Fact]
@@ -314,15 +355,34 @@ public sealed class CsvOperationOptionsTests : IDisposable
         var csvPath = Path.Combine(_testDirectory, "nonexistent", "output.csv");
         var fileWrites = new[] { (csvPath, (IEnumerable<Product>)products) };
 
-        // Act & Assert
-        await Should.ThrowAsync<DirectoryNotFoundException>(async () =>
+        // Act & Assert - handle exception wrapping in parallel operations
+        try
         {
             await fileWrites.WriteCsvParallelAsync(
                 new CsvOperationOptions
                 {
                     CreateDirectoriesIfNotExist = false
                 });
-        });
+
+            // If we get here, the test should fail
+            throw new InvalidOperationException("Expected an exception but none was thrown");
+        }
+        catch (Exception ex) when (ex is not InvalidOperationException)
+        {
+            // The expected exception or one of its inner exceptions should be DirectoryNotFoundException
+            var actualException = ex;
+            var found = false;
+            while (actualException != null)
+            {
+                if (actualException is DirectoryNotFoundException)
+                {
+                    found = true;
+                    break;
+                }
+                actualException = actualException.InnerException;
+            }
+            found.ShouldBeTrue("Expected DirectoryNotFoundException in exception chain");
+        }
     }
 
     [SuppressMessage("ReSharper", "PropertyCanBeMadeInitOnly.Local")]

@@ -8,12 +8,25 @@ using Rivulet.IO.Internal;
 
 namespace Rivulet.Csv;
 
-public struct CsvFileConfiguration
+/// <summary>
+///     Configuration for individual CSV file operations, allowing per-file customization of CsvHelper settings.
+/// </summary>
+[SuppressMessage("ReSharper", "MemberCanBeInternal")]
+public sealed class CsvFileConfiguration
 {
+    /// <summary>
+    ///     Gets or sets an action to configure CsvHelper's reader settings (delimiter, culture, header detection, etc.).
+    /// </summary>
     public Action<IReaderConfiguration>? ReaderConfigurationAction { get; init; }
 
+    /// <summary>
+    ///     Gets or sets an action to configure CsvHelper's writer settings (delimiter, quote handling, etc.).
+    /// </summary>
     public Action<IWriterConfiguration>? WriterConfigurationAction { get; init; }
 
+    /// <summary>
+    ///     Gets or sets an action to configure the CsvHelper context (ClassMap registration, type conversion, etc.).
+    /// </summary>
     public Action<CsvContext>? CsvContextAction { get; init; }
 }
 
@@ -29,6 +42,9 @@ public sealed class CsvOperationOptions : BaseFileOperationOptions
     /// </summary>
     public CultureInfo Culture { get; init; } = CultureInfo.InvariantCulture;
 
+    /// <summary>
+    ///     Gets or sets the default file configuration applied to all files unless overridden per-file.
+    /// </summary>
     public CsvFileConfiguration FileConfiguration { get; init; } = new();
 
     /// <summary>

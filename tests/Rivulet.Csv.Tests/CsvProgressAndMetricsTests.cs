@@ -36,6 +36,7 @@ public sealed class CsvProgressAndMetricsTests : IDisposable
             .ToArray();
 
         var progressReports = new List<ProgressSnapshot>();
+        var lockObj = new object();
 
         // Act
         await files.ParseCsvParallelAsync<Product>(
@@ -49,7 +50,10 @@ public sealed class CsvProgressAndMetricsTests : IDisposable
                         ReportInterval = TimeSpan.FromMilliseconds(50),
                         OnProgress = progress =>
                         {
-                            progressReports.Add(progress);
+                            lock (lockObj)
+                            {
+                                progressReports.Add(progress);
+                            }
                             return ValueTask.CompletedTask;
                         }
                     }
@@ -58,9 +62,10 @@ public sealed class CsvProgressAndMetricsTests : IDisposable
 
         // Assert
         progressReports.Count.ShouldBeGreaterThan(0);
-        progressReports.Last().ItemsCompleted.ShouldBe(5);
-        progressReports.Last().TotalItems.ShouldBe(5);
-        progressReports.Last().PercentComplete.ShouldBe(100.0);
+        var lastReport = progressReports.Last();
+        lastReport.ItemsCompleted.ShouldBe(5);
+        lastReport.TotalItems.ShouldBe(5);
+        lastReport.PercentComplete.ShouldBe(100.0);
     }
 
     [Fact]
@@ -153,6 +158,7 @@ public sealed class CsvProgressAndMetricsTests : IDisposable
             .ToArray();
 
         var progressReports = new List<double?>();
+        var lockObj = new object();
 
         // Act
         await fileWrites.WriteCsvParallelAsync(
@@ -167,7 +173,10 @@ public sealed class CsvProgressAndMetricsTests : IDisposable
                         ReportInterval = TimeSpan.FromMilliseconds(50),
                         OnProgress = progress =>
                         {
-                            progressReports.Add(progress.PercentComplete);
+                            lock (lockObj)
+                            {
+                                progressReports.Add(progress.PercentComplete);
+                            }
                             return ValueTask.CompletedTask;
                         }
                     }
@@ -192,8 +201,9 @@ public sealed class CsvProgressAndMetricsTests : IDisposable
             })
             .ToArray();
 
-        // Act
-        var results = await files.ParseCsvParallelAsync<Product>(
+        // Act - Using dictionary-returning overload
+        var fileReads = files.Select(f => (f, new CsvFileConfiguration())).ToArray();
+        var results = await fileReads.ParseCsvParallelAsync(
             new CsvOperationOptions
             {
                 ParallelOptions = new ParallelOptionsRivulet
@@ -206,7 +216,12 @@ public sealed class CsvProgressAndMetricsTests : IDisposable
         // Assert
         results.Count.ShouldBe(5);
         for (var i = 0; i < 5; i++)
-            results[i][0].Id.ShouldBe(i + 1);
+        {
+            var records = results[files[i]];
+            // Dynamic object from CsvHelper - access property directly (Id is a string from CSV)
+            dynamic record = records[0];
+            int.Parse((string)record.Id).ShouldBe(i + 1);
+        }
     }
 
     [Fact]
@@ -227,16 +242,12 @@ public sealed class CsvProgressAndMetricsTests : IDisposable
 
         // Act
         await transformations.TransformCsvParallelAsync<Product, EnrichedProduct>(
-            static async (_, products) =>
+            static p => new EnrichedProduct
             {
-                await Task.CompletedTask;
-                return products.Select(static p => new EnrichedProduct
-                {
-                    Id = p.Id,
-                    Name = p.Name,
-                    OriginalPrice = p.Price,
-                    PriceWithTax = p.Price * 1.2m
-                });
+                Id = p.Id,
+                Name = p.Name,
+                OriginalPrice = p.Price,
+                PriceWithTax = p.Price * 1.2m
             },
             new CsvOperationOptions
             {

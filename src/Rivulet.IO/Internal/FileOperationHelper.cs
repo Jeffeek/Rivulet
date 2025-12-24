@@ -8,19 +8,22 @@ internal static class FileOperationHelper
     /// <summary>
     ///     Executes a file operation with standard lifecycle callbacks and error handling.
     /// </summary>
-    public static async ValueTask<TResult> ExecuteFileOperationAsync<TResult>(
+    public static async ValueTask<TResult> ExecuteFileOperationAsync<TResult, TOptions>(
         string filePath,
         Func<ValueTask<TResult>> operation,
-        FileOperationOptions options,
+        TOptions options,
         Func<TResult, long>? getBytesProcessed = null)
+        where TOptions : BaseFileOperationOptions
     {
-        if (options.OnFileStartAsync != null) await options.OnFileStartAsync(filePath).ConfigureAwait(false);
-
         try
         {
+            if (options.OnFileStartAsync != null)
+                await options.OnFileStartAsync(filePath).ConfigureAwait(false);
+
             var result = await operation().ConfigureAwait(false);
 
-            if (options.OnFileCompleteAsync == null) return result;
+            if (options.OnFileCompleteAsync == null)
+                return result;
 
             var bytesProcessed = getBytesProcessed?.Invoke(result) ?? 0;
             await options.OnFileCompleteAsync(filePath, bytesProcessed).ConfigureAwait(false);
@@ -29,7 +32,8 @@ internal static class FileOperationHelper
         }
         catch (Exception ex)
         {
-            if (options.OnFileErrorAsync != null) await options.OnFileErrorAsync(filePath, ex).ConfigureAwait(false);
+            if (options.OnFileErrorAsync != null)
+                await options.OnFileErrorAsync(filePath, ex).ConfigureAwait(false);
 
             throw;
         }
@@ -38,7 +42,8 @@ internal static class FileOperationHelper
     /// <summary>
     ///     Ensures directory exists if CreateDirectoriesIfNotExist is enabled.
     /// </summary>
-    public static void EnsureDirectoryExists(string filePath, FileOperationOptions options)
+    public static void EnsureDirectoryExists<TOptions>(string filePath, TOptions options)
+        where TOptions : BaseFileOperationOptions
     {
         if (!options.CreateDirectoriesIfNotExist) return;
 
@@ -49,7 +54,8 @@ internal static class FileOperationHelper
     /// <summary>
     ///     Validates that file doesn't exist if OverwriteExisting is false.
     /// </summary>
-    public static void ValidateOverwrite(string filePath, FileOperationOptions options)
+    public static void ValidateOverwrite<TOptions>(string filePath, TOptions options)
+        where TOptions : BaseFileOperationOptions
     {
         if (!options.OverwriteExisting && File.Exists(filePath))
             throw new IOException($"File already exists: {filePath}");
