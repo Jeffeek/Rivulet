@@ -477,12 +477,13 @@ public sealed class CsvStreamingTests : IDisposable
         SuppressMessage("ReSharper", "PropertyCanBeMadeInitOnly.Local"),
         SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Local"),
         SuppressMessage("ReSharper", "ReplaceAutoPropertyWithComputedProperty"),
-        SuppressMessage("ReSharper", "ClassNeverInstantiated.Local")
+        SuppressMessage("ReSharper", "ClassNeverInstantiated.Local"),
+        SuppressMessage("ReSharper", "AutoPropertyCanBeMadeGetOnly.Local")
     ]
     private sealed class Product
     {
         public int Id { get; set; }
-        public string Name { get; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
         public decimal Price { get; set; }
     }
 
