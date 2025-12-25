@@ -32,8 +32,8 @@ public sealed class CsvErrorHandlingTests : IDisposable
         await File.WriteAllTextAsync(csvPath1, "Id,Name,Price\n1,Product A,10.50");
         await File.WriteAllTextAsync(csvPath3, "Id,Name,Price\n3,Product C,30.50");
 
-        // Act & Assert - handle exception wrapping in parallel operations
-        try
+        // Act & Assert - should throw when encountering missing file with FailFast
+        await Should.ThrowAsync<FileNotFoundException>(async () =>
         {
             await new[] { csvPath1, csvPath2, csvPath3 }.ParseCsvParallelAsync<Product>(
                 new CsvOperationOptions
@@ -43,26 +43,7 @@ public sealed class CsvErrorHandlingTests : IDisposable
                         ErrorMode = ErrorMode.FailFast
                     }
                 });
-
-            // If we get here, the test should fail
-            throw new InvalidOperationException("Expected an exception but none was thrown");
-        }
-        catch (Exception ex) when (ex is not InvalidOperationException)
-        {
-            // The expected exception or one of its inner exceptions should be FileNotFoundException
-            var actualException = ex;
-            var found = false;
-            while (actualException != null)
-            {
-                if (actualException is FileNotFoundException)
-                {
-                    found = true;
-                    break;
-                }
-                actualException = actualException.InnerException;
-            }
-            found.ShouldBeTrue("Expected FileNotFoundException in exception chain");
-        }
+        });
     }
 
     [Fact]
@@ -76,8 +57,8 @@ public sealed class CsvErrorHandlingTests : IDisposable
         await File.WriteAllTextAsync(csvPath1, "Id,Name,Price\n1,Product A,10.50");
         await File.WriteAllTextAsync(csvPath3, "Id,Name,Price\n3,Product C,30.50");
 
-        // Act & Assert - handle exception wrapping
-        try
+        // Act & Assert - CollectAndContinue should throw AggregateException with all errors
+        var exception = await Should.ThrowAsync<AggregateException>(async () =>
         {
             await new[] { csvPath1, csvPath2, csvPath3 }.ParseCsvParallelAsync<Product>(
                 new CsvOperationOptions
@@ -88,37 +69,11 @@ public sealed class CsvErrorHandlingTests : IDisposable
                         MaxRetries = 0 // No retries to ensure the error is captured
                     }
                 });
+        });
 
-            // If we get here, the test should fail
-            throw new InvalidOperationException("Expected an exception but none was thrown");
-        }
-        catch (Exception ex) when (ex is not InvalidOperationException)
-        {
-            // Check if it's an AggregateException with FileNotFoundException
-            var foundFileNotFound = false;
-
-            if (ex is AggregateException agg)
-            {
-                agg.InnerExceptions.Count.ShouldBeGreaterThanOrEqualTo(1);
-                foundFileNotFound = agg.InnerExceptions.Any(static e => e is FileNotFoundException);
-            }
-            else
-            {
-                // Or check if the exception or its inner exception is FileNotFoundException
-                var actualException = ex;
-                while (actualException != null)
-                {
-                    if (actualException is FileNotFoundException)
-                    {
-                        foundFileNotFound = true;
-                        break;
-                    }
-                    actualException = actualException.InnerException;
-                }
-            }
-
-            foundFileNotFound.ShouldBeTrue("Expected FileNotFoundException in exception chain");
-        }
+        // Should contain FileNotFoundException for the missing file
+        exception.InnerExceptions.Count.ShouldBeGreaterThanOrEqualTo(1);
+        exception.InnerExceptions.ShouldContain(static e => e is FileNotFoundException);
     }
 
     [Fact]

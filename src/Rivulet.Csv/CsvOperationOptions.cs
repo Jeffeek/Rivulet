@@ -15,14 +15,9 @@ namespace Rivulet.Csv;
 public sealed class CsvFileConfiguration
 {
     /// <summary>
-    ///     Gets or sets an action to configure CsvHelper's reader settings (delimiter, culture, header detection, etc.).
+    ///     Gets or sets an action to configure CsvHelper's reader/writer settings (delimiter, culture, header detection, etc.).
     /// </summary>
-    public Action<IReaderConfiguration>? ReaderConfigurationAction { get; init; }
-
-    /// <summary>
-    ///     Gets or sets an action to configure CsvHelper's writer settings (delimiter, quote handling, etc.).
-    /// </summary>
-    public Action<IWriterConfiguration>? WriterConfigurationAction { get; init; }
+    public Action<CsvConfiguration>? ConfigurationAction { get; init; }
 
     /// <summary>
     ///     Gets or sets an action to configure the CsvHelper context (ClassMap registration, type conversion, etc.).

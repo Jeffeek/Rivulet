@@ -39,9 +39,9 @@ public sealed class CsvParallelExtensionsTests : IDisposable
 
         // Assert - order-independent
         results.Count.ShouldBe(3);
-        results.ShouldContain(p => p.Id == 1 && p.Name == "Product A" && p.Price == 10.50m);
-        results.ShouldContain(p => p.Id == 2 && p.Name == "Product B" && p.Price == 20.00m);
-        results.ShouldContain(p => p.Id == 3 && p.Name == "Product C" && p.Price == 15.75m);
+        results.ShouldContain(static p => p.Id == 1 && p.Name == "Product A" && p.Price == 10.50m);
+        results.ShouldContain(static p => p.Id == 2 && p.Name == "Product B" && p.Price == 20.00m);
+        results.ShouldContain(static p => p.Id == 3 && p.Name == "Product C" && p.Price == 15.75m);
     }
 
     [Fact]
@@ -83,11 +83,11 @@ public sealed class CsvParallelExtensionsTests : IDisposable
 
         // Assert - order-independent
         results.Count.ShouldBe(5); // Total records from both files
-        results.ShouldContain(p => p.Id == 1);
-        results.ShouldContain(p => p.Id == 2);
-        results.ShouldContain(p => p.Id == 3);
-        results.ShouldContain(p => p.Id == 4);
-        results.ShouldContain(p => p.Id == 5);
+        results.ShouldContain(static p => p.Id == 1);
+        results.ShouldContain(static p => p.Id == 2);
+        results.ShouldContain(static p => p.Id == 3);
+        results.ShouldContain(static p => p.Id == 4);
+        results.ShouldContain(static p => p.Id == 5);
     }
 
     [Fact]
@@ -109,10 +109,9 @@ public sealed class CsvParallelExtensionsTests : IDisposable
             {
                 FileConfiguration = new CsvFileConfiguration
                 {
-                    WriterConfigurationAction = cfg =>
+                    ConfigurationAction = static cfg =>
                     {
-                        if (cfg is CsvHelper.Configuration.CsvConfiguration csvConfig)
-                            csvConfig.HasHeaderRecord = true;
+                        cfg.HasHeaderRecord = true;
                     }
                 },
                 OverwriteExisting = true
@@ -215,18 +214,17 @@ public sealed class CsvParallelExtensionsTests : IDisposable
             {
                 FileConfiguration = new CsvFileConfiguration
                 {
-                    ReaderConfigurationAction = cfg =>
+                    ConfigurationAction = static cfg =>
                     {
-                        if (cfg is CsvHelper.Configuration.CsvConfiguration csvConfig)
-                            csvConfig.Delimiter = ";";
+                        cfg.Delimiter = ";";
                     }
                 }
             });
 
         // Assert - order-independent
         results.Count.ShouldBe(2);
-        results.ShouldContain(p => p.Name == "Product A");
-        results.ShouldContain(p => p.Name == "Product B");
+        results.ShouldContain(static p => p.Name == "Product A");
+        results.ShouldContain(static p => p.Name == "Product B");
     }
 
     [Fact]
@@ -239,34 +237,16 @@ public sealed class CsvParallelExtensionsTests : IDisposable
         var products = new[] { new Product { Id = 1, Name = "Test", Price = 10m } };
         var fileWrites = new[] { (csvPath, (IEnumerable<Product>)products) };
 
-        // Act & Assert - handle exception wrapping in parallel operations
-        try
-        {
-            await fileWrites.WriteCsvParallelAsync(
-                new CsvOperationOptions
-                {
-                    OverwriteExisting = false
-                });
-
-            // If we get here, the test should fail
-            throw new InvalidOperationException("Expected an exception but none was thrown");
-        }
-        catch (Exception ex) when (ex is not InvalidOperationException)
-        {
-            // The expected exception or one of its inner exceptions should be IOException
-            var actualException = ex;
-            var found = false;
-            while (actualException != null)
+        // Act & Assert
+        await Should.ThrowAsync<IOException>(() => fileWrites.WriteCsvParallelAsync(
+            new CsvOperationOptions
             {
-                if (actualException is IOException)
+                OverwriteExisting = false,
+                ParallelOptions = new ParallelOptionsRivulet
                 {
-                    found = true;
-                    break;
+                    ErrorMode = ErrorMode.FailFast
                 }
-                actualException = actualException.InnerException;
-            }
-            found.ShouldBeTrue("Expected IOException in exception chain");
-        }
+            }));
     }
 
     [Fact]

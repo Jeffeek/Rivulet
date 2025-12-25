@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using CsvHelper;
 using CsvHelper.Configuration;
 using Rivulet.Core;
@@ -140,42 +141,79 @@ public static class CsvParallelExtensions
             cancellationToken);
     }
 
-    private static ValueTask<IReadOnlyList<T>> ParseCsvFileAsync<T>(
+    /// <summary>
+    ///     Core streaming primitive that yields CSV records from a single file with proper resource lifetime management.
+    /// </summary>
+    private static async IAsyncEnumerable<T> StreamCsvFileInternalAsync<T>(
         string filePath,
         CsvOperationOptions options,
-        CsvFileConfiguration? fileConfig = null,
-        CancellationToken cancellationToken = default) =>
-        CsvOperationHelper.ExecuteCsvOperationAsync(
-            filePath,
-            async () =>
+        CsvFileConfiguration? fileConfig,
+        [EnumeratorCancellation] CancellationToken cancellationToken
+    )
+    {
+        // Notify file start
+        if (options.OnFileStartAsync != null)
+            await options.OnFileStartAsync(filePath).ConfigureAwait(false);
+
+        Stream? stream = null;
+        StreamReader? reader = null;
+        CsvReader? csv = null;
+        long recordCount = 0;
+
+        try
+        {
+            stream = CsvOperationHelper.CreateReadStream(filePath, options);
+            reader = new StreamReader(stream, options.Encoding);
+
+            var readCsvConfig = new CsvConfiguration(options.Culture);
+
+            if (fileConfig != null)
+                fileConfig.ConfigurationAction?.Invoke(readCsvConfig);
+            else
+                options.FileConfiguration.ConfigurationAction?.Invoke(readCsvConfig);
+
+            csv = new CsvReader(reader, readCsvConfig);
+
+            if (fileConfig != null)
+                fileConfig.CsvContextAction?.Invoke(csv.Context);
+            else
+                options.FileConfiguration.CsvContextAction?.Invoke(csv.Context);
+
+            await foreach (var record in csv.GetRecordsAsync<T>(cancellationToken).ConfigureAwait(false))
             {
-#pragma warning disable CA2007 // ConfigureAwait not applicable to await using
-                await using var stream = CsvOperationHelper.CreateReadStream(filePath, options);
-#pragma warning restore CA2007
-                using var reader = new StreamReader(stream, options.Encoding);
+                recordCount++;
+                yield return record;
+            }
 
-                var readCsvConfig = new CsvConfiguration(options.Culture);
+            // Notify completion
+            if (options.OnFileCompleteAsync != null)
+                await options.OnFileCompleteAsync(filePath, recordCount).ConfigureAwait(false);
+        }
+        finally
+        {
+            // Cleanup resources
+            csv?.Dispose();
+            reader?.Dispose();
+            if (stream != null)
+                await stream.DisposeAsync().ConfigureAwait(false);
+        }
+    }
 
-                if (fileConfig != null)
-                    fileConfig.ReaderConfigurationAction?.Invoke(readCsvConfig);
-                else
-                    options.FileConfiguration.ReaderConfigurationAction?.Invoke(readCsvConfig);
+    /// <summary>
+    ///     Materializes all records from a single CSV file into memory.
+    /// </summary>
+    private static async ValueTask<IReadOnlyList<T>> ParseCsvFileAsync<T>(
+        string filePath,
+        CsvOperationOptions options,
+        CsvFileConfiguration? fileConfig,
+        CancellationToken cancellationToken)
+    {
+        var records = new List<T>();
+        await foreach (var record in StreamCsvFileInternalAsync<T>(filePath, options, fileConfig, cancellationToken).ConfigureAwait(false))
+            records.Add(record);
 
-                using var csv = new CsvReader(reader, readCsvConfig);
-
-                if (fileConfig != null)
-                    fileConfig.CsvContextAction?.Invoke(csv.Context);
-                else
-                    options.FileConfiguration.CsvContextAction?.Invoke(csv.Context);
-
-                var records = new List<T>();
-                await foreach (var record in csv.GetRecordsAsync<T>(cancellationToken).ConfigureAwait(false))
-                    records.Add(record);
-
-                return (IReadOnlyList<T>)records;
-            },
-            options,
-            static records => records.Count);
+        return records;
+    }
 
     private static ValueTask WriteCsvFileAsync<T>(
         string filePath,
@@ -198,9 +236,9 @@ public static class CsvParallelExtensions
                 var writeCsvConfig = new CsvConfiguration(options.Culture);
 
                 if (fileConfig != null)
-                    fileConfig.WriterConfigurationAction?.Invoke(writeCsvConfig);
+                    fileConfig.ConfigurationAction?.Invoke(writeCsvConfig);
                 else
-                    options.FileConfiguration.WriterConfigurationAction?.Invoke(writeCsvConfig);
+                    options.FileConfiguration.ConfigurationAction?.Invoke(writeCsvConfig);
 
 #pragma warning disable CA2007 // ConfigureAwait not applicable to await using
                 await using var csv = new CsvWriter(writer, writeCsvConfig);
@@ -344,5 +382,104 @@ public static class CsvParallelExtensions
             parallelOptions,
             cancellationToken
         );
+    }
+
+    /// <summary>
+    ///     Streams records from a single CSV file asynchronously without materializing all records in memory.
+    /// </summary>
+    /// <typeparam name="T">The type of record to parse from the CSV file.</typeparam>
+    /// <param name="filePath">The file path to parse.</param>
+    /// <param name="options">CSV operation options. If null, defaults are used.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    /// <returns>An async enumerable that yields records from the CSV file.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when filePath is null.</exception>
+    /// <remarks>
+    ///     This method streams records one at a time, keeping only one record in memory.
+    ///     Resources (file handles, streams) are automatically disposed after enumeration completes.
+    /// </remarks>
+    public static IAsyncEnumerable<T> StreamCsvAsync<T>(
+        this string filePath,
+        CsvOperationOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(filePath);
+        options ??= new();
+        return StreamCsvFileInternalAsync<T>(filePath, options, null, cancellationToken);
+    }
+
+    /// <summary>
+    ///     Streams records from a single CSV file with per-file configuration.
+    /// </summary>
+    /// <typeparam name="T">The type of record to parse from the CSV file.</typeparam>
+    /// <param name="filePath">The file path to parse.</param>
+    /// <param name="fileConfig">Per-file CSV configuration.</param>
+    /// <param name="options">CSV operation options. If null, defaults are used.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    /// <returns>An async enumerable that yields records from the CSV file.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when filePath is null.</exception>
+    public static IAsyncEnumerable<T> StreamCsvAsync<T>(
+        this string filePath,
+        CsvFileConfiguration fileConfig,
+        CsvOperationOptions? options = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(filePath);
+        ArgumentNullException.ThrowIfNull(fileConfig);
+        options ??= new();
+        return StreamCsvFileInternalAsync<T>(filePath, options, fileConfig, cancellationToken);
+    }
+
+    /// <summary>
+    ///     Streams records from multiple CSV files sequentially, yielding records from each file in order.
+    /// </summary>
+    /// <typeparam name="T">The type of record to parse from CSV files.</typeparam>
+    /// <param name="filePaths">Collection of file paths to parse.</param>
+    /// <param name="options">CSV operation options. If null, defaults are used.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    /// <returns>An async enumerable that yields records from all files sequentially.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when filePaths is null.</exception>
+    /// <remarks>
+    ///     Files are processed sequentially in the order provided. All records from the first file
+    ///     are yielded before moving to the second file, and so on. This is memory-efficient as only
+    ///     one record from one file is kept in memory at a time.
+    /// </remarks>
+    public static async IAsyncEnumerable<T> StreamCsvSequentialAsync<T>(
+        this IEnumerable<string> filePaths,
+        CsvOperationOptions? options = null,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(filePaths);
+        options ??= new();
+
+        foreach (var filePath in filePaths)
+        {
+            await foreach (var record in StreamCsvFileInternalAsync<T>(filePath, options, null, cancellationToken).ConfigureAwait(false))
+                yield return record;
+        }
+    }
+
+    /// <summary>
+    ///     Streams records from multiple CSV files with per-file configuration, processing files sequentially.
+    /// </summary>
+    /// <typeparam name="T">The type of record to parse from CSV files.</typeparam>
+    /// <param name="fileReads">Collection of tuples containing file path and per-file configuration.</param>
+    /// <param name="options">CSV operation options. If null, defaults are used.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    /// <returns>An async enumerable that yields records from all files sequentially.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when fileReads is null.</exception>
+    public static async IAsyncEnumerable<T> StreamCsvSequentialAsync<T>(
+        this IEnumerable<(string FilePath, CsvFileConfiguration Configuration)> fileReads,
+        CsvOperationOptions? options = null,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(fileReads);
+        options ??= new();
+
+        foreach (var (filePath, fileConfig) in fileReads)
+        {
+            ArgumentNullException.ThrowIfNull(fileConfig);
+            await foreach (var record in StreamCsvFileInternalAsync<T>(filePath, options, fileConfig, cancellationToken).ConfigureAwait(false))
+                yield return record;
+        }
     }
 }

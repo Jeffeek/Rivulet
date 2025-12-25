@@ -24,14 +24,12 @@ internal static class CsvOperationHelper
     internal static async ValueTask ExecuteCsvOperationAsync(
         string filePath,
         Func<ValueTask<long>> operation,
-        CsvOperationOptions options)
-    {
+        CsvOperationOptions options) =>
         await FileOperationHelper.ExecuteFileOperationAsync(
             filePath,
             operation,
             options,
             static count => count).ConfigureAwait(false);
-    }
 
     /// <summary>
     ///     Ensures the directory for the given file path exists if CreateDirectoriesIfNotExist is true.
