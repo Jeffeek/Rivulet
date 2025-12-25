@@ -31,7 +31,8 @@ public static class HttpClientFactoryExtensions
         IHttpClientFactory httpClientFactory,
         string? clientName = null,
         HttpOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(uris);
         ArgumentNullException.ThrowIfNull(httpClientFactory);
@@ -59,7 +60,8 @@ public static class HttpClientFactoryExtensions
         IHttpClientFactory httpClientFactory,
         string? clientName = null,
         HttpOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(uris);
         ArgumentNullException.ThrowIfNull(httpClientFactory);
@@ -87,7 +89,8 @@ public static class HttpClientFactoryExtensions
         IHttpClientFactory httpClientFactory,
         string? clientName = null,
         HttpOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(uris);
         ArgumentNullException.ThrowIfNull(httpClientFactory);
@@ -116,7 +119,8 @@ public static class HttpClientFactoryExtensions
         IHttpClientFactory httpClientFactory,
         string? clientName = null,
         HttpOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
         where TContent : HttpContent
     {
         ArgumentNullException.ThrowIfNull(requests);
@@ -146,7 +150,8 @@ public static class HttpClientFactoryExtensions
         IHttpClientFactory httpClientFactory,
         string? clientName = null,
         HttpOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
         where TContent : HttpContent
     {
         ArgumentNullException.ThrowIfNull(requests);
@@ -175,7 +180,8 @@ public static class HttpClientFactoryExtensions
         IHttpClientFactory httpClientFactory,
         string? clientName = null,
         HttpOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(uris);
         ArgumentNullException.ThrowIfNull(httpClientFactory);
@@ -200,7 +206,8 @@ public static class HttpClientFactoryExtensions
         IHttpClientFactory httpClientFactory,
         string? clientName = null,
         StreamingDownloadOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(downloads);
         ArgumentNullException.ThrowIfNull(httpClientFactory);

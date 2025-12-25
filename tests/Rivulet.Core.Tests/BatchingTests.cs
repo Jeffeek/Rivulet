@@ -174,7 +174,9 @@ public sealed class BatchingTests
 
                 await Task.Delay(5, ct);
 
-                return batchId == 1 && attempts == 1 ? throw new InvalidOperationException("Transient error") : batch.Sum();
+                return batchId == 1 && attempts == 1
+                    ? throw new InvalidOperationException("Transient error")
+                    : batch.Sum();
             },
             new()
             {

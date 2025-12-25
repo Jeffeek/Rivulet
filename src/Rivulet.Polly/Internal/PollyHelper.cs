@@ -15,27 +15,27 @@ internal static class PollyHelper
     /// </summary>
     public static RetryStrategyOptions CreateRetryOptions(
         ParallelOptionsRivulet options,
-        ThreadLocal<TimeSpan> previousDelayLocal) =>
-        new()
+        ThreadLocal<TimeSpan> previousDelayLocal
+    ) => new()
+    {
+        MaxRetryAttempts = options.MaxRetries,
+        ShouldHandle = new PredicateBuilder().Handle<Exception>(ex => options.IsTransient?.Invoke(ex) ?? false),
+        DelayGenerator = args =>
         {
-            MaxRetryAttempts = options.MaxRetries,
-            ShouldHandle = new PredicateBuilder().Handle<Exception>(ex => options.IsTransient?.Invoke(ex) ?? false),
-            DelayGenerator = args =>
-            {
-                var prev = previousDelayLocal.Value;
-                var delay = BackoffCalculator.CalculateDelay(
-                    options.BackoffStrategy,
-                    options.BaseDelay,
-                    args.AttemptNumber + 1,
-                    ref prev);
-                previousDelayLocal.Value = prev;
-                return new(delay);
-            },
-            OnRetry = args =>
-            {
-                if (args.AttemptNumber >= options.MaxRetries)
-                    previousDelayLocal.Value = TimeSpan.Zero;
-                return default;
-            }
-        };
+            var prev = previousDelayLocal.Value;
+            var delay = BackoffCalculator.CalculateDelay(
+                options.BackoffStrategy,
+                options.BaseDelay,
+                args.AttemptNumber + 1,
+                ref prev);
+            previousDelayLocal.Value = prev;
+            return new(delay);
+        },
+        OnRetry = args =>
+        {
+            if (args.AttemptNumber >= options.MaxRetries)
+                previousDelayLocal.Value = TimeSpan.Zero;
+            return default;
+        }
+    };
 }

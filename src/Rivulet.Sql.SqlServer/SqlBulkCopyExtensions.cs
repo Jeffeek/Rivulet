@@ -36,7 +36,8 @@ public static class SqlBulkCopyExtensions
         SqlBulkCopyOptions bulkCopyOptions = SqlBulkCopyOptions.Default,
         int batchSize = 5000,
         int bulkCopyTimeout = 30,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         // ReSharper disable once PossibleMultipleEnumeration
         SqlValidationHelper.ValidateCommonBulkParameters(source, connectionFactory, destinationTable, batchSize);
@@ -117,7 +118,8 @@ public static class SqlBulkCopyExtensions
         SqlBulkCopyOptions bulkCopyOptions = SqlBulkCopyOptions.Default,
         int batchSize = 5000,
         int bulkCopyTimeout = 30,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         // ReSharper disable once PossibleMultipleEnumeration
         SqlValidationHelper.ValidateCommonBulkParameters(source, connectionFactory, destinationTable, batchSize);
@@ -198,7 +200,8 @@ public static class SqlBulkCopyExtensions
         SqlBulkCopyOptions bulkCopyOptions = SqlBulkCopyOptions.Default,
         int batchSize = 5000,
         int bulkCopyTimeout = 30,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(connectionFactory);
@@ -253,7 +256,8 @@ public static class SqlBulkCopyExtensions
         string destinationTable,
         SqlBulkCopyOptions bulkCopyOptions,
         int batchSize,
-        int bulkCopyTimeout)
+        int bulkCopyTimeout
+    )
     {
         var bulkCopy = new SqlBulkCopy(connection, bulkCopyOptions, null);
         bulkCopy.DestinationTableName = destinationTable;

@@ -9,9 +9,9 @@ namespace Rivulet.Core.Resilience;
 /// </summary>
 internal sealed class TokenBucket
 {
+    private readonly object _lock = LockFactory.CreateLock();
     private readonly RateLimitOptions _options;
     private readonly Stopwatch _stopwatch;
-    private readonly object _lock = LockFactory.CreateLock();
 
     private double _availableTokens;
     private long _lastRefillTicks;

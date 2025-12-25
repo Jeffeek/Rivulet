@@ -7,8 +7,7 @@ namespace Rivulet.Http.Tests;
 
 public sealed class HttpParallelExtensionsTests
 {
-    private static HttpClient CreateTestClient(
-        Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> handler)
+    private static HttpClient CreateTestClient(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> handler)
         => TestHttpClientFactory.CreateTestClient(handler);
 
     [Fact]

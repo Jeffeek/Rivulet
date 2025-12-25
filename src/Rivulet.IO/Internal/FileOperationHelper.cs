@@ -12,7 +12,8 @@ internal static class FileOperationHelper
         string filePath,
         Func<ValueTask<TResult>> operation,
         TOptions options,
-        Func<TResult, long>? getBytesProcessed = null)
+        Func<TResult, long>? getBytesProcessed = null
+    )
         where TOptions : BaseFileOperationOptions
     {
         try
@@ -91,13 +92,17 @@ internal static class FileOperationHelper
     public static (FileStream sourceStream, FileStream destStream) CreateCopyStreams(
         string sourcePath,
         string destinationPath,
-        FileOperationOptions options) =>
-        (CreateReadStream(sourcePath, options), CreateWriteStream(destinationPath, options));
+        FileOperationOptions options
+    ) => (CreateReadStream(sourcePath, options), CreateWriteStream(destinationPath, options));
 
     /// <summary>
     ///     Computes destination path from source path and destination directory, preserving relative structure.
     /// </summary>
-    public static string ComputeDestinationPath(string sourcePath, string sourceBaseDirectory, string destinationDirectory)
+    public static string ComputeDestinationPath(
+        string sourcePath,
+        string sourceBaseDirectory,
+        string destinationDirectory
+    )
     {
         var relativePath = Path.GetRelativePath(sourceBaseDirectory, sourcePath);
         return Path.Join(destinationDirectory, relativePath);

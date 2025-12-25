@@ -24,7 +24,8 @@ internal static class BackgroundServiceExecutionHelper
         Func<CancellationToken, Task> work,
         string serviceName,
         ILogger logger,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         try
         {

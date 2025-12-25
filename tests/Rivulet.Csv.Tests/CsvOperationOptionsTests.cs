@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text;
+using CsvHelper.Configuration;
 using Rivulet.Core;
 
 namespace Rivulet.Csv.Tests;
@@ -43,7 +44,7 @@ public sealed class CsvOperationOptionsTests : IDisposable
                 {
                     ConfigurationAction = static cfg =>
                     {
-                        cfg.TrimOptions = CsvHelper.Configuration.TrimOptions.Trim;
+                        cfg.TrimOptions = TrimOptions.Trim;
                     }
                 }
             });
@@ -74,7 +75,7 @@ public sealed class CsvOperationOptionsTests : IDisposable
                 {
                     ConfigurationAction = static cfg =>
                     {
-                        cfg.TrimOptions = CsvHelper.Configuration.TrimOptions.None;
+                        cfg.TrimOptions = TrimOptions.None;
                     }
                 }
             });

@@ -1,6 +1,6 @@
+using System.Diagnostics.CodeAnalysis;
 using Rivulet.Core.Observability;
 using Rivulet.Core.Resilience;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Rivulet.Core;
 
@@ -96,7 +96,8 @@ public sealed class ParallelOptionsRivulet
     /// <remarks>
     ///     Different strategies provide different trade-offs:
     ///     - <see cref="Resilience.BackoffStrategy.Exponential" />: Predictable exponential growth without jitter (default).
-    ///     - <see cref="BackoffStrategy.ExponentialJitter" />: Recommended for rate-limited APIs to reduce thundering herd.
+    ///     - <see cref="Resilience.BackoffStrategy.ExponentialJitter" />: Recommended for rate-limited APIs to reduce
+    ///     thundering herd.
     ///     - <see cref="BackoffStrategy.DecorrelatedJitter" />: Best for preventing synchronization across multiple clients.
     ///     - <see cref="BackoffStrategy.Linear" />: Gentler, predictable linear growth.
     ///     - <see cref="BackoffStrategy.LinearJitter" />: Linear growth with randomization.

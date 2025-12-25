@@ -26,7 +26,8 @@ public static class DirectoryInfoExtensions
         string searchPattern = "*.*",
         SearchOption searchOption = SearchOption.TopDirectoryOnly,
         FileOperationOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(directory);
         ArgumentNullException.ThrowIfNull(processFunc);
@@ -57,7 +58,8 @@ public static class DirectoryInfoExtensions
         string searchPattern = "*.*",
         SearchOption searchOption = SearchOption.TopDirectoryOnly,
         FileOperationOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(directory);
 
@@ -82,7 +84,8 @@ public static class DirectoryInfoExtensions
     public static IEnumerable<FileInfo> GetFilesEnumerable(
         this DirectoryInfo directory,
         string searchPattern = "*.*",
-        SearchOption searchOption = SearchOption.TopDirectoryOnly)
+        SearchOption searchOption = SearchOption.TopDirectoryOnly
+    )
     {
         ArgumentNullException.ThrowIfNull(directory);
 
@@ -110,7 +113,8 @@ public static class DirectoryInfoExtensions
         string searchPattern = "*.*",
         SearchOption searchOption = SearchOption.TopDirectoryOnly,
         FileOperationOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(sourceDirectory);
         ArgumentNullException.ThrowIfNull(transformFunc);
@@ -144,7 +148,8 @@ public static class DirectoryInfoExtensions
         string searchPattern = "*.*",
         SearchOption searchOption = SearchOption.TopDirectoryOnly,
         FileOperationOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(sourceDirectory);
 
@@ -174,7 +179,8 @@ public static class DirectoryInfoExtensions
         string searchPattern,
         SearchOption searchOption = SearchOption.TopDirectoryOnly,
         FileOperationOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(directory);
 
@@ -206,7 +212,8 @@ public static class DirectoryInfoExtensions
         Func<string, CancellationToken, ValueTask<TResult>> processFunc,
         SearchOption searchOption = SearchOption.TopDirectoryOnly,
         FileOperationOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(directories);
         ArgumentNullException.ThrowIfNull(processFunc);

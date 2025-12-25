@@ -201,7 +201,8 @@ public sealed class SqlErrorHelperTests
     public void WrapBulkOperationExceptionWithDetails_WithVariousContexts_ShouldFormatCorrectly(
         string context,
         int batchSize,
-        string tableName)
+        string tableName
+    )
     {
         var exception = new Exception("Test error");
 

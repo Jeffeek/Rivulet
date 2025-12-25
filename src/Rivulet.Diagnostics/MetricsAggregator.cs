@@ -102,10 +102,12 @@ public sealed class MetricsAggregator : RivuletEventListenerBase, IAsyncDisposab
     /// <param name="displayName">The human-readable display name of the counter.</param>
     /// <param name="value">The current value of the counter.</param>
     /// <param name="displayUnits">The display units of the counter.</param>
-    protected override void OnCounterReceived(string name,
+    protected override void OnCounterReceived(
+        string name,
         string displayName,
         double value,
-        string displayUnits)
+        string displayUnits
+    )
     {
         var samples = _samples.GetOrAdd(name, static _ => []);
 

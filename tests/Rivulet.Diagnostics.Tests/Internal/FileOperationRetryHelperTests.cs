@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Rivulet.Diagnostics.Internal;
 
@@ -141,7 +142,7 @@ public sealed class FileOperationRetryHelperTests
     public void ExecuteWithRetry_WithDelayParameter_ShouldWaitBetweenRetries()
     {
         var executionCount = 0;
-        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        var stopwatch = Stopwatch.StartNew();
 
         FileOperationRetryHelper.ExecuteWithRetry(() =>
             {

@@ -1,6 +1,8 @@
 using System.Diagnostics.CodeAnalysis;
+using CsvHelper;
 using CsvHelper.Configuration;
 using Rivulet.Core;
+using MissingFieldException = CsvHelper.MissingFieldException;
 
 namespace Rivulet.Csv.Tests;
 
@@ -115,9 +117,12 @@ public sealed class CsvClassMapTests : IDisposable
 
         var fileReads = new[]
         {
-            (file1, new CsvFileConfiguration { CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByName>() }),
-            (file2, new CsvFileConfiguration { CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByName>() }),
-            (file3, new CsvFileConfiguration { CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByName>() }),
+            (file1,
+                new CsvFileConfiguration { CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByName>() }),
+            (file2,
+                new CsvFileConfiguration { CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByName>() }),
+            (file3,
+                new CsvFileConfiguration { CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByName>() }),
             (file4, new CsvFileConfiguration
             {
                 ConfigurationAction = static cfg =>
@@ -126,7 +131,9 @@ public sealed class CsvClassMapTests : IDisposable
                 },
                 CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByIndex>()
             }),
-            (file5, new CsvFileConfiguration { CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapWithOptional>() })
+            (file5,
+                new CsvFileConfiguration
+                    { CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapWithOptional>() })
         };
 
         // Act
@@ -318,103 +325,6 @@ public sealed class CsvClassMapTests : IDisposable
         results[0].Internal.ShouldBeNull(); // Should be ignored, remain null
     }
 
-    // Test classes and ClassMaps
-
-    [SuppressMessage("ReSharper", "PropertyCanBeMadeInitOnly.Local")]
-    private sealed class Product
-    {
-        public int Id { get; set; }
-        public string Name { get; set; } = string.Empty;
-        public decimal Price { get; set; }
-        public string? Description { get; set; }
-    }
-
-    [
-        SuppressMessage("ReSharper", "ClassNeverInstantiated.Local"),
-        SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Local"),
-        SuppressMessage("ReSharper", "AutoPropertyCanBeMadeGetOnly.Local")
-    ]
-    private sealed class ProductWithInternal
-    {
-        public int Id { get; set; }
-        public string Name { get; set; } = string.Empty;
-        public decimal Price { get; set; }
-        public string? Internal { get; set; }
-    }
-
-    // ClassMap that maps by name
-    [SuppressMessage("ReSharper", "ClassNeverInstantiated.Local")]
-    private sealed class ProductMapByName : ClassMap<Product>
-    {
-        public ProductMapByName()
-        {
-            Map(static m => m.Id).Name("ProductID");
-            Map(static m => m.Name).Name("ProductName");
-            Map(static m => m.Price);
-        }
-    }
-
-    // ClassMap that maps by index (for headerless files)
-    [SuppressMessage("ReSharper", "ClassNeverInstantiated.Local")]
-    private sealed class ProductMapByIndex : ClassMap<Product>
-    {
-        public ProductMapByIndex()
-        {
-            Map(static m => m.Id).Index(0);
-            Map(static m => m.Name).Index(1);
-            Map(static m => m.Price).Index(2);
-        }
-    }
-
-    // ClassMap with optional field
-    [SuppressMessage("ReSharper", "ClassNeverInstantiated.Local")]
-    private sealed class ProductMapWithOptional : ClassMap<Product>
-    {
-        public ProductMapWithOptional()
-        {
-            Map(static m => m.Id).Name("ProductID");
-            Map(static m => m.Name).Name("ProductName");
-            Map(static m => m.Price);
-            Map(static m => m.Description).Optional();
-        }
-    }
-
-    // ClassMap that ignores a field
-    [SuppressMessage("ReSharper", "ClassNeverInstantiated.Local")]
-    private sealed class ProductMapIgnoringInternal : ClassMap<ProductWithInternal>
-    {
-        public ProductMapIgnoringInternal()
-        {
-            Map(static m => m.Id).Name("ProductID");
-            Map(static m => m.Name).Name("ProductName");
-            Map(static m => m.Price);
-            Map(static m => m.Internal).Ignore();
-        }
-    }
-
-    // EnrichedProduct for Transform tests
-    [SuppressMessage("ReSharper", "PropertyCanBeMadeInitOnly.Local")]
-    private sealed class EnrichedProduct
-    {
-        public int Id { get; set; }
-        public string Name { get; set; } = string.Empty;
-        public decimal OriginalPrice { get; set; }
-        public decimal PriceWithTax { get; set; }
-    }
-
-    // ClassMap for EnrichedProduct
-    [SuppressMessage("ReSharper", "ClassNeverInstantiated.Local")]
-    private sealed class EnrichedProductMap : ClassMap<EnrichedProduct>
-    {
-        public EnrichedProductMap()
-        {
-            Map(static m => m.Id).Name("ProductID");
-            Map(static m => m.Name).Name("ProductName");
-            Map(static m => m.OriginalPrice);
-            Map(static m => m.PriceWithTax);
-        }
-    }
-
     // Transform ClassMap tests
 
     [Fact]
@@ -513,7 +423,7 @@ public sealed class CsvClassMapTests : IDisposable
 
         // Act & Assert - ClassMap expects "ProductID" but file has "Id"
         // Enable header validation to throw on mismatch
-        await Should.ThrowAsync<CsvHelper.HeaderValidationException>(async () =>
+        await Should.ThrowAsync<HeaderValidationException>(async () =>
         {
             await new[] { csvPath }.ParseCsvParallelAsync<Product>(
                 new CsvOperationOptions
@@ -524,7 +434,8 @@ public sealed class CsvClassMapTests : IDisposable
                         {
                             // Enable header validation - PrepareHeaderForMatch must return exact match
                             cfg.PrepareHeaderForMatch = static args => args.Header;
-                            cfg.MissingFieldFound = static args => throw new CsvHelper.MissingFieldException(args.Context, "Missing field");
+                            cfg.MissingFieldFound = static args =>
+                                throw new MissingFieldException(args.Context, "Missing field");
                         },
                         CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByName>()
                     },
@@ -534,5 +445,102 @@ public sealed class CsvClassMapTests : IDisposable
                     }
                 });
         });
+    }
+
+    // Test classes and ClassMaps
+
+    [SuppressMessage("ReSharper", "PropertyCanBeMadeInitOnly.Local")]
+    private sealed class Product
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+        public string? Description { get; set; }
+    }
+
+    [
+        SuppressMessage("ReSharper", "ClassNeverInstantiated.Local"),
+        SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Local"),
+        SuppressMessage("ReSharper", "AutoPropertyCanBeMadeGetOnly.Local")
+    ]
+    private sealed class ProductWithInternal
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+        public string? Internal { get; set; }
+    }
+
+    // ClassMap that maps by name
+    [SuppressMessage("ReSharper", "ClassNeverInstantiated.Local")]
+    private sealed class ProductMapByName : ClassMap<Product>
+    {
+        public ProductMapByName()
+        {
+            Map(static m => m.Id).Name("ProductID");
+            Map(static m => m.Name).Name("ProductName");
+            Map(static m => m.Price);
+        }
+    }
+
+    // ClassMap that maps by index (for headerless files)
+    [SuppressMessage("ReSharper", "ClassNeverInstantiated.Local")]
+    private sealed class ProductMapByIndex : ClassMap<Product>
+    {
+        public ProductMapByIndex()
+        {
+            Map(static m => m.Id).Index(0);
+            Map(static m => m.Name).Index(1);
+            Map(static m => m.Price).Index(2);
+        }
+    }
+
+    // ClassMap with optional field
+    [SuppressMessage("ReSharper", "ClassNeverInstantiated.Local")]
+    private sealed class ProductMapWithOptional : ClassMap<Product>
+    {
+        public ProductMapWithOptional()
+        {
+            Map(static m => m.Id).Name("ProductID");
+            Map(static m => m.Name).Name("ProductName");
+            Map(static m => m.Price);
+            Map(static m => m.Description).Optional();
+        }
+    }
+
+    // ClassMap that ignores a field
+    [SuppressMessage("ReSharper", "ClassNeverInstantiated.Local")]
+    private sealed class ProductMapIgnoringInternal : ClassMap<ProductWithInternal>
+    {
+        public ProductMapIgnoringInternal()
+        {
+            Map(static m => m.Id).Name("ProductID");
+            Map(static m => m.Name).Name("ProductName");
+            Map(static m => m.Price);
+            Map(static m => m.Internal).Ignore();
+        }
+    }
+
+    // EnrichedProduct for Transform tests
+    [SuppressMessage("ReSharper", "PropertyCanBeMadeInitOnly.Local")]
+    private sealed class EnrichedProduct
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public decimal OriginalPrice { get; set; }
+        public decimal PriceWithTax { get; set; }
+    }
+
+    // ClassMap for EnrichedProduct
+    [SuppressMessage("ReSharper", "ClassNeverInstantiated.Local")]
+    private sealed class EnrichedProductMap : ClassMap<EnrichedProduct>
+    {
+        public EnrichedProductMap()
+        {
+            Map(static m => m.Id).Name("ProductID");
+            Map(static m => m.Name).Name("ProductName");
+            Map(static m => m.OriginalPrice);
+            Map(static m => m.PriceWithTax);
+        }
     }
 }

@@ -1,6 +1,6 @@
+using System.Diagnostics.CodeAnalysis;
 using Rivulet.Core;
 using Rivulet.IO.Internal;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Rivulet.IO;
 

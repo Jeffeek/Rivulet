@@ -17,7 +17,8 @@ internal static class PeriodicTaskRunner
         Func<ValueTask> work,
         TimeSpan interval,
         CancellationToken cancellationToken,
-        Func<ValueTask>? finalWork = null)
+        Func<ValueTask>? finalWork = null
+    )
     {
         try
         {

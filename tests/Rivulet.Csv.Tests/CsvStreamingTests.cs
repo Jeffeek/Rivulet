@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using CsvHelper.Configuration;
 
 namespace Rivulet.Csv.Tests;
 
@@ -39,9 +40,9 @@ public sealed class CsvStreamingTests : IDisposable
 
         // Assert
         records.Count.ShouldBe(3);
-        records.ShouldContain(p => p.Id == 1 && p.Name == "Product A" && p.Price == 10.50m);
-        records.ShouldContain(p => p.Id == 2 && p.Name == "Product B" && p.Price == 20.00m);
-        records.ShouldContain(p => p.Id == 3 && p.Name == "Product C" && p.Price == 15.75m);
+        records.ShouldContain(static p => p.Id == 1 && p.Name == "Product A" && p.Price == 10.50m);
+        records.ShouldContain(static p => p.Id == 2 && p.Name == "Product B" && p.Price == 20.00m);
+        records.ShouldContain(static p => p.Id == 3 && p.Name == "Product C" && p.Price == 15.75m);
     }
 
     [Fact]
@@ -69,7 +70,7 @@ public sealed class CsvStreamingTests : IDisposable
 
         // Assert
         count.ShouldBe(recordCount);
-        sum.ShouldBe((recordCount * (recordCount + 1)) / 2); // Sum of 1 to 1000
+        sum.ShouldBe(recordCount * (recordCount + 1) / 2); // Sum of 1 to 1000
     }
 
     [Fact]
@@ -77,6 +78,7 @@ public sealed class CsvStreamingTests : IDisposable
     {
         // Arrange
         var csvPath = Path.Combine(_testDirectory, "whitespace.csv");
+        // ReSharper disable once GrammarMistakeInStringLiteral
         const string csvContent = """
                                   Id,Name,Price
                                   1,  Product A  ,10.50
@@ -86,7 +88,7 @@ public sealed class CsvStreamingTests : IDisposable
 
         var fileConfig = new CsvFileConfiguration
         {
-            ConfigurationAction = cfg => { cfg.TrimOptions = CsvHelper.Configuration.TrimOptions.Trim; }
+            ConfigurationAction = static cfg => { cfg.TrimOptions = TrimOptions.Trim; }
         };
 
         // Act
@@ -105,6 +107,7 @@ public sealed class CsvStreamingTests : IDisposable
     {
         // Arrange
         var csvPath = Path.Combine(_testDirectory, "products.csv");
+        // ReSharper disable once GrammarMistakeInStringLiteral
         const string csvContent = """
                                   Id,Name,Price
                                   1,Product A,10.50
@@ -119,7 +122,7 @@ public sealed class CsvStreamingTests : IDisposable
         var records = new List<Product>();
 
         // Act
-        var exception = await Should.ThrowAsync<OperationCanceledException>(async () =>
+        await Should.ThrowAsync<OperationCanceledException>(async () =>
         {
             await foreach (var record in csvPath.StreamCsvAsync<Product>(cancellationToken: cts.Token))
             {
@@ -207,18 +210,20 @@ public sealed class CsvStreamingTests : IDisposable
         var file1 = Path.Combine(_testDirectory, "trimmed.csv");
         var file2 = Path.Combine(_testDirectory, "untrimmed.csv");
 
+        // ReSharper disable GrammarMistakeInStringLiteral
         await File.WriteAllTextAsync(file1, "Id,Name,Price\n1,  Product A  ,10.50");
         await File.WriteAllTextAsync(file2, "Id,Name,Price\n2,  Product B  ,20.00");
+        // ReSharper restore GrammarMistakeInStringLiteral
 
         var fileReads = new[]
         {
             (file1, new CsvFileConfiguration
             {
-                ConfigurationAction = cfg => { cfg.TrimOptions = CsvHelper.Configuration.TrimOptions.Trim; }
+                ConfigurationAction = static cfg => { cfg.TrimOptions = TrimOptions.Trim; }
             }),
             (file2, new CsvFileConfiguration
             {
-                ConfigurationAction = cfg => { cfg.TrimOptions = CsvHelper.Configuration.TrimOptions.None; }
+                ConfigurationAction = static cfg => { cfg.TrimOptions = TrimOptions.None; }
             })
         };
 
@@ -229,7 +234,7 @@ public sealed class CsvStreamingTests : IDisposable
 
         // Assert
         records.Count.ShouldBe(2);
-        records[0].Name.ShouldBe("Product A"); // Trimmed
+        records[0].Name.ShouldBe("Product A");     // Trimmed
         records[1].Name.ShouldBe("  Product B  "); // Not trimmed
     }
 
@@ -238,6 +243,7 @@ public sealed class CsvStreamingTests : IDisposable
     {
         // Arrange
         var csvPath = Path.Combine(_testDirectory, "products.csv");
+        // ReSharper disable once GrammarMistakeInStringLiteral
         const string csvContent = """
                                   Id,Name,Price
                                   1,Product A,10.50
@@ -329,6 +335,7 @@ public sealed class CsvStreamingTests : IDisposable
     {
         // Arrange
         var csvPath = Path.Combine(_testDirectory, "products.csv");
+        // ReSharper disable once GrammarMistakeInStringLiteral
         const string csvContent = """
                                   Id,Name,Price
                                   1,Product A,10.50
@@ -381,6 +388,7 @@ public sealed class CsvStreamingTests : IDisposable
     {
         // Arrange
         var csvPath = Path.Combine(_testDirectory, "products.csv");
+        // ReSharper disable once GrammarMistakeInStringLiteral
         const string csvContent = """
                                   Id,Name,Price
                                   1,Product A,10.50
@@ -421,7 +429,7 @@ public sealed class CsvStreamingTests : IDisposable
 
         var fileConfig = new CsvFileConfiguration
         {
-            CsvContextAction = ctx => { ctx.RegisterClassMap<ProductClassMap>(); }
+            CsvContextAction = static ctx => { ctx.RegisterClassMap<ProductClassMap>(); }
         };
 
         var fileReads = new[] { (csvPath, fileConfig) };
@@ -465,21 +473,27 @@ public sealed class CsvStreamingTests : IDisposable
         }
     }
 
-    [SuppressMessage("ReSharper", "PropertyCanBeMadeInitOnly.Local")]
+    [
+        SuppressMessage("ReSharper", "PropertyCanBeMadeInitOnly.Local"),
+        SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Local"),
+        SuppressMessage("ReSharper", "ReplaceAutoPropertyWithComputedProperty"),
+        SuppressMessage("ReSharper", "ClassNeverInstantiated.Local")
+    ]
     private sealed class Product
     {
         public int Id { get; set; }
-        public string Name { get; set; } = string.Empty;
+        public string Name { get; } = string.Empty;
         public decimal Price { get; set; }
     }
 
-    private sealed class ProductClassMap : CsvHelper.Configuration.ClassMap<Product>
+    [SuppressMessage("ReSharper", "ClassNeverInstantiated.Local")]
+    private sealed class ProductClassMap : ClassMap<Product>
     {
         public ProductClassMap()
         {
-            Map(m => m.Id).Name("ProductID");
-            Map(m => m.Name).Name("ProductName");
-            Map(m => m.Price).Name("Price");
+            Map(static m => m.Id).Name("ProductID");
+            Map(static m => m.Name).Name("ProductName");
+            Map(static m => m.Price).Name("Price");
         }
     }
 }

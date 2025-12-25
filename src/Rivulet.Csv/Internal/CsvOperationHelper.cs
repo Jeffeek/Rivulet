@@ -15,7 +15,8 @@ internal static class CsvOperationHelper
         string filePath,
         Func<ValueTask<TResult>> operation,
         CsvOperationOptions options,
-        Func<TResult, long> getRecordCount) =>
+        Func<TResult, long> getRecordCount
+    ) =>
         FileOperationHelper.ExecuteFileOperationAsync(filePath, operation, options, getRecordCount);
 
     /// <summary>
@@ -24,7 +25,8 @@ internal static class CsvOperationHelper
     internal static async ValueTask ExecuteCsvOperationAsync(
         string filePath,
         Func<ValueTask<long>> operation,
-        CsvOperationOptions options) =>
+        CsvOperationOptions options
+    ) =>
         await FileOperationHelper.ExecuteFileOperationAsync(
             filePath,
             operation,

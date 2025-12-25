@@ -38,7 +38,8 @@ public static class MySqlBulkExtensions
         int batchSize = 5000,
         string fieldSeparator = ",",
         string lineTerminator = "\n",
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         // ReSharper disable once PossibleMultipleEnumeration
         SqlValidationHelper.ValidateCommonBulkParameters(source, connectionFactory, tableName, batchSize);
@@ -120,7 +121,8 @@ public static class MySqlBulkExtensions
         ParallelOptionsRivulet? options = null,
         string fieldSeparator = ",",
         string lineTerminator = "\n",
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(connectionFactory);
@@ -182,7 +184,8 @@ public static class MySqlBulkExtensions
         string fileName,
         IEnumerable<string> columnNames,
         string fieldSeparator,
-        string lineTerminator)
+        string lineTerminator
+    )
     {
         var bulkLoader = new MySqlBulkLoader(connection)
         {

@@ -1,5 +1,5 @@
-using Rivulet.Core;
 using System.Diagnostics;
+using Rivulet.Core;
 
 namespace Rivulet.Diagnostics.OpenTelemetry;
 
@@ -34,7 +34,8 @@ public static class RivuletActivitySource
     ///     The ActivitySource instance for creating activities.
     /// </summary>
     // ReSharper disable once MemberCanBeInternal
-    public static readonly ActivitySource Source = new(RivuletSharedConstants.RivuletCore, RivuletOpenTelemetryConstants.InstrumentationVersion);
+    public static readonly ActivitySource Source = new(RivuletSharedConstants.RivuletCore,
+        RivuletOpenTelemetryConstants.InstrumentationVersion);
 
     /// <summary>
     ///     Creates an Activity for a parallel operation.

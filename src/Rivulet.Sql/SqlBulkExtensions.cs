@@ -27,7 +27,8 @@ public static class SqlBulkExtensions
         Func<IDbConnection> connectionFactory,
         Func<IReadOnlyList<T>, IDbCommand, CancellationToken, ValueTask> commandBuilder,
         BulkOperationOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(items);
         ArgumentNullException.ThrowIfNull(connectionFactory);
@@ -58,7 +59,8 @@ public static class SqlBulkExtensions
         Func<IDbConnection> connectionFactory,
         Func<IReadOnlyList<T>, IDbCommand, CancellationToken, ValueTask> commandBuilder,
         BulkOperationOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(items);
         ArgumentNullException.ThrowIfNull(connectionFactory);
@@ -89,7 +91,8 @@ public static class SqlBulkExtensions
         Func<IDbConnection> connectionFactory,
         Func<IReadOnlyList<T>, IDbCommand, CancellationToken, ValueTask> commandBuilder,
         BulkOperationOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(items);
         ArgumentNullException.ThrowIfNull(connectionFactory);
@@ -110,7 +113,8 @@ public static class SqlBulkExtensions
         Func<IDbConnection> connectionFactory,
         Func<IReadOnlyList<T>, IDbCommand, CancellationToken, ValueTask> commandBuilder,
         BulkOperationOptions options,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var sqlOptions = options.SqlOptions ?? new SqlOptions();
         var parallelOptions = sqlOptions.GetMergedParallelOptions();
@@ -145,7 +149,8 @@ public static class SqlBulkExtensions
         Func<IReadOnlyList<T>, IDbCommand, CancellationToken, ValueTask> commandBuilder,
         BulkOperationOptions options,
         int batchNumber,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         if (options.OnBatchStartAsync != null)
             await options.OnBatchStartAsync(batch.Cast<object>().ToList(), batchNumber).ConfigureAwait(false);

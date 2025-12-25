@@ -23,7 +23,8 @@ public static class FileParallelExtensions
     public static async Task<IReadOnlyList<string>> ReadAllTextParallelAsync(
         this IEnumerable<string> filePaths,
         FileOperationOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(filePaths);
 
@@ -49,7 +50,8 @@ public static class FileParallelExtensions
     public static async Task<IReadOnlyList<byte[]>> ReadAllBytesParallelAsync(
         this IEnumerable<string> filePaths,
         FileOperationOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(filePaths);
 
@@ -75,7 +77,8 @@ public static class FileParallelExtensions
     public static async Task<IReadOnlyList<string[]>> ReadAllLinesParallelAsync(
         this IEnumerable<string> filePaths,
         FileOperationOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(filePaths);
 
@@ -102,7 +105,8 @@ public static class FileParallelExtensions
     public static async Task<IReadOnlyList<string>> WriteAllTextParallelAsync(
         this IEnumerable<(string filePath, string content)> fileWrites,
         FileOperationOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(fileWrites);
 
@@ -133,7 +137,8 @@ public static class FileParallelExtensions
     public static async Task<IReadOnlyList<string>> WriteAllBytesParallelAsync(
         this IEnumerable<(string filePath, byte[] content)> fileWrites,
         FileOperationOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(fileWrites);
 
@@ -166,7 +171,8 @@ public static class FileParallelExtensions
         this IEnumerable<(string sourcePath, string destinationPath)> files,
         Func<string, string, ValueTask<string>> transformFunc,
         FileOperationOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(files);
         ArgumentNullException.ThrowIfNull(transformFunc);
@@ -200,7 +206,8 @@ public static class FileParallelExtensions
     public static async Task<IReadOnlyList<string>> CopyFilesParallelAsync(
         this IEnumerable<(string sourcePath, string destinationPath)> files,
         FileOperationOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(files);
 
@@ -231,7 +238,8 @@ public static class FileParallelExtensions
     public static async Task<IReadOnlyList<string>> DeleteFilesParallelAsync(
         this IEnumerable<string> filePaths,
         FileOperationOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(filePaths);
 
@@ -256,7 +264,8 @@ public static class FileParallelExtensions
     private static ValueTask<string> ReadFileTextAsync(
         string filePath,
         FileOperationOptions options,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
 #pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements
         return FileOperationHelper.ExecuteFileOperationAsync(
@@ -276,7 +285,8 @@ public static class FileParallelExtensions
     private static ValueTask<byte[]> ReadFileBytesAsync(
         string filePath,
         FileOperationOptions options,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
 #pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements
         return FileOperationHelper.ExecuteFileOperationAsync(
@@ -297,7 +307,8 @@ public static class FileParallelExtensions
     private static ValueTask<string[]> ReadFileLinesAsync(
         string filePath,
         FileOperationOptions options,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
 #pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements
         return FileOperationHelper.ExecuteFileOperationAsync(
@@ -326,7 +337,8 @@ public static class FileParallelExtensions
         string filePath,
         string content,
         FileOperationOptions options,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
 #pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements
         await FileOperationHelper.ExecuteFileOperationAsync(
@@ -352,7 +364,8 @@ public static class FileParallelExtensions
         string filePath,
         byte[] content,
         FileOperationOptions options,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
 #pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements
         await FileOperationHelper.ExecuteFileOperationAsync(
@@ -378,7 +391,8 @@ public static class FileParallelExtensions
         string sourcePath,
         string destinationPath,
         FileOperationOptions options,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
 #pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements
         await FileOperationHelper.ExecuteFileOperationAsync(
@@ -388,11 +402,13 @@ public static class FileParallelExtensions
                 FileOperationHelper.EnsureDirectoryExists(destinationPath, options);
                 FileOperationHelper.ValidateOverwrite(destinationPath, options);
 
-                var (sourceStream, destStream) = FileOperationHelper.CreateCopyStreams(sourcePath, destinationPath, options);
+                var (sourceStream, destStream) =
+                    FileOperationHelper.CreateCopyStreams(sourcePath, destinationPath, options);
                 await using (sourceStream)
                 await using (destStream)
                 {
-                    await sourceStream.CopyToAsync(destStream, options.BufferSize, cancellationToken).ConfigureAwait(false);
+                    await sourceStream.CopyToAsync(destStream, options.BufferSize, cancellationToken)
+                        .ConfigureAwait(false);
                     await destStream.FlushAsync(cancellationToken).ConfigureAwait(false);
 
                     return sourceStream.Length;
@@ -406,7 +422,8 @@ public static class FileParallelExtensions
     private static async ValueTask DeleteFileAsync(
         string filePath,
         FileOperationOptions options,
-        CancellationToken cancellationToken) =>
+        CancellationToken cancellationToken
+    ) =>
         await FileOperationHelper.ExecuteFileOperationAsync(
                 filePath,
                 async () =>

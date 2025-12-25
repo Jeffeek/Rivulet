@@ -91,7 +91,7 @@ public sealed class DirectoryParallelExtensionsTests : TempDirectoryFixture
     public async Task ProcessDirectoryFilesParallelAsync_WithSubdirectories_ShouldProcessRecursively()
     {
         // Arrange
-        var subDir = Path.Join(TestDirectory, "subdir");
+        var subDir = Path.Join(TestDirectory, "sub_dir");
         Directory.CreateDirectory(subDir);
 
         var file1 = Path.Join(TestDirectory, "root.txt");
@@ -343,7 +343,7 @@ public sealed class DirectoryParallelExtensionsTests : TempDirectoryFixture
         // Arrange
         var sourceDir = Path.Join(TestDirectory, "source_nested");
         var destDir = Path.Join(TestDirectory, "dest_nested");
-        var subDir = Path.Join(sourceDir, "subdir");
+        var subDir = Path.Join(sourceDir, "sub_dir");
 
         Directory.CreateDirectory(sourceDir);
         Directory.CreateDirectory(subDir);
@@ -366,7 +366,7 @@ public sealed class DirectoryParallelExtensionsTests : TempDirectoryFixture
         results.Count.ShouldBe(2);
 
         var destRootFile = Path.Join(destDir, "root.txt");
-        var destNestedFile = Path.Join(destDir, "subdir", "nested.txt");
+        var destNestedFile = Path.Join(destDir, "sub_dir", "nested.txt");
 
         File.Exists(destRootFile).ShouldBeTrue();
         File.Exists(destNestedFile).ShouldBeTrue();

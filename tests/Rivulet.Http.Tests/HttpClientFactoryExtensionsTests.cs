@@ -8,8 +8,7 @@ namespace Rivulet.Http.Tests;
 // ReSharper disable once MemberCanBeFileLocal
 public sealed class HttpClientFactoryExtensionsTests
 {
-    private static IHttpClientFactory CreateTestFactory(
-        Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> handler)
+    private static IHttpClientFactory CreateTestFactory(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> handler)
     {
         var services = new ServiceCollection();
         services.AddHttpClient("test")

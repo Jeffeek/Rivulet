@@ -1,3 +1,6 @@
+using System.Diagnostics;
+using Rivulet.Core;
+
 namespace Rivulet.Http.Internal;
 
 /// <summary>
@@ -8,7 +11,7 @@ internal static class HttpHelper
     /// <summary>
     ///     Initializes HTTP options and gets merged parallel options.
     /// </summary>
-    public static (HttpOptions options, Core.ParallelOptionsRivulet parallelOptions) InitializeOptions(HttpOptions? options)
+    public static (HttpOptions options, ParallelOptionsRivulet parallelOptions) InitializeOptions(HttpOptions? options)
     {
         options ??= new();
         var parallelOptions = options.GetMergedParallelOptions();
@@ -31,7 +34,7 @@ internal static class HttpHelper
     {
         var bytesDownloaded = existingFileSize;
         var buffer = new byte[options.BufferSize];
-        var lastProgressReport = System.Diagnostics.Stopwatch.GetTimestamp();
+        var lastProgressReport = Stopwatch.GetTimestamp();
         var progressIntervalTicks = options.ProgressInterval.Ticks;
 
         return (bytesDownloaded, buffer, lastProgressReport, progressIntervalTicks);
@@ -53,12 +56,12 @@ internal static class HttpHelper
         if (options.OnProgressAsync is null)
             return lastProgressReport;
 
-        var elapsed = System.Diagnostics.Stopwatch.GetTimestamp() - lastProgressReport;
-        if (elapsed < progressIntervalTicks * (System.Diagnostics.Stopwatch.Frequency / TimeSpan.TicksPerSecond))
+        var elapsed = Stopwatch.GetTimestamp() - lastProgressReport;
+        if (elapsed < progressIntervalTicks * (Stopwatch.Frequency / TimeSpan.TicksPerSecond))
             return lastProgressReport;
 
         await options.OnProgressAsync(uri, bytesDownloaded, totalBytes).ConfigureAwait(false);
 
-        return System.Diagnostics.Stopwatch.GetTimestamp();
+        return Stopwatch.GetTimestamp();
     }
 }

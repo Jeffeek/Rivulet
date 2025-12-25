@@ -26,7 +26,8 @@ public static class CsvParallelExtensions
     public static async Task<IReadOnlyList<T>> ParseCsvParallelAsync<T>(
         this IEnumerable<string> filePaths,
         CsvOperationOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(filePaths);
 
@@ -58,7 +59,8 @@ public static class CsvParallelExtensions
     public static async Task<IReadOnlyDictionary<string, IReadOnlyList<object>>> ParseCsvParallelAsync(
         this IEnumerable<(string FilePath, CsvFileConfiguration Configuration)> fileReads,
         CsvOperationOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(fileReads);
 
@@ -99,7 +101,8 @@ public static class CsvParallelExtensions
     public static Task WriteCsvParallelAsync<T>(
         this IEnumerable<(string FilePath, IEnumerable<T> Records)> fileWrites,
         CsvOperationOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         options ??= new();
 
@@ -122,7 +125,8 @@ public static class CsvParallelExtensions
     public static Task WriteCsvParallelAsync<T>(
         this IEnumerable<(string FilePath, IEnumerable<T> Records, CsvFileConfiguration Configuration)> fileWrites,
         CsvOperationOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(fileWrites);
 
@@ -148,7 +152,8 @@ public static class CsvParallelExtensions
         string filePath,
         CsvOperationOptions options,
         CsvFileConfiguration? fileConfig,
-        [EnumeratorCancellation] CancellationToken cancellationToken
+        [EnumeratorCancellation]
+        CancellationToken cancellationToken
     )
     {
         // Notify file start
@@ -206,10 +211,12 @@ public static class CsvParallelExtensions
         string filePath,
         CsvOperationOptions options,
         CsvFileConfiguration? fileConfig,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var records = new List<T>();
-        await foreach (var record in StreamCsvFileInternalAsync<T>(filePath, options, fileConfig, cancellationToken).ConfigureAwait(false))
+        await foreach (var record in StreamCsvFileInternalAsync<T>(filePath, options, fileConfig, cancellationToken)
+                           .ConfigureAwait(false))
             records.Add(record);
 
         return records;
@@ -220,7 +227,8 @@ public static class CsvParallelExtensions
         IEnumerable<T> records,
         CsvOperationOptions options,
         CsvFileConfiguration? fileConfig = null,
-        CancellationToken cancellationToken = default) =>
+        CancellationToken cancellationToken = default
+    ) =>
         CsvOperationHelper.ExecuteCsvOperationAsync(
             filePath,
             async () =>
@@ -272,13 +280,15 @@ public static class CsvParallelExtensions
         this IEnumerable<(string InputPath, string OutputPath)> transformations,
         Func<TIn, TOut> transform,
         CsvOperationOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(transformations);
         ArgumentNullException.ThrowIfNull(transform);
 
         return TransformCsvParallelAsync(
-            transformations.Select(static x => (x.InputPath, x.OutputPath, (CsvFileConfiguration?)null, (CsvFileConfiguration?)null)),
+            transformations.Select(static x =>
+                (x.InputPath, x.OutputPath, (CsvFileConfiguration?)null, (CsvFileConfiguration?)null)),
             transform,
             options,
             cancellationToken
@@ -297,10 +307,12 @@ public static class CsvParallelExtensions
     /// <returns>A task representing the asynchronous operation.</returns>
     /// <exception cref="ArgumentNullException">Thrown when transformations or transform is null.</exception>
     public static Task TransformCsvParallelAsync<TIn, TOut>(
-        this IEnumerable<(string InputPath, string OutputPath, CsvFileConfiguration? InputConfig, CsvFileConfiguration? OutputConfig)> transformations,
+        this IEnumerable<(string InputPath, string OutputPath, CsvFileConfiguration? InputConfig, CsvFileConfiguration?
+            OutputConfig)> transformations,
         Func<TIn, TOut> transform,
         CsvOperationOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(transformations);
         ArgumentNullException.ThrowIfNull(transform);
@@ -345,10 +357,12 @@ public static class CsvParallelExtensions
     /// <returns>A task representing the asynchronous operation.</returns>
     /// <exception cref="ArgumentNullException">Thrown when transformations or transform is null.</exception>
     public static Task TransformCsvParallelAsync<TIn, TOut>(
-        this IEnumerable<(string InputPath, string OutputPath, CsvFileConfiguration? InputConfig, CsvFileConfiguration? OutputConfig)> transformations,
+        this IEnumerable<(string InputPath, string OutputPath, CsvFileConfiguration? InputConfig, CsvFileConfiguration?
+            OutputConfig)> transformations,
         Func<TIn, Task<TOut>> transform,
         CsvOperationOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(transformations);
         ArgumentNullException.ThrowIfNull(transform);
@@ -400,7 +414,8 @@ public static class CsvParallelExtensions
     public static IAsyncEnumerable<T> StreamCsvAsync<T>(
         this string filePath,
         CsvOperationOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(filePath);
         options ??= new();
@@ -421,7 +436,8 @@ public static class CsvParallelExtensions
         this string filePath,
         CsvFileConfiguration fileConfig,
         CsvOperationOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(filePath);
         ArgumentNullException.ThrowIfNull(fileConfig);
@@ -446,14 +462,17 @@ public static class CsvParallelExtensions
     public static async IAsyncEnumerable<T> StreamCsvSequentialAsync<T>(
         this IEnumerable<string> filePaths,
         CsvOperationOptions? options = null,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        [EnumeratorCancellation]
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(filePaths);
         options ??= new();
 
         foreach (var filePath in filePaths)
         {
-            await foreach (var record in StreamCsvFileInternalAsync<T>(filePath, options, null, cancellationToken).ConfigureAwait(false))
+            await foreach (var record in StreamCsvFileInternalAsync<T>(filePath, options, null, cancellationToken)
+                               .ConfigureAwait(false))
                 yield return record;
         }
     }
@@ -470,7 +489,9 @@ public static class CsvParallelExtensions
     public static async IAsyncEnumerable<T> StreamCsvSequentialAsync<T>(
         this IEnumerable<(string FilePath, CsvFileConfiguration Configuration)> fileReads,
         CsvOperationOptions? options = null,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        [EnumeratorCancellation]
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(fileReads);
         options ??= new();
@@ -478,7 +499,8 @@ public static class CsvParallelExtensions
         foreach (var (filePath, fileConfig) in fileReads)
         {
             ArgumentNullException.ThrowIfNull(fileConfig);
-            await foreach (var record in StreamCsvFileInternalAsync<T>(filePath, options, fileConfig, cancellationToken).ConfigureAwait(false))
+            await foreach (var record in StreamCsvFileInternalAsync<T>(filePath, options, fileConfig, cancellationToken)
+                               .ConfigureAwait(false))
                 yield return record;
         }
     }

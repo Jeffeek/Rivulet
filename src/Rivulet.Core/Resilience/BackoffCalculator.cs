@@ -20,7 +20,8 @@ public static class BackoffCalculator
         BackoffStrategy strategy,
         TimeSpan baseDelay,
         int attempt,
-        ref TimeSpan previousDelay)
+        ref TimeSpan previousDelay
+    )
     {
         var baseDelayMs = baseDelay.TotalMilliseconds;
 

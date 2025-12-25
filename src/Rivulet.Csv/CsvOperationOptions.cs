@@ -15,7 +15,8 @@ namespace Rivulet.Csv;
 public sealed class CsvFileConfiguration
 {
     /// <summary>
-    ///     Gets or sets an action to configure CsvHelper's reader/writer settings (delimiter, culture, header detection, etc.).
+    ///     Gets or sets an action to configure CsvHelper's reader/writer settings (delimiter, culture, header detection,
+    ///     etc.).
     /// </summary>
     public Action<CsvConfiguration>? ConfigurationAction { get; init; }
 
@@ -43,7 +44,8 @@ public sealed class CsvOperationOptions : BaseFileOperationOptions
     public CsvFileConfiguration FileConfiguration { get; init; } = new();
 
     /// <summary>
-    ///     Creates a merged ParallelOptionsRivulet by combining CsvOperationOptions.ParallelOptions with CSV-specific defaults.
+    ///     Creates a merged ParallelOptionsRivulet by combining CsvOperationOptions.ParallelOptions with CSV-specific
+    ///     defaults.
     /// </summary>
     internal ParallelOptionsRivulet GetMergedParallelOptions()
     {

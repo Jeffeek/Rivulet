@@ -27,8 +27,10 @@ public sealed class RivuletOperationHealthCheck : IHealthCheck
     /// <param name="context">The health check context.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The health check result.</returns>
-    public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context,
-        CancellationToken cancellationToken = default)
+    public Task<HealthCheckResult> CheckHealthAsync(
+        HealthCheckContext context,
+        CancellationToken cancellationToken = default
+    )
     {
         var lastSuccessTime = new DateTime(Interlocked.Read(ref _lastSuccessTimeTicks), DateTimeKind.Utc);
         var timeSinceLastSuccess = DateTime.UtcNow - lastSuccessTime;

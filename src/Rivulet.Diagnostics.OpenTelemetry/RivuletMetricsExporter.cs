@@ -28,7 +28,8 @@ namespace Rivulet.Diagnostics.OpenTelemetry;
 /// </example>
 public sealed class RivuletMetricsExporter : IDisposable
 {
-    private static readonly Meter Meter = new(RivuletSharedConstants.RivuletCore, RivuletOpenTelemetryConstants.InstrumentationVersion);
+    private static readonly Meter Meter = new(RivuletSharedConstants.RivuletCore,
+        RivuletOpenTelemetryConstants.InstrumentationVersion);
 
     /// <summary>
     ///     Initializes a new instance of the <see cref="RivuletMetricsExporter" /> class.
@@ -107,7 +108,8 @@ public sealed class RivuletMetricsExporter : IDisposable
         string name,
         Func<T> measurement,
         string unit,
-        string description)
+        string description
+    )
         where T : struct =>
         Meter.CreateObservableGauge(name, measurement, unit, description);
 

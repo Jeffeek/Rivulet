@@ -1,11 +1,10 @@
-using System.Diagnostics.CodeAnalysis;
-using Rivulet.Core;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Text;
+using Rivulet.Core;
 
 namespace Rivulet.IO.Internal;
 
 /// <summary>
-/// 
 /// </summary>
 [SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public class BaseFileOperationOptions

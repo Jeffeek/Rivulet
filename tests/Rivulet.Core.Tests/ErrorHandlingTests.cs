@@ -249,20 +249,27 @@ public sealed class ErrorHandlingTests
     }
 
     [Fact]
-    public async Task CollectAndContinue_SelectParallelStreamAsync_SkipsErrorItems()
+    public async Task CollectAndContinue_SelectParallelStreamAsync_ThrowsAggregateException()
     {
         var source = Enumerable.Range(1, 10).ToAsyncEnumerable();
         var options = new ParallelOptionsRivulet { ErrorMode = ErrorMode.CollectAndContinue };
-        var results = await source.SelectParallelStreamAsync(static async (x, ct) =>
-                {
-                    await Task.Delay(10, ct);
-                    return x == 5 ? throw new InvalidOperationException("Error at 5") : x * 2;
-                },
-                options)
-            .ToListAsync();
 
-        results.Count.ShouldBe(9);
-        results.ShouldNotContain(10);
+        var exception = await Assert.ThrowsAsync<AggregateException>(async () =>
+        {
+            await foreach (var _ in source.SelectParallelStreamAsync(static async (x, ct) =>
+                               {
+                                   await Task.Delay(10, ct);
+                                   return x == 5 ? throw new InvalidOperationException("Error at 5") : x * 2;
+                               },
+                               options))
+            {
+                // Consuming items - will process all but throw AggregateException at the end
+            }
+        });
+
+        exception.InnerExceptions.ShouldHaveSingleItem();
+        exception.InnerExceptions[0].ShouldBeOfType<InvalidOperationException>();
+        exception.InnerExceptions[0].Message.ShouldBe("Error at 5");
     }
 
     [Fact]
@@ -324,9 +331,13 @@ public sealed class ErrorHandlingTests
             }
         };
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(Act);
+        // CollectAndContinue collects all errors (including cancellations) into AggregateException
+        var exception = await Assert.ThrowsAsync<AggregateException>(Act);
         errorCaught.ShouldBeTrue();
         processedCount.ShouldBeLessThan(100);
+
+        // Should contain the original InvalidOperationException and cancellation exceptions
+        exception.InnerExceptions.ShouldContain(static e => e is InvalidOperationException);
         return;
 
         async Task Act()

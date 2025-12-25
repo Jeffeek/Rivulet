@@ -51,7 +51,8 @@ internal static class SqlValidationHelper
         IEnumerable<TItem> source,
         Func<TConnection> connectionFactory,
         string tableName,
-        int batchSize)
+        int batchSize
+    )
         where TConnection : class, IDbConnection
     {
         ArgumentNullException.ThrowIfNull(source);
