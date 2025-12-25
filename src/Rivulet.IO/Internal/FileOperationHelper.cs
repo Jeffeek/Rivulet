@@ -72,7 +72,7 @@ internal static class FileOperationHelper
             FileAccess.Read,
             options.ReadFileShare,
             options.BufferSize,
-            true);
+            FileOptions.Asynchronous | FileOptions.SequentialScan);
 
     /// <summary>
     ///     Creates a FileStream for writing with standard options.
@@ -84,7 +84,7 @@ internal static class FileOperationHelper
             FileAccess.Write,
             options.WriteFileShare,
             options.BufferSize,
-            true);
+            FileOptions.Asynchronous | FileOptions.SequentialScan);
 
     /// <summary>
     ///     Creates dual FileStreams for copy operations (source read + destination write).

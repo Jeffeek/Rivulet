@@ -238,4 +238,37 @@ public sealed class ParallelOptionsRivulet
     /// </code>
     /// </example>
     public AdaptiveConcurrencyOptions? AdaptiveConcurrency { get; init; }
+
+    /// <summary>
+    ///     Creates a new instance with the specified IsTransient predicate, copying all other properties from the current
+    ///     instance.
+    ///     This enables composing transient error detection logic without manually copying all properties.
+    /// </summary>
+    /// <param name="isTransient">The transient error predicate to use in the new instance.</param>
+    /// <returns>A new ParallelOptionsRivulet instance with the specified IsTransient and all other properties copied.</returns>
+    public ParallelOptionsRivulet WithIsTransient(Func<Exception, bool>? isTransient) =>
+        new()
+        {
+            IsTransient = isTransient,
+            MaxDegreeOfParallelism = MaxDegreeOfParallelism,
+            PerItemTimeout = PerItemTimeout,
+            ErrorMode = ErrorMode,
+            OnErrorAsync = OnErrorAsync,
+            OnStartItemAsync = OnStartItemAsync,
+            OnCompleteItemAsync = OnCompleteItemAsync,
+            OnRetryAsync = OnRetryAsync,
+            OnThrottleAsync = OnThrottleAsync,
+            OnDrainAsync = OnDrainAsync,
+            MaxRetries = MaxRetries,
+            BaseDelay = BaseDelay,
+            BackoffStrategy = BackoffStrategy,
+            OnFallback = OnFallback,
+            ChannelCapacity = ChannelCapacity,
+            OrderedOutput = OrderedOutput,
+            Progress = Progress,
+            Metrics = Metrics,
+            RateLimit = RateLimit,
+            CircuitBreaker = CircuitBreaker,
+            AdaptiveConcurrency = AdaptiveConcurrency
+        };
 }

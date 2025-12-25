@@ -214,7 +214,13 @@ public static class CsvParallelExtensions
         CancellationToken cancellationToken
     )
     {
-        var records = new List<T>();
+        // Estimate initial capacity based on file size to reduce List reallocations
+        var fileInfo = new FileInfo(filePath);
+        var estimatedCapacity = fileInfo.Length > 0
+            ? (int)Math.Min(fileInfo.Length / 200, 10000) // Assume ~200 bytes/record, cap at 10k
+            : 0;
+
+        var records = estimatedCapacity > 0 ? new List<T>(estimatedCapacity) : new List<T>();
         await foreach (var record in StreamCsvFileInternalAsync<T>(filePath, options, fileConfig, cancellationToken)
                            .ConfigureAwait(false))
             records.Add(record);
@@ -239,7 +245,6 @@ public static class CsvParallelExtensions
 #pragma warning disable CA2007 // ConfigureAwait not applicable to await using
                 await using var stream = CsvOperationHelper.CreateWriteStream(filePath, options);
                 await using var writer = new StreamWriter(stream, options.Encoding);
-#pragma warning restore CA2007
 
                 var writeCsvConfig = new CsvConfiguration(options.Culture);
 
@@ -248,7 +253,6 @@ public static class CsvParallelExtensions
                 else
                     options.FileConfiguration.ConfigurationAction?.Invoke(writeCsvConfig);
 
-#pragma warning disable CA2007 // ConfigureAwait not applicable to await using
                 await using var csv = new CsvWriter(writer, writeCsvConfig);
 #pragma warning restore CA2007
 
