@@ -22,4 +22,15 @@ public sealed class ProgressOptions
     ///     The callback is called from a background task and may be invoked from any thread.
     /// </remarks>
     public Func<ProgressSnapshot, ValueTask>? OnProgress { get; init; }
+
+    public ProgressOptions() { }
+
+    public ProgressOptions(ProgressOptions? original)
+    {
+        if (original is null)
+            return;
+
+        ReportInterval = original.ReportInterval;
+        OnProgress = original.OnProgress;
+    }
 }

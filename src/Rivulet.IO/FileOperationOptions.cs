@@ -1,6 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
-using Rivulet.Core;
-using Rivulet.IO.Internal;
+using Rivulet.IO.Base;
 
 namespace Rivulet.IO;
 
@@ -21,10 +20,4 @@ public sealed class FileOperationOptions : BaseFileOperationOptions
     ///     Default is FileShare.None (exclusive access).
     /// </summary>
     public FileShare WriteFileShare { get; init; } = FileShare.None;
-
-    /// <summary>
-    ///     Creates a merged ParallelOptionsRivulet by combining FileOperationOptions.ParallelOptions with defaults.
-    /// </summary>
-    internal ParallelOptionsRivulet GetMergedParallelOptions() =>
-        ParallelOptions ?? new();
 }

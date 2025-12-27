@@ -1,13 +1,13 @@
-﻿using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using Rivulet.Core;
 
-namespace Rivulet.IO.Internal;
+namespace Rivulet.IO.Base;
 
 /// <summary>
 /// </summary>
 [SuppressMessage("ReSharper", "MemberCanBeInternal")]
-public class BaseFileOperationOptions
+public abstract class BaseFileOperationOptions
 {
     /// <summary>
     ///     Gets or sets the text encoding to use for file operations.
@@ -55,4 +55,10 @@ public class BaseFileOperationOptions
     ///     Parameters: filePath, exception
     /// </summary>
     public Func<string, Exception, ValueTask>? OnFileErrorAsync { get; init; }
+
+    /// <summary>
+    ///     Creates a merged ParallelOptionsRivulet by combining FileOperationOptions.ParallelOptions with defaults.
+    /// </summary>
+    internal virtual ParallelOptionsRivulet GetMergedParallelOptions() =>
+        ParallelOptions ?? new();
 }

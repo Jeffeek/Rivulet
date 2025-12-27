@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 using CsvHelper;
 using CsvHelper.Configuration;
 using Rivulet.Core;
-using Rivulet.IO.Internal;
+using Rivulet.IO.Base;
 
 namespace Rivulet.Csv;
 
@@ -47,33 +47,13 @@ public sealed class CsvOperationOptions : BaseFileOperationOptions
     ///     Creates a merged ParallelOptionsRivulet by combining CsvOperationOptions.ParallelOptions with CSV-specific
     ///     defaults.
     /// </summary>
-    internal ParallelOptionsRivulet GetMergedParallelOptions()
+    internal override ParallelOptionsRivulet GetMergedParallelOptions()
     {
         var baseOptions = ParallelOptions ?? new();
 
-        return new()
+        return new(baseOptions)
         {
             IsTransient = ex => (baseOptions.IsTransient?.Invoke(ex) ?? false) || IsCsvTransientError(ex),
-            MaxRetries = baseOptions.MaxRetries,
-            MaxDegreeOfParallelism = baseOptions.MaxDegreeOfParallelism,
-            BaseDelay = baseOptions.BaseDelay,
-            BackoffStrategy = baseOptions.BackoffStrategy,
-            PerItemTimeout = baseOptions.PerItemTimeout,
-            ErrorMode = baseOptions.ErrorMode,
-            OnStartItemAsync = baseOptions.OnStartItemAsync,
-            OnCompleteItemAsync = baseOptions.OnCompleteItemAsync,
-            OnErrorAsync = baseOptions.OnErrorAsync,
-            CircuitBreaker = baseOptions.CircuitBreaker,
-            RateLimit = baseOptions.RateLimit,
-            Progress = baseOptions.Progress,
-            OrderedOutput = baseOptions.OrderedOutput,
-            Metrics = baseOptions.Metrics,
-            AdaptiveConcurrency = baseOptions.AdaptiveConcurrency,
-            OnRetryAsync = baseOptions.OnRetryAsync,
-            OnDrainAsync = baseOptions.OnDrainAsync,
-            OnFallback = baseOptions.OnFallback,
-            OnThrottleAsync = baseOptions.OnThrottleAsync,
-            ChannelCapacity = baseOptions.ChannelCapacity
         };
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

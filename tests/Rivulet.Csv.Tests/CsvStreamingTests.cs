@@ -86,9 +86,9 @@ public sealed class CsvStreamingTests : IDisposable
                                   """;
         await File.WriteAllTextAsync(csvPath, csvContent);
 
-        var fileConfig = new CsvFileConfiguration
+        var fileConfig = new CsvOperationOptions
         {
-            ConfigurationAction = static cfg => { cfg.TrimOptions = TrimOptions.Trim; }
+            FileConfiguration = new() { ConfigurationAction = static cfg => { cfg.TrimOptions = TrimOptions.Trim; } }
         };
 
         // Act

@@ -239,36 +239,33 @@ public sealed class ParallelOptionsRivulet
     /// </example>
     public AdaptiveConcurrencyOptions? AdaptiveConcurrency { get; init; }
 
-    /// <summary>
-    ///     Creates a new instance with the specified IsTransient predicate, copying all other properties from the current
-    ///     instance.
-    ///     This enables composing transient error detection logic without manually copying all properties.
-    /// </summary>
-    /// <param name="isTransient">The transient error predicate to use in the new instance.</param>
-    /// <returns>A new ParallelOptionsRivulet instance with the specified IsTransient and all other properties copied.</returns>
-    public ParallelOptionsRivulet WithIsTransient(Func<Exception, bool>? isTransient) =>
-        new()
-        {
-            IsTransient = isTransient,
-            MaxDegreeOfParallelism = MaxDegreeOfParallelism,
-            PerItemTimeout = PerItemTimeout,
-            ErrorMode = ErrorMode,
-            OnErrorAsync = OnErrorAsync,
-            OnStartItemAsync = OnStartItemAsync,
-            OnCompleteItemAsync = OnCompleteItemAsync,
-            OnRetryAsync = OnRetryAsync,
-            OnThrottleAsync = OnThrottleAsync,
-            OnDrainAsync = OnDrainAsync,
-            MaxRetries = MaxRetries,
-            BaseDelay = BaseDelay,
-            BackoffStrategy = BackoffStrategy,
-            OnFallback = OnFallback,
-            ChannelCapacity = ChannelCapacity,
-            OrderedOutput = OrderedOutput,
-            Progress = Progress,
-            Metrics = Metrics,
-            RateLimit = RateLimit,
-            CircuitBreaker = CircuitBreaker,
-            AdaptiveConcurrency = AdaptiveConcurrency
-        };
+    public ParallelOptionsRivulet() { }
+
+    public ParallelOptionsRivulet(ParallelOptionsRivulet? original)
+    {
+        if (original is null)
+            return;
+
+        MaxDegreeOfParallelism = original.MaxDegreeOfParallelism;
+        PerItemTimeout = original.PerItemTimeout;
+        ErrorMode = original.ErrorMode;
+        OnErrorAsync = original.OnErrorAsync;
+        OnStartItemAsync = original.OnStartItemAsync;
+        OnCompleteItemAsync = original.OnCompleteItemAsync;
+        OnRetryAsync = original.OnRetryAsync;
+        OnThrottleAsync = original.OnThrottleAsync;
+        OnDrainAsync = original.OnDrainAsync;
+        IsTransient = original.IsTransient;
+        MaxRetries = original.MaxRetries;
+        BaseDelay = original.BaseDelay;
+        BackoffStrategy = original.BackoffStrategy;
+        OnFallback = original.OnFallback;
+        ChannelCapacity = original.ChannelCapacity;
+        OrderedOutput = original.OrderedOutput;
+        Progress = new ProgressOptions(original.Progress);
+        Metrics = new MetricsOptions(original.Metrics);
+        RateLimit = new RateLimitOptions(original.RateLimit);
+        CircuitBreaker = new CircuitBreakerOptions(original.CircuitBreaker);
+        AdaptiveConcurrency = new AdaptiveConcurrencyOptions(original.AdaptiveConcurrency);
+    }
 }

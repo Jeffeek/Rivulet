@@ -1,3 +1,5 @@
+using Rivulet.IO.Base;
+
 namespace Rivulet.IO.Internal;
 
 /// <summary>

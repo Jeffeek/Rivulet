@@ -427,29 +427,6 @@ public static class CsvParallelExtensions
     }
 
     /// <summary>
-    ///     Streams records from a single CSV file with per-file configuration.
-    /// </summary>
-    /// <typeparam name="T">The type of record to parse from the CSV file.</typeparam>
-    /// <param name="filePath">The file path to parse.</param>
-    /// <param name="fileConfig">Per-file CSV configuration.</param>
-    /// <param name="options">CSV operation options. If null, defaults are used.</param>
-    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-    /// <returns>An async enumerable that yields records from the CSV file.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when filePath is null.</exception>
-    public static IAsyncEnumerable<T> StreamCsvAsync<T>(
-        this string filePath,
-        CsvFileConfiguration fileConfig,
-        CsvOperationOptions? options = null,
-        CancellationToken cancellationToken = default
-    )
-    {
-        ArgumentNullException.ThrowIfNull(filePath);
-        ArgumentNullException.ThrowIfNull(fileConfig);
-        options ??= new();
-        return StreamCsvFileInternalAsync<T>(filePath, options, fileConfig, cancellationToken);
-    }
-
-    /// <summary>
     ///     Streams records from multiple CSV files sequentially, yielding records from each file in order.
     /// </summary>
     /// <typeparam name="T">The type of record to parse from CSV files.</typeparam>

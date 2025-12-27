@@ -29,4 +29,15 @@ public sealed class MetricsOptions
     ///     The callback may be invoked from any thread and must be thread-safe.
     /// </remarks>
     public Func<MetricsSnapshot, ValueTask>? OnMetricsSample { get; init; }
+
+    public MetricsOptions() { }
+
+    public MetricsOptions(MetricsOptions? original)
+    {
+        if (original is null)
+            return;
+
+        SampleInterval = original.SampleInterval;
+        OnMetricsSample = original.OnMetricsSample;
+    }
 }

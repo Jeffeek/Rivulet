@@ -50,22 +50,44 @@ public sealed class RateLimitOptions
     /// </remarks>
     public double TokensPerOperation { get; init; } = 1.0;
 
+    public RateLimitOptions() { }
+
+    public RateLimitOptions(RateLimitOptions? original)
+    {
+        if (original is null)
+            return;
+
+        Validate(original);
+
+        TokensPerSecond = original.TokensPerSecond;
+        BurstCapacity = original.BurstCapacity;
+        TokensPerOperation = original.TokensPerOperation;
+        BurstCapacity = original.BurstCapacity;
+    }
+
     /// <summary>
     ///     Validates the rate limit options.
     /// </summary>
     /// <exception cref="ArgumentException">Thrown when configuration is invalid.</exception>
-    internal void Validate()
+    internal void Validate() => Validate(this);
+
+    /// <summary>
+    ///     Validates the rate limit options.
+    /// </summary>
+    /// <argument name="options">The rate limit options to validate.</argument>
+    /// <exception cref="ArgumentException">Thrown when configuration is invalid.</exception>
+    private static void Validate(RateLimitOptions options)
     {
-        if (TokensPerSecond <= 0)
+        if (options.TokensPerSecond <= 0)
             throw new ArgumentException("TokensPerSecond must be greater than 0.", nameof(TokensPerSecond));
 
-        if (BurstCapacity <= 0)
+        if (options.BurstCapacity <= 0)
             throw new ArgumentException("BurstCapacity must be greater than 0.", nameof(BurstCapacity));
 
-        if (TokensPerOperation <= 0)
+        if (options.TokensPerOperation <= 0)
             throw new ArgumentException("TokensPerOperation must be greater than 0.", nameof(TokensPerOperation));
 
-        if (BurstCapacity < TokensPerOperation)
+        if (options.BurstCapacity < options.TokensPerOperation)
             throw new ArgumentException("BurstCapacity must be at least TokensPerOperation.", nameof(BurstCapacity));
     }
 }
