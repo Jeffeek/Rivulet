@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using CsvHelper;
@@ -11,7 +10,6 @@ namespace Rivulet.Csv;
 /// <summary>
 ///     Configuration for individual CSV file operations, allowing per-file customization of CsvHelper settings.
 /// </summary>
-[SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public sealed class CsvFileConfiguration
 {
     /// <summary>
@@ -29,7 +27,6 @@ public sealed class CsvFileConfiguration
 /// <summary>
 ///     Configuration options for CSV operations with Rivulet.Csv.
 /// </summary>
-[SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public sealed class CsvOperationOptions : BaseFileOperationOptions
 {
     /// <summary>

@@ -11,17 +11,6 @@ internal static class CsvOperationHelper
     /// <summary>
     ///     Executes a CSV file operation with lifecycle callbacks (OnFileStartAsync, OnFileCompleteAsync, OnFileErrorAsync).
     /// </summary>
-    internal static ValueTask<TResult> ExecuteCsvOperationAsync<TResult>(
-        string filePath,
-        Func<ValueTask<TResult>> operation,
-        CsvOperationOptions options,
-        Func<TResult, long> getRecordCount
-    ) =>
-        FileOperationHelper.ExecuteFileOperationAsync(filePath, operation, options, getRecordCount);
-
-    /// <summary>
-    ///     Executes a CSV file operation without a return value.
-    /// </summary>
     internal static async ValueTask ExecuteCsvOperationAsync(
         string filePath,
         Func<ValueTask<long>> operation,
