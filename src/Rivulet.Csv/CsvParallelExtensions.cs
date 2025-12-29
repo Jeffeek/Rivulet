@@ -4,6 +4,7 @@ using CsvHelper;
 using CsvHelper.Configuration;
 using Rivulet.Core;
 using Rivulet.Csv.Internal;
+using Rivulet.IO.Base;
 
 namespace Rivulet.Csv;
 
@@ -420,7 +421,14 @@ public static class CsvParallelExtensions
             }
 
             if (options.OnFileCompleteAsync != null)
-                await options.OnFileCompleteAsync(fileConfig.Path, recordCount).ConfigureAwait(false);
+            {
+                var result = new FileOperationResult
+                {
+                    BytesProcessed = stream.Position,
+                    RecordCount = recordCount
+                };
+                await options.OnFileCompleteAsync(fileConfig.Path, result).ConfigureAwait(false);
+            }
         }
         finally
         {
@@ -506,7 +514,11 @@ public static class CsvParallelExtensions
                 await csv.WriteRecordsAsync(write.Records, cancellationToken).ConfigureAwait(false);
                 await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
 
-                return write.Records.Count;
+                return new FileOperationResult
+                {
+                    BytesProcessed = stream.Position,
+                    RecordCount = write.Records.Count
+                };
             },
             options);
 }

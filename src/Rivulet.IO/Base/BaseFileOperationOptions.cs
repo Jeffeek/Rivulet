@@ -46,9 +46,9 @@ public abstract class BaseFileOperationOptions
 
     /// <summary>
     ///     Gets or sets a callback invoked after successfully processing each file.
-    ///     Parameters: filePath, bytesProcessed
+    ///     Parameters: filePath, result
     /// </summary>
-    public Func<string, long, ValueTask>? OnFileCompleteAsync { get; init; }
+    public Func<string, FileOperationResult, ValueTask>? OnFileCompleteAsync { get; init; }
 
     /// <summary>
     ///     Gets or sets a callback invoked when an error occurs processing a file.
@@ -61,4 +61,21 @@ public abstract class BaseFileOperationOptions
     /// </summary>
     internal virtual ParallelOptionsRivulet GetMergedParallelOptions() =>
         ParallelOptions ?? new();
+}
+
+/// <summary>
+///     Represents the result of a file operation, containing metrics about the operation.
+/// </summary>
+public readonly struct FileOperationResult
+{
+    /// <summary>
+    ///     Gets the number of bytes processed during the file operation.
+    /// </summary>
+    public required long BytesProcessed { get; init; }
+
+    /// <summary>
+    ///     Gets the number of records processed. Only populated for structured data operations (CSV, JSON, etc.).
+    ///     Null for raw file operations.
+    /// </summary>
+    public long? RecordCount { get; init; }
 }

@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Rivulet.Core;
+using Rivulet.IO.Base;
 using Rivulet.IO.Internal;
 
 namespace Rivulet.IO;
@@ -278,7 +279,7 @@ public static class FileParallelExtensions
                 return await reader.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
             },
             options,
-            static content => content.Length);
+            static content => new FileOperationResult { BytesProcessed = content.Length });
 #pragma warning restore CA2007
     }
 
@@ -300,7 +301,7 @@ public static class FileParallelExtensions
                 return buffer;
             },
             options,
-            static bytes => bytes.Length);
+            static bytes => new FileOperationResult { BytesProcessed = bytes.Length });
 #pragma warning restore CA2007
     }
 
@@ -329,7 +330,7 @@ public static class FileParallelExtensions
                 return lines.ToArray();
             },
             options,
-            static lines => lines.Length);
+            static lines => new FileOperationResult { BytesProcessed = lines.Length });
 #pragma warning restore CA2007
     }
 
@@ -356,7 +357,7 @@ public static class FileParallelExtensions
                 return content.Length;
             },
             options,
-            static length => length);
+            static length => new FileOperationResult { BytesProcessed = length });
 #pragma warning restore CA2007
     }
 
@@ -383,7 +384,7 @@ public static class FileParallelExtensions
                 return content.Length;
             },
             options,
-            static length => length);
+            static length => new FileOperationResult { BytesProcessed = length });
 #pragma warning restore CA2007
     }
 
@@ -415,7 +416,7 @@ public static class FileParallelExtensions
                 }
             },
             options,
-            static length => length);
+            static length => new FileOperationResult { BytesProcessed = length });
 #pragma warning restore CA2007
     }
 

@@ -154,7 +154,7 @@ public sealed class CsvProgressAndMetricsTests : IDisposable
             {
                 var path = Path.Combine(_testDirectory, $"output{i}.csv");
                 var products = new[] { new Product { Id = i, Name = $"Product {i}", Price = 10m * i } };
-                return (path, (IEnumerable<Product>)products);
+                return new RivuletCsvWriteFile<Product>(path, products, null);
             })
             .ToArray();
 
@@ -202,8 +202,8 @@ public sealed class CsvProgressAndMetricsTests : IDisposable
             .ToArray();
 
         // Act - Using dictionary-returning overload
-        var fileReads = files.Select(static f => (f, new CsvFileConfiguration())).ToArray();
-        var results = await fileReads.ParseCsvParallelAsync(
+        var fileReads = files.Select(static f => new RivuletCsvReadFile<Product>(f, null)).ToArray();
+        var results = await fileReads.ParseCsvParallelGroupedAsync(
             new CsvOperationOptions
             {
                 ParallelOptions = new ParallelOptionsRivulet
@@ -236,7 +236,10 @@ public sealed class CsvProgressAndMetricsTests : IDisposable
                 var inputPath = Path.Combine(_testDirectory, $"input{i}.csv");
                 var outputPath = Path.Combine(_testDirectory, $"output{i}.csv");
                 File.WriteAllText(inputPath, $"Id,Name,Price\n{i},Product {i},10.00");
-                return (inputPath, outputPath);
+                return (
+                    Input: new RivuletCsvReadFile<Product>(inputPath, null),
+                    Output: new RivuletCsvWriteFile<EnrichedProduct>(outputPath, Array.Empty<EnrichedProduct>(), null)
+                );
             })
             .ToArray();
 

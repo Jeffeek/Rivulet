@@ -10,11 +10,11 @@ internal static class FileOperationHelper
     /// <summary>
     ///     Executes a file operation with standard lifecycle callbacks and error handling.
     /// </summary>
-    public static async ValueTask<TResult> ExecuteFileOperationAsync<TResult, TOptions>(
+    internal static async ValueTask<TResult> ExecuteFileOperationAsync<TResult, TOptions>(
         string filePath,
         Func<ValueTask<TResult>> operation,
         TOptions options,
-        Func<TResult, long>? getBytesProcessed = null
+        Func<TResult, FileOperationResult>? getOperationResult = null
     )
         where TOptions : BaseFileOperationOptions
     {
@@ -28,8 +28,8 @@ internal static class FileOperationHelper
             if (options.OnFileCompleteAsync == null)
                 return result;
 
-            var bytesProcessed = getBytesProcessed?.Invoke(result) ?? 0;
-            await options.OnFileCompleteAsync(filePath, bytesProcessed).ConfigureAwait(false);
+            var operationResult = getOperationResult?.Invoke(result) ?? new FileOperationResult { BytesProcessed = 0 };
+            await options.OnFileCompleteAsync(filePath, operationResult).ConfigureAwait(false);
 
             return result;
         }

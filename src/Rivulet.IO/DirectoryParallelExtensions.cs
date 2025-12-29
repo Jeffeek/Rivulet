@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Rivulet.Core;
+using Rivulet.IO.Base;
 using Rivulet.IO.Internal;
 
 namespace Rivulet.IO;
@@ -47,7 +48,8 @@ public static class DirectoryParallelExtensions
                         if (options.OnFileCompleteAsync == null) return result;
 
                         var fileInfo = new FileInfo(filePath);
-                        await options.OnFileCompleteAsync(filePath, fileInfo.Length).ConfigureAwait(false);
+                        var operationResult = new FileOperationResult { BytesProcessed = fileInfo.Length };
+                        await options.OnFileCompleteAsync(filePath, operationResult).ConfigureAwait(false);
 
                         return result;
                     }

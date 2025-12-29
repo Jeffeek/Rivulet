@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Rivulet.Core;
+using Rivulet.IO.Base;
 
 namespace Rivulet.Csv.Tests;
 
@@ -16,7 +17,6 @@ public sealed class CsvParallelExtensionsTests : IDisposable
     public void Dispose()
     {
         if (Directory.Exists(_testDirectory))
-            // ReSharper disable once ArgumentsStyleLiteral
             Directory.Delete(_testDirectory, recursive: true);
     }
 
@@ -25,7 +25,6 @@ public sealed class CsvParallelExtensionsTests : IDisposable
     {
         // Arrange
         var csvPath = Path.Combine(_testDirectory, "products.csv");
-        // ReSharper disable once GrammarMistakeInStringLiteral
         const string csvContent = """
                                   Id,Name,Price
                                   1,Product A,10.50
@@ -37,7 +36,7 @@ public sealed class CsvParallelExtensionsTests : IDisposable
         // Act
         var results = await new[] { csvPath }.ParseCsvParallelAsync<Product>();
 
-        // Assert - order-independent
+        // Assert
         results.Count.ShouldBe(3);
         results.ShouldContain(static p => p.Id == 1 && p.Name == "Product A" && p.Price == 10.50m);
         results.ShouldContain(static p => p.Id == 2 && p.Name == "Product B" && p.Price == 20.00m);
@@ -53,7 +52,6 @@ public sealed class CsvParallelExtensionsTests : IDisposable
 
         await File.WriteAllTextAsync(
             csvPath1,
-            // ReSharper disable once GrammarMistakeInStringLiteral
             """
             Id,Name,Price
             1,Product A,10.50
@@ -62,7 +60,6 @@ public sealed class CsvParallelExtensionsTests : IDisposable
 
         await File.WriteAllTextAsync(
             csvPath2,
-            // ReSharper disable once GrammarMistakeInStringLiteral
             """
             Id,Name,Price
             3,Product C,15.75
@@ -81,8 +78,8 @@ public sealed class CsvParallelExtensionsTests : IDisposable
                 }
             });
 
-        // Assert - order-independent
-        results.Count.ShouldBe(5); // Total records from both files
+        // Assert
+        results.Count.ShouldBe(5);
         results.ShouldContain(static p => p.Id == 1);
         results.ShouldContain(static p => p.Id == 2);
         results.ShouldContain(static p => p.Id == 3);
@@ -101,19 +98,21 @@ public sealed class CsvParallelExtensionsTests : IDisposable
         };
 
         var csvPath = Path.Combine(_testDirectory, "output.csv");
-        var fileWrites = new[] { (csvPath, (IEnumerable<Product>)products) };
+        var fileWrites = new[]
+        {
+            new RivuletCsvWriteFile<Product>(
+                csvPath,
+                products,
+                new CsvFileConfiguration
+                {
+                    ConfigurationAction = static cfg => cfg.HasHeaderRecord = true
+                })
+        };
 
         // Act
         await fileWrites.WriteCsvParallelAsync(
             new CsvOperationOptions
             {
-                FileConfiguration = new CsvFileConfiguration
-                {
-                    ConfigurationAction = static cfg =>
-                    {
-                        cfg.HasHeaderRecord = true;
-                    }
-                },
                 OverwriteExisting = true
             });
 
@@ -137,8 +136,8 @@ public sealed class CsvParallelExtensionsTests : IDisposable
 
         var fileWrites = new[]
         {
-            (csvPath1, (IEnumerable<Product>)products1),
-            (csvPath2, (IEnumerable<Product>)products2)
+            new RivuletCsvWriteFile<Product>(csvPath1, products1, null),
+            new RivuletCsvWriteFile<Product>(csvPath2, products2, null)
         };
 
         // Act
@@ -165,17 +164,23 @@ public sealed class CsvParallelExtensionsTests : IDisposable
         var outputPath = Path.Combine(_testDirectory, "output.csv");
 
         await File.WriteAllTextAsync(inputPath,
-            // ReSharper disable once GrammarMistakeInStringLiteral
             """
             Id,Name,Price
             1,Product A,10.00
             2,Product B,20.00
             """);
 
-        var transformations = new[] { (inputPath, outputPath) };
+        var transformations = new[]
+        {
+            (
+                Input: new RivuletCsvReadFile<Product>(inputPath, null),
+                Output: new RivuletCsvWriteFile<EnrichedProduct>(outputPath, Array.Empty<EnrichedProduct>(), null)
+            )
+        };
 
         // Act
-        await transformations.TransformCsvParallelAsync<Product, EnrichedProduct>(static p => new EnrichedProduct
+        await transformations.TransformCsvParallelAsync<Product, EnrichedProduct>(
+            static p => new EnrichedProduct
             {
                 Id = p.Id,
                 Name = p.Name,
@@ -200,7 +205,6 @@ public sealed class CsvParallelExtensionsTests : IDisposable
     {
         // Arrange
         var csvPath = Path.Combine(_testDirectory, "semicolon.csv");
-        // ReSharper disable once GrammarMistakeInStringLiteral
         const string csvContent = """
                                   Id;Name;Price
                                   1;Product A;10.50
@@ -214,14 +218,11 @@ public sealed class CsvParallelExtensionsTests : IDisposable
             {
                 FileConfiguration = new CsvFileConfiguration
                 {
-                    ConfigurationAction = static cfg =>
-                    {
-                        cfg.Delimiter = ";";
-                    }
+                    ConfigurationAction = static cfg => cfg.Delimiter = ";"
                 }
             });
 
-        // Assert - order-independent
+        // Assert
         results.Count.ShouldBe(2);
         results.ShouldContain(static p => p.Name == "Product A");
         results.ShouldContain(static p => p.Name == "Product B");
@@ -235,7 +236,10 @@ public sealed class CsvParallelExtensionsTests : IDisposable
         await File.WriteAllTextAsync(csvPath, "existing content");
 
         var products = new[] { new Product { Id = 1, Name = "Test", Price = 10m } };
-        var fileWrites = new[] { (csvPath, (IEnumerable<Product>)products) };
+        var fileWrites = new[]
+        {
+            new RivuletCsvWriteFile<Product>(csvPath, products, null)
+        };
 
         // Act & Assert
         await Should.ThrowAsync<IOException>(() => fileWrites.WriteCsvParallelAsync(
@@ -262,7 +266,8 @@ public sealed class CsvParallelExtensionsTests : IDisposable
 
         var startCalled = false;
         var completeCalled = false;
-        long recordCount = 0;
+        long bytesProcessed = 0;
+        long? recordCount = null;
 
         // Act
         await new[] { csvPath }.ParseCsvParallelAsync<Product>(
@@ -273,10 +278,11 @@ public sealed class CsvParallelExtensionsTests : IDisposable
                     startCalled = true;
                     await Task.CompletedTask;
                 },
-                OnFileCompleteAsync = async (_, count) =>
+                OnFileCompleteAsync = async (_, result) =>
                 {
                     completeCalled = true;
-                    recordCount = count;
+                    bytesProcessed = result.BytesProcessed;
+                    recordCount = result.RecordCount;
                     await Task.CompletedTask;
                 }
             });
@@ -284,7 +290,90 @@ public sealed class CsvParallelExtensionsTests : IDisposable
         // Assert
         startCalled.ShouldBeTrue();
         completeCalled.ShouldBeTrue();
+        bytesProcessed.ShouldBeGreaterThan(0);
         recordCount.ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task ParseCsvParallelGroupedAsync_WithSingleType_ShouldGroupByFilePath()
+    {
+        // Arrange
+        var csvPath1 = Path.Combine(_testDirectory, "file1.csv");
+        var csvPath2 = Path.Combine(_testDirectory, "file2.csv");
+
+        await File.WriteAllTextAsync(csvPath1, "Id,Name,Price\n1,Product A,10.50");
+        await File.WriteAllTextAsync(csvPath2, "Id,Name,Price\n2,Product B,20.00");
+
+        var fileReads = new[]
+        {
+            new RivuletCsvReadFile<Product>(csvPath1, null),
+            new RivuletCsvReadFile<Product>(csvPath2, null)
+        };
+
+        // Act
+        var results = await fileReads.ParseCsvParallelGroupedAsync();
+
+        // Assert
+        results.Count.ShouldBe(2);
+        results[csvPath1].Count.ShouldBe(1);
+        results[csvPath1][0].Id.ShouldBe(1);
+        results[csvPath2].Count.ShouldBe(1);
+        results[csvPath2][0].Id.ShouldBe(2);
+    }
+
+    [Fact]
+    public async Task ParseCsvParallelGroupedAsync_WithTwoTypes_ShouldGroupBothTypes()
+    {
+        // Arrange
+        var productPath = Path.Combine(_testDirectory, "products.csv");
+        var customerPath = Path.Combine(_testDirectory, "customers.csv");
+
+        await File.WriteAllTextAsync(productPath, "Id,Name,Price\n1,Product A,10.50");
+        await File.WriteAllTextAsync(customerPath, "Id,Name\n1,Customer A");
+
+        var productReads = new[] { new RivuletCsvReadFile<Product>(productPath, null) };
+        var customerReads = new[] { new RivuletCsvReadFile<Customer>(customerPath, null) };
+
+        // Act
+        var (products, customers) = await CsvParallelExtensions.ParseCsvParallelGroupedAsync(
+            productReads,
+            customerReads);
+
+        // Assert
+        products.Count.ShouldBe(1);
+        products[productPath].Count.ShouldBe(1);
+        customers.Count.ShouldBe(1);
+        customers[customerPath].Count.ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task WriteCsvParallelAsync_WithCallbacks_ShouldProvideMetrics()
+    {
+        // Arrange
+        var products = new[] { new Product { Id = 1, Name = "Test", Price = 10m } };
+        var csvPath = Path.Combine(_testDirectory, "metrics.csv");
+
+        var fileWrites = new[] { new RivuletCsvWriteFile<Product>(csvPath, products, null) };
+
+        long bytesWritten = 0;
+        long? recordsWritten = null;
+
+        // Act
+        await fileWrites.WriteCsvParallelAsync(
+            new CsvOperationOptions
+            {
+                OverwriteExisting = true,
+                OnFileCompleteAsync = async (_, result) =>
+                {
+                    bytesWritten = result.BytesProcessed;
+                    recordsWritten = result.RecordCount;
+                    await Task.CompletedTask;
+                }
+            });
+
+        // Assert
+        bytesWritten.ShouldBeGreaterThan(0);
+        recordsWritten.ShouldBe(1);
     }
 
     [SuppressMessage("ReSharper", "PropertyCanBeMadeInitOnly.Local")]
@@ -293,6 +382,13 @@ public sealed class CsvParallelExtensionsTests : IDisposable
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public decimal Price { get; set; }
+    }
+
+    [SuppressMessage("ReSharper", "PropertyCanBeMadeInitOnly.Local")]
+    private sealed class Customer
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
     }
 
     [SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Local")]

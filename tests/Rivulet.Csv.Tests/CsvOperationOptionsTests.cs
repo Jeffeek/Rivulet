@@ -19,7 +19,6 @@ public sealed class CsvOperationOptionsTests : IDisposable
     public void Dispose()
     {
         if (Directory.Exists(_testDirectory))
-            // ReSharper disable once ArgumentsStyleLiteral
             Directory.Delete(_testDirectory, recursive: true);
     }
 
@@ -28,7 +27,6 @@ public sealed class CsvOperationOptionsTests : IDisposable
     {
         // Arrange
         var csvPath = Path.Combine(_testDirectory, "whitespace.csv");
-        // ReSharper disable once GrammarMistakeInStringLiteral
         const string csvContent = """
                                   Id,Name,Price
                                   1,  Product A  ,10.50
@@ -49,7 +47,7 @@ public sealed class CsvOperationOptionsTests : IDisposable
                 }
             });
 
-        // Assert - order-independent
+        // Assert
         results.Count.ShouldBe(2);
         results.ShouldContain(static p => p.Name == "Product A");
         results.ShouldContain(static p => p.Name == "Product B");
@@ -60,7 +58,6 @@ public sealed class CsvOperationOptionsTests : IDisposable
     {
         // Arrange
         var csvPath = Path.Combine(_testDirectory, "whitespace.csv");
-        // ReSharper disable once GrammarMistakeInStringLiteral
         const string csvContent = """
                                   Id,Name,Price
                                   1,  Product A  ,10.50
@@ -89,7 +86,6 @@ public sealed class CsvOperationOptionsTests : IDisposable
     {
         // Arrange
         var csvPath = Path.Combine(_testDirectory, "utf16.csv");
-        // ReSharper disable once StringLiteralTypo
         const string csvContent = """
                                   Id,Name,Price
                                   1,Prøduct Â,10.50
@@ -104,9 +100,8 @@ public sealed class CsvOperationOptionsTests : IDisposable
                 Encoding = Encoding.Unicode
             });
 
-        // Assert - order-independent
+        // Assert
         results.Count.ShouldBe(2);
-        // ReSharper disable once StringLiteralTypo
         results.ShouldContain(static p => p.Name == "Prøduct Â");
         results.ShouldContain(static p => p.Name == "Prödüct B");
     }
@@ -116,7 +111,6 @@ public sealed class CsvOperationOptionsTests : IDisposable
     {
         // Arrange
         var csvPath = Path.Combine(_testDirectory, "culture.csv");
-        // ReSharper disable once GrammarMistakeInStringLiteral
         const string csvContent = """
                                   Id,Name,Price
                                   1,Product A,10.50
@@ -131,7 +125,7 @@ public sealed class CsvOperationOptionsTests : IDisposable
                 Culture = CultureInfo.InvariantCulture
             });
 
-        // Assert - order-independent
+        // Assert
         results.Count.ShouldBe(2);
         results.ShouldContain(static p => p.Price == 10.50m);
         results.ShouldContain(static p => p.Price == 20.00m);
@@ -142,7 +136,6 @@ public sealed class CsvOperationOptionsTests : IDisposable
     {
         // Arrange
         var csvPath = Path.Combine(_testDirectory, "blank_lines.csv");
-        // ReSharper disable once GrammarMistakeInStringLiteral
         const string csvContent = """
                                   Id,Name,Price
                                   1,Product A,10.50
@@ -175,13 +168,15 @@ public sealed class CsvOperationOptionsTests : IDisposable
         // Arrange
         var products = new[]
         {
-            // ReSharper disable once StringLiteralTypo
             new Product { Id = 1, Name = "Prøduct Â", Price = 10.50m },
             new Product { Id = 2, Name = "Prödüct B", Price = 20.00m }
         };
 
         var csvPath = Path.Combine(_testDirectory, "utf16-output.csv");
-        var fileWrites = new[] { (csvPath, (IEnumerable<Product>)products) };
+        var fileWrites = new[]
+        {
+            new RivuletCsvWriteFile<Product>(csvPath, products, null)
+        };
 
         // Act
         await fileWrites.WriteCsvParallelAsync(
@@ -193,7 +188,6 @@ public sealed class CsvOperationOptionsTests : IDisposable
 
         // Assert
         var content = await File.ReadAllTextAsync(csvPath, Encoding.Unicode);
-        // ReSharper disable once StringLiteralTypo
         content.ShouldContain("Prøduct Â");
         content.ShouldContain("Prödüct B");
     }
@@ -210,14 +204,17 @@ public sealed class CsvOperationOptionsTests : IDisposable
         var csvPath = Path.Combine(_testDirectory, "output.tsv");
         var fileWrites = new[]
         {
-            (csvPath, (IEnumerable<Product>)products, new CsvFileConfiguration
-            {
-                ConfigurationAction = static cfg =>
+            new RivuletCsvWriteFile<Product>(
+                csvPath,
+                products,
+                new CsvFileConfiguration
                 {
-                    cfg.Delimiter = "\t";
-                    cfg.HasHeaderRecord = true;
-                }
-            })
+                    ConfigurationAction = static cfg =>
+                    {
+                        cfg.Delimiter = "\t";
+                        cfg.HasHeaderRecord = true;
+                    }
+                })
         };
 
         // Act
@@ -257,7 +254,7 @@ public sealed class CsvOperationOptionsTests : IDisposable
                 }
             });
 
-        // Assert - order-independent
+        // Assert
         results.Count.ShouldBe(2);
         results.ShouldContain(static p => p.Id == 1 && p.Name == "Product A");
         results.ShouldContain(static p => p.Id == 2 && p.Name == "Product B");
@@ -275,13 +272,16 @@ public sealed class CsvOperationOptionsTests : IDisposable
         var csvPath = Path.Combine(_testDirectory, "no_header-output.csv");
         var fileWrites = new[]
         {
-            (csvPath, (IEnumerable<Product>)products, new CsvFileConfiguration
-            {
-                ConfigurationAction = static cfg =>
+            new RivuletCsvWriteFile<Product>(
+                csvPath,
+                products,
+                new CsvFileConfiguration
                 {
-                    cfg.HasHeaderRecord = false;
-                }
-            })
+                    ConfigurationAction = static cfg =>
+                    {
+                        cfg.HasHeaderRecord = false;
+                    }
+                })
         };
 
         // Act
@@ -329,7 +329,10 @@ public sealed class CsvOperationOptionsTests : IDisposable
         };
 
         var csvPath = Path.Combine(_testDirectory, "sub_dir1", "sub_dir2", "output.csv");
-        var fileWrites = new[] { (csvPath, (IEnumerable<Product>)products) };
+        var fileWrites = new[]
+        {
+            new RivuletCsvWriteFile<Product>(csvPath, products, null)
+        };
 
         // Act
         await fileWrites.WriteCsvParallelAsync(
@@ -353,7 +356,10 @@ public sealed class CsvOperationOptionsTests : IDisposable
         };
 
         var csvPath = Path.Combine(_testDirectory, "nonexistent", "output.csv");
-        var fileWrites = new[] { (csvPath, (IEnumerable<Product>)products) };
+        var fileWrites = new[]
+        {
+            new RivuletCsvWriteFile<Product>(csvPath, products, null)
+        };
 
         // Act & Assert
         await Should.ThrowAsync<DirectoryNotFoundException>(() => fileWrites.WriteCsvParallelAsync(

@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using Rivulet.IO.Base;
 using Rivulet.IO.Internal;
 
 namespace Rivulet.IO;
@@ -81,7 +82,7 @@ public static class FileInfoExtensions
                 return await reader.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
             },
             options,
-            static content => content.Length);
+            static content => new FileOperationResult { BytesProcessed = content.Length });
     }
 
     /// <summary>
@@ -115,7 +116,7 @@ public static class FileInfoExtensions
                 return buffer;
             },
             options,
-            static bytes => bytes.Length);
+            static bytes => new FileOperationResult { BytesProcessed = bytes.Length });
     }
 
     /// <summary>
@@ -156,7 +157,7 @@ public static class FileInfoExtensions
                 return content.Length;
             },
             options,
-            static length => length);
+            static length => new FileOperationResult { BytesProcessed = length });
     }
 
     /// <summary>
@@ -197,7 +198,7 @@ public static class FileInfoExtensions
                 return content.Length;
             },
             options,
-            static length => length);
+            static length => new FileOperationResult { BytesProcessed = length });
     }
 
     /// <summary>
@@ -243,7 +244,7 @@ public static class FileInfoExtensions
                 }
             },
             options,
-            static length => length);
+            static length => new FileOperationResult { BytesProcessed = length });
     }
 
     /// <summary>

@@ -60,14 +60,14 @@ public sealed class CsvClassMapTests : IDisposable
         await File.WriteAllTextAsync(csvPath1, "ProductID,ProductName,Price\n1,Widget,10.50");
         await File.WriteAllTextAsync(csvPath2, "1|OldWidget|5.25");
 
-        // Act - Configure per file using tuple-based approach
+        // Act - Configure per file using record-based approach
         var fileReads = new[]
         {
-            (csvPath1, new CsvFileConfiguration
+            new RivuletCsvReadFile<dynamic>(csvPath1, new CsvFileConfiguration
             {
                 CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByName>()
             }),
-            (csvPath2, new CsvFileConfiguration
+            new RivuletCsvReadFile<dynamic>(csvPath2, new CsvFileConfiguration
             {
                 ConfigurationAction = static cfg =>
                 {
@@ -78,7 +78,7 @@ public sealed class CsvClassMapTests : IDisposable
             })
         };
 
-        var results = await fileReads.ParseCsvParallelAsync(
+        var results = await fileReads.ParseCsvParallelGroupedAsync(
             new CsvOperationOptions
             {
                 ParallelOptions = new ParallelOptionsRivulet { OrderedOutput = true }
@@ -117,13 +117,13 @@ public sealed class CsvClassMapTests : IDisposable
 
         var fileReads = new[]
         {
-            (file1,
+            new RivuletCsvReadFile<dynamic>(file1,
                 new CsvFileConfiguration { CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByName>() }),
-            (file2,
+            new RivuletCsvReadFile<dynamic>(file2,
                 new CsvFileConfiguration { CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByName>() }),
-            (file3,
+            new RivuletCsvReadFile<dynamic>(file3,
                 new CsvFileConfiguration { CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByName>() }),
-            (file4, new CsvFileConfiguration
+            new RivuletCsvReadFile<dynamic>(file4, new CsvFileConfiguration
             {
                 ConfigurationAction = static cfg =>
                 {
@@ -131,13 +131,13 @@ public sealed class CsvClassMapTests : IDisposable
                 },
                 CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByIndex>()
             }),
-            (file5,
+            new RivuletCsvReadFile<dynamic>(file5,
                 new CsvFileConfiguration
                     { CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapWithOptional>() })
         };
 
         // Act
-        var results = await fileReads.ParseCsvParallelAsync(
+        var results = await fileReads.ParseCsvParallelGroupedAsync(
             new CsvOperationOptions
             {
                 ParallelOptions = new ParallelOptionsRivulet { OrderedOutput = true }
@@ -171,7 +171,11 @@ public sealed class CsvClassMapTests : IDisposable
         var csvPath2 = Path.Combine(_testDirectory, "out2.csv");
 
         // Act - Using single ClassMap for all writes via CsvContextAction
-        await new[] { (csvPath1, (IEnumerable<Product>)products1), (csvPath2, (IEnumerable<Product>)products2) }
+        await new[]
+            {
+                new RivuletCsvWriteFile<Product>(csvPath1, products1, null),
+                new RivuletCsvWriteFile<Product>(csvPath2, products2, null)
+            }
             .WriteCsvParallelAsync(
                 new CsvOperationOptions
                 {
@@ -206,11 +210,11 @@ public sealed class CsvClassMapTests : IDisposable
 
         var fileWrites = new[]
         {
-            (csvPath1, (IEnumerable<Product>)products1, new CsvFileConfiguration
+            new RivuletCsvWriteFile<Product>(csvPath1, products1, new CsvFileConfiguration
             {
                 CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByName>()
             }),
-            (csvPath2, (IEnumerable<Product>)products2, new CsvFileConfiguration
+            new RivuletCsvWriteFile<Product>(csvPath2, products2, new CsvFileConfiguration
             {
                 CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapWithOptional>()
             })
@@ -270,7 +274,7 @@ public sealed class CsvClassMapTests : IDisposable
         // Act - Different delimiter per file using CsvFileConfiguration
         var writes = new[]
         {
-            (csvPath1, (IEnumerable<Product>)products1, new CsvFileConfiguration
+            new RivuletCsvWriteFile<Product>(csvPath1, products1, new CsvFileConfiguration
             {
                 ConfigurationAction = static cfg =>
                 {
@@ -278,7 +282,7 @@ public sealed class CsvClassMapTests : IDisposable
                 },
                 CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByName>()
             }),
-            (csvPath2, (IEnumerable<Product>)products2, new CsvFileConfiguration
+            new RivuletCsvWriteFile<Product>(csvPath2, products2, new CsvFileConfiguration
             {
                 ConfigurationAction = static cfg =>
                 {
@@ -338,10 +342,10 @@ public sealed class CsvClassMapTests : IDisposable
         var transformations = new[]
         {
             (
-                inputPath,
-                outputPath,
-                new CsvFileConfiguration { CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByName>() },
-                new CsvFileConfiguration { CsvContextAction = static ctx => ctx.RegisterClassMap<EnrichedProductMap>() }
+                Input: new RivuletCsvReadFile<Product>(inputPath, new CsvFileConfiguration
+                    { CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByName>() }),
+                Output: new RivuletCsvWriteFile<EnrichedProduct>(outputPath, Array.Empty<EnrichedProduct>(),
+                    new CsvFileConfiguration { CsvContextAction = static ctx => ctx.RegisterClassMap<EnrichedProductMap>() })
             )
         };
 
@@ -375,23 +379,25 @@ public sealed class CsvClassMapTests : IDisposable
 
         var transformations = new[]
         {
-            (inputPath, outputPath,
-                new CsvFileConfiguration
+            (
+                Input: new RivuletCsvReadFile<Product>(inputPath, new CsvFileConfiguration
                 {
                     ConfigurationAction = static cfg =>
                     {
                         cfg.HasHeaderRecord = false;
                     },
                     CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByIndex>()
-                },
-                new CsvFileConfiguration
-                {
-                    ConfigurationAction = static cfg =>
+                }),
+                Output: new RivuletCsvWriteFile<EnrichedProduct>(outputPath, Array.Empty<EnrichedProduct>(),
+                    new CsvFileConfiguration
                     {
-                        cfg.Delimiter = "\t";
-                    },
-                    CsvContextAction = static ctx => ctx.RegisterClassMap<EnrichedProductMap>()
-                })
+                        ConfigurationAction = static cfg =>
+                        {
+                            cfg.Delimiter = "\t";
+                        },
+                        CsvContextAction = static ctx => ctx.RegisterClassMap<EnrichedProductMap>()
+                    })
+            )
         };
 
         // Act - Input: no header, comma; Output: header, tab-separated

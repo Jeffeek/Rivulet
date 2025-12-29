@@ -1,3 +1,4 @@
+using Rivulet.IO.Base;
 using Rivulet.IO.Internal;
 
 namespace Rivulet.Csv.Internal;
@@ -13,14 +14,14 @@ internal static class CsvOperationHelper
     /// </summary>
     internal static async ValueTask ExecuteCsvOperationAsync(
         string filePath,
-        Func<ValueTask<long>> operation,
+        Func<ValueTask<FileOperationResult>> operation,
         CsvOperationOptions options
     ) =>
         await FileOperationHelper.ExecuteFileOperationAsync(
             filePath,
             operation,
             options,
-            static count => count).ConfigureAwait(false);
+            static result => result).ConfigureAwait(false);
 
     /// <summary>
     ///     Ensures the directory for the given file path exists if CreateDirectoriesIfNotExist is true.

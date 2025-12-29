@@ -158,7 +158,7 @@ public sealed class CsvErrorHandlingTests : IDisposable
 
         var products = new[] { new Product { Id = 1, Name = "Test", Price = 10m } };
         var csvPath = Path.Combine(nonExistentPath, "output.csv");
-        var fileWrites = new[] { (csvPath, (IEnumerable<Product>)products) };
+        var fileWrites = new[] { new RivuletCsvWriteFile<Product>(csvPath, products, null) };
 
         var fileErrorOccurred = false;
         string? errorFilePath = null;
