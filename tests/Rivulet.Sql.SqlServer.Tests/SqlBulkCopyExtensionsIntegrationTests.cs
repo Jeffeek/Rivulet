@@ -180,7 +180,17 @@ public sealed class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
         var mappings = new Dictionary<string, string> { ["Id"] = "Id" };
 
         // Should throw InvalidOperationException for null connection
-        await Should.ThrowAsync<InvalidOperationException>(((Func<Task>?)Act)!);
+        // With parallel operations, the exception may be thrown directly or wrapped in TaskCanceledException
+        var exception = await Should.ThrowAsync<Exception>(((Func<Task>?)Act)!);
+
+        // Verify that either the exception is InvalidOperationException or it contains one
+        var isInvalidOperation = exception is InvalidOperationException;
+        var containsInvalidOperation = exception is AggregateException aggregateEx &&
+                                       aggregateEx.InnerExceptions.Any(static e => e is InvalidOperationException);
+        var hasInvalidOperationInner = exception.InnerException is InvalidOperationException;
+
+        (isInvalidOperation || containsInvalidOperation || hasInvalidOperationInner).ShouldBeTrue(
+            $"Expected InvalidOperationException but got {exception.GetType().Name}: {exception.Message}");
         return;
 
         Task Act() =>
@@ -250,7 +260,17 @@ public sealed class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
         var readers = new[] { new TestDataReader(rows) };
 
         // Should throw InvalidOperationException for null connection
-        await Should.ThrowAsync<InvalidOperationException>((Func<Task>)Act);
+        // With parallel operations, the exception may be thrown directly or wrapped in TaskCanceledException
+        var exception = await Should.ThrowAsync<Exception>((Func<Task>)Act);
+
+        // Verify that either the exception is InvalidOperationException or it contains one
+        var isInvalidOperation = exception is InvalidOperationException;
+        var containsInvalidOperation = exception is AggregateException aggregateEx &&
+                                       aggregateEx.InnerExceptions.Any(static e => e is InvalidOperationException);
+        var hasInvalidOperationInner = exception.InnerException is InvalidOperationException;
+
+        (isInvalidOperation || containsInvalidOperation || hasInvalidOperationInner).ShouldBeTrue(
+            $"Expected InvalidOperationException but got {exception.GetType().Name}: {exception.Message}");
         return;
 
         Task Act() =>
