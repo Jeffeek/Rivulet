@@ -118,6 +118,11 @@ updates:
       interval: daily
 
   - package-ecosystem: nuget
+    directory: /src/Rivulet.Csv
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
     directory: /tests/Rivulet.Core.Tests
     schedule:
       interval: daily
@@ -174,6 +179,11 @@ updates:
 
   - package-ecosystem: nuget
     directory: /tests/Rivulet.Polly.Tests
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /tests/Rivulet.Csv.Tests
     schedule:
       interval: daily
 
@@ -250,5 +260,10 @@ updates:
 
   - package-ecosystem: nuget
     directory: /samples/Rivulet.Testing.Sample
+    schedule:
+      interval: daily
+
+  - package-ecosystem: nuget
+    directory: /samples/Rivulet.Csv.Sample
     schedule:
       interval: daily
