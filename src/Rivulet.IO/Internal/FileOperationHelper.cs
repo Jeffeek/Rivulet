@@ -10,6 +10,13 @@ internal static class FileOperationHelper
     /// <summary>
     ///     Executes a file operation with standard lifecycle callbacks and error handling.
     /// </summary>
+    /// <typeparam name="TResult">The result type returned by the operation.</typeparam>
+    /// <typeparam name="TOptions">The options type derived from BaseFileOperationOptions.</typeparam>
+    /// <param name="filePath">The path to the file being processed.</param>
+    /// <param name="operation">The async operation to execute.</param>
+    /// <param name="options">Configuration options including lifecycle callbacks.</param>
+    /// <param name="getOperationResult">Optional function to extract FileOperationResult metrics from the operation result. If null and OnFileCompleteAsync is set, BytesProcessed will be 0.</param>
+    /// <returns>The result of the operation.</returns>
     internal static async ValueTask<TResult> ExecuteFileOperationAsync<TResult, TOptions>(
         string filePath,
         Func<ValueTask<TResult>> operation,
@@ -45,6 +52,9 @@ internal static class FileOperationHelper
     /// <summary>
     ///     Ensures directory exists if CreateDirectoriesIfNotExist is enabled.
     /// </summary>
+    /// <typeparam name="TOptions">The options type derived from BaseFileOperationOptions.</typeparam>
+    /// <param name="filePath">The file path whose parent directory should be validated/created.</param>
+    /// <param name="options">Configuration options containing CreateDirectoriesIfNotExist setting.</param>
     public static void EnsureDirectoryExists<TOptions>(string filePath, TOptions options)
         where TOptions : BaseFileOperationOptions
     {
@@ -57,6 +67,10 @@ internal static class FileOperationHelper
     /// <summary>
     ///     Validates that file doesn't exist if OverwriteExisting is false.
     /// </summary>
+    /// <typeparam name="TOptions">The options type derived from BaseFileOperationOptions.</typeparam>
+    /// <param name="filePath">The file path to check for existence.</param>
+    /// <param name="options">Configuration options containing OverwriteExisting setting.</param>
+    /// <exception cref="IOException">Thrown when the file exists and OverwriteExisting is false.</exception>
     public static void ValidateOverwrite<TOptions>(string filePath, TOptions options)
         where TOptions : BaseFileOperationOptions
     {
@@ -67,6 +81,9 @@ internal static class FileOperationHelper
     /// <summary>
     ///     Creates a FileStream for reading with standard options.
     /// </summary>
+    /// <param name="filePath">The path to the file to read.</param>
+    /// <param name="options">Configuration options containing buffer size and file share settings.</param>
+    /// <returns>A FileStream configured for async sequential reading.</returns>
     public static FileStream CreateReadStream(string filePath, FileOperationOptions options) =>
         new(
             filePath,
@@ -79,6 +96,9 @@ internal static class FileOperationHelper
     /// <summary>
     ///     Creates a FileStream for writing with standard options.
     /// </summary>
+    /// <param name="filePath">The path to the file to write.</param>
+    /// <param name="options">Configuration options containing buffer size and file share settings.</param>
+    /// <returns>A FileStream configured for async sequential writing.</returns>
     public static FileStream CreateWriteStream(string filePath, FileOperationOptions options) =>
         new(
             filePath,
@@ -91,6 +111,10 @@ internal static class FileOperationHelper
     /// <summary>
     ///     Creates dual FileStreams for copy operations (source read + destination write).
     /// </summary>
+    /// <param name="sourcePath">The path to the source file to read.</param>
+    /// <param name="destinationPath">The path to the destination file to write.</param>
+    /// <param name="options">Configuration options for both streams.</param>
+    /// <returns>A tuple containing the source read stream and destination write stream.</returns>
     public static (FileStream sourceStream, FileStream destStream) CreateCopyStreams(
         string sourcePath,
         string destinationPath,
@@ -100,6 +124,10 @@ internal static class FileOperationHelper
     /// <summary>
     ///     Computes destination path from source path and destination directory, preserving relative structure.
     /// </summary>
+    /// <param name="sourcePath">The full path to the source file.</param>
+    /// <param name="sourceBaseDirectory">The base directory of the source file (used to compute relative path).</param>
+    /// <param name="destinationDirectory">The target directory where the file should be copied.</param>
+    /// <returns>The computed destination file path preserving the relative directory structure.</returns>
     public static string ComputeDestinationPath(
         string sourcePath,
         string sourceBaseDirectory,

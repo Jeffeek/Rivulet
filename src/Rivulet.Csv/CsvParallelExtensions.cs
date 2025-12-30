@@ -304,6 +304,158 @@ public static class CsvParallelExtensions
     }
 
     /// <summary>
+    ///     Writes multiple CSV file groups in parallel with per-file configuration.
+    /// </summary>
+    /// <typeparam name="T1">The first record type to write.</typeparam>
+    /// <typeparam name="T2">The second record type to write.</typeparam>
+    /// <param name="fileWrites">First collection of files to write.</param>
+    /// <param name="fileWrites2">Second collection of files to write.</param>
+    /// <param name="options">CSV operation options. If null, defaults are used.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when any file collection is null.</exception>
+    public static Task WriteCsvParallelAsync<T1, T2>(
+        IEnumerable<RivuletCsvWriteFile<T1>> fileWrites,
+        IEnumerable<RivuletCsvWriteFile<T2>> fileWrites2,
+        CsvOperationOptions? options = null,
+        CancellationToken cancellationToken = default
+    )
+        where T1 : class
+        where T2 : class
+    {
+        ArgumentNullException.ThrowIfNull(fileWrites);
+        ArgumentNullException.ThrowIfNull(fileWrites2);
+
+        var task1 = fileWrites.WriteCsvParallelAsync(options, cancellationToken);
+        var task2 = fileWrites2.WriteCsvParallelAsync(options, cancellationToken);
+
+        return Task.WhenAll(task1, task2);
+    }
+
+    /// <summary>
+    ///     Writes multiple CSV file groups in parallel with per-file configuration.
+    /// </summary>
+    /// <typeparam name="T1">The first record type to write.</typeparam>
+    /// <typeparam name="T2">The second record type to write.</typeparam>
+    /// <typeparam name="T3">The third record type to write.</typeparam>
+    /// <param name="fileWrites">First collection of files to write.</param>
+    /// <param name="fileWrites2">Second collection of files to write.</param>
+    /// <param name="fileWrites3">Third collection of files to write.</param>
+    /// <param name="options">CSV operation options. If null, defaults are used.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when any file collection is null.</exception>
+    public static Task WriteCsvParallelAsync<T1, T2, T3>(
+        IEnumerable<RivuletCsvWriteFile<T1>> fileWrites,
+        IEnumerable<RivuletCsvWriteFile<T2>> fileWrites2,
+        IEnumerable<RivuletCsvWriteFile<T3>> fileWrites3,
+        CsvOperationOptions? options = null,
+        CancellationToken cancellationToken = default
+    )
+        where T1 : class
+        where T2 : class
+        where T3 : class
+    {
+        ArgumentNullException.ThrowIfNull(fileWrites);
+        ArgumentNullException.ThrowIfNull(fileWrites2);
+        ArgumentNullException.ThrowIfNull(fileWrites3);
+
+        var task1 = fileWrites.WriteCsvParallelAsync(options, cancellationToken);
+        var task2 = fileWrites2.WriteCsvParallelAsync(options, cancellationToken);
+        var task3 = fileWrites3.WriteCsvParallelAsync(options, cancellationToken);
+
+        return Task.WhenAll(task1, task2, task3);
+    }
+
+    /// <summary>
+    ///     Writes multiple CSV file groups in parallel with per-file configuration.
+    /// </summary>
+    /// <typeparam name="T1">The first record type to write.</typeparam>
+    /// <typeparam name="T2">The second record type to write.</typeparam>
+    /// <typeparam name="T3">The third record type to write.</typeparam>
+    /// <typeparam name="T4">The fourth record type to write.</typeparam>
+    /// <param name="fileWrites">First collection of files to write.</param>
+    /// <param name="fileWrites2">Second collection of files to write.</param>
+    /// <param name="fileWrites3">Third collection of files to write.</param>
+    /// <param name="fileWrites4">Fourth collection of files to write.</param>
+    /// <param name="options">CSV operation options. If null, defaults are used.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when any file collection is null.</exception>
+    public static Task WriteCsvParallelAsync<T1, T2, T3, T4>(
+        IEnumerable<RivuletCsvWriteFile<T1>> fileWrites,
+        IEnumerable<RivuletCsvWriteFile<T2>> fileWrites2,
+        IEnumerable<RivuletCsvWriteFile<T3>> fileWrites3,
+        IEnumerable<RivuletCsvWriteFile<T4>> fileWrites4,
+        CsvOperationOptions? options = null,
+        CancellationToken cancellationToken = default
+    )
+        where T1 : class
+        where T2 : class
+        where T3 : class
+        where T4 : class
+    {
+        ArgumentNullException.ThrowIfNull(fileWrites);
+        ArgumentNullException.ThrowIfNull(fileWrites2);
+        ArgumentNullException.ThrowIfNull(fileWrites3);
+        ArgumentNullException.ThrowIfNull(fileWrites4);
+
+        var task1 = fileWrites.WriteCsvParallelAsync(options, cancellationToken);
+        var task2 = fileWrites2.WriteCsvParallelAsync(options, cancellationToken);
+        var task3 = fileWrites3.WriteCsvParallelAsync(options, cancellationToken);
+        var task4 = fileWrites4.WriteCsvParallelAsync(options, cancellationToken);
+
+        return Task.WhenAll(task1, task2, task3, task4);
+    }
+
+    /// <summary>
+    ///     Writes multiple CSV file groups in parallel with per-file configuration.
+    /// </summary>
+    /// <typeparam name="T1">The first record type to write.</typeparam>
+    /// <typeparam name="T2">The second record type to write.</typeparam>
+    /// <typeparam name="T3">The third record type to write.</typeparam>
+    /// <typeparam name="T4">The fourth record type to write.</typeparam>
+    /// <typeparam name="T5">The fifth record type to write.</typeparam>
+    /// <param name="fileWrites">First collection of files to write.</param>
+    /// <param name="fileWrites2">Second collection of files to write.</param>
+    /// <param name="fileWrites3">Third collection of files to write.</param>
+    /// <param name="fileWrites4">Fourth collection of files to write.</param>
+    /// <param name="fileWrites5">Fifth collection of files to write.</param>
+    /// <param name="options">CSV operation options. If null, defaults are used.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when any file collection is null.</exception>
+    public static Task WriteCsvParallelAsync<T1, T2, T3, T4, T5>(
+        IEnumerable<RivuletCsvWriteFile<T1>> fileWrites,
+        IEnumerable<RivuletCsvWriteFile<T2>> fileWrites2,
+        IEnumerable<RivuletCsvWriteFile<T3>> fileWrites3,
+        IEnumerable<RivuletCsvWriteFile<T4>> fileWrites4,
+        IEnumerable<RivuletCsvWriteFile<T5>> fileWrites5,
+        CsvOperationOptions? options = null,
+        CancellationToken cancellationToken = default
+    )
+        where T1 : class
+        where T2 : class
+        where T3 : class
+        where T4 : class
+        where T5 : class
+    {
+        ArgumentNullException.ThrowIfNull(fileWrites);
+        ArgumentNullException.ThrowIfNull(fileWrites2);
+        ArgumentNullException.ThrowIfNull(fileWrites3);
+        ArgumentNullException.ThrowIfNull(fileWrites4);
+        ArgumentNullException.ThrowIfNull(fileWrites5);
+
+        var task1 = fileWrites.WriteCsvParallelAsync(options, cancellationToken);
+        var task2 = fileWrites2.WriteCsvParallelAsync(options, cancellationToken);
+        var task3 = fileWrites3.WriteCsvParallelAsync(options, cancellationToken);
+        var task4 = fileWrites4.WriteCsvParallelAsync(options, cancellationToken);
+        var task5 = fileWrites5.WriteCsvParallelAsync(options, cancellationToken);
+
+        return Task.WhenAll(task1, task2, task3, task4, task5);
+    }
+
+    /// <summary>
     ///     Transforms CSV files in parallel with per-file configuration, applying a synchronous transformation function.
     /// </summary>
     /// <typeparam name="TIn">The input record type to read from CSV files.</typeparam>
@@ -387,6 +539,11 @@ public static class CsvParallelExtensions
     /// <summary>
     ///     Core streaming primitive that yields CSV records from a single file with proper resource lifetime management.
     /// </summary>
+    /// <typeparam name="T">The type of record to parse from the CSV file.</typeparam>
+    /// <param name="fileConfig">Configuration for the CSV file including path and per-file settings.</param>
+    /// <param name="options">CSV operation options including encoding, buffer size, and callbacks.</param>
+    /// <param name="cancellationToken">Cancellation token to cancel the streaming operation.</param>
+    /// <returns>An async enumerable stream of parsed CSV records.</returns>
     private static async IAsyncEnumerable<T> StreamCsvFileInternalAsync<T>(
         RivuletCsvFile fileConfig,
         CsvOperationOptions options,
@@ -420,15 +577,15 @@ public static class CsvParallelExtensions
                 yield return record;
             }
 
-            if (options.OnFileCompleteAsync != null)
+            if (options.OnFileCompleteAsync == null)
+                yield break;
+
+            var result = new FileOperationResult
             {
-                var result = new FileOperationResult
-                {
-                    BytesProcessed = stream.Position,
-                    RecordCount = recordCount
-                };
-                await options.OnFileCompleteAsync(fileConfig.Path, result).ConfigureAwait(false);
-            }
+                BytesProcessed = stream.Position,
+                RecordCount = recordCount
+            };
+            await options.OnFileCompleteAsync(fileConfig.Path, result).ConfigureAwait(false);
         }
         finally
         {
@@ -442,6 +599,11 @@ public static class CsvParallelExtensions
     /// <summary>
     ///     Materializes all records from a single CSV file into memory.
     /// </summary>
+    /// <typeparam name="T">The type of record to parse from the CSV file.</typeparam>
+    /// <param name="csvFile">Configuration for the CSV file including path and per-file settings.</param>
+    /// <param name="options">CSV operation options including encoding, buffer size, and callbacks.</param>
+    /// <param name="cancellationToken">Cancellation token to cancel the parse operation.</param>
+    /// <returns>A read-only list containing all parsed CSV records from the file.</returns>
     private static async ValueTask<IReadOnlyList<T>> ParseCsvFileAsync<T>(
         RivuletCsvFile csvFile,
         CsvOperationOptions options,
@@ -456,6 +618,12 @@ public static class CsvParallelExtensions
         return records;
     }
 
+    /// <summary>
+    ///     Creates and configures a CsvConfiguration by applying per-file or default configuration actions.
+    /// </summary>
+    /// <param name="fileConfig">File-specific configuration that may override defaults.</param>
+    /// <param name="options">Global CSV operation options containing default configuration.</param>
+    /// <returns>A configured CsvConfiguration instance ready for use with CsvHelper.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static CsvConfiguration CreateAndConfigureCsvConfiguration(
         RivuletCsvFile fileConfig,
@@ -472,6 +640,12 @@ public static class CsvParallelExtensions
         return csvConfig;
     }
 
+    /// <summary>
+    ///     Configures the CsvHelper context by applying per-file or default context actions (ClassMap registration, type conversion, etc.).
+    /// </summary>
+    /// <param name="fileConfig">File-specific configuration that may override defaults.</param>
+    /// <param name="options">Global CSV operation options containing default configuration.</param>
+    /// <param name="context">The CsvHelper context to configure.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void ConfigureCsvContext(
         RivuletCsvFile fileConfig,
@@ -485,6 +659,14 @@ public static class CsvParallelExtensions
             options.FileConfiguration.CsvContextAction?.Invoke(context);
     }
 
+    /// <summary>
+    ///     Writes a collection of records to a single CSV file with lifecycle callbacks.
+    /// </summary>
+    /// <typeparam name="T">The type of record to write to the CSV file.</typeparam>
+    /// <param name="write">The write operation configuration containing records, path, and per-file settings.</param>
+    /// <param name="options">CSV operation options including encoding, buffer size, and callbacks.</param>
+    /// <param name="cancellationToken">Cancellation token to cancel the write operation.</param>
+    /// <returns>A ValueTask representing the asynchronous write operation.</returns>
     private static ValueTask WriteCsvFileAsync<T>(
         RivuletCsvWriteFile<T> write,
         CsvOperationOptions options,

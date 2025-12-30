@@ -5,6 +5,8 @@ using Rivulet.Core;
 namespace Rivulet.IO.Base;
 
 /// <summary>
+///     Base configuration options for file operations across Rivulet file-based packages.
+///     Provides common settings for encoding, buffering, directory management, and lifecycle hooks.
 /// </summary>
 [SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public abstract class BaseFileOperationOptions

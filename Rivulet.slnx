@@ -17,6 +17,7 @@
     <Project Path="samples/Rivulet.Sql.Sample/Rivulet.Sql.Sample.csproj" />
     <Project Path="samples/Rivulet.Sql.SqlServer.Sample/Rivulet.Sql.SqlServer.Sample.csproj" />
     <Project Path="samples/Rivulet.Testing.Sample/Rivulet.Testing.Sample.csproj" />
+    <Project Path="samples/Rivulet.Csv.Sample/Rivulet.Csv.Sample.csproj" />
   </Folder>
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />
@@ -27,6 +28,7 @@
     <File Path="CODE_OF_CONDUCT.md" />
     <File Path="CONTRIBUTING.md" />
     <File Path="LICENSE.txt" />
+    <File Path="packages.yml" />
     <File Path="README-RESHARPER.md" />
     <File Path="README.md" />
     <File Path="Rivulet.sln.DotSettings" />

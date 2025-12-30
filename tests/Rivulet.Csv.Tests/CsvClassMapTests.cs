@@ -63,19 +63,21 @@ public sealed class CsvClassMapTests : IDisposable
         // Act - Configure per file using record-based approach
         var fileReads = new[]
         {
-            new RivuletCsvReadFile<dynamic>(csvPath1, new CsvFileConfiguration
-            {
-                CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByName>()
-            }),
-            new RivuletCsvReadFile<dynamic>(csvPath2, new CsvFileConfiguration
-            {
-                ConfigurationAction = static cfg =>
+            new RivuletCsvReadFile<dynamic>(csvPath1,
+                new CsvFileConfiguration
                 {
-                    cfg.Delimiter = "|";
-                    cfg.HasHeaderRecord = false;
-                },
-                CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByIndex>()
-            })
+                    CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByName>()
+                }),
+            new RivuletCsvReadFile<dynamic>(csvPath2,
+                new CsvFileConfiguration
+                {
+                    ConfigurationAction = static cfg =>
+                    {
+                        cfg.Delimiter = "|";
+                        cfg.HasHeaderRecord = false;
+                    },
+                    CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByIndex>()
+                })
         };
 
         var results = await fileReads.ParseCsvParallelGroupedAsync(
@@ -88,9 +90,9 @@ public sealed class CsvClassMapTests : IDisposable
         // csvPath1 has headers: ProductID,ProductName,Price
         // csvPath2 is headerless so uses Field1,Field2,Field3
         results.Count.ShouldBe(2);
-        dynamic record1 = results[csvPath1][0];
+        var record1 = results[csvPath1][0];
         ((string)record1.ProductName).ShouldBe("Widget");
-        dynamic record2 = results[csvPath2][0];
+        var record2 = results[csvPath2][0];
         ((string)record2.Field2).ShouldBe("OldWidget"); // Headerless file
     }
 
@@ -123,14 +125,15 @@ public sealed class CsvClassMapTests : IDisposable
                 new CsvFileConfiguration { CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByName>() }),
             new RivuletCsvReadFile<dynamic>(file3,
                 new CsvFileConfiguration { CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByName>() }),
-            new RivuletCsvReadFile<dynamic>(file4, new CsvFileConfiguration
-            {
-                ConfigurationAction = static cfg =>
+            new RivuletCsvReadFile<dynamic>(file4,
+                new CsvFileConfiguration
                 {
-                    cfg.HasHeaderRecord = false;
-                },
-                CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByIndex>()
-            }),
+                    ConfigurationAction = static cfg =>
+                    {
+                        cfg.HasHeaderRecord = false;
+                    },
+                    CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByIndex>()
+                }),
             new RivuletCsvReadFile<dynamic>(file5,
                 new CsvFileConfiguration
                     { CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapWithOptional>() })
@@ -146,16 +149,16 @@ public sealed class CsvClassMapTests : IDisposable
         // Assert - Verify all 5 files parsed with correct ClassMaps - use dynamic access with COLUMN names
         // Note: dynamic objects return all values as strings, must parse to int
         results.Count.ShouldBe(5);
-        dynamic rec1 = results[file1][0];
+        var rec1 = results[file1][0];
         int.Parse((string)rec1.ProductID).ShouldBe(1);
         ((string)rec1.ProductName).ShouldBe("Widget");
-        dynamic rec2 = results[file2][0];
+        var rec2 = results[file2][0];
         int.Parse((string)rec2.ProductID).ShouldBe(2);
-        dynamic rec3 = results[file3][0];
+        var rec3 = results[file3][0];
         int.Parse((string)rec3.ProductID).ShouldBe(3);
-        dynamic rec4 = results[file4][0];
+        var rec4 = results[file4][0];
         ((string)rec4.Field1).ShouldBe("4"); // Headerless file with dynamic returns strings
-        dynamic rec5 = results[file5][0];
+        var rec5 = results[file5][0];
         int.Parse((string)rec5.ProductID).ShouldBe(5);
         ((string)rec5.Description).ShouldBe("Special");
     }
@@ -210,14 +213,20 @@ public sealed class CsvClassMapTests : IDisposable
 
         var fileWrites = new[]
         {
-            new RivuletCsvWriteFile<Product>(csvPath1, products1, new CsvFileConfiguration
-            {
-                CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByName>()
-            }),
-            new RivuletCsvWriteFile<Product>(csvPath2, products2, new CsvFileConfiguration
-            {
-                CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapWithOptional>()
-            })
+            new RivuletCsvWriteFile<Product>(
+                csvPath1,
+                products1,
+                new CsvFileConfiguration
+                {
+                    CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByName>()
+                }),
+            new RivuletCsvWriteFile<Product>(
+                csvPath2,
+                products2,
+                new CsvFileConfiguration
+                {
+                    CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapWithOptional>()
+                })
         };
 
         // Act
@@ -274,22 +283,28 @@ public sealed class CsvClassMapTests : IDisposable
         // Act - Different delimiter per file using CsvFileConfiguration
         var writes = new[]
         {
-            new RivuletCsvWriteFile<Product>(csvPath1, products1, new CsvFileConfiguration
-            {
-                ConfigurationAction = static cfg =>
+            new RivuletCsvWriteFile<Product>(
+                csvPath1,
+                products1,
+                new CsvFileConfiguration
                 {
-                    cfg.Delimiter = ",";
-                },
-                CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByName>()
-            }),
-            new RivuletCsvWriteFile<Product>(csvPath2, products2, new CsvFileConfiguration
-            {
-                ConfigurationAction = static cfg =>
+                    ConfigurationAction = static cfg =>
+                    {
+                        cfg.Delimiter = ",";
+                    },
+                    CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByName>()
+                }),
+            new RivuletCsvWriteFile<Product>(
+                csvPath2,
+                products2,
+                new CsvFileConfiguration
                 {
-                    cfg.Delimiter = "|";
-                },
-                CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByName>()
-            })
+                    ConfigurationAction = static cfg =>
+                    {
+                        cfg.Delimiter = "|";
+                    },
+                    CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByName>()
+                })
         };
 
         await writes.WriteCsvParallelAsync(
@@ -342,15 +357,18 @@ public sealed class CsvClassMapTests : IDisposable
         var transformations = new[]
         {
             (
-                Input: new RivuletCsvReadFile<Product>(inputPath, new CsvFileConfiguration
-                    { CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByName>() }),
-                Output: new RivuletCsvWriteFile<EnrichedProduct>(outputPath, Array.Empty<EnrichedProduct>(),
+                Input: new RivuletCsvReadFile<Product>(
+                    inputPath,
+                    new CsvFileConfiguration { CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByName>() }),
+                Output: new RivuletCsvWriteFile<EnrichedProduct>(
+                    outputPath,
+                    Array.Empty<EnrichedProduct>(),
                     new CsvFileConfiguration { CsvContextAction = static ctx => ctx.RegisterClassMap<EnrichedProductMap>() })
             )
         };
 
         // Act
-        await transformations!.TransformCsvParallelAsync<Product, EnrichedProduct>(
+        await transformations.TransformCsvParallelAsync<Product, EnrichedProduct>(
             static p => new EnrichedProduct
             {
                 Id = p.Id,
@@ -380,15 +398,17 @@ public sealed class CsvClassMapTests : IDisposable
         var transformations = new[]
         {
             (
-                Input: new RivuletCsvReadFile<Product>(inputPath, new CsvFileConfiguration
-                {
-                    ConfigurationAction = static cfg =>
+                Input: new RivuletCsvReadFile<Product>(inputPath,
+                    new CsvFileConfiguration
                     {
-                        cfg.HasHeaderRecord = false;
-                    },
-                    CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByIndex>()
-                }),
-                Output: new RivuletCsvWriteFile<EnrichedProduct>(outputPath, Array.Empty<EnrichedProduct>(),
+                        ConfigurationAction = static cfg =>
+                        {
+                            cfg.HasHeaderRecord = false;
+                        },
+                        CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByIndex>()
+                    }),
+                Output: new RivuletCsvWriteFile<EnrichedProduct>(outputPath,
+                    Array.Empty<EnrichedProduct>(),
                     new CsvFileConfiguration
                     {
                         ConfigurationAction = static cfg =>
@@ -401,7 +421,7 @@ public sealed class CsvClassMapTests : IDisposable
         };
 
         // Act - Input: no header, comma; Output: header, tab-separated
-        await transformations!.TransformCsvParallelAsync<Product, EnrichedProduct>(
+        await transformations.TransformCsvParallelAsync<Product, EnrichedProduct>(
             static p => new EnrichedProduct
             {
                 Id = p.Id,

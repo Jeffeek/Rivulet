@@ -200,7 +200,9 @@ public sealed class CsvErrorHandlingTests : IDisposable
             .Select(i => Path.Combine(_testDirectory, $"missing{i}.csv"))
             .ToArray();
 
-        var errorCount = 0;
+        var fileErrorCount = 0;
+        var circuitBreakerErrorCount = 0;
+        var circuitBreakerOpened = false;
 
         // Act & Assert
         await Should.ThrowAsync<Exception>(async () =>
@@ -210,26 +212,38 @@ public sealed class CsvErrorHandlingTests : IDisposable
                 {
                     ParallelOptions = new ParallelOptionsRivulet
                     {
-                        MaxRetries = 1,
-                        MaxDegreeOfParallelism = 4,
+                        MaxRetries = 0, // No retries
+                        MaxDegreeOfParallelism = 1, // Single worker to allow circuit breaker to interrupt
+                        ErrorMode = ErrorMode.CollectAndContinue, // Don't fail fast, let circuit breaker do its job
                         CircuitBreaker = new CircuitBreakerOptions
                         {
                             FailureThreshold = 3, // Open after 3 consecutive failures
                             SuccessThreshold = 2,
-                            OpenTimeout = TimeSpan.FromSeconds(1)
+                            OpenTimeout = TimeSpan.FromSeconds(1),
+                            OnStateChange = (_, newState) =>
+                            {
+                                if (newState == CircuitBreakerState.Open)
+                                    circuitBreakerOpened = true;
+                                return ValueTask.CompletedTask;
+                            }
                         },
-                        OnErrorAsync = async (_, _) =>
+                        OnErrorAsync = async (_, ex) =>
                         {
-                            errorCount++;
+                            if (ex is CircuitBreakerOpenException)
+                                circuitBreakerErrorCount++;
+                            else
+                                fileErrorCount++;
                             await Task.CompletedTask;
-                            return false;
+                            return true; // Continue processing to let circuit breaker accumulate failures
                         }
                     }
                 });
         });
 
         // Circuit breaker should have kicked in, preventing all 10 failures
-        errorCount.ShouldBeLessThan(10);
+        circuitBreakerOpened.ShouldBeTrue("Circuit breaker should have opened");
+        fileErrorCount.ShouldBe(3, "Should have 3 file errors before circuit breaker opens");
+        circuitBreakerErrorCount.ShouldBe(7, "Should have 7 circuit breaker errors after opening");
     }
 
     [Fact]

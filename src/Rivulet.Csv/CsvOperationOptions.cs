@@ -76,7 +76,7 @@ public sealed class CsvOperationOptions : BaseFileOperationOptions
 
         return new(baseOptions)
         {
-            IsTransient = ex => (baseOptions.IsTransient?.Invoke(ex) ?? false) || IsCsvTransientError(ex),
+            IsTransient = ex => (baseOptions.IsTransient?.Invoke(ex) ?? false) || IsCsvTransientError(ex)
         };
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

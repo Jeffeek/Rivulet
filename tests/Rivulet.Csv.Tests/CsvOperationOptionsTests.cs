@@ -19,7 +19,7 @@ public sealed class CsvOperationOptionsTests : IDisposable
     public void Dispose()
     {
         if (Directory.Exists(_testDirectory))
-            Directory.Delete(_testDirectory, recursive: true);
+            Directory.Delete(_testDirectory, true);
     }
 
     [Fact]
@@ -27,6 +27,7 @@ public sealed class CsvOperationOptionsTests : IDisposable
     {
         // Arrange
         var csvPath = Path.Combine(_testDirectory, "whitespace.csv");
+        // ReSharper disable once GrammarMistakeInStringLiteral
         const string csvContent = """
                                   Id,Name,Price
                                   1,  Product A  ,10.50

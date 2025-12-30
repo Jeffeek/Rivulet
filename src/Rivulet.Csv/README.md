@@ -722,21 +722,97 @@ foreach (var concurrency in concurrencyLevels)
 }
 ```
 
+## Multi-Type Operations
+
+Process multiple CSV file groups of different types concurrently. Supports 2-5 generic type parameters for maximum flexibility.
+
+### Reading Multiple Types Concurrently
+
+```csharp
+// Read products and customers concurrently
+var productFiles = new[] { new RivuletCsvReadFile<Product>("products.csv", null) };
+var customerFiles = new[] { new RivuletCsvReadFile<Customer>("customers.csv", null) };
+
+var (products, customers) = await CsvParallelExtensions.ParseCsvParallelGroupedAsync(
+    productFiles,
+    customerFiles);
+
+// Results are grouped by file path
+foreach (var (filePath, productList) in products)
+    Console.WriteLine($"{filePath}: {productList.Count} products");
+
+foreach (var (filePath, customerList) in customers)
+    Console.WriteLine($"{filePath}: {customerList.Count} customers");
+```
+
+### Writing Multiple Types Concurrently
+
+```csharp
+// Write products and customers concurrently
+var productWrites = new[] { new RivuletCsvWriteFile<Product>("output/products.csv", products, null) };
+var customerWrites = new[] { new RivuletCsvWriteFile<Customer>("output/customers.csv", customers, null) };
+
+await CsvParallelExtensions.WriteCsvParallelAsync(
+    productWrites,
+    customerWrites);
+```
+
+### Up to 5 Types Supported
+
+```csharp
+// Read 5 different entity types concurrently
+var (products, customers, orders, categories, suppliers) =
+    await CsvParallelExtensions.ParseCsvParallelGroupedAsync(
+        productFiles,
+        customerFiles,
+        orderFiles,
+        categoryFiles,
+        supplierFiles);
+
+// Write 5 different entity types concurrently
+await CsvParallelExtensions.WriteCsvParallelAsync(
+    productWrites,
+    customerWrites,
+    orderWrites,
+    categoryWrites,
+    supplierWrites);
+```
+
 ## API Reference
 
 ### Extension Methods
 
+#### Single-Type Operations
+
 **`ParseCsvParallelAsync<T>`**
 - Parse multiple CSV files in parallel
-- Returns: `Task<IReadOnlyList<IReadOnlyList<T>>>`
+- Returns: `Task<List<T>>` - Flattened list of all records from all files
+
+**`ParseCsvParallelGroupedAsync<T>`**
+- Parse multiple CSV files in parallel, preserving file source
+- Returns: `Task<IReadOnlyDictionary<string, IReadOnlyList<T>>>` - Records grouped by file path
+
+**`StreamCsvParallelAsync<T>`**
+- Stream CSV records as they're parsed (memory-efficient)
+- Returns: `IAsyncEnumerable<T>` - Stream of records
 
 **`WriteCsvParallelAsync<T>`**
 - Write collections of records to multiple CSV files in parallel
-- Returns: `Task<IReadOnlyList<string>>`
+- Returns: `Task`
 
 **`TransformCsvParallelAsync<TIn, TOut>`**
 - Parse, transform, and write CSV files in parallel
-- Returns: `Task<IReadOnlyList<string>>`
+- Returns: `Task`
+
+#### Multi-Type Operations (2-5 Types)
+
+**`ParseCsvParallelGroupedAsync<T1, T2>`** (and 3, 4, 5 type variants)
+- Parse multiple CSV file groups of different types concurrently
+- Returns: Tuple of dictionaries, one per type
+
+**`WriteCsvParallelAsync<T1, T2>`** (and 3, 4, 5 type variants)
+- Write multiple CSV file groups of different types concurrently
+- Returns: `Task`
 
 ### Options Classes
 

@@ -57,7 +57,7 @@ public sealed class SqlOptions
         {
             MaxRetries = maxRetries,
             PerItemTimeout = perItemTimeout,
-            IsTransient = ex => (baseOptions.IsTransient != null && baseOptions.IsTransient.Invoke(ex)) || SqlIsTransient(ex),
+            IsTransient = ex => (baseOptions.IsTransient != null && baseOptions.IsTransient.Invoke(ex)) || SqlIsTransient(ex)
         };
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -1,6 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
 using Rivulet.Core;
-using Rivulet.IO.Base;
 
 namespace Rivulet.Csv.Tests;
 
@@ -17,7 +16,7 @@ public sealed class CsvParallelExtensionsTests : IDisposable
     public void Dispose()
     {
         if (Directory.Exists(_testDirectory))
-            Directory.Delete(_testDirectory, recursive: true);
+            Directory.Delete(_testDirectory, true);
     }
 
     [Fact]
@@ -25,6 +24,7 @@ public sealed class CsvParallelExtensionsTests : IDisposable
     {
         // Arrange
         var csvPath = Path.Combine(_testDirectory, "products.csv");
+        // ReSharper disable once GrammarMistakeInStringLiteral
         const string csvContent = """
                                   Id,Name,Price
                                   1,Product A,10.50
@@ -384,7 +384,11 @@ public sealed class CsvParallelExtensionsTests : IDisposable
         public decimal Price { get; set; }
     }
 
-    [SuppressMessage("ReSharper", "PropertyCanBeMadeInitOnly.Local")]
+    [
+        SuppressMessage("ReSharper", "PropertyCanBeMadeInitOnly.Local"),
+        SuppressMessage("ReSharper", "ClassNeverInstantiated.Local"),
+        SuppressMessage("ReSharper", "UnusedMember.Local")
+    ]
     private sealed class Customer
     {
         public int Id { get; set; }
