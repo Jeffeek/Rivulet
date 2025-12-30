@@ -30,8 +30,15 @@ public sealed class MetricsOptions
     /// </remarks>
     public Func<MetricsSnapshot, ValueTask>? OnMetricsSample { get; init; }
 
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="MetricsOptions"/> class with default values.
+    /// </summary>
     public MetricsOptions() { }
 
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="MetricsOptions"/> class by copying values from another instance.
+    /// </summary>
+    /// <param name="original">The original instance to copy from. If null, default values are used.</param>
     public MetricsOptions(MetricsOptions? original)
     {
         if (original is null)

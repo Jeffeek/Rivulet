@@ -37,8 +37,15 @@ public sealed class CircuitBreakerOptions
     /// </summary>
     public Func<CircuitBreakerState, CircuitBreakerState, ValueTask>? OnStateChange { get; init; }
 
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="CircuitBreakerOptions"/> class with default values.
+    /// </summary>
     public CircuitBreakerOptions() { }
 
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="CircuitBreakerOptions"/> class by copying values from another instance.
+    /// </summary>
+    /// <param name="original">The original instance to copy from. If null, default values are used.</param>
     public CircuitBreakerOptions(CircuitBreakerOptions? original)
     {
         if (original is null)

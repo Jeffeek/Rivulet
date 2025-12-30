@@ -50,8 +50,15 @@ public sealed class RateLimitOptions
     /// </remarks>
     public double TokensPerOperation { get; init; } = 1.0;
 
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="RateLimitOptions"/> class with default values.
+    /// </summary>
     public RateLimitOptions() { }
 
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="RateLimitOptions"/> class by copying values from another instance.
+    /// </summary>
+    /// <param name="original">The original instance to copy from. If null, default values are used.</param>
     public RateLimitOptions(RateLimitOptions? original)
     {
         if (original is null)

@@ -239,8 +239,15 @@ public sealed class ParallelOptionsRivulet
     /// </example>
     public AdaptiveConcurrencyOptions? AdaptiveConcurrency { get; init; }
 
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="ParallelOptionsRivulet"/> class with default values.
+    /// </summary>
     public ParallelOptionsRivulet() { }
 
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="ParallelOptionsRivulet"/> class by copying values from another instance.
+    /// </summary>
+    /// <param name="original">The original instance to copy from. If null, default values are used.</param>
     public ParallelOptionsRivulet(ParallelOptionsRivulet? original)
     {
         if (original is null)

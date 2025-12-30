@@ -70,8 +70,15 @@ public sealed class AdaptiveConcurrencyOptions
     /// </summary>
     public Func<int, int, ValueTask>? OnConcurrencyChange { get; init; }
 
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="AdaptiveConcurrencyOptions"/> class with default values.
+    /// </summary>
     public AdaptiveConcurrencyOptions() { }
 
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="AdaptiveConcurrencyOptions"/> class by copying values from another instance.
+    /// </summary>
+    /// <param name="original">The original instance to copy from. If null, default values are used.</param>
     public AdaptiveConcurrencyOptions(AdaptiveConcurrencyOptions? original)
     {
         if (original is null)
