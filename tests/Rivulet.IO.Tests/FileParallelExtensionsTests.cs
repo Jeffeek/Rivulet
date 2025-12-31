@@ -1,5 +1,6 @@
 using System.Text;
 using Rivulet.Base.Tests;
+using Rivulet.Core;
 
 namespace Rivulet.IO.Tests;
 
@@ -115,13 +116,23 @@ public sealed class FileParallelExtensionsTests : TempDirectoryFixture
         await File.WriteAllTextAsync(filePath, "Existing");
 
         var writes = new[] { (filePath, "New Content") };
-        var options = new FileOperationOptions { OverwriteExisting = false };
+        var options = new FileOperationOptions
+        {
+            OverwriteExisting = false,
+            ParallelOptions = new ParallelOptionsRivulet
+            {
+                ErrorMode = ErrorMode.CollectAndContinue,
+                MaxRetries = 0
+            }
+        };
 
         // Act
         var act = () => writes.WriteAllTextParallelAsync(options);
 
         // Assert
-        await act.ShouldThrowAsync<IOException>();
+        // Use CollectAndContinue to ensure the IOException is properly collected and re-thrown
+        var exception = await act.ShouldThrowAsync<AggregateException>();
+        exception.InnerExceptions.ShouldContain(static e => e is IOException);
     }
 
     [Fact]

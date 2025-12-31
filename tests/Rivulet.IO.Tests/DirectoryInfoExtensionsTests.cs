@@ -195,6 +195,7 @@ public sealed class DirectoryInfoExtensionsTests : TempDirectoryFixture
             "*.txt");
 
         // Assert
+        // DirectoryNotFoundException is thrown synchronously before parallel processing starts
         await act.ShouldThrowAsync<DirectoryNotFoundException>();
     }
 

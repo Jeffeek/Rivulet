@@ -242,26 +242,21 @@ public sealed class CsvParallelExtensionsTests : IDisposable
         };
 
         // Act & Assert
-        // With FailFast mode, the IOException may be thrown directly or wrapped in TaskCanceledException
-        // depending on timing in the parallel pipeline
-        var exception = await Should.ThrowAsync<Exception>(() => fileWrites.WriteCsvParallelAsync(
+        // Use CollectAndContinue to ensure the IOException is properly collected and re-thrown
+        // instead of being masked by TaskCanceledException from FailFast cancellation
+        var exception = await Should.ThrowAsync<AggregateException>(() => fileWrites.WriteCsvParallelAsync(
             new CsvOperationOptions
             {
                 OverwriteExisting = false,
                 ParallelOptions = new ParallelOptionsRivulet
                 {
-                    ErrorMode = ErrorMode.FailFast
+                    ErrorMode = ErrorMode.CollectAndContinue,
+                    MaxRetries = 0
                 }
             }));
 
-        // Verify that either the exception is IOException or it contains one
-        var isIoException = exception is IOException;
-        var containsIoException = exception is AggregateException aggregateEx &&
-                                  aggregateEx.InnerExceptions.Any(static e => e is IOException);
-        var hasIoExceptionInner = exception.InnerException is IOException;
-
-        (isIoException || containsIoException || hasIoExceptionInner).ShouldBeTrue(
-            $"Expected IOException but got {exception.GetType().Name}: {exception.Message}");
+        // Verify the exception contains IOException
+        exception.InnerExceptions.ShouldContain(static e => e is IOException);
     }
 
     [Fact]

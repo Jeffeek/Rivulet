@@ -32,18 +32,23 @@ public sealed class CsvErrorHandlingTests : IDisposable
         await File.WriteAllTextAsync(csvPath1, "Id,Name,Price\n1,Product A,10.50");
         await File.WriteAllTextAsync(csvPath3, "Id,Name,Price\n3,Product C,30.50");
 
-        // Act & Assert - should throw when encountering missing file with FailFast
-        await Should.ThrowAsync<FileNotFoundException>(async () =>
+        // Act & Assert - Use CollectAndContinue to ensure FileNotFoundException is properly collected
+        // instead of being masked by TaskCanceledException from FailFast cancellation
+        var exception = await Should.ThrowAsync<AggregateException>(async () =>
         {
             await new[] { csvPath1, csvPath2, csvPath3 }.ParseCsvParallelAsync<Product>(
                 new CsvOperationOptions
                 {
                     ParallelOptions = new ParallelOptionsRivulet
                     {
-                        ErrorMode = ErrorMode.FailFast
+                        ErrorMode = ErrorMode.CollectAndContinue,
+                        MaxRetries = 0
                     }
                 });
         });
+
+        // Verify the exception contains FileNotFoundException
+        exception.InnerExceptions.ShouldContain(static e => e is FileNotFoundException);
     }
 
     [Fact]

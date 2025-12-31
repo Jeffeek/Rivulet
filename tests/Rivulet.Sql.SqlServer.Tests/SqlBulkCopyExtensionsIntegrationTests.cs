@@ -1,6 +1,7 @@
 using System.Data;
 using Microsoft.Data.SqlClient;
 using Rivulet.Base.Tests;
+using Rivulet.Core;
 using Testcontainers.MsSql;
 
 namespace Rivulet.Sql.SqlServer.Tests;
@@ -149,13 +150,22 @@ public sealed class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
         var records = new[] { new TestRecord(1, "Test", "test@example.com") };
 
         // Should throw InvalidOperationException for null connection
-        await Should.ThrowAsync<InvalidOperationException>(((Func<Task>?)Act)!);
+        // Use CollectAndContinue to ensure the exception is properly collected and re-thrown
+        var exception = await Should.ThrowAsync<AggregateException>(((Func<Task>?)Act)!);
+
+        // Verify the exception contains InvalidOperationException
+        exception.InnerExceptions.ShouldContain(static e => e is InvalidOperationException);
         return;
 
         Task Act() =>
             records.BulkInsertUsingSqlBulkCopyAsync(static () => null!,
                 "TestTable",
-                MapToDataTable);
+                MapToDataTable,
+                new ParallelOptionsRivulet
+                {
+                    ErrorMode = ErrorMode.CollectAndContinue,
+                    MaxRetries = 0
+                });
     }
 
     [Fact]
@@ -180,24 +190,23 @@ public sealed class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
         var mappings = new Dictionary<string, string> { ["Id"] = "Id" };
 
         // Should throw InvalidOperationException for null connection
-        // With parallel operations, the exception may be thrown directly or wrapped in TaskCanceledException
-        var exception = await Should.ThrowAsync<Exception>(((Func<Task>?)Act)!);
+        // Use CollectAndContinue to ensure the exception is properly collected and re-thrown
+        var exception = await Should.ThrowAsync<AggregateException>(((Func<Task>?)Act)!);
 
-        // Verify that either the exception is InvalidOperationException or it contains one
-        var isInvalidOperation = exception is InvalidOperationException;
-        var containsInvalidOperation = exception is AggregateException aggregateEx &&
-                                       aggregateEx.InnerExceptions.Any(static e => e is InvalidOperationException);
-        var hasInvalidOperationInner = exception.InnerException is InvalidOperationException;
-
-        (isInvalidOperation || containsInvalidOperation || hasInvalidOperationInner).ShouldBeTrue(
-            $"Expected InvalidOperationException but got {exception.GetType().Name}: {exception.Message}");
+        // Verify the exception contains InvalidOperationException
+        exception.InnerExceptions.ShouldContain(static e => e is InvalidOperationException);
         return;
 
         Task Act() =>
             records.BulkInsertUsingSqlBulkCopyAsync(static () => null!,
                 "TestTable",
                 MapToDataTable,
-                mappings);
+                mappings,
+                new ParallelOptionsRivulet
+                {
+                    ErrorMode = ErrorMode.CollectAndContinue,
+                    MaxRetries = 0
+                });
     }
 
     [Fact]
@@ -260,22 +269,21 @@ public sealed class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
         var readers = new[] { new TestDataReader(rows) };
 
         // Should throw InvalidOperationException for null connection
-        // With parallel operations, the exception may be thrown directly or wrapped in TaskCanceledException
-        var exception = await Should.ThrowAsync<Exception>((Func<Task>)Act);
+        // Use CollectAndContinue to ensure the exception is properly collected and re-thrown
+        var exception = await Should.ThrowAsync<AggregateException>((Func<Task>)Act);
 
-        // Verify that either the exception is InvalidOperationException or it contains one
-        var isInvalidOperation = exception is InvalidOperationException;
-        var containsInvalidOperation = exception is AggregateException aggregateEx &&
-                                       aggregateEx.InnerExceptions.Any(static e => e is InvalidOperationException);
-        var hasInvalidOperationInner = exception.InnerException is InvalidOperationException;
-
-        (isInvalidOperation || containsInvalidOperation || hasInvalidOperationInner).ShouldBeTrue(
-            $"Expected InvalidOperationException but got {exception.GetType().Name}: {exception.Message}");
+        // Verify the exception contains InvalidOperationException
+        exception.InnerExceptions.ShouldContain(static e => e is InvalidOperationException);
         return;
 
         Task Act() =>
             readers.BulkInsertUsingSqlBulkCopyAsync(static () => null!,
-                "TestTable");
+                "TestTable",
+                new ParallelOptionsRivulet
+                {
+                    ErrorMode = ErrorMode.CollectAndContinue,
+                    MaxRetries = 0
+                });
     }
 
     [Fact]

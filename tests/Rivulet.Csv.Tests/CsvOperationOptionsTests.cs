@@ -363,15 +363,21 @@ public sealed class CsvOperationOptionsTests : IDisposable
         };
 
         // Act & Assert
-        await Should.ThrowAsync<DirectoryNotFoundException>(() => fileWrites.WriteCsvParallelAsync(
+        // Use CollectAndContinue to ensure the DirectoryNotFoundException is properly collected and re-thrown
+        // instead of being masked by TaskCanceledException from FailFast cancellation
+        var exception = await Should.ThrowAsync<AggregateException>(() => fileWrites.WriteCsvParallelAsync(
             new CsvOperationOptions
             {
                 CreateDirectoriesIfNotExist = false,
                 ParallelOptions = new ParallelOptionsRivulet
                 {
-                    ErrorMode = ErrorMode.FailFast
+                    ErrorMode = ErrorMode.CollectAndContinue,
+                    MaxRetries = 0
                 }
             }));
+
+        // Verify the exception contains DirectoryNotFoundException
+        exception.InnerExceptions.ShouldContain(static e => e is DirectoryNotFoundException);
     }
 
     [SuppressMessage("ReSharper", "PropertyCanBeMadeInitOnly.Local")]

@@ -449,7 +449,8 @@ public sealed class CsvClassMapTests : IDisposable
 
         // Act & Assert - ClassMap expects "ProductID" but file has "Id"
         // Enable header validation to throw on mismatch
-        await Should.ThrowAsync<HeaderValidationException>(async () =>
+        // Use CollectAndContinue to ensure HeaderValidationException is properly collected
+        var exception = await Should.ThrowAsync<AggregateException>(async () =>
         {
             await new[] { csvPath }.ParseCsvParallelAsync<Product>(
                 new CsvOperationOptions
@@ -467,10 +468,14 @@ public sealed class CsvClassMapTests : IDisposable
                     },
                     ParallelOptions = new ParallelOptionsRivulet
                     {
-                        ErrorMode = ErrorMode.FailFast
+                        ErrorMode = ErrorMode.CollectAndContinue,
+                        MaxRetries = 0
                     }
                 });
         });
+
+        // Verify the exception contains HeaderValidationException
+        exception.InnerExceptions.ShouldContain(static e => e is HeaderValidationException);
     }
 
     // Test classes and ClassMaps
