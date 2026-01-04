@@ -38,6 +38,7 @@ public static class CsvParallelExtensions
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>A flattened list containing all records from all files.</returns>
     /// <exception cref="ArgumentNullException">Thrown when csvFiles is null.</exception>
+    // ReSharper disable once MemberCanBePrivate.Global
     public static async Task<IReadOnlyList<T>> ParseCsvParallelAsync<T>(
         this IEnumerable<RivuletCsvFile> csvFiles,
         CsvOperationOptions? options = null,
