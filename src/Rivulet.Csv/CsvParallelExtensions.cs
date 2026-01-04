@@ -148,6 +148,7 @@ public static class CsvParallelExtensions
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>A tuple of dictionaries, each mapping file paths to their parsed records.</returns>
     /// <exception cref="ArgumentNullException">Thrown when any file collection is null.</exception>
+    // ReSharper disable once MemberCanBeInternal
     public static async Task<(
         IReadOnlyDictionary<string, IReadOnlyList<T1>>,
         IReadOnlyDictionary<string, IReadOnlyList<T2>>,
@@ -190,6 +191,7 @@ public static class CsvParallelExtensions
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>A tuple of dictionaries, each mapping file paths to their parsed records.</returns>
     /// <exception cref="ArgumentNullException">Thrown when any file collection is null.</exception>
+    // ReSharper disable once MemberCanBeInternal
     public static async Task<(
         IReadOnlyDictionary<string, IReadOnlyList<T1>>,
         IReadOnlyDictionary<string, IReadOnlyList<T2>>,
@@ -239,6 +241,7 @@ public static class CsvParallelExtensions
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>A tuple of dictionaries, each mapping file paths to their parsed records.</returns>
     /// <exception cref="ArgumentNullException">Thrown when any file collection is null.</exception>
+    // ReSharper disable once MemberCanBeInternal
     public static async Task<(
         IReadOnlyDictionary<string, IReadOnlyList<T1>>,
         IReadOnlyDictionary<string, IReadOnlyList<T2>>,
@@ -314,6 +317,7 @@ public static class CsvParallelExtensions
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
     /// <exception cref="ArgumentNullException">Thrown when any file collection is null.</exception>
+    // ReSharper disable once MemberCanBeInternal
     public static Task WriteCsvParallelAsync<T1, T2>(
         IEnumerable<RivuletCsvWriteFile<T1>> fileWrites,
         IEnumerable<RivuletCsvWriteFile<T2>> fileWrites2,
@@ -345,6 +349,7 @@ public static class CsvParallelExtensions
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
     /// <exception cref="ArgumentNullException">Thrown when any file collection is null.</exception>
+    // ReSharper disable once MemberCanBeInternal
     public static Task WriteCsvParallelAsync<T1, T2, T3>(
         IEnumerable<RivuletCsvWriteFile<T1>> fileWrites,
         IEnumerable<RivuletCsvWriteFile<T2>> fileWrites2,
@@ -382,6 +387,7 @@ public static class CsvParallelExtensions
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
     /// <exception cref="ArgumentNullException">Thrown when any file collection is null.</exception>
+    // ReSharper disable once MemberCanBeInternal
     public static Task WriteCsvParallelAsync<T1, T2, T3, T4>(
         IEnumerable<RivuletCsvWriteFile<T1>> fileWrites,
         IEnumerable<RivuletCsvWriteFile<T2>> fileWrites2,
@@ -425,6 +431,7 @@ public static class CsvParallelExtensions
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
     /// <exception cref="ArgumentNullException">Thrown when any file collection is null.</exception>
+    // ReSharper disable once MemberCanBeInternal
     public static Task WriteCsvParallelAsync<T1, T2, T3, T4, T5>(
         IEnumerable<RivuletCsvWriteFile<T1>> fileWrites,
         IEnumerable<RivuletCsvWriteFile<T2>> fileWrites2,
@@ -497,6 +504,7 @@ public static class CsvParallelExtensions
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
     /// <exception cref="ArgumentNullException">Thrown when transformations or transformAsync is null.</exception>
+    // ReSharper disable once MemberCanBeInternal
     public static Task TransformCsvParallelAsync<TIn, TOut>(
         this IEnumerable<(RivuletCsvReadFile<TIn> Input, RivuletCsvWriteFile<TOut> Output)> transformations,
         Func<TIn, CancellationToken, ValueTask<TOut>> transformAsync,

@@ -46,6 +46,7 @@ public sealed class CircuitBreakerOptions
     ///     Initializes a new instance of the <see cref="CircuitBreakerOptions"/> class by copying values from another instance.
     /// </summary>
     /// <param name="original">The original instance to copy from. If null, default values are used.</param>
+    // ReSharper disable once MemberCanBeInternal
     public CircuitBreakerOptions(CircuitBreakerOptions? original)
     {
         if (original is null)

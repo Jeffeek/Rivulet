@@ -39,6 +39,7 @@ public sealed class MetricsOptions
     ///     Initializes a new instance of the <see cref="MetricsOptions"/> class by copying values from another instance.
     /// </summary>
     /// <param name="original">The original instance to copy from. If null, default values are used.</param>
+    // ReSharper disable once MemberCanBeInternal
     public MetricsOptions(MetricsOptions? original)
     {
         if (original is null)
