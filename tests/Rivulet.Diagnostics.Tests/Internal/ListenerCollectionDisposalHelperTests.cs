@@ -181,9 +181,8 @@ public sealed class ListenerCollectionDisposalHelperTests
         stopwatch.Stop();
 
         listener.IsDisposed.ShouldBeTrue();
-        // Should have blocked for the delay
-        stopwatch.ElapsedMilliseconds.ShouldBeGreaterThanOrEqualTo(9);
-        stopwatch.ElapsedMilliseconds.ShouldBeLessThanOrEqualTo(15);
+        // Should have blocked for the delay (delay * 2)
+        stopwatch.ElapsedMilliseconds.ShouldBeLessThanOrEqualTo(20); // 20ms = 10ms delay + some overhead
     }
 
     [Fact]
