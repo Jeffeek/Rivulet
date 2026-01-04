@@ -38,18 +38,14 @@ var csvFiles = new[]
 var allProducts = await csvFiles.ParseCsvParallelAsync<Product>(
     new CsvOperationOptions
     {
-        HasHeaderRecord = true,
         ParallelOptions = new ParallelOptionsRivulet
         {
             MaxDegreeOfParallelism = 4
         }
     });
 
-// allProducts is a list of lists (one per file)
-foreach (var fileProducts in allProducts)
-{
-    Console.WriteLine($"Loaded {fileProducts.Count} products");
-}
+// allProducts is a flattened list of all products from all files
+Console.WriteLine($"Loaded {allProducts.Count} products total");
 ```
 
 ### Parallel CSV Writing
@@ -66,12 +62,11 @@ var productsPerRegion = new Dictionary<string, List<Product>>
 };
 
 var fileWrites = productsPerRegion.Select(kvp =>
-    ($"output/products-{kvp.Key}.csv", (IEnumerable<Product>)kvp.Value));
+    new RivuletCsvWriteFile<Product>($"output/products-{kvp.Key}.csv", kvp.Value, null));
 
 await fileWrites.WriteCsvParallelAsync(
     new CsvOperationOptions
     {
-        HasHeaderRecord = true,
         CreateDirectoriesIfNotExist = true,
         OverwriteExisting = true
     });
@@ -84,22 +79,24 @@ Parse CSV files, transform the data, and write to new files:
 ```csharp
 var transformations = new[]
 {
-    ("input/raw-products.csv", "output/processed-products.csv"),
-    ("input/raw-customers.csv", "output/processed-customers.csv")
+    (
+        Input: new RivuletCsvReadFile<Product>("input/raw-products.csv", null),
+        Output: new RivuletCsvWriteFile<EnrichedProduct>("output/processed-products.csv", Array.Empty<EnrichedProduct>(), null)
+    ),
+    (
+        Input: new RivuletCsvReadFile<Product>("input/raw-customers.csv", null),
+        Output: new RivuletCsvWriteFile<EnrichedProduct>("output/processed-customers.csv", Array.Empty<EnrichedProduct>(), null)
+    )
 };
 
 await transformations.TransformCsvParallelAsync<Product, EnrichedProduct>(
-    async (filePath, products) =>
+    p => new EnrichedProduct
     {
-        // Transform each product
-        return products.Select(p => new EnrichedProduct
-        {
-            Id = p.Id,
-            Name = p.Name,
-            Price = p.Price,
-            PriceWithTax = p.Price * 1.2m,
-            Timestamp = DateTime.UtcNow
-        });
+        Id = p.Id,
+        Name = p.Name,
+        Price = p.Price,
+        PriceWithTax = p.Price * 1.2m,
+        Timestamp = DateTime.UtcNow
     },
     new CsvOperationOptions
     {
@@ -131,49 +128,62 @@ public class ProductMap : ClassMap<Product>
 }
 
 // Parse all files using the same ClassMap
-var results = await csvFiles.ParseCsvParallelAsync<Product, ProductMap>(
+var results = await csvFiles.ParseCsvParallelAsync<Product>(
     new CsvOperationOptions
     {
+        FileConfiguration = new CsvFileConfiguration
+        {
+            CsvContextAction = ctx => ctx.RegisterClassMap<ProductMap>()
+        },
         ParallelOptions = new() { MaxDegreeOfParallelism = 4 }
     });
 
 // Write all files using the same ClassMap
 var writes = new[]
 {
-    ("output1.csv", productsGroup1),
-    ("output2.csv", productsGroup2)
+    new RivuletCsvWriteFile<Product>("output1.csv", productsGroup1, null),
+    new RivuletCsvWriteFile<Product>("output2.csv", productsGroup2, null)
 };
 
-await writes.WriteCsvParallelAsync<Product, ProductMap>(
-    new CsvOperationOptions { OverwriteExisting = true });
-```
-
-### Per-File Configuration Based on File Path
-
-Configure each file differently based on its path or characteristics:
-
-```csharp
-var files = new[] { "modern_format.csv", "legacy_format.csv" };
-
-var results = await files.ParseCsvParallelAsync<Product>(
-    filePath => ctx =>
+await writes.WriteCsvParallelAsync(
+    new CsvOperationOptions
     {
-        if (filePath.Contains("legacy"))
+        FileConfiguration = new CsvFileConfiguration
         {
-            // Legacy files use pipe delimiters and no header
-            ctx.Configuration.Delimiter = "|";
-            ctx.Configuration.HasHeaderRecord = false;
-            ctx.RegisterClassMap<ProductMapByIndex>();
-        }
-        else
-        {
-            // Modern files use standard format
-            ctx.RegisterClassMap<ProductMapByName>();
-        }
+            CsvContextAction = ctx => ctx.RegisterClassMap<ProductMap>()
+        },
+        OverwriteExisting = true
     });
 ```
 
-### Explicit Per-File Configuration (Your Complex Scenario)
+### Per-File Configuration with RivuletCsvReadFile
+
+Configure each file differently using `RivuletCsvReadFile`:
+
+```csharp
+var fileReads = new[]
+{
+    new RivuletCsvReadFile<Product>("modern_format.csv",
+        new CsvFileConfiguration
+        {
+            CsvContextAction = ctx => ctx.RegisterClassMap<ProductMapByName>()
+        }),
+    new RivuletCsvReadFile<Product>("legacy_format.csv",
+        new CsvFileConfiguration
+        {
+            ConfigurationAction = cfg =>
+            {
+                cfg.Delimiter = "|";
+                cfg.HasHeaderRecord = false;
+            },
+            CsvContextAction = ctx => ctx.RegisterClassMap<ProductMapByIndex>()
+        })
+};
+
+var results = await fileReads.ParseCsvParallelGroupedAsync();
+```
+
+### Explicit Per-File Configuration (Complex Scenario)
 
 Handle scenarios where you have multiple files with different schemas - like 5 files using 3 different ClassMaps:
 
@@ -209,26 +219,31 @@ public class ProductMapWithOptional : ClassMap<Product>
     }
 }
 
-// Your exact scenario: 5 files with 3 different ClassMaps
-var fileConfigs = new[]
+// Scenario: 5 files with 3 different ClassMaps
+var fileReads = new[]
 {
     // Files 1-3 use ProductMapByName
-    new CsvFileConfig<Product>("file1.csv", ctx => ctx.RegisterClassMap<ProductMapByName>()),
-    new CsvFileConfig<Product>("file2.csv", ctx => ctx.RegisterClassMap<ProductMapByName>()),
-    new CsvFileConfig<Product>("file3.csv", ctx => ctx.RegisterClassMap<ProductMapByName>()),
+    new RivuletCsvReadFile<Product>("file1.csv",
+        new CsvFileConfiguration { CsvContextAction = ctx => ctx.RegisterClassMap<ProductMapByName>() }),
+    new RivuletCsvReadFile<Product>("file2.csv",
+        new CsvFileConfiguration { CsvContextAction = ctx => ctx.RegisterClassMap<ProductMapByName>() }),
+    new RivuletCsvReadFile<Product>("file3.csv",
+        new CsvFileConfiguration { CsvContextAction = ctx => ctx.RegisterClassMap<ProductMapByName>() }),
 
     // File 4 uses ProductMapByIndex (headerless)
-    new CsvFileConfig<Product>("file4.csv", ctx =>
-    {
-        ctx.Configuration.HasHeaderRecord = false;
-        ctx.RegisterClassMap<ProductMapByIndex>();
-    }),
+    new RivuletCsvReadFile<Product>("file4.csv",
+        new CsvFileConfiguration
+        {
+            ConfigurationAction = cfg => cfg.HasHeaderRecord = false,
+            CsvContextAction = ctx => ctx.RegisterClassMap<ProductMapByIndex>()
+        }),
 
     // File 5 uses ProductMapWithOptional
-    new CsvFileConfig<Product>("file5.csv", ctx => ctx.RegisterClassMap<ProductMapWithOptional>())
+    new RivuletCsvReadFile<Product>("file5.csv",
+        new CsvFileConfiguration { CsvContextAction = ctx => ctx.RegisterClassMap<ProductMapWithOptional>() })
 };
 
-var results = await fileConfigs.ParseCsvParallelAsync(
+var results = await fileReads.ParseCsvParallelGroupedAsync(
     new CsvOperationOptions
     {
         ParallelOptions = new()
@@ -242,22 +257,26 @@ var results = await fileConfigs.ParseCsvParallelAsync(
 ### Writing with Per-File ClassMaps
 
 ```csharp
-var fileConfigs = new[]
+var fileWrites = new[]
 {
-    CsvFileConfig<Product>.ForWrite(
+    new RivuletCsvWriteFile<Product>(
         "standard_output.csv",
         standardProducts,
-        ctx => ctx.RegisterClassMap<ProductMapByName>()
-    ),
+        new CsvFileConfiguration
+        {
+            CsvContextAction = ctx => ctx.RegisterClassMap<ProductMapByName>()
+        }),
 
-    CsvFileConfig<Product>.ForWrite(
+    new RivuletCsvWriteFile<Product>(
         "detailed_output.csv",
         detailedProducts,
-        ctx => ctx.RegisterClassMap<ProductMapWithOptional>()
-    )
+        new CsvFileConfiguration
+        {
+            CsvContextAction = ctx => ctx.RegisterClassMap<ProductMapWithOptional>()
+        })
 };
 
-await fileConfigs.WriteCsvParallelAsync(
+await fileWrites.WriteCsvParallelAsync(
     new CsvOperationOptions { OverwriteExisting = true });
 ```
 
@@ -289,21 +308,25 @@ public class AdvancedProductMap : ClassMap<Product>
 }
 ```
 
-### Combining CsvContext with CsvOperationOptions
+### Combining FileConfiguration with CsvOperationOptions
 
 Separate CsvHelper-specific configuration from Rivulet parallel execution settings:
 
 ```csharp
 var results = await csvFiles.ParseCsvParallelAsync<Product>(
-    ctx =>
-    {
-        // CsvHelper configuration
-        ctx.Configuration.Delimiter = ";";
-        ctx.Configuration.TrimOptions = TrimOptions.Trim;
-        ctx.RegisterClassMap<ProductMap>();
-    },
     new CsvOperationOptions
     {
+        // CsvHelper configuration
+        FileConfiguration = new CsvFileConfiguration
+        {
+            ConfigurationAction = cfg =>
+            {
+                cfg.Delimiter = ";";
+                cfg.TrimOptions = TrimOptions.Trim;
+            },
+            CsvContextAction = ctx => ctx.RegisterClassMap<ProductMap>()
+        },
+
         // Rivulet configuration
         Encoding = Encoding.UTF8,
         BufferSize = 4096,
@@ -325,27 +348,36 @@ Rivulet.Csv is built on top of [CsvHelper](https://joshclose.github.io/CsvHelper
 ```csharp
 // Use custom CsvHelper configuration
 await csvFiles.ParseCsvParallelAsync<Product>(
-    config =>
-    {
-        config.HasHeaderRecord = true;
-        config.Delimiter = ";";
-        config.TrimOptions = TrimOptions.Trim;
-        config.MissingFieldFound = null; // Ignore missing fields
-    },
     new CsvOperationOptions
     {
+        FileConfiguration = new CsvFileConfiguration
+        {
+            ConfigurationAction = cfg =>
+            {
+                cfg.HasHeaderRecord = true;
+                cfg.Delimiter = ";";
+                cfg.TrimOptions = TrimOptions.Trim;
+                cfg.MissingFieldFound = null; // Ignore missing fields
+            }
+        },
         ParallelOptions = new ParallelOptionsRivulet { MaxDegreeOfParallelism = 4 }
     });
 
 // Write with custom configuration
 await fileWrites.WriteCsvParallelAsync(
-    config =>
+    new CsvOperationOptions
     {
-        config.Delimiter = "\t"; // Tab-separated values
-        config.HasHeaderRecord = true;
-        config.ShouldQuote = args => true; // Quote all fields
-    },
-    new CsvOperationOptions { OverwriteExisting = true });
+        FileConfiguration = new CsvFileConfiguration
+        {
+            ConfigurationAction = cfg =>
+            {
+                cfg.Delimiter = "\t"; // Tab-separated values
+                cfg.HasHeaderRecord = true;
+                cfg.ShouldQuote = args => true; // Quote all fields
+            }
+        },
+        OverwriteExisting = true
+    });
 ```
 
 ### CSV Options
@@ -355,11 +387,17 @@ Configure CSV operations with `CsvOperationOptions`:
 ```csharp
 var options = new CsvOperationOptions
 {
-    // CSV format settings
-    HasHeaderRecord = true,           // CSV has header row
-    Delimiter = ",",                   // Field delimiter (default: comma)
-    TrimWhitespace = false,           // Trim whitespace from fields
-    IgnoreBlankLines = true,          // Skip blank lines
+    // CSV format settings (via FileConfiguration)
+    FileConfiguration = new CsvFileConfiguration
+    {
+        ConfigurationAction = cfg =>
+        {
+            cfg.HasHeaderRecord = true;           // CSV has header row
+            cfg.Delimiter = ",";                   // Field delimiter (default: comma)
+            cfg.TrimOptions = TrimOptions.Trim;   // Trim whitespace from fields
+            cfg.IgnoreBlankLines = true;          // Skip blank lines
+        }
+    },
 
     // Encoding and culture
     Encoding = Encoding.UTF8,         // Text encoding
@@ -434,9 +472,9 @@ var options = new CsvOperationOptions
         await Task.CompletedTask;
     },
 
-    OnFileCompleteAsync = async (filePath, recordCount) =>
+    OnFileCompleteAsync = async (filePath, result) =>
     {
-        Console.WriteLine($"Completed: {filePath} ({recordCount} records)");
+        Console.WriteLine($"Completed: {filePath} ({result.RecordCount} records)");
         await Task.CompletedTask;
     },
 
@@ -626,16 +664,19 @@ await enrichedRecords.BatchParallelAsync(
 var migrationTasks = Directory.GetFiles("legacy-data", "*.csv")
     .Select(oldFile => (oldFile, $"migrated-data/{Path.GetFileName(oldFile)}"));
 
-await migrationTasks.TransformCsvParallelAsync<OldFormat, NewFormat>(
-    async (filePath, oldRecords) =>
+var transformations = migrationTasks.Select(pair =>
+    (
+        Input: new RivuletCsvReadFile<OldFormat>(pair.oldFile, null),
+        Output: new RivuletCsvWriteFile<NewFormat>(pair.Item2, Array.Empty<NewFormat>(), null)
+    ));
+
+await transformations.TransformCsvParallelAsync<OldFormat, NewFormat>(
+    old => new NewFormat
     {
-        return oldRecords.Select(old => new NewFormat
-        {
-            Id = old.LegacyId,
-            Name = old.CustomerName,
-            Email = old.EmailAddress,
-            CreatedDate = old.RegistrationDate
-        });
+        Id = old.LegacyId,
+        Name = old.CustomerName,
+        Email = old.EmailAddress,
+        CreatedDate = old.RegistrationDate
     },
     new CsvOperationOptions
     {
@@ -658,7 +699,8 @@ await migrationTasks.TransformCsvParallelAsync<OldFormat, NewFormat>(
 ### Report Generation
 
 ```csharp
-// Generate reports from CSV data
+// Generate reports from CSV data - note: TransformCsvParallelAsync operates per-record,
+// so for aggregations like this, it's better to read, transform in memory, then write
 var reportTasks = new[]
 {
     (source: "sales-Q1.csv", report: "reports/Q1-summary.csv"),
@@ -667,19 +709,27 @@ var reportTasks = new[]
     (source: "sales-Q4.csv", report: "reports/Q4-summary.csv")
 };
 
-await reportTasks.TransformCsvParallelAsync<SalesRecord, SalesSummary>(
-    async (source, records) =>
+// Read all sales records
+var salesByQuarter = await reportTasks
+    .Select(task => task.source)
+    .ToArray()
+    .ParseCsvParallelAsync<SalesRecord>();
+
+// Transform to summaries (this would need proper grouping logic per file)
+var summaries = salesByQuarter
+    .GroupBy(r => r.ProductCategory)
+    .Select(g => new SalesSummary
     {
-        return records
-            .GroupBy(r => r.ProductCategory)
-            .Select(g => new SalesSummary
-            {
-                Category = g.Key,
-                TotalSales = g.Sum(r => r.Amount),
-                AveragePrice = g.Average(r => r.Price),
-                TransactionCount = g.Count()
-            });
-    });
+        Category = g.Key,
+        TotalSales = g.Sum(r => r.Amount),
+        AveragePrice = g.Average(r => r.Price),
+        TransactionCount = g.Count()
+    })
+    .ToList();
+
+// Write summaries
+var writes = new[] { new RivuletCsvWriteFile<SalesSummary>("reports/summary.csv", summaries, null) };
+await writes.WriteCsvParallelAsync();
 ```
 
 ## Performance Considerations
@@ -817,11 +867,15 @@ await CsvParallelExtensions.WriteCsvParallelAsync(
 ### Options Classes
 
 **`CsvOperationOptions`**
-- `HasHeaderRecord`, `Delimiter`, `TrimWhitespace`, `IgnoreBlankLines`
-- `Encoding`, `Culture`, `BufferSize`
+- `Culture`, `FileConfiguration`
+- `Encoding`, `BufferSize`
 - `CreateDirectoriesIfNotExist`, `OverwriteExisting`
 - `ParallelOptions`
 - `OnFileStartAsync`, `OnFileCompleteAsync`, `OnFileErrorAsync`
+
+**`CsvFileConfiguration`**
+- `ConfigurationAction` - Configure CsvHelper settings (Delimiter, HasHeaderRecord, TrimOptions, etc.)
+- `CsvContextAction` - Register ClassMaps, configure CsvContext
 
 ## See Also
 
