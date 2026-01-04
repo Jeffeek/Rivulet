@@ -20,7 +20,7 @@ public abstract record RivuletCsvFile(string Path, CsvFileConfiguration? Configu
 /// <typeparam name="T">The record type to parse from the CSV file.</typeparam>
 /// <param name="Path">The file path to read from.</param>
 /// <param name="Configuration">Optional per-file configuration. If null, defaults from <see cref="CsvOperationOptions.FileConfiguration"/> are used.</param>
-public record RivuletCsvReadFile<T>(string Path, CsvFileConfiguration? Configuration) : RivuletCsvFile(Path, Configuration)
+public sealed record RivuletCsvReadFile<T>(string Path, CsvFileConfiguration? Configuration) : RivuletCsvFile(Path, Configuration)
     where T : class;
 
 /// <summary>
@@ -30,7 +30,7 @@ public record RivuletCsvReadFile<T>(string Path, CsvFileConfiguration? Configura
 /// <param name="Path">The file path to write to.</param>
 /// <param name="Records">The collection of records to write.</param>
 /// <param name="Configuration">Optional per-file configuration. If null, defaults from <see cref="CsvOperationOptions.FileConfiguration"/> are used.</param>
-public record RivuletCsvWriteFile<T>(string Path, ICollection<T> Records, CsvFileConfiguration? Configuration) : RivuletCsvFile(Path, Configuration)
+public sealed record RivuletCsvWriteFile<T>(string Path, ICollection<T> Records, CsvFileConfiguration? Configuration) : RivuletCsvFile(Path, Configuration)
     where T : class;
 
 /// <summary>
@@ -47,6 +47,7 @@ public sealed class CsvFileConfiguration
     /// <summary>
     ///     Gets or sets an action to configure the CsvHelper context (ClassMap registration, type conversion, etc.).
     /// </summary>
+    // ReSharper disable once MemberCanBeInternal
     public Action<CsvContext>? CsvContextAction { get; init; }
 }
 
@@ -59,11 +60,13 @@ public sealed class CsvOperationOptions : BaseFileOperationOptions
     ///     Gets or sets the culture info to use for parsing and formatting values.
     ///     Default is InvariantCulture.
     /// </summary>
+    // ReSharper disable once MemberCanBeInternal
     public CultureInfo Culture { get; init; } = CultureInfo.InvariantCulture;
 
     /// <summary>
     ///     Gets or sets the default file configuration applied to all files unless overridden per-file.
     /// </summary>
+    // ReSharper disable once MemberCanBeInternal
     public CsvFileConfiguration FileConfiguration { get; init; } = new();
 
     /// <summary>

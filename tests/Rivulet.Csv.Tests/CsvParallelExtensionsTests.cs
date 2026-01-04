@@ -201,10 +201,115 @@ public sealed class CsvParallelExtensionsTests : IDisposable
     }
 
     [Fact]
+    public async Task TransformCsvParallelAsync_WithAsyncTransform_ShouldParseTransformAndWrite()
+    {
+        // Arrange
+        var inputPath = Path.Combine(_testDirectory, "input_async.csv");
+        var outputPath = Path.Combine(_testDirectory, "output_async.csv");
+
+        await File.WriteAllTextAsync(inputPath,
+            // ReSharper disable once GrammarMistakeInStringLiteral
+            """
+            Id,Name,Price
+            1,Product A,10.00
+            2,Product B,20.00
+            3,Product C,30.00
+            """);
+
+        var transformations = new[]
+        {
+            (
+                Input: new RivuletCsvReadFile<Product>(inputPath, null),
+                Output: new RivuletCsvWriteFile<EnrichedProduct>(outputPath, Array.Empty<EnrichedProduct>(), null)
+            )
+        };
+
+        // Act - Use async transform function that simulates async I/O
+        await transformations.TransformCsvParallelAsync(
+            static async (p, ct) =>
+            {
+                await Task.Delay(1, ct); // Simulate async operation
+                return new EnrichedProduct
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    OriginalPrice = p.Price,
+                    PriceWithTax = p.Price * 1.15m // 15% tax
+                };
+            },
+            new CsvOperationOptions
+            {
+                OverwriteExisting = true
+            });
+
+        // Assert
+        File.Exists(outputPath).ShouldBeTrue();
+        var content = await File.ReadAllTextAsync(outputPath);
+        content.ShouldContain("PriceWithTax");
+        content.ShouldContain("11.5"); // 10 * 1.15 = 11.5
+        content.ShouldContain("23"); // 20 * 1.15 = 23
+        content.ShouldContain("34.5"); // 30 * 1.15 = 34.5
+    }
+
+    [Fact]
+    public async Task TransformCsvParallelAsync_WithAsyncTransformAndCancellation_ShouldRespectCancellation()
+    {
+        // Arrange
+        var inputPath = Path.Combine(_testDirectory, "input_cancel.csv");
+        var outputPath = Path.Combine(_testDirectory, "output_cancel.csv");
+
+        var records = Enumerable.Range(1, 100)
+            .Select(static i => $"{i},Product {i},{i * 10.0:F2}")
+            .ToArray();
+        await File.WriteAllTextAsync(inputPath, $"Id,Name,Price\n{string.Join("\n", records)}");
+
+        var transformations = new[]
+        {
+            (
+                Input: new RivuletCsvReadFile<Product>(inputPath, null),
+                Output: new RivuletCsvWriteFile<EnrichedProduct>(outputPath, Array.Empty<EnrichedProduct>(), null)
+            )
+        };
+
+        var cts = new CancellationTokenSource();
+        var transformCount = 0;
+
+        // Act & Assert
+        await Should.ThrowAsync<OperationCanceledException>(() =>
+        {
+            return transformations.TransformCsvParallelAsync(
+                async (p, ct) =>
+                {
+                    Interlocked.Increment(ref transformCount);
+                    if (transformCount > 10)
+                        await cts.CancelAsync();
+
+                    await Task.Delay(1, ct);
+                    return new EnrichedProduct
+                    {
+                        Id = p.Id,
+                        Name = p.Name,
+                        OriginalPrice = p.Price,
+                        PriceWithTax = p.Price * 1.2m
+                    };
+                },
+                new CsvOperationOptions
+                {
+                    OverwriteExisting = true
+                },
+                cts.Token);
+        });
+
+        // Verify that cancellation stopped processing early
+        transformCount.ShouldBeLessThan(100);
+    }
+
+    [Fact]
     public async Task ParseCsvParallelAsync_WithCustomDelimiter_ShouldParseCorrectly()
     {
         // Arrange
         var csvPath = Path.Combine(_testDirectory, "semicolon.csv");
+        // ReSharper disable once GrammarMistakeInStringLiteral
         const string csvContent = """
                                   Id;Name;Price
                                   1;Product A;10.50
