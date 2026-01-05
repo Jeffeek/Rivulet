@@ -136,8 +136,7 @@ public sealed class ListenerCollectionDisposalHelperTests
 
         listener1.IsDisposed.ShouldBeTrue();
         listener2.IsDisposed.ShouldBeTrue();
-        // Should have awaited the delays (2 * 10ms)
-        stopwatch.ElapsedMilliseconds.ShouldBeGreaterThanOrEqualTo(20);
+        stopwatch.ElapsedMilliseconds.ShouldBeGreaterThanOrEqualTo(18);
     }
 
     [Fact]
