@@ -10,7 +10,8 @@ internal static class RetryPolicy
         ParallelOptionsRivulet options,
         MetricsTrackerBase metricsTracker,
         int itemIndex,
-        CancellationToken ct)
+        CancellationToken ct
+    )
     {
         var attempt = 0;
         var previousDelay = TimeSpan.Zero;

@@ -49,10 +49,12 @@ public abstract class RivuletEventListenerBase : EventListener
                 continue;
 
             var value = Convert.ToDouble(meanObj);
-            var displayName = eventPayload.TryGetValue(RivuletDiagnosticsConstants.EventCounterKeys.DisplayName, out var displayNameObj)
+            var displayName = eventPayload.TryGetValue(RivuletDiagnosticsConstants.EventCounterKeys.DisplayName,
+                out var displayNameObj)
                 ? displayNameObj.ToString()
                 : name;
-            var displayUnits = eventPayload.TryGetValue(RivuletDiagnosticsConstants.EventCounterKeys.DisplayUnits, out var displayUnitsObj)
+            var displayUnits = eventPayload.TryGetValue(RivuletDiagnosticsConstants.EventCounterKeys.DisplayUnits,
+                out var displayUnitsObj)
                 ? displayUnitsObj.ToString()
                 : string.Empty;
 
@@ -67,8 +69,10 @@ public abstract class RivuletEventListenerBase : EventListener
     /// <param name="displayName">The counter display name.</param>
     /// <param name="value">The counter value.</param>
     /// <param name="displayUnits">The counter display units.</param>
-    protected abstract void OnCounterReceived(string name,
+    protected abstract void OnCounterReceived(
+        string name,
         string displayName,
         double value,
-        string displayUnits);
+        string displayUnits
+    );
 }

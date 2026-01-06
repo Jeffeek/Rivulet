@@ -9,19 +9,14 @@ namespace Rivulet.Core.Resilience;
 /// </summary>
 internal sealed class CircuitBreaker
 {
-    private readonly CircuitBreakerOptions _options;
     private readonly ConcurrentQueue<long> _failureTimestamps;
     private readonly object _lock = LockFactory.CreateLock();
-
-    private CircuitBreakerState _state;
+    private readonly CircuitBreakerOptions _options;
     private int _consecutiveFailures;
     private int _consecutiveSuccesses;
     private long _openedAtTicks;
 
-    /// <summary>
-    ///     Gets the current state of the circuit breaker.
-    /// </summary>
-    public CircuitBreakerState State => LockHelper.Execute(_lock, () => _state);
+    private CircuitBreakerState _state;
 
     /// <summary>
     ///     Initializes a new instance of the CircuitBreaker class.
@@ -40,6 +35,11 @@ internal sealed class CircuitBreaker
     }
 
     /// <summary>
+    ///     Gets the current state of the circuit breaker.
+    /// </summary>
+    public CircuitBreakerState State => LockHelper.Execute(_lock, () => _state);
+
+    /// <summary>
     ///     Executes an operation with circuit breaker protection.
     /// </summary>
     /// <typeparam name="T">The result type.</typeparam>
@@ -47,8 +47,10 @@ internal sealed class CircuitBreaker
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The result of the operation.</returns>
     /// <exception cref="CircuitBreakerOpenException">Thrown when circuit is open.</exception>
-    public async ValueTask<T> ExecuteAsync<T>(Func<ValueTask<T>> operation,
-        CancellationToken cancellationToken = default)
+    public async ValueTask<T> ExecuteAsync<T>(
+        Func<ValueTask<T>> operation,
+        CancellationToken cancellationToken = default
+    )
     {
         await BeforeExecuteAsync(cancellationToken).ConfigureAwait(false);
 

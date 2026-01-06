@@ -43,7 +43,8 @@ public static class PollyAdvancedExtensions
         int maxHedgedAttempts = 2,
         TimeSpan? hedgingDelay = null,
         ParallelOptionsRivulet? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(selector);
@@ -113,7 +114,8 @@ public static class PollyAdvancedExtensions
         int maxRetries = 3,
         TimeSpan? delayBetweenRetries = null,
         ParallelOptionsRivulet? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(selector);
@@ -174,7 +176,8 @@ public static class PollyAdvancedExtensions
         int maxRetries = 3,
         TimeSpan? baseDelay = null,
         ParallelOptionsRivulet? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(selector);

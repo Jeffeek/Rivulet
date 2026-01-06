@@ -347,11 +347,12 @@ public sealed class RivuletEventListenerBaseTests : IDisposable
     {
         public ConcurrentDictionary<string, CounterData> ReceivedCounters { get; } = new();
 
-        protected override void OnCounterReceived(string name,
+        protected override void OnCounterReceived(
+            string name,
             string displayName,
             double value,
-            string displayUnits) =>
-            ReceivedCounters[name] = new(displayName, displayUnits);
+            string displayUnits
+        ) => ReceivedCounters[name] = new(displayName, displayUnits);
     }
 
     private sealed record CounterData(string DisplayName, string DisplayUnits);

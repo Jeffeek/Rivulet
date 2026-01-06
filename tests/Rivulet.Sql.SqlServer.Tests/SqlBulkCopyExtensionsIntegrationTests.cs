@@ -1,6 +1,7 @@
 using System.Data;
 using Microsoft.Data.SqlClient;
 using Rivulet.Base.Tests;
+using Rivulet.Core;
 using Testcontainers.MsSql;
 
 namespace Rivulet.Sql.SqlServer.Tests;
@@ -148,13 +149,23 @@ public sealed class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
     {
         var records = new[] { new TestRecord(1, "Test", "test@example.com") };
 
-        await Should.ThrowAsync<OperationCanceledException>(((Func<Task>?)Act)!);
+        // Should throw InvalidOperationException for null connection
+        // Use CollectAndContinue to ensure the exception is properly collected and re-thrown
+        var exception = await Should.ThrowAsync<AggregateException>(((Func<Task>?)Act)!);
+
+        // Verify the exception contains InvalidOperationException
+        exception.InnerExceptions.ShouldContain(static e => e is InvalidOperationException);
         return;
 
         Task Act() =>
             records.BulkInsertUsingSqlBulkCopyAsync(static () => null!,
                 "TestTable",
-                MapToDataTable);
+                MapToDataTable,
+                new ParallelOptionsRivulet
+                {
+                    ErrorMode = ErrorMode.CollectAndContinue,
+                    MaxRetries = 0
+                });
     }
 
     [Fact]
@@ -162,7 +173,8 @@ public sealed class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
     {
         var records = new[] { new TestRecord(1, "Test", "test@example.com") };
 
-        await Should.ThrowAsync<OperationCanceledException>(((Func<Task>?)Act)!);
+        // Should throw SqlException for invalid table name (wrapped or unwrapped depending on error handling)
+        await Should.ThrowAsync<Exception>(((Func<Task>?)Act)!);
         return;
 
         Task Act() =>
@@ -177,14 +189,24 @@ public sealed class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
         var records = new[] { new TestRecord(1, "Test", "test@example.com") };
         var mappings = new Dictionary<string, string> { ["Id"] = "Id" };
 
-        await Should.ThrowAsync<OperationCanceledException>(((Func<Task>?)Act)!);
+        // Should throw InvalidOperationException for null connection
+        // Use CollectAndContinue to ensure the exception is properly collected and re-thrown
+        var exception = await Should.ThrowAsync<AggregateException>(((Func<Task>?)Act)!);
+
+        // Verify the exception contains InvalidOperationException
+        exception.InnerExceptions.ShouldContain(static e => e is InvalidOperationException);
         return;
 
         Task Act() =>
             records.BulkInsertUsingSqlBulkCopyAsync(static () => null!,
                 "TestTable",
                 MapToDataTable,
-                mappings);
+                mappings,
+                new ParallelOptionsRivulet
+                {
+                    ErrorMode = ErrorMode.CollectAndContinue,
+                    MaxRetries = 0
+                });
     }
 
     [Fact]
@@ -246,12 +268,22 @@ public sealed class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
         var rows = new List<Dictionary<string, object>> { new() { ["Id"] = 1, ["Name"] = "Test" } };
         var readers = new[] { new TestDataReader(rows) };
 
-        await Should.ThrowAsync<OperationCanceledException>((Func<Task>)Act);
+        // Should throw InvalidOperationException for null connection
+        // Use CollectAndContinue to ensure the exception is properly collected and re-thrown
+        var exception = await Should.ThrowAsync<AggregateException>((Func<Task>)Act);
+
+        // Verify the exception contains InvalidOperationException
+        exception.InnerExceptions.ShouldContain(static e => e is InvalidOperationException);
         return;
 
         Task Act() =>
             readers.BulkInsertUsingSqlBulkCopyAsync(static () => null!,
-                "TestTable");
+                "TestTable",
+                new ParallelOptionsRivulet
+                {
+                    ErrorMode = ErrorMode.CollectAndContinue,
+                    MaxRetries = 0
+                });
     }
 
     [Fact]

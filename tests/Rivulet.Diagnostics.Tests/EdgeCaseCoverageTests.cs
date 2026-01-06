@@ -300,10 +300,11 @@ public sealed class EdgeCaseCoverageTests
     {
         public List<string> ReceivedCounters { get; } = new();
 
-        protected override void OnCounterReceived(string name,
+        protected override void OnCounterReceived(
+            string name,
             string displayName,
             double value,
-            string displayUnits) =>
-            ReceivedCounters.Add(name);
+            string displayUnits
+        ) => ReceivedCounters.Add(name);
     }
 }

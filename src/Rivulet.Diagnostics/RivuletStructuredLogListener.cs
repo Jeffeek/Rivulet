@@ -25,9 +25,9 @@ namespace Rivulet.Diagnostics;
 public sealed class RivuletStructuredLogListener : RivuletEventListenerBase, IAsyncDisposable
 {
     private readonly string? _filePath;
-    private readonly Action<string>? _logAction;
     private readonly JsonSerializerOptions _jsonOptions;
     private readonly object _lock = LockFactory.CreateLock();
+    private readonly Action<string>? _logAction;
     private StreamWriter? _writer;
 
     /// <summary>
@@ -55,12 +55,31 @@ public sealed class RivuletStructuredLogListener : RivuletEventListenerBase, IAs
     }
 
     /// <summary>
+    ///     Disposes the structured log listener asynchronously and closes the file if applicable.
+    /// </summary>
+    public async ValueTask DisposeAsync()
+    {
+        // Extract writer under lock to ensure thread-safety and dispose outside lock to avoid holding lock during async I/O
+        await StreamWriterDisposalHelper.ExtractAndDisposeAsync(_lock,
+            () =>
+            {
+                var w = _writer;
+                _writer = null;
+                return w;
+            }).ConfigureAwait(false);
+
+        base.Dispose();
+    }
+
+    /// <summary>
     ///     Called when a counter value is received.
     /// </summary>
-    protected override void OnCounterReceived(string name,
+    protected override void OnCounterReceived(
+        string name,
         string displayName,
         double value,
-        string displayUnits)
+        string displayUnits
+    )
     {
         var logEntry = new
         {
@@ -106,23 +125,6 @@ public sealed class RivuletStructuredLogListener : RivuletEventListenerBase, IAs
                 _writer = null;
                 return w;
             });
-
-        base.Dispose();
-    }
-
-    /// <summary>
-    ///     Disposes the structured log listener asynchronously and closes the file if applicable.
-    /// </summary>
-    public async ValueTask DisposeAsync()
-    {
-        // Extract writer under lock to ensure thread-safety and dispose outside lock to avoid holding lock during async I/O
-        await StreamWriterDisposalHelper.ExtractAndDisposeAsync(_lock,
-            () =>
-            {
-                var w = _writer;
-                _writer = null;
-                return w;
-            }).ConfigureAwait(false);
 
         base.Dispose();
     }

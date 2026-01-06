@@ -42,17 +42,14 @@ public static class PollyParallelExtensions
         Func<TSource, CancellationToken, ValueTask<TResult>> selector,
         ResiliencePipeline policy,
         ParallelOptionsRivulet? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(selector);
         ArgumentNullException.ThrowIfNull(policy);
 
-        return source.SelectParallelAsync((item, ct) =>
-            {
-                return policy.ExecuteAsync(token => selector(item, token),
-                    ct);
-            },
+        return source.SelectParallelAsync((item, ct) => policy.ExecuteAsync(token => selector(item, token), ct),
             options,
             cancellationToken);
     }
@@ -94,17 +91,14 @@ public static class PollyParallelExtensions
         Func<TSource, CancellationToken, ValueTask<TResult>> selector,
         ResiliencePipeline<TResult> policy,
         ParallelOptionsRivulet? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(selector);
         ArgumentNullException.ThrowIfNull(policy);
 
-        return source.SelectParallelAsync((item, ct) =>
-            {
-                return policy.ExecuteAsync(token => selector(item, token),
-                    ct);
-            },
+        return source.SelectParallelAsync((item, ct) => policy.ExecuteAsync(token => selector(item, token), ct),
             options,
             cancellationToken);
     }
@@ -139,7 +133,8 @@ public static class PollyParallelExtensions
         Func<TSource, CancellationToken, ValueTask> action,
         ResiliencePipeline policy,
         ParallelOptionsRivulet? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(action);

@@ -27,7 +27,8 @@ public static class SqlParallelExtensions
         Func<IDbConnection> connectionFactory,
         Func<IDataReader, TResult> readerMapper,
         SqlOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(queries);
         ArgumentNullException.ThrowIfNull(connectionFactory);
@@ -60,7 +61,8 @@ public static class SqlParallelExtensions
         Func<IDbConnection> connectionFactory,
         Func<IDataReader, TResult> readerMapper,
         SqlOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(queriesWithParams);
         ArgumentNullException.ThrowIfNull(connectionFactory);
@@ -91,7 +93,8 @@ public static class SqlParallelExtensions
         this IEnumerable<string> commands,
         Func<IDbConnection> connectionFactory,
         SqlOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(commands);
         ArgumentNullException.ThrowIfNull(connectionFactory);
@@ -117,7 +120,8 @@ public static class SqlParallelExtensions
         this IEnumerable<(string command, Action<IDbCommand> configureParams)> commandsWithParams,
         Func<IDbConnection> connectionFactory,
         SqlOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(commandsWithParams);
         ArgumentNullException.ThrowIfNull(connectionFactory);
@@ -144,7 +148,8 @@ public static class SqlParallelExtensions
         this IEnumerable<string> queries,
         Func<IDbConnection> connectionFactory,
         SqlOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(queries);
         ArgumentNullException.ThrowIfNull(connectionFactory);
@@ -173,7 +178,8 @@ public static class SqlParallelExtensions
         this IEnumerable<(string query, Action<IDbCommand> configureParams)> queriesWithParams,
         Func<IDbConnection> connectionFactory,
         SqlOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(queriesWithParams);
         ArgumentNullException.ThrowIfNull(connectionFactory);
@@ -195,7 +201,8 @@ public static class SqlParallelExtensions
         Func<IDataReader, TResult> readerMapper,
         SqlOptions options,
         CancellationToken cancellationToken,
-        Action<IDbCommand>? configureParams = null)
+        Action<IDbCommand>? configureParams = null
+    )
     {
         var connection = SqlConnectionHelper.CreateAndValidate(connectionFactory);
         using (connection)
@@ -233,7 +240,8 @@ public static class SqlParallelExtensions
         Func<IDbConnection> connectionFactory,
         SqlOptions options,
         CancellationToken cancellationToken,
-        Action<IDbCommand>? configureParams = null)
+        Action<IDbCommand>? configureParams = null
+    )
     {
         var connection = SqlConnectionHelper.CreateAndValidate(connectionFactory);
         using (connection)
@@ -270,7 +278,8 @@ public static class SqlParallelExtensions
         Func<IDbConnection> connectionFactory,
         SqlOptions options,
         CancellationToken cancellationToken,
-        Action<IDbCommand>? configureParams = null)
+        Action<IDbCommand>? configureParams = null
+    )
     {
         var connection = SqlConnectionHelper.CreateAndValidate(connectionFactory);
         using (connection)

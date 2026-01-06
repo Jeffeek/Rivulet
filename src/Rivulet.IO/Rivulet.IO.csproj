@@ -27,6 +27,8 @@
   </ItemGroup>
   <ItemGroup>
   	<InternalsVisibleTo Include="Rivulet.IO.Tests" />
+  	<InternalsVisibleTo Include="Rivulet.Csv" />
+  	<InternalsVisibleTo Include="Rivulet.Csv.Tests" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Rivulet.Core\Rivulet.Core.csproj" />

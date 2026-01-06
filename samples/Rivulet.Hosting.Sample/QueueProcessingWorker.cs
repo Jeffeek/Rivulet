@@ -13,8 +13,8 @@ public sealed class QueueProcessingWorker : ParallelBackgroundService<string>
 
     public QueueProcessingWorker(
         IOptions<ParallelOptionsRivulet> options,
-        ILogger<QueueProcessingWorker> logger)
-        : base(logger, options.Value)
+        ILogger<QueueProcessingWorker> logger
+    ) : base(logger, options.Value)
     {
         _queue = Channel.CreateUnbounded<string>();
 

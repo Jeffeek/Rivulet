@@ -21,7 +21,8 @@ internal static class DisposalHelper
         Task task,
         TimeSpan waitTimeout,
         Stopwatch? stopwatch = null,
-        Func<ValueTask>? finalWork = null)
+        Func<ValueTask>? finalWork = null
+    )
     {
         // Cancel the background task
         await cts.CancelAsync().ConfigureAwait(false);

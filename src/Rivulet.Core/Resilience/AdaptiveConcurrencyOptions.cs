@@ -71,31 +71,58 @@ public sealed class AdaptiveConcurrencyOptions
     public Func<int, int, ValueTask>? OnConcurrencyChange { get; init; }
 
     /// <summary>
+    ///     Initializes a new instance of the <see cref="AdaptiveConcurrencyOptions"/> class with default values.
+    /// </summary>
+    public AdaptiveConcurrencyOptions() { }
+
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="AdaptiveConcurrencyOptions"/> class by copying values from another instance.
+    /// </summary>
+    /// <param name="original">The original instance to copy from. If null, default values are used.</param>
+    public AdaptiveConcurrencyOptions(AdaptiveConcurrencyOptions? original)
+    {
+        if (original is null)
+            return;
+
+        MinConcurrency = original.MinConcurrency;
+        MaxConcurrency = original.MaxConcurrency;
+        InitialConcurrency = original.InitialConcurrency;
+        SampleInterval = original.SampleInterval;
+        TargetLatency = original.TargetLatency;
+        MinSuccessRate = original.MinSuccessRate;
+        IncreaseStrategy = original.IncreaseStrategy;
+        DecreaseStrategy = original.DecreaseStrategy;
+        OnConcurrencyChange = original.OnConcurrencyChange;
+    }
+
+    /// <summary>
     ///     Validates the adaptive concurrency options.
     /// </summary>
     /// <exception cref="ArgumentException">Thrown when options are invalid.</exception>
-    internal void Validate()
+    internal void Validate() => Validate(this);
+
+    private static void Validate(AdaptiveConcurrencyOptions options)
     {
-        if (MinConcurrency <= 0)
+        if (options.MinConcurrency <= 0)
             throw new ArgumentException("MinConcurrency must be greater than 0.", nameof(MinConcurrency));
 
-        if (MaxConcurrency < MinConcurrency)
+        if (options.MaxConcurrency < options.MinConcurrency)
             throw new ArgumentException("MaxConcurrency must be greater than or equal to MinConcurrency.", nameof(MaxConcurrency));
 
-        if (InitialConcurrency.HasValue &&
-            (InitialConcurrency.Value < MinConcurrency || InitialConcurrency.Value > MaxConcurrency))
+        if (options.InitialConcurrency.HasValue &&
+            (options.InitialConcurrency.Value < options.MinConcurrency || options.InitialConcurrency.Value > options.MaxConcurrency))
         {
             throw new ArgumentException("InitialConcurrency must be between MinConcurrency and MaxConcurrency.",
                 nameof(InitialConcurrency));
         }
 
-        if (SampleInterval <= TimeSpan.Zero)
+        if (options.SampleInterval <= TimeSpan.Zero)
             throw new ArgumentException("SampleInterval must be greater than zero.", nameof(SampleInterval));
 
-        if (TargetLatency.HasValue && TargetLatency.Value <= TimeSpan.Zero)
+        if (options.TargetLatency.HasValue && options.TargetLatency.Value <= TimeSpan.Zero)
             throw new ArgumentException("TargetLatency must be greater than zero when specified.", nameof(TargetLatency));
 
-        if (MinSuccessRate is < 0.0 or > 1.0)
+        if (options.MinSuccessRate is < 0.0 or > 1.0)
             throw new ArgumentException("MinSuccessRate must be between 0.0 and 1.0.", nameof(MinSuccessRate));
     }
 }

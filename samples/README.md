@@ -296,6 +296,37 @@ dotnet run
 
 ---
 
+### 13. Rivulet.Csv.Sample
+**Package:** `Rivulet.Csv`
+
+Parallel CSV parsing and writing for Rivulet with CsvHelper integration, bounded concurrency, and batching support for high-throughput data processing
+
+- **ParseCsvParallelAsync** - Parse multiple CSV files in parallel and return all records as a flattened list
+- **ParseCsvParallelGroupedAsync** - Parse multiple CSV file groups in parallel with per-file configuration, returning records grouped by file path
+- **ParseCsvParallelGroupedAsync (Multi-Type)** - Parse 2-5 different record types concurrently with grouped results
+- **StreamCsvParallelAsync** - Stream CSV records as IAsyncEnumerable with memory-efficient processing
+- **WriteCsvParallelAsync** - Write collections of records to multiple CSV files in parallel with per-file configuration
+- **WriteCsvParallelAsync (Multi-Type)** - Write 2-5 different record types to separate files concurrently
+- **TransformCsvParallelAsync** - Transform CSV files in parallel applying sync or async transformation functions
+
+**Run:**
+```bash
+cd Rivulet.Csv.Sample
+dotnet run
+```
+
+**Key Features:**
+- CsvHelper integration for robust CSV parsing
+- Multi-type operations (2-5 generic type parameters)
+- Memory-efficient streaming with IAsyncEnumerable
+- Per-file CSV configuration (delimiters, culture, class maps)
+- Progress tracking and lifecycle callbacks
+- Error handling modes (FailFast, CollectAndContinue, BestEffort)
+- Circuit breaker and retry support
+- Ordered and unordered output options
+
+---
+
 ## Running All Samples
 
 To build all samples:

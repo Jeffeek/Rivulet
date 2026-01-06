@@ -1,8 +1,8 @@
-using Rivulet.Core;
-using Rivulet.Core.Resilience;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using Rivulet.Core;
+using Rivulet.Core.Resilience;
 
 namespace Rivulet.Diagnostics.OpenTelemetry;
 
@@ -17,7 +17,8 @@ public static class ParallelOptionsRivuletExtensions
     /// </summary>
     public static ParallelOptionsRivulet WithOpenTelemetryTracing(
         this ParallelOptionsRivulet options,
-        string operationName) => CreateTracingOptions(options, operationName, false);
+        string operationName
+    ) => CreateTracingOptions(options, operationName, false);
 
     /// <summary>
     ///     Adds OpenTelemetry distributed tracing with retry tracking to Rivulet parallel operations.
@@ -25,13 +26,15 @@ public static class ParallelOptionsRivuletExtensions
     public static ParallelOptionsRivulet WithOpenTelemetryTracingAndRetries(
         this ParallelOptionsRivulet options,
         string operationName,
-        bool trackRetries = true) =>
+        bool trackRetries = true
+    ) =>
         CreateTracingOptions(options, operationName, trackRetries && options.MaxRetries > 0);
 
     private static ParallelOptionsRivulet CreateTracingOptions(
         ParallelOptionsRivulet options,
         string operationName,
-        bool trackRetries)
+        bool trackRetries
+    )
     {
         var itemActivities = new ConcurrentDictionary<int, Activity>();
         var asyncLocalActivity = new AsyncLocal<Activity?>();
@@ -118,7 +121,8 @@ public static class ParallelOptionsRivuletExtensions
                         asyncLocalActivity.Value = null;
                     }
 
-                    return options.OnErrorAsync is null || await options.OnErrorAsync(index, exception).ConfigureAwait(false);
+                    return options.OnErrorAsync is null ||
+                           await options.OnErrorAsync(index, exception).ConfigureAwait(false);
                 }
                 finally
                 {
@@ -126,14 +130,16 @@ public static class ParallelOptionsRivuletExtensions
                 }
             },
             CircuitBreaker = CreateCircuitBreakerOptions(options.CircuitBreaker, itemActivities, asyncLocalActivity),
-            AdaptiveConcurrency = CreateAdaptiveConcurrencyOptions(options.AdaptiveConcurrency, itemActivities, asyncLocalActivity)
+            AdaptiveConcurrency =
+                CreateAdaptiveConcurrencyOptions(options.AdaptiveConcurrency, itemActivities, asyncLocalActivity)
         };
     }
 
     private static CircuitBreakerOptions? CreateCircuitBreakerOptions(
         CircuitBreakerOptions? sourceOptions,
         ConcurrentDictionary<int, Activity> itemActivities,
-        AsyncLocal<Activity?> asyncLocalActivity)
+        AsyncLocal<Activity?> asyncLocalActivity
+    )
     {
         if (sourceOptions is null) return null;
 
@@ -156,7 +162,8 @@ public static class ParallelOptionsRivuletExtensions
     private static AdaptiveConcurrencyOptions? CreateAdaptiveConcurrencyOptions(
         AdaptiveConcurrencyOptions? sourceOptions,
         ConcurrentDictionary<int, Activity> itemActivities,
-        AsyncLocal<Activity?> asyncLocalActivity)
+        AsyncLocal<Activity?> asyncLocalActivity
+    )
     {
         if (sourceOptions is null)
             return null;
@@ -187,7 +194,8 @@ public static class ParallelOptionsRivuletExtensions
     private static Activity? GetItemActivity(
         AsyncLocal<Activity?> asyncLocalActivity,
         ConcurrentDictionary<int, Activity> itemActivities,
-        int index) =>
+        int index
+    ) =>
         asyncLocalActivity.Value ?? itemActivities.GetValueOrDefault(index);
 
     /// <summary>
@@ -196,6 +204,7 @@ public static class ParallelOptionsRivuletExtensions
     /// </summary>
     private static Activity? GetCurrentActivityForStateChange(
         AsyncLocal<Activity?> asyncLocalActivity,
-        ConcurrentDictionary<int, Activity> itemActivities) =>
+        ConcurrentDictionary<int, Activity> itemActivities
+    ) =>
         asyncLocalActivity.Value ?? Activity.Current ?? itemActivities.Values.FirstOrDefault();
 }

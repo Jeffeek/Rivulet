@@ -1,6 +1,6 @@
+using System.Diagnostics.CodeAnalysis;
 using Rivulet.Core.Internal;
 using Rivulet.Diagnostics.Internal;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Rivulet.Diagnostics;
 
@@ -33,11 +33,61 @@ namespace Rivulet.Diagnostics;
 [SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public sealed class DiagnosticsBuilder : IDisposable, IAsyncDisposable
 {
+    private readonly List<IAsyncDisposable> _asyncListeners = [];
     private readonly object _disposeLock = LockFactory.CreateLock();
-    private bool _disposed;
 
     private readonly List<IDisposable> _listeners = [];
-    private readonly List<IAsyncDisposable> _asyncListeners = [];
+    private bool _disposed;
+
+    /// <summary>
+    ///     Disposes all registered listeners asynchronously.
+    ///     This is the preferred disposal method for proper async cleanup.
+    /// </summary>
+    public async ValueTask DisposeAsync()
+    {
+        var shouldDispose = false;
+
+        LockHelper.Execute(_disposeLock,
+            () =>
+            {
+                if (_disposed) return;
+
+                _disposed = true;
+                shouldDispose = true;
+            });
+
+        if (!shouldDispose) return;
+
+        // Dispose async listeners first (preferred)
+        await ListenerCollectionDisposalHelper.DisposeAllAsync(_asyncListeners).ConfigureAwait(false);
+        _asyncListeners.Clear();
+
+        // Then dispose synchronous listeners
+        ListenerCollectionDisposalHelper.DisposeAll(_listeners);
+        _listeners.Clear();
+    }
+
+    /// <summary>
+    ///     Disposes all registered listeners synchronously.
+    ///     Only disposes synchronous listeners. Use DisposeAsync for proper async disposal.
+    /// </summary>
+    public void Dispose() =>
+        LockHelper.Execute(_disposeLock,
+            () =>
+            {
+                if (_disposed) return;
+
+                _disposed = true;
+
+                // Dispose synchronous listeners
+                ListenerCollectionDisposalHelper.DisposeAll(_listeners);
+                _listeners.Clear();
+
+                // For async listeners, we can only dispose them synchronously (not ideal but necessary for IDisposable)
+                // Users should prefer DisposeAsync for proper async disposal
+                ListenerCollectionDisposalHelper.DisposeAllAsyncBlocking(_asyncListeners);
+                _asyncListeners.Clear();
+            });
 
     /// <summary>
     ///     Adds a console listener to the diagnostics pipeline.
@@ -90,8 +140,10 @@ public sealed class DiagnosticsBuilder : IDisposable, IAsyncDisposable
     /// <param name="aggregationWindow">The time window for aggregation.</param>
     /// <param name="onAggregation">Action to invoke when metrics are aggregated.</param>
     /// <returns>The builder for chaining.</returns>
-    public DiagnosticsBuilder AddMetricsAggregator(TimeSpan aggregationWindow,
-        Action<IReadOnlyList<AggregatedMetrics>> onAggregation)
+    public DiagnosticsBuilder AddMetricsAggregator(
+        TimeSpan aggregationWindow,
+        Action<IReadOnlyList<AggregatedMetrics>> onAggregation
+    )
     {
         var aggregator = new MetricsAggregator(aggregationWindow);
         aggregator.OnAggregation += onAggregation;
@@ -128,54 +180,4 @@ public sealed class DiagnosticsBuilder : IDisposable, IAsyncDisposable
     /// </summary>
     /// <returns>The builder instance for disposal.</returns>
     public DiagnosticsBuilder Build() => this;
-
-    /// <summary>
-    ///     Disposes all registered listeners synchronously.
-    ///     Only disposes synchronous listeners. Use DisposeAsync for proper async disposal.
-    /// </summary>
-    public void Dispose() =>
-        LockHelper.Execute(_disposeLock,
-            () =>
-            {
-                if (_disposed) return;
-
-                _disposed = true;
-
-                // Dispose synchronous listeners
-                ListenerCollectionDisposalHelper.DisposeAll(_listeners);
-                _listeners.Clear();
-
-                // For async listeners, we can only dispose them synchronously (not ideal but necessary for IDisposable)
-                // Users should prefer DisposeAsync for proper async disposal
-                ListenerCollectionDisposalHelper.DisposeAllAsyncBlocking(_asyncListeners);
-                _asyncListeners.Clear();
-            });
-
-    /// <summary>
-    ///     Disposes all registered listeners asynchronously.
-    ///     This is the preferred disposal method for proper async cleanup.
-    /// </summary>
-    public async ValueTask DisposeAsync()
-    {
-        var shouldDispose = false;
-
-        LockHelper.Execute(_disposeLock,
-            () =>
-            {
-                if (_disposed) return;
-
-                _disposed = true;
-                shouldDispose = true;
-            });
-
-        if (!shouldDispose) return;
-
-        // Dispose async listeners first (preferred)
-        await ListenerCollectionDisposalHelper.DisposeAllAsync(_asyncListeners).ConfigureAwait(false);
-        _asyncListeners.Clear();
-
-        // Then dispose synchronous listeners
-        ListenerCollectionDisposalHelper.DisposeAll(_listeners);
-        _listeners.Clear();
-    }
 }

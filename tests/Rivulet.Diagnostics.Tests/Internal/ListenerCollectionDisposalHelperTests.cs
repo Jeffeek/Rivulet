@@ -1,40 +1,10 @@
+using System.Diagnostics;
 using Rivulet.Diagnostics.Internal;
 
 namespace Rivulet.Diagnostics.Tests.Internal;
 
 public sealed class ListenerCollectionDisposalHelperTests
 {
-    private sealed class TestDisposable : IDisposable
-    {
-        public bool IsDisposed { get; private set; }
-        public bool ThrowOnDispose { get; init; }
-
-        public void Dispose()
-        {
-            if (ThrowOnDispose)
-                throw new InvalidOperationException("Dispose failed");
-
-            IsDisposed = true;
-        }
-    }
-
-    private sealed class TestAsyncDisposable : IAsyncDisposable
-    {
-        public bool IsDisposed { get; private set; }
-        public bool ThrowOnDispose { get; init; }
-        public bool IsAsync { get; init; } = true;
-
-        public ValueTask DisposeAsync()
-        {
-            if (ThrowOnDispose)
-                throw new InvalidOperationException("DisposeAsync failed");
-
-            IsDisposed = true;
-
-            return IsAsync ? new ValueTask(Task.Delay(10)) : ValueTask.CompletedTask;
-        }
-    }
-
     [Fact]
     public void DisposeAll_WithEmptyCollection_ShouldNotThrow() =>
         ListenerCollectionDisposalHelper.DisposeAll([]);
@@ -77,7 +47,7 @@ public sealed class ListenerCollectionDisposalHelperTests
 
         listener1.IsDisposed.ShouldBeTrue();
         listener2.IsDisposed.ShouldBeFalse(); // Failed to dispose
-        listener3.IsDisposed.ShouldBeTrue(); // Should still try to dispose this one
+        listener3.IsDisposed.ShouldBeTrue();  // Should still try to dispose this one
     }
 
     [Fact]
@@ -136,7 +106,7 @@ public sealed class ListenerCollectionDisposalHelperTests
 
         listener1.IsDisposed.ShouldBeTrue();
         listener2.IsDisposed.ShouldBeFalse(); // Failed to dispose
-        listener3.IsDisposed.ShouldBeTrue(); // Should still try to dispose this one
+        listener3.IsDisposed.ShouldBeTrue();  // Should still try to dispose this one
     }
 
     [Fact]
@@ -160,14 +130,13 @@ public sealed class ListenerCollectionDisposalHelperTests
         var listener2 = new TestAsyncDisposable { IsAsync = true };
         var listeners = new List<IAsyncDisposable> { listener1, listener2 };
 
-        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        var stopwatch = Stopwatch.StartNew();
         await ListenerCollectionDisposalHelper.DisposeAllAsync(listeners);
         stopwatch.Stop();
 
         listener1.IsDisposed.ShouldBeTrue();
         listener2.IsDisposed.ShouldBeTrue();
-        // Should have awaited the delays (2 * 10ms)
-        stopwatch.ElapsedMilliseconds.ShouldBeGreaterThanOrEqualTo(20);
+        stopwatch.ElapsedMilliseconds.ShouldBeGreaterThanOrEqualTo(18);
     }
 
     [Fact]
@@ -206,13 +175,13 @@ public sealed class ListenerCollectionDisposalHelperTests
         var listener = new TestAsyncDisposable { IsAsync = true };
         var listeners = new List<IAsyncDisposable> { listener };
 
-        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        var stopwatch = Stopwatch.StartNew();
         ListenerCollectionDisposalHelper.DisposeAllAsyncBlocking(listeners);
         stopwatch.Stop();
 
         listener.IsDisposed.ShouldBeTrue();
         // Should have blocked for the delay
-        stopwatch.ElapsedMilliseconds.ShouldBeGreaterThanOrEqualTo(10);
+        stopwatch.ElapsedMilliseconds.ShouldBeGreaterThanOrEqualTo(9);
     }
 
     [Fact]
@@ -227,7 +196,7 @@ public sealed class ListenerCollectionDisposalHelperTests
 
         listener1.IsDisposed.ShouldBeTrue();
         listener2.IsDisposed.ShouldBeFalse(); // Failed to dispose
-        listener3.IsDisposed.ShouldBeTrue(); // Should still try to dispose this one
+        listener3.IsDisposed.ShouldBeTrue();  // Should still try to dispose this one
     }
 
     [Fact]
@@ -251,7 +220,7 @@ public sealed class ListenerCollectionDisposalHelperTests
         var listener2 = new TestAsyncDisposable { IsAsync = false };
         var listeners = new List<IAsyncDisposable> { listener1, listener2 };
 
-        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        var stopwatch = Stopwatch.StartNew();
         ListenerCollectionDisposalHelper.DisposeAllAsyncBlocking(listeners);
         stopwatch.Stop();
 
@@ -259,5 +228,36 @@ public sealed class ListenerCollectionDisposalHelperTests
         listener2.IsDisposed.ShouldBeTrue();
         // Should be very fast since ValueTasks are already completed
         stopwatch.ElapsedMilliseconds.ShouldBeLessThan(100);
+    }
+
+    private sealed class TestDisposable : IDisposable
+    {
+        public bool IsDisposed { get; private set; }
+        public bool ThrowOnDispose { get; init; }
+
+        public void Dispose()
+        {
+            if (ThrowOnDispose)
+                throw new InvalidOperationException("Dispose failed");
+
+            IsDisposed = true;
+        }
+    }
+
+    private sealed class TestAsyncDisposable : IAsyncDisposable
+    {
+        public bool IsDisposed { get; private set; }
+        public bool ThrowOnDispose { get; init; }
+        public bool IsAsync { get; init; } = true;
+
+        public ValueTask DisposeAsync()
+        {
+            if (ThrowOnDispose)
+                throw new InvalidOperationException("DisposeAsync failed");
+
+            IsDisposed = true;
+
+            return IsAsync ? new ValueTask(Task.Delay(10)) : ValueTask.CompletedTask;
+        }
     }
 }

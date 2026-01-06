@@ -9,21 +9,16 @@ namespace Rivulet.Core.Resilience;
 /// </summary>
 internal sealed class AdaptiveConcurrencyController : IAsyncDisposable
 {
-    private readonly AdaptiveConcurrencyOptions _options;
-    private readonly SemaphoreSlim _semaphore;
-    private readonly object _lock = LockFactory.CreateLock();
-    private readonly Timer _samplingTimer;
     private readonly List<double> _latencySamples = [];
+    private readonly object _lock = LockFactory.CreateLock();
+    private readonly AdaptiveConcurrencyOptions _options;
+    private readonly Timer _samplingTimer;
+    private readonly SemaphoreSlim _semaphore;
 
     private int _currentConcurrency;
-    private int _successCount;
-    private int _failureCount;
     private bool _disposed;
-
-    /// <summary>
-    ///     Gets the current concurrency level.
-    /// </summary>
-    public int CurrentConcurrency => LockHelper.Execute(_lock, () => _currentConcurrency);
+    private int _failureCount;
+    private int _successCount;
 
     /// <summary>
     ///     Initializes a new instance of the AdaptiveConcurrencyController class.
@@ -42,6 +37,23 @@ internal sealed class AdaptiveConcurrencyController : IAsyncDisposable
             null,
             _options.SampleInterval,
             _options.SampleInterval);
+    }
+
+    /// <summary>
+    ///     Gets the current concurrency level.
+    /// </summary>
+    public int CurrentConcurrency => LockHelper.Execute(_lock, () => _currentConcurrency);
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_disposed) return;
+
+        _disposed = true;
+
+        // Dispose timer - callback checks _disposed flag so it's safe to dispose immediately
+        await _samplingTimer.DisposeAsync().ConfigureAwait(false);
+
+        _semaphore.Dispose();
     }
 
     /// <summary>
@@ -165,17 +177,5 @@ internal sealed class AdaptiveConcurrencyController : IAsyncDisposable
             oldConcurrency,
             newConcurrency,
             nameof(AdaptiveConcurrencyOptions.OnConcurrencyChange));
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        if (_disposed) return;
-
-        _disposed = true;
-
-        // Dispose timer - callback checks _disposed flag so it's safe to dispose immediately
-        await _samplingTimer.DisposeAsync().ConfigureAwait(false);
-
-        _semaphore.Dispose();
     }
 }

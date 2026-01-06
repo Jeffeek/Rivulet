@@ -7,9 +7,10 @@ public sealed class TestHttpMessageHandler(
     Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> handler
 ) : HttpMessageHandler
 {
-    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
-        CancellationToken cancellationToken) =>
-        handler(request, cancellationToken);
+    protected override Task<HttpResponseMessage> SendAsync(
+        HttpRequestMessage request,
+        CancellationToken cancellationToken
+    ) => handler(request, cancellationToken);
 }
 
 /// <summary>
@@ -22,7 +23,8 @@ public static class TestHttpClientFactory
     /// </summary>
     public static HttpClient CreateTestClient(
         Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> handler,
-        string? baseAddress = "http://test.local")
+        string? baseAddress = "http://test.local"
+    )
     {
         var messageHandler = new TestHttpMessageHandler(handler);
         var client = new HttpClient(messageHandler);

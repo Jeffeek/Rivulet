@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <!-- Compile settings -->
+	<TargetFrameworks>net9.0;net8.0;</TargetFrameworks>
+	<LangVersion>12</LangVersion>
+  	<Nullable>enable</Nullable>
+  	<ImplicitUsings>enable</ImplicitUsings>
+  	<GenerateDocumentationFile>true</GenerateDocumentationFile>
+  	<IncludeSymbols>true</IncludeSymbols>
+    <!-- NuGet settings -->
+    <Version>1.4.0</Version>
+  	<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  	<PackageId>Rivulet.Csv</PackageId>
+  	<Title>Rivulet.Csv</Title>
+  	<Description>Parallel CSV parsing and writing for Rivulet with CsvHelper integration, bounded concurrency, and batching support for high-throughput data processing.</Description>
+  	<PackageTags>async;csv;parallel;parsing;writing;csvhelper;dotnet;etl;data-processing;batching</PackageTags>
+  	<PackageIcon>nuget_logo.png</PackageIcon>
+  	<PackageReadmeFile>README.md</PackageReadmeFile>
+  	<Authors>Jeffeek</Authors>
+  	<RepositoryUrl>https://github.com/Jeffeek/Rivulet</RepositoryUrl>
+  	<PackageProjectUrl>https://github.com/Jeffeek/Rivulet</PackageProjectUrl>
+  	<PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
+  <ItemGroup>
+  	<None Include="nuget_logo.png" Pack="true" PackagePath="\" />
+  	<None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+  <ItemGroup>
+  	<InternalsVisibleTo Include="Rivulet.Csv.Tests" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="CsvHelper" Version="33.1.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Rivulet.IO\Rivulet.IO.csproj" />
+  </ItemGroup>
+</Project>

@@ -13,10 +13,10 @@ internal static class HealthCheckDataBuilder
     /// <returns>A dictionary containing the health check metrics.</returns>
     internal static Dictionary<string, object> CreateOperationData(
         int consecutiveFailures,
-        TimeSpan timeSinceLastSuccess) =>
-        new()
-        {
-            [RivuletHostingConstants.HealthCheckKeys.ConsecutiveFailures] = consecutiveFailures,
-            [RivuletHostingConstants.HealthCheckKeys.TimeSinceLastSuccess] = timeSinceLastSuccess
-        };
+        TimeSpan timeSinceLastSuccess
+    ) => new()
+    {
+        [RivuletHostingConstants.HealthCheckKeys.ConsecutiveFailures] = consecutiveFailures,
+        [RivuletHostingConstants.HealthCheckKeys.TimeSinceLastSuccess] = timeSinceLastSuccess
+    };
 }

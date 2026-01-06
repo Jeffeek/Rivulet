@@ -111,27 +111,27 @@ public static class RivuletToPollyConverter
     }
 
     private static PollyCircuitBreaker.CircuitBreakerStrategyOptions CreateCircuitBreakerOptions(
-        CircuitBreakerOptions options) =>
-        new()
+        CircuitBreakerOptions options
+    ) => new()
+    {
+        FailureRatio = 1.0,
+        MinimumThroughput = options.FailureThreshold,
+        BreakDuration = options.OpenTimeout,
+        ShouldHandle = new PredicateBuilder().Handle<Exception>(),
+        OnOpened = _ =>
         {
-            FailureRatio = 1.0,
-            MinimumThroughput = options.FailureThreshold,
-            BreakDuration = options.OpenTimeout,
-            ShouldHandle = new PredicateBuilder().Handle<Exception>(),
-            OnOpened = _ =>
-            {
-                var unused = options.OnStateChange?.Invoke(CircuitBreakerState.Closed, CircuitBreakerState.Open);
-                return ValueTask.CompletedTask;
-            },
-            OnClosed = _ =>
-            {
-                var unused = options.OnStateChange?.Invoke(CircuitBreakerState.HalfOpen, CircuitBreakerState.Closed);
-                return ValueTask.CompletedTask;
-            },
-            OnHalfOpened = _ =>
-            {
-                var unused = options.OnStateChange?.Invoke(CircuitBreakerState.Open, CircuitBreakerState.HalfOpen);
-                return ValueTask.CompletedTask;
-            }
-        };
+            var unused = options.OnStateChange?.Invoke(CircuitBreakerState.Closed, CircuitBreakerState.Open);
+            return ValueTask.CompletedTask;
+        },
+        OnClosed = _ =>
+        {
+            var unused = options.OnStateChange?.Invoke(CircuitBreakerState.HalfOpen, CircuitBreakerState.Closed);
+            return ValueTask.CompletedTask;
+        },
+        OnHalfOpened = _ =>
+        {
+            var unused = options.OnStateChange?.Invoke(CircuitBreakerState.Open, CircuitBreakerState.HalfOpen);
+            return ValueTask.CompletedTask;
+        }
+    };
 }

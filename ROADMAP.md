@@ -32,6 +32,10 @@
 - **Rivulet.Sql.PostgreSql** - PostgreSQL optimizations with COPY command integration (10-100x faster bulk operations)
 - **Rivulet.Sql.MySql** - MySQL optimizations with LOAD DATA INFILE integration using MySqlBulkLoader
 - **Rivulet.Polly** - Polly v8 integration with hedging, result-based retry, and resilience pipeline composition
+
+### 🚧 1.4.0 - In Development
+
+- **Rivulet.Csv** - Parallel CSV parsing and writing for Rivulet with CsvHelper integration, bounded concurrency, and batching support for high-throughput data processing
 <!-- VERSIONS_END -->
 
 ---

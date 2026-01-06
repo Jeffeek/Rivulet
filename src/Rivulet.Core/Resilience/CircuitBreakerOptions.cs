@@ -38,22 +38,53 @@ public sealed class CircuitBreakerOptions
     public Func<CircuitBreakerState, CircuitBreakerState, ValueTask>? OnStateChange { get; init; }
 
     /// <summary>
+    ///     Initializes a new instance of the <see cref="CircuitBreakerOptions"/> class with default values.
+    /// </summary>
+    public CircuitBreakerOptions() { }
+
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="CircuitBreakerOptions"/> class by copying values from another instance.
+    /// </summary>
+    /// <param name="original">The original instance to copy from. If null, default values are used.</param>
+    // ReSharper disable once MemberCanBeInternal
+    public CircuitBreakerOptions(CircuitBreakerOptions? original)
+    {
+        if (original is null)
+            return;
+
+        Validate(original);
+
+        FailureThreshold = original.FailureThreshold;
+        SuccessThreshold = original.SuccessThreshold;
+        OpenTimeout = original.OpenTimeout;
+        SamplingDuration = original.SamplingDuration;
+        OnStateChange = original.OnStateChange;
+    }
+
+    /// <summary>
     ///     Validates the circuit breaker options.
     /// </summary>
     /// <exception cref="ArgumentException">Thrown when options are invalid.</exception>
     // ReSharper disable once MemberCanBeInternal
-    public void Validate()
+    public void Validate() => Validate(this);
+
+    /// <summary>
+    ///     Validates the circuit breaker options.
+    /// </summary>
+    /// <exception cref="ArgumentException">Thrown when options are invalid.</exception>
+    // ReSharper disable once MemberCanBeInternal
+    private static void Validate(CircuitBreakerOptions options)
     {
-        if (FailureThreshold <= 0)
+        if (options.FailureThreshold <= 0)
             throw new ArgumentException("FailureThreshold must be greater than 0.", nameof(FailureThreshold));
 
-        if (SuccessThreshold <= 0)
+        if (options.SuccessThreshold <= 0)
             throw new ArgumentException("SuccessThreshold must be greater than 0.", nameof(SuccessThreshold));
 
-        if (OpenTimeout <= TimeSpan.Zero)
+        if (options.OpenTimeout <= TimeSpan.Zero)
             throw new ArgumentException("OpenTimeout must be greater than zero.", nameof(OpenTimeout));
 
-        if (SamplingDuration.HasValue && SamplingDuration.Value <= TimeSpan.Zero)
+        if (options.SamplingDuration.HasValue && options.SamplingDuration.Value <= TimeSpan.Zero)
             throw new ArgumentException("SamplingDuration must be greater than zero when specified.", nameof(SamplingDuration));
     }
 }

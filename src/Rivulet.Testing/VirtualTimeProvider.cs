@@ -18,6 +18,16 @@ public sealed class VirtualTimeProvider : IDisposable
     public TimeSpan CurrentTime => LockHelper.Execute(_lock, () => _currentTime);
 
     /// <summary>
+    ///     Disposes the virtual time provider and releases all resources.
+    /// </summary>
+    public void Dispose()
+    {
+        if (_disposed) return;
+
+        _disposed = true;
+    }
+
+    /// <summary>
     ///     Advances virtual time by the specified duration and executes all scheduled tasks.
     /// </summary>
     /// <param name="duration">The amount of time to advance. Must be non-negative.</param>
@@ -94,15 +104,5 @@ public sealed class VirtualTimeProvider : IDisposable
 
         // Cancel all pending tasks outside the lock
         foreach (var tcs in tasksToCancel) tcs.TrySetCanceled();
-    }
-
-    /// <summary>
-    ///     Disposes the virtual time provider and releases all resources.
-    /// </summary>
-    public void Dispose()
-    {
-        if (_disposed) return;
-
-        _disposed = true;
     }
 }

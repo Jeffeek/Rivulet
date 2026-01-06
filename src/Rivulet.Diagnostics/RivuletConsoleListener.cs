@@ -21,8 +21,8 @@ namespace Rivulet.Diagnostics;
 /// </example>
 public sealed class RivuletConsoleListener : RivuletEventListenerBase
 {
-    private readonly bool _useColors;
     private readonly object _lock = LockFactory.CreateLock();
+    private readonly bool _useColors;
 
     /// <summary>
     ///     Initializes a new instance of the <see cref="RivuletConsoleListener" /> class.
@@ -33,10 +33,12 @@ public sealed class RivuletConsoleListener : RivuletEventListenerBase
     /// <summary>
     ///     Called when a counter value is received.
     /// </summary>
-    protected override void OnCounterReceived(string name,
+    protected override void OnCounterReceived(
+        string name,
         string displayName,
         double value,
-        string displayUnits) =>
+        string displayUnits
+    ) =>
         LockHelper.Execute(_lock,
             () =>
             {

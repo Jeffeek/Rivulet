@@ -81,9 +81,10 @@ internal sealed class TestDbCommand(
         return (DbDataReader)reader;
     }
 
-    protected override Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior,
-        CancellationToken cancellationToken) =>
-        Task.FromResult(ExecuteDbDataReader(behavior));
+    protected override Task<DbDataReader> ExecuteDbDataReaderAsync(
+        CommandBehavior behavior,
+        CancellationToken cancellationToken
+    ) => Task.FromResult(ExecuteDbDataReader(behavior));
 }
 
 public sealed class TestDbTransaction(DbConnection connection, IsolationLevel isolationLevel) : DbTransaction
@@ -187,19 +188,23 @@ public sealed class TestDataReader(List<Dictionary<string, object>> rows) : DbDa
     public override bool GetBoolean(int ordinal) => (bool)GetValue(ordinal);
     public override byte GetByte(int ordinal) => (byte)GetValue(ordinal);
 
-    public override long GetBytes(int ordinal,
+    public override long GetBytes(
+        int ordinal,
         long dataOffset,
         byte[]? buffer,
         int bufferOffset,
-        int length) => 0;
+        int length
+    ) => 0;
 
     public override char GetChar(int ordinal) => (char)GetValue(ordinal);
 
-    public override long GetChars(int ordinal,
+    public override long GetChars(
+        int ordinal,
         long dataOffset,
         char[]? buffer,
         int bufferOffset,
-        int length) => 0;
+        int length
+    ) => 0;
 
     public override string GetDataTypeName(int ordinal) => GetValue(ordinal).GetType().Name;
     public override DateTime GetDateTime(int ordinal) => (DateTime)GetValue(ordinal);

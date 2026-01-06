@@ -175,6 +175,21 @@ Polly v8 integration with hedging, result-based retry, and resilience pipeline c
 - Policy composition
 - Fallback strategies
 
+#### 🚧 [Rivulet.Csv](https://www.nuget.org/packages/Rivulet.Csv)
+[![NuGet](https://img.shields.io/nuget/v/Rivulet.Csv.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Csv) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Csv.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Csv)
+
+Parallel CSV parsing and writing for Rivulet with CsvHelper integration, bounded concurrency, and batching support for high-throughput data processing
+
+**Key Features:**
+- CsvHelper integration for robust CSV parsing
+- Multi-type operations (2-5 generic type parameters)
+- Memory-efficient streaming with IAsyncEnumerable
+- Per-file CSV configuration (delimiters, culture, class maps)
+- Progress tracking and lifecycle callbacks
+- Error handling modes (FailFast, CollectAndContinue, BestEffort)
+- Circuit breaker and retry support
+- Ordered and unordered output options
+
 ### Integration Packages (v1.4.0 🚧)
 <!-- PACKAGES_END -->
 

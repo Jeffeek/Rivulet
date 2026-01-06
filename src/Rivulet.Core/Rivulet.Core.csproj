@@ -41,6 +41,8 @@
     <InternalsVisibleTo Include="Rivulet.Sql.Tests" />
   	<InternalsVisibleTo Include="Rivulet.Polly" />
   	<InternalsVisibleTo Include="Rivulet.Polly.Tests" />
+    <InternalsVisibleTo Include="Rivulet.Csv" />
+    <InternalsVisibleTo Include="Rivulet.Csv.Tests" />
   </ItemGroup>
   <ItemGroup>
   	<PackageReference Include="System.Linq.Async" Version="7.0.0" />

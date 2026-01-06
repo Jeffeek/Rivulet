@@ -355,12 +355,12 @@ public sealed class SqlOptionsTests
         merged.OnStartItemAsync.ShouldBeSameAs(baseOptions.OnStartItemAsync);
         merged.OnCompleteItemAsync.ShouldBeSameAs(baseOptions.OnCompleteItemAsync);
         merged.OnErrorAsync.ShouldBeSameAs(baseOptions.OnErrorAsync);
-        merged.CircuitBreaker.ShouldBeSameAs(circuitBreaker);
-        merged.RateLimit.ShouldBeSameAs(rateLimit);
-        merged.Progress.ShouldBeSameAs(progress);
+        merged.CircuitBreaker.ShouldBeEquivalentTo(circuitBreaker);
+        merged.RateLimit.ShouldBeEquivalentTo(rateLimit);
+        merged.Progress.ShouldBeEquivalentTo(progress);
         merged.OrderedOutput.ShouldBeTrue();
-        merged.Metrics.ShouldBeSameAs(metrics);
-        merged.AdaptiveConcurrency.ShouldBeSameAs(adaptiveConcurrency);
+        merged.Metrics.ShouldBeEquivalentTo(metrics);
+        merged.AdaptiveConcurrency.ShouldBeEquivalentTo(adaptiveConcurrency);
     }
 
     // Helper methods to create mock exceptions

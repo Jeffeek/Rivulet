@@ -1,6 +1,6 @@
+using System.Diagnostics.CodeAnalysis;
 using Rivulet.Core.Observability;
 using Rivulet.Core.Resilience;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Rivulet.Core;
 
@@ -96,7 +96,8 @@ public sealed class ParallelOptionsRivulet
     /// <remarks>
     ///     Different strategies provide different trade-offs:
     ///     - <see cref="Resilience.BackoffStrategy.Exponential" />: Predictable exponential growth without jitter (default).
-    ///     - <see cref="BackoffStrategy.ExponentialJitter" />: Recommended for rate-limited APIs to reduce thundering herd.
+    ///     - <see cref="Resilience.BackoffStrategy.ExponentialJitter" />: Recommended for rate-limited APIs to reduce
+    ///     thundering herd.
     ///     - <see cref="BackoffStrategy.DecorrelatedJitter" />: Best for preventing synchronization across multiple clients.
     ///     - <see cref="BackoffStrategy.Linear" />: Gentler, predictable linear growth.
     ///     - <see cref="BackoffStrategy.LinearJitter" />: Linear growth with randomization.
@@ -237,4 +238,41 @@ public sealed class ParallelOptionsRivulet
     /// </code>
     /// </example>
     public AdaptiveConcurrencyOptions? AdaptiveConcurrency { get; init; }
+
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="ParallelOptionsRivulet"/> class with default values.
+    /// </summary>
+    public ParallelOptionsRivulet() { }
+
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="ParallelOptionsRivulet"/> class by copying values from another instance.
+    /// </summary>
+    /// <param name="original">The original instance to copy from. If null, default values are used.</param>
+    public ParallelOptionsRivulet(ParallelOptionsRivulet? original)
+    {
+        if (original is null)
+            return;
+
+        MaxDegreeOfParallelism = original.MaxDegreeOfParallelism;
+        PerItemTimeout = original.PerItemTimeout;
+        ErrorMode = original.ErrorMode;
+        OnErrorAsync = original.OnErrorAsync;
+        OnStartItemAsync = original.OnStartItemAsync;
+        OnCompleteItemAsync = original.OnCompleteItemAsync;
+        OnRetryAsync = original.OnRetryAsync;
+        OnThrottleAsync = original.OnThrottleAsync;
+        OnDrainAsync = original.OnDrainAsync;
+        IsTransient = original.IsTransient;
+        MaxRetries = original.MaxRetries;
+        BaseDelay = original.BaseDelay;
+        BackoffStrategy = original.BackoffStrategy;
+        OnFallback = original.OnFallback;
+        ChannelCapacity = original.ChannelCapacity;
+        OrderedOutput = original.OrderedOutput;
+        Progress = new ProgressOptions(original.Progress);
+        Metrics = new MetricsOptions(original.Metrics);
+        RateLimit = new RateLimitOptions(original.RateLimit);
+        CircuitBreaker = new CircuitBreakerOptions(original.CircuitBreaker);
+        AdaptiveConcurrency = new AdaptiveConcurrencyOptions(original.AdaptiveConcurrency);
+    }
 }

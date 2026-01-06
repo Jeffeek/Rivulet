@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
 using System.Threading.Channels;
 using Rivulet.Core.Observability;
 using Rivulet.Core.Resilience;
@@ -38,7 +39,8 @@ public static class AsyncParallelLinq
         this IEnumerable<TSource> source,
         Func<TSource, CancellationToken, ValueTask<TResult>> taskSelector,
         ParallelOptionsRivulet? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         (options, var cts, var token) = InitializeOptionsAndCancellation(options, cancellationToken);
         using (cts)
@@ -143,7 +145,10 @@ public static class AsyncParallelLinq
                             finally
                             {
                                 // ReSharper disable once AccessToDisposedClosure
-                                ReleaseAdaptiveController(infrastructure.AdaptiveController, acquiredAdaptive, startTime, success);
+                                ReleaseAdaptiveController(infrastructure.AdaptiveController,
+                                    acquiredAdaptive,
+                                    startTime,
+                                    success);
                             }
                         }
                     },
@@ -203,7 +208,8 @@ public static class AsyncParallelLinq
         Func<TSource, CancellationToken, ValueTask<TResult>> taskSelector,
         ParallelOptionsRivulet? options = null,
         [EnumeratorCancellation]
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         (options, var cts, var token) = InitializeOptionsAndCancellation(options, cancellationToken);
         using (cts)
@@ -213,14 +219,16 @@ public static class AsyncParallelLinq
 #pragma warning restore CA2007
 
             var effectiveMaxWorkers = infrastructure.EffectiveMaxWorkers;
+            var errors = new ConcurrentBag<Exception>();
 
             var input = CreateBoundedInputChannel<(int idx, TSource item)>(options.ChannelCapacity);
-            var output = Channel.CreateBounded<(int idx, TResult result)>(new BoundedChannelOptions(options.ChannelCapacity)
-            {
-                SingleReader = true,
-                SingleWriter = false,
-                FullMode = BoundedChannelFullMode.Wait
-            });
+            var output = Channel.CreateBounded<(int idx, TResult result)>(
+                new BoundedChannelOptions(options.ChannelCapacity)
+                {
+                    SingleReader = true,
+                    SingleWriter = false,
+                    FullMode = BoundedChannelFullMode.Wait
+                });
 
             var writer = Task.Run(async () =>
                 {
@@ -284,12 +292,15 @@ public static class AsyncParallelLinq
                                         options,
                                         infrastructure,
                                         cts,
-                                        null)
+                                        errors)
                                     .ConfigureAwait(false);
                             }
                             finally
                             {
-                                ReleaseAdaptiveController(infrastructure.AdaptiveController, acquiredAdaptive, startTime, success);
+                                ReleaseAdaptiveController(infrastructure.AdaptiveController,
+                                    acquiredAdaptive,
+                                    startTime,
+                                    success);
                             }
                         }
                     },
@@ -309,37 +320,108 @@ public static class AsyncParallelLinq
                 },
                 token);
 
-            if (options.OrderedOutput)
+            try
             {
-                var buffer = new Dictionary<int, TResult>(options.ChannelCapacity);
-                var nextIndex = 0;
-
-                await foreach (var (idx, result) in output.Reader.ReadAllAsync(token).ConfigureAwait(false))
+                if (options.OrderedOutput)
                 {
-                    token.ThrowIfCancellationRequested();
+                    var buffer = new Dictionary<int, TResult>(options.ChannelCapacity);
+                    var nextIndex = 0;
 
-                    buffer[idx] = result;
-
-                    while (buffer.Remove(nextIndex, out var orderedResult))
+                    await foreach (var (idx, result) in output.Reader.ReadAllAsync(token).ConfigureAwait(false))
                     {
-                        yield return orderedResult;
+                        token.ThrowIfCancellationRequested();
 
-                        nextIndex++;
+                        buffer[idx] = result;
+
+                        while (buffer.Remove(nextIndex, out var orderedResult))
+                        {
+                            yield return orderedResult;
+
+                            nextIndex++;
+                        }
+                    }
+
+                    foreach (var idx in buffer.Keys.OrderBy(static k => k)) yield return buffer[idx];
+                }
+                else
+                {
+                    await foreach (var (_, result) in output.Reader.ReadAllAsync(token).ConfigureAwait(false))
+                    {
+                        token.ThrowIfCancellationRequested();
+                        yield return result;
                     }
                 }
-
-                foreach (var idx in buffer.Keys.OrderBy(static k => k)) yield return buffer[idx];
             }
-            else
+            finally
             {
-                await foreach (var (_, result) in output.Reader.ReadAllAsync(token).ConfigureAwait(false))
+                // Wait for all tasks to complete and handle errors
+                Exception? taskException = null;
+                try
                 {
-                    token.ThrowIfCancellationRequested();
-                    yield return result;
+                    await Task.WhenAll(writer, reader).ConfigureAwait(false);
+                }
+#pragma warning disable CA1031 // Do not catch general exception types
+                catch (Exception ex)
+#pragma warning restore CA1031
+                {
+                    taskException = ex;
+                }
+
+                switch (options.ErrorMode)
+                {
+                    // Determine how to handle errors based on error mode
+                    case ErrorMode.CollectAndContinue:
+                    {
+                        // Collect all errors (worker + source) and throw AggregateException
+                        if (taskException != null || !errors.IsEmpty)
+                        {
+                            var allErrors = new List<Exception>(errors);
+                            switch (taskException)
+                            {
+                                case null:
+                                break;
+                                // Add source exception or flatten AggregateException from Task.WhenAll
+                                case AggregateException ae:
+                                    allErrors.AddRange(ae.InnerExceptions);
+                                break;
+                                default:
+                                    allErrors.Add(taskException);
+                                break;
+                            }
+
+                            throw new AggregateException(allErrors);
+                        }
+
+                        break;
+                    }
+                    case ErrorMode.FailFast:
+                    {
+                        // FailFast: Exceptions already propagated by HandleProcessingErrorAsync
+                        // But if source failed, propagate that too
+                        if (taskException != null)
+                            throw taskException;
+
+                        break;
+                    }
+                    // BestEffort
+                    case ErrorMode.BestEffort:
+                    default:
+                    {
+                        // BestEffort: Swallow worker errors but propagate source errors
+                        if (taskException != null)
+                        {
+                            // Check if this is a writer (source) exception by examining the faulted task
+                            if (writer is { IsFaulted: true, Exception: not null })
+                            {
+                                // Source exception should propagate
+                                throw writer.Exception.InnerException ?? writer.Exception;
+                            }
+                        }
+
+                        break;
+                    }
                 }
             }
-
-            await Task.WhenAll(writer, reader).ConfigureAwait(false);
         }
     }
 
@@ -362,18 +444,18 @@ public static class AsyncParallelLinq
         this IAsyncEnumerable<TSource> source,
         Func<TSource, CancellationToken, ValueTask> action,
         ParallelOptionsRivulet? options = null,
-        CancellationToken cancellationToken = default) =>
-        SelectParallelStreamAsync(
-                source,
-                async (item, ct) =>
-                {
-                    await action(item, ct).ConfigureAwait(false);
-                    return true;
-                },
-                options,
-                cancellationToken
-            )
-            .CollectAsync(cancellationToken);
+        CancellationToken cancellationToken = default
+    ) => SelectParallelStreamAsync(
+            source,
+            async (item, ct) =>
+            {
+                await action(item, ct).ConfigureAwait(false);
+                return true;
+            },
+            options,
+            cancellationToken
+        )
+        .CollectAsync(cancellationToken);
 
     /// <summary>
     ///     Executes an async action on each element in an enumerable in parallel with bounded concurrency.
@@ -394,8 +476,8 @@ public static class AsyncParallelLinq
         this IEnumerable<TSource> source,
         Func<TSource, CancellationToken, ValueTask> action,
         ParallelOptionsRivulet? options = null,
-        CancellationToken cancellationToken = default) =>
-        source.ToAsyncEnumerable().ForEachParallelAsync(action, options, cancellationToken);
+        CancellationToken cancellationToken = default
+    ) => source.ToAsyncEnumerable().ForEachParallelAsync(action, options, cancellationToken);
 
     private static async Task CollectAsync<T>(this IAsyncEnumerable<T> source, CancellationToken ct)
     {
@@ -425,7 +507,8 @@ public static class AsyncParallelLinq
         int batchSize,
         Func<IReadOnlyList<TSource>, CancellationToken, ValueTask<TResult>> batchSelector,
         ParallelOptionsRivulet? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         if (batchSize < 1) throw new ArgumentException("Batch size must be at least 1.", nameof(batchSize));
 
@@ -455,17 +538,21 @@ public static class AsyncParallelLinq
         ParallelOptionsRivulet? options = null,
         TimeSpan? batchTimeout = null,
         [EnumeratorCancellation]
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         if (batchSize < 1) throw new ArgumentException("Batch size must be at least 1.", nameof(batchSize));
 
         var batches = CreateBatchesAsync(source, batchSize, batchTimeout, cancellationToken);
-        await foreach (var result in batches.SelectParallelStreamAsync(batchSelector, options, cancellationToken).ConfigureAwait(false))
+        await foreach (var result in batches.SelectParallelStreamAsync(batchSelector, options, cancellationToken)
+                           .ConfigureAwait(false))
             yield return result;
     }
 
-    private static IEnumerable<IReadOnlyList<TSource>> CreateBatches<TSource>(IEnumerable<TSource> source,
-        int batchSize)
+    private static IEnumerable<IReadOnlyList<TSource>> CreateBatches<TSource>(
+        IEnumerable<TSource> source,
+        int batchSize
+    )
     {
         var batch = new List<TSource>(batchSize);
         foreach (var item in source)
@@ -486,7 +573,8 @@ public static class AsyncParallelLinq
         int batchSize,
         TimeSpan? batchTimeout,
         [EnumeratorCancellation]
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var batch = new List<TSource>(batchSize);
 
@@ -553,36 +641,13 @@ public static class AsyncParallelLinq
     }
 
     /// <summary>
-    ///     Infrastructure components for parallel processing operations.
-    /// </summary>
-    private readonly record struct ParallelInfrastructure(
-        ProgressTracker? ProgressTracker,
-        MetricsTrackerBase MetricsTracker,
-        TokenBucket? TokenBucket,
-        CircuitBreaker? CircuitBreaker,
-        AdaptiveConcurrencyController? AdaptiveController,
-        int EffectiveMaxWorkers
-    ) : IAsyncDisposable
-    {
-        public async ValueTask DisposeAsync()
-        {
-            if (ProgressTracker is not null)
-                await ProgressTracker.DisposeAsync().ConfigureAwait(false);
-
-            await MetricsTracker.DisposeAsync().ConfigureAwait(false);
-
-            if (AdaptiveController is not null)
-                await AdaptiveController.DisposeAsync().ConfigureAwait(false);
-        }
-    }
-
-    /// <summary>
     ///     Initializes all infrastructure components needed for parallel processing.
     /// </summary>
     private static ParallelInfrastructure InitializeInfrastructure(
         ParallelOptionsRivulet options,
         int? totalItems,
-        CancellationToken token)
+        CancellationToken token
+    )
     {
         var progressTracker = options.Progress is not null
             ? new ProgressTracker(totalItems, options.Progress, token)
@@ -640,7 +705,7 @@ public static class AsyncParallelLinq
         if (options.ErrorMode == ErrorMode.FailFast)
         {
             await cts.CancelAsync().ConfigureAwait(false);
-            System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(ex).Throw();
+            ExceptionDispatchInfo.Capture(ex).Throw();
         }
     }
 
@@ -652,7 +717,8 @@ public static class AsyncParallelLinq
         AdaptiveConcurrencyController? controller,
         bool acquired,
         long startTime,
-        bool success)
+        bool success
+    )
     {
         if (controller is null || !acquired)
             return;
@@ -671,7 +737,8 @@ public static class AsyncParallelLinq
         ParallelOptionsRivulet options,
         ParallelInfrastructure infrastructure,
         int idx,
-        CancellationToken token)
+        CancellationToken token
+    )
     {
         return infrastructure.CircuitBreaker?.ExecuteAsync(Execute, token) ?? Execute();
 
@@ -695,7 +762,8 @@ public static class AsyncParallelLinq
         Func<TSource, CancellationToken, ValueTask<TResult>> taskSelector,
         ParallelOptionsRivulet options,
         ParallelInfrastructure infrastructure,
-        CancellationToken token)
+        CancellationToken token
+    )
     {
         // Acquire token bucket
         if (infrastructure.TokenBucket is not null)
@@ -745,12 +813,34 @@ public static class AsyncParallelLinq
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static (ParallelOptionsRivulet options, CancellationTokenSource cts, CancellationToken token)
-        InitializeOptionsAndCancellation(
-            ParallelOptionsRivulet? options,
-            CancellationToken cancellationToken)
+        InitializeOptionsAndCancellation(ParallelOptionsRivulet? options, CancellationToken cancellationToken)
     {
         options ??= new ParallelOptionsRivulet();
         var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         return (options, cts, cts.Token);
+    }
+
+    /// <summary>
+    ///     Infrastructure components for parallel processing operations.
+    /// </summary>
+    private readonly record struct ParallelInfrastructure(
+        ProgressTracker? ProgressTracker,
+        MetricsTrackerBase MetricsTracker,
+        TokenBucket? TokenBucket,
+        CircuitBreaker? CircuitBreaker,
+        AdaptiveConcurrencyController? AdaptiveController,
+        int EffectiveMaxWorkers
+    ) : IAsyncDisposable
+    {
+        public async ValueTask DisposeAsync()
+        {
+            if (ProgressTracker is not null)
+                await ProgressTracker.DisposeAsync().ConfigureAwait(false);
+
+            await MetricsTracker.DisposeAsync().ConfigureAwait(false);
+
+            if (AdaptiveController is not null)
+                await AdaptiveController.DisposeAsync().ConfigureAwait(false);
+        }
     }
 }

@@ -16,7 +16,8 @@ public sealed class DataProcessingWorker(
 
     protected override async IAsyncEnumerable<string> GetSourceItems(
         [EnumeratorCancellation]
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         while (!cancellationToken.IsCancellationRequested)
         {

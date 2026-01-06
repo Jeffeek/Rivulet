@@ -1,5 +1,6 @@
 using System.Data;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using Rivulet.Core;
 
 namespace Rivulet.Sql;
@@ -49,34 +50,19 @@ public sealed class SqlOptions
     internal ParallelOptionsRivulet GetMergedParallelOptions()
     {
         var baseOptions = ParallelOptions ?? new();
-
         var maxRetries = baseOptions.MaxRetries > 0 ? baseOptions.MaxRetries : DefaultRetryCount;
         var perItemTimeout = baseOptions.PerItemTimeout ?? TimeSpan.FromSeconds(CommandTimeout + 5);
 
-        var userIsTransient = baseOptions.IsTransient;
-
-        return new()
+        return new(baseOptions)
         {
-            MaxDegreeOfParallelism = baseOptions.MaxDegreeOfParallelism,
             MaxRetries = maxRetries,
-            BaseDelay = baseOptions.BaseDelay,
-            BackoffStrategy = baseOptions.BackoffStrategy,
             PerItemTimeout = perItemTimeout,
-            ErrorMode = baseOptions.ErrorMode,
-            IsTransient = SqlIsTransient,
-            OnStartItemAsync = baseOptions.OnStartItemAsync,
-            OnCompleteItemAsync = baseOptions.OnCompleteItemAsync,
-            OnErrorAsync = baseOptions.OnErrorAsync,
-            CircuitBreaker = baseOptions.CircuitBreaker,
-            RateLimit = baseOptions.RateLimit,
-            Progress = baseOptions.Progress,
-            OrderedOutput = baseOptions.OrderedOutput,
-            Metrics = baseOptions.Metrics,
-            AdaptiveConcurrency = baseOptions.AdaptiveConcurrency
+            IsTransient = ex => (baseOptions.IsTransient != null && baseOptions.IsTransient.Invoke(ex)) || SqlIsTransient(ex)
         };
 
-        bool SqlIsTransient(Exception ex) =>
-            (userIsTransient != null && userIsTransient(ex)) || ex switch
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static bool SqlIsTransient(Exception ex) =>
+            ex switch
             {
                 TimeoutException => true,
                 InvalidOperationException invalidOp when invalidOp.Message.Contains("timeout", StringComparison.OrdinalIgnoreCase) => true,

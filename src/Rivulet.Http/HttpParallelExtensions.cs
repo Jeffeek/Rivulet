@@ -29,7 +29,8 @@ public static class HttpParallelExtensions
         this IEnumerable<Uri> uris,
         HttpClient httpClient,
         HttpOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(uris);
         ArgumentNullException.ThrowIfNull(httpClient);
@@ -61,7 +62,8 @@ public static class HttpParallelExtensions
         this IEnumerable<Uri> uris,
         HttpClient httpClient,
         HttpOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(uris);
         ArgumentNullException.ThrowIfNull(httpClient);
@@ -100,7 +102,8 @@ public static class HttpParallelExtensions
         this IEnumerable<Uri> uris,
         HttpClient httpClient,
         HttpOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(uris);
         ArgumentNullException.ThrowIfNull(httpClient);
@@ -140,7 +143,8 @@ public static class HttpParallelExtensions
         this IEnumerable<(Uri uri, TContent content)> requests,
         HttpClient httpClient,
         HttpOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
         where TContent : HttpContent
     {
         ArgumentNullException.ThrowIfNull(requests);
@@ -174,7 +178,8 @@ public static class HttpParallelExtensions
         this IEnumerable<(Uri uri, TContent content)> requests,
         HttpClient httpClient,
         HttpOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
         where TContent : HttpContent
     {
         ArgumentNullException.ThrowIfNull(requests);
@@ -207,7 +212,8 @@ public static class HttpParallelExtensions
         this IEnumerable<Uri> uris,
         HttpClient httpClient,
         HttpOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(uris);
         ArgumentNullException.ThrowIfNull(httpClient);
@@ -230,7 +236,8 @@ public static class HttpParallelExtensions
         Uri uri,
         Func<Task<HttpResponseMessage>> requestFunc,
         HttpOptions options,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         try
         {

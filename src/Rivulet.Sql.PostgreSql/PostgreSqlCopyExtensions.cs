@@ -31,7 +31,8 @@ public static class PostgreSqlCopyExtensions
         Func<T, object?[]> mapToRow,
         ParallelOptionsRivulet? options = null,
         int batchSize = 5000,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         // ReSharper disable once PossibleMultipleEnumeration
         SqlValidationHelper.ValidateCommonBulkParameters(source, connectionFactory, tableName, batchSize);
@@ -122,7 +123,8 @@ public static class PostgreSqlCopyExtensions
         int batchSize = 5000,
         bool hasHeader = false,
         char delimiter = ',',
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         // ReSharper disable once PossibleMultipleEnumeration
         SqlValidationHelper.ValidateCommonBulkParameters(source, connectionFactory, tableName, batchSize);
@@ -191,7 +193,8 @@ public static class PostgreSqlCopyExtensions
         string[] columns,
         ParallelOptionsRivulet? options = null,
         int batchSize = 5000,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         // ReSharper disable once PossibleMultipleEnumeration
         SqlValidationHelper.ValidateCommonBulkParameters(source, connectionFactory, tableName, batchSize);
@@ -254,7 +257,8 @@ public static class PostgreSqlCopyExtensions
     /// </summary>
     private static (string escapedTableName, string columnList) EscapeTableAndColumns(
         string tableName,
-        IEnumerable<string> columns)
+        IEnumerable<string> columns
+    )
     {
         var escapedTableName = EscapeIdentifier(tableName);
         var columnList = BuildColumnList(columns);

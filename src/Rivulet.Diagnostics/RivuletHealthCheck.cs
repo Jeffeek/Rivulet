@@ -45,8 +45,10 @@ public sealed class RivuletHealthCheck : IHealthCheck, IDisposable
     /// <summary>
     ///     Checks the health of Rivulet operations.
     /// </summary>
-    public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context,
-        CancellationToken cancellationToken = default)
+    public Task<HealthCheckResult> CheckHealthAsync(
+        HealthCheckContext context,
+        CancellationToken cancellationToken = default
+    )
     {
         try
         {

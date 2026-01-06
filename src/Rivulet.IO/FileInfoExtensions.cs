@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using Rivulet.IO.Base;
 using Rivulet.IO.Internal;
 
 namespace Rivulet.IO;
@@ -22,7 +23,8 @@ public static class FileInfoExtensions
     public static Task<IReadOnlyList<string>> ReadAllTextParallelAsync(
         this IEnumerable<FileInfo> files,
         FileOperationOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(files);
 
@@ -41,7 +43,8 @@ public static class FileInfoExtensions
     public static Task<IReadOnlyList<byte[]>> ReadAllBytesParallelAsync(
         this IEnumerable<FileInfo> files,
         FileOperationOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(files);
 
@@ -60,7 +63,8 @@ public static class FileInfoExtensions
     public static ValueTask<string> ReadAllTextAsync(
         this FileInfo file,
         FileOperationOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(file);
 
@@ -78,7 +82,7 @@ public static class FileInfoExtensions
                 return await reader.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
             },
             options,
-            static content => content.Length);
+            static content => new FileOperationResult { BytesProcessed = content.Length });
     }
 
     /// <summary>
@@ -92,7 +96,8 @@ public static class FileInfoExtensions
     public static ValueTask<byte[]> ReadAllBytesAsync(
         this FileInfo file,
         FileOperationOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(file);
 
@@ -111,7 +116,7 @@ public static class FileInfoExtensions
                 return buffer;
             },
             options,
-            static bytes => bytes.Length);
+            static bytes => new FileOperationResult { BytesProcessed = bytes.Length });
     }
 
     /// <summary>
@@ -128,7 +133,8 @@ public static class FileInfoExtensions
         this FileInfo file,
         string content,
         FileOperationOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(file);
 
@@ -151,7 +157,7 @@ public static class FileInfoExtensions
                 return content.Length;
             },
             options,
-            static length => length);
+            static length => new FileOperationResult { BytesProcessed = length });
     }
 
     /// <summary>
@@ -168,7 +174,8 @@ public static class FileInfoExtensions
         this FileInfo file,
         byte[] content,
         FileOperationOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(file);
 
@@ -191,7 +198,7 @@ public static class FileInfoExtensions
                 return content.Length;
             },
             options,
-            static length => length);
+            static length => new FileOperationResult { BytesProcessed = length });
     }
 
     /// <summary>
@@ -208,7 +215,8 @@ public static class FileInfoExtensions
         this FileInfo file,
         string destinationPath,
         FileOperationOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(file);
 
@@ -222,19 +230,21 @@ public static class FileInfoExtensions
                 FileOperationHelper.ValidateOverwrite(destinationPath, options);
 
 #pragma warning disable CA2007
-                var (sourceStream, destStream) = FileOperationHelper.CreateCopyStreams(file.FullName, destinationPath, options);
+                var (sourceStream, destStream) =
+                    FileOperationHelper.CreateCopyStreams(file.FullName, destinationPath, options);
                 await using (sourceStream)
                 await using (destStream)
                 {
 #pragma warning restore CA2007
-                    await sourceStream.CopyToAsync(destStream, options.BufferSize, cancellationToken).ConfigureAwait(false);
+                    await sourceStream.CopyToAsync(destStream, options.BufferSize, cancellationToken)
+                        .ConfigureAwait(false);
                     await destStream.FlushAsync(cancellationToken).ConfigureAwait(false);
 
                     return sourceStream.Length;
                 }
             },
             options,
-            static length => length);
+            static length => new FileOperationResult { BytesProcessed = length });
     }
 
     /// <summary>
@@ -243,12 +253,15 @@ public static class FileInfoExtensions
     /// <param name="file">The FileInfo object to delete.</param>
     /// <param name="options">File operation options. If null, defaults are used.</param>
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-    /// <returns><value>0</value></returns>
+    /// <returns>
+    ///     <value>0</value>
+    /// </returns>
     /// <exception cref="ArgumentNullException">Thrown when file is null.</exception>
     public static ValueTask<int> DeleteAsync(
         this FileInfo file,
         FileOperationOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(file);
 

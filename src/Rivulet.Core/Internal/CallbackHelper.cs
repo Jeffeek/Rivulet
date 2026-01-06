@@ -23,7 +23,8 @@ internal static class CallbackHelper
         Func<T1, T2, ValueTask>? callback,
         T1 arg1,
         T2 arg2,
-        string callbackName)
+        string callbackName
+    )
     {
         if (callback is null) return;
 
@@ -56,7 +57,8 @@ internal static class CallbackHelper
     internal static async ValueTask InvokeSafelyAsync<T>(
         Func<T, ValueTask>? callback,
         T arg,
-        string callbackName)
+        string callbackName
+    )
     {
         if (callback is null) return;
 

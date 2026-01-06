@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Rivulet.Core.Tests;
@@ -152,7 +153,9 @@ public sealed class RetryPolicyTests
         var results = await source.SelectParallelStreamAsync((x, _) =>
                 {
                     var attempts = attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
-                    return x == 3 && attempts == 1 ? throw new InvalidOperationException("Transient error") : new ValueTask<int>(x * 2);
+                    return x == 3 && attempts == 1
+                        ? throw new InvalidOperationException("Transient error")
+                        : new ValueTask<int>(x * 2);
                 },
                 options)
             .ToListAsync();
@@ -385,9 +388,9 @@ public sealed class RetryPolicyTests
             options);
 
         results.Count.ShouldBe(3);
-        results.ShouldContain(2); // 1 * 2
+        results.ShouldContain(2);  // 1 * 2
         results.ShouldContain(-1); // Fallback value for 2
-        results.ShouldContain(6); // 3 * 2
+        results.ShouldContain(6);  // 3 * 2
 
         fallbackCalls.Count.ShouldBe(1);
         fallbackCalls.Single().exception.Message.ShouldBe("Always fails");
@@ -472,7 +475,7 @@ public sealed class RetryPolicyTests
     {
         var source = new[] { 1 };
         var retryDelayMs = new List<long>();
-        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        var stopwatch = Stopwatch.StartNew();
 
         var options = new ParallelOptionsRivulet
         {

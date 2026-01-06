@@ -23,7 +23,8 @@ internal static class SqlConnectionHelper
     /// </summary>
     internal static async ValueTask OpenConnectionAsync(
         IDbConnection connection,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         if (connection is DbConnection dbConnection)
             await dbConnection.OpenAsync(cancellationToken).ConfigureAwait(false);
@@ -37,7 +38,8 @@ internal static class SqlConnectionHelper
     internal static ValueTask OpenConnectionIfNeededAsync(
         IDbConnection connection,
         SqlOptions options,
-        CancellationToken cancellationToken) =>
+        CancellationToken cancellationToken
+    ) =>
         options.AutoManageConnection && connection.State != ConnectionState.Open
             ? OpenConnectionAsync(connection, cancellationToken)
             : ValueTask.CompletedTask;
@@ -58,7 +60,8 @@ internal static class SqlConnectionHelper
         IDbConnection connection,
         string commandText,
         int commandTimeout,
-        Action<IDbCommand>? configureParams = null)
+        Action<IDbCommand>? configureParams = null
+    )
     {
         var command = connection.CreateCommand();
         command.CommandText = commandText;
@@ -72,28 +75,28 @@ internal static class SqlConnectionHelper
     /// </summary>
     internal static async ValueTask<int> ExecuteNonQueryAsync(
         IDbCommand command,
-        CancellationToken cancellationToken) =>
-        command is DbCommand dbCommand
-            ? await dbCommand.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false)
-            : await Task.Run(command.ExecuteNonQuery, cancellationToken).ConfigureAwait(false);
+        CancellationToken cancellationToken
+    ) => command is DbCommand dbCommand
+        ? await dbCommand.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false)
+        : await Task.Run(command.ExecuteNonQuery, cancellationToken).ConfigureAwait(false);
 
     /// <summary>
     ///     Executes a reader command asynchronously.
     /// </summary>
     internal static async ValueTask<IDataReader> ExecuteReaderAsync(
         IDbCommand command,
-        CancellationToken cancellationToken) =>
-        command is DbCommand dbCommand
-            ? await dbCommand.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false)
-            : await Task.Run(command.ExecuteReader, cancellationToken).ConfigureAwait(false);
+        CancellationToken cancellationToken
+    ) => command is DbCommand dbCommand
+        ? await dbCommand.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false)
+        : await Task.Run(command.ExecuteReader, cancellationToken).ConfigureAwait(false);
 
     /// <summary>
     ///     Executes a scalar command asynchronously.
     /// </summary>
     internal static async ValueTask<object?> ExecuteScalarAsync(
         IDbCommand command,
-        CancellationToken cancellationToken) =>
-        command is DbCommand dbCommand
-            ? await dbCommand.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false)
-            : await Task.Run(command.ExecuteScalar, cancellationToken).ConfigureAwait(false);
+        CancellationToken cancellationToken
+    ) => command is DbCommand dbCommand
+        ? await dbCommand.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false)
+        : await Task.Run(command.ExecuteScalar, cancellationToken).ConfigureAwait(false);
 }

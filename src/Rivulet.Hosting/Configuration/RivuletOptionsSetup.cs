@@ -38,7 +38,11 @@ internal sealed class RivuletOptionsSetup(IConfiguration configuration) : IConfi
         SetPropertyIfExists(options, type, section, nameof(ParallelOptionsRivulet.PerItemTimeout), TimeSpan.Parse);
         SetPropertyIfExists(options, type, section, nameof(ParallelOptionsRivulet.BaseDelay), TimeSpan.Parse);
         SetPropertyIfExists(options, type, section, nameof(ParallelOptionsRivulet.ErrorMode), Enum.Parse<ErrorMode>);
-        SetPropertyIfExists(options, type, section, nameof(ParallelOptionsRivulet.BackoffStrategy), Enum.Parse<BackoffStrategy>);
+        SetPropertyIfExists(options,
+            type,
+            section,
+            nameof(ParallelOptionsRivulet.BackoffStrategy),
+            Enum.Parse<BackoffStrategy>);
     }
 
     private static void SetPropertyIfExists<T>(
@@ -46,7 +50,8 @@ internal sealed class RivuletOptionsSetup(IConfiguration configuration) : IConfi
         Type type,
         IConfiguration section,
         string propertyName,
-        Func<string, T> parser)
+        Func<string, T> parser
+    )
     {
         var configValue = section[propertyName];
         if (string.IsNullOrEmpty(configValue)) return;

@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Rivulet.Core;
+using Rivulet.IO.Base;
 using Rivulet.IO.Internal;
 
 namespace Rivulet.IO;
@@ -25,7 +26,8 @@ public static class DirectoryParallelExtensions
         this IEnumerable<string> filePaths,
         Func<string, CancellationToken, ValueTask<TResult>> processFunc,
         FileOperationOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(filePaths);
         ArgumentNullException.ThrowIfNull(processFunc);
@@ -46,7 +48,8 @@ public static class DirectoryParallelExtensions
                         if (options.OnFileCompleteAsync == null) return result;
 
                         var fileInfo = new FileInfo(filePath);
-                        await options.OnFileCompleteAsync(filePath, fileInfo.Length).ConfigureAwait(false);
+                        var operationResult = new FileOperationResult { BytesProcessed = fileInfo.Length };
+                        await options.OnFileCompleteAsync(filePath, operationResult).ConfigureAwait(false);
 
                         return result;
                     }
@@ -82,7 +85,8 @@ public static class DirectoryParallelExtensions
         Func<string, CancellationToken, ValueTask<TResult>> processFunc,
         SearchOption searchOption = SearchOption.TopDirectoryOnly,
         FileOperationOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(directoryPath);
         ArgumentNullException.ThrowIfNull(processFunc);
@@ -108,7 +112,8 @@ public static class DirectoryParallelExtensions
         string searchPattern = "*.*",
         SearchOption searchOption = SearchOption.TopDirectoryOnly,
         FileOperationOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(directoryPath);
 
@@ -163,7 +168,8 @@ public static class DirectoryParallelExtensions
         Func<string, string, ValueTask<string>> transformFunc,
         SearchOption searchOption = SearchOption.TopDirectoryOnly,
         FileOperationOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sourceDirectory);
         ArgumentException.ThrowIfNullOrWhiteSpace(destinationDirectory);
@@ -176,7 +182,8 @@ public static class DirectoryParallelExtensions
 
         var filePairs = sourceFiles.Select(sourcePath =>
         {
-            var destPath = FileOperationHelper.ComputeDestinationPath(sourcePath, sourceDirectory, destinationDirectory);
+            var destPath =
+                FileOperationHelper.ComputeDestinationPath(sourcePath, sourceDirectory, destinationDirectory);
             return (sourcePath, destPath);
         });
 
@@ -199,7 +206,8 @@ public static class DirectoryParallelExtensions
         string searchPattern = "*.*",
         SearchOption searchOption = SearchOption.TopDirectoryOnly,
         FileOperationOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sourceDirectory);
         ArgumentException.ThrowIfNullOrWhiteSpace(destinationDirectory);
@@ -211,7 +219,8 @@ public static class DirectoryParallelExtensions
 
         var filePairs = sourceFiles.Select(sourcePath =>
         {
-            var destPath = FileOperationHelper.ComputeDestinationPath(sourcePath, sourceDirectory, destinationDirectory);
+            var destPath =
+                FileOperationHelper.ComputeDestinationPath(sourcePath, sourceDirectory, destinationDirectory);
             return (sourcePath, destPath);
         });
 
@@ -232,7 +241,8 @@ public static class DirectoryParallelExtensions
         string searchPattern,
         SearchOption searchOption = SearchOption.TopDirectoryOnly,
         FileOperationOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(directoryPath);
 
@@ -260,7 +270,8 @@ public static class DirectoryParallelExtensions
         Func<string, CancellationToken, ValueTask<TResult>> processFunc,
         SearchOption searchOption = SearchOption.TopDirectoryOnly,
         FileOperationOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(directoryPaths);
         ArgumentNullException.ThrowIfNull(processFunc);

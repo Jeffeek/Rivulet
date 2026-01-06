@@ -100,10 +100,11 @@ public sealed class ComprehensiveCoverageTests
         // ReSharper disable once CollectionNeverQueried.Local
         private List<string> ReceivedMetrics { get; } = new();
 
-        protected override void OnCounterReceived(string name,
+        protected override void OnCounterReceived(
+            string name,
             string displayName,
             double value,
-            string displayUnits) =>
-            ReceivedMetrics.Add(name);
+            string displayUnits
+        ) => ReceivedMetrics.Add(name);
     }
 }

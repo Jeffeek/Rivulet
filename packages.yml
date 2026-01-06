@@ -7,7 +7,7 @@
 
 metadata:
   schema_version: "1.0"
-  last_updated: "2025-11-24"
+  last_updated: "2025-12-30"
   repository: "https://github.com/Jeffeek/Rivulet"
 
 packages:
@@ -347,8 +347,42 @@ packages:
       - net9.0
 
 # ============================================================================
-# INTEGRATION PACKAGES (v1.4.0 - In Development)
+# INTEGRATION PACKAGES (v1.4.0)
 # ============================================================================
+
+  - name: Rivulet.Csv
+    id: csv
+    category: core
+    version: 1.4.0
+    status: in_development
+    nuget_id: Rivulet.Csv
+    description: Parallel CSV parsing and writing for Rivulet with CsvHelper integration, bounded concurrency, and batching support for high-throughput data processing
+    path: src/Rivulet.Csv
+    test_path: tests/Rivulet.Csv.Tests
+    sample_path: samples/Rivulet.Csv.Sample
+    sample_name: Rivulet.Csv.Sample
+    features:
+      - ParseCsvParallelAsync - Parse multiple CSV files in parallel and return all records as a flattened list
+      - ParseCsvParallelGroupedAsync - Parse multiple CSV file groups in parallel with per-file configuration, returning records grouped by file path
+      - ParseCsvParallelGroupedAsync (Multi-Type) - Parse 2-5 different record types concurrently with grouped results
+      - StreamCsvParallelAsync - Stream CSV records as IAsyncEnumerable with memory-efficient processing
+      - WriteCsvParallelAsync - Write collections of records to multiple CSV files in parallel with per-file configuration
+      - WriteCsvParallelAsync (Multi-Type) - Write 2-5 different record types to separate files concurrently
+      - TransformCsvParallelAsync - Transform CSV files in parallel applying sync or async transformation functions
+    key_features:
+      - CsvHelper integration for robust CSV parsing
+      - Multi-type operations (2-5 generic type parameters)
+      - Memory-efficient streaming with IAsyncEnumerable
+      - Per-file CSV configuration (delimiters, culture, class maps)
+      - Progress tracking and lifecycle callbacks
+      - Error handling modes (FailFast, CollectAndContinue, BestEffort)
+      - Circuit breaker and retry support
+      - Ordered and unordered output options
+    dependencies:
+      - Rivulet.IO
+    targets:
+      - net8.0
+      - net9.0
 
 # ============================================================================
 # GENERATION RULES
@@ -447,6 +481,12 @@ versions:
       - polly
 
   - version: "1.4.0"
+    release_date: "2025-12-30"
+    status: in_development
+    packages:
+      - csv
+
+  - version: "1.5.0"
     release_date: "2026-06-15"
     status: planned
     packages:
@@ -454,7 +494,7 @@ versions:
       - messaging
       - caching
 
-  - version: "1.5.0"
+  - version: "1.6.0"
     release_date: "2026-09-15"
     status: planned
     packages:

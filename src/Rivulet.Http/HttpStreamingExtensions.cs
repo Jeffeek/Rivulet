@@ -30,7 +30,8 @@ public static class HttpStreamingExtensions
         this IEnumerable<(Uri uri, string destinationPath)> downloads,
         HttpClient httpClient,
         StreamingDownloadOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(downloads);
         ArgumentNullException.ThrowIfNull(httpClient);
@@ -73,7 +74,8 @@ public static class HttpStreamingExtensions
         Stream destination,
         HttpClient httpClient,
         StreamingDownloadOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(uri);
         ArgumentNullException.ThrowIfNull(destination);
@@ -123,7 +125,8 @@ public static class HttpStreamingExtensions
 
         // Validate content length if requested
         return options.ValidateContentLength && totalBytes.HasValue && bytesDownloaded != totalBytes.Value
-            ? throw new HttpRequestException($"Content length mismatch: expected {totalBytes.Value} bytes, but downloaded {bytesDownloaded} bytes")
+            ? throw new HttpRequestException(
+                $"Content length mismatch: expected {totalBytes.Value} bytes, but downloaded {bytesDownloaded} bytes")
             : bytesDownloaded;
     }
 
@@ -135,7 +138,8 @@ public static class HttpStreamingExtensions
         string destinationPath,
         HttpClient httpClient,
         StreamingDownloadOptions options,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         // Ensure directory exists
         var directory = Path.GetDirectoryName(destinationPath);
@@ -274,7 +278,8 @@ public static class HttpStreamingExtensions
     private static async ValueTask<bool> CheckRangeSupport(
         Uri uri,
         HttpMessageInvoker httpClient,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         try
         {

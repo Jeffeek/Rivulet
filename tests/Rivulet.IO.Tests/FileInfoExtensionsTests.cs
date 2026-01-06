@@ -215,10 +215,10 @@ public sealed class FileInfoExtensionsTests : TempDirectoryFixture
                 startCalled = true;
                 return ValueTask.CompletedTask;
             },
-            OnFileCompleteAsync = (_, bytes) =>
+            OnFileCompleteAsync = (_, operationResult) =>
             {
                 completeCalled = true;
-                bytesProcessed = bytes;
+                bytesProcessed = operationResult.BytesProcessed;
                 return ValueTask.CompletedTask;
             }
         };

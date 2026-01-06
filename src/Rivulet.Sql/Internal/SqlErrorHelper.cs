@@ -12,8 +12,8 @@ internal static class SqlErrorHelper
         Exception ex,
         string operation,
         int batchSize,
-        string tableName) =>
-        new($"Failed to {operation} batch of {batchSize} rows to table '{tableName}'", ex);
+        string tableName
+    ) => new($"Failed to {operation} batch of {batchSize} rows to table '{tableName}'", ex);
 
     /// <summary>
     ///     Creates a detailed error message for bulk operations with exception information.
@@ -23,7 +23,8 @@ internal static class SqlErrorHelper
         string context,
         int batchSize,
         string tableName,
-        string? command = null)
+        string? command = null
+    )
     {
         var message = $"[{context}] Failed to bulk insert batch of {batchSize} rows to table '{tableName}'.";
 
@@ -49,7 +50,8 @@ internal static class SqlErrorHelper
         string context,
         int batchSize,
         string tableName,
-        string? command = null)
+        string? command = null
+    )
     {
         var detailMessage = CreateDetailedErrorMessage(ex, context, batchSize, tableName, command);
         return new InvalidOperationException(detailMessage, ex);
