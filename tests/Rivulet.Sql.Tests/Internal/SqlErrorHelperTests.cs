@@ -129,10 +129,12 @@ public sealed class SqlErrorHelperTests
         {
             throw new InvalidOperationException("Test exception with stack trace");
         }
+#pragma warning disable CA1031 // Do not catch general exception types - intentional for test exception capture
         catch (Exception ex)
         {
             exceptionWithStack = ex;
         }
+#pragma warning restore CA1031
 
         var wrappedException = SqlErrorHelper.WrapBulkOperationExceptionWithDetails(
             exceptionWithStack,
@@ -172,10 +174,12 @@ public sealed class SqlErrorHelperTests
             // Create nested calls to generate a longer stack trace
             ThrowNestedExceptionLevel1();
         }
+#pragma warning disable CA1031 // Do not catch general exception types - intentional for test exception capture
         catch (Exception ex)
         {
             exceptionWithLongStack = ex;
         }
+#pragma warning restore CA1031
 
         exceptionWithLongStack.ShouldNotBeNull();
 

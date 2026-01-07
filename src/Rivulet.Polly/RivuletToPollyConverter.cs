@@ -120,17 +120,17 @@ public static class RivuletToPollyConverter
         ShouldHandle = new PredicateBuilder().Handle<Exception>(),
         OnOpened = _ =>
         {
-            var unused = options.OnStateChange?.Invoke(CircuitBreakerState.Closed, CircuitBreakerState.Open);
+            options.OnStateChange?.Invoke(CircuitBreakerState.Closed, CircuitBreakerState.Open);
             return ValueTask.CompletedTask;
         },
         OnClosed = _ =>
         {
-            var unused = options.OnStateChange?.Invoke(CircuitBreakerState.HalfOpen, CircuitBreakerState.Closed);
+            options.OnStateChange?.Invoke(CircuitBreakerState.HalfOpen, CircuitBreakerState.Closed);
             return ValueTask.CompletedTask;
         },
         OnHalfOpened = _ =>
         {
-            var unused = options.OnStateChange?.Invoke(CircuitBreakerState.Open, CircuitBreakerState.HalfOpen);
+            options.OnStateChange?.Invoke(CircuitBreakerState.Open, CircuitBreakerState.HalfOpen);
             return ValueTask.CompletedTask;
         }
     };
