@@ -10,7 +10,7 @@ public sealed class CsvErrorHandlingTests : IDisposable
 
     public CsvErrorHandlingTests()
     {
-        _testDirectory = Path.Combine(Path.GetTempPath(), $"RivuletCsvErrorTests_{Guid.NewGuid()}");
+        _testDirectory = Path.Join(Path.GetTempPath(), $"RivuletCsvErrorTests_{Guid.NewGuid()}");
         Directory.CreateDirectory(_testDirectory);
     }
 
@@ -25,9 +25,9 @@ public sealed class CsvErrorHandlingTests : IDisposable
     public async Task ParseCsvParallelAsync_WithFailFast_ShouldStopOnFirstError()
     {
         // Arrange
-        var csvPath1 = Path.Combine(_testDirectory, "file1.csv");
-        var csvPath2 = Path.Combine(_testDirectory, "missing.csv"); // This doesn't exist
-        var csvPath3 = Path.Combine(_testDirectory, "file3.csv");
+        var csvPath1 = Path.Join(_testDirectory, "file1.csv");
+        var csvPath2 = Path.Join(_testDirectory, "missing.csv"); // This doesn't exist
+        var csvPath3 = Path.Join(_testDirectory, "file3.csv");
 
         await File.WriteAllTextAsync(csvPath1, "Id,Name,Price\n1,Product A,10.50");
         await File.WriteAllTextAsync(csvPath3, "Id,Name,Price\n3,Product C,30.50");
@@ -55,9 +55,9 @@ public sealed class CsvErrorHandlingTests : IDisposable
     public async Task ParseCsvParallelAsync_WithCollectAndContinue_ShouldProcessAllFiles()
     {
         // Arrange
-        var csvPath1 = Path.Combine(_testDirectory, "file1.csv");
-        var csvPath2 = Path.Combine(_testDirectory, "missing.csv"); // This doesn't exist
-        var csvPath3 = Path.Combine(_testDirectory, "file3.csv");
+        var csvPath1 = Path.Join(_testDirectory, "file1.csv");
+        var csvPath2 = Path.Join(_testDirectory, "missing.csv"); // This doesn't exist
+        var csvPath3 = Path.Join(_testDirectory, "file3.csv");
 
         await File.WriteAllTextAsync(csvPath1, "Id,Name,Price\n1,Product A,10.50");
         await File.WriteAllTextAsync(csvPath3, "Id,Name,Price\n3,Product C,30.50");
@@ -85,7 +85,7 @@ public sealed class CsvErrorHandlingTests : IDisposable
     public async Task ParseCsvParallelAsync_WithRetries_ShouldRetryTransientErrors()
     {
         // Arrange
-        var csvPath = Path.Combine(_testDirectory, "locked.csv");
+        var csvPath = Path.Join(_testDirectory, "locked.csv");
         await File.WriteAllTextAsync(csvPath, "Id,Name,Price\n1,Product A,10.50");
 
         var attemptCount = 0;
@@ -120,7 +120,7 @@ public sealed class CsvErrorHandlingTests : IDisposable
     public async Task ParseCsvParallelAsync_WithOnErrorCallback_ShouldInvokeOnError()
     {
         // Arrange
-        var csvPath = Path.Combine(_testDirectory, "missing.csv"); // Doesn't exist
+        var csvPath = Path.Join(_testDirectory, "missing.csv"); // Doesn't exist
         var errorOccurred = false;
         Exception? capturedException = null;
 
@@ -143,10 +143,12 @@ public sealed class CsvErrorHandlingTests : IDisposable
                     }
                 });
         }
+#pragma warning disable CA1031 // Do not catch general exception types - intentional for test error verification
         catch
         {
             // Expected
         }
+#pragma warning restore CA1031
 
         // Assert
         errorOccurred.ShouldBeTrue();
@@ -158,11 +160,11 @@ public sealed class CsvErrorHandlingTests : IDisposable
     public async Task WriteCsvParallelAsync_WithErrorCallback_ShouldInvokeOnFileError()
     {
         // Arrange
-        var nonExistentPath = Path.Combine(_testDirectory, "nonexistent");
+        var nonExistentPath = Path.Join(_testDirectory, "nonexistent");
         // Don't create the directory - this will cause a DirectoryNotFoundException
 
         var products = new[] { new Product { Id = 1, Name = "Test", Price = 10m } };
-        var csvPath = Path.Combine(nonExistentPath, "output.csv");
+        var csvPath = Path.Join(nonExistentPath, "output.csv");
         var fileWrites = new[] { new RivuletCsvWriteFile<Product>(csvPath, products, null) };
 
         var fileErrorOccurred = false;
@@ -187,10 +189,12 @@ public sealed class CsvErrorHandlingTests : IDisposable
                     }
                 });
         }
+#pragma warning disable CA1031 // Do not catch general exception types - intentional for test error verification
         catch
         {
             // Expected
         }
+#pragma warning restore CA1031
 
         // Assert
         fileErrorOccurred.ShouldBeTrue();
@@ -202,7 +206,7 @@ public sealed class CsvErrorHandlingTests : IDisposable
     {
         // Arrange
         var files = Enumerable.Range(1, 10)
-            .Select(i => Path.Combine(_testDirectory, $"missing{i}.csv"))
+            .Select(i => Path.Join(_testDirectory, $"missing{i}.csv"))
             .ToArray();
 
         var fileErrorCount = 0;
@@ -258,7 +262,7 @@ public sealed class CsvErrorHandlingTests : IDisposable
         var files = Enumerable.Range(1, 5)
             .Select(i =>
             {
-                var path = Path.Combine(_testDirectory, $"file{i}.csv");
+                var path = Path.Join(_testDirectory, $"file{i}.csv");
                 File.WriteAllText(path, $"Id,Name,Price\n{i},Product {i},10.50");
                 return path;
             })

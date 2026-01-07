@@ -16,8 +16,7 @@ public sealed class MySqlBulkExtensionsIntegrationTests : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
-        _container = new MySqlBuilder()
-            .WithImage("mysql:8.0")
+        _container = new MySqlBuilder("mysql:8.0")
             .WithCommand("--local-infile=1") // Enable LOAD DATA LOCAL INFILE
             .Build();
 

@@ -16,10 +16,12 @@ internal static class TestCleanupHelper
             {
                 Thread.Sleep(50);
             }
+#pragma warning disable CA1031 // Do not catch general exception types - intentional for test cleanup
             catch
             {
                 /* Ignore other errors */
             }
+#pragma warning restore CA1031
         }
     }
 
@@ -37,10 +39,12 @@ internal static class TestCleanupHelper
             {
                 Thread.Sleep(50);
             }
+#pragma warning disable CA1031 // Do not catch general exception types - intentional for test cleanup
             catch
             {
                 /* Ignore other errors */
             }
+#pragma warning restore CA1031
         }
     }
 }

@@ -408,14 +408,11 @@ public static class AsyncParallelLinq
                     default:
                     {
                         // BestEffort: Swallow worker errors but propagate source errors
-                        if (taskException != null)
+                        // Check if this is a writer (source) exception by examining the faulted task
+                        if (taskException != null && writer is { IsFaulted: true, Exception: not null })
                         {
-                            // Check if this is a writer (source) exception by examining the faulted task
-                            if (writer is { IsFaulted: true, Exception: not null })
-                            {
-                                // Source exception should propagate
-                                throw writer.Exception.InnerException ?? writer.Exception;
-                            }
+                            // Source exception should propagate
+                            throw writer.Exception.InnerException ?? writer.Exception;
                         }
 
                         break;
