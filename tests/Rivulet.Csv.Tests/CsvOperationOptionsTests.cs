@@ -380,6 +380,156 @@ public sealed class CsvOperationOptionsTests : IDisposable
         exception.InnerExceptions.ShouldContain(static e => e is DirectoryNotFoundException);
     }
 
+    [Fact]
+    public async Task ParseCsvParallelAsync_WithCsvContextAction_ShouldApplyContextConfiguration()
+    {
+        // Arrange
+        var csvPath = Path.Join(_testDirectory, "context.csv");
+        // ReSharper disable once GrammarMistakeInStringLiteral
+        const string csvContent = """
+                                  Id,Name,Price
+                                  1,Product A,10.50
+                                  2,Product B,20.00
+                                  """;
+        await File.WriteAllTextAsync(csvPath, csvContent);
+
+        var contextActionCalled = false;
+
+        // Act
+        var results = await new[] { csvPath }.ParseCsvParallelAsync<Product>(
+            new CsvOperationOptions
+            {
+                FileConfiguration = new CsvFileConfiguration
+                {
+                    CsvContextAction = ctx =>
+                    {
+                        contextActionCalled = true;
+                        // Context configuration can register class maps, type converters, etc.
+                        ctx.ShouldNotBeNull();
+                    }
+                }
+            });
+
+        // Assert
+        results.Count.ShouldBe(2);
+        contextActionCalled.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task WriteCsvParallelAsync_WithCsvContextAction_ShouldApplyContextConfiguration()
+    {
+        // Arrange
+        var products = new[]
+        {
+            new Product { Id = 1, Name = "Product A", Price = 10.50m }
+        };
+
+        var csvPath = Path.Join(_testDirectory, "context-output.csv");
+        var contextActionCalled = false;
+
+        var fileWrites = new[]
+        {
+            new RivuletCsvWriteFile<Product>(
+                csvPath,
+                products,
+                new CsvFileConfiguration
+                {
+                    CsvContextAction = ctx =>
+                    {
+                        contextActionCalled = true;
+                        ctx.ShouldNotBeNull();
+                    }
+                })
+        };
+
+        // Act
+        await fileWrites.WriteCsvParallelAsync(
+            new CsvOperationOptions
+            {
+                OverwriteExisting = true
+            });
+
+        // Assert
+        File.Exists(csvPath).ShouldBeTrue();
+        contextActionCalled.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task CsvOperationOptions_WithNullParallelOptions_ShouldUseDefaults()
+    {
+        // Arrange
+        var csvPath = Path.Join(_testDirectory, "null_options.csv");
+        const string csvContent = """
+                                  Id,Name,Price
+                                  1,Product A,10.50
+                                  """;
+        await File.WriteAllTextAsync(csvPath, csvContent);
+
+        // Act - ParallelOptions is null by default
+        var results = await new[] { csvPath }.ParseCsvParallelAsync<Product>(
+            new CsvOperationOptions
+            {
+                // ParallelOptions is intentionally not set (null)
+            });
+
+        // Assert
+        results.Count.ShouldBe(1);
+    }
+
+    [Fact]
+    public void CsvOperationOptions_Properties_ShouldHaveCorrectDefaults()
+    {
+        // Act
+        var options = new CsvOperationOptions();
+
+        // Assert
+        options.Culture.ShouldBe(CultureInfo.InvariantCulture);
+        options.FileConfiguration.ShouldNotBeNull();
+        options.ParallelOptions.ShouldBeNull(); // Default is null
+    }
+
+    [Fact]
+    public void CsvFileConfiguration_Properties_ShouldBeInitializable()
+    {
+        // Act
+        var config = new CsvFileConfiguration
+        {
+            ConfigurationAction = static cfg => cfg.Delimiter = ",",
+            CsvContextAction = static ctx => { }
+        };
+
+        // Assert
+        config.ConfigurationAction.ShouldNotBeNull();
+        config.CsvContextAction.ShouldNotBeNull();
+    }
+
+    [Fact]
+    public void RivuletCsvReadFile_ShouldCreateWithNullConfiguration()
+    {
+        // Act
+        var readFile = new RivuletCsvReadFile<Product>("test.csv", null);
+
+        // Assert
+        readFile.Path.ShouldBe("test.csv");
+        readFile.Configuration.ShouldBeNull();
+    }
+
+    [Fact]
+    public void RivuletCsvWriteFile_ShouldCreateWithConfiguration()
+    {
+        // Arrange
+        var products = new[] { new Product { Id = 1, Name = "Test", Price = 10m } };
+        var config = new CsvFileConfiguration();
+
+        // Act
+        var writeFile = new RivuletCsvWriteFile<Product>("output.csv", products, config);
+
+        // Assert
+        writeFile.Path.ShouldBe("output.csv");
+        writeFile.Records.ShouldBe(products);
+        writeFile.Configuration.ShouldBe(config);
+    }
+
     [SuppressMessage("ReSharper", "PropertyCanBeMadeInitOnly.Local")]
     private sealed class Product
     {
