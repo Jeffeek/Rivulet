@@ -50,7 +50,7 @@ jobs:
       run: dotnet build Rivulet.slnx -c Release --no-restore
 
     - name: ReSharper CLI InspectCode
-      uses: muno92/resharper_inspectcode@a63335b1d72c215c2be11aea8c318eda74259c1e # 1.15.5
+      uses: muno92/resharper_inspectcode@4ac1433b1e654cc150566a73ccebb9a0b7f89e59 # 1.15.6
       with:
          solutionPath: ./Rivulet.slnx
          version: 2025.3.1
