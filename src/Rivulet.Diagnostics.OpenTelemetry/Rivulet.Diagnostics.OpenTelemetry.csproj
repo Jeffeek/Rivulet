@@ -32,7 +32,7 @@
   	<ProjectReference Include="..\Rivulet.Core\Rivulet.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
-  	<PackageReference Include="OpenTelemetry.Api" Version="1.14.0" />
+  	<PackageReference Include="OpenTelemetry.Api" Version="1.15.0" />
   	<PackageReference Include="System.Diagnostics.DiagnosticSource" Version="10.0.2" />
   </ItemGroup>
 </Project>
