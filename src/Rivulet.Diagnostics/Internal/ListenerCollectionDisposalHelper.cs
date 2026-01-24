@@ -21,7 +21,7 @@ internal static class ListenerCollectionDisposalHelper
             {
                 listener.Dispose();
             }
-#pragma warning disable CA1031 // Do not catch general exception types
+#pragma warning disable CA1031 // Do not catch general exception types - disposal exceptions must not propagate during cleanup
             catch
 #pragma warning restore CA1031
             {
@@ -46,7 +46,7 @@ internal static class ListenerCollectionDisposalHelper
             {
                 await listener.DisposeAsync().ConfigureAwait(false);
             }
-#pragma warning disable CA1031 // Do not catch general exception types
+#pragma warning disable CA1031 // Do not catch general exception types - disposal exceptions must not propagate during cleanup
             catch
 #pragma warning restore CA1031
             {
@@ -73,7 +73,7 @@ internal static class ListenerCollectionDisposalHelper
                 var valueTask = listener.DisposeAsync();
                 if (!valueTask.IsCompleted) valueTask.AsTask().GetAwaiter().GetResult();
             }
-#pragma warning disable CA1031 // Do not catch general exception types
+#pragma warning disable CA1031 // Do not catch general exception types - disposal exceptions must not propagate during cleanup
             catch
 #pragma warning restore CA1031
             {

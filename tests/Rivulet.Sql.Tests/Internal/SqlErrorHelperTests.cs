@@ -168,7 +168,7 @@ public sealed class SqlErrorHelperTests
     [Fact]
     public void WrapBulkOperationExceptionWithDetails_WithLongStackTrace_ShouldTruncateAt500Characters()
     {
-        Exception exceptionWithLongStack = null!;
+        Exception? exceptionWithLongStack = null;
         try
         {
             // Create nested calls to generate a longer stack trace

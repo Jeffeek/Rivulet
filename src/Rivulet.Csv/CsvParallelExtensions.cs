@@ -564,9 +564,11 @@ public static class CsvParallelExtensions
         if (options.OnFileStartAsync != null)
             await options.OnFileStartAsync(fileConfig.Path).ConfigureAwait(false);
 
+#pragma warning disable CA2000 // Dispose objects before losing scope - all resources properly disposed in finally block
         Stream? stream = null;
         StreamReader? reader = null;
         CsvReader? csv = null;
+#pragma warning restore CA2000
         long recordCount = 0;
 
         try

@@ -80,7 +80,7 @@ public static class MySqlBulkExtensions
                             {
                                 await bulkLoader.LoadAsync(ct).ConfigureAwait(false);
                             }
-#pragma warning disable CA1031 // Do not catch general exception types
+#pragma warning disable CA1031 // Do not catch general exception types - wrapping all MySQL exceptions with operation context
                             catch (Exception ex)
 #pragma warning restore CA1031
                             {
@@ -161,7 +161,7 @@ public static class MySqlBulkExtensions
                             // Re-throw FileNotFoundException with original detail
                             throw;
                         }
-#pragma warning disable CA1031 // Do not catch general exception types
+#pragma warning disable CA1031 // Do not catch general exception types - wrapping all MySQL exceptions with operation context
                         catch (Exception ex)
 #pragma warning restore CA1031
                         {
@@ -212,7 +212,7 @@ public static class MySqlBulkExtensions
             if (File.Exists(tempFile))
                 File.Delete(tempFile);
         }
-#pragma warning disable CA1031 // Do not catch general exception types
+#pragma warning disable CA1031 // Do not catch general exception types - suppressing cleanup exceptions to avoid masking original errors
         catch (Exception)
 #pragma warning restore CA1031
         {

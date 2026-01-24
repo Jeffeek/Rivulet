@@ -26,9 +26,15 @@ internal static class StreamWriterDisposalHelper
 
         if (writer is null) return;
 
-        await writer.FlushAsync().ConfigureAwait(false);
-        writer.Close();
-        await writer.DisposeAsync().ConfigureAwait(false);
+        try
+        {
+            await writer.FlushAsync().ConfigureAwait(false);
+            writer.Close();
+        }
+        finally
+        {
+            await writer.DisposeAsync().ConfigureAwait(false);
+        }
     }
 
     /// <summary>
@@ -50,8 +56,14 @@ internal static class StreamWriterDisposalHelper
 
         if (writer is null) return;
 
-        writer.Flush();
-        writer.Close();
-        writer.Dispose();
+        try
+        {
+            writer.Flush();
+            writer.Close();
+        }
+        finally
+        {
+            writer.Dispose();
+        }
     }
 }
