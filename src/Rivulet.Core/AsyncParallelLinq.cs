@@ -127,7 +127,7 @@ public static class AsyncParallelLinq
 
                                 success = true;
                             }
-#pragma warning disable CA1031 // Do not catch general exception types
+#pragma warning disable CA1031 // Do not catch general exception types - user selector can throw any exception type
                             catch (Exception ex)
 #pragma warning restore CA1031
                             {
@@ -159,7 +159,7 @@ public static class AsyncParallelLinq
             {
                 await Task.WhenAll(workers.Prepend(writerTask)).ConfigureAwait(false);
             }
-#pragma warning disable CA1031 // Do not catch general exception types
+#pragma warning disable CA1031 // Do not catch general exception types - errors collected via error mode policy
             catch when (options.ErrorMode != ErrorMode.FailFast)
 #pragma warning restore CA1031
             {
@@ -281,7 +281,7 @@ public static class AsyncParallelLinq
 
                                 success = true;
                             }
-#pragma warning disable CA1031 // Do not catch general exception types
+#pragma warning disable CA1031 // Do not catch general exception types - user selector can throw any exception type
                             catch (Exception ex)
 #pragma warning restore CA1031
                             {
@@ -360,7 +360,7 @@ public static class AsyncParallelLinq
                 {
                     await Task.WhenAll(writer, reader).ConfigureAwait(false);
                 }
-#pragma warning disable CA1031 // Do not catch general exception types
+#pragma warning disable CA1031 // Do not catch general exception types - capturing all task exceptions for error aggregation
                 catch (Exception ex)
 #pragma warning restore CA1031
                 {

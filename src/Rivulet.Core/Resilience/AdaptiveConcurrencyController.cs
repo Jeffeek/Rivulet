@@ -159,7 +159,7 @@ internal sealed class AdaptiveConcurrencyController : IAsyncDisposable
                             for (var i = 0; i < Math.Abs(delta); i++)
                                 await _semaphore.WaitAsync().ConfigureAwait(false);
                         }
-#pragma warning disable CA1031 // Do not catch general exception types
+#pragma warning disable CA1031 // Do not catch general exception types - background task must not throw
                         catch (Exception ex)
 #pragma warning restore CA1031
                         {
