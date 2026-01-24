@@ -495,7 +495,7 @@ public sealed class CsvOperationOptionsTests : IDisposable
         var config = new CsvFileConfiguration
         {
             ConfigurationAction = static cfg => cfg.Delimiter = ",",
-            CsvContextAction = static ctx => { }
+            CsvContextAction = static _ => { }
         };
 
         // Assert
