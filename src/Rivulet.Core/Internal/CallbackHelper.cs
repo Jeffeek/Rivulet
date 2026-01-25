@@ -34,7 +34,7 @@ internal static class CallbackHelper
                 {
                     await callback(arg1, arg2).ConfigureAwait(false);
                 }
-#pragma warning disable CA1031 // Do not catch general exception types
+#pragma warning disable CA1031 // Do not catch general exception types - user callbacks can throw any exception
                 catch (Exception ex)
 #pragma warning restore CA1031
                 {

@@ -77,7 +77,7 @@ public static class SqlBulkCopyExtensions
                         {
                             await bulkCopy.WriteToServerAsync(dataTable, ct).ConfigureAwait(false);
                         }
-#pragma warning disable CA1031 // Do not catch general exception types
+#pragma warning disable CA1031 // Do not catch general exception types - wrapping all SQL exceptions with operation context
                         catch (Exception ex)
 #pragma warning restore CA1031
                         {
@@ -160,7 +160,7 @@ public static class SqlBulkCopyExtensions
                         {
                             await bulkCopy.WriteToServerAsync(dataTable, ct).ConfigureAwait(false);
                         }
-#pragma warning disable CA1031 // Do not catch general exception types
+#pragma warning disable CA1031 // Do not catch general exception types - wrapping all SQL exceptions with operation context
                         catch (Exception ex)
 #pragma warning restore CA1031
                         {

@@ -85,7 +85,7 @@ public static class PostgreSqlCopyExtensions
                             await writer.CompleteAsync(ct).ConfigureAwait(false);
                         }
                     }
-#pragma warning disable CA1031 // Do not catch general exception types
+#pragma warning disable CA1031 // Do not catch general exception types - wrapping all PostgreSQL exceptions with operation context
                     catch (Exception ex)
 #pragma warning restore CA1031
                     {
