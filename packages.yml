@@ -384,6 +384,45 @@ packages:
       - net8.0
       - net9.0
 
+  - name: Rivulet.Pipeline
+    id: pipeline
+    category: core
+    version: 2.0.0
+    status: in_development
+    nuget_id: Rivulet.Pipeline
+    description: Multi-stage pipeline composition for Rivulet with fluent API, per-stage concurrency, backpressure management between stages, and streaming support
+    path: src/Rivulet.Pipeline
+    test_path: tests/Rivulet.Pipeline.Tests
+    sample_path: samples/Rivulet.Pipeline.Sample
+    sample_name: Rivulet.Pipeline.Sample
+    features:
+      - PipelineBuilder.Create - Create type-safe pipeline builders with fluent API
+      - SelectParallel - Parallel transform stage with async/sync selectors
+      - WhereParallel - Parallel filter stage with async/sync predicates
+      - Batch - Group items into fixed-size batches with optional timeout
+      - BatchSelectParallel - Batch and transform items in parallel
+      - SelectManyParallel - Flatten/expand collections in parallel
+      - Tap - Execute side effects without transforming items
+      - Buffer - Decouple upstream/downstream with channel-based buffering
+      - Throttle - Rate limit items using token bucket algorithm
+      - ExecuteAsync - Execute pipeline and collect all results
+      - ExecuteStreamAsync - Stream results as IAsyncEnumerable
+    key_features:
+      - Fluent builder API with type-safe stage chaining
+      - Per-stage concurrency configuration via StageOptions
+      - Backpressure management using System.Threading.Channels
+      - Reuses Core components (TokenBucket, ParallelOptionsRivulet)
+      - Pipeline lifecycle callbacks (start, complete, stage events)
+      - Per-stage metrics tracking (items in/out, timing)
+      - Retry policies, circuit breaker, and error modes per stage
+      - Cancellation support propagated through all stages
+      - Streaming execution with IAsyncEnumerable
+    dependencies:
+      - Rivulet.Core
+    targets:
+      - net8.0
+      - net9.0
+
 # ============================================================================
 # GENERATION RULES
 # ============================================================================
@@ -485,6 +524,7 @@ versions:
     status: in_development
     packages:
       - csv
+      - pipeline
 
   - version: "1.5.0"
     release_date: "2026-06-15"

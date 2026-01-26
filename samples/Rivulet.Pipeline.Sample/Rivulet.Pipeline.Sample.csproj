@@ -10,12 +10,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Rivulet.Core\Rivulet.Core.csproj" />
-    <ProjectReference Include="..\..\src\Rivulet.Diagnostics.OpenTelemetry\Rivulet.Diagnostics.OpenTelemetry.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="OpenTelemetry" Version="1.15.0" />
-    <PackageReference Include="OpenTelemetry.Exporter.Console" Version="1.15.0" />
-    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.15.0" />
+    <ProjectReference Include="..\..\src\Rivulet.Pipeline\Rivulet.Pipeline.csproj" />
   </ItemGroup>
 </Project>

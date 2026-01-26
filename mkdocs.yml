@@ -138,6 +138,8 @@ nav:
       - Rivulet.Sql.MySql: packages/rivulet-sql-mysql.md
       - Rivulet.Polly: packages/rivulet-polly.md
       - Rivulet.IO: packages/rivulet-io.md
+      - Rivulet.Csv: packages/rivulet-csv.md
+      - Rivulet.Pipeline: packages/rivulet-pipeline.md
   - Development:
       - Contributing: CONTRIBUTING.md
       - Roadmap: ROADMAP.md
