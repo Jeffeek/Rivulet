@@ -35,7 +35,7 @@ internal sealed class Pipeline<TIn, TOut> : IPipeline<TIn, TOut>
             try
             {
                 // Chain all stages together
-                var current = source.Select(static x => (object)x!, cancellationToken);
+                var current = source.Select(static x => (object)x!);
 
                 for (var i = 0; i < _stages.Count; i++)
                 {
@@ -81,7 +81,7 @@ internal sealed class Pipeline<TIn, TOut> : IPipeline<TIn, TOut>
     public Task<List<TOut>> ExecuteAsync(
         IEnumerable<TIn> source,
         CancellationToken cancellationToken = default
-    ) => ExecuteAsync(source.ToAsyncEnumerable(cancellationToken), cancellationToken);
+    ) => ExecuteAsync(source.ToAsyncEnumerable(), cancellationToken);
 
     public async Task<List<TOut>> ExecuteAsync(
         IAsyncEnumerable<TIn> source,
@@ -94,43 +94,5 @@ internal sealed class Pipeline<TIn, TOut> : IPipeline<TIn, TOut>
             results.Add(result);
 
         return results;
-    }
-}
-
-/// <summary>
-/// Extension methods for converting IEnumerable to IAsyncEnumerable.
-/// </summary>
-internal static class AsyncEnumerableExtensions
-{
-    /// <summary>
-    /// Converts an IEnumerable to IAsyncEnumerable.
-    /// </summary>
-    public static async IAsyncEnumerable<T> ToAsyncEnumerable<T>(
-        this IEnumerable<T> source,
-        [EnumeratorCancellation]
-        CancellationToken cancellationToken = default
-    )
-    {
-        foreach (var item in source)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            yield return item;
-        }
-
-        await Task.CompletedTask.ConfigureAwait(false); // Ensure async state machine
-    }
-
-    /// <summary>
-    /// Projects each element of an async sequence to a new form.
-    /// </summary>
-    public static async IAsyncEnumerable<TResult> Select<TSource, TResult>(
-        this IAsyncEnumerable<TSource> source,
-        Func<TSource, TResult> selector,
-        [EnumeratorCancellation]
-        CancellationToken cancellationToken = default
-    )
-    {
-        await foreach (var item in source.WithCancellation(cancellationToken).ConfigureAwait(false))
-            yield return selector(item);
     }
 }

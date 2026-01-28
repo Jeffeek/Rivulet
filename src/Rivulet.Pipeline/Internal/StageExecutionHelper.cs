@@ -18,7 +18,7 @@ internal static class StageExecutionHelper
         CancellationToken cancellationToken
     )
     {
-        var typedInput = input.Select(static x => (TIn)x, cancellationToken);
+        var typedInput = input.Select(static x => (TIn)x);
 
         await foreach (var result in typedExecutor(typedInput).WithCancellation(cancellationToken).ConfigureAwait(false))
             yield return result!;
