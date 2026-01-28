@@ -18,6 +18,7 @@
     <Project Path="samples/Rivulet.Sql.SqlServer.Sample/Rivulet.Sql.SqlServer.Sample.csproj" />
     <Project Path="samples/Rivulet.Testing.Sample/Rivulet.Testing.Sample.csproj" />
     <Project Path="samples/Rivulet.Csv.Sample/Rivulet.Csv.Sample.csproj" />
+    <Project Path="samples/Rivulet.Pipeline.Sample/Rivulet.Pipeline.Sample.csproj" />
   </Folder>
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />
@@ -50,6 +51,7 @@
     <Project Path="src/Rivulet.Sql.SqlServer/Rivulet.Sql.SqlServer.csproj" />
     <Project Path="src/Rivulet.Sql/Rivulet.Sql.csproj" />
     <Project Path="src/Rivulet.Testing/Rivulet.Testing.csproj" />
+    <Project Path="src/Rivulet.Pipeline/Rivulet.Pipeline.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Rivulet.Base.Tests/Rivulet.Base.Tests.csproj" />
@@ -67,5 +69,6 @@
     <Project Path="tests/Rivulet.Sql.SqlServer.Tests/Rivulet.Sql.SqlServer.Tests.csproj" />
     <Project Path="tests/Rivulet.Sql.Tests/Rivulet.Sql.Tests.csproj" />
     <Project Path="tests/Rivulet.Testing.Tests/Rivulet.Testing.Tests.csproj" />
+    <Project Path="tests/Rivulet.Pipeline.Tests/Rivulet.Pipeline.Tests.csproj" />
   </Folder>
 </Solution>

@@ -190,6 +190,22 @@ Parallel CSV parsing and writing for Rivulet with CsvHelper integration, bounded
 - Circuit breaker and retry support
 - Ordered and unordered output options
 
+#### 🚧 [Rivulet.Pipeline](https://www.nuget.org/packages/Rivulet.Pipeline)
+[![NuGet](https://img.shields.io/nuget/v/Rivulet.Pipeline.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Pipeline) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Pipeline.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Pipeline)
+
+Multi-stage pipeline composition for Rivulet with fluent API, per-stage concurrency, backpressure management between stages, and streaming support
+
+**Key Features:**
+- Fluent builder API with type-safe stage chaining
+- Per-stage concurrency configuration via StageOptions
+- Backpressure management using System.Threading.Channels
+- Reuses Core components (TokenBucket, ParallelOptionsRivulet)
+- Pipeline lifecycle callbacks (start, complete, stage events)
+- Per-stage metrics tracking (items in/out, timing)
+- Retry policies, circuit breaker, and error modes per stage
+- Cancellation support propagated through all stages
+- Streaming execution with IAsyncEnumerable
+
 ### Integration Packages (v1.4.0 🚧)
 <!-- PACKAGES_END -->
 

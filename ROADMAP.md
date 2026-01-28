@@ -36,6 +36,7 @@
 ### 🚧 1.4.0 - In Development
 
 - **Rivulet.Csv** - Parallel CSV parsing and writing for Rivulet with CsvHelper integration, bounded concurrency, and batching support for high-throughput data processing
+- **Rivulet.Pipeline** - Multi-stage pipeline composition for Rivulet with fluent API, per-stage concurrency, backpressure management between stages, and streaming support
 <!-- VERSIONS_END -->
 
 ---

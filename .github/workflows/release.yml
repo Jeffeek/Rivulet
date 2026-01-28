@@ -74,6 +74,7 @@ jobs:
         dotnet pack src/Rivulet.Sql.MySql/Rivulet.Sql.MySql.csproj -c Release --output ./artifacts -p:PackageVersion=${{ steps.get_version.outputs.version }}
         dotnet pack src/Rivulet.Polly/Rivulet.Polly.csproj -c Release --output ./artifacts -p:PackageVersion=${{ steps.get_version.outputs.version }}
         dotnet pack src/Rivulet.Csv/Rivulet.Csv.csproj -c Release --output ./artifacts -p:PackageVersion=${{ steps.get_version.outputs.version }}
+        dotnet pack src/Rivulet.Pipeline/Rivulet.Pipeline.csproj -c Release --output ./artifacts -p:PackageVersion=${{ steps.get_version.outputs.version }}
         # PACK_COMMANDS_END
       timeout-minutes: 20
 
