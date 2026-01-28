@@ -405,7 +405,7 @@ class DependabotGenerator(FileGenerator):
             lines.append(f"  - package-ecosystem: nuget")
             lines.append(f"    directory: /{path}")
             lines.append(f"    schedule:")
-            lines.append(f"      interval: daily")
+            lines.append(f"      interval: weekly")
             lines.append("")
 
         # Test packages from packages.yml
@@ -417,7 +417,7 @@ class DependabotGenerator(FileGenerator):
                 lines.append(f"  - package-ecosystem: nuget")
                 lines.append(f"    directory: /{test_path}")
                 lines.append(f"    schedule:")
-                lines.append(f"      interval: daily")
+                lines.append(f"      interval: weekly")
                 lines.append("")
 
         # Auto-discover additional test directories (e.g., Benchmarks)
@@ -435,7 +435,7 @@ class DependabotGenerator(FileGenerator):
                             lines.append(f"  - package-ecosystem: nuget")
                             lines.append(f"    directory: /{rel_path}")
                             lines.append(f"    schedule:")
-                            lines.append(f"      interval: daily")
+                            lines.append(f"      interval: weekly")
                             lines.append("")
 
         # Remove trailing empty line
