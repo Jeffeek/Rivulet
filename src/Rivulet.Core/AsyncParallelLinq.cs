@@ -396,8 +396,15 @@ public static class AsyncParallelLinq
                     }
                     case ErrorMode.FailFast:
                     {
-                        // FailFast: Exceptions already propagated by HandleProcessingErrorAsync
-                        // But if source failed, propagate that too
+                        // FailFast: Throw the first real exception, not cancellation exceptions.
+                        // When an exception occurs, we cancel the token to stop other workers,
+                        // but this causes other workers to throw OperationCanceledException.
+                        // Filter out cancellation exceptions to find the real error.
+                        var firstRealError = errors.FirstOrDefault(static e => e is not OperationCanceledException);
+                        if (firstRealError != null)
+                            ExceptionDispatchInfo.Capture(firstRealError).Throw();
+
+                        // If no real errors but task failed, propagate that (e.g., source error)
                         if (taskException != null)
                             throw taskException;
 
