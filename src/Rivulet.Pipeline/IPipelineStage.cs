@@ -5,6 +5,7 @@ namespace Rivulet.Pipeline;
 /// </summary>
 /// <typeparam name="TIn">The input type for this stage.</typeparam>
 /// <typeparam name="TOut">The output type for this stage.</typeparam>
+// ReSharper disable once MemberCanBeInternal
 public interface IPipelineStage<in TIn, out TOut>
 {
     /// <summary>
@@ -19,6 +20,7 @@ public interface IPipelineStage<in TIn, out TOut>
     /// <param name="context">The pipeline execution context.</param>
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>An async enumerable of processed results.</returns>
+    // ReSharper disable once UnusedMemberInSuper.Global
     IAsyncEnumerable<TOut> ExecuteAsync(
         IAsyncEnumerable<TIn> input,
         PipelineContext context,

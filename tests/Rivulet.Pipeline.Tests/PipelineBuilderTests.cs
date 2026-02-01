@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Rivulet.Core;
 using Rivulet.Core.Resilience;
 
@@ -223,5 +224,129 @@ public sealed class PipelineBuilderTests
         Should.Throw<InvalidOperationException>(() => builder1.Build());
         builder2.Build().StageCount.ShouldBe(1);
         builder3.Build().StageCount.ShouldBe(2);
+    }
+
+    [Fact]
+    public async Task AddStage_CustomStage_ExecutesCorrectly()
+    {
+        // Create a custom stage
+        var customStage = new TestMultiplyStage(3);
+
+        var pipeline = PipelineBuilder.Create<int>("CustomStageTest")
+            .AddStage(customStage)
+            .Build();
+
+        var results = await pipeline.ExecuteAsync(new[] { 1, 2, 3, 4, 5 });
+
+        results.ShouldBe(new[] { 3, 6, 9, 12, 15 });
+        pipeline.StageCount.ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task AddStage_WithOptions_RespectsOptions()
+    {
+        var customStage = new TestMultiplyStage(2);
+
+        var pipeline = PipelineBuilder.Create<int>()
+            .AddStage(customStage,
+                new StageOptions
+                {
+                    ParallelOptions = new ParallelOptionsRivulet { MaxDegreeOfParallelism = 1 }
+                })
+            .Build();
+
+        var results = await pipeline.ExecuteAsync(new[] { 1, 2, 3 });
+
+        results.ShouldBe(new[] { 2, 4, 6 });
+    }
+
+    [Fact]
+    public async Task AddStage_ChainedWithBuiltInStages_WorksCorrectly()
+    {
+        var customStage = new TestMultiplyStage(10);
+
+        var pipeline = PipelineBuilder.Create<int>()
+            .SelectParallel(static x => x + 1)
+            .AddStage(customStage)
+            .WhereParallel(static x => x > 20)
+            .Build();
+
+        var results = await pipeline.ExecuteAsync(new[] { 1, 2, 3, 4, 5 });
+
+        // Input: 1,2,3,4,5
+        // After SelectParallel(+1): 2,3,4,5,6
+        // After custom(*10): 20,30,40,50,60
+        // After WhereParallel(>20): 30,40,50,60
+        // Order not guaranteed due to parallelism
+        results.ShouldBeSubsetOf(new[] { 30, 40, 50, 60 });
+        results.Count.ShouldBe(4);
+        pipeline.StageCount.ShouldBe(3);
+    }
+
+    [Fact]
+    public async Task AddStage_TypeTransformation_PreservesTypeChain()
+    {
+        var customStage = new TestToStringStage();
+
+        var pipeline = PipelineBuilder.Create<int>()
+            .AddStage(customStage)
+            .WhereParallel(static s => s.Length > 0)
+            .Build();
+
+        var results = await pipeline.ExecuteAsync(new[] { 1, 22, 333 });
+
+        // Order not guaranteed due to parallelism
+        results.ShouldBeSubsetOf(new[] { "1", "22", "333" });
+        results.Count.ShouldBe(3);
+    }
+
+    [Fact]
+    public void AddStage_NullStage_ThrowsArgumentNullException()
+    {
+        var builder = PipelineBuilder.Create<int>();
+
+        Should.Throw<ArgumentNullException>(() =>
+            builder.AddStage<int>(null!));
+    }
+}
+
+/// <summary>
+/// Test stage that multiplies each item by a factor.
+/// </summary>
+file sealed class TestMultiplyStage(int factor) : IPipelineStage<int, int>
+{
+    public string Name => $"Multiply_x{factor}";
+
+    public async IAsyncEnumerable<int> ExecuteAsync(
+        IAsyncEnumerable<int> input,
+        PipelineContext context,
+        [EnumeratorCancellation]
+        CancellationToken cancellationToken
+    )
+    {
+        await foreach (var item in input.WithCancellation(cancellationToken).ConfigureAwait(false))
+        {
+            await Task.Yield(); // Simulate async work
+            yield return item * factor;
+        }
+    }
+}
+
+/// <summary>
+/// Test stage that converts integers to strings.
+/// </summary>
+file sealed class TestToStringStage : IPipelineStage<int, string>
+{
+    public string Name => "ToString";
+
+    public async IAsyncEnumerable<string> ExecuteAsync(
+        IAsyncEnumerable<int> input,
+        PipelineContext context,
+        [EnumeratorCancellation]
+        CancellationToken cancellationToken
+    )
+    {
+        await foreach (var item in input.WithCancellation(cancellationToken).ConfigureAwait(false))
+            yield return item.ToString();
     }
 }

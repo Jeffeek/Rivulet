@@ -18,6 +18,7 @@ public sealed class PipelineOptions
     /// Gets the default parallel options applied to all stages unless overridden.
     /// This includes concurrency, retries, circuit breaker, rate limiting, etc.
     /// </summary>
+    // ReSharper disable once MemberCanBeInternal
     public ParallelOptionsRivulet DefaultStageOptions { get; init; } = new();
 
     /// <summary>
@@ -39,12 +40,6 @@ public sealed class PipelineOptions
     public Func<string, int, ValueTask>? OnStageStartAsync { get; init; }
 
     /// <summary>
-    /// Gets a callback invoked when a stage completes execution.
-    /// Receives the stage name, stage index, and stage result summary.
-    /// </summary>
-    public Func<string, int, StageResult, ValueTask>? OnStageCompleteAsync { get; init; }
-
-    /// <summary>
     /// Initializes a new instance of the <see cref="PipelineOptions"/> class with default values.
     /// </summary>
     public PipelineOptions() { }
@@ -53,7 +48,7 @@ public sealed class PipelineOptions
     /// Initializes a new instance of the <see cref="PipelineOptions"/> class by copying values from another instance.
     /// </summary>
     /// <param name="original">The original instance to copy from. If null, default values are used.</param>
-    public PipelineOptions(PipelineOptions? original)
+    internal PipelineOptions(PipelineOptions? original)
     {
         if (original is null)
             return;
@@ -63,6 +58,5 @@ public sealed class PipelineOptions
         OnPipelineStartAsync = original.OnPipelineStartAsync;
         OnPipelineCompleteAsync = original.OnPipelineCompleteAsync;
         OnStageStartAsync = original.OnStageStartAsync;
-        OnStageCompleteAsync = original.OnStageCompleteAsync;
     }
 }

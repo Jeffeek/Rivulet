@@ -24,11 +24,6 @@ public sealed class PipelineContext : IAsyncDisposable
     public Guid ExecutionId { get; } = Guid.NewGuid();
 
     /// <summary>
-    /// Gets the UTC timestamp when the pipeline started.
-    /// </summary>
-    public DateTimeOffset StartTime { get; } = DateTimeOffset.UtcNow;
-
-    /// <summary>
     /// Gets the elapsed time since the pipeline started.
     /// </summary>
     public TimeSpan Elapsed => _stopwatch.Elapsed;
@@ -39,32 +34,33 @@ public sealed class PipelineContext : IAsyncDisposable
     internal ParallelOptionsRivulet DefaultStageOptions { get; }
 
     /// <summary>
-    /// Gets the pipeline options.
-    /// </summary>
-    internal PipelineOptions Options { get; }
-
-    /// <summary>
     /// Initializes a new instance of the <see cref="PipelineContext"/> class.
     /// </summary>
     /// <param name="options">The pipeline options.</param>
     internal PipelineContext(PipelineOptions options)
     {
-        Options = options;
         PipelineName = options.Name;
         DefaultStageOptions = options.DefaultStageOptions;
     }
-
-    /// <summary>
-    /// Records metrics for a stage.
-    /// </summary>
-    internal void RecordStageMetrics(string stageName, StageMetrics metrics) =>
-        _stageMetrics[stageName] = metrics;
 
     /// <summary>
     /// Gets or creates metrics tracking for a stage.
     /// </summary>
     internal StageMetrics GetOrCreateStageMetrics(string stageName, int stageIndex) =>
         _stageMetrics.GetOrAdd(stageName, _ => new StageMetrics(stageName, stageIndex));
+
+    /// <summary>
+    /// Gets existing metrics for a stage. Should only be called after GetOrCreateStageMetrics.
+    /// </summary>
+    internal StageMetrics GetStageMetrics(string stageName) =>
+        _stageMetrics[stageName];
+
+    /// <summary>
+    /// Tries to get existing metrics for a stage. Returns null if not found.
+    /// Useful for internal stages that may not be registered.
+    /// </summary>
+    internal StageMetrics? TryGetStageMetrics(string stageName) =>
+        _stageMetrics.GetValueOrDefault(stageName);
 
     /// <summary>
     /// Creates the pipeline result summary.
@@ -108,9 +104,8 @@ internal sealed class StageMetrics(string stageName, int stageIndex)
     private readonly Stopwatch _stopwatch = new();
     private long _itemsIn;
     private long _itemsOut;
-    private long _itemsFailed;
-    private long _totalRetries;
 
+    // ReSharper disable once MemberCanBePrivate.Global
     public string StageName { get; } = stageName;
     public int StageIndex { get; } = stageIndex;
 
@@ -119,8 +114,6 @@ internal sealed class StageMetrics(string stageName, int stageIndex)
 
     public void IncrementItemsIn() => Interlocked.Increment(ref _itemsIn);
     public void IncrementItemsOut() => Interlocked.Increment(ref _itemsOut);
-    public void IncrementItemsFailed() => Interlocked.Increment(ref _itemsFailed);
-    public void IncrementRetries() => Interlocked.Increment(ref _totalRetries);
 
     public StageResult ToStageResult() => new()
     {
@@ -128,8 +121,8 @@ internal sealed class StageMetrics(string stageName, int stageIndex)
         StageIndex = StageIndex,
         ItemsIn = Interlocked.Read(ref _itemsIn),
         ItemsOut = Interlocked.Read(ref _itemsOut),
-        ItemsFailed = Interlocked.Read(ref _itemsFailed),
-        TotalRetries = Interlocked.Read(ref _totalRetries),
+        ItemsFailed = 0,
+        TotalRetries = 0,
         Elapsed = _stopwatch.Elapsed
     };
 }

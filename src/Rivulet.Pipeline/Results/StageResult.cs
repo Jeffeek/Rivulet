@@ -1,3 +1,5 @@
+// ReSharper disable UnusedAutoPropertyAccessor.Global
+// ReSharper disable MemberCanBeInternal
 namespace Rivulet.Pipeline.Results;
 
 /// <summary>
@@ -44,6 +46,7 @@ public sealed class StageResult
     /// <summary>
     /// Gets the average throughput for this stage in items per second.
     /// </summary>
+    // ReSharper disable once UnusedMember.Global
     public double ItemsPerSecond => Elapsed.TotalSeconds > 0
         ? ItemsOut / Elapsed.TotalSeconds
         : 0;

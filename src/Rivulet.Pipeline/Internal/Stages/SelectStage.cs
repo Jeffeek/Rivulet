@@ -24,7 +24,7 @@ internal sealed class SelectStage<TIn, TOut>(Func<TIn, CancellationToken, ValueT
     )
     {
         var parallelOptions = Options.GetMergedOptions(context.DefaultStageOptions);
-        var metrics = context.GetOrCreateStageMetrics(Name, 0);
+        var metrics = context.GetStageMetrics(Name);
 
         metrics.Start();
 

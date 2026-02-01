@@ -46,6 +46,7 @@ public interface IPipeline<in TIn, TOut>
     /// <param name="source">The async enumerable source to process.</param>
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>A task containing the list of all processed results.</returns>
+    // ReSharper disable once UnusedMemberInSuper.Global
     Task<List<TOut>> ExecuteAsync(
         IAsyncEnumerable<TIn> source,
         CancellationToken cancellationToken = default

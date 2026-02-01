@@ -1,3 +1,4 @@
+// ReSharper disable MemberCanBeInternal
 using Rivulet.Core;
 using Rivulet.Core.Resilience;
 using Rivulet.Pipeline.Internal;
@@ -380,6 +381,30 @@ public sealed class PipelineBuilder<TIn, TCurrent>
         };
 
         return WithUpdatedDefaults(newDefaults);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // CUSTOM STAGES
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Adds a custom stage implementation to the pipeline.
+    /// This allows users to implement their own IPipelineStage and integrate it into the pipeline.
+    /// </summary>
+    /// <typeparam name="TOut">The output type of the custom stage.</typeparam>
+    /// <param name="stage">The custom stage implementation.</param>
+    /// <param name="options">Stage-specific options. If null, uses pipeline defaults.</param>
+    /// <returns>A new builder with the updated pipeline configuration.</returns>
+    public PipelineBuilder<TIn, TOut> AddStage<TOut>(
+        IPipelineStage<TCurrent, TOut> stage,
+        StageOptions? options = null
+    )
+    {
+        var adapter = new CustomStageAdapter<TCurrent, TOut>(
+            stage,
+            options ?? new StageOptions());
+
+        return AddStage<TOut>(adapter);
     }
 
     // ═══════════════════════════════════════════════════════════════════════════

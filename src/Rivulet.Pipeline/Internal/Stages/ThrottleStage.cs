@@ -26,7 +26,7 @@ internal sealed class ThrottleStage<T>(double tokensPerSecond, double burstCapac
         CancellationToken cancellationToken
     )
     {
-        var metrics = context.GetOrCreateStageMetrics(Name, 0);
+        var metrics = context.GetStageMetrics(Name);
         metrics.Start();
 
         // Reuse TokenBucket from Core instead of reimplementing

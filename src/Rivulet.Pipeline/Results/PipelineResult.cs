@@ -1,3 +1,5 @@
+// ReSharper disable UnusedAutoPropertyAccessor.Global
+// ReSharper disable MemberCanBeInternal
 namespace Rivulet.Pipeline.Results;
 
 /// <summary>
@@ -35,6 +37,7 @@ public sealed class PipelineResult
     /// <summary>
     /// Gets a value indicating whether the pipeline completed successfully without errors.
     /// </summary>
+    // ReSharper disable once UnusedMember.Global
     public bool IsSuccess => ItemsFailed == 0;
 
     /// <summary>

@@ -18,7 +18,7 @@ internal sealed class BufferStage<T>(int capacity, string name) : IInternalPipel
         CancellationToken cancellationToken
     )
     {
-        var metrics = context.GetOrCreateStageMetrics(Name, 0);
+        var metrics = context.GetStageMetrics(Name);
         metrics.Start();
 
         var channel = Channel.CreateBounded<T>(new BoundedChannelOptions(capacity)

@@ -24,7 +24,7 @@ internal sealed class TapStage<T>(Func<T, CancellationToken, ValueTask> action,
     )
     {
         var parallelOptions = Options.GetMergedOptions(context.DefaultStageOptions);
-        var metrics = context.GetOrCreateStageMetrics(Name, 0);
+        var metrics = context.GetStageMetrics(Name);
 
         metrics.Start();
 
