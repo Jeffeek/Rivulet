@@ -35,6 +35,7 @@ jobs:
           - 'Rivulet.Sql.MySql'
           - 'Rivulet.Polly'
           - 'Rivulet.Csv'
+          - 'Rivulet.Pipeline'
           # PACKAGE_LIST_END
       fail-fast: false
 

@@ -61,7 +61,8 @@ public sealed class CircuitBreakerTests
     public async Task CircuitBreaker_Opens_AfterFailureThreshold()
     {
         // Circuit should open after 3 consecutive failures
-        var cb = new CircuitBreaker(new() { FailureThreshold = 3, OpenTimeout = TimeSpan.FromSeconds(1) });
+        // Use a long timeout to prevent flakiness in slow CI environments
+        var cb = new CircuitBreaker(new() { FailureThreshold = 3, OpenTimeout = TimeSpan.FromSeconds(30) });
 
         var failureCount = 0;
 

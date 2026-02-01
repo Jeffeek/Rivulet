@@ -327,6 +327,42 @@ dotnet run
 
 ---
 
+### 14. Rivulet.Pipeline.Sample
+**Package:** `Rivulet.Pipeline`
+
+Multi-stage pipeline composition for Rivulet with fluent API, per-stage concurrency, backpressure management between stages, and streaming support
+
+- **PipelineBuilder.Create** - Create type-safe pipeline builders with fluent API
+- **SelectParallel** - Parallel transform stage with async/sync selectors
+- **WhereParallel** - Parallel filter stage with async/sync predicates
+- **Batch** - Group items into fixed-size batches with optional timeout
+- **BatchSelectParallel** - Batch and transform items in parallel
+- **SelectManyParallel** - Flatten/expand collections in parallel
+- **Tap** - Execute side effects without transforming items
+- **Buffer** - Decouple upstream/downstream with channel-based buffering
+- **Throttle** - Rate limit items using token bucket algorithm
+- **ExecuteAsync** - Execute pipeline and collect all results
+- **ExecuteStreamAsync** - Stream results as IAsyncEnumerable
+
+**Run:**
+```bash
+cd Rivulet.Pipeline.Sample
+dotnet run
+```
+
+**Key Features:**
+- Fluent builder API with type-safe stage chaining
+- Per-stage concurrency configuration via StageOptions
+- Backpressure management using System.Threading.Channels
+- Reuses Core components (TokenBucket, ParallelOptionsRivulet)
+- Pipeline lifecycle callbacks (start, complete, stage events)
+- Per-stage metrics tracking (items in/out, timing)
+- Retry policies, circuit breaker, and error modes per stage
+- Cancellation support propagated through all stages
+- Streaming execution with IAsyncEnumerable
+
+---
+
 ## Running All Samples
 
 To build all samples:
