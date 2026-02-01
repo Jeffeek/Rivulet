@@ -13,6 +13,7 @@ internal interface IInternalPipelineStage
     /// <summary>
     /// Gets the stage options.
     /// </summary>
+    // ReSharper disable once UnusedMemberInSuper.Global - Used through interface in Pipeline.cs
     StageOptions Options { get; }
 
     /// <summary>

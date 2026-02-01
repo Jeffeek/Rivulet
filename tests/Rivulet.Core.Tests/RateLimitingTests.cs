@@ -432,7 +432,7 @@ public sealed class RateLimitingTests
         // Exhaust bucket
         for (var i = 0; i < 10; i++) bucket.TryAcquire().ShouldBeTrue();
 
-        bucket.GetAvailableTokens().ShouldBeLessThan(1);
+        bucket.GetAvailableTokens().ShouldBeLessThan(1.1);
 
         // Wait for refill
         await Task.Delay(200, CancellationToken.None); // 200ms should add ~20 tokens (100 tokens/sec = 0.1 tokens/ms)

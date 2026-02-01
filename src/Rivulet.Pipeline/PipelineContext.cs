@@ -26,6 +26,7 @@ public sealed class PipelineContext : IAsyncDisposable
     /// <summary>
     /// Gets the elapsed time since the pipeline started.
     /// </summary>
+    // ReSharper disable once UnusedMember.Global - Public API for user access in callbacks
     public TimeSpan Elapsed => _stopwatch.Elapsed;
 
     /// <summary>
