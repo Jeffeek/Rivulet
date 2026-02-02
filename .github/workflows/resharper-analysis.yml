@@ -37,7 +37,7 @@ jobs:
           dotnet-version: '9.0.x'
 
     - name: Cache NuGet packages
-      uses: actions/cache@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
+      uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
       with:
         path: ~/.nuget/packages
         key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
@@ -51,7 +51,7 @@ jobs:
       run: dotnet build Rivulet.slnx -c Release --no-restore
 
     - name: ReSharper CLI InspectCode
-      uses: muno92/resharper_inspectcode@18018fc0f7c44a122aa1735843bd576a9fd66475 # 1.15.7
+      uses: muno92/resharper_inspectcode@65534cb58c0e8d726f5555b08a6964048966dbc6 # 1.15.8
       with:
          solutionPath: ./Rivulet.slnx
          version: 2025.3.1
