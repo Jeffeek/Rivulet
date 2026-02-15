@@ -48,6 +48,6 @@
   </ItemGroup>
   <ItemGroup>
   	<PackageReference Include="System.Linq.Async" Version="7.0.0" />
-  	<PackageReference Include="System.Threading.Channels" Version="10.0.2" />
+  	<PackageReference Include="System.Threading.Channels" Version="10.0.3" />
   </ItemGroup>
 </Project>
