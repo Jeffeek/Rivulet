@@ -8,7 +8,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Rivulet.Core\Rivulet.Core.csproj" />
     <ProjectReference Include="..\..\src\Rivulet.Hosting\Rivulet.Hosting.csproj" />
     <ProjectReference Include="..\..\src\Rivulet.Diagnostics\Rivulet.Diagnostics.csproj" />
   </ItemGroup>

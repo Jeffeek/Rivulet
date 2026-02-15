@@ -9,8 +9,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Rivulet.Core\Rivulet.Core.csproj" />
-    <ProjectReference Include="..\..\src\Rivulet.Sql\Rivulet.Sql.csproj" />
     <ProjectReference Include="..\..\src\Rivulet.Sql.SqlServer\Rivulet.Sql.SqlServer.csproj" />
   </ItemGroup>
 </Project>
