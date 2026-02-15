@@ -10,7 +10,7 @@ internal abstract class SqlServerFixture : IAsyncLifetime
 {
     private MsSqlContainer? _container;
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         _container = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-latest")
             .Build();
@@ -19,10 +19,7 @@ internal abstract class SqlServerFixture : IAsyncLifetime
         _container.GetConnectionString();
     }
 
-    public async Task DisposeAsync()
-    {
-        if (_container != null) await _container.DisposeAsync();
-    }
+    public ValueTask DisposeAsync() => _container?.DisposeAsync() ?? ValueTask.CompletedTask;
 }
 
 /// <summary>

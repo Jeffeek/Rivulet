@@ -14,7 +14,7 @@ public sealed class MySqlBulkExtensionsIntegrationTests : IAsyncLifetime
     private string? _connectionString;
     private MySqlContainer? _container;
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         _container = new MySqlBuilder("mysql:8.0")
             .WithCommand("--local-infile=1") // Enable LOAD DATA LOCAL INFILE
@@ -42,10 +42,7 @@ public sealed class MySqlBulkExtensionsIntegrationTests : IAsyncLifetime
         await command.ExecuteNonQueryAsync();
     }
 
-    public async Task DisposeAsync()
-    {
-        if (_container != null) await _container.DisposeAsync();
-    }
+    public ValueTask DisposeAsync() => _container?.DisposeAsync() ?? ValueTask.CompletedTask;
 
     private MySqlConnection CreateConnection() => new(_connectionString!);
 

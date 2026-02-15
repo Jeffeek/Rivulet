@@ -9,7 +9,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Rivulet.Core\Rivulet.Core.csproj" />
     <ProjectReference Include="..\..\src\Rivulet.Polly\Rivulet.Polly.csproj" />
   </ItemGroup>
 </Project>

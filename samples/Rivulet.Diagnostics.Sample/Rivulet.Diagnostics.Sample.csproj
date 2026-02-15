@@ -9,11 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Rivulet.Core\Rivulet.Core.csproj" />
     <ProjectReference Include="..\..\src\Rivulet.Diagnostics\Rivulet.Diagnostics.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="10.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="10.0.3" />
   </ItemGroup>
 </Project>

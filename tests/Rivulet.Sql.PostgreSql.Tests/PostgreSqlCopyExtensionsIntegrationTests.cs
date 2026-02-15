@@ -14,7 +14,7 @@ public sealed class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
     private string? _connectionString;
     private PostgreSqlContainer? _container;
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         _container = new PostgreSqlBuilder("postgres:16-alpine")
             .Build();
@@ -38,10 +38,7 @@ public sealed class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
         await command.ExecuteNonQueryAsync();
     }
 
-    public async Task DisposeAsync()
-    {
-        if (_container != null) await _container.DisposeAsync();
-    }
+    public ValueTask DisposeAsync() => _container?.DisposeAsync() ?? ValueTask.CompletedTask;
 
     private NpgsqlConnection CreateConnection() => new(_connectionString!);
 

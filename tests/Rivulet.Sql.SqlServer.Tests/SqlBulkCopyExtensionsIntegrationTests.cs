@@ -17,7 +17,7 @@ public sealed class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
     private string? _connectionString;
     private MsSqlContainer? _container;
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         _container = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-latest")
             .Build();
@@ -41,10 +41,7 @@ public sealed class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
         await command.ExecuteNonQueryAsync();
     }
 
-    public async Task DisposeAsync()
-    {
-        if (_container != null) await _container.DisposeAsync();
-    }
+    public ValueTask DisposeAsync() => _container?.DisposeAsync() ?? ValueTask.CompletedTask;
 
     private SqlConnection CreateConnection() => new(_connectionString!);
 
