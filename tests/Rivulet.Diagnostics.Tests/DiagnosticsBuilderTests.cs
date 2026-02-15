@@ -49,7 +49,8 @@ public sealed class DiagnosticsBuilderTests : IDisposable
                         await Task.Delay(100, ct);
                         return x * 2;
                     },
-                    new() { MaxDegreeOfParallelism = 2 });
+                    new() { MaxDegreeOfParallelism = 2 },
+                    cancellationToken: TestContext.Current.CancellationToken);
 
             // Wait for at least 2x the aggregation interval to ensure timer fires reliably
             await Task.Delay(2000, CancellationToken.None);
@@ -200,7 +201,7 @@ public sealed class DiagnosticsBuilderTests : IDisposable
             .Build();
 
         var task = Enumerable.Range(1, 3)
-            .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x), new());
+            .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x), new(), cancellationToken: TestContext.Current.CancellationToken);
 #pragma warning disable xUnit1031
         task.Wait();
 #pragma warning restore xUnit1031
@@ -225,7 +226,7 @@ public sealed class DiagnosticsBuilderTests : IDisposable
 
         // Run operation
         var task = Enumerable.Range(1, 3)
-            .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x), new());
+            .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x), new(), cancellationToken: TestContext.Current.CancellationToken);
 #pragma warning disable xUnit1031
         task.Wait();
 #pragma warning restore xUnit1031
@@ -247,7 +248,7 @@ public sealed class DiagnosticsBuilderTests : IDisposable
             .Build();
 
         await Enumerable.Range(1, 3)
-            .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x), new());
+            .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x), new(), cancellationToken: TestContext.Current.CancellationToken);
 
         await diagnostics.DisposeAsync();
 
@@ -265,7 +266,7 @@ public sealed class DiagnosticsBuilderTests : IDisposable
 
         // Run minimal operation
         var task = Enumerable.Range(1, 1)
-            .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x), new());
+            .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x), new(), cancellationToken: TestContext.Current.CancellationToken);
 #pragma warning disable xUnit1031
         task.Wait();
 #pragma warning restore xUnit1031

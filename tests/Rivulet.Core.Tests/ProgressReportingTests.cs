@@ -37,7 +37,8 @@ public sealed class ProgressReportingTests
                 await Task.Delay(10, ct);
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(100);
         snapshots.ShouldNotBeEmpty();
@@ -121,7 +122,8 @@ public sealed class ProgressReportingTests
                 await Task.Delay(15, ct);
                 return x % 5 == 0 ? throw new InvalidOperationException($"Error on {x}") : x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         await Task.Yield();
 
@@ -172,7 +174,8 @@ public sealed class ProgressReportingTests
                 await Task.Delay(20, ct);
                 return x;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(50);
         snapshots.ShouldNotBeEmpty();
@@ -209,7 +212,8 @@ public sealed class ProgressReportingTests
                 await Task.Delay(10, ct);
                 return x;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         snapshotsWithEta.ShouldNotBeEmpty();
         snapshotsWithEta.All(static s => s.EstimatedTimeRemaining.HasValue).ShouldBeTrue();
@@ -241,7 +245,8 @@ public sealed class ProgressReportingTests
                 await Task.Delay(10, ct);
                 return x;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         snapshots.ShouldNotBeEmpty();
         var progressSnapshots = snapshots.Where(static s => s.PercentComplete.HasValue).ToList();
@@ -262,7 +267,8 @@ public sealed class ProgressReportingTests
                 await Task.Delay(5, ct);
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(10);
     }
@@ -293,7 +299,8 @@ public sealed class ProgressReportingTests
                 await Task.Delay(20, ct);
                 return x;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         snapshots.ShouldNotBeEmpty();
         snapshots.All(static s => s.ItemsStarted >= s.ItemsCompleted).ShouldBeTrue();
@@ -326,7 +333,8 @@ public sealed class ProgressReportingTests
                 await Task.Delay(10, ct);
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.ShouldBe(Enumerable.Range(1, 40).Select(static x => x * 2));
         snapshots.ShouldNotBeEmpty();
@@ -392,7 +400,8 @@ public sealed class ProgressReportingTests
                 await Task.Delay(5, ct);
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(20);
         callbackCount.ShouldBeGreaterThan(0);
@@ -423,7 +432,8 @@ public sealed class ProgressReportingTests
                 await Task.Delay(10, ct);
                 return x;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         snapshots.ShouldNotBeEmpty();
         var orderedSnapshots = snapshots.OrderBy(static s => s.Elapsed).ToList();
@@ -493,7 +503,8 @@ public sealed class ProgressReportingTests
                 await Task.Delay(5, ct);
                 return x % 5 == 0 ? throw new InvalidOperationException("Permanent error") : x;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(12);
         snapshots.ShouldNotBeEmpty();
@@ -587,7 +598,8 @@ public sealed class ProgressReportingTests
                 await Task.Delay(5, ct);
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(20);
     }
@@ -619,7 +631,8 @@ public sealed class ProgressReportingTests
                 await Task.CompletedTask;
                 return x;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -647,7 +660,8 @@ public sealed class ProgressReportingTests
                 await Task.Delay(5, ct);
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(10);
     }
@@ -677,7 +691,8 @@ public sealed class ProgressReportingTests
                 await Task.Delay(5, ct);
                 return x;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(10);
         callbackExecuted.ShouldBeTrue();
@@ -753,7 +768,8 @@ public sealed class ProgressReportingTests
                 await Task.Delay(5, ct);
                 return x;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(10);
         reportCount.ShouldBeGreaterThan(0);
@@ -781,7 +797,8 @@ public sealed class ProgressReportingTests
         };
 
         await source.SelectParallelAsync(static (x, _) => ValueTask.FromResult(x),
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -811,7 +828,8 @@ public sealed class ProgressReportingTests
                     await Task.Delay(2, ct);
                     return x;
                 },
-                options);
+                options,
+                cancellationToken: TestContext.Current.CancellationToken);
 
             results.Count.ShouldBe(5);
         }

@@ -99,7 +99,7 @@ public sealed class RivuletEventListenerBaseTests : IDisposable
 
         // Run a simple operation asynchronously
         var task = Enumerable.Range(1, 3)
-            .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x), new());
+            .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x), new(), cancellationToken: TestContext.Current.CancellationToken);
 
 #pragma warning disable xUnit1031
         task.Wait();

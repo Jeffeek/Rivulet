@@ -37,7 +37,8 @@ public sealed class MetricsTests
                 await Task.Delay(10, ct);
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         await Task.Delay(100, CancellationToken.None);
 
@@ -75,7 +76,8 @@ public sealed class MetricsTests
                 await Task.Delay(5, ct);
                 return x % 5 == 0 ? throw new InvalidOperationException("Error") : x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Disposal completes inside SelectParallelAsync before it returns, which triggers the final sample.
         // The final sample has a 1000ms delay built-in (see MetricsTracker.cs disposal handler).
@@ -122,7 +124,8 @@ public sealed class MetricsTests
                 var attemptCount = attempts.AddOrUpdate(x, 1, static (_, count) => count + 1);
                 return attemptCount < 3 ? throw new InvalidOperationException("Transient error") : x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         await Task.Delay(100, CancellationToken.None);
 
@@ -163,7 +166,8 @@ public sealed class MetricsTests
                 await Task.Delay(1, ct);
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         await Task.Delay(100, CancellationToken.None);
 
@@ -198,7 +202,8 @@ public sealed class MetricsTests
                 await Task.Delay(5, ct);
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         await Task.Delay(100, CancellationToken.None);
 
@@ -309,7 +314,8 @@ public sealed class MetricsTests
                 await Task.Delay(5, ct);
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         return act.ShouldNotThrowAsync();
     }
@@ -335,7 +341,8 @@ public sealed class MetricsTests
                 await Task.Delay(5, ct);
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(20);
     }
@@ -405,7 +412,8 @@ public sealed class MetricsTests
                 await Task.Delay(5, ct);
                 return x == 10 ? throw new InvalidOperationException("Error") : x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         await act.ShouldThrowAsync<InvalidOperationException>();
         capturedSnapshot?.ItemsStarted.ShouldBeGreaterThan(0);
@@ -458,13 +466,15 @@ public sealed class MetricsTests
                 await Task.Delay(50, ct);
                 return x * 2;
             },
-            options1);
+            options1,
+            cancellationToken: TestContext.Current.CancellationToken);
         var task2 = source2.SelectParallelAsync(static async (x, ct) =>
             {
                 await Task.Delay(50, ct);
                 return x * 3;
             },
-            options2);
+            options2,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         var results1 = await task1;
         var results2 = await task2;
@@ -531,7 +541,8 @@ public sealed class MetricsTests
                 await Task.Delay(10, ct);
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         await Task.Delay(100, CancellationToken.None);
 
@@ -594,7 +605,8 @@ public sealed class MetricsTests
                 await Task.Delay(10, ct);
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         await Task.Delay(100, CancellationToken.None);
 
@@ -633,7 +645,8 @@ public sealed class MetricsTests
                 await Task.Delay(100, ct);
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Wait for final timer ticks after operation completes
         // Sample interval is 10ms, wait 50ms (5x interval) for final state + buffer
@@ -681,7 +694,8 @@ public sealed class MetricsTests
                 await Task.Delay(10, ct);
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Wait for timers to fire multiple times after completion
         // Both sample intervals are 50ms, so wait 200ms (4x interval) to ensure
@@ -721,7 +735,8 @@ public sealed class MetricsTests
                 await Task.Delay(1, ct);
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         await Task.Yield();
 
@@ -773,7 +788,8 @@ public sealed class MetricsTests
                             await Task.Delay(5, ct);
                             return x == 10 ? throw new InvalidOperationException("Error") : x * 2;
                         },
-                        options);
+                        options,
+                        cancellationToken: TestContext.Current.CancellationToken);
 
                     await act.ShouldThrowAsync<InvalidOperationException>();
                     break;
@@ -786,7 +802,8 @@ public sealed class MetricsTests
                             await Task.Delay(5, ct);
                             return x % 5 == 0 ? throw new InvalidOperationException("Error") : x * 2;
                         },
-                        options);
+                        options,
+                        cancellationToken: TestContext.Current.CancellationToken);
 
                     await act.ShouldThrowAsync<AggregateException>();
                     break;
@@ -800,7 +817,8 @@ public sealed class MetricsTests
                             await Task.Delay(5, ct);
                             return x % 5 == 0 ? throw new InvalidOperationException("Error") : x * 2;
                         },
-                        options);
+                        options,
+                        cancellationToken: TestContext.Current.CancellationToken);
 
                     results.Count.ShouldBe(16); // 20 - 4 failures
                     break;
@@ -998,7 +1016,8 @@ public sealed class MetricsTests
 
                 return x % 5 == 0 && attempt <= 1 ? throw new InvalidOperationException("Transient error") : x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         await Task.Delay(100, CancellationToken.None);
 
@@ -1033,7 +1052,8 @@ public sealed class MetricsTests
 
                 return x % 5 == 0 && attempt <= 1 ? throw new InvalidOperationException("Transient error") : x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(20);
         attempts.Values.ShouldContain(static v => v > 1);
@@ -1189,7 +1209,8 @@ public sealed class MetricsTests
                     ? throw new InvalidOperationException("Transient")
                     : new ValueTask<int>(x * 2);
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         await Task.Delay(150, CancellationToken.None); // Wait for sampling
 

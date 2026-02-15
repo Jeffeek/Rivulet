@@ -9,7 +9,7 @@ public sealed class SelectParallelAsyncTests
     {
         var source = Enumerable.Empty<int>();
 
-        var results = await source.SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2));
+        var results = await source.SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2), cancellationToken: TestContext.Current.CancellationToken);
 
         results.ShouldBeEmpty();
     }
@@ -19,7 +19,7 @@ public sealed class SelectParallelAsyncTests
     {
         var source = new[] { 5 };
 
-        var results = await source.SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2));
+        var results = await source.SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2), cancellationToken: TestContext.Current.CancellationToken);
 
         results.ShouldHaveSingleItem().ShouldBe(10);
     }
@@ -40,7 +40,7 @@ public sealed class SelectParallelAsyncTests
     {
         var source = Enumerable.Range(1, 1000);
 
-        var results = await source.SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2));
+        var results = await source.SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2), cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(1000);
         results.Sum().ShouldBe(1001000);
@@ -59,7 +59,8 @@ public sealed class SelectParallelAsyncTests
                 await Task.Delay(100, ct);
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         var duration = DateTime.UtcNow - startTime;
 
@@ -94,7 +95,8 @@ public sealed class SelectParallelAsyncTests
 
                 return x;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(20);
         maxConcurrent.ShouldBeLessThanOrEqualTo(3);
@@ -105,7 +107,7 @@ public sealed class SelectParallelAsyncTests
     {
         var source = Enumerable.Range(1, 5);
 
-        var results = await source.SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2));
+        var results = await source.SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2), cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(5);
         results.OrderBy(static x => x).ShouldBe([2, 4, 6, 8, 10]);
@@ -123,7 +125,8 @@ public sealed class SelectParallelAsyncTests
                 await Task.Delay(10, ct);
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(100);
     }
@@ -134,10 +137,11 @@ public sealed class SelectParallelAsyncTests
         var source = Enumerable.Range(1, 50);
 
         var results = await source.SelectParallelAsync(static async (x, ct) =>
-        {
-            await Task.Delay(1, ct);
-            return new { Original = x, Squared = x * x, IsEven = x % 2 == 0 };
-        });
+            {
+                await Task.Delay(1, ct);
+                return new { Original = x, Squared = x * x, IsEven = x % 2 == 0 };
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(50);
         results.Where(static r => r.IsEven).Count().ShouldBe(25);
@@ -149,7 +153,7 @@ public sealed class SelectParallelAsyncTests
     {
         var source = Enumerable.Range(1, 10);
 
-        var results = await source.SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2));
+        var results = await source.SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2), cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(10);
     }
@@ -174,7 +178,8 @@ public sealed class SelectParallelAsyncTests
             (x, _) => failOn.Contains(x)
                 ? throw new InvalidOperationException($"Failed on {x}")
                 : new ValueTask<int>(x * 2),
-            new() { OnFallback = static (_, _) => -1 });
+            new() { OnFallback = static (_, _) => -1 },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(10);
         foreach (var expected in new[] { 2, 4, -1, 8, 10, 12, -1, 16, 18, 20 }) results.ShouldContain(expected);
@@ -198,7 +203,8 @@ public sealed class SelectParallelAsyncTests
                 IsTransient = static ex => ex is TimeoutException,
                 BaseDelay = TimeSpan.FromMilliseconds(1),
                 OnFallback = static (_, _) => 999
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(5);
         foreach (var expected in new[] { 10, 20, 999, 40, 50 }) results.ShouldContain(expected);
@@ -231,7 +237,8 @@ public sealed class SelectParallelAsyncTests
                     4 => throw new InvalidOperationException(),
                     _ => new ValueTask<int>(x * 10)
                 },
-            new() { OnFallback = static (_, ex) => ex is TimeoutException ? -1 : -2 });
+            new() { OnFallback = static (_, ex) => ex is TimeoutException ? -1 : -2 },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(5);
         foreach (var expected in new[] { 10, -1, 30, -2, 50 }) results.ShouldContain(expected);
@@ -244,7 +251,8 @@ public sealed class SelectParallelAsyncTests
 
         var results = await source.SelectParallelAsync(
             static (x, _) => x is 20 or 40 ? throw new() : new ValueTask<int>(x),
-            new() { OnFallback = static (index, _) => index * 1000 });
+            new() { OnFallback = static (index, _) => index * 1000 },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(4);
         // Index 0 -> 10, Index 1 -> 1000, Index 2 -> 30, Index 3 -> 3000
@@ -258,7 +266,10 @@ public sealed class SelectParallelAsyncTests
 
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
             await source.SelectParallelAsync(static (x, _) =>
-                x == 3 ? throw new InvalidOperationException() : new ValueTask<int>(x * 2)));
+                    x == 3
+                        ? throw new InvalidOperationException()
+                        : new ValueTask<int>(x * 2),
+                cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -268,7 +279,8 @@ public sealed class SelectParallelAsyncTests
 
         var results = await source.SelectParallelAsync(
             static (x, _) => x == 2 ? throw new() : new ValueTask<(int Value, string Status)>((x, "OK")),
-            new() { OnFallback = static (_, _) => (0, "FAILED") });
+            new() { OnFallback = static (_, _) => (0, "FAILED") },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(4);
         foreach (var expected in new[] { (1, "OK"), (0, "FAILED"), (3, "OK"), (4, "OK") })

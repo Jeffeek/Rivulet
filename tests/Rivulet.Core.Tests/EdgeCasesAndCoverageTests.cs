@@ -83,7 +83,8 @@ public sealed class EdgeCasesAndCoverageTests
                 await Task.Delay(5, ct);
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(100);
     }
@@ -112,7 +113,8 @@ public sealed class EdgeCasesAndCoverageTests
 
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(10);
         maxConcurrent.ShouldBe(1);
@@ -150,7 +152,7 @@ public sealed class EdgeCasesAndCoverageTests
             throw new InvalidOperationException("Source enumeration error");
         }
 
-        static Task<List<int>> Act() => FaultySource().SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2));
+        static Task<List<int>> Act() => FaultySource().SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2), cancellationToken: TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -195,7 +197,8 @@ public sealed class EdgeCasesAndCoverageTests
 
         var act = () => source.SelectParallelAsync(
             static (x, _) => x == 5 ? throw new InvalidOperationException("Error") : new ValueTask<int>(x * 2),
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         await act.ShouldThrowAsync<AggregateException>();
     }
@@ -241,7 +244,8 @@ public sealed class EdgeCasesAndCoverageTests
                 ct.ThrowIfCancellationRequested();
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         errorCount.ShouldBeGreaterThanOrEqualTo(1);
         results.Count.ShouldBeLessThan(100);
@@ -283,7 +287,7 @@ public sealed class EdgeCasesAndCoverageTests
             throw new InvalidOperationException("Writer error");
         }
 
-        static Task<List<int>> Act() => Source().SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2));
+        static Task<List<int>> Act() => Source().SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2), cancellationToken: TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -319,7 +323,8 @@ public sealed class EdgeCasesAndCoverageTests
         };
 
         await source.SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2),
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         processedIndices.Count.ShouldBe(50);
     }
@@ -340,7 +345,8 @@ public sealed class EdgeCasesAndCoverageTests
                     await Task.Delay(100, ct);
                     return x == 5 ? throw new InvalidOperationException("Error at 5") : x * 2;
                 },
-                options);
+                options,
+                cancellationToken: TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -358,7 +364,8 @@ public sealed class EdgeCasesAndCoverageTests
                     _ => new ValueTask<int>(x * 2)
                 };
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         var exception = await act.ShouldThrowAsync<AggregateException>();
         exception.InnerExceptions.Count.ShouldBe(2);

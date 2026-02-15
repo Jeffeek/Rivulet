@@ -13,7 +13,7 @@ public sealed class EdgeCaseCoverageTests
         var options = new ParallelOptionsRivulet { MaxDegreeOfParallelism = 10 };
 
         var result = await Enumerable.Range(1, 3)
-            .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x), options);
+            .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x), options, cancellationToken: TestContext.Current.CancellationToken);
 
         result.Count.ShouldBe(3);
     }
@@ -36,7 +36,8 @@ public sealed class EdgeCaseCoverageTests
                     await Task.Delay(1, ct);
                     return x;
                 },
-                options);
+                options,
+                cancellationToken: TestContext.Current.CancellationToken);
 
         result.Count.ShouldBe(1);
         attemptCount.ShouldBe(2);
@@ -48,7 +49,7 @@ public sealed class EdgeCaseCoverageTests
         var options = new ParallelOptionsRivulet { MaxDegreeOfParallelism = 5 };
 
         var result = await Enumerable.Range(1, 10)
-            .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x), options);
+            .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x), options, cancellationToken: TestContext.Current.CancellationToken);
 
         result.Count.ShouldBe(10);
     }
@@ -82,7 +83,8 @@ public sealed class EdgeCaseCoverageTests
                     await Task.Delay(10, ct);
                     throw new InvalidOperationException("Always fails");
                 },
-                options);
+                options,
+                cancellationToken: TestContext.Current.CancellationToken);
 
         await Task.Delay(150, CancellationToken.None);
 
@@ -92,7 +94,8 @@ public sealed class EdgeCaseCoverageTests
                     await Task.Delay(10, ct);
                     throw new InvalidOperationException("Still failing");
                 },
-                options);
+                options,
+                cancellationToken: TestContext.Current.CancellationToken);
 
         stateChanges.ShouldContain(CircuitBreakerState.Open);
     }
@@ -103,7 +106,7 @@ public sealed class EdgeCaseCoverageTests
         var options = new ParallelOptionsRivulet { MaxDegreeOfParallelism = 10 };
 
         var result = await Enumerable.Range(1, 20)
-            .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x * 2), options);
+            .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x * 2), options, cancellationToken: TestContext.Current.CancellationToken);
 
         result.Count.ShouldBe(20);
     }
@@ -134,7 +137,8 @@ public sealed class EdgeCaseCoverageTests
                     await Task.Delay(delay, ct);
                     return x;
                 },
-                options);
+                options,
+                cancellationToken: TestContext.Current.CancellationToken);
 
         result.Count.ShouldBe(50);
     }
@@ -150,7 +154,8 @@ public sealed class EdgeCaseCoverageTests
                 await Task.Delay(1, ct);
                 return x;
             },
-            new() { MaxDegreeOfParallelism = 2 });
+            new() { MaxDegreeOfParallelism = 2 },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         result.ShouldBeEmpty();
     }
@@ -166,7 +171,8 @@ public sealed class EdgeCaseCoverageTests
                 await Task.Delay(10, ct);
                 return x * 2;
             },
-            new() { MaxDegreeOfParallelism = 10 });
+            new() { MaxDegreeOfParallelism = 10 },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         result.Count.ShouldBe(1);
         result.ShouldContain(2);
@@ -183,7 +189,8 @@ public sealed class EdgeCaseCoverageTests
                     await Task.Delay(1, ct);
                     return x % 3 == 0 ? throw new InvalidOperationException($"Failed on {x}") : x;
                 },
-                options);
+                options,
+                cancellationToken: TestContext.Current.CancellationToken);
 
         result.ShouldNotContain(static x => x % 3 == 0);
         result.Count.ShouldBeLessThan(10);
@@ -212,7 +219,8 @@ public sealed class EdgeCaseCoverageTests
                         await Task.Delay(1, ct);
                         throw new InvalidOperationException("Transient");
                     },
-                    options);
+                    options,
+                    cancellationToken: TestContext.Current.CancellationToken);
         }
         catch
         {
@@ -237,7 +245,8 @@ public sealed class EdgeCaseCoverageTests
                     await Task.Delay(10, ct);
                     return x * 2;
                 },
-                options);
+                options,
+                cancellationToken: TestContext.Current.CancellationToken);
 
         result.Count.ShouldBe(5);
     }
@@ -266,7 +275,8 @@ public sealed class EdgeCaseCoverageTests
                     await Task.Delay(20, ct);
                     return x;
                 },
-                options);
+                options,
+                cancellationToken: TestContext.Current.CancellationToken);
 
         await Task.Delay(50, CancellationToken.None);
 

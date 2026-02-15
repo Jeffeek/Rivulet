@@ -27,7 +27,8 @@ public sealed class EventSourceTests
                 await Task.Delay(5, ct);
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         var finalStarted = RivuletEventSource.Log.GetItemsStarted();
         var finalCompleted = RivuletEventSource.Log.GetItemsCompleted();
@@ -53,7 +54,8 @@ public sealed class EventSourceTests
                 await Task.Delay(5, ct);
                 return x % 5 == 0 ? throw new InvalidOperationException("Error") : x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         var finalFailures = RivuletEventSource.Log.GetTotalFailures();
 
@@ -82,7 +84,8 @@ public sealed class EventSourceTests
                 var attemptCount = attempts.AddOrUpdate(x, 1, static (_, count) => count + 1);
                 return attemptCount < 2 ? throw new InvalidOperationException("Transient") : x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         var finalRetries = RivuletEventSource.Log.GetTotalRetries();
 

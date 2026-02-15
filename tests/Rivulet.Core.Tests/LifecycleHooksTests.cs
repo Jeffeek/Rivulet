@@ -18,7 +18,7 @@ public sealed class LifecycleHooksTests
             }
         };
 
-        await source.SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2), options);
+        await source.SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2), options, cancellationToken: TestContext.Current.CancellationToken);
 
         startedItems.Count.ShouldBe(10);
     }
@@ -37,7 +37,7 @@ public sealed class LifecycleHooksTests
             }
         };
 
-        await source.SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2), options);
+        await source.SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2), options, cancellationToken: TestContext.Current.CancellationToken);
 
         completedItems.Count.ShouldBe(10);
     }
@@ -59,7 +59,8 @@ public sealed class LifecycleHooksTests
 
         await source.SelectParallelAsync(
             static (x, _) => x == 5 ? throw new InvalidOperationException("Error") : new ValueTask<int>(x * 2),
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         completedItems.Count.ShouldBe(9);
     }
@@ -84,7 +85,8 @@ public sealed class LifecycleHooksTests
         await source.SelectParallelAsync(
             static (x, _) =>
                 x is 3 or 7 ? throw new InvalidOperationException($"Error at {x}") : new ValueTask<int>(x * 2),
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         errorIndices.Count.ShouldBe(2);
         errorExceptions.Count.ShouldBe(2);
@@ -112,7 +114,8 @@ public sealed class LifecycleHooksTests
                 await Task.Delay(1, ct);
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         throttleCalls.ShouldNotBeEmpty();
     }
@@ -137,7 +140,7 @@ public sealed class LifecycleHooksTests
             }
         };
 
-        await source.SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2), options);
+        await source.SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2), options, cancellationToken: TestContext.Current.CancellationToken);
 
         events.Count.ShouldBe(10);
     }
@@ -169,7 +172,8 @@ public sealed class LifecycleHooksTests
 
         await source.SelectParallelAsync(
             static (x, _) => x == 5 ? throw new InvalidOperationException("Error") : new ValueTask<int>(x * 2),
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         events.ShouldContain(static e => e.StartsWith("Error-"));
         events.Where(static e => e.StartsWith("Complete-", StringComparison.Ordinal)).Count().ShouldBe(9);
@@ -251,7 +255,8 @@ public sealed class LifecycleHooksTests
                 await Task.Delay(1, ct);
                 return x == 10 ? throw new InvalidOperationException("Error") : x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         await act.ShouldThrowAsync<AggregateException>();
         processedCount.ShouldBeLessThan(5000);
@@ -270,7 +275,7 @@ public sealed class LifecycleHooksTests
             OnDrainAsync = null
         };
 
-        var results = await source.SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2), options);
+        var results = await source.SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2), options, cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(10);
     }
@@ -294,7 +299,7 @@ public sealed class LifecycleHooksTests
             }
         };
 
-        await source.SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2), options);
+        await source.SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2), options, cancellationToken: TestContext.Current.CancellationToken);
 
         asyncWorkDone.Count.ShouldBe(10);
     }
@@ -305,7 +310,7 @@ public sealed class LifecycleHooksTests
         var source = Enumerable.Range(1, 50);
         var options = new ParallelOptionsRivulet { OnThrottleAsync = null };
 
-        var results = await source.SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2), options);
+        var results = await source.SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2), options, cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(50);
     }

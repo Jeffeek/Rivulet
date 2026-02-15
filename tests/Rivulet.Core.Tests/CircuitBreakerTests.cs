@@ -396,7 +396,8 @@ public sealed class CircuitBreakerTests
                 // Fail for items 1, 2, 3
                 return x <= 3 ? throw new InvalidOperationException($"Item {x} failed") : x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // After 3 failures, circuit opens and remaining items fail fast
         // Should get results only for items that were attempted before circuit opened
@@ -459,7 +460,8 @@ public sealed class CircuitBreakerTests
                 // Always fail for items 1 and 2
                 return x <= 2 ? throw new InvalidOperationException($"Item {x} failed") : x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Items 1 and 2 should be retried
         attemptCounts[1].ShouldBe(3); // Initial + 2 retries
@@ -521,7 +523,8 @@ public sealed class CircuitBreakerTests
                 await Task.Delay(Random.Shared.Next(1, 10), ct);
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(10);
         results.ShouldBeInOrder();

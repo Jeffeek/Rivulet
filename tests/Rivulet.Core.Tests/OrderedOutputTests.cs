@@ -15,7 +15,8 @@ public sealed class OrderedOutputTests
                 await Task.Delay(Random.Shared.Next(1, 10), ct);
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(100);
         results.ShouldBe(Enumerable.Range(1, 100).Select(static x => x * 2));
@@ -38,7 +39,8 @@ public sealed class OrderedOutputTests
                     await Task.Delay(Random.Shared.Next(1, 5), ct);
                     return x;
                 },
-                options);
+                options,
+                cancellationToken: TestContext.Current.CancellationToken);
 
             if (results.SequenceEqual(source)) orderedCount++;
         }
@@ -104,7 +106,8 @@ public sealed class OrderedOutputTests
                 await Task.Delay(Random.Shared.Next(1, 5), ct);
                 return x % 5 == 0 ? throw new InvalidOperationException($"Error at {x}") : x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         var expected = Enumerable.Range(1, 20)
             .Where(static x => x % 5 != 0)
@@ -158,7 +161,8 @@ public sealed class OrderedOutputTests
                 await Task.Delay(10, ct);
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.ShouldBeEmpty();
     }
@@ -175,7 +179,8 @@ public sealed class OrderedOutputTests
                 await Task.Delay(10, ct);
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.ShouldBe(new[] { 84 });
     }
@@ -219,7 +224,8 @@ public sealed class OrderedOutputTests
                 await Task.Delay(Random.Shared.Next(1, 3), ct);
                 return x;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(1000);
         results.ShouldBe((IEnumerable<int>)source, "large dataset should maintain order");

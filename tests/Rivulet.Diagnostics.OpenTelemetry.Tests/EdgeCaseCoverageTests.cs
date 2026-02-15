@@ -27,7 +27,8 @@ public sealed class EdgeCaseCoverageTests
                     await Task.Delay(1, ct);
                     return x;
                 },
-                options);
+                options,
+                cancellationToken: TestContext.Current.CancellationToken);
 
         result.Count.ShouldBe(3);
     }
@@ -49,7 +50,8 @@ public sealed class EdgeCaseCoverageTests
                     await Task.Delay(1, ct);
                     return x;
                 },
-                options);
+                options,
+                cancellationToken: TestContext.Current.CancellationToken);
 
         result.Count.ShouldBe(2);
     }
@@ -75,7 +77,8 @@ public sealed class EdgeCaseCoverageTests
                     await Task.Delay(1, ct);
                     return x;
                 },
-                options);
+                options,
+                cancellationToken: TestContext.Current.CancellationToken);
 
         result.Count.ShouldBe(5);
 
@@ -130,7 +133,8 @@ public sealed class EdgeCaseCoverageTests
                         await Task.Delay(10, ct);
                         return x == 3 ? throw new InvalidOperationException("Test") : x;
                     },
-                    options);
+                    options,
+                    cancellationToken: TestContext.Current.CancellationToken);
         }
         catch (AggregateException)
         {
@@ -155,7 +159,8 @@ public sealed class EdgeCaseCoverageTests
                     await Task.Delay(1, ct);
                     return x;
                 },
-                options);
+                options,
+                cancellationToken: TestContext.Current.CancellationToken);
 
         result.Count.ShouldBe(3);
     }
@@ -200,7 +205,8 @@ public sealed class EdgeCaseCoverageTests
                     await Task.Delay(1, ct);
                     return x;
                 },
-                options);
+                options,
+                cancellationToken: TestContext.Current.CancellationToken);
 
         result.Count.ShouldBe(100);
     }
@@ -228,7 +234,8 @@ public sealed class EdgeCaseCoverageTests
                         await Task.Delay(1, ct);
                         return x % 3 == 0 ? throw new InvalidOperationException($"Failed {x}") : x;
                     },
-                    options);
+                    options,
+                    cancellationToken: TestContext.Current.CancellationToken);
         }
         catch (AggregateException)
         {
@@ -276,7 +283,8 @@ public sealed class EdgeCaseCoverageTests
                                 ? throw new InvalidOperationException("permanent error")
                                 : x;
                     },
-                    options);
+                    options,
+                    cancellationToken: TestContext.Current.CancellationToken);
         }
         catch (AggregateException)
         {
@@ -303,7 +311,8 @@ public sealed class EdgeCaseCoverageTests
                     await Task.Delay(1, ct);
                     return x * 2;
                 },
-                options);
+                options,
+                cancellationToken: TestContext.Current.CancellationToken);
 
         result.Count.ShouldBe(5);
         result.ShouldContain(2);
