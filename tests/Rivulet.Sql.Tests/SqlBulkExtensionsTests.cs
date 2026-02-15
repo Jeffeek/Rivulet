@@ -28,7 +28,8 @@ public sealed class SqlBulkExtensionsTests
                         $"INSERT INTO Users (Id, Name) VALUES ({item.Id}, '{item.Name}')"));
                 await Task.CompletedTask;
             },
-            new() { BatchSize = 1000 });
+            new() { BatchSize = 1000 },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         result.ShouldBeGreaterThan(0);
         totalAffectedRows.ShouldBeGreaterThan(0);
@@ -41,7 +42,8 @@ public sealed class SqlBulkExtensionsTests
 
         await Assert.ThrowsAsync<ArgumentNullException>(async () => await items.BulkInsertAsync(
             static () => new TestDbConnection(),
-            static (_, _, _) => ValueTask.CompletedTask));
+            static (_, _, _) => ValueTask.CompletedTask,
+            cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -51,7 +53,8 @@ public sealed class SqlBulkExtensionsTests
 
         await Assert.ThrowsAsync<ArgumentNullException>(async () => await items.BulkInsertAsync(
             null!,
-            static (_, _, _) => ValueTask.CompletedTask));
+            static (_, _, _) => ValueTask.CompletedTask,
+            cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -61,7 +64,8 @@ public sealed class SqlBulkExtensionsTests
 
         await Assert.ThrowsAsync<ArgumentNullException>(async () => await items.BulkInsertAsync(
             static () => new TestDbConnection(),
-            null!));
+            null!,
+            cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -83,7 +87,8 @@ public sealed class SqlBulkExtensionsTests
                         $"UPDATE Users SET Name = '{item.Name}' WHERE Id = {item.Id}"));
                 await Task.CompletedTask;
             },
-            new() { BatchSize = 500 });
+            new() { BatchSize = 500 },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         result.ShouldBe(1500);
         batchesExecuted.ShouldBe(3);
@@ -99,7 +104,8 @@ public sealed class SqlBulkExtensionsTests
                 cmd.CommandText = $"DELETE FROM Users WHERE Id IN ({string.Join(",", batch)})";
                 await Task.CompletedTask;
             },
-            new() { BatchSize = 1000 });
+            new() { BatchSize = 1000 },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         result.ShouldBe(2000);
     }
@@ -125,7 +131,8 @@ public sealed class SqlBulkExtensionsTests
                 cmd.CommandText = "INSERT INTO Users (Id) VALUES (...)";
                 await Task.CompletedTask;
             },
-            new() { UseTransaction = true, BatchSize = 100 });
+            new() { UseTransaction = true, BatchSize = 100 },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         result.ShouldBe(100);
         capturedTransaction.ShouldNotBeNull();
@@ -158,7 +165,8 @@ public sealed class SqlBulkExtensionsTests
                 {
                     UseTransaction = true, BatchSize = 100,
                     SqlOptions = new() { ParallelOptions = new() { MaxRetries = 0 } }
-                }));
+                },
+                cancellationToken: TestContext.Current.CancellationToken));
 
         capturedTransaction.ShouldNotBeNull();
         capturedTransaction!.IsRolledBack.ShouldBeTrue();
@@ -194,7 +202,8 @@ public sealed class SqlBulkExtensionsTests
 
                     return ValueTask.CompletedTask;
                 }
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         result.ShouldBe(300);
         batchStarted.Count.ShouldBe(3);
@@ -233,7 +242,8 @@ public sealed class SqlBulkExtensionsTests
                         return ValueTask.CompletedTask;
                     },
                     SqlOptions = new() { ParallelOptions = new() { MaxRetries = 0 } }
-                }));
+                },
+                cancellationToken: TestContext.Current.CancellationToken));
 
         errorBatchNumber.ShouldBe(0);
         errorException.ShouldNotBeNull();
@@ -257,7 +267,8 @@ public sealed class SqlBulkExtensionsTests
                 cmd.CommandText = "INSERT INTO Users (Id) VALUES (...)";
                 await Task.CompletedTask;
             },
-            new() { BatchSize = 250 });
+            new() { BatchSize = 250 },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         result.ShouldBeGreaterThan(0);
         batchesExecuted.ShouldBe(10);
@@ -291,7 +302,8 @@ public sealed class SqlBulkExtensionsTests
                 cmd.CommandText = "INSERT INTO Users (Id) VALUES (...)";
                 await Task.CompletedTask;
             },
-            new() { BatchSize = 500, SqlOptions = new() { ParallelOptions = new() { MaxDegreeOfParallelism = 3 } } });
+            new() { BatchSize = 500, SqlOptions = new() { ParallelOptions = new() { MaxDegreeOfParallelism = 3 } } },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         result.ShouldBeGreaterThan(0);
         maxConcurrent.ShouldBeLessThanOrEqualTo(3);
@@ -322,7 +334,8 @@ public sealed class SqlBulkExtensionsTests
             {
                 UseTransaction = true, BatchSize = 100,
                 SqlOptions = new() { IsolationLevel = IsolationLevel.Serializable }
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         result.ShouldBe(100);
         capturedIsolationLevel.ShouldBe(IsolationLevel.Serializable);
@@ -350,7 +363,8 @@ public sealed class SqlBulkExtensionsTests
                 BatchSize = 100,
                 SqlOptions = new()
                     { ParallelOptions = new() { MaxRetries = 3, BaseDelay = TimeSpan.FromMilliseconds(10) } }
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         attemptCount.ShouldBe(2);
         result.ShouldBe(100);
@@ -389,7 +403,8 @@ public sealed class SqlBulkExtensionsTests
             {
                 cmd.CommandText = "INSERT INTO Users (Id) VALUES (...)";
                 await Task.CompletedTask;
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         result.ShouldBe(10);
     }
@@ -404,7 +419,8 @@ public sealed class SqlBulkExtensionsTests
             {
                 cmd.CommandText = "UPDATE Users SET Name = 'Updated'";
                 await Task.CompletedTask;
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         result.ShouldBe(10);
     }
@@ -419,7 +435,8 @@ public sealed class SqlBulkExtensionsTests
             {
                 cmd.CommandText = "DELETE FROM Users WHERE Id IN (...)";
                 await Task.CompletedTask;
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         result.ShouldBe(10);
     }
@@ -442,7 +459,8 @@ public sealed class SqlBulkExtensionsTests
                 cmd.CommandText = "INSERT INTO Users (Id) VALUES (...)";
                 await Task.CompletedTask;
             },
-            new() { BatchSize = 10, SqlOptions = new() { AutoManageConnection = true } });
+            new() { BatchSize = 10, SqlOptions = new() { AutoManageConnection = true } },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         result.ShouldBe(10);
         capturedConnection.ShouldNotBeNull();
@@ -462,7 +480,8 @@ public sealed class SqlBulkExtensionsTests
                 cmd.CommandText = "INSERT INTO Users (Id) VALUES (...)";
                 await Task.CompletedTask;
             },
-            new() { BatchSize = 10 });
+            new() { BatchSize = 10 },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         result.ShouldBe(10);
         openCalled.ShouldBeTrue();
@@ -485,7 +504,8 @@ public sealed class SqlBulkExtensionsTests
                 cmd.CommandText = "INSERT INTO Users (Id) VALUES (...)";
                 await Task.CompletedTask;
             },
-            new() { BatchSize = 10 });
+            new() { BatchSize = 10 },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         result.ShouldBe(10);
         executeNonQueryCalled.ShouldBeTrue();

@@ -208,7 +208,8 @@ public sealed class SqlParallelExtensionsTests
                     return new TestDataReader([]);
                 }),
             static _ => 1,
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         commandTimeout.ShouldBe(60);
         results.Count.ShouldBe(1);
@@ -255,7 +256,8 @@ public sealed class SqlParallelExtensionsTests
                         return ValueTask.CompletedTask;
                     },
                     ParallelOptions = new() { MaxRetries = 0 }
-                }));
+                },
+                cancellationToken: TestContext.Current.CancellationToken));
 
         callbackItem.ShouldNotBeNull();
         callbackException.ShouldNotBeNull();
@@ -297,7 +299,8 @@ public sealed class SqlParallelExtensionsTests
                 return conn;
             },
             static _ => 1,
-            new() { AutoManageConnection = true });
+            new() { AutoManageConnection = true },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(1);
         capturedConnection.ShouldNotBeNull();
@@ -348,7 +351,8 @@ public sealed class SqlParallelExtensionsTests
                 reader.Read();
                 return reader.GetInt32(0);
             },
-            new() { AutoManageConnection = false });
+            new() { AutoManageConnection = false },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(2);
         connection.State.ShouldBe(ConnectionState.Open); // Should still be open
@@ -413,7 +417,8 @@ public sealed class SqlParallelExtensionsTests
                     new TestDbConnection(
                         executeReaderFunc: static _ => throw new InvalidOperationException("SQL Error")),
                 static reader => reader.GetInt32(0),
-                options));
+                options,
+                cancellationToken: TestContext.Current.CancellationToken));
 
         capturedQuery.ShouldBe("INVALID SQL QUERY");
         capturedException.ShouldNotBeNull();
@@ -596,7 +601,8 @@ public sealed class SqlParallelExtensionsTests
             {
                 reader.Read();
                 return reader.GetInt32(0);
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(1);
         results[0].ShouldBe(1);
@@ -641,7 +647,8 @@ public sealed class SqlParallelExtensionsTests
                     commandTimeouts.Add(cmd.CommandTimeout);
                     return new TestDataReader([]);
                 }),
-            static _ => 1);
+            static _ => 1,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(2);
         commandTimeouts.ShouldAllBe(static timeout => timeout == 30); // Default timeout

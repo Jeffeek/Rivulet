@@ -31,7 +31,8 @@ public sealed class SqlBulkCopyExtensionsTests
         var act = () => source!.BulkInsertUsingSqlBulkCopyAsync(
             CreateMockConnection,
             "TestTable",
-            MapToDataTable);
+            MapToDataTable,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("source");
     }
@@ -44,7 +45,8 @@ public sealed class SqlBulkCopyExtensionsTests
         var act = () => source.BulkInsertUsingSqlBulkCopyAsync(
             null!,
             "TestTable",
-            MapToDataTable);
+            MapToDataTable,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("connectionFactory");
     }
@@ -57,7 +59,8 @@ public sealed class SqlBulkCopyExtensionsTests
         var act = () => source.BulkInsertUsingSqlBulkCopyAsync(
             CreateMockConnection,
             null!,
-            MapToDataTable);
+            MapToDataTable,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         await act.ShouldThrowAsync<ArgumentException>();
     }
@@ -70,7 +73,8 @@ public sealed class SqlBulkCopyExtensionsTests
         var act = () => source.BulkInsertUsingSqlBulkCopyAsync(
             CreateMockConnection,
             "",
-            MapToDataTable);
+            MapToDataTable,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         await act.ShouldThrowAsync<ArgumentException>();
     }
@@ -83,7 +87,8 @@ public sealed class SqlBulkCopyExtensionsTests
         var act = () => source.BulkInsertUsingSqlBulkCopyAsync(
             CreateMockConnection,
             "   ",
-            MapToDataTable);
+            MapToDataTable,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         await act.ShouldThrowAsync<ArgumentException>();
     }
@@ -96,7 +101,8 @@ public sealed class SqlBulkCopyExtensionsTests
         var act = () => source.BulkInsertUsingSqlBulkCopyAsync(
             CreateMockConnection,
             "TestTable",
-            null!);
+            null!,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("mapToDataTable");
     }
@@ -110,7 +116,8 @@ public sealed class SqlBulkCopyExtensionsTests
             CreateMockConnection,
             "TestTable",
             MapToDataTable,
-            batchSize: 0);
+            batchSize: 0,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentOutOfRangeException>()).ParamName.ShouldBe("batchSize");
     }
@@ -124,7 +131,8 @@ public sealed class SqlBulkCopyExtensionsTests
             CreateMockConnection,
             "TestTable",
             MapToDataTable,
-            batchSize: -1);
+            batchSize: -1,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentOutOfRangeException>()).ParamName.ShouldBe("batchSize");
     }
@@ -138,7 +146,8 @@ public sealed class SqlBulkCopyExtensionsTests
             CreateMockConnection,
             "TestTable",
             MapToDataTable,
-            bulkCopyTimeout: -1);
+            bulkCopyTimeout: -1,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentOutOfRangeException>()).ParamName.ShouldBe("bulkCopyTimeout");
     }
@@ -152,7 +161,8 @@ public sealed class SqlBulkCopyExtensionsTests
         return source.BulkInsertUsingSqlBulkCopyAsync(
             CreateMockConnection,
             "TestTable",
-            MapToDataTable);
+            MapToDataTable,
+            cancellationToken: TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -164,7 +174,8 @@ public sealed class SqlBulkCopyExtensionsTests
             CreateMockConnection,
             "TestTable",
             MapToDataTable,
-            columnMappings: null!);
+            columnMappings: null!,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("columnMappings");
     }
@@ -180,7 +191,8 @@ public sealed class SqlBulkCopyExtensionsTests
             CreateMockConnection,
             "TestTable",
             MapToDataTable,
-            mappings);
+            mappings,
+            cancellationToken: TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -190,7 +202,8 @@ public sealed class SqlBulkCopyExtensionsTests
 
         var act = () => source!.BulkInsertUsingSqlBulkCopyAsync(
             CreateMockConnection,
-            "TestTable");
+            "TestTable",
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("source");
     }
@@ -203,7 +216,8 @@ public sealed class SqlBulkCopyExtensionsTests
 
         var act = () => source.BulkInsertUsingSqlBulkCopyAsync(
             null!,
-            "TestTable");
+            "TestTable",
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("connectionFactory");
     }
@@ -216,7 +230,8 @@ public sealed class SqlBulkCopyExtensionsTests
 
         var act = () => source.BulkInsertUsingSqlBulkCopyAsync(
             CreateMockConnection,
-            null!);
+            null!,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         await act.ShouldThrowAsync<ArgumentException>();
     }
@@ -229,7 +244,8 @@ public sealed class SqlBulkCopyExtensionsTests
 
         var act = () => source.BulkInsertUsingSqlBulkCopyAsync(
             CreateMockConnection,
-            "");
+            "",
+            cancellationToken: TestContext.Current.CancellationToken);
 
         await act.ShouldThrowAsync<ArgumentException>();
     }
@@ -243,7 +259,8 @@ public sealed class SqlBulkCopyExtensionsTests
         var act = () => source.BulkInsertUsingSqlBulkCopyAsync(
             CreateMockConnection,
             "TestTable",
-            batchSize: 0);
+            batchSize: 0,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentOutOfRangeException>()).ParamName.ShouldBe("batchSize");
     }
@@ -257,7 +274,8 @@ public sealed class SqlBulkCopyExtensionsTests
         var act = () => source.BulkInsertUsingSqlBulkCopyAsync(
             CreateMockConnection,
             "TestTable",
-            batchSize: -1);
+            batchSize: -1,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentOutOfRangeException>()).ParamName.ShouldBe("batchSize");
     }
@@ -271,7 +289,8 @@ public sealed class SqlBulkCopyExtensionsTests
         var act = () => source.BulkInsertUsingSqlBulkCopyAsync(
             CreateMockConnection,
             "TestTable",
-            bulkCopyTimeout: -1);
+            bulkCopyTimeout: -1,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentOutOfRangeException>()).ParamName.ShouldBe("bulkCopyTimeout");
     }
@@ -284,7 +303,8 @@ public sealed class SqlBulkCopyExtensionsTests
         // Should not throw, just complete quickly
         return source.BulkInsertUsingSqlBulkCopyAsync(
             CreateMockConnection,
-            "TestTable");
+            "TestTable",
+            cancellationToken: TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -315,7 +335,8 @@ public sealed class SqlBulkCopyExtensionsTests
             CreateMockConnection,
             "TestTable",
             MapToDataTable,
-            emptyMappings);
+            emptyMappings,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         var ex = await act.ShouldThrowAsync<ArgumentException>();
         ex.Message.ShouldContain("Column mappings dictionary cannot be empty");

@@ -73,7 +73,8 @@ public sealed class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
             CreateConnection,
             "TestTable",
             MapToDataTable,
-            batchSize: 2);
+            batchSize: 2,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         await using var connection = new SqlConnection(_connectionString);
@@ -99,7 +100,8 @@ public sealed class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
             CreateConnection,
             "TestTable",
             MapToDataTable,
-            batchSize: 3); // Will create 4 batches (3+3+3+1)
+            batchSize: 3,
+            cancellationToken: TestContext.Current.CancellationToken); // Will create 4 batches (3+3+3+1)
 
         // Assert
         await using var connection = new SqlConnection(_connectionString);
@@ -127,7 +129,8 @@ public sealed class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
             "TestTable",
             MapToDataTable,
             columnMappings,
-            batchSize: 10);
+            batchSize: 10,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         await using var connection = new SqlConnection(_connectionString);
@@ -161,7 +164,8 @@ public sealed class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
                 {
                     ErrorMode = ErrorMode.CollectAndContinue,
                     MaxRetries = 0
-                });
+                },
+                cancellationToken: TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -176,7 +180,8 @@ public sealed class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
         Task Act() =>
             records.BulkInsertUsingSqlBulkCopyAsync(CreateConnection,
                 "NonExistentTable",
-                MapToDataTable);
+                MapToDataTable,
+                cancellationToken: TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -202,7 +207,8 @@ public sealed class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
                 {
                     ErrorMode = ErrorMode.CollectAndContinue,
                     MaxRetries = 0
-                });
+                },
+                cancellationToken: TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -218,7 +224,8 @@ public sealed class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
             MapToDataTable,
             bulkCopyOptions: SqlBulkCopyOptions.Default,
             batchSize: 1000,
-            bulkCopyTimeout: 60);
+            bulkCopyTimeout: 60,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         await using var connection = new SqlConnection(_connectionString);
@@ -245,7 +252,8 @@ public sealed class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
         // Act
         await readers.BulkInsertUsingSqlBulkCopyAsync(
             CreateConnection,
-            "TestTable");
+            "TestTable",
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         await using var connection = new SqlConnection(_connectionString);
@@ -279,7 +287,8 @@ public sealed class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
                 {
                     ErrorMode = ErrorMode.CollectAndContinue,
                     MaxRetries = 0
-                });
+                },
+                cancellationToken: TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -295,7 +304,8 @@ public sealed class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
 
         Task Act() =>
             readers.BulkInsertUsingSqlBulkCopyAsync(CreateConnection,
-                "TestTable");
+                "TestTable",
+                cancellationToken: TestContext.Current.CancellationToken);
     }
 
     private sealed record TestRecord(int Id, string Name, string Email);

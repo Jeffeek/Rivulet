@@ -26,10 +26,11 @@ public sealed class ForEachParallelAsyncTests
         var processedItems = new ConcurrentBag<int>();
 
         await source.ForEachParallelAsync((x, _) =>
-        {
-            processedItems.Add(x * 2);
-            return ValueTask.CompletedTask;
-        });
+            {
+                processedItems.Add(x * 2);
+                return ValueTask.CompletedTask;
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         processedItems.ShouldHaveSingleItem().ShouldBe(10);
     }
@@ -41,10 +42,11 @@ public sealed class ForEachParallelAsyncTests
         var processedItems = new ConcurrentBag<int>();
 
         await source.ForEachParallelAsync((x, _) =>
-        {
-            processedItems.Add(x);
-            return ValueTask.CompletedTask;
-        });
+            {
+                processedItems.Add(x);
+                return ValueTask.CompletedTask;
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         processedItems.Count.ShouldBe(10);
         processedItems.OrderBy(static x => x).ShouldBe(Enumerable.Range(1, 10));
@@ -57,10 +59,11 @@ public sealed class ForEachParallelAsyncTests
         var results = new ConcurrentDictionary<int, int>();
 
         await source.ForEachParallelAsync(async (x, ct) =>
-        {
-            await Task.Delay(10, ct);
-            results[x] = x * x;
-        });
+            {
+                await Task.Delay(10, ct);
+                results[x] = x * x;
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(20);
         results[5].ShouldBe(25);
