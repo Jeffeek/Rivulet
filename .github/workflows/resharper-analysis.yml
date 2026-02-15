@@ -21,7 +21,7 @@ jobs:
 
     steps:
     - name: Harden the runner (Audit all outbound calls)
-      uses: step-security/harden-runner@e3f713f2d8f53843e71c69a996d56f51aa9adfb9 # v2.14.1
+      uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e # v2.14.2
       with:
         egress-policy: audit
 
@@ -51,7 +51,7 @@ jobs:
       run: dotnet build Rivulet.slnx -c Release --no-restore
 
     - name: ReSharper CLI InspectCode
-      uses: muno92/resharper_inspectcode@65534cb58c0e8d726f5555b08a6964048966dbc6 # 1.15.8
+      uses: muno92/resharper_inspectcode@d60738baf1ed03e7fc21d8c8dd4b0ba20b316adf # 1.15.9
       with:
          solutionPath: ./Rivulet.slnx
          version: 2025.3.1
