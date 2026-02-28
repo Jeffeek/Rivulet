@@ -178,7 +178,7 @@ public sealed class BackoffStrategyTests
                 },
                 options,
                 cancellationToken: TestContext.Current.CancellationToken)
-            .ToListAsync();
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(10);
         attemptCounts[5].ShouldBe(3);

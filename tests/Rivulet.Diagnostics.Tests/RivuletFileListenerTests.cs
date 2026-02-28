@@ -34,7 +34,7 @@ public sealed class RivuletFileListenerTests : IDisposable
                         return x * 2;
                     },
                     new() { MaxDegreeOfParallelism = 2 })
-                .ToListAsync();
+                .ToListAsync(TestContext.Current.CancellationToken);
 
             // Wait for EventCounters to poll and write metrics after operation completes
             // Polling interval is ~1 second, wait 2 seconds for CI/CD reliability
@@ -45,7 +45,7 @@ public sealed class RivuletFileListenerTests : IDisposable
         await Task.Delay(500, CancellationToken.None);
 
         File.Exists(_testFilePath).ShouldBeTrue();
-        var content = await File.ReadAllTextAsync(_testFilePath);
+        var content = await File.ReadAllTextAsync(_testFilePath, TestContext.Current.CancellationToken);
         content.ShouldContain("Items Started");
         content.ShouldContain("Items Completed");
     }
@@ -70,7 +70,7 @@ public sealed class RivuletFileListenerTests : IDisposable
                         return x;
                     },
                     new() { MaxDegreeOfParallelism = 2 })
-                .ToListAsync();
+                .ToListAsync(TestContext.Current.CancellationToken);
 
             // Wait for EventCounters to fire and write to file
             await Task.Delay(1500, CancellationToken.None);

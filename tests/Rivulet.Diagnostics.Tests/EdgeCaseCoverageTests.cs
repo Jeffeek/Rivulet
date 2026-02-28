@@ -18,7 +18,7 @@ public sealed class EdgeCaseCoverageTests
         await Task.Delay(100, CancellationToken.None);
 
         var context = new HealthCheckContext();
-        var result = await healthCheck.CheckHealthAsync(context);
+        var result = await healthCheck.CheckHealthAsync(context, TestContext.Current.CancellationToken);
 
         result.Status.ShouldBeOneOf(HealthStatus.Healthy, HealthStatus.Degraded, HealthStatus.Unhealthy);
     }
@@ -40,7 +40,7 @@ public sealed class EdgeCaseCoverageTests
                         return x <= 90 ? throw new InvalidOperationException("Test failure") : x;
                     },
                     new() { MaxDegreeOfParallelism = 8, ErrorMode = ErrorMode.CollectAndContinue })
-                .ToListAsync();
+                .ToListAsync(TestContext.Current.CancellationToken);
         }
         catch
         {
@@ -52,7 +52,7 @@ public sealed class EdgeCaseCoverageTests
         await Task.Delay(2000, CancellationToken.None);
 
         var context = new HealthCheckContext();
-        var result = await healthCheck.CheckHealthAsync(context);
+        var result = await healthCheck.CheckHealthAsync(context, TestContext.Current.CancellationToken);
 
         result.Data.TryGetValue("total_failures", out var failuresObj).ShouldBeTrue();
         var failures = (double)failuresObj;
@@ -71,7 +71,7 @@ public sealed class EdgeCaseCoverageTests
         var healthCheck = new RivuletHealthCheck(exporter);
 
         var context = new HealthCheckContext();
-        var result = await healthCheck.CheckHealthAsync(context);
+        var result = await healthCheck.CheckHealthAsync(context, TestContext.Current.CancellationToken);
 
         result.Status.ShouldNotBe(default);
     }
@@ -96,7 +96,7 @@ public sealed class EdgeCaseCoverageTests
                             throw new InvalidOperationException("Retry");
                         },
                         new() { MaxRetries = 2, IsTransient = static _ => true, MaxDegreeOfParallelism = 1 })
-                    .ToListAsync();
+                    .ToListAsync(TestContext.Current.CancellationToken);
             }
             catch
             {
@@ -132,7 +132,7 @@ public sealed class EdgeCaseCoverageTests
                             return x;
                         },
                         new() { MaxDegreeOfParallelism = 2 })
-                    .ToListAsync();
+                    .ToListAsync(TestContext.Current.CancellationToken);
 
                 try
                 {
@@ -144,7 +144,7 @@ public sealed class EdgeCaseCoverageTests
                                 return x % 2 == 0 ? throw new InvalidOperationException() : x;
                             },
                             new() { MaxDegreeOfParallelism = 2, ErrorMode = ErrorMode.CollectAndContinue })
-                        .ToListAsync();
+                        .ToListAsync(TestContext.Current.CancellationToken);
                 }
                 catch
                 {
@@ -158,7 +158,7 @@ public sealed class EdgeCaseCoverageTests
             await Task.Delay(100, CancellationToken.None);
 
             File.Exists(testFile).ShouldBeTrue();
-            var content = await File.ReadAllTextAsync(testFile);
+            var content = await File.ReadAllTextAsync(testFile, TestContext.Current.CancellationToken);
             content.ShouldNotBeEmpty();
         }
         finally
@@ -186,7 +186,7 @@ public sealed class EdgeCaseCoverageTests
                             return x;
                         },
                         new() { MaxDegreeOfParallelism = 2 })
-                    .ToListAsync();
+                    .ToListAsync(TestContext.Current.CancellationToken);
 
                 // Wait for EventSource counters to fire (1s default interval)
                 await Task.Delay(1500, CancellationToken.None);
@@ -195,7 +195,7 @@ public sealed class EdgeCaseCoverageTests
             await Task.Delay(100, CancellationToken.None);
 
             File.Exists(testFile).ShouldBeTrue();
-            var jsonContent = await File.ReadAllTextAsync(testFile);
+            var jsonContent = await File.ReadAllTextAsync(testFile, TestContext.Current.CancellationToken);
             jsonContent.ShouldNotBeEmpty();
         }
         finally
@@ -221,7 +221,7 @@ public sealed class EdgeCaseCoverageTests
                         return x;
                     },
                     new() { MaxDegreeOfParallelism = 2 })
-                .ToListAsync();
+                .ToListAsync(TestContext.Current.CancellationToken);
 
             // Wait for EventSource counters to fire (1s default interval)
             // Increased from 1100ms to 2000ms to handle CI/CD timing variability
@@ -250,7 +250,7 @@ public sealed class EdgeCaseCoverageTests
                     return x;
                 },
                 new() { MaxDegreeOfParallelism = 2 })
-            .ToListAsync();
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         // Wait for EventSource counters to fire (1s default interval)
         // Increased from 1100ms to 2000ms to handle CI/CD timing variability
@@ -287,7 +287,7 @@ public sealed class EdgeCaseCoverageTests
                     return x;
                 },
                 new() { MaxDegreeOfParallelism = 2 })
-            .ToListAsync();
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         // Wait for EventSource counters to fire (1s default interval)
         await Task.Delay(1500, CancellationToken.None);

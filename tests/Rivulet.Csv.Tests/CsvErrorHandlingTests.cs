@@ -29,8 +29,8 @@ public sealed class CsvErrorHandlingTests : IDisposable
         var csvPath2 = Path.Join(_testDirectory, "missing.csv"); // This doesn't exist
         var csvPath3 = Path.Join(_testDirectory, "file3.csv");
 
-        await File.WriteAllTextAsync(csvPath1, "Id,Name,Price\n1,Product A,10.50");
-        await File.WriteAllTextAsync(csvPath3, "Id,Name,Price\n3,Product C,30.50");
+        await File.WriteAllTextAsync(csvPath1, "Id,Name,Price\n1,Product A,10.50", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(csvPath3, "Id,Name,Price\n3,Product C,30.50", TestContext.Current.CancellationToken);
 
         // Act & Assert - Use CollectAndContinue to ensure FileNotFoundException is properly collected
         // instead of being masked by TaskCanceledException from FailFast cancellation
@@ -44,7 +44,8 @@ public sealed class CsvErrorHandlingTests : IDisposable
                         ErrorMode = ErrorMode.CollectAndContinue,
                         MaxRetries = 0
                     }
-                });
+                },
+                cancellationToken: TestContext.Current.CancellationToken);
         });
 
         // Verify the exception contains FileNotFoundException
@@ -59,8 +60,8 @@ public sealed class CsvErrorHandlingTests : IDisposable
         var csvPath2 = Path.Join(_testDirectory, "missing.csv"); // This doesn't exist
         var csvPath3 = Path.Join(_testDirectory, "file3.csv");
 
-        await File.WriteAllTextAsync(csvPath1, "Id,Name,Price\n1,Product A,10.50");
-        await File.WriteAllTextAsync(csvPath3, "Id,Name,Price\n3,Product C,30.50");
+        await File.WriteAllTextAsync(csvPath1, "Id,Name,Price\n1,Product A,10.50", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(csvPath3, "Id,Name,Price\n3,Product C,30.50", TestContext.Current.CancellationToken);
 
         // Act & Assert - CollectAndContinue should throw AggregateException with all errors
         var exception = await Should.ThrowAsync<AggregateException>(async () =>
@@ -73,7 +74,8 @@ public sealed class CsvErrorHandlingTests : IDisposable
                         ErrorMode = ErrorMode.CollectAndContinue,
                         MaxRetries = 0 // No retries to ensure the error is captured
                     }
-                });
+                },
+                cancellationToken: TestContext.Current.CancellationToken);
         });
 
         // Should contain FileNotFoundException for the missing file
@@ -86,7 +88,7 @@ public sealed class CsvErrorHandlingTests : IDisposable
     {
         // Arrange
         var csvPath = Path.Join(_testDirectory, "locked.csv");
-        await File.WriteAllTextAsync(csvPath, "Id,Name,Price\n1,Product A,10.50");
+        await File.WriteAllTextAsync(csvPath, "Id,Name,Price\n1,Product A,10.50", TestContext.Current.CancellationToken);
 
         var attemptCount = 0;
 
@@ -109,7 +111,8 @@ public sealed class CsvErrorHandlingTests : IDisposable
                         return false;
                     }
                 }
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         results.Count.ShouldBe(1);
@@ -141,7 +144,8 @@ public sealed class CsvErrorHandlingTests : IDisposable
                             return false;
                         }
                     }
-                });
+                },
+                cancellationToken: TestContext.Current.CancellationToken);
         }
 #pragma warning disable CA1031 // Do not catch general exception types - intentional for test error verification
         catch
@@ -187,7 +191,8 @@ public sealed class CsvErrorHandlingTests : IDisposable
                     {
                         MaxRetries = 1
                     }
-                });
+                },
+                cancellationToken: TestContext.Current.CancellationToken);
         }
 #pragma warning disable CA1031 // Do not catch general exception types - intentional for test error verification
         catch
@@ -293,7 +298,8 @@ public sealed class CsvErrorHandlingTests : IDisposable
                         lock (lockObj) currentTasks--;
                     }
                 }
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         maxConcurrentTasks.ShouldBeLessThanOrEqualTo(2);

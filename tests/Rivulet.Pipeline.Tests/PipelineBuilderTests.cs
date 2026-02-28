@@ -236,7 +236,7 @@ public sealed class PipelineBuilderTests
             .AddStage(customStage)
             .Build();
 
-        var results = await pipeline.ExecuteAsync(new[] { 1, 2, 3, 4, 5 });
+        var results = await pipeline.ExecuteAsync(new[] { 1, 2, 3, 4, 5 }, TestContext.Current.CancellationToken);
 
         results.ShouldBe(new[] { 3, 6, 9, 12, 15 });
         pipeline.StageCount.ShouldBe(1);
@@ -255,7 +255,7 @@ public sealed class PipelineBuilderTests
                 })
             .Build();
 
-        var results = await pipeline.ExecuteAsync(new[] { 1, 2, 3 });
+        var results = await pipeline.ExecuteAsync(new[] { 1, 2, 3 }, TestContext.Current.CancellationToken);
 
         results.ShouldBe(new[] { 2, 4, 6 });
     }
@@ -271,7 +271,7 @@ public sealed class PipelineBuilderTests
             .WhereParallel(static x => x > 20)
             .Build();
 
-        var results = await pipeline.ExecuteAsync(new[] { 1, 2, 3, 4, 5 });
+        var results = await pipeline.ExecuteAsync(new[] { 1, 2, 3, 4, 5 }, TestContext.Current.CancellationToken);
 
         // Input: 1,2,3,4,5
         // After SelectParallel(+1): 2,3,4,5,6
@@ -293,7 +293,7 @@ public sealed class PipelineBuilderTests
             .WhereParallel(static s => s.Length > 0)
             .Build();
 
-        var results = await pipeline.ExecuteAsync(new[] { 1, 22, 333 });
+        var results = await pipeline.ExecuteAsync(new[] { 1, 22, 333 }, TestContext.Current.CancellationToken);
 
         // Order not guaranteed due to parallelism
         results.ShouldBeSubsetOf(new[] { "1", "22", "333" });

@@ -133,7 +133,7 @@ public sealed class ErrorHandlingTests
                 },
                 options,
                 cancellationToken: TestContext.Current.CancellationToken)
-            .ToListAsync();
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(16);
         foreach (var value in new[] { 10, 20, 30, 40 }) results.ShouldNotContain(value);

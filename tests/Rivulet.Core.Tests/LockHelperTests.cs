@@ -107,11 +107,11 @@ public sealed class LockHelperTests
             tasks[i] = Task.Run(() =>
             {
                 for (var j = 0; j < incrementsPerThread; j++) LockHelper.Execute(_lock, () => { counter++; });
-            });
+            }, TestContext.Current.CancellationToken);
         }
 
 #pragma warning disable xUnit1031
-        Task.WaitAll(tasks);
+        Task.WaitAll(tasks, TestContext.Current.CancellationToken);
 #pragma warning restore xUnit1031
 
         counter.ShouldBe(threadCount * incrementsPerThread);
@@ -141,11 +141,11 @@ public sealed class LockHelperTests
                     var value = LockHelper.Execute(_lock, () => counter);
                     results.Add(value);
                 }
-            });
+            }, TestContext.Current.CancellationToken);
         }
 
 #pragma warning disable xUnit1031
-        Task.WaitAll(tasks);
+        Task.WaitAll(tasks, TestContext.Current.CancellationToken);
 #pragma warning restore xUnit1031
 
         counter.ShouldBe(threadCount / 2);
@@ -245,11 +245,11 @@ public sealed class LockHelperTests
 
                         Interlocked.Decrement(ref activeCount);
                     });
-            });
+            }, TestContext.Current.CancellationToken);
         }
 
 #pragma warning disable xUnit1031
-        Task.WaitAll(tasks);
+        Task.WaitAll(tasks, TestContext.Current.CancellationToken);
 #pragma warning restore xUnit1031
 
         executionOrder.Count.ShouldBe(threadCount);
@@ -325,7 +325,7 @@ public sealed class LockHelperTests
     {
         var counter = 0;
 
-        await Task.Run(() => { LockHelper.Execute(_lock, () => { counter++; }); });
+        await Task.Run(() => { LockHelper.Execute(_lock, () => { counter++; }); }, TestContext.Current.CancellationToken);
 
         counter.ShouldBe(1);
     }
@@ -364,11 +364,11 @@ public sealed class LockHelperTests
             tasks[i] = Task.Run(() =>
             {
                 for (var j = 0; j < incrementsPerThread; j++) LockHelper.Execute(_lock, () => { counter++; });
-            });
+            }, TestContext.Current.CancellationToken);
         }
 
 #pragma warning disable xUnit1031
-        Task.WaitAll(tasks);
+        Task.WaitAll(tasks, TestContext.Current.CancellationToken);
 #pragma warning restore xUnit1031
 
         counter.ShouldBe(threadCount * incrementsPerThread);

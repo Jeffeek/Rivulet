@@ -10,9 +10,9 @@ public sealed class DirectoryInfoExtensionsTests : TempDirectoryFixture
         // Arrange
         var directory = new DirectoryInfo(TestDirectory);
 
-        await File.WriteAllTextAsync(Path.Join(TestDirectory, "file1.txt"), "Content1");
-        await File.WriteAllTextAsync(Path.Join(TestDirectory, "file2.txt"), "Content2");
-        await File.WriteAllTextAsync(Path.Join(TestDirectory, "file3.txt"), "Content3");
+        await File.WriteAllTextAsync(Path.Join(TestDirectory, "file1.txt"), "Content1", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(Path.Join(TestDirectory, "file2.txt"), "Content2", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(Path.Join(TestDirectory, "file3.txt"), "Content3", TestContext.Current.CancellationToken);
 
         // Act
         var results = await directory.ProcessFilesParallelAsync(static async (filePath, ct) =>
@@ -20,7 +20,8 @@ public sealed class DirectoryInfoExtensionsTests : TempDirectoryFixture
                 var content = await File.ReadAllTextAsync(filePath, ct);
                 return content.Length;
             },
-            "*.txt");
+            "*.txt",
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         results.Count.ShouldBe(3);
@@ -36,11 +37,11 @@ public sealed class DirectoryInfoExtensionsTests : TempDirectoryFixture
         var file1 = Path.Join(TestDirectory, "read1.txt");
         var file2 = Path.Join(TestDirectory, "read2.txt");
 
-        await File.WriteAllTextAsync(file1, "Content A");
-        await File.WriteAllTextAsync(file2, "Content B");
+        await File.WriteAllTextAsync(file1, "Content A", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(file2, "Content B", TestContext.Current.CancellationToken);
 
         // Act
-        var results = await directory.ReadAllFilesParallelAsync("*.txt");
+        var results = await directory.ReadAllFilesParallelAsync("*.txt", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         results.Count.ShouldBe(2);
@@ -75,14 +76,15 @@ public sealed class DirectoryInfoExtensionsTests : TempDirectoryFixture
         var sourceDirectory = new DirectoryInfo(TestDirectory);
         var destDirectory = Path.Join(TestDirectory, "transformed");
 
-        await File.WriteAllTextAsync(Path.Join(TestDirectory, "trans1.txt"), "lower");
-        await File.WriteAllTextAsync(Path.Join(TestDirectory, "trans2.txt"), "case");
+        await File.WriteAllTextAsync(Path.Join(TestDirectory, "trans1.txt"), "lower", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(Path.Join(TestDirectory, "trans2.txt"), "case", TestContext.Current.CancellationToken);
 
         // Act
         var results = await sourceDirectory.TransformFilesParallelAsync(
             destDirectory,
             static (_, content) => ValueTask.FromResult(content.ToUpperInvariant()),
-            "*.txt");
+            "*.txt",
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         results.Count.ShouldBe(2);
@@ -92,8 +94,8 @@ public sealed class DirectoryInfoExtensionsTests : TempDirectoryFixture
         File.Exists(destFile1).ShouldBeTrue();
         File.Exists(destFile2).ShouldBeTrue();
 
-        var content1 = await File.ReadAllTextAsync(destFile1);
-        var content2 = await File.ReadAllTextAsync(destFile2);
+        var content1 = await File.ReadAllTextAsync(destFile1, TestContext.Current.CancellationToken);
+        var content2 = await File.ReadAllTextAsync(destFile2, TestContext.Current.CancellationToken);
 
         content1.ShouldBe("LOWER");
         content2.ShouldBe("CASE");
@@ -109,11 +111,11 @@ public sealed class DirectoryInfoExtensionsTests : TempDirectoryFixture
         var file1 = Path.Join(TestDirectory, "copy1.txt");
         var file2 = Path.Join(TestDirectory, "copy2.txt");
 
-        await File.WriteAllTextAsync(file1, "Copy Content 1");
-        await File.WriteAllTextAsync(file2, "Copy Content 2");
+        await File.WriteAllTextAsync(file1, "Copy Content 1", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(file2, "Copy Content 2", TestContext.Current.CancellationToken);
 
         // Act
-        var results = await sourceDirectory.CopyFilesToParallelAsync(destDirectory, "*.txt");
+        var results = await sourceDirectory.CopyFilesToParallelAsync(destDirectory, "*.txt", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         results.Count.ShouldBe(2);
@@ -124,8 +126,8 @@ public sealed class DirectoryInfoExtensionsTests : TempDirectoryFixture
         File.Exists(destFile1).ShouldBeTrue();
         File.Exists(destFile2).ShouldBeTrue();
 
-        var destContent1 = await File.ReadAllTextAsync(destFile1);
-        var destContent2 = await File.ReadAllTextAsync(destFile2);
+        var destContent1 = await File.ReadAllTextAsync(destFile1, TestContext.Current.CancellationToken);
+        var destContent2 = await File.ReadAllTextAsync(destFile2, TestContext.Current.CancellationToken);
 
         destContent1.ShouldBe("Copy Content 1");
         destContent2.ShouldBe("Copy Content 2");
@@ -141,12 +143,12 @@ public sealed class DirectoryInfoExtensionsTests : TempDirectoryFixture
         var file2 = Path.Join(TestDirectory, "delete2.tmp");
         var keepFile = Path.Join(TestDirectory, "keep.txt");
 
-        await File.WriteAllTextAsync(file1, "Delete me");
-        await File.WriteAllTextAsync(file2, "Delete me too");
-        await File.WriteAllTextAsync(keepFile, "Keep me");
+        await File.WriteAllTextAsync(file1, "Delete me", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(file2, "Delete me too", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(keepFile, "Keep me", TestContext.Current.CancellationToken);
 
         // Act
-        var results = await directory.DeleteFilesParallelAsync("*.tmp");
+        var results = await directory.DeleteFilesParallelAsync("*.tmp", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         results.Count.ShouldBe(2);
@@ -165,8 +167,8 @@ public sealed class DirectoryInfoExtensionsTests : TempDirectoryFixture
         dir1.Create();
         dir2.Create();
 
-        await File.WriteAllTextAsync(Path.Join(dir1.FullName, "file1.txt"), "Dir1Content");
-        await File.WriteAllTextAsync(Path.Join(dir2.FullName, "file2.txt"), "Dir2Content");
+        await File.WriteAllTextAsync(Path.Join(dir1.FullName, "file1.txt"), "Dir1Content", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(Path.Join(dir2.FullName, "file2.txt"), "Dir2Content", TestContext.Current.CancellationToken);
 
         var directories = new[] { dir1, dir2 };
 
@@ -177,7 +179,8 @@ public sealed class DirectoryInfoExtensionsTests : TempDirectoryFixture
             {
                 var content = await File.ReadAllTextAsync(filePath, ct);
                 return content.Length;
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         results.Count.ShouldBe(2);
@@ -207,13 +210,14 @@ public sealed class DirectoryInfoExtensionsTests : TempDirectoryFixture
         var subDirectory = Path.Join(TestDirectory, "sub");
         Directory.CreateDirectory(subDirectory);
 
-        await File.WriteAllTextAsync(Path.Join(TestDirectory, "root.txt"), "Root");
-        await File.WriteAllTextAsync(Path.Join(subDirectory, "sub.txt"), "Sub");
+        await File.WriteAllTextAsync(Path.Join(TestDirectory, "root.txt"), "Root", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(Path.Join(subDirectory, "sub.txt"), "Sub", TestContext.Current.CancellationToken);
 
         // Act
         var results = await directory.ReadAllFilesParallelAsync(
             "*.txt",
-            SearchOption.AllDirectories);
+            SearchOption.AllDirectories,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         results.Count.ShouldBe(2);
@@ -228,7 +232,7 @@ public sealed class DirectoryInfoExtensionsTests : TempDirectoryFixture
         var sourceDirectory = new DirectoryInfo(TestDirectory);
         var destDirectory = Path.Join(TestDirectory, "customtransform");
 
-        await File.WriteAllTextAsync(Path.Join(TestDirectory, "custom.txt"), "test");
+        await File.WriteAllTextAsync(Path.Join(TestDirectory, "custom.txt"), "test", TestContext.Current.CancellationToken);
 
         var startCalled = false;
         var completeCalled = false;
@@ -253,7 +257,8 @@ public sealed class DirectoryInfoExtensionsTests : TempDirectoryFixture
             static (_, content) => ValueTask.FromResult(content),
             "*.txt",
             SearchOption.TopDirectoryOnly,
-            options);
+            options,
+            TestContext.Current.CancellationToken);
 
         // Assert
         startCalled.ShouldBeTrue();
@@ -271,16 +276,16 @@ public sealed class DirectoryInfoExtensionsTests : TempDirectoryFixture
         var sourceFile = Path.Join(TestDirectory, "overwrite.txt");
         var destFile = Path.Join(destDirectory, "overwrite.txt");
 
-        await File.WriteAllTextAsync(sourceFile, "New content");
-        await File.WriteAllTextAsync(destFile, "Old content");
+        await File.WriteAllTextAsync(sourceFile, "New content", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(destFile, "Old content", TestContext.Current.CancellationToken);
 
         var options = new FileOperationOptions { OverwriteExisting = true };
 
         // Act
-        await sourceDirectory.CopyFilesToParallelAsync(destDirectory, "*.txt", SearchOption.TopDirectoryOnly, options);
+        await sourceDirectory.CopyFilesToParallelAsync(destDirectory, "*.txt", SearchOption.TopDirectoryOnly, options, TestContext.Current.CancellationToken);
 
         // Assert
-        var content = await File.ReadAllTextAsync(destFile);
+        var content = await File.ReadAllTextAsync(destFile, TestContext.Current.CancellationToken);
         content.ShouldBe("New content");
     }
 }

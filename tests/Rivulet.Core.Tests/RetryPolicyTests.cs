@@ -164,7 +164,7 @@ public sealed class RetryPolicyTests
                 },
                 options,
                 cancellationToken: TestContext.Current.CancellationToken)
-            .ToListAsync();
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(5);
         attemptCounts[3].ShouldBe(2);
@@ -191,7 +191,8 @@ public sealed class RetryPolicyTests
                 processedItems.Add(x);
                 return ValueTask.CompletedTask;
             },
-            options);
+            options,
+            TestContext.Current.CancellationToken);
 
         processedItems.Count.ShouldBe(5);
         attemptCounts[3].ShouldBe(2);

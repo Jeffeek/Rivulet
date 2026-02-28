@@ -29,7 +29,7 @@ public sealed class SelectParallelAsyncTests
     {
         var source = Enumerable.Range(1, 10);
 
-        var results = await source.SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2));
+        var results = await source.SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2), cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(10);
         results.OrderBy(static x => x).ShouldBe([2, 4, 6, 8, 10, 12, 14, 16, 18, 20]);
@@ -163,7 +163,7 @@ public sealed class SelectParallelAsyncTests
     {
         var source = new[] { "hello", "world", "test", "xunit" };
 
-        var results = await source.SelectParallelAsync(static (s, _) => new ValueTask<string>(s.ToUpper()));
+        var results = await source.SelectParallelAsync(static (s, _) => new ValueTask<string>(s.ToUpper()), cancellationToken: TestContext.Current.CancellationToken);
 
         results.OrderBy(static x => x).ShouldBe(["HELLO", "TEST", "WORLD", "XUNIT"]);
     }
@@ -219,7 +219,8 @@ public sealed class SelectParallelAsyncTests
 
         var results = await source.SelectParallelAsync(
             static (x, _) => x == "b" ? throw new InvalidOperationException() : new ValueTask<string>(x.ToUpper()),
-            new() { OnFallback = static (_, _) => null });
+            new() { OnFallback = static (_, _) => null },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(3);
         results.OrderBy(static x => x).ShouldBe([null, "A", "C"]);

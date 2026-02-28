@@ -79,7 +79,7 @@ public sealed class ProgressReportingTests
                     return x * 2;
                 },
                 options)
-            .ToListAsync();
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(50);
         snapshots.ShouldNotBeEmpty();
@@ -368,7 +368,8 @@ public sealed class ProgressReportingTests
                 await Task.Delay(10, ct);
                 Interlocked.Increment(ref processedCount);
             },
-            options);
+            options,
+            TestContext.Current.CancellationToken);
 
         processedCount.ShouldBe(30);
         snapshots.ShouldNotBeEmpty();
@@ -469,7 +470,7 @@ public sealed class ProgressReportingTests
                     return x * 2;
                 },
                 options)
-            .ToListAsync();
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         results.ShouldBe(Enumerable.Range(1, 30).Select(static x => x * 2));
         snapshots.ShouldNotBeEmpty();
@@ -712,7 +713,7 @@ public sealed class ProgressReportingTests
                     return x * 2;
                 },
                 options)
-            .ToListAsync();
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(10);
     }

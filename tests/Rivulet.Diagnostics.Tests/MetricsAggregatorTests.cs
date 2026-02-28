@@ -29,7 +29,7 @@ public sealed class MetricsAggregatorTests
                     return x * 2;
                 },
                 new() { MaxDegreeOfParallelism = 2 })
-            .ToListAsync();
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         // Wait for EventCounters to poll and write metrics, then for aggregation window to fire
         await Task.Delay(5000, CancellationToken.None);
@@ -78,7 +78,7 @@ public sealed class MetricsAggregatorTests
                     return x;
                 },
                 new() { MaxDegreeOfParallelism = 2 })
-            .ToListAsync();
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         // Wait for at least 2x the aggregation window to ensure timer fires reliably
         await Task.Delay(3000, CancellationToken.None); // Fixed delay for timer-based aggregation
@@ -127,7 +127,7 @@ public sealed class MetricsAggregatorTests
                     return x;
                 },
                 new() { MaxDegreeOfParallelism = 2 })
-            .ToListAsync();
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         // Wait for EventCounters to poll (~1s interval) + aggregation timer to fire
         await Task.Delay(2000, CancellationToken.None); // Fixed delay for timer-based aggregation

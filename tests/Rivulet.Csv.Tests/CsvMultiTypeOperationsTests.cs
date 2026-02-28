@@ -38,7 +38,8 @@ public sealed class CsvMultiTypeOperationsTests : IDisposable
             Id,Name,Price
             1,Product A,10.50
             2,Product B,20.00
-            """);
+            """,
+            TestContext.Current.CancellationToken);
 
         await File.WriteAllTextAsync(
             customersPath,
@@ -47,7 +48,8 @@ public sealed class CsvMultiTypeOperationsTests : IDisposable
             Id,Name,Email
             1,John Doe,john@example.com
             2,Jane Smith,jane@example.com
-            """);
+            """,
+            TestContext.Current.CancellationToken);
 
         var productReads = new[] { new RivuletCsvReadFile<Product>(productsPath, null) };
         var customerReads = new[] { new RivuletCsvReadFile<Customer>(customersPath, null) };
@@ -55,7 +57,8 @@ public sealed class CsvMultiTypeOperationsTests : IDisposable
         // Act
         var (products, customers) = await CsvParallelExtensions.ParseCsvParallelGroupedAsync(
             productReads,
-            customerReads);
+            customerReads,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         products.Count.ShouldBe(1);
@@ -77,9 +80,9 @@ public sealed class CsvMultiTypeOperationsTests : IDisposable
         var customersPath = Path.Join(_testDirectory, "customers.csv");
         var ordersPath = Path.Join(_testDirectory, "orders.csv");
 
-        await File.WriteAllTextAsync(productsPath, "Id,Name,Price\n1,Product A,10.50");
-        await File.WriteAllTextAsync(customersPath, "Id,Name,Email\n1,John Doe,john@example.com");
-        await File.WriteAllTextAsync(ordersPath, "Id,ProductId,CustomerId,Quantity\n1,1,1,5");
+        await File.WriteAllTextAsync(productsPath, "Id,Name,Price\n1,Product A,10.50", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(customersPath, "Id,Name,Email\n1,John Doe,john@example.com", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(ordersPath, "Id,ProductId,CustomerId,Quantity\n1,1,1,5", TestContext.Current.CancellationToken);
 
         var productReads = new[] { new RivuletCsvReadFile<Product>(productsPath, null) };
         var customerReads = new[] { new RivuletCsvReadFile<Customer>(customersPath, null) };
@@ -89,7 +92,8 @@ public sealed class CsvMultiTypeOperationsTests : IDisposable
         var (products, customers, orders) = await CsvParallelExtensions.ParseCsvParallelGroupedAsync(
             productReads,
             customerReads,
-            orderReads);
+            orderReads,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         products.Count.ShouldBe(1);
@@ -107,10 +111,10 @@ public sealed class CsvMultiTypeOperationsTests : IDisposable
         var ordersPath = Path.Join(_testDirectory, "orders.csv");
         var categoriesPath = Path.Join(_testDirectory, "categories.csv");
 
-        await File.WriteAllTextAsync(productsPath, "Id,Name,Price\n1,Product A,10.50");
-        await File.WriteAllTextAsync(customersPath, "Id,Name,Email\n1,John Doe,john@example.com");
-        await File.WriteAllTextAsync(ordersPath, "Id,ProductId,CustomerId,Quantity\n1,1,1,5");
-        await File.WriteAllTextAsync(categoriesPath, "Id,Name\n1,Electronics");
+        await File.WriteAllTextAsync(productsPath, "Id,Name,Price\n1,Product A,10.50", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(customersPath, "Id,Name,Email\n1,John Doe,john@example.com", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(ordersPath, "Id,ProductId,CustomerId,Quantity\n1,1,1,5", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(categoriesPath, "Id,Name\n1,Electronics", TestContext.Current.CancellationToken);
 
         var productReads = new[] { new RivuletCsvReadFile<Product>(productsPath, null) };
         var customerReads = new[] { new RivuletCsvReadFile<Customer>(customersPath, null) };
@@ -122,7 +126,8 @@ public sealed class CsvMultiTypeOperationsTests : IDisposable
             productReads,
             customerReads,
             orderReads,
-            categoryReads);
+            categoryReads,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         products.Count.ShouldBe(1);
@@ -142,11 +147,11 @@ public sealed class CsvMultiTypeOperationsTests : IDisposable
         var categoriesPath = Path.Join(_testDirectory, "categories.csv");
         var suppliersPath = Path.Join(_testDirectory, "suppliers.csv");
 
-        await File.WriteAllTextAsync(productsPath, "Id,Name,Price\n1,Product A,10.50");
-        await File.WriteAllTextAsync(customersPath, "Id,Name,Email\n1,John Doe,john@example.com");
-        await File.WriteAllTextAsync(ordersPath, "Id,ProductId,CustomerId,Quantity\n1,1,1,5");
-        await File.WriteAllTextAsync(categoriesPath, "Id,Name\n1,Electronics");
-        await File.WriteAllTextAsync(suppliersPath, "Id,Name,Country\n1,Supplier Inc,USA");
+        await File.WriteAllTextAsync(productsPath, "Id,Name,Price\n1,Product A,10.50", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(customersPath, "Id,Name,Email\n1,John Doe,john@example.com", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(ordersPath, "Id,ProductId,CustomerId,Quantity\n1,1,1,5", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(categoriesPath, "Id,Name\n1,Electronics", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(suppliersPath, "Id,Name,Country\n1,Supplier Inc,USA", TestContext.Current.CancellationToken);
 
         var productReads = new[] { new RivuletCsvReadFile<Product>(productsPath, null) };
         var customerReads = new[] { new RivuletCsvReadFile<Customer>(customersPath, null) };
@@ -160,7 +165,8 @@ public sealed class CsvMultiTypeOperationsTests : IDisposable
             customerReads,
             orderReads,
             categoryReads,
-            supplierReads);
+            supplierReads,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         products.Count.ShouldBe(1);
@@ -191,16 +197,17 @@ public sealed class CsvMultiTypeOperationsTests : IDisposable
         // Act
         await CsvParallelExtensions.WriteCsvParallelAsync(
             productWrites,
-            customerWrites);
+            customerWrites,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         File.Exists(productsPath).ShouldBeTrue();
         File.Exists(customersPath).ShouldBeTrue();
 
-        var productContent = await File.ReadAllTextAsync(productsPath);
+        var productContent = await File.ReadAllTextAsync(productsPath, TestContext.Current.CancellationToken);
         productContent.ShouldContain("Product A");
 
-        var customerContent = await File.ReadAllTextAsync(customersPath);
+        var customerContent = await File.ReadAllTextAsync(customersPath, TestContext.Current.CancellationToken);
         customerContent.ShouldContain("John Doe");
     }
 
@@ -224,14 +231,15 @@ public sealed class CsvMultiTypeOperationsTests : IDisposable
         await CsvParallelExtensions.WriteCsvParallelAsync(
             productWrites,
             customerWrites,
-            orderWrites);
+            orderWrites,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         File.Exists(productsPath).ShouldBeTrue();
         File.Exists(customersPath).ShouldBeTrue();
         File.Exists(ordersPath).ShouldBeTrue();
 
-        var orderContent = await File.ReadAllTextAsync(ordersPath);
+        var orderContent = await File.ReadAllTextAsync(ordersPath, TestContext.Current.CancellationToken);
         orderContent.ShouldContain("5");
     }
 
@@ -259,7 +267,8 @@ public sealed class CsvMultiTypeOperationsTests : IDisposable
             productWrites,
             customerWrites,
             orderWrites,
-            categoryWrites);
+            categoryWrites,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         File.Exists(productsPath).ShouldBeTrue();
@@ -267,7 +276,7 @@ public sealed class CsvMultiTypeOperationsTests : IDisposable
         File.Exists(ordersPath).ShouldBeTrue();
         File.Exists(categoriesPath).ShouldBeTrue();
 
-        var categoryContent = await File.ReadAllTextAsync(categoriesPath);
+        var categoryContent = await File.ReadAllTextAsync(categoriesPath, TestContext.Current.CancellationToken);
         categoryContent.ShouldContain("Electronics");
     }
 
@@ -299,7 +308,8 @@ public sealed class CsvMultiTypeOperationsTests : IDisposable
             customerWrites,
             orderWrites,
             categoryWrites,
-            supplierWrites);
+            supplierWrites,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         File.Exists(productsPath).ShouldBeTrue();
@@ -308,7 +318,7 @@ public sealed class CsvMultiTypeOperationsTests : IDisposable
         File.Exists(categoriesPath).ShouldBeTrue();
         File.Exists(suppliersPath).ShouldBeTrue();
 
-        var supplierContent = await File.ReadAllTextAsync(suppliersPath);
+        var supplierContent = await File.ReadAllTextAsync(suppliersPath, TestContext.Current.CancellationToken);
         supplierContent.ShouldContain("Supplier Inc");
         supplierContent.ShouldContain("USA");
     }
@@ -343,14 +353,15 @@ public sealed class CsvMultiTypeOperationsTests : IDisposable
         await CsvParallelExtensions.WriteCsvParallelAsync(
             productWrites,
             customerWrites,
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         File.Exists(productsPath).ShouldBeTrue();
         File.Exists(customersPath).ShouldBeTrue();
 
-        var productLines = (await File.ReadAllLinesAsync(productsPath)).Length;
-        var customerLines = (await File.ReadAllLinesAsync(customersPath)).Length;
+        var productLines = (await File.ReadAllLinesAsync(productsPath, TestContext.Current.CancellationToken)).Length;
+        var customerLines = (await File.ReadAllLinesAsync(customersPath, TestContext.Current.CancellationToken)).Length;
 
         productLines.ShouldBe(101); // 100 records + 1 header
         customerLines.ShouldBe(101); // 100 records + 1 header

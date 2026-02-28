@@ -125,7 +125,7 @@ public sealed class EdgeCasesAndCoverageTests
     {
         var results = await Source().SelectParallelStreamAsync(static (x, _) => new ValueTask<int>(x * 2),
                 cancellationToken: TestContext.Current.CancellationToken)
-            .ToListAsync();
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(5);
         return;
@@ -185,7 +185,7 @@ public sealed class EdgeCasesAndCoverageTests
         {
             Interlocked.Increment(ref processedCount);
             return ValueTask.CompletedTask;
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         processedCount.ShouldBe(50);
     }
@@ -217,7 +217,7 @@ public sealed class EdgeCasesAndCoverageTests
                 },
                 options,
                 cancellationToken: TestContext.Current.CancellationToken)
-            .ToListAsync();
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(20);
     }
@@ -272,7 +272,7 @@ public sealed class EdgeCasesAndCoverageTests
                 static (x, _) => new ValueTask<int>(x * 2),
                 options,
                 cancellationToken: TestContext.Current.CancellationToken)
-            .ToListAsync();
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(30);
         workerIndices.Count.ShouldBe(30);
@@ -308,7 +308,7 @@ public sealed class EdgeCasesAndCoverageTests
                 },
                 options,
                 cancellationToken: TestContext.Current.CancellationToken)
-            .ToListAsync();
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(10);
     }
@@ -486,7 +486,7 @@ public sealed class EdgeCasesAndCoverageTests
                 },
                 options,
                 cancellationToken: TestContext.Current.CancellationToken)
-            .ToListAsync();
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(50);
         results.OrderBy(static x => x).ShouldBe(Enumerable.Range(1, 50).Select(static x => x * 2));
@@ -506,7 +506,7 @@ public sealed class EdgeCasesAndCoverageTests
                 },
                 options,
                 cancellationToken: TestContext.Current.CancellationToken)
-            .ToListAsync();
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(50);
         results.ShouldBe(Enumerable.Range(1, 50).Select(static x => x * 2));
@@ -525,7 +525,7 @@ public sealed class EdgeCasesAndCoverageTests
                 },
                 options,
                 cancellationToken: TestContext.Current.CancellationToken)
-            .CountAsync();
+            .CountAsync(TestContext.Current.CancellationToken);
 
         count.ShouldBe(25);
     }
@@ -543,7 +543,7 @@ public sealed class EdgeCasesAndCoverageTests
                 },
                 options,
                 cancellationToken: TestContext.Current.CancellationToken)
-            .CountAsync();
+            .CountAsync(TestContext.Current.CancellationToken);
 
         count.ShouldBe(25);
     }

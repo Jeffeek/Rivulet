@@ -14,7 +14,7 @@ public sealed class ForEachParallelAsyncTests
         {
             processedItems.Add(x);
             return ValueTask.CompletedTask;
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         processedItems.ShouldBeEmpty();
     }
@@ -85,7 +85,8 @@ public sealed class ForEachParallelAsyncTests
                 await Task.Delay(100, ct);
                 lock (lockObj) processedCount++;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         var duration = DateTime.UtcNow - startTime;
 
@@ -118,7 +119,8 @@ public sealed class ForEachParallelAsyncTests
 
                 lock (lockObj) concurrentCount--;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         maxConcurrent.ShouldBeLessThanOrEqualTo(3);
     }
@@ -133,7 +135,7 @@ public sealed class ForEachParallelAsyncTests
         {
             processedItems.Add(x);
             return ValueTask.CompletedTask;
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         processedItems.Count.ShouldBe(5);
     }
@@ -148,7 +150,7 @@ public sealed class ForEachParallelAsyncTests
         {
             Interlocked.Increment(ref processedCount);
             return ValueTask.CompletedTask;
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         processedCount.ShouldBe(1000);
     }
@@ -167,7 +169,7 @@ public sealed class ForEachParallelAsyncTests
                 evenNumbers.Add(x);
             else
                 oddNumbers.Add(x);
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         evenNumbers.Count.ShouldBe(25);
         oddNumbers.Count.ShouldBe(25);
@@ -178,7 +180,8 @@ public sealed class ForEachParallelAsyncTests
     {
         var source = Enumerable.Range(1, 5).ToAsyncEnumerable();
 
-        var task = source.ForEachParallelAsync(static (_, _) => ValueTask.CompletedTask);
+        var task = source.ForEachParallelAsync(static (_, _) => ValueTask.CompletedTask,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         await task;
         task.IsCompleted.ShouldBeTrue();

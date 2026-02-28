@@ -297,7 +297,7 @@ public sealed class AdaptiveConcurrencyTests
                 },
                 options,
                 cancellationToken: TestContext.Current.CancellationToken)
-            .CountAsync();
+            .CountAsync(TestContext.Current.CancellationToken);
 
         count.ShouldBe(150);
 
@@ -545,7 +545,7 @@ public sealed class AdaptiveConcurrencyTests
         });
 
         // Trigger some activity
-        await controller.AcquireAsync();
+        await controller.AcquireAsync(TestContext.Current.CancellationToken);
         controller.Release(TimeSpan.FromMilliseconds(10), true);
 
         await Task.Delay(20, CancellationToken.None); // Let sampling happen

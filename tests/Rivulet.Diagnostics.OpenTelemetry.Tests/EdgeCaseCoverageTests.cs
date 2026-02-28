@@ -181,7 +181,7 @@ public sealed class EdgeCaseCoverageTests
                 },
                 new(),
                 cancellationToken: TestContext.Current.CancellationToken)
-            .ToListAsync();
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         await Task.Delay(100, CancellationToken.None);
     }

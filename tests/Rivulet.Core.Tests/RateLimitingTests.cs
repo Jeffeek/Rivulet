@@ -131,7 +131,7 @@ public sealed class RateLimitingTests
                     return x * 2;
                 },
                 options)
-            .CountAsync();
+            .CountAsync(TestContext.Current.CancellationToken);
 
         sw.Stop();
 

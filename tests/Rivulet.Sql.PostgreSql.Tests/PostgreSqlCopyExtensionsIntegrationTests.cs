@@ -69,11 +69,11 @@ public sealed class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
 
         // Assert
         await using var connection = new NpgsqlConnection(_connectionString);
-        await connection.OpenAsync();
+        await connection.OpenAsync(TestContext.Current.CancellationToken);
 
         await using var command = connection.CreateCommand();
         command.CommandText = "SELECT COUNT(*) FROM \"TestTable\"";
-        var count = Convert.ToInt64(await command.ExecuteScalarAsync());
+        var count = Convert.ToInt64(await command.ExecuteScalarAsync(TestContext.Current.CancellationToken));
 
         count.ShouldBe(3);
     }
@@ -98,11 +98,11 @@ public sealed class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
 
         // Assert
         await using var connection = new NpgsqlConnection(_connectionString);
-        await connection.OpenAsync();
+        await connection.OpenAsync(TestContext.Current.CancellationToken);
 
         await using var command = connection.CreateCommand();
         command.CommandText = "SELECT COUNT(*) FROM \"TestTable\"";
-        var count = Convert.ToInt64(await command.ExecuteScalarAsync());
+        var count = Convert.ToInt64(await command.ExecuteScalarAsync(TestContext.Current.CancellationToken));
 
         count.ShouldBe(10);
     }
@@ -157,11 +157,11 @@ public sealed class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
 
         // Assert
         await using var connection = new NpgsqlConnection(_connectionString);
-        await connection.OpenAsync();
+        await connection.OpenAsync(TestContext.Current.CancellationToken);
 
         await using var command = connection.CreateCommand();
         command.CommandText = "SELECT COUNT(*) FROM \"TestTable\" WHERE \"Id\" >=100";
-        var count = Convert.ToInt64(await command.ExecuteScalarAsync());
+        var count = Convert.ToInt64(await command.ExecuteScalarAsync(TestContext.Current.CancellationToken));
 
         count.ShouldBe(2);
     }
@@ -185,11 +185,11 @@ public sealed class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
 
         // Assert
         await using var connection = new NpgsqlConnection(_connectionString);
-        await connection.OpenAsync();
+        await connection.OpenAsync(TestContext.Current.CancellationToken);
 
         await using var command = connection.CreateCommand();
         command.CommandText = "SELECT COUNT(*) FROM \"TestTable\" WHERE \"Id\" >=200";
-        var count = Convert.ToInt64(await command.ExecuteScalarAsync());
+        var count = Convert.ToInt64(await command.ExecuteScalarAsync(TestContext.Current.CancellationToken));
 
         count.ShouldBe(10);
     }
@@ -212,11 +212,11 @@ public sealed class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
 
         // Assert
         await using var connection = new NpgsqlConnection(_connectionString);
-        await connection.OpenAsync();
+        await connection.OpenAsync(TestContext.Current.CancellationToken);
 
         await using var command = connection.CreateCommand();
         command.CommandText = "SELECT COUNT(*) FROM \"TestTable\" WHERE \"Id\" >=300";
-        var count = Convert.ToInt64(await command.ExecuteScalarAsync());
+        var count = Convert.ToInt64(await command.ExecuteScalarAsync(TestContext.Current.CancellationToken));
 
         count.ShouldBe(2);
     }
@@ -253,11 +253,11 @@ public sealed class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
 
         // Assert
         await using var connection = new NpgsqlConnection(_connectionString);
-        await connection.OpenAsync();
+        await connection.OpenAsync(TestContext.Current.CancellationToken);
 
         await using var command = connection.CreateCommand();
         command.CommandText = "SELECT COUNT(*) FROM \"TestTable\" WHERE \"Id\" >=400";
-        var count = Convert.ToInt64(await command.ExecuteScalarAsync());
+        var count = Convert.ToInt64(await command.ExecuteScalarAsync(TestContext.Current.CancellationToken));
 
         count.ShouldBe(2);
     }
@@ -281,11 +281,11 @@ public sealed class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
 
         // Assert
         await using var connection = new NpgsqlConnection(_connectionString);
-        await connection.OpenAsync();
+        await connection.OpenAsync(TestContext.Current.CancellationToken);
 
         await using var command = connection.CreateCommand();
         command.CommandText = "SELECT COUNT(*) FROM \"TestTable\" WHERE \"Id\" >=500";
-        var count = Convert.ToInt64(await command.ExecuteScalarAsync());
+        var count = Convert.ToInt64(await command.ExecuteScalarAsync(TestContext.Current.CancellationToken));
 
         count.ShouldBe(10);
     }

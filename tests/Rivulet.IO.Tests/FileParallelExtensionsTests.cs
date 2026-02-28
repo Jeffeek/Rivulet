@@ -16,13 +16,13 @@ public sealed class FileParallelExtensionsTests : TempDirectoryFixture
         for (var i = 0; i < files.Length; i++)
         {
             var path = Path.Join(TestDirectory, files[i]);
-            await File.WriteAllTextAsync(path, expectedContents[i]);
+            await File.WriteAllTextAsync(path, expectedContents[i], TestContext.Current.CancellationToken);
         }
 
         var filePaths = files.Select(f => Path.Join(TestDirectory, f));
 
         // Act
-        var results = await filePaths.ReadAllTextParallelAsync();
+        var results = await filePaths.ReadAllTextParallelAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         results.Count.ShouldBe(3);
@@ -49,14 +49,15 @@ public sealed class FileParallelExtensionsTests : TempDirectoryFixture
         for (var i = 0; i < files.Length; i++)
         {
             var path = Path.Join(TestDirectory, files[i]);
-            await File.WriteAllBytesAsync(path, expectedContents[i]);
+            await File.WriteAllBytesAsync(path, expectedContents[i], TestContext.Current.CancellationToken);
         }
 
         var filePaths = files.Select(f => Path.Join(TestDirectory, f)).ToList();
 
         // Act
         var results = await filePaths.ReadAllBytesParallelAsync(
-            new() { ParallelOptions = new() { OrderedOutput = true } });
+            new() { ParallelOptions = new() { OrderedOutput = true } },
+            TestContext.Current.CancellationToken);
 
         // Assert
         results.Count.ShouldBe(2);
@@ -71,12 +72,13 @@ public sealed class FileParallelExtensionsTests : TempDirectoryFixture
         var file1Path = Path.Join(TestDirectory, "lines1.txt");
         var file2Path = Path.Join(TestDirectory, "lines2.txt");
 
-        await File.WriteAllLinesAsync(file1Path, ["Line 1", "Line 2"]);
-        await File.WriteAllLinesAsync(file2Path, ["Line A", "Line B", "Line C"]);
+        await File.WriteAllLinesAsync(file1Path, ["Line 1", "Line 2"], TestContext.Current.CancellationToken);
+        await File.WriteAllLinesAsync(file2Path, ["Line A", "Line B", "Line C"], TestContext.Current.CancellationToken);
 
         // Act
         var results = await new[] { file1Path, file2Path }.ReadAllLinesParallelAsync(
-            new() { ParallelOptions = new() { OrderedOutput = true } });
+            new() { ParallelOptions = new() { OrderedOutput = true } },
+            TestContext.Current.CancellationToken);
 
         // Assert
         results.Count.ShouldBe(2);
@@ -96,13 +98,13 @@ public sealed class FileParallelExtensionsTests : TempDirectoryFixture
         var options = new FileOperationOptions { OverwriteExisting = true };
 
         // Act
-        var results = await writes.WriteAllTextParallelAsync(options);
+        var results = await writes.WriteAllTextParallelAsync(options, TestContext.Current.CancellationToken);
 
         // Assert
         results.Count.ShouldBe(2);
 
-        var content1 = await File.ReadAllTextAsync(writes[0].Item1);
-        var content2 = await File.ReadAllTextAsync(writes[1].Item1);
+        var content1 = await File.ReadAllTextAsync(writes[0].Item1, TestContext.Current.CancellationToken);
+        var content2 = await File.ReadAllTextAsync(writes[1].Item1, TestContext.Current.CancellationToken);
 
         content1.ShouldBe("Content 1");
         content2.ShouldBe("Content 2");
@@ -113,7 +115,7 @@ public sealed class FileParallelExtensionsTests : TempDirectoryFixture
     {
         // Arrange
         var filePath = Path.Join(TestDirectory, "existing.txt");
-        await File.WriteAllTextAsync(filePath, "Existing");
+        await File.WriteAllTextAsync(filePath, "Existing", TestContext.Current.CancellationToken);
 
         var writes = new[] { (filePath, "New Content") };
         var options = new FileOperationOptions
@@ -148,13 +150,13 @@ public sealed class FileParallelExtensionsTests : TempDirectoryFixture
         var options = new FileOperationOptions { OverwriteExisting = true };
 
         // Act
-        var results = await writes.WriteAllBytesParallelAsync(options);
+        var results = await writes.WriteAllBytesParallelAsync(options, TestContext.Current.CancellationToken);
 
         // Assert
         results.Count.ShouldBe(2);
 
-        var bytes1 = await File.ReadAllBytesAsync(writes[0].Item1);
-        var bytes2 = await File.ReadAllBytesAsync(writes[1].Item1);
+        var bytes1 = await File.ReadAllBytesAsync(writes[0].Item1, TestContext.Current.CancellationToken);
+        var bytes2 = await File.ReadAllBytesAsync(writes[1].Item1, TestContext.Current.CancellationToken);
 
         ((IEnumerable<byte>)bytes1).ShouldBe(new byte[] { 1, 2, 3 });
         ((IEnumerable<byte>)bytes2).ShouldBe(new byte[] { 4, 5, 6 });
@@ -169,21 +171,22 @@ public sealed class FileParallelExtensionsTests : TempDirectoryFixture
         var destFile1 = Path.Join(TestDirectory, "dest1.txt");
         var destFile2 = Path.Join(TestDirectory, "dest2.txt");
 
-        await File.WriteAllTextAsync(sourceFile1, "hello");
-        await File.WriteAllTextAsync(sourceFile2, "world");
+        await File.WriteAllTextAsync(sourceFile1, "hello", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(sourceFile2, "world", TestContext.Current.CancellationToken);
 
         var files = new[] { (sourceFile1, destFile1), (sourceFile2, destFile2) };
 
         // Act
         var results = await files.TransformFilesParallelAsync(
             static (_, content) => ValueTask.FromResult(content.ToUpper()),
-            new() { OverwriteExisting = true });
+            new() { OverwriteExisting = true },
+            TestContext.Current.CancellationToken);
 
         // Assert
         results.Count.ShouldBe(2);
 
-        var dest1Content = await File.ReadAllTextAsync(destFile1);
-        var dest2Content = await File.ReadAllTextAsync(destFile2);
+        var dest1Content = await File.ReadAllTextAsync(destFile1, TestContext.Current.CancellationToken);
+        var dest2Content = await File.ReadAllTextAsync(destFile2, TestContext.Current.CancellationToken);
 
         dest1Content.ShouldBe("HELLO");
         dest2Content.ShouldBe("WORLD");
@@ -198,14 +201,15 @@ public sealed class FileParallelExtensionsTests : TempDirectoryFixture
         var dest1 = Path.Join(TestDirectory, "copy_dest1.txt");
         var dest2 = Path.Join(TestDirectory, "copy_dest2.txt");
 
-        await File.WriteAllTextAsync(source1, "Copy Content 1");
-        await File.WriteAllTextAsync(source2, "Copy Content 2");
+        await File.WriteAllTextAsync(source1, "Copy Content 1", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(source2, "Copy Content 2", TestContext.Current.CancellationToken);
 
         var files = new[] { (source1, dest1), (source2, dest2) };
 
         // Act
         var results = await files.CopyFilesParallelAsync(
-            new() { OverwriteExisting = true });
+            new() { OverwriteExisting = true },
+            TestContext.Current.CancellationToken);
 
         // Assert
         results.Count.ShouldBe(2);
@@ -213,8 +217,8 @@ public sealed class FileParallelExtensionsTests : TempDirectoryFixture
         File.Exists(dest1).ShouldBeTrue();
         File.Exists(dest2).ShouldBeTrue();
 
-        var dest1Content = await File.ReadAllTextAsync(dest1);
-        var dest2Content = await File.ReadAllTextAsync(dest2);
+        var dest1Content = await File.ReadAllTextAsync(dest1, TestContext.Current.CancellationToken);
+        var dest2Content = await File.ReadAllTextAsync(dest2, TestContext.Current.CancellationToken);
 
         dest1Content.ShouldBe("Copy Content 1");
         dest2Content.ShouldBe("Copy Content 2");
@@ -227,11 +231,11 @@ public sealed class FileParallelExtensionsTests : TempDirectoryFixture
         var file1 = Path.Join(TestDirectory, "delete1.txt");
         var file2 = Path.Join(TestDirectory, "delete2.txt");
 
-        await File.WriteAllTextAsync(file1, "To delete 1");
-        await File.WriteAllTextAsync(file2, "To delete 2");
+        await File.WriteAllTextAsync(file1, "To delete 1", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(file2, "To delete 2", TestContext.Current.CancellationToken);
 
         // Act
-        var results = await new[] { file1, file2 }.DeleteFilesParallelAsync();
+        var results = await new[] { file1, file2 }.DeleteFilesParallelAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         results.Count.ShouldBe(2);
@@ -244,7 +248,7 @@ public sealed class FileParallelExtensionsTests : TempDirectoryFixture
     {
         // Arrange
         var filePath = Path.Join(TestDirectory, "callback.txt");
-        await File.WriteAllTextAsync(filePath, "Callback test");
+        await File.WriteAllTextAsync(filePath, "Callback test", TestContext.Current.CancellationToken);
 
         var startCalled = false;
         var completeCalled = false;
@@ -264,7 +268,7 @@ public sealed class FileParallelExtensionsTests : TempDirectoryFixture
         };
 
         // Act
-        await new[] { filePath }.ReadAllTextParallelAsync(options);
+        await new[] { filePath }.ReadAllTextParallelAsync(options, TestContext.Current.CancellationToken);
 
         // Assert
         startCalled.ShouldBeTrue();
@@ -281,11 +285,11 @@ public sealed class FileParallelExtensionsTests : TempDirectoryFixture
         var options = new FileOperationOptions { CreateDirectoriesIfNotExist = true, OverwriteExisting = true };
 
         // Act
-        await writes.WriteAllTextParallelAsync(options);
+        await writes.WriteAllTextParallelAsync(options, TestContext.Current.CancellationToken);
 
         // Assert
         File.Exists(nestedPath).ShouldBeTrue();
-        var content = await File.ReadAllTextAsync(nestedPath);
+        var content = await File.ReadAllTextAsync(nestedPath, TestContext.Current.CancellationToken);
         content.ShouldBe("Content in nested directory");
     }
 
@@ -296,12 +300,12 @@ public sealed class FileParallelExtensionsTests : TempDirectoryFixture
         var filePath = Path.Join(TestDirectory, "encoding.txt");
         const string content = "Test with encoding: Привет мир";
 
-        await File.WriteAllTextAsync(filePath, content, Encoding.UTF8);
+        await File.WriteAllTextAsync(filePath, content, Encoding.UTF8, TestContext.Current.CancellationToken);
 
         var options = new FileOperationOptions { Encoding = Encoding.UTF8 };
 
         // Act
-        var results = await new[] { filePath }.ReadAllTextParallelAsync(options);
+        var results = await new[] { filePath }.ReadAllTextParallelAsync(options, TestContext.Current.CancellationToken);
 
         // Assert
         results[0].ShouldBe(content);

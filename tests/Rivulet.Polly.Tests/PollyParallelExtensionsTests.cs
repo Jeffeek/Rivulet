@@ -33,7 +33,8 @@ public sealed class PollyParallelExtensionsTests
                 throw new InvalidOperationException($"Transient failure for item {item}");
             },
             retryPolicy,
-            new() { MaxDegreeOfParallelism = 2 });
+            new() { MaxDegreeOfParallelism = 2 },
+            TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(5);
         results.OrderBy(static x => x).ShouldBe([2, 4, 6, 8, 10]);
@@ -73,7 +74,8 @@ public sealed class PollyParallelExtensionsTests
                 return item == 3 && attempts[item] <= 2 ? -1 : item * 2;
             },
             retryPolicy,
-            new() { MaxDegreeOfParallelism = 2 });
+            new() { MaxDegreeOfParallelism = 2 },
+            TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(5);
         results.OrderBy(static x => x).ShouldBe([2, 4, 6, 8, 10]);
@@ -96,7 +98,8 @@ public sealed class PollyParallelExtensionsTests
                 return item * 2;
             },
             timeoutPolicy,
-            new() { MaxDegreeOfParallelism = 2 });
+            new() { MaxDegreeOfParallelism = 2 },
+            TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(5);
         results.OrderBy(static x => x).ShouldBe([2, 4, 6, 8, 10]);
@@ -173,7 +176,8 @@ public sealed class PollyParallelExtensionsTests
                 lock (results) results.Add(item);
             },
             retryPolicy,
-            new() { MaxDegreeOfParallelism = 4 });
+            new() { MaxDegreeOfParallelism = 4 },
+            TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(10);
         results.OrderBy(static x => x).ShouldBe(items.OrderBy(static x => x));

@@ -23,7 +23,8 @@ public sealed class PollyAdvancedExtensionsTests
             },
             2,
             TimeSpan.FromMilliseconds(50),
-            new() { MaxDegreeOfParallelism = 2 });
+            new() { MaxDegreeOfParallelism = 2 },
+            TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(5);
         results.OrderBy(static x => x).ShouldBe([2, 4, 6, 8, 10]);
@@ -84,7 +85,8 @@ public sealed class PollyAdvancedExtensionsTests
             static result => result == -1,
             3,
             TimeSpan.FromMilliseconds(10),
-            new() { MaxDegreeOfParallelism = 2 });
+            new() { MaxDegreeOfParallelism = 2 },
+            TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(5);
         results.OrderBy(static x => x).ShouldBe([2, 4, 6, 8, 10]);
@@ -103,7 +105,8 @@ public sealed class PollyAdvancedExtensionsTests
             },
             static result => result == -1,
             2,
-            TimeSpan.FromMilliseconds(10));
+            TimeSpan.FromMilliseconds(10),
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(1);
         results[0].ShouldBe(-1, "should return undesired result after exceeding max retries");
@@ -173,7 +176,8 @@ public sealed class PollyAdvancedExtensionsTests
             },
             static result => result == -1,
             3,
-            TimeSpan.FromMilliseconds(50));
+            TimeSpan.FromMilliseconds(50),
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(1);
         results[0].ShouldBe(2);

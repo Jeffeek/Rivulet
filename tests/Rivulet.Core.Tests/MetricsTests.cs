@@ -239,7 +239,7 @@ public sealed class MetricsTests
                     return x * 2;
                 },
                 options)
-            .ToListAsync();
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         await Task.Delay(100, CancellationToken.None);
 
@@ -278,7 +278,7 @@ public sealed class MetricsTests
                     return x % 3 == 0 ? throw new InvalidOperationException("Error") : x * 2;
                 },
                 options)
-            .ToListAsync();
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(20,
             "30 items minus 10 failures (every 3rd: 3,6,9,12,15,18,21,24,27,30) equals 20 successful results");
@@ -650,7 +650,7 @@ public sealed class MetricsTests
 
         // Wait for final timer ticks after operation completes
         // Sample interval is 10ms, wait 50ms (5x interval) for final state + buffer
-        await Task.Delay(50 + 500);
+        await Task.Delay(50 + 500, TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(1);
         capturedSnapshot.ShouldNotBeNull("metrics timer should fire during 100ms operation");
@@ -1075,7 +1075,7 @@ public sealed class MetricsTests
 
         await Task.Delay(50, CancellationToken.None);
 
-        var disposeTask = Task.Run(async () => { await tracker.DisposeAsync(); });
+        var disposeTask = Task.Run(async () => { await tracker.DisposeAsync(); }, TestContext.Current.CancellationToken);
 
         await Task.Delay(100, CancellationToken.None);
 

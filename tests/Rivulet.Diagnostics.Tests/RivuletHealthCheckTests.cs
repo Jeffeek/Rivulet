@@ -37,7 +37,7 @@ public sealed class RivuletHealthCheckTests
         var healthCheck = new RivuletHealthCheck(exporter);
         var context = new HealthCheckContext();
 
-        var result = await healthCheck.CheckHealthAsync(context);
+        var result = await healthCheck.CheckHealthAsync(context, TestContext.Current.CancellationToken);
 
         result.Status.ShouldBe(HealthStatus.Healthy);
         result.Description.ShouldNotBeNull();
@@ -65,12 +65,12 @@ public sealed class RivuletHealthCheckTests
                     return x * 2;
                 },
                 new() { MaxDegreeOfParallelism = 2 })
-            .ToListAsync();
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         await Task.Delay(2000, CancellationToken.None);
 
         var context = new HealthCheckContext();
-        var result = await healthCheck.CheckHealthAsync(context);
+        var result = await healthCheck.CheckHealthAsync(context, TestContext.Current.CancellationToken);
 
         result.Status.ShouldBe(HealthStatus.Healthy);
         result.Data.ContainsKey(RivuletDiagnosticsConstants.HealthCheckKeys.ItemsStarted).ShouldBeTrue();
@@ -102,7 +102,7 @@ public sealed class RivuletHealthCheckTests
                         throw new InvalidOperationException("Test error");
                     },
                     new() { MaxDegreeOfParallelism = 8, ErrorMode = ErrorMode.CollectAndContinue })
-                .ToListAsync();
+                .ToListAsync(TestContext.Current.CancellationToken);
         }
         catch
         {
@@ -112,7 +112,7 @@ public sealed class RivuletHealthCheckTests
         await Task.Delay(2000, CancellationToken.None);
 
         var context = new HealthCheckContext();
-        var result = await healthCheck.CheckHealthAsync(context);
+        var result = await healthCheck.CheckHealthAsync(context, TestContext.Current.CancellationToken);
 
         // Verify that we have failures recorded
         result.Data.ContainsKey("total_failures").ShouldBeTrue();
@@ -142,7 +142,7 @@ public sealed class RivuletHealthCheckTests
                         throw new InvalidOperationException("Test error");
                     },
                     new() { MaxDegreeOfParallelism = 2, ErrorMode = ErrorMode.CollectAndContinue })
-                .ToListAsync();
+                .ToListAsync(TestContext.Current.CancellationToken);
         }
         catch
         {
@@ -152,7 +152,7 @@ public sealed class RivuletHealthCheckTests
         await Task.Delay(2000, CancellationToken.None);
 
         var context = new HealthCheckContext();
-        var result = await healthCheck.CheckHealthAsync(context);
+        var result = await healthCheck.CheckHealthAsync(context, TestContext.Current.CancellationToken);
 
         result.Status.ShouldBe(HealthStatus.Unhealthy);
         result.Description.ShouldNotBeNull();
@@ -188,7 +188,7 @@ public sealed class RivuletHealthCheckTests
                         return x <= 4000 ? throw new InvalidOperationException("Test error") : x * 2;
                     },
                     new() { MaxDegreeOfParallelism = 20, ErrorMode = ErrorMode.CollectAndContinue })
-                .ToListAsync();
+                .ToListAsync(TestContext.Current.CancellationToken);
         }
         catch
         {
@@ -200,7 +200,7 @@ public sealed class RivuletHealthCheckTests
         await Task.Delay(2000, CancellationToken.None);
 
         var context = new HealthCheckContext();
-        var result = await healthCheck.CheckHealthAsync(context);
+        var result = await healthCheck.CheckHealthAsync(context, TestContext.Current.CancellationToken);
 
         result.Data.TryGetValue("error_rate", out var errorRateObj).ShouldBeTrue();
         var errorRate = (double)errorRateObj;
@@ -265,12 +265,12 @@ public sealed class RivuletHealthCheckTests
                     return x * 2;
                 },
                 new() { MaxDegreeOfParallelism = 2 })
-            .ToListAsync();
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         await Task.Delay(2000, CancellationToken.None);
 
         var context = new HealthCheckContext();
-        var result = await healthCheck.CheckHealthAsync(context);
+        var result = await healthCheck.CheckHealthAsync(context, TestContext.Current.CancellationToken);
 
         result.Data.ContainsKey(RivuletDiagnosticsConstants.HealthCheckKeys.ItemsStarted).ShouldBeTrue();
         result.Data.ContainsKey(RivuletDiagnosticsConstants.HealthCheckKeys.ItemsCompleted).ShouldBeTrue();
@@ -295,7 +295,7 @@ public sealed class RivuletHealthCheckTests
         await act.ShouldNotThrowAsync();
 
         // Secondary test: result should be a valid health status
-        var result = await healthCheck.CheckHealthAsync(context);
+        var result = await healthCheck.CheckHealthAsync(context, TestContext.Current.CancellationToken);
 
         // When metrics.Count == 0, status is Healthy ("Nothing running")
         // When metrics have accumulated from other tests, status depends on error rate

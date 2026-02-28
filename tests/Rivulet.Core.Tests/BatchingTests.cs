@@ -21,7 +21,8 @@ public sealed class BatchingTests
                 batchSizes.Add(batch.Count);
                 await Task.Delay(5, ct);
                 return batch.Sum();
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(10);
         batchSizes.ShouldAllBe(static size => size == 10);
@@ -41,7 +42,8 @@ public sealed class BatchingTests
                 batchSizes.Add(batch.Count);
                 await Task.Delay(5, ct);
                 return batch.Sum();
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(3);
         batchSizes.ShouldContain(10);
@@ -60,7 +62,8 @@ public sealed class BatchingTests
             {
                 await Task.CompletedTask;
                 return batch.Sum();
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.ShouldBeEmpty();
     }
@@ -76,7 +79,8 @@ public sealed class BatchingTests
             {
                 await Task.CompletedTask;
                 return batch.First();
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(1);
         results[0].ShouldBe(42);
@@ -111,7 +115,8 @@ public sealed class BatchingTests
                 await Task.Delay(Random.Shared.Next(5, 20), ct);
                 return batch.First();
             },
-            new() { MaxDegreeOfParallelism = 5, OrderedOutput = true });
+            new() { MaxDegreeOfParallelism = 5, OrderedOutput = true },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(5);
         results.ShouldBe(new[] { 1, 11, 21, 31, 41 });
@@ -142,7 +147,8 @@ public sealed class BatchingTests
                         return ValueTask.CompletedTask;
                     }
                 }
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Disposal completes inside BatchParallelAsync before it returns
         // Using Task.Yield() to force a context switch, ensuring all memory writes are globally visible
@@ -182,7 +188,8 @@ public sealed class BatchingTests
             {
                 MaxRetries = 2, IsTransient = static ex => ex is InvalidOperationException,
                 ErrorMode = ErrorMode.CollectAndContinue
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(3);
         attemptCounts[1].ShouldBe(2);
@@ -200,7 +207,8 @@ public sealed class BatchingTests
                 await Task.Delay(5, ct);
                 return batch.First() == 11 ? throw new InvalidOperationException("Permanent error") : batch.Sum();
             },
-            new() { MaxRetries = 0, ErrorMode = ErrorMode.BestEffort });
+            new() { MaxRetries = 0, ErrorMode = ErrorMode.BestEffort },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(3);
     }
@@ -238,8 +246,9 @@ public sealed class BatchingTests
                     batchSizes.Add(batch.Count);
                     await Task.Delay(5, ct);
                     return batch.Sum();
-                })
-            .ToListAsync();
+                },
+                cancellationToken: TestContext.Current.CancellationToken)
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(10);
         batchSizes.ShouldAllBe(static size => size == 10);
@@ -259,8 +268,9 @@ public sealed class BatchingTests
                     batchSizes.Add(batch.Count);
                     await Task.Delay(5, ct);
                     return batch.Sum();
-                })
-            .ToListAsync();
+                },
+                cancellationToken: TestContext.Current.CancellationToken)
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(3);
         batchSizes.ShouldContain(10);
@@ -282,8 +292,9 @@ public sealed class BatchingTests
                     await Task.CompletedTask;
                     return batch.Count;
                 },
-                batchTimeout: TimeSpan.FromMilliseconds(200))
-            .ToListAsync();
+                batchTimeout: TimeSpan.FromMilliseconds(200),
+                cancellationToken: TestContext.Current.CancellationToken)
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         results.ShouldNotBeEmpty();
         batchSizes.ShouldContain(static size => size < 100);
@@ -300,8 +311,9 @@ public sealed class BatchingTests
                 {
                     await Task.CompletedTask;
                     return batch.Sum();
-                })
-            .ToListAsync();
+                },
+                cancellationToken: TestContext.Current.CancellationToken)
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         results.ShouldBeEmpty();
     }
@@ -341,8 +353,9 @@ public sealed class BatchingTests
                     await Task.Delay(Random.Shared.Next(5, 20), ct);
                     return batch.First();
                 },
-                new() { MaxDegreeOfParallelism = 5, OrderedOutput = true })
-            .ToListAsync();
+                new() { MaxDegreeOfParallelism = 5, OrderedOutput = true },
+                cancellationToken: TestContext.Current.CancellationToken)
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(5);
         results.ShouldBe(new[] { 1, 11, 21, 31, 41 });
@@ -386,7 +399,8 @@ public sealed class BatchingTests
                 await Task.Delay(1, ct);
                 return batch.Count;
             },
-            new() { MaxDegreeOfParallelism = 4 });
+            new() { MaxDegreeOfParallelism = 4 },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(10);
         results.ShouldAllBe(static count => count == 1000);
@@ -416,8 +430,9 @@ public sealed class BatchingTests
                             return ValueTask.CompletedTask;
                         }
                     }
-                })
-            .ToListAsync();
+                },
+                cancellationToken: TestContext.Current.CancellationToken)
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(6);
         snapshots.ShouldNotBeEmpty();
@@ -435,7 +450,8 @@ public sealed class BatchingTests
                 await Task.Delay(5, ct);
                 return batch.Single();
             },
-            new() { OrderedOutput = true });
+            new() { OrderedOutput = true },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(10);
         results.ShouldBe(Enumerable.Range(1, 10));
@@ -453,8 +469,9 @@ public sealed class BatchingTests
                     await Task.Delay(5, ct);
                     return batch.Single();
                 },
-                new() { OrderedOutput = true })
-            .ToListAsync();
+                new() { OrderedOutput = true },
+                cancellationToken: TestContext.Current.CancellationToken)
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(10);
         results.ShouldBe(Enumerable.Range(1, 10));
@@ -494,7 +511,8 @@ public sealed class BatchingTests
                         return ValueTask.CompletedTask;
                     }
                 }
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(5);
         results.ShouldBe(new[] { 55, 155, 255, 355, 455 });
@@ -514,8 +532,9 @@ public sealed class BatchingTests
                     await Task.CompletedTask;
                     return batch.Count;
                 },
-                batchTimeout: TimeSpan.FromMilliseconds(300))
-            .ToListAsync();
+                batchTimeout: TimeSpan.FromMilliseconds(300),
+                cancellationToken: TestContext.Current.CancellationToken)
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         results.ShouldNotBeEmpty();
         results.ShouldContain(static count => count < 20);
@@ -533,9 +552,9 @@ public sealed class BatchingTests
                     await Task.Delay(5, ct);
                     return batch.Count;
                 },
-                batchTimeout: null
-            )
-            .ToListAsync();
+                batchTimeout: null,
+                cancellationToken: TestContext.Current.CancellationToken)
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(3);
         results.ShouldContain(10);
@@ -566,8 +585,9 @@ public sealed class BatchingTests
                     await Task.CompletedTask;
                     return batch.Sum();
                 },
-                batchTimeout: TimeSpan.FromMilliseconds(300))
-            .ToListAsync();
+                batchTimeout: TimeSpan.FromMilliseconds(300),
+                cancellationToken: TestContext.Current.CancellationToken)
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         results.ShouldNotBeEmpty();
         batchSizes.ShouldAllBe(static size => size < 100);
@@ -585,7 +605,8 @@ public sealed class BatchingTests
                 await Task.Delay(5, ct);
                 return batch.Sum();
             },
-            new() { PerItemTimeout = TimeSpan.FromSeconds(1) });
+            new() { PerItemTimeout = TimeSpan.FromSeconds(1) },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(2);
     }
@@ -601,7 +622,8 @@ public sealed class BatchingTests
             {
                 await Task.CompletedTask;
                 return batch.Count;
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(1);
         results[0].ShouldBe(100);
@@ -618,8 +640,9 @@ public sealed class BatchingTests
                 {
                     await Task.CompletedTask;
                     return batch.Count;
-                })
-            .ToListAsync();
+                },
+                cancellationToken: TestContext.Current.CancellationToken)
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(1);
         results[0].ShouldBe(50);
@@ -691,7 +714,8 @@ public sealed class BatchingTests
 
                 await Task.CompletedTask;
                 return batch.Count;
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         emptyBatchCount.ShouldBe(0);
         results.ShouldAllBe(static count => count > 0);
@@ -711,8 +735,9 @@ public sealed class BatchingTests
 
                     await Task.CompletedTask;
                     return batch.Count;
-                })
-            .ToListAsync();
+                },
+                cancellationToken: TestContext.Current.CancellationToken)
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         emptyBatchCount.ShouldBe(0);
         results.ShouldAllBe(static count => count > 0);
@@ -731,8 +756,9 @@ public sealed class BatchingTests
                     await Task.CompletedTask;
                     return batch.Count;
                 },
-                batchTimeout: null)
-            .ToListAsync();
+                batchTimeout: null,
+                cancellationToken: TestContext.Current.CancellationToken)
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(3);
         results.ShouldContain(10);
@@ -750,8 +776,9 @@ public sealed class BatchingTests
                 {
                     await Task.Delay(1, ct);
                     return batch.Sum();
-                })
-            .ToListAsync();
+                },
+                cancellationToken: TestContext.Current.CancellationToken)
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         yieldedResults.Count.ShouldBe(4);
         yieldedResults.Sum().ShouldBe(153);
@@ -777,8 +804,9 @@ public sealed class BatchingTests
                         processedIndices.Add(idx);
                         return ValueTask.CompletedTask;
                     }
-                })
-            .ToListAsync();
+                },
+                cancellationToken: TestContext.Current.CancellationToken)
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(5);
         results.Sum().ShouldBe(30);
@@ -798,7 +826,8 @@ public sealed class BatchingTests
                                await Task.Delay(10, ct);
                                return batch.Count;
                            },
-                           batchTimeout: null))
+                           batchTimeout: null,
+                           cancellationToken: TestContext.Current.CancellationToken))
         {
             yieldedCount++;
             if (yieldedCount >= 3) break;
@@ -870,8 +899,9 @@ public sealed class BatchingTests
                     await Task.Delay(5, ct);
                     return batch.Count;
                 },
-                batchTimeout: null)
-            .ToListAsync();
+                batchTimeout: null,
+                cancellationToken: TestContext.Current.CancellationToken)
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(1);
         results[0].ShouldBe(7);
@@ -890,8 +920,9 @@ public sealed class BatchingTests
                     await Task.Delay(5, ct);
                     return batch.Count;
                 },
-                batchTimeout: null)
-            .GetAsyncEnumerator();
+                batchTimeout: null,
+                cancellationToken: TestContext.Current.CancellationToken)
+            .GetAsyncEnumerator(TestContext.Current.CancellationToken);
 
         try
         {
@@ -920,7 +951,8 @@ public sealed class BatchingTests
                 processedBatches.Add(batch.Count);
                 await Task.Delay(10, ct);
                 return batch.Sum();
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(10);
         results.Sum().ShouldBe(5050); // Sum of 1..100
@@ -941,7 +973,8 @@ public sealed class BatchingTests
                 batchSizes.Add(batch.Count);
                 await Task.Delay(5, ct);
                 return batch.Count;
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(3);
         batchSizes.ShouldContain(10);
@@ -958,8 +991,9 @@ public sealed class BatchingTests
                 {
                     await Task.Delay(5, ct);
                     return batch.Sum();
-                })
-            .ToListAsync();
+                },
+                cancellationToken: TestContext.Current.CancellationToken)
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(5);
         results.Sum().ShouldBe(1275); // Sum of 1..50
@@ -977,8 +1011,9 @@ public sealed class BatchingTests
                     await Task.Delay(10, ct);
                     return batch.Count;
                 },
-                batchTimeout: timeout)
-            .ToListAsync();
+                batchTimeout: timeout,
+                cancellationToken: TestContext.Current.CancellationToken)
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(3);
     }
@@ -1010,7 +1045,8 @@ public sealed class BatchingTests
                 await Task.Delay(10, ct);
                 return batch.Sum();
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(10);
     }
@@ -1050,7 +1086,7 @@ public sealed class BatchingTests
         var source = AsyncEnumerable.Empty<int>();
         var results = await source.BatchParallelStreamAsync(10, static (batch, _) => new ValueTask<int>(batch.Count),
                 cancellationToken: TestContext.Current.CancellationToken)
-            .ToListAsync();
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         results.ShouldBeEmpty();
     }
@@ -1066,7 +1102,8 @@ public sealed class BatchingTests
             {
                 await Task.Delay(5, ct);
                 return batch.Count;
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.ShouldHaveSingleItem();
         results[0].ShouldBe(5);

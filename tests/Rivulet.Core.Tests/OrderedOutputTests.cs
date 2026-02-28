@@ -63,7 +63,7 @@ public sealed class OrderedOutputTests
                     return x * 2;
                 },
                 options)
-            .ToListAsync();
+            .ToListAsync(TestContext.Current.CancellationToken);
 
 
         results.Count.ShouldBe(100);
@@ -86,7 +86,7 @@ public sealed class OrderedOutputTests
                     return x;
                 },
                 options)
-            .ToListAsync();
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         ((IEnumerable<int>)results).ShouldBe([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "results should be in order");
         completionOrder.SequenceEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
@@ -206,7 +206,7 @@ public sealed class OrderedOutputTests
                         : x * 2;
                 },
                 options)
-            .ToListAsync();
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         results.ShouldBe(Enumerable.Range(1, 20).Select(static x => x * 2));
         attemptCounts.Values.ShouldContain(static v => v > 1, "some items should have retried");
@@ -260,7 +260,7 @@ public sealed class OrderedOutputTests
                     return x * 2;
                 },
                 options)
-            .ToListAsync();
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         results.ShouldBe(Enumerable.Range(1, 50).Select(static x => x * 2));
         startedItems.Count.ShouldBe(50);

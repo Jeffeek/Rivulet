@@ -185,7 +185,7 @@ public sealed class CancellationTests
             .Build();
 
         var results = new List<int>();
-        await foreach (var result in pipeline.ExecuteStreamAsync(Enumerable.Range(1, 100).ToAsyncEnumerable()))
+        await foreach (var result in pipeline.ExecuteStreamAsync(Enumerable.Range(1, 100).ToAsyncEnumerable(), TestContext.Current.CancellationToken))
         {
             results.Add(result);
             if (results.Count >= 5)

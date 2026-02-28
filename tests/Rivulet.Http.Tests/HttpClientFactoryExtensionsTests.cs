@@ -33,7 +33,7 @@ public sealed class HttpClientFactoryExtensionsTests
             return Task.FromResult(response);
         });
 
-        var results = await uris.GetParallelAsync(factory, "test");
+        var results = await uris.GetParallelAsync(factory, "test", cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(2);
         results.ShouldAllBe(static r => r.StatusCode == HttpStatusCode.OK);
@@ -52,7 +52,7 @@ public sealed class HttpClientFactoryExtensionsTests
             return Task.FromResult(response);
         });
 
-        var results = await uris.GetParallelAsync(factory);
+        var results = await uris.GetParallelAsync(factory, cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(2);
         results.ShouldAllBe(static r => r.StatusCode == HttpStatusCode.OK);
@@ -66,7 +66,7 @@ public sealed class HttpClientFactoryExtensionsTests
         var uris = new[] { new Uri("http://test.local") };
 
         await Assert.ThrowsAsync<ArgumentNullException>(async () =>
-            await uris.GetParallelAsync((IHttpClientFactory)null!));
+            await uris.GetParallelAsync((IHttpClientFactory)null!, cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -83,7 +83,7 @@ public sealed class HttpClientFactoryExtensionsTests
             return Task.FromResult(response);
         });
 
-        var results = await uris.GetStringParallelAsync(factory, "test");
+        var results = await uris.GetStringParallelAsync(factory, "test", cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(2);
         results.ShouldContain("String-/1");
@@ -102,7 +102,7 @@ public sealed class HttpClientFactoryExtensionsTests
             return Task.FromResult(response);
         });
 
-        var results = await uris.GetByteArrayParallelAsync(factory, "test");
+        var results = await uris.GetByteArrayParallelAsync(factory, "test", cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(2);
         Encoding.UTF8.GetString(results[0]).ShouldContain("Bytes-/");
@@ -124,7 +124,7 @@ public sealed class HttpClientFactoryExtensionsTests
             return Task.FromResult(response);
         });
 
-        var results = await requests.PostParallelAsync(factory, "test");
+        var results = await requests.PostParallelAsync(factory, "test", cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(2);
         results.ShouldAllBe(static r => r.StatusCode == HttpStatusCode.Created);
@@ -147,7 +147,7 @@ public sealed class HttpClientFactoryExtensionsTests
             return Task.FromResult(response);
         });
 
-        var results = await requests.PutParallelAsync(factory, "test");
+        var results = await requests.PutParallelAsync(factory, "test", cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(2);
         results.ShouldAllBe(static r => r.StatusCode == HttpStatusCode.OK);
@@ -166,7 +166,7 @@ public sealed class HttpClientFactoryExtensionsTests
             return Task.FromResult(response);
         });
 
-        var results = await uris.DeleteParallelAsync(factory, "test");
+        var results = await uris.DeleteParallelAsync(factory, "test", cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(2);
         results.ShouldAllBe(static r => r.StatusCode == HttpStatusCode.NoContent);
@@ -193,7 +193,7 @@ public sealed class HttpClientFactoryExtensionsTests
                 return Task.FromResult(response);
             });
 
-            var results = await downloads.DownloadParallelAsync(factory, "test");
+            var results = await downloads.DownloadParallelAsync(factory, "test", cancellationToken: TestContext.Current.CancellationToken);
 
             results.Count.ShouldBe(1);
             results[0].bytesDownloaded.ShouldBeGreaterThan(0);
@@ -223,7 +223,7 @@ public sealed class HttpClientFactoryExtensionsTests
         var options = new HttpOptions
             { ParallelOptions = new() { MaxRetries = 3, BaseDelay = TimeSpan.FromMilliseconds(10) } };
 
-        var results = await uris.GetParallelAsync(factory, "test", options);
+        var results = await uris.GetParallelAsync(factory, "test", options, TestContext.Current.CancellationToken);
 
         attemptCount.ShouldBeGreaterThan(2); // At least initial + retries
         results.Count.ShouldBe(2);

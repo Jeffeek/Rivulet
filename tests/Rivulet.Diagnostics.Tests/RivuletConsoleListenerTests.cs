@@ -42,7 +42,7 @@ public sealed class RivuletConsoleListenerTests : IDisposable
                         return x;
                     },
                     new() { MaxDegreeOfParallelism = 10 })
-                .ToListAsync();
+                .ToListAsync(TestContext.Current.CancellationToken);
 
             // Wait for EventCounters to fire
             await Task.Delay(1500, CancellationToken.None);
@@ -76,7 +76,7 @@ public sealed class RivuletConsoleListenerTests : IDisposable
                             throw new InvalidOperationException("Test");
                         },
                         new() { MaxDegreeOfParallelism = 2, ErrorMode = ErrorMode.CollectAndContinue })
-                    .ToListAsync();
+                    .ToListAsync(TestContext.Current.CancellationToken);
             }
             catch
             {
@@ -135,7 +135,7 @@ public sealed class RivuletConsoleListenerTests : IDisposable
                         return x;
                     },
                     new() { MaxDegreeOfParallelism = 2 })
-                .ToListAsync();
+                .ToListAsync(TestContext.Current.CancellationToken);
 
             // Wait for EventCounters to fire - increased for CI/CD reliability
             await Task.Delay(2000, CancellationToken.None);
@@ -168,7 +168,7 @@ public sealed class RivuletConsoleListenerTests : IDisposable
                         return x * 2;
                     },
                     new() { MaxDegreeOfParallelism = 2 })
-                .ToListAsync();
+                .ToListAsync(TestContext.Current.CancellationToken);
 
             // EventCounters fire every 1 second. Wait for at least 1.5 intervals
             await Task.Delay(1500, CancellationToken.None);
@@ -228,7 +228,7 @@ public sealed class RivuletConsoleListenerTests : IDisposable
                         return x;
                     },
                     new() { MaxDegreeOfParallelism = 2, MaxRetries = 2 })
-                .ToListAsync();
+                .ToListAsync(TestContext.Current.CancellationToken);
 
             await Task.Delay(1100, CancellationToken.None);
         }
@@ -258,7 +258,7 @@ public sealed class RivuletConsoleListenerTests : IDisposable
                         return x;
                     },
                     new() { MaxDegreeOfParallelism = 100 })
-                .ToListAsync();
+                .ToListAsync(TestContext.Current.CancellationToken);
 
             await Task.Delay(1500, CancellationToken.None);
 
@@ -297,7 +297,7 @@ public sealed class RivuletConsoleListenerTests : IDisposable
                         return x;
                     },
                     new() { MaxDegreeOfParallelism = 50 })
-                .ToListAsync();
+                .ToListAsync(TestContext.Current.CancellationToken);
 
             await Task.Delay(1500, CancellationToken.None);
 
@@ -331,7 +331,7 @@ public sealed class RivuletConsoleListenerTests : IDisposable
                         return x;
                     },
                     new() { MaxDegreeOfParallelism = 2 })
-                .ToListAsync();
+                .ToListAsync(TestContext.Current.CancellationToken);
 
             await Task.Delay(1100, CancellationToken.None);
         }

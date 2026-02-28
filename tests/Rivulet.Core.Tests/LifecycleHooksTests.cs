@@ -202,7 +202,7 @@ public sealed class LifecycleHooksTests
 
         var results = await source.SelectParallelStreamAsync(static (x, _) => new ValueTask<int>(x * 2), options,
                 cancellationToken: TestContext.Current.CancellationToken)
-            .ToListAsync();
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         startedItems.Count.ShouldBe(10);
         completedItems.Count.ShouldBe(10);
@@ -230,7 +230,8 @@ public sealed class LifecycleHooksTests
         };
 
         await source.ForEachParallelAsync(static (_, _) => ValueTask.CompletedTask,
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         startedItems.Count.ShouldBe(10);
         completedItems.Count.ShouldBe(10);

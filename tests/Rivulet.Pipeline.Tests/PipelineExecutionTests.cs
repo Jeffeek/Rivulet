@@ -13,7 +13,7 @@ public sealed class PipelineExecutionTests
             .SelectParallel(static x => x * 2)
             .Build();
 
-        var results = await pipeline.ExecuteAsync(Enumerable.Empty<int>());
+        var results = await pipeline.ExecuteAsync(Enumerable.Empty<int>(), TestContext.Current.CancellationToken);
 
         results.ShouldBeEmpty();
     }
@@ -25,7 +25,7 @@ public sealed class PipelineExecutionTests
             .SelectParallel(static x => x * 2)
             .Build();
 
-        var results = await pipeline.ExecuteAsync(new[] { 5 });
+        var results = await pipeline.ExecuteAsync(new[] { 5 }, TestContext.Current.CancellationToken);
 
         results.ShouldHaveSingleItem().ShouldBe(10);
     }
@@ -37,7 +37,7 @@ public sealed class PipelineExecutionTests
             .SelectParallel(static x => x * 2)
             .Build();
 
-        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 10));
+        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 10), TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(10);
         results.OrderBy(static x => x).ShouldBe(new[] { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20 });
@@ -51,7 +51,7 @@ public sealed class PipelineExecutionTests
             .WhereParallel(static x => x > 10)
             .Build();
 
-        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 10));
+        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 10), TestContext.Current.CancellationToken);
 
         // After doubling: 2, 4, 6, 8, 10, 12, 14, 16, 18, 20
         // After filtering (> 10): 12, 14, 16, 18, 20
@@ -68,7 +68,7 @@ public sealed class PipelineExecutionTests
             .SelectParallel(static x => x.ToString())
             .Build();
 
-        var results = await pipeline.ExecuteAsync(new[] { 1, 2, 3 });
+        var results = await pipeline.ExecuteAsync(new[] { 1, 2, 3 }, TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(3);
         results.OrderBy(static x => x).ShouldBe(new[] { "3", "5", "7" });
@@ -85,7 +85,7 @@ public sealed class PipelineExecutionTests
             })
             .Build();
 
-        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 5));
+        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 5), TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(5);
         results.OrderBy(static x => x).ShouldBe(new[] { 2, 4, 6, 8, 10 });
@@ -98,7 +98,7 @@ public sealed class PipelineExecutionTests
             .Batch(5)
             .Build();
 
-        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 12));
+        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 12), TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(3);
         results[0].Count.ShouldBe(5);
@@ -120,7 +120,7 @@ public sealed class PipelineExecutionTests
                 })
             .Build();
 
-        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 12));
+        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 12), TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(3);
         results.Sum().ShouldBe(78); // Sum of 1..12
@@ -135,7 +135,7 @@ public sealed class PipelineExecutionTests
             .SelectManyParallel(static x => Enumerable.Range(1, x))
             .Build();
 
-        var results = await pipeline.ExecuteAsync(new[] { 1, 2, 3 });
+        var results = await pipeline.ExecuteAsync(new[] { 1, 2, 3 }, TestContext.Current.CancellationToken);
 
         // 1 -> [1], 2 -> [1, 2], 3 -> [1, 2, 3]
         // Total: 1 + 2 + 3 = 6 items
@@ -153,7 +153,7 @@ public sealed class PipelineExecutionTests
             .Tap(x => tappedItems.Add(x))
             .Build();
 
-        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 5));
+        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 5), TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(5);
         tappedItems.Count.ShouldBe(5);
@@ -168,7 +168,7 @@ public sealed class PipelineExecutionTests
             .Buffer(10)
             .Build();
 
-        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 20));
+        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 20), TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(20);
         results.Sum().ShouldBe(420); // Sum of 2+4+...+40
@@ -186,7 +186,7 @@ public sealed class PipelineExecutionTests
             .Build();
 
         var results = new List<int>();
-        await foreach (var result in pipeline.ExecuteStreamAsync(Enumerable.Range(1, 5).ToAsyncEnumerable()))
+        await foreach (var result in pipeline.ExecuteStreamAsync(Enumerable.Range(1, 5).ToAsyncEnumerable(), TestContext.Current.CancellationToken))
             results.Add(result);
 
         results.Count.ShouldBe(5);
@@ -223,7 +223,7 @@ public sealed class PipelineExecutionTests
             .SelectParallel(static x => x + 1, name: "Increment")
             .Build();
 
-        await pipeline.ExecuteAsync(Enumerable.Range(1, 5));
+        await pipeline.ExecuteAsync(Enumerable.Range(1, 5), TestContext.Current.CancellationToken);
 
         startCalled.ShouldBeTrue();
         completeCalled.ShouldBeTrue();
@@ -247,7 +247,7 @@ public sealed class PipelineExecutionTests
             .SelectParallel(static x => x * 2)
             .Build();
 
-        await pipeline.ExecuteAsync(Enumerable.Range(1, 10));
+        await pipeline.ExecuteAsync(Enumerable.Range(1, 10), TestContext.Current.CancellationToken);
 
         capturedResult.ShouldNotBeNull();
         capturedResult!.ItemsCompleted.ShouldBe(10);
@@ -285,7 +285,7 @@ public sealed class PipelineExecutionTests
                 })
             .Build();
 
-        await pipeline.ExecuteAsync(Enumerable.Range(1, 10));
+        await pipeline.ExecuteAsync(Enumerable.Range(1, 10), TestContext.Current.CancellationToken);
 
         maxConcurrent.ShouldBeLessThanOrEqualTo(2);
     }
@@ -298,7 +298,7 @@ public sealed class PipelineExecutionTests
             .WhereParallel(static x => x % 4 == 0)
             .Build();
 
-        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 1000));
+        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 1000), TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(500);
         results.Sum().ShouldBe(501000);
@@ -314,7 +314,7 @@ public sealed class PipelineExecutionTests
             .SelectParallel(static (batch, _) => ValueTask.FromResult(batch.Sum()), name: "SumBatch")
             .Build();
 
-        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 10));
+        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 10), TestContext.Current.CancellationToken);
 
         // After doubling: 2, 4, 6, 8, 10, 12, 14, 16, 18, 20
         // After filtering (> 10): 12, 14, 16, 18, 20 (5 items)

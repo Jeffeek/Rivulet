@@ -31,10 +31,10 @@ public sealed class CsvParallelExtensionsTests : IDisposable
                                   2,Product B,20.00
                                   3,Product C,15.75
                                   """;
-        await File.WriteAllTextAsync(csvPath, csvContent);
+        await File.WriteAllTextAsync(csvPath, csvContent, TestContext.Current.CancellationToken);
 
         // Act
-        var results = await new[] { csvPath }.ParseCsvParallelAsync<Product>();
+        var results = await new[] { csvPath }.ParseCsvParallelAsync<Product>(cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         results.Count.ShouldBe(3);
@@ -56,7 +56,8 @@ public sealed class CsvParallelExtensionsTests : IDisposable
             Id,Name,Price
             1,Product A,10.50
             2,Product B,20.00
-            """);
+            """,
+            TestContext.Current.CancellationToken);
 
         await File.WriteAllTextAsync(
             csvPath2,
@@ -65,7 +66,8 @@ public sealed class CsvParallelExtensionsTests : IDisposable
             3,Product C,15.75
             4,Product D,30.00
             5,Product E,25.50
-            """);
+            """,
+            TestContext.Current.CancellationToken);
 
         // Act
         var results = await new[] { csvPath1, csvPath2 }.ParseCsvParallelAsync<Product>(
@@ -76,7 +78,8 @@ public sealed class CsvParallelExtensionsTests : IDisposable
                     MaxDegreeOfParallelism = 2,
                     OrderedOutput = true
                 }
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         results.Count.ShouldBe(5);
@@ -114,11 +117,12 @@ public sealed class CsvParallelExtensionsTests : IDisposable
             new CsvOperationOptions
             {
                 OverwriteExisting = true
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         File.Exists(csvPath).ShouldBeTrue();
-        var content = await File.ReadAllTextAsync(csvPath);
+        var content = await File.ReadAllTextAsync(csvPath, TestContext.Current.CancellationToken);
         content.ShouldContain("Product A");
         content.ShouldContain("Product B");
         content.ShouldContain("Id,Name,Price");
@@ -149,7 +153,8 @@ public sealed class CsvParallelExtensionsTests : IDisposable
                 {
                     MaxDegreeOfParallelism = 2
                 }
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         File.Exists(csvPath1).ShouldBeTrue();
@@ -168,7 +173,8 @@ public sealed class CsvParallelExtensionsTests : IDisposable
             Id,Name,Price
             1,Product A,10.00
             2,Product B,20.00
-            """);
+            """,
+            TestContext.Current.CancellationToken);
 
         var transformations = new[]
         {
@@ -190,11 +196,12 @@ public sealed class CsvParallelExtensionsTests : IDisposable
             new CsvOperationOptions
             {
                 OverwriteExisting = true
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         File.Exists(outputPath).ShouldBeTrue();
-        var content = await File.ReadAllTextAsync(outputPath);
+        var content = await File.ReadAllTextAsync(outputPath, TestContext.Current.CancellationToken);
         content.ShouldContain("PriceWithTax");
         content.ShouldContain("12"); // 10 * 1.2 = 12
         content.ShouldContain("24"); // 20 * 1.2 = 24
@@ -214,7 +221,8 @@ public sealed class CsvParallelExtensionsTests : IDisposable
             1,Product A,10.00
             2,Product B,20.00
             3,Product C,30.00
-            """);
+            """,
+            TestContext.Current.CancellationToken);
 
         var transformations = new[]
         {
@@ -240,11 +248,12 @@ public sealed class CsvParallelExtensionsTests : IDisposable
             new CsvOperationOptions
             {
                 OverwriteExisting = true
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         File.Exists(outputPath).ShouldBeTrue();
-        var content = await File.ReadAllTextAsync(outputPath);
+        var content = await File.ReadAllTextAsync(outputPath, TestContext.Current.CancellationToken);
         content.ShouldContain("PriceWithTax");
         content.ShouldContain("11.5"); // 10 * 1.15 = 11.5
         content.ShouldContain("23"); // 20 * 1.15 = 23
@@ -261,7 +270,7 @@ public sealed class CsvParallelExtensionsTests : IDisposable
         var records = Enumerable.Range(1, 100)
             .Select(static i => $"{i},Product {i},{i * 10.0:F2}")
             .ToArray();
-        await File.WriteAllTextAsync(inputPath, $"Id,Name,Price\n{string.Join("\n", records)}");
+        await File.WriteAllTextAsync(inputPath, $"Id,Name,Price\n{string.Join("\n", records)}", TestContext.Current.CancellationToken);
 
         var transformations = new[]
         {
@@ -316,7 +325,7 @@ public sealed class CsvParallelExtensionsTests : IDisposable
                                   1;Product A;10.50
                                   2;Product B;20.00
                                   """;
-        await File.WriteAllTextAsync(csvPath, csvContent);
+        await File.WriteAllTextAsync(csvPath, csvContent, TestContext.Current.CancellationToken);
 
         // Act
         var results = await new[] { csvPath }.ParseCsvParallelAsync<Product>(
@@ -326,7 +335,8 @@ public sealed class CsvParallelExtensionsTests : IDisposable
                 {
                     ConfigurationAction = static cfg => cfg.Delimiter = ";"
                 }
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         results.Count.ShouldBe(2);
@@ -339,7 +349,7 @@ public sealed class CsvParallelExtensionsTests : IDisposable
     {
         // Arrange
         var csvPath = Path.Join(_testDirectory, "existing.csv");
-        await File.WriteAllTextAsync(csvPath, "existing content");
+        await File.WriteAllTextAsync(csvPath, "existing content", TestContext.Current.CancellationToken);
 
         var products = new[] { new Product { Id = 1, Name = "Test", Price = 10m } };
         var fileWrites = new[]
@@ -375,7 +385,8 @@ public sealed class CsvParallelExtensionsTests : IDisposable
             """
             Id,Name,Price
             1,Product A,10.50
-            """);
+            """,
+            TestContext.Current.CancellationToken);
 
         var startCalled = false;
         var completeCalled = false;
@@ -398,7 +409,8 @@ public sealed class CsvParallelExtensionsTests : IDisposable
                     recordCount = result.RecordCount;
                     await Task.CompletedTask;
                 }
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         startCalled.ShouldBeTrue();
@@ -414,8 +426,8 @@ public sealed class CsvParallelExtensionsTests : IDisposable
         var csvPath1 = Path.Join(_testDirectory, "file1.csv");
         var csvPath2 = Path.Join(_testDirectory, "file2.csv");
 
-        await File.WriteAllTextAsync(csvPath1, "Id,Name,Price\n1,Product A,10.50");
-        await File.WriteAllTextAsync(csvPath2, "Id,Name,Price\n2,Product B,20.00");
+        await File.WriteAllTextAsync(csvPath1, "Id,Name,Price\n1,Product A,10.50", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(csvPath2, "Id,Name,Price\n2,Product B,20.00", TestContext.Current.CancellationToken);
 
         var fileReads = new[]
         {
@@ -441,8 +453,8 @@ public sealed class CsvParallelExtensionsTests : IDisposable
         var productPath = Path.Join(_testDirectory, "products.csv");
         var customerPath = Path.Join(_testDirectory, "customers.csv");
 
-        await File.WriteAllTextAsync(productPath, "Id,Name,Price\n1,Product A,10.50");
-        await File.WriteAllTextAsync(customerPath, "Id,Name\n1,Customer A");
+        await File.WriteAllTextAsync(productPath, "Id,Name,Price\n1,Product A,10.50", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(customerPath, "Id,Name\n1,Customer A", TestContext.Current.CancellationToken);
 
         var productReads = new[] { new RivuletCsvReadFile<Product>(productPath, null) };
         var customerReads = new[] { new RivuletCsvReadFile<Customer>(customerPath, null) };
@@ -450,7 +462,8 @@ public sealed class CsvParallelExtensionsTests : IDisposable
         // Act
         var (products, customers) = await CsvParallelExtensions.ParseCsvParallelGroupedAsync(
             productReads,
-            customerReads);
+            customerReads,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         products.Count.ShouldBe(1);
@@ -482,7 +495,8 @@ public sealed class CsvParallelExtensionsTests : IDisposable
                     recordsWritten = result.RecordCount;
                     await Task.CompletedTask;
                 }
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         bytesWritten.ShouldBeGreaterThan(0);

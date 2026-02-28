@@ -20,7 +20,7 @@ public sealed class FakeChannelTests
     {
         using var channel = new FakeChannel<int>();
 
-        await channel.WriteAsync(42);
+        await channel.WriteAsync(42, TestContext.Current.CancellationToken);
 
         channel.WriteCount.ShouldBe(1);
     }
@@ -30,8 +30,8 @@ public sealed class FakeChannelTests
     {
         using var channel = new FakeChannel<int>();
 
-        await channel.WriteAsync(42);
-        var result = await channel.ReadAsync();
+        await channel.WriteAsync(42, TestContext.Current.CancellationToken);
+        var result = await channel.ReadAsync(TestContext.Current.CancellationToken);
 
         channel.ReadCount.ShouldBe(1);
         result.ShouldBe(42);
@@ -42,9 +42,9 @@ public sealed class FakeChannelTests
     {
         using var channel = new FakeChannel<int>();
 
-        await channel.WriteAsync(1);
-        await channel.WriteAsync(2);
-        await channel.WriteAsync(3);
+        await channel.WriteAsync(1, TestContext.Current.CancellationToken);
+        await channel.WriteAsync(2, TestContext.Current.CancellationToken);
+        await channel.WriteAsync(3, TestContext.Current.CancellationToken);
 
         channel.WriteCount.ShouldBe(3);
     }
@@ -54,12 +54,12 @@ public sealed class FakeChannelTests
     {
         using var channel = new FakeChannel<int>();
 
-        await channel.WriteAsync(1);
-        await channel.WriteAsync(2);
-        await channel.WriteAsync(3);
+        await channel.WriteAsync(1, TestContext.Current.CancellationToken);
+        await channel.WriteAsync(2, TestContext.Current.CancellationToken);
+        await channel.WriteAsync(3, TestContext.Current.CancellationToken);
 
-        await channel.ReadAsync();
-        await channel.ReadAsync();
+        await channel.ReadAsync(TestContext.Current.CancellationToken);
+        await channel.ReadAsync(TestContext.Current.CancellationToken);
 
         channel.ReadCount.ShouldBe(2);
         channel.WriteCount.ShouldBe(3);
@@ -72,7 +72,7 @@ public sealed class FakeChannelTests
 
         channel.Complete();
 
-        var result = await channel.WriteAsync(42);
+        var result = await channel.WriteAsync(42, TestContext.Current.CancellationToken);
 
         result.ShouldBeFalse();
     }
@@ -82,12 +82,12 @@ public sealed class FakeChannelTests
     {
         using var channel = new FakeChannel<int>();
 
-        await channel.WriteAsync(1);
-        await channel.WriteAsync(2);
+        await channel.WriteAsync(1, TestContext.Current.CancellationToken);
+        await channel.WriteAsync(2, TestContext.Current.CancellationToken);
         channel.Complete();
 
-        var result1 = await channel.ReadAsync();
-        var result2 = await channel.ReadAsync();
+        var result1 = await channel.ReadAsync(TestContext.Current.CancellationToken);
+        var result2 = await channel.ReadAsync(TestContext.Current.CancellationToken);
 
         result1.ShouldBe(1);
         result2.ShouldBe(2);
@@ -99,12 +99,12 @@ public sealed class FakeChannelTests
     {
         using var channel = new FakeChannel<int>();
 
-        await channel.WriteAsync(1);
+        await channel.WriteAsync(1, TestContext.Current.CancellationToken);
         channel.Complete();
 
-        await channel.ReadAsync();
+        await channel.ReadAsync(TestContext.Current.CancellationToken);
 
-        var canRead = await channel.Reader.WaitToReadAsync();
+        var canRead = await channel.Reader.WaitToReadAsync(TestContext.Current.CancellationToken);
 
         canRead.ShouldBeFalse();
     }
@@ -128,10 +128,10 @@ public sealed class FakeChannelTests
     {
         using var channel = new FakeChannel<int>();
 
-        await channel.WriteAsync(42);
+        await channel.WriteAsync(42, TestContext.Current.CancellationToken);
         channel.ResetCounters();
 
-        var result = await channel.ReadAsync();
+        var result = await channel.ReadAsync(TestContext.Current.CancellationToken);
 
         result.ShouldBe(42);
         channel.ReadCount.ShouldBe(1);
@@ -156,10 +156,10 @@ public sealed class FakeChannelTests
     {
         using var channel = new FakeChannel<int>();
 
-        for (var i = 0; i < 100; i++) await channel.WriteAsync(i);
+        for (var i = 0; i < 100; i++) await channel.WriteAsync(i, TestContext.Current.CancellationToken);
 
         var readTasks = Enumerable.Range(0, 100)
-            .Select(_ => Task.Run(async () => await channel.ReadAsync()))
+            .Select(_ => Task.Run(async () => await channel.ReadAsync(TestContext.Current.CancellationToken)))
             .ToArray();
 
         await Task.WhenAll(readTasks);
@@ -172,15 +172,15 @@ public sealed class FakeChannelTests
     {
         using var channel = new FakeChannel<int>(2);
 
-        await channel.WriteAsync(1);
-        await channel.WriteAsync(2);
+        await channel.WriteAsync(1, TestContext.Current.CancellationToken);
+        await channel.WriteAsync(2, TestContext.Current.CancellationToken);
 
-        var writeTask = channel.WriteAsync(3);
+        var writeTask = channel.WriteAsync(3, TestContext.Current.CancellationToken);
 
         await Task.Delay(100, CancellationToken.None);
         writeTask.IsCompleted.ShouldBeFalse();
 
-        await channel.ReadAsync();
+        await channel.ReadAsync(TestContext.Current.CancellationToken);
         await writeTask;
 
         channel.WriteCount.ShouldBe(3);
@@ -192,11 +192,11 @@ public sealed class FakeChannelTests
     {
         using var channel = new FakeChannel<int>();
 
-        for (var i = 0; i < 10000; i++) await channel.WriteAsync(i);
+        for (var i = 0; i < 10000; i++) await channel.WriteAsync(i, TestContext.Current.CancellationToken);
 
         channel.WriteCount.ShouldBe(10000);
 
-        for (var i = 0; i < 10000; i++) await channel.ReadAsync();
+        for (var i = 0; i < 10000; i++) await channel.ReadAsync(TestContext.Current.CancellationToken);
 
         channel.ReadCount.ShouldBe(10000);
     }
@@ -242,13 +242,13 @@ public sealed class FakeChannelTests
     {
         using var channel = new FakeChannel<int>();
 
-        await channel.WriteAsync(1);
-        await channel.WriteAsync(2);
-        await channel.WriteAsync(3);
+        await channel.WriteAsync(1, TestContext.Current.CancellationToken);
+        await channel.WriteAsync(2, TestContext.Current.CancellationToken);
+        await channel.WriteAsync(3, TestContext.Current.CancellationToken);
         channel.Complete();
 
         var results = new List<int>();
-        await foreach (var item in channel.Reader.ReadAllAsync()) results.Add(item);
+        await foreach (var item in channel.Reader.ReadAllAsync(TestContext.Current.CancellationToken)) results.Add(item);
 
         results.ShouldBe(new[] { 1, 2, 3 });
     }
@@ -269,7 +269,7 @@ public sealed class FakeChannelTests
     {
         using var channel = new FakeChannel<int>();
 
-        await channel.WriteAsync(1);
+        await channel.WriteAsync(1, TestContext.Current.CancellationToken);
         channel.Reader.TryRead(out _);
 
         channel.ReadCount.ShouldBe(0);
@@ -291,7 +291,7 @@ public sealed class FakeChannelTests
     public async Task ReadAsync_AfterDispose_ShouldThrowObjectDisposedException()
     {
         var channel = new FakeChannel<int>();
-        await channel.WriteAsync(42);
+        await channel.WriteAsync(42, TestContext.Current.CancellationToken);
         channel.Dispose();
 
         var act = async () => await channel.ReadAsync();
