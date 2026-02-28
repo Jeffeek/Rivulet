@@ -182,10 +182,11 @@ public sealed class EdgeCasesAndCoverageTests
         var processedCount = 0;
 
         await source.ForEachParallelAsync((_, _) =>
-        {
-            Interlocked.Increment(ref processedCount);
-            return ValueTask.CompletedTask;
-        }, cancellationToken: TestContext.Current.CancellationToken);
+            {
+                Interlocked.Increment(ref processedCount);
+                return ValueTask.CompletedTask;
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         processedCount.ShouldBe(50);
     }

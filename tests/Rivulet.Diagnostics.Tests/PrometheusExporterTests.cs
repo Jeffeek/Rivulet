@@ -21,7 +21,8 @@ public sealed class PrometheusExporterTests
                     await Task.Delay(200, ct);
                     return x * 2;
                 },
-                new() { MaxDegreeOfParallelism = 2 })
+                new() { MaxDegreeOfParallelism = 2 },
+                cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync(TestContext.Current.CancellationToken);
 
         // Wait for EventCounters to fire

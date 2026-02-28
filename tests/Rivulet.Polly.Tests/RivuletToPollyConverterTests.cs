@@ -32,12 +32,13 @@ public sealed class RivuletToPollyConverterTests
         var attemptCount = 0;
 
         var result = await pipeline.ExecuteAsync(_ =>
-        {
-            attemptCount++;
-            return attemptCount <= 2
-                ? throw new InvalidOperationException("Transient failure")
-                : ValueTask.FromResult(42);
-        }, TestContext.Current.CancellationToken);
+            {
+                attemptCount++;
+                return attemptCount <= 2
+                    ? throw new InvalidOperationException("Transient failure")
+                    : ValueTask.FromResult(42);
+            },
+            TestContext.Current.CancellationToken);
 
         result.ShouldBe(42);
         attemptCount.ShouldBe(3, "should have retried twice and succeeded on 3rd attempt");
@@ -82,12 +83,13 @@ public sealed class RivuletToPollyConverterTests
         var attemptTimes = new List<DateTime>();
 
         var result = await pipeline.ExecuteAsync(_ =>
-        {
-            attemptTimes.Add(DateTime.UtcNow);
-            return attemptTimes.Count <= 2
-                ? throw new InvalidOperationException("Transient failure")
-                : ValueTask.FromResult(42);
-        }, TestContext.Current.CancellationToken);
+            {
+                attemptTimes.Add(DateTime.UtcNow);
+                return attemptTimes.Count <= 2
+                    ? throw new InvalidOperationException("Transient failure")
+                    : ValueTask.FromResult(42);
+            },
+            TestContext.Current.CancellationToken);
 
         result.ShouldBe(42);
         attemptTimes.Count.ShouldBe(3);
@@ -109,12 +111,13 @@ public sealed class RivuletToPollyConverterTests
         var attemptCount = 0;
 
         var result = await pipeline.ExecuteAsync(_ =>
-        {
-            attemptCount++;
-            return attemptCount <= 2
-                ? throw new InvalidOperationException("Transient failure")
-                : ValueTask.FromResult(42);
-        }, TestContext.Current.CancellationToken);
+            {
+                attemptCount++;
+                return attemptCount <= 2
+                    ? throw new InvalidOperationException("Transient failure")
+                    : ValueTask.FromResult(42);
+            },
+            TestContext.Current.CancellationToken);
 
         result.ShouldBe(42);
         attemptCount.ShouldBe(3);
@@ -135,12 +138,13 @@ public sealed class RivuletToPollyConverterTests
         var attemptCount = 0;
 
         var result = await pipeline.ExecuteAsync(_ =>
-        {
-            attemptCount++;
-            return attemptCount <= 2
-                ? throw new InvalidOperationException("Transient failure")
-                : ValueTask.FromResult(42);
-        }, TestContext.Current.CancellationToken);
+            {
+                attemptCount++;
+                return attemptCount <= 2
+                    ? throw new InvalidOperationException("Transient failure")
+                    : ValueTask.FromResult(42);
+            },
+            TestContext.Current.CancellationToken);
 
         result.ShouldBe(42);
         attemptCount.ShouldBe(3);
@@ -173,10 +177,11 @@ public sealed class RivuletToPollyConverterTests
         var pipeline = timeout.ToPollyTimeoutPipeline();
 
         var result = await pipeline.ExecuteAsync(static async ct =>
-        {
-            await Task.Delay(10, ct);
-            return 42;
-        }, TestContext.Current.CancellationToken);
+            {
+                await Task.Delay(10, ct);
+                return 42;
+            },
+            TestContext.Current.CancellationToken);
 
         result.ShouldBe(42);
     }
@@ -263,12 +268,13 @@ public sealed class RivuletToPollyConverterTests
         var attemptCount = 0;
 
         var result = await pipeline.ExecuteAsync(_ =>
-        {
-            attemptCount++;
-            return attemptCount <= 1
-                ? throw new InvalidOperationException("Transient failure")
-                : ValueTask.FromResult(42);
-        }, TestContext.Current.CancellationToken);
+            {
+                attemptCount++;
+                return attemptCount <= 1
+                    ? throw new InvalidOperationException("Transient failure")
+                    : ValueTask.FromResult(42);
+            },
+            TestContext.Current.CancellationToken);
 
         result.ShouldBe(42);
         attemptCount.ShouldBe(2);
@@ -282,10 +288,11 @@ public sealed class RivuletToPollyConverterTests
         var pipeline = options.ToPollyPipeline();
 
         var result = await pipeline.ExecuteAsync(static async ct =>
-        {
-            await Task.Delay(10, ct);
-            return 42;
-        }, TestContext.Current.CancellationToken);
+            {
+                await Task.Delay(10, ct);
+                return 42;
+            },
+            TestContext.Current.CancellationToken);
 
         result.ShouldBe(42);
     }
@@ -321,10 +328,11 @@ public sealed class RivuletToPollyConverterTests
 
         // Verify it works with a successful operation
         var result = await pipeline.ExecuteAsync(static async ct =>
-        {
-            await Task.Delay(10, ct);
-            return 42;
-        }, TestContext.Current.CancellationToken);
+            {
+                await Task.Delay(10, ct);
+                return 42;
+            },
+            TestContext.Current.CancellationToken);
 
         result.ShouldBe(42);
     }

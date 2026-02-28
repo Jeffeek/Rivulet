@@ -11,10 +11,11 @@ public sealed class ForEachParallelAsyncTests
         var processedItems = new ConcurrentBag<int>();
 
         await source.ForEachParallelAsync((x, _) =>
-        {
-            processedItems.Add(x);
-            return ValueTask.CompletedTask;
-        }, cancellationToken: TestContext.Current.CancellationToken);
+            {
+                processedItems.Add(x);
+                return ValueTask.CompletedTask;
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         processedItems.ShouldBeEmpty();
     }
@@ -132,10 +133,11 @@ public sealed class ForEachParallelAsyncTests
         var processedItems = new ConcurrentBag<int>();
 
         await source.ForEachParallelAsync((x, _) =>
-        {
-            processedItems.Add(x);
-            return ValueTask.CompletedTask;
-        }, cancellationToken: TestContext.Current.CancellationToken);
+            {
+                processedItems.Add(x);
+                return ValueTask.CompletedTask;
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         processedItems.Count.ShouldBe(5);
     }
@@ -147,10 +149,11 @@ public sealed class ForEachParallelAsyncTests
         var processedCount = 0;
 
         await source.ForEachParallelAsync((_, _) =>
-        {
-            Interlocked.Increment(ref processedCount);
-            return ValueTask.CompletedTask;
-        }, cancellationToken: TestContext.Current.CancellationToken);
+            {
+                Interlocked.Increment(ref processedCount);
+                return ValueTask.CompletedTask;
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         processedCount.ShouldBe(1000);
     }
@@ -163,13 +166,14 @@ public sealed class ForEachParallelAsyncTests
         var oddNumbers = new ConcurrentBag<int>();
 
         await source.ForEachParallelAsync(async (x, ct) =>
-        {
-            await Task.Delay(1, ct);
-            if (x % 2 == 0)
-                evenNumbers.Add(x);
-            else
-                oddNumbers.Add(x);
-        }, cancellationToken: TestContext.Current.CancellationToken);
+            {
+                await Task.Delay(1, ct);
+                if (x % 2 == 0)
+                    evenNumbers.Add(x);
+                else
+                    oddNumbers.Add(x);
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         evenNumbers.Count.ShouldBe(25);
         oddNumbers.Count.ShouldBe(25);

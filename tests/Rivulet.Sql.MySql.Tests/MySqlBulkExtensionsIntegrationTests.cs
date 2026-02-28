@@ -165,14 +165,16 @@ public sealed class MySqlBulkExtensionsIntegrationTests : IAsyncLifetime
         try
         {
             await File.WriteAllLinesAsync(tempFile1,
-            [
-                "200,Frank,frank@example.com",
-                "201,Grace,grace@example.com"
-            ], TestContext.Current.CancellationToken);
+                [
+                    "200,Frank,frank@example.com",
+                    "201,Grace,grace@example.com"
+                ],
+                TestContext.Current.CancellationToken);
             await File.WriteAllLinesAsync(tempFile2,
-            [
-                "202,Hank,hank@example.com"
-            ], TestContext.Current.CancellationToken);
+                [
+                    "202,Hank,hank@example.com"
+                ],
+                TestContext.Current.CancellationToken);
 
             var filePaths = new[] { tempFile1, tempFile2 };
             var columnNames = new[] { "Id", "Name", "Email" };

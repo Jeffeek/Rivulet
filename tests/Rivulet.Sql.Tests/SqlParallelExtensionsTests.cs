@@ -101,7 +101,7 @@ public sealed class SqlParallelExtensionsTests
 
         var results =
             await commands.ExecuteCommandsParallelAsync(static () =>
-                new TestDbConnection(executeNonQueryFunc: static _ => 1),
+                    new TestDbConnection(executeNonQueryFunc: static _ => 1),
                 cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(3);
@@ -136,7 +136,7 @@ public sealed class SqlParallelExtensionsTests
         };
 
         var results = await commandsWithParams.ExecuteCommandsParallelAsync(static () =>
-            new TestDbConnection(executeNonQueryFunc: static _ => 1),
+                new TestDbConnection(executeNonQueryFunc: static _ => 1),
             cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(2);
@@ -154,7 +154,7 @@ public sealed class SqlParallelExtensionsTests
         var index = -1; // Start at -1 because Interlocked.Increment happens before indexing
 
         var results = await queries.ExecuteScalarParallelAsync<int>(() =>
-            new TestDbConnection(_ => values[Interlocked.Increment(ref index) % values.Length]),
+                new TestDbConnection(_ => values[Interlocked.Increment(ref index) % values.Length]),
             cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(3);
@@ -645,7 +645,7 @@ public sealed class SqlParallelExtensionsTests
 
         var results =
             await commands.ExecuteCommandsParallelAsync(static () =>
-                new NonDbConnection(executeNonQueryFunc: static _ => 1),
+                    new NonDbConnection(executeNonQueryFunc: static _ => 1),
                 cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(1);
@@ -692,10 +692,10 @@ public sealed class SqlParallelExtensionsTests
         var commandTimeouts = new List<int>();
 
         var results = await commands.ExecuteCommandsParallelAsync(() => new TestDbConnection(executeNonQueryFunc: cmd =>
-        {
-            commandTimeouts.Add(cmd.CommandTimeout);
-            return 1;
-        }),
+            {
+                commandTimeouts.Add(cmd.CommandTimeout);
+                return 1;
+            }),
             cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(2);
@@ -709,10 +709,10 @@ public sealed class SqlParallelExtensionsTests
         var commandTimeouts = new List<int>();
 
         var results = await queries.ExecuteScalarParallelAsync<int>(() => new TestDbConnection(cmd =>
-        {
-            commandTimeouts.Add(cmd.CommandTimeout);
-            return 42;
-        }),
+            {
+                commandTimeouts.Add(cmd.CommandTimeout);
+                return 42;
+            }),
             cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(2);

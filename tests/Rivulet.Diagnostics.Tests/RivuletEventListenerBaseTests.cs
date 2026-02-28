@@ -28,7 +28,8 @@ public sealed class RivuletEventListenerBaseTests : IDisposable
                     await Task.Delay(300, ct);
                     return x * 2;
                 },
-                new() { MaxDegreeOfParallelism = 2 })
+                new() { MaxDegreeOfParallelism = 2 },
+                cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync(TestContext.Current.CancellationToken);
 
         // EventSource publishes counters every 1 second
@@ -54,7 +55,8 @@ public sealed class RivuletEventListenerBaseTests : IDisposable
                     await Task.Delay(300, ct);
                     return x;
                 },
-                new() { MaxDegreeOfParallelism = 2 })
+                new() { MaxDegreeOfParallelism = 2 },
+                cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync(TestContext.Current.CancellationToken);
 
         // EventSource publishes counters every 1 second - poll with timeout
@@ -79,7 +81,8 @@ public sealed class RivuletEventListenerBaseTests : IDisposable
                     await Task.Delay(300, ct);
                     return x;
                 },
-                new() { MaxDegreeOfParallelism = 2 })
+                new() { MaxDegreeOfParallelism = 2 },
+                cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync(TestContext.Current.CancellationToken);
 
         // EventSource publishes counters every 1 second - poll with timeout
@@ -222,7 +225,8 @@ public sealed class RivuletEventListenerBaseTests : IDisposable
                     await Task.Delay(300, ct);
                     return x;
                 },
-                new() { MaxDegreeOfParallelism = 2 })
+                new() { MaxDegreeOfParallelism = 2 },
+                cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync(TestContext.Current.CancellationToken);
 
         // Wait for counters - increased to 8000ms for CI/CD reliability
@@ -332,7 +336,8 @@ public sealed class RivuletEventListenerBaseTests : IDisposable
                     await Task.Delay(300, ct);
                     return x;
                 },
-                new() { MaxDegreeOfParallelism = 2 })
+                new() { MaxDegreeOfParallelism = 2 },
+                cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync(TestContext.Current.CancellationToken);
 
         // Increased to 8000ms for CI/CD reliability

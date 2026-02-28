@@ -62,7 +62,8 @@ public sealed class OrderedOutputTests
                     await Task.Delay(Random.Shared.Next(1, 10), ct);
                     return x * 2;
                 },
-                options)
+                options,
+                cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync(TestContext.Current.CancellationToken);
 
 
@@ -85,7 +86,8 @@ public sealed class OrderedOutputTests
 
                     return x;
                 },
-                options)
+                options,
+                cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync(TestContext.Current.CancellationToken);
 
         ((IEnumerable<int>)results).ShouldBe([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "results should be in order");
@@ -205,7 +207,8 @@ public sealed class OrderedOutputTests
                         ? throw new InvalidOperationException($"Transient error at {x}")
                         : x * 2;
                 },
-                options)
+                options,
+                cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync(TestContext.Current.CancellationToken);
 
         results.ShouldBe(Enumerable.Range(1, 20).Select(static x => x * 2));
@@ -259,7 +262,8 @@ public sealed class OrderedOutputTests
                     await Task.Delay(Random.Shared.Next(1, 5), ct);
                     return x * 2;
                 },
-                options)
+                options,
+                cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync(TestContext.Current.CancellationToken);
 
         results.ShouldBe(Enumerable.Range(1, 50).Select(static x => x * 2));

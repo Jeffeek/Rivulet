@@ -105,9 +105,11 @@ public sealed class LockHelperTests
         for (var i = 0; i < threadCount; i++)
         {
             tasks[i] = Task.Run(() =>
-            {
-                for (var j = 0; j < incrementsPerThread; j++) LockHelper.Execute(_lock, () => { counter++; });
-            }, TestContext.Current.CancellationToken);
+                {
+                    for (var j = 0; j < incrementsPerThread; j++)
+                        LockHelper.Execute(_lock, () => { counter++; });
+                },
+                TestContext.Current.CancellationToken);
         }
 
 #pragma warning disable xUnit1031
@@ -129,19 +131,20 @@ public sealed class LockHelperTests
         {
             var index = i;
             tasks[i] = Task.Run(() =>
-            {
-                if (index % 2 == 0)
                 {
-                    // Increment
-                    LockHelper.Execute(_lock, () => { counter++; });
-                }
-                else
-                {
-                    // Read
-                    var value = LockHelper.Execute(_lock, () => counter);
-                    results.Add(value);
-                }
-            }, TestContext.Current.CancellationToken);
+                    if (index % 2 == 0)
+                    {
+                        // Increment
+                        LockHelper.Execute(_lock, () => { counter++; });
+                    }
+                    else
+                    {
+                        // Read
+                        var value = LockHelper.Execute(_lock, () => counter);
+                        results.Add(value);
+                    }
+                },
+                TestContext.Current.CancellationToken);
         }
 
 #pragma warning disable xUnit1031
@@ -229,23 +232,24 @@ public sealed class LockHelperTests
         {
             var threadId = i;
             tasks[i] = Task.Run(() =>
-            {
-                LockHelper.Execute(_lock,
-                    () =>
-                    {
-                        var current = Interlocked.Increment(ref activeCount);
+                {
+                    LockHelper.Execute(_lock,
+                        () =>
+                        {
+                            var current = Interlocked.Increment(ref activeCount);
 
-                        // Track max concurrent executions inside lock
-                        var currentMax = maxActiveCount;
-                        while (current > currentMax)
-                            currentMax = Interlocked.CompareExchange(ref maxActiveCount, current, currentMax);
+                            // Track max concurrent executions inside lock
+                            var currentMax = maxActiveCount;
+                            while (current > currentMax)
+                                currentMax = Interlocked.CompareExchange(ref maxActiveCount, current, currentMax);
 
-                        executionOrder.Add(threadId);
-                        Thread.Sleep(50); // Reduced from 1000ms to 50ms for faster tests
+                            executionOrder.Add(threadId);
+                            Thread.Sleep(50); // Reduced from 1000ms to 50ms for faster tests
 
-                        Interlocked.Decrement(ref activeCount);
-                    });
-            }, TestContext.Current.CancellationToken);
+                            Interlocked.Decrement(ref activeCount);
+                        });
+                },
+                TestContext.Current.CancellationToken);
         }
 
 #pragma warning disable xUnit1031
@@ -362,9 +366,11 @@ public sealed class LockHelperTests
         for (var i = 0; i < threadCount; i++)
         {
             tasks[i] = Task.Run(() =>
-            {
-                for (var j = 0; j < incrementsPerThread; j++) LockHelper.Execute(_lock, () => { counter++; });
-            }, TestContext.Current.CancellationToken);
+                {
+                    for (var j = 0; j < incrementsPerThread; j++)
+                        LockHelper.Execute(_lock, () => { counter++; });
+                },
+                TestContext.Current.CancellationToken);
         }
 
 #pragma warning disable xUnit1031

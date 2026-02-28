@@ -85,7 +85,8 @@ public sealed class DiagnosticsBuilderTests : IDisposable
                     await Task.Delay(100, ct);
                     return x * 2;
                 },
-                new() { MaxDegreeOfParallelism = 2 })
+                new() { MaxDegreeOfParallelism = 2 },
+                cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync(TestContext.Current.CancellationToken);
 
         // Wait for EventCounters to fire - increased for CI/CD reliability
@@ -113,7 +114,8 @@ public sealed class DiagnosticsBuilderTests : IDisposable
                         await Task.Delay(100, ct);
                         return x;
                     },
-                    new() { MaxDegreeOfParallelism = 2 })
+                    new() { MaxDegreeOfParallelism = 2 },
+                    cancellationToken: TestContext.Current.CancellationToken)
                 .ToListAsync(TestContext.Current.CancellationToken);
 
             // Wait for EventCounters to fire - increased for CI/CD reliability
@@ -143,7 +145,8 @@ public sealed class DiagnosticsBuilderTests : IDisposable
                     await Task.Delay(100, ct);
                     return x;
                 },
-                new() { MaxDegreeOfParallelism = 2 })
+                new() { MaxDegreeOfParallelism = 2 },
+                cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync(TestContext.Current.CancellationToken);
 
         // Wait for EventCounters to be polled and metrics to be available - increased for CI/CD reliability
@@ -182,7 +185,8 @@ public sealed class DiagnosticsBuilderTests : IDisposable
                     await Task.Delay(100, ct);
                     return x;
                 },
-                new() { MaxDegreeOfParallelism = 2 })
+                new() { MaxDegreeOfParallelism = 2 },
+                cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync(TestContext.Current.CancellationToken);
 
         // Wait for EventCounters to fire - increased for CI/CD reliability

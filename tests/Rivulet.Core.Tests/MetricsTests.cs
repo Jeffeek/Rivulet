@@ -238,7 +238,8 @@ public sealed class MetricsTests
                     await Task.Delay(10, ct);
                     return x * 2;
                 },
-                options)
+                options,
+                cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync(TestContext.Current.CancellationToken);
 
         await Task.Delay(100, CancellationToken.None);
@@ -277,7 +278,8 @@ public sealed class MetricsTests
                     await Task.Delay(5, ct);
                     return x % 3 == 0 ? throw new InvalidOperationException("Error") : x * 2;
                 },
-                options)
+                options,
+                cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync(TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(20,

@@ -64,7 +64,8 @@ public sealed class RivuletHealthCheckTests
                     await Task.Delay(200, ct);
                     return x * 2;
                 },
-                new() { MaxDegreeOfParallelism = 2 })
+                new() { MaxDegreeOfParallelism = 2 },
+                cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync(TestContext.Current.CancellationToken);
 
         await Task.Delay(2000, CancellationToken.None);
@@ -101,7 +102,8 @@ public sealed class RivuletHealthCheckTests
                         await Task.Delay(20, ct);
                         throw new InvalidOperationException("Test error");
                     },
-                    new() { MaxDegreeOfParallelism = 8, ErrorMode = ErrorMode.CollectAndContinue })
+                    new() { MaxDegreeOfParallelism = 8, ErrorMode = ErrorMode.CollectAndContinue },
+                    cancellationToken: TestContext.Current.CancellationToken)
                 .ToListAsync(TestContext.Current.CancellationToken);
         }
         catch
@@ -141,7 +143,8 @@ public sealed class RivuletHealthCheckTests
                         await Task.Delay(200, ct);
                         throw new InvalidOperationException("Test error");
                     },
-                    new() { MaxDegreeOfParallelism = 2, ErrorMode = ErrorMode.CollectAndContinue })
+                    new() { MaxDegreeOfParallelism = 2, ErrorMode = ErrorMode.CollectAndContinue },
+                    cancellationToken: TestContext.Current.CancellationToken)
                 .ToListAsync(TestContext.Current.CancellationToken);
         }
         catch
@@ -187,7 +190,8 @@ public sealed class RivuletHealthCheckTests
                         await Task.Delay(1, ct);
                         return x <= 4000 ? throw new InvalidOperationException("Test error") : x * 2;
                     },
-                    new() { MaxDegreeOfParallelism = 20, ErrorMode = ErrorMode.CollectAndContinue })
+                    new() { MaxDegreeOfParallelism = 20, ErrorMode = ErrorMode.CollectAndContinue },
+                    cancellationToken: TestContext.Current.CancellationToken)
                 .ToListAsync(TestContext.Current.CancellationToken);
         }
         catch
@@ -264,7 +268,8 @@ public sealed class RivuletHealthCheckTests
                     await Task.Delay(100, ct);
                     return x * 2;
                 },
-                new() { MaxDegreeOfParallelism = 2 })
+                new() { MaxDegreeOfParallelism = 2 },
+                cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync(TestContext.Current.CancellationToken);
 
         await Task.Delay(2000, CancellationToken.None);

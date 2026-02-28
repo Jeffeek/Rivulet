@@ -33,7 +33,8 @@ public sealed class RivuletFileListenerTests : IDisposable
                         await Task.Delay(300, ct);
                         return x * 2;
                     },
-                    new() { MaxDegreeOfParallelism = 2 })
+                    new() { MaxDegreeOfParallelism = 2 },
+                    cancellationToken: TestContext.Current.CancellationToken)
                 .ToListAsync(TestContext.Current.CancellationToken);
 
             // Wait for EventCounters to poll and write metrics after operation completes
@@ -69,7 +70,8 @@ public sealed class RivuletFileListenerTests : IDisposable
                         await Task.Delay(300, ct);
                         return x;
                     },
-                    new() { MaxDegreeOfParallelism = 2 })
+                    new() { MaxDegreeOfParallelism = 2 },
+                    cancellationToken: TestContext.Current.CancellationToken)
                 .ToListAsync(TestContext.Current.CancellationToken);
 
             // Wait for EventCounters to fire and write to file

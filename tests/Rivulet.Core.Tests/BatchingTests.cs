@@ -1084,7 +1084,9 @@ public sealed class BatchingTests
     public async Task BatchParallelStreamAsync_EmptySource_YieldsNothing()
     {
         var source = AsyncEnumerable.Empty<int>();
-        var results = await source.BatchParallelStreamAsync(10, static (batch, _) => new ValueTask<int>(batch.Count),
+        var results = await source.BatchParallelStreamAsync(
+                10,
+                static (batch, _) => new ValueTask<int>(batch.Count),
                 cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync(TestContext.Current.CancellationToken);
 
@@ -1136,7 +1138,7 @@ public sealed class BatchingTests
                 },
                 options,
                 cancellationToken: TestContext.Current.CancellationToken)
-            .ToListAsync();
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(3);
         attemptCounts[55].ShouldBe(2); // First batch retried once

@@ -130,7 +130,8 @@ public sealed class RateLimitingTests
                     await Task.Delay(1, ct);
                     return x * 2;
                 },
-                options)
+                options,
+                cancellationToken: TestContext.Current.CancellationToken)
             .CountAsync(TestContext.Current.CancellationToken);
 
         sw.Stop();

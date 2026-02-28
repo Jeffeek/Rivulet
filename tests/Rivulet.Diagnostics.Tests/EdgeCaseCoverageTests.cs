@@ -39,7 +39,8 @@ public sealed class EdgeCaseCoverageTests
                         await Task.Delay(5, ct);
                         return x <= 90 ? throw new InvalidOperationException("Test failure") : x;
                     },
-                    new() { MaxDegreeOfParallelism = 8, ErrorMode = ErrorMode.CollectAndContinue })
+                    new() { MaxDegreeOfParallelism = 8, ErrorMode = ErrorMode.CollectAndContinue },
+                    cancellationToken: TestContext.Current.CancellationToken)
                 .ToListAsync(TestContext.Current.CancellationToken);
         }
         catch
@@ -95,7 +96,8 @@ public sealed class EdgeCaseCoverageTests
                             await Task.Delay(1, ct);
                             throw new InvalidOperationException("Retry");
                         },
-                        new() { MaxRetries = 2, IsTransient = static _ => true, MaxDegreeOfParallelism = 1 })
+                        new() { MaxRetries = 2, IsTransient = static _ => true, MaxDegreeOfParallelism = 1 },
+                        cancellationToken: TestContext.Current.CancellationToken)
                     .ToListAsync(TestContext.Current.CancellationToken);
             }
             catch
@@ -131,7 +133,8 @@ public sealed class EdgeCaseCoverageTests
                             await Task.Delay(200, ct);
                             return x;
                         },
-                        new() { MaxDegreeOfParallelism = 2 })
+                        new() { MaxDegreeOfParallelism = 2 },
+                        cancellationToken: TestContext.Current.CancellationToken)
                     .ToListAsync(TestContext.Current.CancellationToken);
 
                 try
@@ -185,7 +188,8 @@ public sealed class EdgeCaseCoverageTests
                             await Task.Delay(200, ct);
                             return x;
                         },
-                        new() { MaxDegreeOfParallelism = 2 })
+                        new() { MaxDegreeOfParallelism = 2 },
+                        cancellationToken: TestContext.Current.CancellationToken)
                     .ToListAsync(TestContext.Current.CancellationToken);
 
                 // Wait for EventSource counters to fire (1s default interval)
@@ -220,7 +224,8 @@ public sealed class EdgeCaseCoverageTests
                         await Task.Delay(200, ct);
                         return x;
                     },
-                    new() { MaxDegreeOfParallelism = 2 })
+                    new() { MaxDegreeOfParallelism = 2 },
+                    cancellationToken: TestContext.Current.CancellationToken)
                 .ToListAsync(TestContext.Current.CancellationToken);
 
             // Wait for EventSource counters to fire (1s default interval)
@@ -249,7 +254,8 @@ public sealed class EdgeCaseCoverageTests
                     await Task.Delay(200, ct);
                     return x;
                 },
-                new() { MaxDegreeOfParallelism = 2 })
+                new() { MaxDegreeOfParallelism = 2 },
+                cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync(TestContext.Current.CancellationToken);
 
         // Wait for EventSource counters to fire (1s default interval)
@@ -286,7 +292,8 @@ public sealed class EdgeCaseCoverageTests
                     await Task.Delay(200, ct);
                     return x;
                 },
-                new() { MaxDegreeOfParallelism = 2 })
+                new() { MaxDegreeOfParallelism = 2 },
+                cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync(TestContext.Current.CancellationToken);
 
         // Wait for EventSource counters to fire (1s default interval)

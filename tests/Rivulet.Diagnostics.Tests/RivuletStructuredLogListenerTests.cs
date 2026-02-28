@@ -42,7 +42,8 @@ public sealed class RivuletStructuredLogListenerTests : IDisposable
                         await Task.Delay(200, ct);
                         return x;
                     },
-                    new() { MaxDegreeOfParallelism = 2 })
+                    new() { MaxDegreeOfParallelism = 2 },
+                    cancellationToken: TestContext.Current.CancellationToken)
                 .ToListAsync(TestContext.Current.CancellationToken);
 
             // Wait for EventCounters to fire - increased for CI/CD reliability
@@ -72,7 +73,8 @@ public sealed class RivuletStructuredLogListenerTests : IDisposable
                         await Task.Delay(200, ct);
                         return x * 2;
                     },
-                    new() { MaxDegreeOfParallelism = 2 })
+                    new() { MaxDegreeOfParallelism = 2 },
+                    cancellationToken: TestContext.Current.CancellationToken)
                 .ToListAsync(TestContext.Current.CancellationToken);
 
             // Wait for EventCounters to poll and write metrics after operation completes
@@ -107,7 +109,8 @@ public sealed class RivuletStructuredLogListenerTests : IDisposable
                     await Task.Delay(200, ct);
                     return x * 2;
                 },
-                new() { MaxDegreeOfParallelism = 2 })
+                new() { MaxDegreeOfParallelism = 2 },
+                cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync(TestContext.Current.CancellationToken);
 
         // Wait for EventCounters to fire - increased for CI/CD reliability
@@ -134,7 +137,8 @@ public sealed class RivuletStructuredLogListenerTests : IDisposable
                     await Task.Delay(200, ct);
                     return x;
                 },
-                new() { MaxDegreeOfParallelism = 2 })
+                new() { MaxDegreeOfParallelism = 2 },
+                cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync(TestContext.Current.CancellationToken);
 
         // Wait for EventCounters to fire - increased for CI/CD reliability

@@ -78,7 +78,8 @@ public sealed class ProgressReportingTests
                     await Task.Delay(10, ct);
                     return x * 2;
                 },
-                options)
+                options,
+                cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync(TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(50);
@@ -469,7 +470,8 @@ public sealed class ProgressReportingTests
                     await Task.Delay(10, ct);
                     return x * 2;
                 },
-                options)
+                options,
+                cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync(TestContext.Current.CancellationToken);
 
         results.ShouldBe(Enumerable.Range(1, 30).Select(static x => x * 2));
@@ -712,7 +714,8 @@ public sealed class ProgressReportingTests
                     await Task.Delay(5, ct);
                     return x * 2;
                 },
-                options)
+                options,
+                cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync(TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(10);
