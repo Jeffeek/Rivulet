@@ -18,11 +18,11 @@ public sealed class DirectoryParallelExtensionsTests : TempDirectoryFixture
 
         // Act
         var results = await files.ProcessFilesParallelAsync(static async (path, ct) =>
-        {
-            var content = await File.ReadAllTextAsync(path, ct);
-            return content.Length;
-        },
-        cancellationToken: TestContext.Current.CancellationToken);
+            {
+                var content = await File.ReadAllTextAsync(path, ct);
+                return content.Length;
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         results.Count.ShouldBe(2);

@@ -187,7 +187,7 @@ public sealed class BatchStageTests
             .SelectParallel(static (batch, _) => ValueTask.FromResult(batch.Count))
             .Build();
 
-        var results = await pipeline.ExecuteAsync(SlowSource().ToBlockingEnumerable().ToList(), TestContext.Current.CancellationToken);
+        var results = await pipeline.ExecuteAsync(SlowSource().ToBlockingEnumerable(TestContext.Current.CancellationToken).ToList(), TestContext.Current.CancellationToken);
 
         results.Sum().ShouldBe(5);
         return;

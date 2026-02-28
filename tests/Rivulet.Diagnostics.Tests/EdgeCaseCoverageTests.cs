@@ -146,7 +146,8 @@ public sealed class EdgeCaseCoverageTests
                                 await Task.Delay(200, ct);
                                 return x % 2 == 0 ? throw new InvalidOperationException() : x;
                             },
-                            new() { MaxDegreeOfParallelism = 2, ErrorMode = ErrorMode.CollectAndContinue })
+                            new() { MaxDegreeOfParallelism = 2, ErrorMode = ErrorMode.CollectAndContinue },
+                            cancellationToken: TestContext.Current.CancellationToken)
                         .ToListAsync(TestContext.Current.CancellationToken);
                 }
                 catch
