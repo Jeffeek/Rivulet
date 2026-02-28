@@ -162,7 +162,8 @@ public sealed class RetryPolicyTests
                         ? throw new InvalidOperationException("Transient error")
                         : new ValueTask<int>(x * 2);
                 },
-                options)
+                options,
+                cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync();
 
         results.Count.ShouldBe(5);

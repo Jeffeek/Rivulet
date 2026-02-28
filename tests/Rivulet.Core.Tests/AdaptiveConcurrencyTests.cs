@@ -295,7 +295,8 @@ public sealed class AdaptiveConcurrencyTests
                     await Task.Delay(10, ct);
                     return x * 2;
                 },
-                options)
+                options,
+                cancellationToken: TestContext.Current.CancellationToken)
             .CountAsync();
 
         count.ShouldBe(150);

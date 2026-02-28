@@ -1048,7 +1048,8 @@ public sealed class BatchingTests
     public async Task BatchParallelStreamAsync_EmptySource_YieldsNothing()
     {
         var source = AsyncEnumerable.Empty<int>();
-        var results = await source.BatchParallelStreamAsync(10, static (batch, _) => new ValueTask<int>(batch.Count))
+        var results = await source.BatchParallelStreamAsync(10, static (batch, _) => new ValueTask<int>(batch.Count),
+                cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync();
 
         results.ShouldBeEmpty();
@@ -1096,7 +1097,8 @@ public sealed class BatchingTests
                     await Task.Delay(5, ct);
                     return batchSum;
                 },
-                options)
+                options,
+                cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync();
 
         results.Count.ShouldBe(3);

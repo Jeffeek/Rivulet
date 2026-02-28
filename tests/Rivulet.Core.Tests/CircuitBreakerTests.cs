@@ -424,7 +424,8 @@ public sealed class CircuitBreakerTests
                     // Fail for items 1-3, then succeed
                     return x <= 3 ? throw new InvalidOperationException($"Item {x} failed") : x * 2;
                 },
-                options)
+                options,
+                cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync();
 
         // Should have successful results (items 4-20)

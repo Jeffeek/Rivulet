@@ -155,7 +155,8 @@ public sealed class SelectParallelStreamAsyncTests
     [Fact]
     public async Task SelectParallelStreamAsync_SlowProducer_HandlesCorrectly()
     {
-        var results = await SlowProducer().SelectParallelStreamAsync(static (x, _) => new ValueTask<int>(x * 2))
+        var results = await SlowProducer().SelectParallelStreamAsync(static (x, _) => new ValueTask<int>(x * 2),
+                cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync();
 
         results.Count.ShouldBe(5);

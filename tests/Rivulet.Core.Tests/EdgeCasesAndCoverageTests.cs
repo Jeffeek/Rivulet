@@ -123,7 +123,8 @@ public sealed class EdgeCasesAndCoverageTests
     [Fact]
     public async Task SelectParallelStreamAsync_EmptyAfterSomeItems_CompletesCorrectly()
     {
-        var results = await Source().SelectParallelStreamAsync(static (x, _) => new ValueTask<int>(x * 2))
+        var results = await Source().SelectParallelStreamAsync(static (x, _) => new ValueTask<int>(x * 2),
+                cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync();
 
         results.Count.ShouldBe(5);
@@ -214,7 +215,8 @@ public sealed class EdgeCasesAndCoverageTests
                     await Task.Delay(10, ct);
                     return x * 2;
                 },
-                options)
+                options,
+                cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync();
 
         results.Count.ShouldBe(20);
@@ -266,7 +268,10 @@ public sealed class EdgeCasesAndCoverageTests
             }
         };
 
-        var results = await source.SelectParallelStreamAsync(static (x, _) => new ValueTask<int>(x * 2), options)
+        var results = await source.SelectParallelStreamAsync(
+                static (x, _) => new ValueTask<int>(x * 2),
+                options,
+                cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync();
 
         results.Count.ShouldBe(30);
@@ -301,7 +306,8 @@ public sealed class EdgeCasesAndCoverageTests
                     await Task.Delay(10, ct);
                     return x * 2;
                 },
-                options)
+                options,
+                cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync();
 
         results.Count.ShouldBe(10);
@@ -478,7 +484,8 @@ public sealed class EdgeCasesAndCoverageTests
                     await Task.Delay(5, ct);
                     return x * 2;
                 },
-                options)
+                options,
+                cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync();
 
         results.Count.ShouldBe(50);
@@ -497,7 +504,8 @@ public sealed class EdgeCasesAndCoverageTests
                     await Task.Delay(5, ct);
                     return x * 2;
                 },
-                options)
+                options,
+                cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync();
 
         results.Count.ShouldBe(50);
@@ -515,7 +523,8 @@ public sealed class EdgeCasesAndCoverageTests
                     await Task.Delay(2, ct);
                     return x * 3;
                 },
-                options)
+                options,
+                cancellationToken: TestContext.Current.CancellationToken)
             .CountAsync();
 
         count.ShouldBe(25);
@@ -532,7 +541,8 @@ public sealed class EdgeCasesAndCoverageTests
                     await Task.Delay(2, ct);
                     return x * 3;
                 },
-                options)
+                options,
+                cancellationToken: TestContext.Current.CancellationToken)
             .CountAsync();
 
         count.ShouldBe(25);

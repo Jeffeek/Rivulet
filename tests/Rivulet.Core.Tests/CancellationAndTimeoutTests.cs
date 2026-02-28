@@ -186,7 +186,8 @@ public sealed class CancellationAndTimeoutTests
 
                     return x * 2;
                 },
-                options)
+                options,
+                cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync();
 
         results.Count.ShouldBe(4);

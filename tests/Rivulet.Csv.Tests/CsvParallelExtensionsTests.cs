@@ -359,7 +359,8 @@ public sealed class CsvParallelExtensionsTests : IDisposable
                     ErrorMode = ErrorMode.CollectAndContinue,
                     MaxRetries = 0
                 }
-            }));
+            },
+            cancellationToken: TestContext.Current.CancellationToken));
 
         // Verify the exception contains IOException
         exception.InnerExceptions.ShouldContain(static e => e is IOException);
@@ -423,7 +424,7 @@ public sealed class CsvParallelExtensionsTests : IDisposable
         };
 
         // Act
-        var results = await fileReads.ParseCsvParallelGroupedAsync();
+        var results = await fileReads.ParseCsvParallelGroupedAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         results.Count.ShouldBe(2);

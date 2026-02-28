@@ -131,7 +131,8 @@ public sealed class ErrorHandlingTests
                     await Task.Delay(10, ct);
                     return x % 5 == 0 ? throw new InvalidOperationException($"Error at {x}") : x * 2;
                 },
-                options)
+                options,
+                cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync();
 
         results.Count.ShouldBe(16);
@@ -269,7 +270,8 @@ public sealed class ErrorHandlingTests
                                    await Task.Delay(10, ct);
                                    return x == 5 ? throw new InvalidOperationException("Error at 5") : x * 2;
                                },
-                               options))
+                               options,
+                               cancellationToken: TestContext.Current.CancellationToken))
             {
                 // Consuming items - will process all but throw AggregateException at the end
             }

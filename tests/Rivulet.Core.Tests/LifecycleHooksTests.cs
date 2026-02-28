@@ -200,7 +200,8 @@ public sealed class LifecycleHooksTests
             }
         };
 
-        var results = await source.SelectParallelStreamAsync(static (x, _) => new ValueTask<int>(x * 2), options)
+        var results = await source.SelectParallelStreamAsync(static (x, _) => new ValueTask<int>(x * 2), options,
+                cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync();
 
         startedItems.Count.ShouldBe(10);
