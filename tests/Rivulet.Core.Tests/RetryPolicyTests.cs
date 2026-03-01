@@ -21,7 +21,8 @@ public sealed class RetryPolicyTests
                 attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
                 return x == 3 ? throw new InvalidOperationException("Transient error") : new ValueTask<int>(x * 2);
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(4);
         attemptCounts[3].ShouldBe(1);
@@ -48,7 +49,8 @@ public sealed class RetryPolicyTests
                     ? throw new InvalidOperationException("Transient error")
                     : new ValueTask<int>(x * 2);
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(5);
         attemptCounts[3].ShouldBe(3);
@@ -73,7 +75,8 @@ public sealed class RetryPolicyTests
                 attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
                 return x == 3 ? throw new InvalidOperationException("Non-transient error") : new ValueTask<int>(x * 2);
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(4);
         attemptCounts[3].ShouldBe(1);
@@ -98,7 +101,8 @@ public sealed class RetryPolicyTests
                     ? throw new InvalidOperationException("Transient error")
                     : new ValueTask<int>(x * 2);
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         attemptTimestamps.Count.ShouldBe(4);
 
@@ -131,7 +135,8 @@ public sealed class RetryPolicyTests
                     return new ValueTask<int>(x);
 #pragma warning restore CS0162 // Unreachable code detected
                 },
-                options);
+                options,
+                cancellationToken: TestContext.Current.CancellationToken);
 
         await Assert.ThrowsAsync<InvalidOperationException>(((Func<Task<List<int>>>?)Act)!);
         attemptCount.ShouldBe(3);
@@ -157,8 +162,9 @@ public sealed class RetryPolicyTests
                         ? throw new InvalidOperationException("Transient error")
                         : new ValueTask<int>(x * 2);
                 },
-                options)
-            .ToListAsync();
+                options,
+                cancellationToken: TestContext.Current.CancellationToken)
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(5);
         attemptCounts[3].ShouldBe(2);
@@ -185,7 +191,8 @@ public sealed class RetryPolicyTests
                 processedItems.Add(x);
                 return ValueTask.CompletedTask;
             },
-            options);
+            options,
+            TestContext.Current.CancellationToken);
 
         processedItems.Count.ShouldBe(5);
         attemptCounts[3].ShouldBe(2);
@@ -208,7 +215,8 @@ public sealed class RetryPolicyTests
                 attemptCount++;
                 return attemptCount == 1 ? throw new InvalidOperationException("Error") : new ValueTask<int>(x * 2);
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.ShouldBeEmpty();
         attemptCount.ShouldBe(1);
@@ -268,7 +276,8 @@ public sealed class RetryPolicyTests
                     _ => new ValueTask<int>(x * 2)
                 };
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(2);
         attemptCounts[1].ShouldBe(3);
@@ -296,7 +305,8 @@ public sealed class RetryPolicyTests
 
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Item 2 should timeout and be excluded
         results.Count.ShouldBe(2);
@@ -320,7 +330,8 @@ public sealed class RetryPolicyTests
                 await Task.Delay(10, ct); // Short delay, well within timeout
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // All items should complete successfully
         results.Count.ShouldBe(3);
@@ -353,7 +364,8 @@ public sealed class RetryPolicyTests
                     ? throw new InvalidOperationException($"Attempt {attemptCount}")
                     : new ValueTask<int>(x * 2);
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(1);
         retryCallbacks.Count.ShouldBe(2); // First retry (attempt 2) and second retry (attempt 3)
@@ -385,7 +397,8 @@ public sealed class RetryPolicyTests
         var results = await source.SelectParallelAsync(static (x, _) => x == 2
                 ? throw new InvalidOperationException("Always fails")
                 : new ValueTask<int>(x * 2),
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(3);
         results.ShouldContain(2);  // 1 * 2
@@ -412,7 +425,8 @@ public sealed class RetryPolicyTests
         var results = await source.SelectParallelAsync(static (x, _) => x == 2
                 ? throw new InvalidOperationException("Always fails")
                 : new ValueTask<string?>($"Item{x}"),
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(3);
         results.ShouldContain("Item1");
@@ -442,7 +456,8 @@ public sealed class RetryPolicyTests
         Task<List<int>> Act() =>
             source.SelectParallelAsync<int, int>(
                 static (_, _) => throw new InvalidOperationException("Always fails"),
-                options);
+                options,
+                cancellationToken: TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -467,7 +482,8 @@ public sealed class RetryPolicyTests
         Task<List<int>> Act() =>
             source.SelectParallelAsync<int, int>(
                 static (_, _) => throw new InvalidOperationException("Always fails"),
-                options);
+                options,
+                cancellationToken: TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -499,7 +515,8 @@ public sealed class RetryPolicyTests
                     ? throw new InvalidOperationException("Retry me")
                     : new ValueTask<int>(x * 2);
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         retryDelayMs.Count.ShouldBe(2);
         // Verify async work was awaited by checking elapsed time
@@ -522,7 +539,8 @@ public sealed class RetryPolicyTests
                 await Task.Delay(10, ct);
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // All items should complete successfully
         results.Count.ShouldBe(3);

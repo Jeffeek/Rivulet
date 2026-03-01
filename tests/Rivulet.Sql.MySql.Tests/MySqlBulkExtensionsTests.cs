@@ -17,7 +17,8 @@ public sealed class MySqlBulkExtensionsTests
         var act = () => source!.BulkInsertUsingMySqlBulkLoaderAsync(
             CreateMockConnection,
             "test_table",
-            ["id", "name", "email"]);
+            ["id", "name", "email"],
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("source");
     }
@@ -30,7 +31,8 @@ public sealed class MySqlBulkExtensionsTests
         var act = () => source.BulkInsertUsingMySqlBulkLoaderAsync(
             null!,
             "test_table",
-            ["id", "name", "email"]);
+            ["id", "name", "email"],
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("connectionFactory");
     }
@@ -43,7 +45,8 @@ public sealed class MySqlBulkExtensionsTests
         var act = () => source.BulkInsertUsingMySqlBulkLoaderAsync(
             CreateMockConnection,
             null!,
-            ["id", "name", "email"]);
+            ["id", "name", "email"],
+            cancellationToken: TestContext.Current.CancellationToken);
 
         await act.ShouldThrowAsync<ArgumentException>();
     }
@@ -56,7 +59,8 @@ public sealed class MySqlBulkExtensionsTests
         var act = () => source.BulkInsertUsingMySqlBulkLoaderAsync(
             CreateMockConnection,
             "",
-            ["id", "name", "email"]);
+            ["id", "name", "email"],
+            cancellationToken: TestContext.Current.CancellationToken);
 
         await act.ShouldThrowAsync<ArgumentException>();
     }
@@ -69,7 +73,8 @@ public sealed class MySqlBulkExtensionsTests
         var act = () => source.BulkInsertUsingMySqlBulkLoaderAsync(
             CreateMockConnection,
             "test_table",
-            null!);
+            null!,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("columnNames");
     }
@@ -82,7 +87,8 @@ public sealed class MySqlBulkExtensionsTests
         var act = () => source.BulkInsertUsingMySqlBulkLoaderAsync(
             CreateMockConnection,
             "test_table",
-            []);
+            [],
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentException>()).ParamName.ShouldBe("columnNames");
     }
@@ -96,7 +102,8 @@ public sealed class MySqlBulkExtensionsTests
             CreateMockConnection,
             "test_table",
             ["id", "name", "email"],
-            fieldSeparator: null!);
+            fieldSeparator: null!,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("fieldSeparator");
     }
@@ -110,7 +117,8 @@ public sealed class MySqlBulkExtensionsTests
             CreateMockConnection,
             "test_table",
             ["id", "name", "email"],
-            fieldSeparator: "");
+            fieldSeparator: "",
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentException>()).ParamName.ShouldBe("fieldSeparator");
     }
@@ -124,7 +132,8 @@ public sealed class MySqlBulkExtensionsTests
             CreateMockConnection,
             "test_table",
             ["id", "name", "email"],
-            lineTerminator: null!);
+            lineTerminator: null!,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("lineTerminator");
     }
@@ -138,7 +147,8 @@ public sealed class MySqlBulkExtensionsTests
             CreateMockConnection,
             "test_table",
             ["id", "name", "email"],
-            lineTerminator: "");
+            lineTerminator: "",
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentException>()).ParamName.ShouldBe("lineTerminator");
     }
@@ -152,7 +162,8 @@ public sealed class MySqlBulkExtensionsTests
             CreateMockConnection,
             "test_table",
             ["id", "name", "email"],
-            batchSize: 0);
+            batchSize: 0,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentOutOfRangeException>()).ParamName.ShouldBe("batchSize");
     }
@@ -166,7 +177,8 @@ public sealed class MySqlBulkExtensionsTests
             CreateMockConnection,
             "test_table",
             ["id", "name", "email"],
-            batchSize: -1);
+            batchSize: -1,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentOutOfRangeException>()).ParamName.ShouldBe("batchSize");
     }
@@ -180,7 +192,8 @@ public sealed class MySqlBulkExtensionsTests
         return source.BulkInsertUsingMySqlBulkLoaderAsync(
             CreateMockConnection,
             "test_table",
-            ["id", "name", "email"]);
+            ["id", "name", "email"],
+            cancellationToken: TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -191,7 +204,8 @@ public sealed class MySqlBulkExtensionsTests
         var act = () => source!.BulkInsertFromFilesUsingMySqlBulkLoaderAsync(
             CreateMockConnection,
             "test_table",
-            ["id", "name", "email"]);
+            ["id", "name", "email"],
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("source");
     }
@@ -204,7 +218,8 @@ public sealed class MySqlBulkExtensionsTests
         var act = () => source.BulkInsertFromFilesUsingMySqlBulkLoaderAsync(
             null!,
             "test_table",
-            ["id", "name", "email"]);
+            ["id", "name", "email"],
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("connectionFactory");
     }
@@ -217,7 +232,8 @@ public sealed class MySqlBulkExtensionsTests
         var act = () => source.BulkInsertFromFilesUsingMySqlBulkLoaderAsync(
             CreateMockConnection,
             null!,
-            ["id", "name", "email"]);
+            ["id", "name", "email"],
+            cancellationToken: TestContext.Current.CancellationToken);
 
         await act.ShouldThrowAsync<ArgumentException>();
     }
@@ -230,7 +246,8 @@ public sealed class MySqlBulkExtensionsTests
         var act = () => source.BulkInsertFromFilesUsingMySqlBulkLoaderAsync(
             CreateMockConnection,
             "",
-            ["id", "name", "email"]);
+            ["id", "name", "email"],
+            cancellationToken: TestContext.Current.CancellationToken);
 
         await act.ShouldThrowAsync<ArgumentException>();
     }
@@ -243,7 +260,8 @@ public sealed class MySqlBulkExtensionsTests
         var act = () => source.BulkInsertFromFilesUsingMySqlBulkLoaderAsync(
             CreateMockConnection,
             "test_table",
-            null!);
+            null!,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("columnNames");
     }
@@ -256,7 +274,8 @@ public sealed class MySqlBulkExtensionsTests
         var act = () => source.BulkInsertFromFilesUsingMySqlBulkLoaderAsync(
             CreateMockConnection,
             "test_table",
-            []);
+            [],
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentException>()).ParamName.ShouldBe("columnNames");
     }
@@ -270,7 +289,8 @@ public sealed class MySqlBulkExtensionsTests
             CreateMockConnection,
             "test_table",
             ["id", "name", "email"],
-            fieldSeparator: null!);
+            fieldSeparator: null!,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("fieldSeparator");
     }
@@ -284,7 +304,8 @@ public sealed class MySqlBulkExtensionsTests
             CreateMockConnection,
             "test_table",
             ["id", "name", "email"],
-            fieldSeparator: "");
+            fieldSeparator: "",
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentException>()).ParamName.ShouldBe("fieldSeparator");
     }
@@ -298,7 +319,8 @@ public sealed class MySqlBulkExtensionsTests
             CreateMockConnection,
             "test_table",
             ["id", "name", "email"],
-            lineTerminator: null!);
+            lineTerminator: null!,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("lineTerminator");
     }
@@ -312,7 +334,8 @@ public sealed class MySqlBulkExtensionsTests
             CreateMockConnection,
             "test_table",
             ["id", "name", "email"],
-            lineTerminator: "");
+            lineTerminator: "",
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentException>()).ParamName.ShouldBe("lineTerminator");
     }
@@ -326,7 +349,8 @@ public sealed class MySqlBulkExtensionsTests
         return source.BulkInsertFromFilesUsingMySqlBulkLoaderAsync(
             CreateMockConnection,
             "test_table",
-            ["id", "name", "email"]);
+            ["id", "name", "email"],
+            cancellationToken: TestContext.Current.CancellationToken);
     }
 
     // New tests for fixes

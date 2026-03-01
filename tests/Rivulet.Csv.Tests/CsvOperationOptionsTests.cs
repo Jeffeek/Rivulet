@@ -33,7 +33,7 @@ public sealed class CsvOperationOptionsTests : IDisposable
                                   1,  Product A  ,10.50
                                   2,  Product B  ,20.00
                                   """;
-        await File.WriteAllTextAsync(csvPath, csvContent);
+        await File.WriteAllTextAsync(csvPath, csvContent, TestContext.Current.CancellationToken);
 
         // Act
         var results = await new[] { csvPath }.ParseCsvParallelAsync<Product>(
@@ -46,7 +46,8 @@ public sealed class CsvOperationOptionsTests : IDisposable
                         cfg.TrimOptions = TrimOptions.Trim;
                     }
                 }
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         results.Count.ShouldBe(2);
@@ -63,7 +64,7 @@ public sealed class CsvOperationOptionsTests : IDisposable
                                   Id,Name,Price
                                   1,  Product A  ,10.50
                                   """;
-        await File.WriteAllTextAsync(csvPath, csvContent);
+        await File.WriteAllTextAsync(csvPath, csvContent, TestContext.Current.CancellationToken);
 
         // Act
         var results = await new[] { csvPath }.ParseCsvParallelAsync<Product>(
@@ -76,7 +77,8 @@ public sealed class CsvOperationOptionsTests : IDisposable
                         cfg.TrimOptions = TrimOptions.None;
                     }
                 }
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         results[0].Name.ShouldBe("  Product A  ");
@@ -92,14 +94,15 @@ public sealed class CsvOperationOptionsTests : IDisposable
                                   1,Prøduct Â,10.50
                                   2,Prödüct B,20.00
                                   """;
-        await File.WriteAllTextAsync(csvPath, csvContent, Encoding.Unicode);
+        await File.WriteAllTextAsync(csvPath, csvContent, Encoding.Unicode, TestContext.Current.CancellationToken);
 
         // Act
         var results = await new[] { csvPath }.ParseCsvParallelAsync<Product>(
             new CsvOperationOptions
             {
                 Encoding = Encoding.Unicode
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         results.Count.ShouldBe(2);
@@ -117,14 +120,15 @@ public sealed class CsvOperationOptionsTests : IDisposable
                                   1,Product A,10.50
                                   2,Product B,20.00
                                   """;
-        await File.WriteAllTextAsync(csvPath, csvContent);
+        await File.WriteAllTextAsync(csvPath, csvContent, TestContext.Current.CancellationToken);
 
         // Act
         var results = await new[] { csvPath }.ParseCsvParallelAsync<Product>(
             new CsvOperationOptions
             {
                 Culture = CultureInfo.InvariantCulture
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         results.Count.ShouldBe(2);
@@ -144,7 +148,7 @@ public sealed class CsvOperationOptionsTests : IDisposable
                                   2,Product B,20.00
 
                                   """;
-        await File.WriteAllTextAsync(csvPath, csvContent);
+        await File.WriteAllTextAsync(csvPath, csvContent, TestContext.Current.CancellationToken);
 
         // Act
         var results = await new[] { csvPath }.ParseCsvParallelAsync<Product>(
@@ -157,7 +161,8 @@ public sealed class CsvOperationOptionsTests : IDisposable
                         cfg.IgnoreBlankLines = true;
                     }
                 }
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         results.Count.ShouldBe(2);
@@ -185,10 +190,11 @@ public sealed class CsvOperationOptionsTests : IDisposable
             {
                 Encoding = Encoding.Unicode,
                 OverwriteExisting = true
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
-        var content = await File.ReadAllTextAsync(csvPath, Encoding.Unicode);
+        var content = await File.ReadAllTextAsync(csvPath, Encoding.Unicode, TestContext.Current.CancellationToken);
         content.ShouldContain("Prøduct Â");
         content.ShouldContain("Prödüct B");
     }
@@ -223,10 +229,11 @@ public sealed class CsvOperationOptionsTests : IDisposable
             new CsvOperationOptions
             {
                 OverwriteExisting = true
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
-        var content = await File.ReadAllTextAsync(csvPath);
+        var content = await File.ReadAllTextAsync(csvPath, TestContext.Current.CancellationToken);
         content.ShouldContain("Id\tName\tPrice");
         content.ShouldContain("1\tProduct A\t10.50");
     }
@@ -240,7 +247,7 @@ public sealed class CsvOperationOptionsTests : IDisposable
                                   1,Product A,10.50
                                   2,Product B,20.00
                                   """;
-        await File.WriteAllTextAsync(csvPath, csvContent);
+        await File.WriteAllTextAsync(csvPath, csvContent, TestContext.Current.CancellationToken);
 
         // Act
         var results = await new[] { csvPath }.ParseCsvParallelAsync<Product>(
@@ -253,7 +260,8 @@ public sealed class CsvOperationOptionsTests : IDisposable
                         cfg.HasHeaderRecord = false;
                     }
                 }
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         results.Count.ShouldBe(2);
@@ -290,10 +298,11 @@ public sealed class CsvOperationOptionsTests : IDisposable
             new CsvOperationOptions
             {
                 OverwriteExisting = true
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
-        var content = await File.ReadAllTextAsync(csvPath);
+        var content = await File.ReadAllTextAsync(csvPath, TestContext.Current.CancellationToken);
         content.ShouldNotContain("Id,Name,Price");
         content.ShouldContain("1,Product A,10.50");
     }
@@ -307,14 +316,15 @@ public sealed class CsvOperationOptionsTests : IDisposable
                                   Id,Name,Price
                                   1,Product A,10.50
                                   """;
-        await File.WriteAllTextAsync(csvPath, csvContent);
+        await File.WriteAllTextAsync(csvPath, csvContent, TestContext.Current.CancellationToken);
 
         // Act
         var results = await new[] { csvPath }.ParseCsvParallelAsync<Product>(
             new CsvOperationOptions
             {
                 BufferSize = 4096 // Small buffer
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         results.Count.ShouldBe(1);
@@ -341,7 +351,8 @@ public sealed class CsvOperationOptionsTests : IDisposable
             {
                 CreateDirectoriesIfNotExist = true,
                 OverwriteExisting = true
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         File.Exists(csvPath).ShouldBeTrue();
@@ -391,7 +402,7 @@ public sealed class CsvOperationOptionsTests : IDisposable
                                   1,Product A,10.50
                                   2,Product B,20.00
                                   """;
-        await File.WriteAllTextAsync(csvPath, csvContent);
+        await File.WriteAllTextAsync(csvPath, csvContent, TestContext.Current.CancellationToken);
 
         var contextActionCalled = false;
 
@@ -408,7 +419,8 @@ public sealed class CsvOperationOptionsTests : IDisposable
                         ctx.ShouldNotBeNull();
                     }
                 }
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         results.Count.ShouldBe(2);
@@ -447,7 +459,8 @@ public sealed class CsvOperationOptionsTests : IDisposable
             new CsvOperationOptions
             {
                 OverwriteExisting = true
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         File.Exists(csvPath).ShouldBeTrue();
@@ -463,14 +476,15 @@ public sealed class CsvOperationOptionsTests : IDisposable
                                   Id,Name,Price
                                   1,Product A,10.50
                                   """;
-        await File.WriteAllTextAsync(csvPath, csvContent);
+        await File.WriteAllTextAsync(csvPath, csvContent, TestContext.Current.CancellationToken);
 
         // Act - ParallelOptions is null by default
         var results = await new[] { csvPath }.ParseCsvParallelAsync<Product>(
             new CsvOperationOptions
             {
                 // ParallelOptions is intentionally not set (null)
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         results.Count.ShouldBe(1);

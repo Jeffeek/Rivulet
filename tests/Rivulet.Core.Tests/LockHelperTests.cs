@@ -105,13 +105,15 @@ public sealed class LockHelperTests
         for (var i = 0; i < threadCount; i++)
         {
             tasks[i] = Task.Run(() =>
-            {
-                for (var j = 0; j < incrementsPerThread; j++) LockHelper.Execute(_lock, () => { counter++; });
-            });
+                {
+                    for (var j = 0; j < incrementsPerThread; j++)
+                        LockHelper.Execute(_lock, () => { counter++; });
+                },
+                TestContext.Current.CancellationToken);
         }
 
 #pragma warning disable xUnit1031
-        Task.WaitAll(tasks);
+        Task.WaitAll(tasks, TestContext.Current.CancellationToken);
 #pragma warning restore xUnit1031
 
         counter.ShouldBe(threadCount * incrementsPerThread);
@@ -129,23 +131,24 @@ public sealed class LockHelperTests
         {
             var index = i;
             tasks[i] = Task.Run(() =>
-            {
-                if (index % 2 == 0)
                 {
-                    // Increment
-                    LockHelper.Execute(_lock, () => { counter++; });
-                }
-                else
-                {
-                    // Read
-                    var value = LockHelper.Execute(_lock, () => counter);
-                    results.Add(value);
-                }
-            });
+                    if (index % 2 == 0)
+                    {
+                        // Increment
+                        LockHelper.Execute(_lock, () => { counter++; });
+                    }
+                    else
+                    {
+                        // Read
+                        var value = LockHelper.Execute(_lock, () => counter);
+                        results.Add(value);
+                    }
+                },
+                TestContext.Current.CancellationToken);
         }
 
 #pragma warning disable xUnit1031
-        Task.WaitAll(tasks);
+        Task.WaitAll(tasks, TestContext.Current.CancellationToken);
 #pragma warning restore xUnit1031
 
         counter.ShouldBe(threadCount / 2);
@@ -229,27 +232,28 @@ public sealed class LockHelperTests
         {
             var threadId = i;
             tasks[i] = Task.Run(() =>
-            {
-                LockHelper.Execute(_lock,
-                    () =>
-                    {
-                        var current = Interlocked.Increment(ref activeCount);
+                {
+                    LockHelper.Execute(_lock,
+                        () =>
+                        {
+                            var current = Interlocked.Increment(ref activeCount);
 
-                        // Track max concurrent executions inside lock
-                        var currentMax = maxActiveCount;
-                        while (current > currentMax)
-                            currentMax = Interlocked.CompareExchange(ref maxActiveCount, current, currentMax);
+                            // Track max concurrent executions inside lock
+                            var currentMax = maxActiveCount;
+                            while (current > currentMax)
+                                currentMax = Interlocked.CompareExchange(ref maxActiveCount, current, currentMax);
 
-                        executionOrder.Add(threadId);
-                        Thread.Sleep(50); // Reduced from 1000ms to 50ms for faster tests
+                            executionOrder.Add(threadId);
+                            Thread.Sleep(50); // Reduced from 1000ms to 50ms for faster tests
 
-                        Interlocked.Decrement(ref activeCount);
-                    });
-            });
+                            Interlocked.Decrement(ref activeCount);
+                        });
+                },
+                TestContext.Current.CancellationToken);
         }
 
 #pragma warning disable xUnit1031
-        Task.WaitAll(tasks);
+        Task.WaitAll(tasks, TestContext.Current.CancellationToken);
 #pragma warning restore xUnit1031
 
         executionOrder.Count.ShouldBe(threadCount);
@@ -325,7 +329,7 @@ public sealed class LockHelperTests
     {
         var counter = 0;
 
-        await Task.Run(() => { LockHelper.Execute(_lock, () => { counter++; }); });
+        await Task.Run(() => { LockHelper.Execute(_lock, () => { counter++; }); }, TestContext.Current.CancellationToken);
 
         counter.ShouldBe(1);
     }
@@ -362,13 +366,15 @@ public sealed class LockHelperTests
         for (var i = 0; i < threadCount; i++)
         {
             tasks[i] = Task.Run(() =>
-            {
-                for (var j = 0; j < incrementsPerThread; j++) LockHelper.Execute(_lock, () => { counter++; });
-            });
+                {
+                    for (var j = 0; j < incrementsPerThread; j++)
+                        LockHelper.Execute(_lock, () => { counter++; });
+                },
+                TestContext.Current.CancellationToken);
         }
 
 #pragma warning disable xUnit1031
-        Task.WaitAll(tasks);
+        Task.WaitAll(tasks, TestContext.Current.CancellationToken);
 #pragma warning restore xUnit1031
 
         counter.ShouldBe(threadCount * incrementsPerThread);

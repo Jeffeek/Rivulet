@@ -49,7 +49,8 @@ public sealed class DiagnosticsBuilderTests : IDisposable
                         await Task.Delay(100, ct);
                         return x * 2;
                     },
-                    new() { MaxDegreeOfParallelism = 2 });
+                    new() { MaxDegreeOfParallelism = 2 },
+                    cancellationToken: TestContext.Current.CancellationToken);
 
             // Wait for at least 2x the aggregation interval to ensure timer fires reliably
             await Task.Delay(2000, CancellationToken.None);
@@ -62,7 +63,7 @@ public sealed class DiagnosticsBuilderTests : IDisposable
         // so we verify metrics through file output and aggregated metrics instead
 
         File.Exists(_testFilePath).ShouldBeTrue();
-        var fileContent = await File.ReadAllTextAsync(_testFilePath);
+        var fileContent = await File.ReadAllTextAsync(_testFilePath, TestContext.Current.CancellationToken);
         fileContent.ShouldContain("Items Started");
 
         aggregatedMetrics.ShouldNotBeEmpty();
@@ -84,8 +85,9 @@ public sealed class DiagnosticsBuilderTests : IDisposable
                     await Task.Delay(100, ct);
                     return x * 2;
                 },
-                new() { MaxDegreeOfParallelism = 2 })
-            .ToListAsync();
+                new() { MaxDegreeOfParallelism = 2 },
+                cancellationToken: TestContext.Current.CancellationToken)
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         // Wait for EventCounters to fire - increased for CI/CD reliability
         await Task.Delay(2000, CancellationToken.None);
@@ -112,8 +114,9 @@ public sealed class DiagnosticsBuilderTests : IDisposable
                         await Task.Delay(100, ct);
                         return x;
                     },
-                    new() { MaxDegreeOfParallelism = 2 })
-                .ToListAsync();
+                    new() { MaxDegreeOfParallelism = 2 },
+                    cancellationToken: TestContext.Current.CancellationToken)
+                .ToListAsync(TestContext.Current.CancellationToken);
 
             // Wait for EventCounters to fire - increased for CI/CD reliability
             await Task.Delay(2000, CancellationToken.None);
@@ -142,8 +145,9 @@ public sealed class DiagnosticsBuilderTests : IDisposable
                     await Task.Delay(100, ct);
                     return x;
                 },
-                new() { MaxDegreeOfParallelism = 2 })
-            .ToListAsync();
+                new() { MaxDegreeOfParallelism = 2 },
+                cancellationToken: TestContext.Current.CancellationToken)
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         // Wait for EventCounters to be polled and metrics to be available - increased for CI/CD reliability
         await Task.Delay(2000, CancellationToken.None);
@@ -181,8 +185,9 @@ public sealed class DiagnosticsBuilderTests : IDisposable
                     await Task.Delay(100, ct);
                     return x;
                 },
-                new() { MaxDegreeOfParallelism = 2 })
-            .ToListAsync();
+                new() { MaxDegreeOfParallelism = 2 },
+                cancellationToken: TestContext.Current.CancellationToken)
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         // Wait for EventCounters to fire - increased for CI/CD reliability
         await Task.Delay(2000, CancellationToken.None);
@@ -200,9 +205,9 @@ public sealed class DiagnosticsBuilderTests : IDisposable
             .Build();
 
         var task = Enumerable.Range(1, 3)
-            .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x), new());
+            .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x), new(), cancellationToken: TestContext.Current.CancellationToken);
 #pragma warning disable xUnit1031
-        task.Wait();
+        task.Wait(TestContext.Current.CancellationToken);
 #pragma warning restore xUnit1031
 
         diagnostics.Dispose();
@@ -225,9 +230,9 @@ public sealed class DiagnosticsBuilderTests : IDisposable
 
         // Run operation
         var task = Enumerable.Range(1, 3)
-            .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x), new());
+            .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x), new(), cancellationToken: TestContext.Current.CancellationToken);
 #pragma warning disable xUnit1031
-        task.Wait();
+        task.Wait(TestContext.Current.CancellationToken);
 #pragma warning restore xUnit1031
 
         // Dispose sync first to test dual disposal logic
@@ -247,7 +252,7 @@ public sealed class DiagnosticsBuilderTests : IDisposable
             .Build();
 
         await Enumerable.Range(1, 3)
-            .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x), new());
+            .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x), new(), cancellationToken: TestContext.Current.CancellationToken);
 
         await diagnostics.DisposeAsync();
 
@@ -265,9 +270,9 @@ public sealed class DiagnosticsBuilderTests : IDisposable
 
         // Run minimal operation
         var task = Enumerable.Range(1, 1)
-            .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x), new());
+            .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x), new(), cancellationToken: TestContext.Current.CancellationToken);
 #pragma warning disable xUnit1031
-        task.Wait();
+        task.Wait(TestContext.Current.CancellationToken);
 #pragma warning restore xUnit1031
 
         // First dispose

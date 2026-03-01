@@ -58,15 +58,16 @@ public sealed class MySqlBulkExtensionsIntegrationTests : IAsyncLifetime
             CreateConnection,
             "TestTable",
             columnNames,
-            batchSize: 2);
+            batchSize: 2,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         await using var connection = new MySqlConnection(_connectionString);
-        await connection.OpenAsync();
+        await connection.OpenAsync(TestContext.Current.CancellationToken);
 
         await using var command = connection.CreateCommand();
         command.CommandText = "SELECT COUNT(*) FROM TestTable";
-        var count = Convert.ToInt64(await command.ExecuteScalarAsync());
+        var count = Convert.ToInt64(await command.ExecuteScalarAsync(TestContext.Current.CancellationToken));
 
         count.ShouldBe(3);
     }
@@ -85,15 +86,16 @@ public sealed class MySqlBulkExtensionsIntegrationTests : IAsyncLifetime
             CreateConnection,
             "TestTable",
             columnNames,
-            batchSize: 3); // Will create 4 batches (3+3+3+1)
+            batchSize: 3,
+            cancellationToken: TestContext.Current.CancellationToken); // Will create 4 batches (3+3+3+1)
 
         // Assert
         await using var connection = new MySqlConnection(_connectionString);
-        await connection.OpenAsync();
+        await connection.OpenAsync(TestContext.Current.CancellationToken);
 
         await using var command = connection.CreateCommand();
         command.CommandText = "SELECT COUNT(*) FROM TestTable";
-        var count = Convert.ToInt64(await command.ExecuteScalarAsync());
+        var count = Convert.ToInt64(await command.ExecuteScalarAsync(TestContext.Current.CancellationToken));
 
         count.ShouldBe(10);
     }
@@ -111,15 +113,16 @@ public sealed class MySqlBulkExtensionsIntegrationTests : IAsyncLifetime
             "TestTable",
             columnNames,
             fieldSeparator: "|",
-            batchSize: 1000);
+            batchSize: 1000,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         await using var connection = new MySqlConnection(_connectionString);
-        await connection.OpenAsync();
+        await connection.OpenAsync(TestContext.Current.CancellationToken);
 
         await using var command = connection.CreateCommand();
         command.CommandText = "SELECT COUNT(*) FROM TestTable WHERE Id >= 100";
-        var count = Convert.ToInt64(await command.ExecuteScalarAsync());
+        var count = Convert.ToInt64(await command.ExecuteScalarAsync(TestContext.Current.CancellationToken));
 
         count.ShouldBe(2);
     }
@@ -162,14 +165,16 @@ public sealed class MySqlBulkExtensionsIntegrationTests : IAsyncLifetime
         try
         {
             await File.WriteAllLinesAsync(tempFile1,
-            [
-                "200,Frank,frank@example.com",
-                "201,Grace,grace@example.com"
-            ]);
+                [
+                    "200,Frank,frank@example.com",
+                    "201,Grace,grace@example.com"
+                ],
+                TestContext.Current.CancellationToken);
             await File.WriteAllLinesAsync(tempFile2,
-            [
-                "202,Hank,hank@example.com"
-            ]);
+                [
+                    "202,Hank,hank@example.com"
+                ],
+                TestContext.Current.CancellationToken);
 
             var filePaths = new[] { tempFile1, tempFile2 };
             var columnNames = new[] { "Id", "Name", "Email" };
@@ -178,15 +183,16 @@ public sealed class MySqlBulkExtensionsIntegrationTests : IAsyncLifetime
             await filePaths.BulkInsertFromFilesUsingMySqlBulkLoaderAsync(
                 CreateConnection,
                 "TestTable",
-                columnNames);
+                columnNames,
+                cancellationToken: TestContext.Current.CancellationToken);
 
             // Assert
             await using var connection = new MySqlConnection(_connectionString);
-            await connection.OpenAsync();
+            await connection.OpenAsync(TestContext.Current.CancellationToken);
 
             await using var command = connection.CreateCommand();
             command.CommandText = "SELECT COUNT(*) FROM TestTable WHERE Id >= 200";
-            var count = Convert.ToInt64(await command.ExecuteScalarAsync());
+            var count = Convert.ToInt64(await command.ExecuteScalarAsync(TestContext.Current.CancellationToken));
 
             count.ShouldBe(3);
         }
@@ -204,7 +210,7 @@ public sealed class MySqlBulkExtensionsIntegrationTests : IAsyncLifetime
         var tempFile = Path.GetTempFileName();
         try
         {
-            await File.WriteAllLinesAsync(tempFile, ["1,Test,test@example.com"]);
+            await File.WriteAllLinesAsync(tempFile, ["1,Test,test@example.com"], TestContext.Current.CancellationToken);
             var filePaths = new[] { tempFile };
             var columnNames = new[] { "Id", "Name", "Email" };
 

@@ -30,8 +30,8 @@ public sealed class CsvClassMapTests : IDisposable
         var csvPath1 = Path.Join(_testDirectory, "products1.csv");
         var csvPath2 = Path.Join(_testDirectory, "products2.csv");
 
-        await File.WriteAllTextAsync(csvPath1, "ProductID,ProductName,Price\n1,Widget,10.50");
-        await File.WriteAllTextAsync(csvPath2, "ProductID,ProductName,Price\n2,Gadget,20.00");
+        await File.WriteAllTextAsync(csvPath1, "ProductID,ProductName,Price\n1,Widget,10.50", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(csvPath2, "ProductID,ProductName,Price\n2,Gadget,20.00", TestContext.Current.CancellationToken);
 
         // Act - Using single ClassMap for all files via CsvContextAction
         var results = await new[] { csvPath1, csvPath2 }.ParseCsvParallelAsync<Product>(
@@ -42,7 +42,8 @@ public sealed class CsvClassMapTests : IDisposable
                     CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByName>()
                 },
                 ParallelOptions = new ParallelOptionsRivulet { OrderedOutput = true }
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - order-independent
         results.Count.ShouldBe(2);
@@ -57,8 +58,8 @@ public sealed class CsvClassMapTests : IDisposable
         var csvPath1 = Path.Join(_testDirectory, "modern_products.csv");
         var csvPath2 = Path.Join(_testDirectory, "legacy_products.csv");
 
-        await File.WriteAllTextAsync(csvPath1, "ProductID,ProductName,Price\n1,Widget,10.50");
-        await File.WriteAllTextAsync(csvPath2, "1|OldWidget|5.25");
+        await File.WriteAllTextAsync(csvPath1, "ProductID,ProductName,Price\n1,Widget,10.50", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(csvPath2, "1|OldWidget|5.25", TestContext.Current.CancellationToken);
 
         // Act - Configure per file using record-based approach
         var fileReads = new[]
@@ -84,7 +85,8 @@ public sealed class CsvClassMapTests : IDisposable
             new CsvOperationOptions
             {
                 ParallelOptions = new ParallelOptionsRivulet { OrderedOutput = true }
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - use dynamic access with COLUMN names
         // csvPath1 has headers: ProductID,ProductName,Price
@@ -107,15 +109,15 @@ public sealed class CsvClassMapTests : IDisposable
         var file5 = Path.Join(_testDirectory, "file5.csv");
 
         // Files 1-3 use ProductMapByName
-        await File.WriteAllTextAsync(file1, "ProductID,ProductName,Price\n1,Widget,10.00");
-        await File.WriteAllTextAsync(file2, "ProductID,ProductName,Price\n2,Gadget,20.00");
-        await File.WriteAllTextAsync(file3, "ProductID,ProductName,Price\n3,Doohickey,30.00");
+        await File.WriteAllTextAsync(file1, "ProductID,ProductName,Price\n1,Widget,10.00", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(file2, "ProductID,ProductName,Price\n2,Gadget,20.00", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(file3, "ProductID,ProductName,Price\n3,Doohickey,30.00", TestContext.Current.CancellationToken);
 
-        // File 4 uses ProductMapByIndex (no header)
-        await File.WriteAllTextAsync(file4, "4,Thingamajig,40.00");
+        // File 4 uses ProductMapByIndex (no header,
+        await File.WriteAllTextAsync(file4, "4,Thingamajig,40.00", TestContext.Current.CancellationToken);
 
-        // File 5 uses ProductMapWithOptional (has optional Description column)
-        await File.WriteAllTextAsync(file5, "ProductID,ProductName,Price,Description\n5,Whatsit,50.00,Special");
+        // File 5 uses ProductMapWithOptional (has optional Description column,
+        await File.WriteAllTextAsync(file5, "ProductID,ProductName,Price,Description\n5,Whatsit,50.00,Special", TestContext.Current.CancellationToken);
 
         var fileReads = new[]
         {
@@ -144,7 +146,8 @@ public sealed class CsvClassMapTests : IDisposable
             new CsvOperationOptions
             {
                 ParallelOptions = new ParallelOptionsRivulet { OrderedOutput = true }
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - Verify all 5 files parsed with correct ClassMaps - use dynamic access with COLUMN names
         // Note: dynamic objects return all values as strings, must parse to int
@@ -187,11 +190,12 @@ public sealed class CsvClassMapTests : IDisposable
                         CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByName>()
                     },
                     OverwriteExisting = true
-                });
+                },
+                cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
-        var content1 = await File.ReadAllTextAsync(csvPath1);
-        var content2 = await File.ReadAllTextAsync(csvPath2);
+        var content1 = await File.ReadAllTextAsync(csvPath1, TestContext.Current.CancellationToken);
+        var content2 = await File.ReadAllTextAsync(csvPath2, TestContext.Current.CancellationToken);
 
         content1.ShouldContain("ProductID");
         content1.ShouldContain("ProductName");
@@ -231,11 +235,12 @@ public sealed class CsvClassMapTests : IDisposable
 
         // Act
         await fileWrites.WriteCsvParallelAsync(
-            new CsvOperationOptions { OverwriteExisting = true });
+            new CsvOperationOptions { OverwriteExisting = true },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
-        var content1 = await File.ReadAllTextAsync(csvPath1);
-        var content2 = await File.ReadAllTextAsync(csvPath2);
+        var content1 = await File.ReadAllTextAsync(csvPath1, TestContext.Current.CancellationToken);
+        var content2 = await File.ReadAllTextAsync(csvPath2, TestContext.Current.CancellationToken);
 
         content1.ShouldContain("ProductName");
         content1.ShouldNotContain("Description");
@@ -250,7 +255,7 @@ public sealed class CsvClassMapTests : IDisposable
     {
         // Arrange
         var csvPath = Path.Join(_testDirectory, "semicolon.csv");
-        await File.WriteAllTextAsync(csvPath, "ProductID;ProductName;Price\n1;Widget;10.50");
+        await File.WriteAllTextAsync(csvPath, "ProductID;ProductName;Price\n1;Widget;10.50", TestContext.Current.CancellationToken);
 
         // Act - Configure delimiter and ClassMap via CsvFileConfiguration
         var results = await new[] { csvPath }.ParseCsvParallelAsync<Product>(
@@ -264,7 +269,8 @@ public sealed class CsvClassMapTests : IDisposable
                     },
                     CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByName>()
                 }
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         results[0].Name.ShouldBe("Widget");
@@ -308,11 +314,12 @@ public sealed class CsvClassMapTests : IDisposable
         };
 
         await writes.WriteCsvParallelAsync(
-            new CsvOperationOptions { OverwriteExisting = true });
+            new CsvOperationOptions { OverwriteExisting = true },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
-        var content1 = await File.ReadAllTextAsync(csvPath1);
-        var content2 = await File.ReadAllTextAsync(csvPath2);
+        var content1 = await File.ReadAllTextAsync(csvPath1, TestContext.Current.CancellationToken);
+        var content2 = await File.ReadAllTextAsync(csvPath2, TestContext.Current.CancellationToken);
 
         content1.ShouldContain(",");
         content1.ShouldNotContain("|");
@@ -326,7 +333,7 @@ public sealed class CsvClassMapTests : IDisposable
     {
         // Arrange
         var csvPath = Path.Join(_testDirectory, "with_extra.csv");
-        await File.WriteAllTextAsync(csvPath, "ProductID,ProductName,Price,Internal\n1,Widget,10.50,secret");
+        await File.WriteAllTextAsync(csvPath, "ProductID,ProductName,Price,Internal\n1,Widget,10.50,secret", TestContext.Current.CancellationToken);
 
         // Act - Using ClassMap that ignores Internal field via CsvContextAction
         var results = await new[] { csvPath }.ParseCsvParallelAsync<ProductWithInternal>(
@@ -336,7 +343,8 @@ public sealed class CsvClassMapTests : IDisposable
                 {
                     CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapIgnoringInternal>()
                 }
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         results[0].Id.ShouldBe(1);
@@ -352,7 +360,7 @@ public sealed class CsvClassMapTests : IDisposable
         // Arrange
         var inputPath = Path.Join(_testDirectory, "input.csv");
         var outputPath = Path.Join(_testDirectory, "output.csv");
-        await File.WriteAllTextAsync(inputPath, "ProductID,ProductName,Price\n1,Widget,10.00");
+        await File.WriteAllTextAsync(inputPath, "ProductID,ProductName,Price\n1,Widget,10.00", TestContext.Current.CancellationToken);
 
         var transformations = new[]
         {
@@ -376,10 +384,11 @@ public sealed class CsvClassMapTests : IDisposable
                 OriginalPrice = p.Price,
                 PriceWithTax = p.Price * 1.2m
             },
-            new CsvOperationOptions { OverwriteExisting = true });
+            new CsvOperationOptions { OverwriteExisting = true },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
-        var output = await File.ReadAllTextAsync(outputPath);
+        var output = await File.ReadAllTextAsync(outputPath, TestContext.Current.CancellationToken);
         output.ShouldContain("ProductID");
         output.ShouldContain("ProductName");
         output.ShouldContain("OriginalPrice");
@@ -393,7 +402,7 @@ public sealed class CsvClassMapTests : IDisposable
         // Arrange
         var inputPath = Path.Join(_testDirectory, "legacy.csv");
         var outputPath = Path.Join(_testDirectory, "modern.csv");
-        await File.WriteAllTextAsync(inputPath, "1,Widget,10.00"); // No header, comma-separated
+        await File.WriteAllTextAsync(inputPath, "1,Widget,10.00", TestContext.Current.CancellationToken); // No header, comma-separated
 
         var transformations = new[]
         {
@@ -429,10 +438,11 @@ public sealed class CsvClassMapTests : IDisposable
                 OriginalPrice = p.Price,
                 PriceWithTax = p.Price * 1.2m
             },
-            new CsvOperationOptions { OverwriteExisting = true });
+            new CsvOperationOptions { OverwriteExisting = true },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
-        var output = await File.ReadAllTextAsync(outputPath);
+        var output = await File.ReadAllTextAsync(outputPath, TestContext.Current.CancellationToken);
         output.ShouldContain("\t"); // Tab-separated
         output.ShouldContain("ProductID");
         output.ShouldContain("12"); // 10.00 * 1.2
@@ -445,7 +455,7 @@ public sealed class CsvClassMapTests : IDisposable
     {
         // Arrange
         var csvPath = Path.Join(_testDirectory, "file.csv");
-        await File.WriteAllTextAsync(csvPath, "Id,Name,Price\n1,Widget,10.50");
+        await File.WriteAllTextAsync(csvPath, "Id,Name,Price\n1,Widget,10.50", TestContext.Current.CancellationToken);
 
         // Act & Assert - ClassMap expects "ProductID" but file has "Id"
         // Enable header validation to throw on mismatch
@@ -471,7 +481,8 @@ public sealed class CsvClassMapTests : IDisposable
                         ErrorMode = ErrorMode.CollectAndContinue,
                         MaxRetries = 0
                     }
-                });
+                },
+                cancellationToken: TestContext.Current.CancellationToken);
         });
 
         // Verify the exception contains HeaderValidationException

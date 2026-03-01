@@ -15,7 +15,8 @@ public sealed class OrderedOutputTests
                 await Task.Delay(Random.Shared.Next(1, 10), ct);
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(100);
         results.ShouldBe(Enumerable.Range(1, 100).Select(static x => x * 2));
@@ -38,7 +39,8 @@ public sealed class OrderedOutputTests
                     await Task.Delay(Random.Shared.Next(1, 5), ct);
                     return x;
                 },
-                options);
+                options,
+                cancellationToken: TestContext.Current.CancellationToken);
 
             if (results.SequenceEqual(source)) orderedCount++;
         }
@@ -60,8 +62,9 @@ public sealed class OrderedOutputTests
                     await Task.Delay(Random.Shared.Next(1, 10), ct);
                     return x * 2;
                 },
-                options)
-            .ToListAsync();
+                options,
+                cancellationToken: TestContext.Current.CancellationToken)
+            .ToListAsync(TestContext.Current.CancellationToken);
 
 
         results.Count.ShouldBe(100);
@@ -83,8 +86,9 @@ public sealed class OrderedOutputTests
 
                     return x;
                 },
-                options)
-            .ToListAsync();
+                options,
+                cancellationToken: TestContext.Current.CancellationToken)
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         ((IEnumerable<int>)results).ShouldBe([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "results should be in order");
         completionOrder.SequenceEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
@@ -104,7 +108,8 @@ public sealed class OrderedOutputTests
                 await Task.Delay(Random.Shared.Next(1, 5), ct);
                 return x % 5 == 0 ? throw new InvalidOperationException($"Error at {x}") : x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         var expected = Enumerable.Range(1, 20)
             .Where(static x => x % 5 != 0)
@@ -158,7 +163,8 @@ public sealed class OrderedOutputTests
                 await Task.Delay(10, ct);
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.ShouldBeEmpty();
     }
@@ -175,7 +181,8 @@ public sealed class OrderedOutputTests
                 await Task.Delay(10, ct);
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.ShouldBe(new[] { 84 });
     }
@@ -200,8 +207,9 @@ public sealed class OrderedOutputTests
                         ? throw new InvalidOperationException($"Transient error at {x}")
                         : x * 2;
                 },
-                options)
-            .ToListAsync();
+                options,
+                cancellationToken: TestContext.Current.CancellationToken)
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         results.ShouldBe(Enumerable.Range(1, 20).Select(static x => x * 2));
         attemptCounts.Values.ShouldContain(static v => v > 1, "some items should have retried");
@@ -219,7 +227,8 @@ public sealed class OrderedOutputTests
                 await Task.Delay(Random.Shared.Next(1, 3), ct);
                 return x;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(1000);
         results.ShouldBe((IEnumerable<int>)source, "large dataset should maintain order");
@@ -253,8 +262,9 @@ public sealed class OrderedOutputTests
                     await Task.Delay(Random.Shared.Next(1, 5), ct);
                     return x * 2;
                 },
-                options)
-            .ToListAsync();
+                options,
+                cancellationToken: TestContext.Current.CancellationToken)
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         results.ShouldBe(Enumerable.Range(1, 50).Select(static x => x * 2));
         startedItems.Count.ShouldBe(50);

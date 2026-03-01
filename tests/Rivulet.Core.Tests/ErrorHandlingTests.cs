@@ -23,7 +23,8 @@ public sealed class ErrorHandlingTests
                     await Task.Delay(10, ct);
                     return x == 5 ? throw new InvalidOperationException("Error at 5") : x * 2;
                 },
-                options);
+                options,
+                cancellationToken: TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -63,7 +64,8 @@ public sealed class ErrorHandlingTests
                 await Task.Delay(10, ct);
                 return x % 5 == 0 ? throw new InvalidOperationException($"Error at {x}") : x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         var exception = await act.ShouldThrowAsync<AggregateException>();
         exception.InnerExceptions.Count.ShouldBe(4);
@@ -85,7 +87,8 @@ public sealed class ErrorHandlingTests
                     await Task.Delay(10, ct);
                     return x == 5 ? throw new InvalidOperationException("Error at 5") : x * 2;
                 },
-                options);
+                options,
+                cancellationToken: TestContext.Current.CancellationToken);
 
             Assert.Fail("Expected AggregateException");
         }
@@ -111,7 +114,8 @@ public sealed class ErrorHandlingTests
                 Interlocked.Increment(ref errorCount);
                 throw new InvalidOperationException($"Error at {x}");
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(16);
         errorCount.ShouldBe(4);
@@ -127,8 +131,9 @@ public sealed class ErrorHandlingTests
                     await Task.Delay(10, ct);
                     return x % 5 == 0 ? throw new InvalidOperationException($"Error at {x}") : x * 2;
                 },
-                options)
-            .ToListAsync();
+                options,
+                cancellationToken: TestContext.Current.CancellationToken)
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(16);
         foreach (var value in new[] { 10, 20, 30, 40 }) results.ShouldNotContain(value);
@@ -159,7 +164,8 @@ public sealed class ErrorHandlingTests
                     await Task.Delay(10, ct);
                     return x == 10 ? throw new InvalidOperationException("Test error") : x;
                 },
-                options);
+                options,
+                cancellationToken: TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -183,7 +189,8 @@ public sealed class ErrorHandlingTests
                 await Task.Delay(10, ct);
                 return x % 5 == 0 ? throw new InvalidOperationException($"Error at {x}") : x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(16);
         errorIndices.Count.ShouldBe(4);
@@ -216,7 +223,8 @@ public sealed class ErrorHandlingTests
                     await Task.Delay(10, ct);
                     return x is 5 or 15 ? throw new InvalidOperationException($"Error at {x}") : x * 2;
                 },
-                options);
+                options,
+                cancellationToken: TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -245,7 +253,8 @@ public sealed class ErrorHandlingTests
                     await Task.Delay(10, ct);
                     return x % 10 == 0 ? throw new InvalidOperationException($"Error at {x}") : x * 2;
                 },
-                options);
+                options,
+                cancellationToken: TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -261,7 +270,8 @@ public sealed class ErrorHandlingTests
                                    await Task.Delay(10, ct);
                                    return x == 5 ? throw new InvalidOperationException("Error at 5") : x * 2;
                                },
-                               options))
+                               options,
+                               cancellationToken: TestContext.Current.CancellationToken))
             {
                 // Consuming items - will process all but throw AggregateException at the end
             }

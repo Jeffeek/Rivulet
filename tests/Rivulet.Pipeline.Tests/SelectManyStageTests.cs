@@ -9,7 +9,7 @@ public sealed class SelectManyStageTests
             .SelectManyParallel(static x => Enumerable.Range(1, x))
             .Build();
 
-        var results = await pipeline.ExecuteAsync(new[] { 1, 2, 3 });
+        var results = await pipeline.ExecuteAsync(new[] { 1, 2, 3 }, TestContext.Current.CancellationToken);
 
         // 1 -> [1], 2 -> [1, 2], 3 -> [1, 2, 3]
         results.Count.ShouldBe(6);
@@ -23,7 +23,7 @@ public sealed class SelectManyStageTests
             .SelectManyParallel(static x => Enumerable.Range(1, x))
             .Build();
 
-        var results = await pipeline.ExecuteAsync(Enumerable.Empty<int>());
+        var results = await pipeline.ExecuteAsync(Enumerable.Empty<int>(), TestContext.Current.CancellationToken);
 
         results.ShouldBeEmpty();
     }
@@ -35,7 +35,7 @@ public sealed class SelectManyStageTests
             .SelectManyParallel(static x => x > 0 ? Enumerable.Range(1, x) : Enumerable.Empty<int>())
             .Build();
 
-        var results = await pipeline.ExecuteAsync(new[] { 0, 1, 0, 2, 0 });
+        var results = await pipeline.ExecuteAsync(new[] { 0, 1, 0, 2, 0 }, TestContext.Current.CancellationToken);
 
         // 0 -> [], 1 -> [1], 0 -> [], 2 -> [1, 2], 0 -> []
         results.Count.ShouldBe(3);
@@ -49,7 +49,7 @@ public sealed class SelectManyStageTests
             .SelectManyParallel(static x => Enumerable.Repeat(x, x))
             .Build();
 
-        var results = await pipeline.ExecuteAsync(new[] { 3 });
+        var results = await pipeline.ExecuteAsync(new[] { 3 }, TestContext.Current.CancellationToken);
 
         // 3 -> [3, 3, 3]
         results.Count.ShouldBe(3);
@@ -67,7 +67,7 @@ public sealed class SelectManyStageTests
             })
             .Build();
 
-        var results = await pipeline.ExecuteAsync(new[] { 2, 3 });
+        var results = await pipeline.ExecuteAsync(new[] { 2, 3 }, TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(5); // 2 + 3
     }
@@ -81,7 +81,7 @@ public sealed class SelectManyStageTests
             .WhereParallel(static x => x > 15)
             .Build();
 
-        var results = await pipeline.ExecuteAsync(new[] { 1, 2, 3 });
+        var results = await pipeline.ExecuteAsync(new[] { 1, 2, 3 }, TestContext.Current.CancellationToken);
 
         // After flatten: [1, 1, 2, 1, 2, 3]
         // After *10: [10, 10, 20, 10, 20, 30]
@@ -97,7 +97,7 @@ public sealed class SelectManyStageTests
             .SelectManyParallel(static _ => Enumerable.Range(1, 100))
             .Build();
 
-        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 10));
+        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 10), TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(1000); // 10 items * 100 each
     }
@@ -127,7 +127,7 @@ public sealed class SelectManyStageTests
             })
             .Build();
 
-        await pipeline.ExecuteAsync(Enumerable.Range(1, 10));
+        await pipeline.ExecuteAsync(Enumerable.Range(1, 10), TestContext.Current.CancellationToken);
 
         maxConcurrent.ShouldBeGreaterThan(1);
     }
@@ -139,7 +139,7 @@ public sealed class SelectManyStageTests
             .SelectManyParallel(static s => s.Split(' '))
             .Build();
 
-        var results = await pipeline.ExecuteAsync(new[] { "hello world", "foo bar baz" });
+        var results = await pipeline.ExecuteAsync(new[] { "hello world", "foo bar baz" }, TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(5);
         results.OrderBy(static x => x).ShouldBe(new[] { "bar", "baz", "foo", "hello", "world" });

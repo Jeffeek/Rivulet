@@ -29,7 +29,8 @@ public sealed class BackoffStrategyTests
                     ? throw new InvalidOperationException("Transient error")
                     : new ValueTask<int>(x * 2);
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
         results.Count.ShouldBe(3);
         attemptCounts[2].ShouldBe(3);
     }
@@ -55,7 +56,8 @@ public sealed class BackoffStrategyTests
                     ? throw new InvalidOperationException("Transient error")
                     : new ValueTask<int>(x * 2);
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
         results.Count.ShouldBe(3);
         attemptCounts[2].ShouldBe(3);
     }
@@ -81,7 +83,8 @@ public sealed class BackoffStrategyTests
                     ? throw new InvalidOperationException("Transient error")
                     : new ValueTask<int>(x * 2);
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(3);
         attemptCounts[2].ShouldBe(3);
@@ -108,7 +111,8 @@ public sealed class BackoffStrategyTests
                     ? throw new InvalidOperationException("Transient error")
                     : new ValueTask<int>(x * 2);
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(3);
         attemptCounts[2].ShouldBe(3);
@@ -135,7 +139,8 @@ public sealed class BackoffStrategyTests
                     ? throw new InvalidOperationException("Transient error")
                     : new ValueTask<int>(x * 2);
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(3);
         attemptCounts[2].ShouldBe(3);
@@ -171,8 +176,9 @@ public sealed class BackoffStrategyTests
                         ? throw new InvalidOperationException("Transient error")
                         : new ValueTask<int>(x * 2);
                 },
-                options)
-            .ToListAsync();
+                options,
+                cancellationToken: TestContext.Current.CancellationToken)
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(10);
         attemptCounts[5].ShouldBe(3);
@@ -238,7 +244,8 @@ public sealed class BackoffStrategyTests
                     ? throw new InvalidOperationException($"Transient error for {x}")
                     : new ValueTask<int>(x * 2);
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(5);
         attemptCounts.Values.ShouldAllBe(static count => count == 3);
@@ -265,7 +272,8 @@ public sealed class BackoffStrategyTests
                 attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
                 return x == 2 ? throw new InvalidOperationException("Always fails") : new ValueTask<int>(x * 2);
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         await act.ShouldThrowAsync<AggregateException>();
         attemptCounts[2].ShouldBe(3);
@@ -307,7 +315,8 @@ public sealed class BackoffStrategyTests
                 Interlocked.Increment(ref processedCount);
                 return ValueTask.CompletedTask;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         processedCount.ShouldBe(10);
         attemptCounts[5].ShouldBe(3);
@@ -329,7 +338,8 @@ public sealed class BackoffStrategyTests
                 var attempts = attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
                 return attempts <= 2 ? throw new InvalidOperationException("Transient error") : new ValueTask<int>(x);
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(1);
         results[0].ShouldBe(1);
@@ -366,7 +376,8 @@ public sealed class BackoffStrategyTests
                         ? throw new InvalidOperationException($"Test {strategy}")
                         : new ValueTask<int>(x);
                 },
-                options);
+                options,
+                cancellationToken: TestContext.Current.CancellationToken);
 
             results.Count.ShouldBe(1);
             attemptCounts[1].ShouldBe(3, $"strategy {strategy} should retry correctly");
@@ -396,7 +407,8 @@ public sealed class BackoffStrategyTests
                         ? throw new InvalidOperationException("Transient error")
                         : new ValueTask<int>(x * 2);
                 },
-                options);
+                options,
+                cancellationToken: TestContext.Current.CancellationToken);
 
         results.ShouldBe([2, 4, 6, 8, 10]);
         attemptCounts[3].ShouldBe(3);
@@ -421,7 +433,8 @@ public sealed class BackoffStrategyTests
                 var attempts = attemptCounts.AddOrUpdate(x, 1, static (_, count) => count + 1);
                 return attempts <= 2 ? throw new InvalidOperationException("Transient error") : new ValueTask<int>(x);
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(1);
         results[0].ShouldBe(1);
@@ -459,7 +472,8 @@ public sealed class BackoffStrategyTests
                         ? throw new InvalidOperationException($"Test {strategy}")
                         : new ValueTask<int>(x);
                 },
-                options);
+                options,
+                cancellationToken: TestContext.Current.CancellationToken);
 
             results.Count.ShouldBe(1, $"strategy {strategy} should complete successfully");
         }

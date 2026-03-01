@@ -158,7 +158,8 @@ public sealed class RivuletMetricsExporterTests : IDisposable
                 await Task.Delay(1, ct);
                 return x * 2;
             },
-            new() { MaxDegreeOfParallelism = 4 });
+            new() { MaxDegreeOfParallelism = 4 },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Force flush to get latest metrics
         _meterProvider.ForceFlush();

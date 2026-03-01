@@ -42,8 +42,9 @@ public sealed class RivuletStructuredLogListenerTests : IDisposable
                         await Task.Delay(200, ct);
                         return x;
                     },
-                    new() { MaxDegreeOfParallelism = 2 })
-                .ToListAsync();
+                    new() { MaxDegreeOfParallelism = 2 },
+                    cancellationToken: TestContext.Current.CancellationToken)
+                .ToListAsync(TestContext.Current.CancellationToken);
 
             // Wait for EventCounters to fire - increased for CI/CD reliability
             await Task.Delay(1500, CancellationToken.None);
@@ -72,8 +73,9 @@ public sealed class RivuletStructuredLogListenerTests : IDisposable
                         await Task.Delay(200, ct);
                         return x * 2;
                     },
-                    new() { MaxDegreeOfParallelism = 2 })
-                .ToListAsync();
+                    new() { MaxDegreeOfParallelism = 2 },
+                    cancellationToken: TestContext.Current.CancellationToken)
+                .ToListAsync(TestContext.Current.CancellationToken);
 
             // Wait for EventCounters to poll and write metrics after operation completes
             await Task.Delay(1500, CancellationToken.None);
@@ -83,7 +85,7 @@ public sealed class RivuletStructuredLogListenerTests : IDisposable
         await Task.Delay(200, CancellationToken.None);
 
         File.Exists(_testFilePath).ShouldBeTrue();
-        var lines = await File.ReadAllLinesAsync(_testFilePath);
+        var lines = await File.ReadAllLinesAsync(_testFilePath, TestContext.Current.CancellationToken);
         lines.ShouldNotBeEmpty();
 
         foreach (var act in lines.Select(static line => (Func<JsonDocument>?)(() => JsonDocument.Parse(line))))
@@ -107,8 +109,9 @@ public sealed class RivuletStructuredLogListenerTests : IDisposable
                     await Task.Delay(200, ct);
                     return x * 2;
                 },
-                new() { MaxDegreeOfParallelism = 2 })
-            .ToListAsync();
+                new() { MaxDegreeOfParallelism = 2 },
+                cancellationToken: TestContext.Current.CancellationToken)
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         // Wait for EventCounters to fire - increased for CI/CD reliability
         await Task.Delay(1500, CancellationToken.None);
@@ -134,8 +137,9 @@ public sealed class RivuletStructuredLogListenerTests : IDisposable
                     await Task.Delay(200, ct);
                     return x;
                 },
-                new() { MaxDegreeOfParallelism = 2 })
-            .ToListAsync();
+                new() { MaxDegreeOfParallelism = 2 },
+                cancellationToken: TestContext.Current.CancellationToken)
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         // Wait for EventCounters to fire - increased for CI/CD reliability
         await Task.Delay(1500, CancellationToken.None);
@@ -158,9 +162,9 @@ public sealed class RivuletStructuredLogListenerTests : IDisposable
         var listener = new RivuletStructuredLogListener(testFile);
 
         var task = Enumerable.Range(1, 3)
-            .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x), new());
+            .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x), new(), cancellationToken: TestContext.Current.CancellationToken);
 #pragma warning disable xUnit1031
-        task.Wait();
+        task.Wait(TestContext.Current.CancellationToken);
 #pragma warning restore xUnit1031
 
         // Call sync Dispose explicitly to test that path
@@ -178,9 +182,9 @@ public sealed class RivuletStructuredLogListenerTests : IDisposable
         var listener = new RivuletStructuredLogListener(loggedLines.Add);
 
         var task = Enumerable.Range(1, 3)
-            .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x), new());
+            .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x), new(), cancellationToken: TestContext.Current.CancellationToken);
 #pragma warning disable xUnit1031
-        task.Wait();
+        task.Wait(TestContext.Current.CancellationToken);
 #pragma warning restore xUnit1031
 
         // Call sync Dispose explicitly (tests the _filePath == null path)

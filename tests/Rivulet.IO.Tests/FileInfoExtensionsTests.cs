@@ -13,15 +13,16 @@ public sealed class FileInfoExtensionsTests : TempDirectoryFixture
         var file2 = new FileInfo(Path.Join(TestDirectory, "file2.txt"));
         var file3 = new FileInfo(Path.Join(TestDirectory, "file3.txt"));
 
-        await File.WriteAllTextAsync(file1.FullName, "Content 1");
-        await File.WriteAllTextAsync(file2.FullName, "Content 2");
-        await File.WriteAllTextAsync(file3.FullName, "Content 3");
+        await File.WriteAllTextAsync(file1.FullName, "Content 1", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(file2.FullName, "Content 2", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(file3.FullName, "Content 3", TestContext.Current.CancellationToken);
 
         var files = new[] { file1, file2, file3 };
 
         // Act
         var results = await files.ReadAllTextParallelAsync(
-            new() { ParallelOptions = new() { OrderedOutput = true } });
+            new() { ParallelOptions = new() { OrderedOutput = true } },
+            TestContext.Current.CancellationToken);
 
         // Assert
         results.Count.ShouldBe(3);
@@ -40,14 +41,15 @@ public sealed class FileInfoExtensionsTests : TempDirectoryFixture
         var data1 = new byte[] { 1, 2, 3 };
         var data2 = new byte[] { 4, 5, 6 };
 
-        await File.WriteAllBytesAsync(file1.FullName, data1);
-        await File.WriteAllBytesAsync(file2.FullName, data2);
+        await File.WriteAllBytesAsync(file1.FullName, data1, TestContext.Current.CancellationToken);
+        await File.WriteAllBytesAsync(file2.FullName, data2, TestContext.Current.CancellationToken);
 
         var files = new[] { file1, file2 };
 
         // Act
         var results = await files.ReadAllBytesParallelAsync(
-            new() { ParallelOptions = new() { OrderedOutput = true } });
+            new() { ParallelOptions = new() { OrderedOutput = true } },
+            TestContext.Current.CancellationToken);
 
         // Assert
         results.Count.ShouldBe(2);
@@ -60,10 +62,10 @@ public sealed class FileInfoExtensionsTests : TempDirectoryFixture
     {
         // Arrange
         var file = new FileInfo(Path.Join(TestDirectory, "single.txt"));
-        await File.WriteAllTextAsync(file.FullName, "Single file content");
+        await File.WriteAllTextAsync(file.FullName, "Single file content", TestContext.Current.CancellationToken);
 
         // Act
-        var result = await file.ReadAllTextAsync();
+        var result = await file.ReadAllTextAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         result.ShouldBe("Single file content");
@@ -75,10 +77,10 @@ public sealed class FileInfoExtensionsTests : TempDirectoryFixture
         // Arrange
         var file = new FileInfo(Path.Join(TestDirectory, "single.bin"));
         var data = new byte[] { 10, 20, 30, 40 };
-        await File.WriteAllBytesAsync(file.FullName, data);
+        await File.WriteAllBytesAsync(file.FullName, data, TestContext.Current.CancellationToken);
 
         // Act
-        var result = await file.ReadAllBytesAsync();
+        var result = await file.ReadAllBytesAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         result.ShouldBe(data);
@@ -92,10 +94,10 @@ public sealed class FileInfoExtensionsTests : TempDirectoryFixture
         const string content = "Written content";
 
         // Act
-        await file.WriteAllTextAsync(content);
+        await file.WriteAllTextAsync(content, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
-        var readContent = await File.ReadAllTextAsync(file.FullName);
+        var readContent = await File.ReadAllTextAsync(file.FullName, TestContext.Current.CancellationToken);
         readContent.ShouldBe(content);
     }
 
@@ -104,7 +106,7 @@ public sealed class FileInfoExtensionsTests : TempDirectoryFixture
     {
         // Arrange
         var file = new FileInfo(Path.Join(TestDirectory, "existing.txt"));
-        await File.WriteAllTextAsync(file.FullName, "Original");
+        await File.WriteAllTextAsync(file.FullName, "Original", TestContext.Current.CancellationToken);
 
         var options = new FileOperationOptions { OverwriteExisting = false };
 
@@ -124,10 +126,10 @@ public sealed class FileInfoExtensionsTests : TempDirectoryFixture
         var data = "def"u8.ToArray();
 
         // Act
-        await file.WriteAllBytesAsync(data);
+        await file.WriteAllBytesAsync(data, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
-        var readData = await File.ReadAllBytesAsync(file.FullName);
+        var readData = await File.ReadAllBytesAsync(file.FullName, TestContext.Current.CancellationToken);
         readData.ShouldBe(data);
     }
 
@@ -138,14 +140,14 @@ public sealed class FileInfoExtensionsTests : TempDirectoryFixture
         var sourceFile = new FileInfo(Path.Join(TestDirectory, "source.txt"));
         var destPath = Path.Join(TestDirectory, "dest.txt");
 
-        await File.WriteAllTextAsync(sourceFile.FullName, "Source content");
+        await File.WriteAllTextAsync(sourceFile.FullName, "Source content", TestContext.Current.CancellationToken);
 
         // Act
-        await sourceFile.CopyToAsync(destPath);
+        await sourceFile.CopyToAsync(destPath, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         File.Exists(destPath).ShouldBeTrue();
-        var destContent = await File.ReadAllTextAsync(destPath);
+        var destContent = await File.ReadAllTextAsync(destPath, TestContext.Current.CancellationToken);
         destContent.ShouldBe("Source content");
     }
 
@@ -156,8 +158,8 @@ public sealed class FileInfoExtensionsTests : TempDirectoryFixture
         var sourceFile = new FileInfo(Path.Join(TestDirectory, "source2.txt"));
         var destPath = Path.Join(TestDirectory, "dest2.txt");
 
-        await File.WriteAllTextAsync(sourceFile.FullName, "Source");
-        await File.WriteAllTextAsync(destPath, "Existing");
+        await File.WriteAllTextAsync(sourceFile.FullName, "Source", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(destPath, "Existing", TestContext.Current.CancellationToken);
 
         var options = new FileOperationOptions { OverwriteExisting = false };
 
@@ -174,10 +176,10 @@ public sealed class FileInfoExtensionsTests : TempDirectoryFixture
         // Arrange
         // ReSharper disable once StringLiteralTypo
         var file = new FileInfo(Path.Join(TestDirectory, "todelete.txt"));
-        await File.WriteAllTextAsync(file.FullName, "Will be deleted");
+        await File.WriteAllTextAsync(file.FullName, "Will be deleted", TestContext.Current.CancellationToken);
 
         // Act
-        await file.DeleteAsync();
+        await file.DeleteAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         File.Exists(file.FullName).ShouldBeFalse();
@@ -192,8 +194,8 @@ public sealed class FileInfoExtensionsTests : TempDirectoryFixture
         var options = new FileOperationOptions { Encoding = Encoding.Unicode };
 
         // Act
-        await file.WriteAllTextAsync(content, options);
-        var readContent = await file.ReadAllTextAsync(options);
+        await file.WriteAllTextAsync(content, options, TestContext.Current.CancellationToken);
+        var readContent = await file.ReadAllTextAsync(options, TestContext.Current.CancellationToken);
 
         // Assert
         readContent.ShouldBe(content);
@@ -224,7 +226,7 @@ public sealed class FileInfoExtensionsTests : TempDirectoryFixture
         };
 
         // Act
-        await file.WriteAllTextAsync("Test content", options);
+        await file.WriteAllTextAsync("Test content", options, TestContext.Current.CancellationToken);
 
         // Assert
         startCalled.ShouldBeTrue();

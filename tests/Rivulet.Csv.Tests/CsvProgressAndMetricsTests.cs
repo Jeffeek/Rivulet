@@ -55,7 +55,8 @@ public sealed class CsvProgressAndMetricsTests : IDisposable
                         }
                     }
                 }
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         progressReports.Count.ShouldBeGreaterThan(0);
@@ -101,7 +102,8 @@ public sealed class CsvProgressAndMetricsTests : IDisposable
                         }
                     }
                 }
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         metricsSamples.Count.ShouldBeGreaterThan(0);
@@ -136,7 +138,8 @@ public sealed class CsvProgressAndMetricsTests : IDisposable
                         await Task.CompletedTask;
                     }
                 }
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         completedFiles.Count.ShouldBe(3);
@@ -179,7 +182,8 @@ public sealed class CsvProgressAndMetricsTests : IDisposable
                         }
                     }
                 }
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         progressReports.Count.ShouldBeGreaterThan(0);
@@ -211,7 +215,8 @@ public sealed class CsvProgressAndMetricsTests : IDisposable
                     MaxDegreeOfParallelism = 3,
                     OrderedOutput = true
                 }
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         results.Count.ShouldBe(5);
@@ -269,7 +274,8 @@ public sealed class CsvProgressAndMetricsTests : IDisposable
                         }
                     }
                 }
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         progressCalled.ShouldBeTrue();
@@ -310,7 +316,8 @@ public sealed class CsvProgressAndMetricsTests : IDisposable
                         }
                     }
                 }
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - adaptive concurrency may or may not adjust based on performance
         // Just verify it completes successfully

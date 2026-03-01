@@ -186,7 +186,7 @@ public sealed class VirtualTimeProviderTests
             .ToList();
 
         // Wait for all tasks to register their delays
-        countdown.Wait(TimeSpan.FromSeconds(5)).ShouldBeTrue("all tasks should register within 5 seconds");
+        countdown.Wait(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken).ShouldBeTrue("all tasks should register within 5 seconds");
 
         // Now advance time to complete all delays
         timeProvider.AdvanceTime(TimeSpan.FromSeconds(10));

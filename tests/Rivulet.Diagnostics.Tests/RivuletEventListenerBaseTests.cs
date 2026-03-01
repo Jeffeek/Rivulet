@@ -28,8 +28,9 @@ public sealed class RivuletEventListenerBaseTests : IDisposable
                     await Task.Delay(300, ct);
                     return x * 2;
                 },
-                new() { MaxDegreeOfParallelism = 2 })
-            .ToListAsync();
+                new() { MaxDegreeOfParallelism = 2 },
+                cancellationToken: TestContext.Current.CancellationToken)
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         // EventSource publishes counters every 1 second
         // Increased to 8000ms for Windows CI/CD reliability
@@ -54,8 +55,9 @@ public sealed class RivuletEventListenerBaseTests : IDisposable
                     await Task.Delay(300, ct);
                     return x;
                 },
-                new() { MaxDegreeOfParallelism = 2 })
-            .ToListAsync();
+                new() { MaxDegreeOfParallelism = 2 },
+                cancellationToken: TestContext.Current.CancellationToken)
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         // EventSource publishes counters every 1 second - poll with timeout
         // Increased to 8000ms for Windows CI/CD reliability
@@ -79,8 +81,9 @@ public sealed class RivuletEventListenerBaseTests : IDisposable
                     await Task.Delay(300, ct);
                     return x;
                 },
-                new() { MaxDegreeOfParallelism = 2 })
-            .ToListAsync();
+                new() { MaxDegreeOfParallelism = 2 },
+                cancellationToken: TestContext.Current.CancellationToken)
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         // EventSource publishes counters every 1 second - poll with timeout
         // Increased to 8000ms for Windows CI/CD reliability
@@ -99,10 +102,10 @@ public sealed class RivuletEventListenerBaseTests : IDisposable
 
         // Run a simple operation asynchronously
         var task = Enumerable.Range(1, 3)
-            .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x), new());
+            .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x), new(), cancellationToken: TestContext.Current.CancellationToken);
 
 #pragma warning disable xUnit1031
-        task.Wait();
+        task.Wait(TestContext.Current.CancellationToken);
 #pragma warning restore xUnit1031
 
         // Dispose using sync Dispose() method
@@ -222,8 +225,9 @@ public sealed class RivuletEventListenerBaseTests : IDisposable
                     await Task.Delay(300, ct);
                     return x;
                 },
-                new() { MaxDegreeOfParallelism = 2 })
-            .ToListAsync();
+                new() { MaxDegreeOfParallelism = 2 },
+                cancellationToken: TestContext.Current.CancellationToken)
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         // Wait for counters - increased to 8000ms for CI/CD reliability
         await DeadlineExtensions.ApplyDeadlineAsync(
@@ -332,8 +336,9 @@ public sealed class RivuletEventListenerBaseTests : IDisposable
                     await Task.Delay(300, ct);
                     return x;
                 },
-                new() { MaxDegreeOfParallelism = 2 })
-            .ToListAsync();
+                new() { MaxDegreeOfParallelism = 2 },
+                cancellationToken: TestContext.Current.CancellationToken)
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         // Increased to 8000ms for CI/CD reliability
         var deadline = DateTime.UtcNow.AddMilliseconds(8000);

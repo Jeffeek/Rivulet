@@ -94,7 +94,7 @@ public sealed class ErrorHandlingTests
                 })
             .Build();
 
-        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 10));
+        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 10), TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(10);
         attemptCounts[5].ShouldBe(3); // Initial + 2 retries then success
@@ -118,7 +118,7 @@ public sealed class ErrorHandlingTests
                 })
             .Build();
 
-        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 10));
+        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 10), TestContext.Current.CancellationToken);
 
         // Should have 9 results (all except the failed one)
         results.Count.ShouldBe(9);
@@ -143,7 +143,7 @@ public sealed class ErrorHandlingTests
                 })
             .Build();
 
-        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 10));
+        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 10), TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(10);
         results.ShouldContain(-1); // Fallback value for failed item
@@ -166,7 +166,7 @@ public sealed class ErrorHandlingTests
             .Build();
 
         // Should not throw despite callback exception
-        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 5));
+        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 5), TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(5);
         callbackCalled.ShouldBeTrue();
@@ -202,7 +202,7 @@ public sealed class ErrorHandlingTests
             .Build();
 
         // Circuit breaker should open after 3 failures
-        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 10));
+        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 10), TestContext.Current.CancellationToken);
 
         // Some items should be processed, but circuit breaker should limit failures
         results.Count.ShouldBeLessThan(10);
@@ -237,7 +237,7 @@ public sealed class ErrorHandlingTests
                 })
             .Build();
 
-        var results = await pipeline.ExecuteAsync(new[] { 1 });
+        var results = await pipeline.ExecuteAsync(new[] { 1 }, TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(1);
         failedOnce.ShouldBeTrue();

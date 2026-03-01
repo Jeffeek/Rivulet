@@ -20,7 +20,7 @@ public sealed class BatchStageTests
             })
             .Build();
 
-        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 20));
+        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 20), TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(4);
         batchSizes.ShouldAllBe(static size => size == 5);
@@ -40,7 +40,7 @@ public sealed class BatchStageTests
             })
             .Build();
 
-        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 17));
+        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 17), TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(4); // 3 full batches + 1 partial
         batchSizes.ShouldContain(5);
@@ -61,7 +61,7 @@ public sealed class BatchStageTests
             })
             .Build();
 
-        var results = await pipeline.ExecuteAsync(new[] { 42 });
+        var results = await pipeline.ExecuteAsync(new[] { 42 }, TestContext.Current.CancellationToken);
 
         results.ShouldHaveSingleItem().ShouldBe(42);
         batchSizes.ShouldHaveSingleItem().ShouldBe(1);
@@ -74,7 +74,7 @@ public sealed class BatchStageTests
             .Batch(10)
             .Build();
 
-        var results = await pipeline.ExecuteAsync(Enumerable.Empty<int>());
+        var results = await pipeline.ExecuteAsync(Enumerable.Empty<int>(), TestContext.Current.CancellationToken);
 
         results.ShouldBeEmpty();
     }
@@ -93,7 +93,7 @@ public sealed class BatchStageTests
             })
             .Build();
 
-        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 5));
+        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 5), TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(5);
         batchSizes.ShouldAllBe(static size => size == 1);
@@ -106,7 +106,7 @@ public sealed class BatchStageTests
             .Batch(1000)
             .Build();
 
-        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 100));
+        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 100), TestContext.Current.CancellationToken);
 
         results.ShouldHaveSingleItem();
         results[0].Count.ShouldBe(100);
@@ -138,7 +138,7 @@ public sealed class BatchStageTests
                 })
             .Build();
 
-        await pipeline.ExecuteAsync(Enumerable.Range(1, 100));
+        await pipeline.ExecuteAsync(Enumerable.Range(1, 100), TestContext.Current.CancellationToken);
 
         // Should have some parallel processing
         maxConcurrent.ShouldBeGreaterThan(1);
@@ -151,7 +151,7 @@ public sealed class BatchStageTests
             .BatchSelectParallel(10, static (batch, _) => ValueTask.FromResult(batch.Sum()))
             .Build();
 
-        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 100));
+        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 100), TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(10);
         results.Sum().ShouldBe(5050); // Sum of 1..100
@@ -167,7 +167,7 @@ public sealed class BatchStageTests
             .WhereParallel(static x => x > 50)
             .Build();
 
-        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 20));
+        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 20), TestContext.Current.CancellationToken);
 
         // After doubling: 2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40
         // After batching by 5: batches have sum > 30 (first batch sum)
@@ -187,7 +187,7 @@ public sealed class BatchStageTests
             .SelectParallel(static (batch, _) => ValueTask.FromResult(batch.Count))
             .Build();
 
-        var results = await pipeline.ExecuteAsync(SlowSource().ToBlockingEnumerable().ToList());
+        var results = await pipeline.ExecuteAsync(SlowSource().ToBlockingEnumerable(TestContext.Current.CancellationToken).ToList(), TestContext.Current.CancellationToken);
 
         results.Sum().ShouldBe(5);
         return;
@@ -211,7 +211,7 @@ public sealed class BatchStageTests
             .Batch(3)
             .Build();
 
-        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 9));
+        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 9), TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(3);
         results[0].ShouldBe(new[] { 1, 2, 3 });

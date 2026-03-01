@@ -21,7 +21,8 @@ public sealed class SqlParallelExtensionsTests
                 while (reader.Read()) items.Add(reader.GetString(1));
 
                 return items;
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(3);
         results.ShouldAllBe(static r => r.Count == 1);
@@ -34,7 +35,8 @@ public sealed class SqlParallelExtensionsTests
 
         await Assert.ThrowsAsync<ArgumentNullException>(async () => await queries.ExecuteQueriesParallelAsync(
             static () => new TestDbConnection(),
-            static _ => new List<string>()));
+            static _ => new List<string>(),
+            cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -44,7 +46,8 @@ public sealed class SqlParallelExtensionsTests
 
         await Assert.ThrowsAsync<ArgumentNullException>(async () => await queries.ExecuteQueriesParallelAsync(
             null!,
-            static _ => new List<string>()));
+            static _ => new List<string>(),
+            cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -54,7 +57,8 @@ public sealed class SqlParallelExtensionsTests
 
         await Assert.ThrowsAsync<ArgumentNullException>(async () => await queries.ExecuteQueriesParallelAsync<string>(
             static () => new TestDbConnection(),
-            null!));
+            null!,
+            cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -76,7 +80,8 @@ public sealed class SqlParallelExtensionsTests
 
         var results = await queriesWithParams.ExecuteQueriesParallelAsync(static () => new TestDbConnection(
                 executeReaderFunc: static _ => new TestDataReader([new() { ["Id"] = 1 }])),
-            static _ => new List<int> { 1 });
+            static _ => new List<int> { 1 },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(2);
         commandsReceived.Count.ShouldBe(2);
@@ -96,7 +101,8 @@ public sealed class SqlParallelExtensionsTests
 
         var results =
             await commands.ExecuteCommandsParallelAsync(static () =>
-                new TestDbConnection(executeNonQueryFunc: static _ => 1));
+                    new TestDbConnection(executeNonQueryFunc: static _ => 1),
+                cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(3);
         results.ShouldAllBe(static r => r == 1);
@@ -108,7 +114,8 @@ public sealed class SqlParallelExtensionsTests
         IEnumerable<string> commands = null!;
 
         await Assert.ThrowsAsync<ArgumentNullException>(async () =>
-            await commands.ExecuteCommandsParallelAsync(static () => new TestDbConnection()));
+            await commands.ExecuteCommandsParallelAsync(static () => new TestDbConnection(),
+                cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -129,7 +136,8 @@ public sealed class SqlParallelExtensionsTests
         };
 
         var results = await commandsWithParams.ExecuteCommandsParallelAsync(static () =>
-            new TestDbConnection(executeNonQueryFunc: static _ => 1));
+                new TestDbConnection(executeNonQueryFunc: static _ => 1),
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(2);
         commandsReceived.Count.ShouldBe(2);
@@ -146,7 +154,8 @@ public sealed class SqlParallelExtensionsTests
         var index = -1; // Start at -1 because Interlocked.Increment happens before indexing
 
         var results = await queries.ExecuteScalarParallelAsync<int>(() =>
-            new TestDbConnection(_ => values[Interlocked.Increment(ref index) % values.Length]));
+                new TestDbConnection(_ => values[Interlocked.Increment(ref index) % values.Length]),
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(3);
         results.ShouldContain(10);
@@ -160,7 +169,8 @@ public sealed class SqlParallelExtensionsTests
         IEnumerable<string> queries = null!;
 
         await Assert.ThrowsAsync<ArgumentNullException>(async () =>
-            await queries.ExecuteScalarParallelAsync<int>(static () => new TestDbConnection()));
+            await queries.ExecuteScalarParallelAsync<int>(static () => new TestDbConnection(),
+                cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -169,7 +179,8 @@ public sealed class SqlParallelExtensionsTests
         var queries = new[] { "SELECT NULL" };
 
         var results =
-            await queries.ExecuteScalarParallelAsync<int>(static () => new TestDbConnection(static _ => DBNull.Value));
+            await queries.ExecuteScalarParallelAsync<int>(static () => new TestDbConnection(static _ => DBNull.Value),
+                cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(1);
         results[0].ShouldBe(0);
@@ -186,7 +197,8 @@ public sealed class SqlParallelExtensionsTests
         };
 
         var results =
-            await queriesWithParams.ExecuteScalarParallelAsync<int>(static () => new TestDbConnection(static _ => 42));
+            await queriesWithParams.ExecuteScalarParallelAsync<int>(static () => new TestDbConnection(static _ => 42),
+                cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(1);
         results[0].ShouldBe(42);
@@ -208,7 +220,8 @@ public sealed class SqlParallelExtensionsTests
                     return new TestDataReader([]);
                 }),
             static _ => 1,
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         commandTimeout.ShouldBe(60);
         results.Count.ShouldBe(1);
@@ -226,7 +239,8 @@ public sealed class SqlParallelExtensionsTests
                 attemptCount++;
                 return attemptCount < 2 ? throw new TimeoutException("Timeout occurred") : 1;
             }),
-            new() { ParallelOptions = new() { MaxRetries = 3, BaseDelay = TimeSpan.FromMilliseconds(10) } });
+            new() { ParallelOptions = new() { MaxRetries = 3, BaseDelay = TimeSpan.FromMilliseconds(10) } },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         attemptCount.ShouldBe(2);
         results.Count.ShouldBe(1);
@@ -255,7 +269,8 @@ public sealed class SqlParallelExtensionsTests
                         return ValueTask.CompletedTask;
                     },
                     ParallelOptions = new() { MaxRetries = 0 }
-                }));
+                },
+                cancellationToken: TestContext.Current.CancellationToken));
 
         callbackItem.ShouldNotBeNull();
         callbackException.ShouldNotBeNull();
@@ -297,7 +312,8 @@ public sealed class SqlParallelExtensionsTests
                 return conn;
             },
             static _ => 1,
-            new() { AutoManageConnection = true });
+            new() { AutoManageConnection = true },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(1);
         capturedConnection.ShouldNotBeNull();
@@ -326,7 +342,8 @@ public sealed class SqlParallelExtensionsTests
 
                 return 1;
             }),
-            new() { ParallelOptions = new() { MaxDegreeOfParallelism = 5 } });
+            new() { ParallelOptions = new() { MaxDegreeOfParallelism = 5 } },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(50);
         maxConcurrent.ShouldBeLessThanOrEqualTo(5);
@@ -348,7 +365,8 @@ public sealed class SqlParallelExtensionsTests
                 reader.Read();
                 return reader.GetInt32(0);
             },
-            new() { AutoManageConnection = false });
+            new() { AutoManageConnection = false },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(2);
         connection.State.ShouldBe(ConnectionState.Open); // Should still be open
@@ -365,7 +383,8 @@ public sealed class SqlParallelExtensionsTests
 
         var results = await commands.ExecuteCommandsParallelAsync(
             () => connection,
-            new() { AutoManageConnection = false });
+            new() { AutoManageConnection = false },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.ShouldAllBe(static r => r == 1);
         connection.State.ShouldBe(ConnectionState.Open); // Should still be open
@@ -383,7 +402,8 @@ public sealed class SqlParallelExtensionsTests
 
         var results = await queries.ExecuteScalarParallelAsync<int>(
             () => connection,
-            new() { AutoManageConnection = false });
+            new() { AutoManageConnection = false },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(2);
         connection.State.ShouldBe(ConnectionState.Open); // Should still be open
@@ -413,7 +433,8 @@ public sealed class SqlParallelExtensionsTests
                     new TestDbConnection(
                         executeReaderFunc: static _ => throw new InvalidOperationException("SQL Error")),
                 static reader => reader.GetInt32(0),
-                options));
+                options,
+                cancellationToken: TestContext.Current.CancellationToken));
 
         capturedQuery.ShouldBe("INVALID SQL QUERY");
         capturedException.ShouldNotBeNull();
@@ -441,7 +462,8 @@ public sealed class SqlParallelExtensionsTests
                 static () =>
                     new TestDbConnection(executeNonQueryFunc: static _ =>
                         throw new InvalidOperationException("SQL Error")),
-                options));
+                options,
+                cancellationToken: TestContext.Current.CancellationToken));
 
         capturedCommand.ShouldBe("INVALID SQL");
         capturedException.ShouldNotBeNull();
@@ -467,7 +489,8 @@ public sealed class SqlParallelExtensionsTests
         await Assert.ThrowsAnyAsync<Exception>(async () =>
             await queries.ExecuteScalarParallelAsync<int>(
                 static () => new TestDbConnection(static _ => throw new InvalidOperationException("SQL Error")),
-                options));
+                options,
+                cancellationToken: TestContext.Current.CancellationToken));
 
         capturedQuery.ShouldBe("INVALID SQL");
         capturedException.ShouldNotBeNull();
@@ -480,7 +503,8 @@ public sealed class SqlParallelExtensionsTests
 
         var queries = new[] { "SELECT NULL" };
 
-        var results = await queries.ExecuteScalarParallelAsync<string>(() => connection);
+        var results = await queries.ExecuteScalarParallelAsync<string>(() => connection,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.ShouldHaveSingleItem();
         results[0].ShouldBeNull();
@@ -493,7 +517,8 @@ public sealed class SqlParallelExtensionsTests
 
         var queries = new[] { "SELECT NULL" };
 
-        var results = await queries.ExecuteScalarParallelAsync<int?>(() => connection);
+        var results = await queries.ExecuteScalarParallelAsync<int?>(() => connection,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.ShouldHaveSingleItem();
         results[0].ShouldBeNull();
@@ -506,7 +531,8 @@ public sealed class SqlParallelExtensionsTests
 
         await Assert.ThrowsAsync<ArgumentNullException>(async () => await queriesWithParams.ExecuteQueriesParallelAsync(
             static () => new TestDbConnection(),
-            static _ => new List<string>()));
+            static _ => new List<string>(),
+            cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -516,7 +542,8 @@ public sealed class SqlParallelExtensionsTests
 
         await Assert.ThrowsAsync<ArgumentNullException>(async () => await queriesWithParams.ExecuteQueriesParallelAsync(
             null!,
-            static _ => new List<string>()));
+            static _ => new List<string>(),
+            cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -526,7 +553,8 @@ public sealed class SqlParallelExtensionsTests
 
         await Assert.ThrowsAsync<ArgumentNullException>(async () =>
             await queriesWithParams.ExecuteQueriesParallelAsync<string>(static () => new TestDbConnection(),
-                null!));
+                null!,
+                cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -534,7 +562,8 @@ public sealed class SqlParallelExtensionsTests
     {
         var commands = new[] { "INSERT 1" };
 
-        await Assert.ThrowsAsync<ArgumentNullException>(async () => await commands.ExecuteCommandsParallelAsync(null!));
+        await Assert.ThrowsAsync<ArgumentNullException>(async () => await commands.ExecuteCommandsParallelAsync(null!,
+            cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -543,7 +572,8 @@ public sealed class SqlParallelExtensionsTests
         IEnumerable<(string command, Action<IDbCommand> configureParams)> commandsWithParams = null!;
 
         await Assert.ThrowsAsync<ArgumentNullException>(async () =>
-            await commandsWithParams.ExecuteCommandsParallelAsync(static () => new TestDbConnection()));
+            await commandsWithParams.ExecuteCommandsParallelAsync(static () => new TestDbConnection(),
+                cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -554,7 +584,8 @@ public sealed class SqlParallelExtensionsTests
             { (command: "INSERT 1", configureParams: (Action<IDbCommand>)(static _ => { })) };
 
         await Assert.ThrowsAsync<ArgumentNullException>(async () =>
-            await commandsWithParams.ExecuteCommandsParallelAsync(null!));
+            await commandsWithParams.ExecuteCommandsParallelAsync(null!,
+                cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -563,7 +594,8 @@ public sealed class SqlParallelExtensionsTests
         var queries = new[] { "SELECT 1" };
 
         await Assert.ThrowsAsync<ArgumentNullException>(async () =>
-            await queries.ExecuteScalarParallelAsync<int>(null!));
+            await queries.ExecuteScalarParallelAsync<int>(null!,
+                cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -572,7 +604,8 @@ public sealed class SqlParallelExtensionsTests
         IEnumerable<(string query, Action<IDbCommand> configureParams)> queriesWithParams = null!;
 
         await Assert.ThrowsAsync<ArgumentNullException>(async () =>
-            await queriesWithParams.ExecuteScalarParallelAsync<int>(static () => new TestDbConnection()));
+            await queriesWithParams.ExecuteScalarParallelAsync<int>(static () => new TestDbConnection(),
+                cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -581,7 +614,8 @@ public sealed class SqlParallelExtensionsTests
         var queriesWithParams = new[] { (query: "SELECT 1", configureParams: (Action<IDbCommand>)(static _ => { })) };
 
         await Assert.ThrowsAsync<ArgumentNullException>(async () =>
-            await queriesWithParams.ExecuteScalarParallelAsync<int>(null!));
+            await queriesWithParams.ExecuteScalarParallelAsync<int>(null!,
+                cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -596,7 +630,8 @@ public sealed class SqlParallelExtensionsTests
             {
                 reader.Read();
                 return reader.GetInt32(0);
-            });
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(1);
         results[0].ShouldBe(1);
@@ -610,7 +645,8 @@ public sealed class SqlParallelExtensionsTests
 
         var results =
             await commands.ExecuteCommandsParallelAsync(static () =>
-                new NonDbConnection(executeNonQueryFunc: static _ => 1));
+                    new NonDbConnection(executeNonQueryFunc: static _ => 1),
+                cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(1);
         results[0].ShouldBe(1);
@@ -622,7 +658,8 @@ public sealed class SqlParallelExtensionsTests
         // Use a custom IDbConnection that's not DbConnection to test Task.Run fallback
         var queries = new[] { "SELECT 42" };
 
-        var results = await queries.ExecuteScalarParallelAsync<int>(static () => new NonDbConnection(static _ => 42));
+        var results = await queries.ExecuteScalarParallelAsync<int>(static () => new NonDbConnection(static _ => 42),
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(1);
         results[0].ShouldBe(42);
@@ -641,7 +678,8 @@ public sealed class SqlParallelExtensionsTests
                     commandTimeouts.Add(cmd.CommandTimeout);
                     return new TestDataReader([]);
                 }),
-            static _ => 1);
+            static _ => 1,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(2);
         commandTimeouts.ShouldAllBe(static timeout => timeout == 30); // Default timeout
@@ -654,10 +692,11 @@ public sealed class SqlParallelExtensionsTests
         var commandTimeouts = new List<int>();
 
         var results = await commands.ExecuteCommandsParallelAsync(() => new TestDbConnection(executeNonQueryFunc: cmd =>
-        {
-            commandTimeouts.Add(cmd.CommandTimeout);
-            return 1;
-        }));
+            {
+                commandTimeouts.Add(cmd.CommandTimeout);
+                return 1;
+            }),
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(2);
         commandTimeouts.ShouldAllBe(static timeout => timeout == 30); // Default timeout
@@ -670,10 +709,11 @@ public sealed class SqlParallelExtensionsTests
         var commandTimeouts = new List<int>();
 
         var results = await queries.ExecuteScalarParallelAsync<int>(() => new TestDbConnection(cmd =>
-        {
-            commandTimeouts.Add(cmd.CommandTimeout);
-            return 42;
-        }));
+            {
+                commandTimeouts.Add(cmd.CommandTimeout);
+                return 42;
+            }),
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(2);
         commandTimeouts.ShouldAllBe(static timeout => timeout == 30); // Default timeout

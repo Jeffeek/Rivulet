@@ -13,7 +13,7 @@ public sealed class ChaosInjectorTests
 
         for (var i = 0; i < 100; i++)
         {
-            var result = await injector.ExecuteAsync(static () => Task.FromResult(42));
+            var result = await injector.ExecuteAsync(static () => Task.FromResult(42), TestContext.Current.CancellationToken);
             result.ShouldBe(42);
         }
     }
@@ -34,7 +34,7 @@ public sealed class ChaosInjectorTests
         var injector = new ChaosInjector(0.0, TimeSpan.FromMilliseconds(100));
 
         var sw = Stopwatch.StartNew();
-        await injector.ExecuteAsync(static () => Task.FromResult(42));
+        await injector.ExecuteAsync(static () => Task.FromResult(42), TestContext.Current.CancellationToken);
         sw.Stop();
 
         sw.ElapsedMilliseconds.ShouldBeGreaterThanOrEqualTo(90);
@@ -56,7 +56,7 @@ public sealed class ChaosInjectorTests
     {
         var injector = new ChaosInjector(0.0);
 
-        var result = await injector.ExecuteAsync(static () => Task.FromResult("test result"));
+        var result = await injector.ExecuteAsync(static () => Task.FromResult("test result"), TestContext.Current.CancellationToken);
 
         result.ShouldBe("test result");
     }
@@ -85,7 +85,7 @@ public sealed class ChaosInjectorTests
         {
             try
             {
-                await injector.ExecuteAsync(static () => Task.FromResult(42));
+                await injector.ExecuteAsync(static () => Task.FromResult(42), TestContext.Current.CancellationToken);
             }
             catch (ChaosException)
             {
@@ -103,7 +103,7 @@ public sealed class ChaosInjectorTests
         var injector = new ChaosInjector(0.0, TimeSpan.Zero);
 
         var sw = Stopwatch.StartNew();
-        await injector.ExecuteAsync(static () => Task.FromResult(42));
+        await injector.ExecuteAsync(static () => Task.FromResult(42), TestContext.Current.CancellationToken);
         sw.Stop();
 
         sw.ElapsedMilliseconds.ShouldBeLessThan(50);
@@ -198,7 +198,7 @@ public sealed class ChaosInjectorTests
 
         try
         {
-            await injector.ExecuteAsync(static () => Task.FromResult(42));
+            await injector.ExecuteAsync(static () => Task.FromResult(42), TestContext.Current.CancellationToken);
             Assert.Fail("Should have thrown");
         }
         catch (ChaosException ex)
@@ -213,7 +213,7 @@ public sealed class ChaosInjectorTests
         var injector1 = new ChaosInjector(0.0);
         var injector2 = new ChaosInjector(1.0);
 
-        var result1 = await injector1.ExecuteAsync(static () => Task.FromResult(1));
+        var result1 = await injector1.ExecuteAsync(static () => Task.FromResult(1), TestContext.Current.CancellationToken);
         result1.ShouldBe(1);
 
         var act2 = () => injector2.ExecuteAsync(static () => Task.FromResult(2));

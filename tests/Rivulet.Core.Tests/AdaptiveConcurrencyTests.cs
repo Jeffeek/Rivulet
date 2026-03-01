@@ -107,7 +107,8 @@ public sealed class AdaptiveConcurrencyTests
                 await Task.Delay(10, ct);
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(200);
 
@@ -155,7 +156,8 @@ public sealed class AdaptiveConcurrencyTests
                 await Task.Delay(50, ct); // Slow operations exceeding target latency
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(100);
 
@@ -204,7 +206,8 @@ public sealed class AdaptiveConcurrencyTests
                 // 50% failure rate
                 return x % 2 == 0 ? throw new InvalidOperationException("Test failure") : x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Should get only successful results (50% of 100 = 50)
         results.Count.ShouldBeLessThan(100);
@@ -252,7 +255,8 @@ public sealed class AdaptiveConcurrencyTests
                 await Task.Delay(10, ct);
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(200);
 
@@ -291,8 +295,9 @@ public sealed class AdaptiveConcurrencyTests
                     await Task.Delay(10, ct);
                     return x * 2;
                 },
-                options)
-            .CountAsync();
+                options,
+                cancellationToken: TestContext.Current.CancellationToken)
+            .CountAsync(TestContext.Current.CancellationToken);
 
         count.ShouldBe(150);
 
@@ -328,7 +333,8 @@ public sealed class AdaptiveConcurrencyTests
                 await Task.Delay(Random.Shared.Next(1, 10), ct);
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(30);
         results.ShouldBeInOrder();
@@ -424,7 +430,8 @@ public sealed class AdaptiveConcurrencyTests
                 await Task.Delay(10, ct);
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(300);
 
@@ -473,7 +480,8 @@ public sealed class AdaptiveConcurrencyTests
                 await Task.Delay(50, ct); // High latency
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(150);
 
@@ -518,7 +526,8 @@ public sealed class AdaptiveConcurrencyTests
                 await Task.Delay(10, ct);
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(100);
         // Operation should complete despite callback exceptions
@@ -536,7 +545,7 @@ public sealed class AdaptiveConcurrencyTests
         });
 
         // Trigger some activity
-        await controller.AcquireAsync();
+        await controller.AcquireAsync(TestContext.Current.CancellationToken);
         controller.Release(TimeSpan.FromMilliseconds(10), true);
 
         await Task.Delay(20, CancellationToken.None); // Let sampling happen

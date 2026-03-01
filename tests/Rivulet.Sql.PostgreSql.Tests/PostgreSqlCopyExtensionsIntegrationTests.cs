@@ -64,15 +64,16 @@ public sealed class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
             columns,
             MapToRow,
             new() { MaxDegreeOfParallelism = 1 },
-            2);
+            2,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         await using var connection = new NpgsqlConnection(_connectionString);
-        await connection.OpenAsync();
+        await connection.OpenAsync(TestContext.Current.CancellationToken);
 
         await using var command = connection.CreateCommand();
         command.CommandText = "SELECT COUNT(*) FROM \"TestTable\"";
-        var count = Convert.ToInt64(await command.ExecuteScalarAsync());
+        var count = Convert.ToInt64(await command.ExecuteScalarAsync(TestContext.Current.CancellationToken));
 
         count.ShouldBe(3);
     }
@@ -92,15 +93,16 @@ public sealed class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
             "TestTable",
             columns,
             MapToRow,
-            batchSize: 3); // Will create 4 batches (3+3+3+1)
+            batchSize: 3,
+            cancellationToken: TestContext.Current.CancellationToken); // Will create 4 batches (3+3+3+1)
 
         // Assert
         await using var connection = new NpgsqlConnection(_connectionString);
-        await connection.OpenAsync();
+        await connection.OpenAsync(TestContext.Current.CancellationToken);
 
         await using var command = connection.CreateCommand();
         command.CommandText = "SELECT COUNT(*) FROM \"TestTable\"";
-        var count = Convert.ToInt64(await command.ExecuteScalarAsync());
+        var count = Convert.ToInt64(await command.ExecuteScalarAsync(TestContext.Current.CancellationToken));
 
         count.ShouldBe(10);
     }
@@ -114,7 +116,8 @@ public sealed class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
         var act = () => records.BulkInsertUsingCopyAsync(static () => null!,
             "TestTable",
             columns,
-            MapToRow);
+            MapToRow,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Should throw the actual exception (null reference or InvalidOperationException)
         await act.ShouldThrowAsync<Exception>();
@@ -130,7 +133,8 @@ public sealed class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
             CreateConnection,
             "NonExistentTable",
             columns,
-            MapToRow);
+            MapToRow,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Should throw PostgresException for invalid table name
         await act.ShouldThrowAsync<Exception>();
@@ -148,15 +152,16 @@ public sealed class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
             CreateConnection,
             "TestTable",
             columns,
-            batchSize: 1000);
+            batchSize: 1000,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         await using var connection = new NpgsqlConnection(_connectionString);
-        await connection.OpenAsync();
+        await connection.OpenAsync(TestContext.Current.CancellationToken);
 
         await using var command = connection.CreateCommand();
         command.CommandText = "SELECT COUNT(*) FROM \"TestTable\" WHERE \"Id\" >=100";
-        var count = Convert.ToInt64(await command.ExecuteScalarAsync());
+        var count = Convert.ToInt64(await command.ExecuteScalarAsync(TestContext.Current.CancellationToken));
 
         count.ShouldBe(2);
     }
@@ -175,15 +180,16 @@ public sealed class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
             CreateConnection,
             "TestTable",
             columns,
-            batchSize: 3); // Will create 4 batches (3+3+3+1)
+            batchSize: 3,
+            cancellationToken: TestContext.Current.CancellationToken); // Will create 4 batches (3+3+3+1)
 
         // Assert
         await using var connection = new NpgsqlConnection(_connectionString);
-        await connection.OpenAsync();
+        await connection.OpenAsync(TestContext.Current.CancellationToken);
 
         await using var command = connection.CreateCommand();
         command.CommandText = "SELECT COUNT(*) FROM \"TestTable\" WHERE \"Id\" >=200";
-        var count = Convert.ToInt64(await command.ExecuteScalarAsync());
+        var count = Convert.ToInt64(await command.ExecuteScalarAsync(TestContext.Current.CancellationToken));
 
         count.ShouldBe(10);
     }
@@ -201,15 +207,16 @@ public sealed class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
             "TestTable",
             columns,
             delimiter: '|',
-            batchSize: 1000);
+            batchSize: 1000,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         await using var connection = new NpgsqlConnection(_connectionString);
-        await connection.OpenAsync();
+        await connection.OpenAsync(TestContext.Current.CancellationToken);
 
         await using var command = connection.CreateCommand();
         command.CommandText = "SELECT COUNT(*) FROM \"TestTable\" WHERE \"Id\" >=300";
-        var count = Convert.ToInt64(await command.ExecuteScalarAsync());
+        var count = Convert.ToInt64(await command.ExecuteScalarAsync(TestContext.Current.CancellationToken));
 
         count.ShouldBe(2);
     }
@@ -222,7 +229,8 @@ public sealed class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
 
         var act = () => csvLines.BulkInsertUsingCopyCsvAsync(static () => null!,
             "TestTable",
-            columns);
+            columns,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Should throw the actual exception (null reference or InvalidOperationException)
         await act.ShouldThrowAsync<Exception>();
@@ -240,15 +248,16 @@ public sealed class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
             CreateConnection,
             "TestTable",
             columns,
-            batchSize: 1000);
+            batchSize: 1000,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         await using var connection = new NpgsqlConnection(_connectionString);
-        await connection.OpenAsync();
+        await connection.OpenAsync(TestContext.Current.CancellationToken);
 
         await using var command = connection.CreateCommand();
         command.CommandText = "SELECT COUNT(*) FROM \"TestTable\" WHERE \"Id\" >=400";
-        var count = Convert.ToInt64(await command.ExecuteScalarAsync());
+        var count = Convert.ToInt64(await command.ExecuteScalarAsync(TestContext.Current.CancellationToken));
 
         count.ShouldBe(2);
     }
@@ -267,15 +276,16 @@ public sealed class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
             CreateConnection,
             "TestTable",
             columns,
-            batchSize: 3); // Will create 4 batches (3+3+3+1)
+            batchSize: 3,
+            cancellationToken: TestContext.Current.CancellationToken); // Will create 4 batches (3+3+3+1)
 
         // Assert
         await using var connection = new NpgsqlConnection(_connectionString);
-        await connection.OpenAsync();
+        await connection.OpenAsync(TestContext.Current.CancellationToken);
 
         await using var command = connection.CreateCommand();
         command.CommandText = "SELECT COUNT(*) FROM \"TestTable\" WHERE \"Id\" >=500";
-        var count = Convert.ToInt64(await command.ExecuteScalarAsync());
+        var count = Convert.ToInt64(await command.ExecuteScalarAsync(TestContext.Current.CancellationToken));
 
         count.ShouldBe(10);
     }
@@ -288,7 +298,8 @@ public sealed class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
 
         var act = () => textLines.BulkInsertUsingCopyTextAsync(static () => null!,
             "TestTable",
-            columns);
+            columns,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Should throw the actual exception (null reference or InvalidOperationException)
         await act.ShouldThrowAsync<Exception>();

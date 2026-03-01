@@ -73,15 +73,16 @@ public sealed class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
             CreateConnection,
             "TestTable",
             MapToDataTable,
-            batchSize: 2);
+            batchSize: 2,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         await using var connection = new SqlConnection(_connectionString);
-        await connection.OpenAsync();
+        await connection.OpenAsync(TestContext.Current.CancellationToken);
 
         await using var command = connection.CreateCommand();
         command.CommandText = "SELECT COUNT(*) FROM TestTable";
-        var count = (int)(await command.ExecuteScalarAsync())!;
+        var count = (int)(await command.ExecuteScalarAsync(TestContext.Current.CancellationToken))!;
 
         count.ShouldBe(3, "all 3 records (Alice, Bob, Charlie) should be inserted successfully");
     }
@@ -99,15 +100,16 @@ public sealed class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
             CreateConnection,
             "TestTable",
             MapToDataTable,
-            batchSize: 3); // Will create 4 batches (3+3+3+1)
+            batchSize: 3,
+            cancellationToken: TestContext.Current.CancellationToken); // Will create 4 batches (3+3+3+1)
 
         // Assert
         await using var connection = new SqlConnection(_connectionString);
-        await connection.OpenAsync();
+        await connection.OpenAsync(TestContext.Current.CancellationToken);
 
         await using var command = connection.CreateCommand();
         command.CommandText = "SELECT COUNT(*) FROM TestTable";
-        var count = (int)(await command.ExecuteScalarAsync())!;
+        var count = (int)(await command.ExecuteScalarAsync(TestContext.Current.CancellationToken))!;
 
         count.ShouldBe(10, "all 10 User records should be inserted in 4 batches (3+3+3+1)");
     }
@@ -127,15 +129,16 @@ public sealed class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
             "TestTable",
             MapToDataTable,
             columnMappings,
-            batchSize: 10);
+            batchSize: 10,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         await using var connection = new SqlConnection(_connectionString);
-        await connection.OpenAsync();
+        await connection.OpenAsync(TestContext.Current.CancellationToken);
 
         await using var command = connection.CreateCommand();
         command.CommandText = "SELECT COUNT(*) FROM TestTable WHERE Id >= 100";
-        var count = (int)(await command.ExecuteScalarAsync())!;
+        var count = (int)(await command.ExecuteScalarAsync(TestContext.Current.CancellationToken))!;
 
         count.ShouldBe(2, "Dave and Eve records (IDs 100-101) should be inserted with explicit column mappings");
     }
@@ -161,7 +164,8 @@ public sealed class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
                 {
                     ErrorMode = ErrorMode.CollectAndContinue,
                     MaxRetries = 0
-                });
+                },
+                cancellationToken: TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -176,7 +180,8 @@ public sealed class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
         Task Act() =>
             records.BulkInsertUsingSqlBulkCopyAsync(CreateConnection,
                 "NonExistentTable",
-                MapToDataTable);
+                MapToDataTable,
+                cancellationToken: TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -202,7 +207,8 @@ public sealed class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
                 {
                     ErrorMode = ErrorMode.CollectAndContinue,
                     MaxRetries = 0
-                });
+                },
+                cancellationToken: TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -218,15 +224,16 @@ public sealed class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
             MapToDataTable,
             bulkCopyOptions: SqlBulkCopyOptions.Default,
             batchSize: 1000,
-            bulkCopyTimeout: 60);
+            bulkCopyTimeout: 60,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         await using var connection = new SqlConnection(_connectionString);
-        await connection.OpenAsync();
+        await connection.OpenAsync(TestContext.Current.CancellationToken);
 
         await using var command = connection.CreateCommand();
         command.CommandText = "SELECT Name FROM TestTable WHERE Id = 200";
-        var name = (string)(await command.ExecuteScalarAsync())!;
+        var name = (string)(await command.ExecuteScalarAsync(TestContext.Current.CancellationToken))!;
 
         name.ShouldBe("Frank", "Frank record (ID 200) should be inserted with custom bulk copy options and timeout");
     }
@@ -245,15 +252,16 @@ public sealed class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
         // Act
         await readers.BulkInsertUsingSqlBulkCopyAsync(
             CreateConnection,
-            "TestTable");
+            "TestTable",
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         await using var connection = new SqlConnection(_connectionString);
-        await connection.OpenAsync();
+        await connection.OpenAsync(TestContext.Current.CancellationToken);
 
         await using var command = connection.CreateCommand();
         command.CommandText = "SELECT COUNT(*) FROM TestTable WHERE Id >= 300";
-        var count = (int)(await command.ExecuteScalarAsync())!;
+        var count = (int)(await command.ExecuteScalarAsync(TestContext.Current.CancellationToken))!;
 
         count.ShouldBe(2, "Grace and Hank records (IDs 300-301) should be inserted from IDataReader");
     }
@@ -279,7 +287,8 @@ public sealed class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
                 {
                     ErrorMode = ErrorMode.CollectAndContinue,
                     MaxRetries = 0
-                });
+                },
+                cancellationToken: TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -295,7 +304,8 @@ public sealed class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
 
         Task Act() =>
             readers.BulkInsertUsingSqlBulkCopyAsync(CreateConnection,
-                "TestTable");
+                "TestTable",
+                cancellationToken: TestContext.Current.CancellationToken);
     }
 
     private sealed record TestRecord(int Id, string Name, string Email);

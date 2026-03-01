@@ -17,7 +17,7 @@ public sealed class ThrottleStageTests
             .Build();
 
         var sw = Stopwatch.StartNew();
-        await pipeline.ExecuteAsync(Enumerable.Range(1, 5));
+        await pipeline.ExecuteAsync(Enumerable.Range(1, 5), TestContext.Current.CancellationToken);
         sw.Stop();
 
         // First 5 items should process almost instantly (burst capacity)
@@ -32,7 +32,7 @@ public sealed class ThrottleStageTests
             .Build();
 
         var sw = Stopwatch.StartNew();
-        await pipeline.ExecuteAsync(Enumerable.Range(1, 6));
+        await pipeline.ExecuteAsync(Enumerable.Range(1, 6), TestContext.Current.CancellationToken);
         sw.Stop();
 
         // 3 items burst, then 3 more at 5/sec = ~600ms minimum
@@ -47,7 +47,7 @@ public sealed class ThrottleStageTests
             .SelectParallel(static x => x * 2)
             .Build();
 
-        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 20));
+        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 20), TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(20);
         results.OrderBy(static x => x).ShouldBe(Enumerable.Range(1, 20).Select(static x => x * 2));
@@ -61,7 +61,7 @@ public sealed class ThrottleStageTests
             .Build();
 
         var sw = Stopwatch.StartNew();
-        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 100));
+        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 100), TestContext.Current.CancellationToken);
         sw.Stop();
 
         results.Count.ShouldBe(100);
@@ -75,7 +75,7 @@ public sealed class ThrottleStageTests
             .Throttle(10)
             .Build();
 
-        var results = await pipeline.ExecuteAsync(Enumerable.Empty<int>());
+        var results = await pipeline.ExecuteAsync(Enumerable.Empty<int>(), TestContext.Current.CancellationToken);
 
         results.ShouldBeEmpty();
     }
@@ -88,7 +88,7 @@ public sealed class ThrottleStageTests
             .Build();
 
         var sw = Stopwatch.StartNew();
-        var results = await pipeline.ExecuteAsync(new[] { 42 });
+        var results = await pipeline.ExecuteAsync(new[] { 42 }, TestContext.Current.CancellationToken);
         sw.Stop();
 
         results.ShouldHaveSingleItem().ShouldBe(42);
@@ -104,7 +104,7 @@ public sealed class ThrottleStageTests
             .WhereParallel(static x => x > 10)
             .Build();
 
-        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 20));
+        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 20), TestContext.Current.CancellationToken);
 
         // After doubling: 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40
         // After filtering (> 10): 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40
@@ -119,7 +119,7 @@ public sealed class ThrottleStageTests
             .Build();
 
         var sw = Stopwatch.StartNew();
-        await pipeline.ExecuteAsync(Enumerable.Range(1, 3));
+        await pipeline.ExecuteAsync(Enumerable.Range(1, 3), TestContext.Current.CancellationToken);
         sw.Stop();
 
         // 1 burst, then 2 more at 2/sec = 1000ms minimum

@@ -35,7 +35,7 @@ public sealed class HttpParallelExtensionsAdditionalTests
             ParallelOptions = new() { MaxRetries = 3, BaseDelay = TimeSpan.FromMilliseconds(10) }
         };
 
-        var results = await uris.GetParallelAsync(httpClient, options);
+        var results = await uris.GetParallelAsync(httpClient, options, TestContext.Current.CancellationToken);
 
         attemptCount.ShouldBe(2); // Initial + 1 retry
         results.Count.ShouldBe(1);
@@ -66,7 +66,7 @@ public sealed class HttpParallelExtensionsAdditionalTests
             ParallelOptions = new() { MaxRetries = 3, BaseDelay = TimeSpan.FromMilliseconds(10) }
         };
 
-        var results = await uris.GetParallelAsync(httpClient, options);
+        var results = await uris.GetParallelAsync(httpClient, options, TestContext.Current.CancellationToken);
 
         attemptCount.ShouldBe(2);
         results[0].StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -96,7 +96,7 @@ public sealed class HttpParallelExtensionsAdditionalTests
             ParallelOptions = new() { MaxRetries = 3, BaseDelay = TimeSpan.FromMilliseconds(10) }
         };
 
-        var results = await uris.GetParallelAsync(httpClient, options);
+        var results = await uris.GetParallelAsync(httpClient, options, TestContext.Current.CancellationToken);
 
         attemptCount.ShouldBe(2);
         results[0].StatusCode.ShouldBe(HttpStatusCode.OK);
@@ -125,7 +125,7 @@ public sealed class HttpParallelExtensionsAdditionalTests
             ParallelOptions = new() { ErrorMode = ErrorMode.BestEffort, MaxRetries = 0 }
         };
 
-        await uris.GetParallelAsync(httpClient, options);
+        await uris.GetParallelAsync(httpClient, options, TestContext.Current.CancellationToken);
 
         callbackUri.ShouldNotBeNull();
         callbackStatus.ShouldBe(HttpStatusCode.BadGateway);
@@ -151,7 +151,7 @@ public sealed class HttpParallelExtensionsAdditionalTests
             ParallelOptions = new() { ErrorMode = ErrorMode.BestEffort, MaxRetries = 0 }
         };
 
-        await uris.GetParallelAsync(httpClient, options);
+        await uris.GetParallelAsync(httpClient, options, TestContext.Current.CancellationToken);
 
         callbackInvoked.ShouldBeTrue();
     }
@@ -178,12 +178,13 @@ public sealed class HttpParallelExtensionsAdditionalTests
             uri,
             destination,
             httpClient,
-            options);
+            options,
+            TestContext.Current.CancellationToken);
 
         bytesDownloaded.ShouldBe(expectedContent.Length);
         destination.Position = 0;
         using var reader = new StreamReader(destination);
-        var downloadedContent = await reader.ReadToEndAsync();
+        var downloadedContent = await reader.ReadToEndAsync(TestContext.Current.CancellationToken);
         downloadedContent.ShouldBe(expectedContent);
     }
 
@@ -196,7 +197,7 @@ public sealed class HttpParallelExtensionsAdditionalTests
         try
         {
             var filePath = Path.Join(tempDir, "overwrite.txt");
-            await File.WriteAllTextAsync(filePath, "Old content");
+            await File.WriteAllTextAsync(filePath, "Old content", TestContext.Current.CancellationToken);
 
             var downloads = new[] { (uri: new Uri("http://test.local/file.txt"), destinationPath: filePath) };
 
@@ -210,10 +211,10 @@ public sealed class HttpParallelExtensionsAdditionalTests
 
             var options = new StreamingDownloadOptions { OverwriteExisting = true, EnableResume = false };
 
-            var results = await downloads.DownloadParallelAsync(httpClient, options);
+            var results = await downloads.DownloadParallelAsync(httpClient, options, TestContext.Current.CancellationToken);
 
             results.Count.ShouldBe(1);
-            var newContent = await File.ReadAllTextAsync(filePath);
+            var newContent = await File.ReadAllTextAsync(filePath, TestContext.Current.CancellationToken);
             newContent.ShouldBe("New content");
         }
         finally
@@ -232,7 +233,7 @@ public sealed class HttpParallelExtensionsAdditionalTests
         {
             var filePath = Path.Join(tempDir, "partial-no-resume.txt");
             const string partialContent = "Partial";
-            await File.WriteAllTextAsync(filePath, partialContent);
+            await File.WriteAllTextAsync(filePath, partialContent, TestContext.Current.CancellationToken);
             const string fullContent = "Partial is wrong - start over";
 
             var downloads = new[] { (uri: new Uri("http://test.local/file.txt"), destinationPath: filePath) };
@@ -257,11 +258,11 @@ public sealed class HttpParallelExtensionsAdditionalTests
 
             var options = new StreamingDownloadOptions { EnableResume = true };
 
-            var results = await downloads.DownloadParallelAsync(httpClient, options);
+            var results = await downloads.DownloadParallelAsync(httpClient, options, TestContext.Current.CancellationToken);
 
             results.Count.ShouldBe(1);
             headCalled.ShouldBeTrue();
-            var downloadedContent = await File.ReadAllTextAsync(filePath);
+            var downloadedContent = await File.ReadAllTextAsync(filePath, TestContext.Current.CancellationToken);
             downloadedContent.ShouldBe(fullContent);
         }
         finally

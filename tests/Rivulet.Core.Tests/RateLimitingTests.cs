@@ -32,7 +32,8 @@ public sealed class RateLimitingTests
                 await Task.Delay(1, ct); // Minimal work
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         sw.Stop();
 
@@ -65,7 +66,8 @@ public sealed class RateLimitingTests
                 await Task.Delay(1, ct);
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         sw.Stop();
 
@@ -99,7 +101,8 @@ public sealed class RateLimitingTests
                 await Task.Delay(1, ct);
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         sw.Stop();
 
@@ -127,8 +130,9 @@ public sealed class RateLimitingTests
                     await Task.Delay(1, ct);
                     return x * 2;
                 },
-                options)
-            .CountAsync();
+                options,
+                cancellationToken: TestContext.Current.CancellationToken)
+            .CountAsync(TestContext.Current.CancellationToken);
 
         sw.Stop();
 
@@ -155,7 +159,8 @@ public sealed class RateLimitingTests
                 await Task.Delay(1, ct);
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         sw.Stop();
 
@@ -268,7 +273,8 @@ public sealed class RateLimitingTests
                 // Fail first attempt
                 return attemptCount < 2 ? throw new InvalidOperationException("Transient") : x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         sw.Stop();
 
@@ -295,7 +301,8 @@ public sealed class RateLimitingTests
                 await Task.Delay(Random.Shared.Next(1, 10), ct);
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(20);
         results.ShouldBeInOrder();
@@ -326,7 +333,8 @@ public sealed class RateLimitingTests
                 await Task.Delay(1, ct);
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         sw.Stop();
 
@@ -360,7 +368,8 @@ public sealed class RateLimitingTests
                 await Task.Delay(1, ct);
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         sw.Stop();
 
@@ -388,7 +397,8 @@ public sealed class RateLimitingTests
                 await Task.Delay(1, ct);
                 return x % 5 == 0 ? throw new InvalidOperationException("Error") : x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Should get 16 results (20 - 4 failures)
         results.Count.ShouldBe(16);

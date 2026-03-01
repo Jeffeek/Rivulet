@@ -26,12 +26,13 @@ public sealed class HttpStreamingExtensionsTests
         var bytesDownloaded = await HttpStreamingExtensions.DownloadToStreamAsync(
             uri,
             destination,
-            httpClient);
+            httpClient,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         bytesDownloaded.ShouldBe(expectedContent.Length);
         destination.Position = 0;
         using var reader = new StreamReader(destination);
-        var downloadedContent = await reader.ReadToEndAsync();
+        var downloadedContent = await reader.ReadToEndAsync(TestContext.Current.CancellationToken);
         downloadedContent.ShouldBe(expectedContent);
     }
 
@@ -44,7 +45,8 @@ public sealed class HttpStreamingExtensionsTests
         await Assert.ThrowsAsync<ArgumentNullException>(async () => await HttpStreamingExtensions.DownloadToStreamAsync(
             null!,
             destination,
-            httpClient));
+            httpClient,
+            cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -56,7 +58,8 @@ public sealed class HttpStreamingExtensionsTests
         await Assert.ThrowsAsync<ArgumentNullException>(async () => await HttpStreamingExtensions.DownloadToStreamAsync(
             uri,
             null!,
-            httpClient));
+            httpClient,
+            cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -93,7 +96,8 @@ public sealed class HttpStreamingExtensionsTests
             uri,
             destination,
             httpClient,
-            options);
+            options,
+            TestContext.Current.CancellationToken);
 
         bytesDownloaded.ShouldBe(fileSize);
         progressReports.ShouldNotBeEmpty();
@@ -124,7 +128,8 @@ public sealed class HttpStreamingExtensionsTests
                 uri,
                 destination,
                 httpClient,
-                options));
+                options,
+                TestContext.Current.CancellationToken));
 
         exception.Message.ShouldContain("Content length mismatch");
     }
@@ -151,7 +156,7 @@ public sealed class HttpStreamingExtensionsTests
                 return Task.FromResult(response);
             });
 
-            var results = await downloads.DownloadParallelAsync(httpClient);
+            var results = await downloads.DownloadParallelAsync(httpClient, cancellationToken: TestContext.Current.CancellationToken);
 
             results.Count.ShouldBe(2);
             results.ShouldAllBe(static r => r.bytesDownloaded > 0);
@@ -159,7 +164,7 @@ public sealed class HttpStreamingExtensionsTests
             File.Exists(Path.Join(tempDir, "file1.txt")).ShouldBeTrue();
             File.Exists(Path.Join(tempDir, "file2.txt")).ShouldBeTrue();
 
-            var content1 = await File.ReadAllTextAsync(Path.Join(tempDir, "file1.txt"));
+            var content1 = await File.ReadAllTextAsync(Path.Join(tempDir, "file1.txt"), TestContext.Current.CancellationToken);
             content1.ShouldContain("file1.txt");
         }
         finally
@@ -177,7 +182,7 @@ public sealed class HttpStreamingExtensionsTests
         try
         {
             var filePath = Path.Join(tempDir, "existing.txt");
-            await File.WriteAllTextAsync(filePath, "Existing content");
+            await File.WriteAllTextAsync(filePath, "Existing content", TestContext.Current.CancellationToken);
 
             var downloads = new[] { (uri: new Uri("http://test.local/file.txt"), destinationPath: filePath) };
 
@@ -191,7 +196,7 @@ public sealed class HttpStreamingExtensionsTests
             var options = new StreamingDownloadOptions { OverwriteExisting = false, EnableResume = false };
 
             await Assert.ThrowsAsync<IOException>(async () =>
-                await downloads.DownloadParallelAsync(httpClient, options));
+                await downloads.DownloadParallelAsync(httpClient, options, TestContext.Current.CancellationToken));
         }
         finally
         {
@@ -209,7 +214,7 @@ public sealed class HttpStreamingExtensionsTests
         {
             var filePath = Path.Join(tempDir, "partial.txt");
             const string partialContent = "Partial ";
-            await File.WriteAllTextAsync(filePath, partialContent);
+            await File.WriteAllTextAsync(filePath, partialContent, TestContext.Current.CancellationToken);
 
             const string fullContent = "Partial content";
             const string remainingContent = "content";
@@ -247,13 +252,13 @@ public sealed class HttpStreamingExtensionsTests
 
             var options = new StreamingDownloadOptions { EnableResume = true };
 
-            var results = await downloads.DownloadParallelAsync(httpClient, options);
+            var results = await downloads.DownloadParallelAsync(httpClient, options, TestContext.Current.CancellationToken);
 
             results.Count.ShouldBe(1);
             headCalled.ShouldBeTrue();
             getRangeCalled.ShouldBeTrue();
 
-            var downloadedContent = await File.ReadAllTextAsync(filePath);
+            var downloadedContent = await File.ReadAllTextAsync(filePath, TestContext.Current.CancellationToken);
             downloadedContent.ShouldBe(fullContent);
         }
         finally
@@ -272,7 +277,7 @@ public sealed class HttpStreamingExtensionsTests
         {
             var filePath = Path.Join(tempDir, "complete.txt");
             const string content = "Complete file";
-            await File.WriteAllTextAsync(filePath, content);
+            await File.WriteAllTextAsync(filePath, content, TestContext.Current.CancellationToken);
 
             var downloads = new[] { (uri: new Uri("http://test.local/file.txt"), destinationPath: filePath) };
 
@@ -294,7 +299,7 @@ public sealed class HttpStreamingExtensionsTests
 
             var options = new StreamingDownloadOptions { EnableResume = true };
 
-            var results = await downloads.DownloadParallelAsync(httpClient, options);
+            var results = await downloads.DownloadParallelAsync(httpClient, options, TestContext.Current.CancellationToken);
 
             results.Count.ShouldBe(1);
             results[0].bytesDownloaded.ShouldBe(content.Length);
@@ -341,7 +346,7 @@ public sealed class HttpStreamingExtensionsTests
                 ProgressInterval = TimeSpan.FromMilliseconds(1)
             };
 
-            await downloads.DownloadParallelAsync(httpClient, options);
+            await downloads.DownloadParallelAsync(httpClient, options, TestContext.Current.CancellationToken);
 
             progressCalled.ShouldBeTrue();
             completeCalled.ShouldBeTrue();

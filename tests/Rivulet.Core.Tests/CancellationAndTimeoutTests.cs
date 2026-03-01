@@ -101,7 +101,8 @@ public sealed class CancellationAndTimeoutTests
 
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(4, "items 1,2,4,5 complete within 2s timeout, item 3 exceeds timeout with 10s delay");
         results.ShouldNotContain(6, "item 3 (result=6) should timeout and be excluded from results");
@@ -118,7 +119,8 @@ public sealed class CancellationAndTimeoutTests
                 await Task.Delay(50, ct);
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(10, "all items should complete within the 2s timeout");
     }
@@ -134,7 +136,8 @@ public sealed class CancellationAndTimeoutTests
                 await Task.Delay(200, ct);
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(3);
     }
@@ -160,7 +163,8 @@ public sealed class CancellationAndTimeoutTests
                 await Task.Delay(1000, ct);
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.ShouldBeEmpty("all 3 attempts (initial + 2 retries) should timeout with 1s delay vs 100ms timeout");
         attemptCount.ShouldBe(3, "operation should be attempted 3 times (initial attempt + 2 retries)");
@@ -182,8 +186,9 @@ public sealed class CancellationAndTimeoutTests
 
                     return x * 2;
                 },
-                options)
-            .ToListAsync();
+                options,
+                cancellationToken: TestContext.Current.CancellationToken)
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(4);
     }
@@ -228,10 +233,11 @@ public sealed class CancellationAndTimeoutTests
         var tokensPassed = new ConcurrentBag<bool>();
 
         var results = await source.SelectParallelAsync((x, ct) =>
-        {
-            tokensPassed.Add(ct != CancellationToken.None);
-            return new ValueTask<int>(x * 2);
-        });
+            {
+                tokensPassed.Add(ct != CancellationToken.None);
+                return new ValueTask<int>(x * 2);
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(5);
         tokensPassed.ShouldAllBe(static token => token);
@@ -259,7 +265,8 @@ public sealed class CancellationAndTimeoutTests
 
                     return x * 2;
                 },
-                options);
+                options,
+                cancellationToken: TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -287,7 +294,8 @@ public sealed class CancellationAndTimeoutTests
 
                     return x * 2;
                 },
-                options);
+                options,
+                cancellationToken: TestContext.Current.CancellationToken);
     }
 
     [Fact]

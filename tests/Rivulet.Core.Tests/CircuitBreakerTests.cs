@@ -72,13 +72,14 @@ public sealed class CircuitBreakerTests
             try
             {
                 await cb.ExecuteAsync(static async () =>
-                {
-                    await Task.Delay(1, CancellationToken.None);
-                    throw new InvalidOperationException("Test failure");
+                    {
+                        await Task.Delay(1, CancellationToken.None);
+                        throw new InvalidOperationException("Test failure");
 #pragma warning disable CS0162 // Unreachable code detected
-                    return 0;
+                        return 0;
 #pragma warning restore CS0162 // Unreachable code detected
-                });
+                    },
+                    TestContext.Current.CancellationToken);
             }
             catch (InvalidOperationException)
             {
@@ -112,13 +113,14 @@ public sealed class CircuitBreakerTests
             try
             {
                 await cb.ExecuteAsync(static async () =>
-                {
-                    await Task.Delay(1, CancellationToken.None);
-                    throw new InvalidOperationException("Test failure");
+                    {
+                        await Task.Delay(1, CancellationToken.None);
+                        throw new InvalidOperationException("Test failure");
 #pragma warning disable CS0162 // Unreachable code detected
-                    return 0;
+                        return 0;
 #pragma warning restore CS0162 // Unreachable code detected
-                });
+                    },
+                    TestContext.Current.CancellationToken);
             }
             catch (InvalidOperationException)
             {
@@ -133,10 +135,11 @@ public sealed class CircuitBreakerTests
 
         // Next execution attempt should transition to HalfOpen
         var result = await cb.ExecuteAsync(static async () =>
-        {
-            await Task.Delay(1, CancellationToken.None);
-            return 42;
-        });
+            {
+                await Task.Delay(1, CancellationToken.None);
+                return 42;
+            },
+            TestContext.Current.CancellationToken);
 
         result.ShouldBe(42);
         cb.State.ShouldBe(CircuitBreakerState.HalfOpen);
@@ -153,7 +156,8 @@ public sealed class CircuitBreakerTests
             try
             {
                 await cb.ExecuteAsync(static () =>
-                    ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")));
+                        ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")),
+                    TestContext.Current.CancellationToken);
             }
             catch (InvalidOperationException)
             {
@@ -170,10 +174,11 @@ public sealed class CircuitBreakerTests
         for (var i = 0; i < 2; i++)
         {
             var result = await cb.ExecuteAsync(async () =>
-            {
-                await Task.Delay(1, CancellationToken.None);
-                return i;
-            });
+                {
+                    await Task.Delay(1, CancellationToken.None);
+                    return i;
+                },
+                TestContext.Current.CancellationToken);
             result.ShouldBe(i);
         }
 
@@ -192,7 +197,8 @@ public sealed class CircuitBreakerTests
             try
             {
                 await cb.ExecuteAsync(static () =>
-                    ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")));
+                        ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")),
+                    TestContext.Current.CancellationToken);
             }
             catch (InvalidOperationException)
             {
@@ -205,10 +211,11 @@ public sealed class CircuitBreakerTests
 
         // Execute one successful operation
         await cb.ExecuteAsync(static async () =>
-        {
-            await Task.Delay(1, CancellationToken.None);
-            return 1;
-        });
+            {
+                await Task.Delay(1, CancellationToken.None);
+                return 1;
+            },
+            TestContext.Current.CancellationToken);
 
         cb.State.ShouldBe(CircuitBreakerState.HalfOpen);
 
@@ -216,7 +223,8 @@ public sealed class CircuitBreakerTests
         try
         {
             await cb.ExecuteAsync(static () =>
-                ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")));
+                    ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")),
+                TestContext.Current.CancellationToken);
         }
         catch (InvalidOperationException)
         {
@@ -241,7 +249,8 @@ public sealed class CircuitBreakerTests
             try
             {
                 await cb.ExecuteAsync(static () =>
-                    ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")));
+                        ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")),
+                    TestContext.Current.CancellationToken);
             }
             catch (InvalidOperationException)
             {
@@ -261,7 +270,8 @@ public sealed class CircuitBreakerTests
             try
             {
                 await cb.ExecuteAsync(static () =>
-                    ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")));
+                        ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")),
+                    TestContext.Current.CancellationToken);
             }
             catch (InvalidOperationException)
             {
@@ -275,7 +285,8 @@ public sealed class CircuitBreakerTests
         try
         {
             await cb.ExecuteAsync(static () =>
-                ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")));
+                    ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")),
+                TestContext.Current.CancellationToken);
         }
         catch (InvalidOperationException)
         {
@@ -312,7 +323,8 @@ public sealed class CircuitBreakerTests
             try
             {
                 await cb.ExecuteAsync(static () =>
-                    ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")));
+                        ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")),
+                    TestContext.Current.CancellationToken);
             }
             catch (InvalidOperationException)
             {
@@ -325,15 +337,16 @@ public sealed class CircuitBreakerTests
 
         // Execute successful operation - this triggers HalfOpen transition and then closes circuit
         await cb.ExecuteAsync(static async () =>
-        {
-            await Task.Delay(1, CancellationToken.None);
-            return 1;
-        });
+            {
+                await Task.Delay(1, CancellationToken.None);
+                return 1;
+            },
+            TestContext.Current.CancellationToken);
 
         // Wait for all transitions to complete with timeout
         // Callbacks are executed via Task.Run in fire-and-forget mode, which can be delayed under load
         // Increased from 500ms → 2000ms for Windows CI/CD reliability
-        var completedTask = await Task.WhenAny(allTransitionsComplete.Task, Task.Delay(2000));
+        var completedTask = await Task.WhenAny(allTransitionsComplete.Task, Task.Delay(2000, TestContext.Current.CancellationToken));
         (completedTask == allTransitionsComplete.Task).ShouldBeTrue("all transitions should complete within 2000ms");
 
         // Verify state transitions
@@ -353,7 +366,8 @@ public sealed class CircuitBreakerTests
             try
             {
                 await cb.ExecuteAsync(static () =>
-                    ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")));
+                        ValueTask.FromException<InvalidOperationException>(new InvalidOperationException("Test failure")),
+                    TestContext.Current.CancellationToken);
             }
             catch (InvalidOperationException)
             {
@@ -370,10 +384,11 @@ public sealed class CircuitBreakerTests
 
         // Should execute normally
         var result = await cb.ExecuteAsync(static async () =>
-        {
-            await Task.Delay(1, CancellationToken.None);
-            return 42;
-        });
+            {
+                await Task.Delay(1, CancellationToken.None);
+                return 42;
+            },
+            TestContext.Current.CancellationToken);
 
         result.ShouldBe(42);
     }
@@ -396,7 +411,8 @@ public sealed class CircuitBreakerTests
                 // Fail for items 1, 2, 3
                 return x <= 3 ? throw new InvalidOperationException($"Item {x} failed") : x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // After 3 failures, circuit opens and remaining items fail fast
         // Should get results only for items that were attempted before circuit opened
@@ -423,8 +439,9 @@ public sealed class CircuitBreakerTests
                     // Fail for items 1-3, then succeed
                     return x <= 3 ? throw new InvalidOperationException($"Item {x} failed") : x * 2;
                 },
-                options)
-            .ToListAsync();
+                options,
+                cancellationToken: TestContext.Current.CancellationToken)
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         // Should have successful results (items 4-20)
         results.ShouldNotBeEmpty();
@@ -459,7 +476,8 @@ public sealed class CircuitBreakerTests
                 // Always fail for items 1 and 2
                 return x <= 2 ? throw new InvalidOperationException($"Item {x} failed") : x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Items 1 and 2 should be retried
         attemptCounts[1].ShouldBe(3); // Initial + 2 retries
@@ -521,7 +539,8 @@ public sealed class CircuitBreakerTests
                 await Task.Delay(Random.Shared.Next(1, 10), ct);
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(10);
         results.ShouldBeInOrder();

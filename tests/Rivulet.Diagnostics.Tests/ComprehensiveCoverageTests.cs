@@ -46,8 +46,9 @@ public sealed class ComprehensiveCoverageTests
                     await Task.Delay(200, ct);
                     return x;
                 },
-                new() { MaxDegreeOfParallelism = 2 })
-            .ToListAsync();
+                new() { MaxDegreeOfParallelism = 2 },
+                cancellationToken: TestContext.Current.CancellationToken)
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         // Wait for at least 2x the aggregation window to ensure timer fires and EventSource counters are received
         await DeadlineExtensions.ApplyDeadlineAsync(
@@ -76,8 +77,9 @@ public sealed class ComprehensiveCoverageTests
                             await Task.Delay(400, ct);
                             return x;
                         },
-                        new() { MaxDegreeOfParallelism = 2 })
-                    .ToListAsync();
+                        new() { MaxDegreeOfParallelism = 2 },
+                        cancellationToken: TestContext.Current.CancellationToken)
+                    .ToListAsync(TestContext.Current.CancellationToken);
 
                 // Wait for EventSource counters to fire and be written to file
                 await Task.Delay(2000, CancellationToken.None);

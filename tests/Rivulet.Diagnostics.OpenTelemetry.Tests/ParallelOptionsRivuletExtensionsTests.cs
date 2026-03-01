@@ -39,10 +39,11 @@ public sealed class ParallelOptionsRivuletExtensionsTests
                 await Task.Delay(1, ct);
                 return x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Wait for all activities to be started and added
-        allActivitiesStarted.Wait(TimeSpan.FromSeconds(2));
+        allActivitiesStarted.Wait(TimeSpan.FromSeconds(2), TestContext.Current.CancellationToken);
         await Task.Delay(50, CancellationToken.None); // Extra buffer
 
         results.Count.ShouldBe(5);
@@ -77,10 +78,11 @@ public sealed class ParallelOptionsRivuletExtensionsTests
                 await Task.Delay(1, ct);
                 return x;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Wait for all activities to be stopped and added
-        allActivitiesStopped.Wait(TimeSpan.FromSeconds(2));
+        allActivitiesStopped.Wait(TimeSpan.FromSeconds(2), TestContext.Current.CancellationToken);
         await Task.Delay(50, CancellationToken.None); // Extra buffer
 
         results.Count.ShouldBe(3);
@@ -124,7 +126,8 @@ public sealed class ParallelOptionsRivuletExtensionsTests
                     await Task.Delay(1, ct);
                     throw new InvalidOperationException($"Error {x}");
                 },
-                options);
+                options,
+                cancellationToken: TestContext.Current.CancellationToken);
         }
         catch (AggregateException)
         {
@@ -132,7 +135,7 @@ public sealed class ParallelOptionsRivuletExtensionsTests
         }
 
         // Wait for all activities to be stopped and added
-        allActivitiesStopped.Wait(TimeSpan.FromSeconds(2));
+        allActivitiesStopped.Wait(TimeSpan.FromSeconds(2), TestContext.Current.CancellationToken);
         await Task.Delay(50, CancellationToken.None); // Extra buffer
 
         var errorActivities = activities.Where(static a => a.OperationName == "Rivulet.ErrorOperation.Item").ToList();
@@ -164,7 +167,8 @@ public sealed class ParallelOptionsRivuletExtensionsTests
                 await Task.Delay(1, ct);
                 return ++attemptCount < 3 ? throw new InvalidOperationException("Transient error") : x * 2;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(1);
 
@@ -218,7 +222,8 @@ public sealed class ParallelOptionsRivuletExtensionsTests
                 await Task.Delay(1, ct);
                 return x;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(3);
         onStartCalled.ShouldBe(3);
@@ -278,10 +283,11 @@ public sealed class ParallelOptionsRivuletExtensionsTests
 
                 throw new InvalidOperationException("Always fails");
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Wait for circuit breaker state change to be recorded
-        var stateChangedSuccessfully = stateChanged.Wait(TimeSpan.FromSeconds(30));
+        var stateChangedSuccessfully = stateChanged.Wait(TimeSpan.FromSeconds(30), TestContext.Current.CancellationToken);
         stateChangedSuccessfully.ShouldBeTrue("circuit breaker should change state");
 
         // Give time for event to be recorded on activity and for activities to complete
@@ -335,7 +341,8 @@ public sealed class ParallelOptionsRivuletExtensionsTests
                 await Task.Delay(delay, ct);
                 return x;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(50);
 
@@ -391,10 +398,11 @@ public sealed class ParallelOptionsRivuletExtensionsTests
                 await Task.Delay(1, ct);
                 return x;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         // Wait for all activities to be stopped and added to the collection
-        allActivitiesStopped.Wait(TimeSpan.FromSeconds(2));
+        allActivitiesStopped.Wait(TimeSpan.FromSeconds(2), TestContext.Current.CancellationToken);
         await Task.Delay(50, CancellationToken.None); // Extra buffer for activity processing
 
         var indexActivities =
@@ -419,7 +427,8 @@ public sealed class ParallelOptionsRivuletExtensionsTests
                 await Task.Delay(1, ct);
                 return x;
             },
-            options);
+            options,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         act.ShouldNotThrowAsync();
     }

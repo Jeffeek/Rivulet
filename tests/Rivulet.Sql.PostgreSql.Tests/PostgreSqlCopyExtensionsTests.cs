@@ -20,7 +20,8 @@ public sealed class PostgreSqlCopyExtensionsTests
             CreateMockConnection,
             "test_table",
             ["id", "name", "email"],
-            MapToRow);
+            MapToRow,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("source");
     }
@@ -34,7 +35,8 @@ public sealed class PostgreSqlCopyExtensionsTests
             null!,
             "test_table",
             ["id", "name", "email"],
-            MapToRow);
+            MapToRow,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("connectionFactory");
     }
@@ -48,7 +50,8 @@ public sealed class PostgreSqlCopyExtensionsTests
             CreateMockConnection,
             null!,
             ["id", "name", "email"],
-            MapToRow);
+            MapToRow,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         await act.ShouldThrowAsync<ArgumentException>();
     }
@@ -62,7 +65,8 @@ public sealed class PostgreSqlCopyExtensionsTests
             CreateMockConnection,
             "",
             ["id", "name", "email"],
-            MapToRow);
+            MapToRow,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         await act.ShouldThrowAsync<ArgumentException>();
     }
@@ -76,7 +80,8 @@ public sealed class PostgreSqlCopyExtensionsTests
             CreateMockConnection,
             "   ",
             ["id", "name", "email"],
-            MapToRow);
+            MapToRow,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         await act.ShouldThrowAsync<ArgumentException>();
     }
@@ -90,7 +95,8 @@ public sealed class PostgreSqlCopyExtensionsTests
             CreateMockConnection,
             "test_table",
             null!,
-            MapToRow);
+            MapToRow,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("columns");
     }
@@ -104,7 +110,8 @@ public sealed class PostgreSqlCopyExtensionsTests
             CreateMockConnection,
             "test_table",
             [],
-            MapToRow);
+            MapToRow,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentException>()).ParamName.ShouldBe("columns");
     }
@@ -118,7 +125,8 @@ public sealed class PostgreSqlCopyExtensionsTests
             CreateMockConnection,
             "test_table",
             ["id", "name", "email"],
-            null!);
+            null!,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("mapToRow");
     }
@@ -133,7 +141,8 @@ public sealed class PostgreSqlCopyExtensionsTests
             "test_table",
             ["id", "name", "email"],
             MapToRow,
-            batchSize: 0);
+            batchSize: 0,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentOutOfRangeException>()).ParamName.ShouldBe("batchSize");
     }
@@ -148,7 +157,8 @@ public sealed class PostgreSqlCopyExtensionsTests
             "test_table",
             ["id", "name", "email"],
             MapToRow,
-            batchSize: -1);
+            batchSize: -1,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentOutOfRangeException>()).ParamName.ShouldBe("batchSize");
     }
@@ -163,7 +173,8 @@ public sealed class PostgreSqlCopyExtensionsTests
             CreateMockConnection,
             "test_table",
             ["id", "name", "email"],
-            MapToRow);
+            MapToRow,
+            cancellationToken: TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -174,7 +185,8 @@ public sealed class PostgreSqlCopyExtensionsTests
         var act = () => source!.BulkInsertUsingCopyCsvAsync(
             CreateMockConnection,
             "test_table",
-            ["id", "name", "email"]);
+            ["id", "name", "email"],
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("source");
     }
@@ -187,7 +199,8 @@ public sealed class PostgreSqlCopyExtensionsTests
         var act = () => source.BulkInsertUsingCopyCsvAsync(
             null!,
             "test_table",
-            ["id", "name", "email"]);
+            ["id", "name", "email"],
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("connectionFactory");
     }
@@ -200,7 +213,8 @@ public sealed class PostgreSqlCopyExtensionsTests
         var act = () => source.BulkInsertUsingCopyCsvAsync(
             CreateMockConnection,
             null!,
-            ["id", "name", "email"]);
+            ["id", "name", "email"],
+            cancellationToken: TestContext.Current.CancellationToken);
 
         await act.ShouldThrowAsync<ArgumentException>();
     }
@@ -213,7 +227,8 @@ public sealed class PostgreSqlCopyExtensionsTests
         var act = () => source.BulkInsertUsingCopyCsvAsync(
             CreateMockConnection,
             "",
-            ["id", "name", "email"]);
+            ["id", "name", "email"],
+            cancellationToken: TestContext.Current.CancellationToken);
 
         await act.ShouldThrowAsync<ArgumentException>();
     }
@@ -226,7 +241,8 @@ public sealed class PostgreSqlCopyExtensionsTests
         var act = () => source.BulkInsertUsingCopyCsvAsync(
             CreateMockConnection,
             "test_table",
-            null!);
+            null!,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("columns");
     }
@@ -239,7 +255,8 @@ public sealed class PostgreSqlCopyExtensionsTests
         var act = () => source.BulkInsertUsingCopyCsvAsync(
             CreateMockConnection,
             "test_table",
-            []);
+            [],
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentException>()).ParamName.ShouldBe("columns");
     }
@@ -253,7 +270,8 @@ public sealed class PostgreSqlCopyExtensionsTests
             CreateMockConnection,
             "test_table",
             ["id", "name", "email"],
-            batchSize: 0);
+            batchSize: 0,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentOutOfRangeException>()).ParamName.ShouldBe("batchSize");
     }
@@ -267,7 +285,8 @@ public sealed class PostgreSqlCopyExtensionsTests
             CreateMockConnection,
             "test_table",
             ["id", "name", "email"],
-            batchSize: -1);
+            batchSize: -1,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentOutOfRangeException>()).ParamName.ShouldBe("batchSize");
     }
@@ -281,7 +300,8 @@ public sealed class PostgreSqlCopyExtensionsTests
         return source.BulkInsertUsingCopyCsvAsync(
             CreateMockConnection,
             "test_table",
-            ["id", "name", "email"]);
+            ["id", "name", "email"],
+            cancellationToken: TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -292,7 +312,8 @@ public sealed class PostgreSqlCopyExtensionsTests
         var act = () => source!.BulkInsertUsingCopyTextAsync(
             CreateMockConnection,
             "test_table",
-            ["id", "name", "email"]);
+            ["id", "name", "email"],
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("source");
     }
@@ -305,7 +326,8 @@ public sealed class PostgreSqlCopyExtensionsTests
         var act = () => source.BulkInsertUsingCopyTextAsync(
             null!,
             "test_table",
-            ["id", "name", "email"]);
+            ["id", "name", "email"],
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("connectionFactory");
     }
@@ -318,7 +340,8 @@ public sealed class PostgreSqlCopyExtensionsTests
         var act = () => source.BulkInsertUsingCopyTextAsync(
             CreateMockConnection,
             null!,
-            ["id", "name", "email"]);
+            ["id", "name", "email"],
+            cancellationToken: TestContext.Current.CancellationToken);
 
         await act.ShouldThrowAsync<ArgumentException>();
     }
@@ -331,7 +354,8 @@ public sealed class PostgreSqlCopyExtensionsTests
         var act = () => source.BulkInsertUsingCopyTextAsync(
             CreateMockConnection,
             "",
-            ["id", "name", "email"]);
+            ["id", "name", "email"],
+            cancellationToken: TestContext.Current.CancellationToken);
 
         await act.ShouldThrowAsync<ArgumentException>();
     }
@@ -344,7 +368,8 @@ public sealed class PostgreSqlCopyExtensionsTests
         var act = () => source.BulkInsertUsingCopyTextAsync(
             CreateMockConnection,
             "test_table",
-            null!);
+            null!,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentNullException>()).ParamName.ShouldBe("columns");
     }
@@ -357,7 +382,8 @@ public sealed class PostgreSqlCopyExtensionsTests
         var act = () => source.BulkInsertUsingCopyTextAsync(
             CreateMockConnection,
             "test_table",
-            []);
+            [],
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentException>()).ParamName.ShouldBe("columns");
     }
@@ -371,7 +397,8 @@ public sealed class PostgreSqlCopyExtensionsTests
             CreateMockConnection,
             "test_table",
             ["id", "name", "email"],
-            batchSize: 0);
+            batchSize: 0,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentOutOfRangeException>()).ParamName.ShouldBe("batchSize");
     }
@@ -385,7 +412,8 @@ public sealed class PostgreSqlCopyExtensionsTests
             CreateMockConnection,
             "test_table",
             ["id", "name", "email"],
-            batchSize: -1);
+            batchSize: -1,
+            cancellationToken: TestContext.Current.CancellationToken);
 
         (await act.ShouldThrowAsync<ArgumentOutOfRangeException>()).ParamName.ShouldBe("batchSize");
     }
@@ -399,7 +427,8 @@ public sealed class PostgreSqlCopyExtensionsTests
         return source.BulkInsertUsingCopyTextAsync(
             CreateMockConnection,
             "test_table",
-            ["id", "name", "email"]);
+            ["id", "name", "email"],
+            cancellationToken: TestContext.Current.CancellationToken);
     }
 
     private sealed record TestRecord(int Id, string Name, string Email);

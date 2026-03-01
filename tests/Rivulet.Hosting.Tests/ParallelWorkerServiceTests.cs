@@ -191,8 +191,8 @@ public sealed class ParallelWorkerServiceTests
 
         using var cts = new CancellationTokenSource();
         await service.StartAsync(cts.Token);
-        // Increased from 50ms → 200ms for Windows CI/CD reliability
-        await Task.Delay(200, cts.Token);
+        // Increased from 50ms → 5s for CI/CD reliability
+        await Task.Delay(TimeSpan.FromSeconds(5), cts.Token);
         await cts.CancelAsync();
         await service.StopAsync(CancellationToken.None);
 

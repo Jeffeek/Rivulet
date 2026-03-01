@@ -9,7 +9,7 @@ public sealed class BufferStageTests
             .Buffer(10)
             .Build();
 
-        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 20));
+        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 20), TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(20);
         results.OrderBy(static x => x).ShouldBe(Enumerable.Range(1, 20));
@@ -22,7 +22,7 @@ public sealed class BufferStageTests
             .Buffer(10)
             .Build();
 
-        var results = await pipeline.ExecuteAsync(Enumerable.Empty<int>());
+        var results = await pipeline.ExecuteAsync(Enumerable.Empty<int>(), TestContext.Current.CancellationToken);
 
         results.ShouldBeEmpty();
     }
@@ -34,7 +34,7 @@ public sealed class BufferStageTests
             .Buffer(10)
             .Build();
 
-        var results = await pipeline.ExecuteAsync(new[] { 42 });
+        var results = await pipeline.ExecuteAsync(new[] { 42 }, TestContext.Current.CancellationToken);
 
         results.ShouldHaveSingleItem().ShouldBe(42);
     }
@@ -59,7 +59,7 @@ public sealed class BufferStageTests
             })
             .Build();
 
-        await pipeline.ExecuteAsync(Enumerable.Range(1, 10));
+        await pipeline.ExecuteAsync(Enumerable.Range(1, 10), TestContext.Current.CancellationToken);
         producerFinished = true;
 
         consumerStarted.ShouldBeTrue();
@@ -75,7 +75,7 @@ public sealed class BufferStageTests
             .Tap(_ => Interlocked.Increment(ref processedCount))
             .Build();
 
-        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 100));
+        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 100), TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(100);
         processedCount.ShouldBe(100);
@@ -91,7 +91,7 @@ public sealed class BufferStageTests
             .Buffer(5)
             .Build();
 
-        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 20));
+        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 20), TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(15); // All x*2 > 10 where x >= 6
     }
@@ -104,7 +104,7 @@ public sealed class BufferStageTests
             .SelectParallel(static x => x * 2)
             .Build();
 
-        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 10000));
+        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 10000), TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(10000);
         results.Sum().ShouldBe(100010000); // Sum of 2+4+...+20000
@@ -117,7 +117,7 @@ public sealed class BufferStageTests
             .Buffer(1)
             .Build();
 
-        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 10));
+        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 10), TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(10);
     }
@@ -133,7 +133,7 @@ public sealed class BufferStageTests
             .Buffer(20)
             .Build();
 
-        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 50));
+        var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 50), TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(50);
         // x -> x*2 -> x*2+1 = 2x+1

@@ -21,8 +21,9 @@ public sealed class PrometheusExporterTests
                     await Task.Delay(200, ct);
                     return x * 2;
                 },
-                new() { MaxDegreeOfParallelism = 2 })
-            .ToListAsync();
+                new() { MaxDegreeOfParallelism = 2 },
+                cancellationToken: TestContext.Current.CancellationToken)
+            .ToListAsync(TestContext.Current.CancellationToken);
 
         // Wait for EventCounters to fire
         // Increased from 2000ms → 5000ms for Windows CI/CD reliability (2/180 failures)
@@ -57,7 +58,8 @@ public sealed class PrometheusExporterTests
         await Enumerable.Range(1, 10)
             .ToAsyncEnumerable()
             .ForEachParallelAsync(static async (_, ct) => { await Task.Delay(200, ct); },
-                new() { MaxDegreeOfParallelism = 2 });
+                new() { MaxDegreeOfParallelism = 2 },
+                TestContext.Current.CancellationToken);
 
         // Wait for EventCounters to fire
         // Increased from 2000ms → 5000ms for Windows CI/CD reliability (3/180 failures)
