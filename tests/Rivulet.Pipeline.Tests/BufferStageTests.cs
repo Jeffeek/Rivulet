@@ -22,7 +22,7 @@ public sealed class BufferStageTests
             .Buffer(10)
             .Build();
 
-        var results = await pipeline.ExecuteAsync(Enumerable.Empty<int>(), TestContext.Current.CancellationToken);
+        var results = await pipeline.ExecuteAsync([], TestContext.Current.CancellationToken);
 
         results.ShouldBeEmpty();
     }
@@ -34,7 +34,7 @@ public sealed class BufferStageTests
             .Buffer(10)
             .Build();
 
-        var results = await pipeline.ExecuteAsync(new[] { 42 }, TestContext.Current.CancellationToken);
+        var results = await pipeline.ExecuteAsync([42], TestContext.Current.CancellationToken);
 
         results.ShouldHaveSingleItem().ShouldBe(42);
     }
@@ -137,6 +137,6 @@ public sealed class BufferStageTests
 
         results.Count.ShouldBe(50);
         // x -> x*2 -> x*2+1 = 2x+1
-        results.OrderBy(static x => x).ShouldBe(Enumerable.Range(1, 50).Select(static x => x * 2 + 1));
+        results.OrderBy(static x => x).ShouldBe(Enumerable.Range(1, 50).Select(static x => (x * 2) + 1));
     }
 }

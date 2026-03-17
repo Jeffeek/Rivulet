@@ -149,7 +149,15 @@ internal sealed class AdaptiveConcurrencyController : IAsyncDisposable
         switch (delta)
         {
             case > 0:
-                _semaphore.Release(delta);
+                try
+                {
+                    _semaphore.Release(delta);
+                }
+                catch (SemaphoreFullException)
+                {
+                    // Semaphore already at max capacity - workers have released their slots.
+                    // Concurrency update is still recorded in _currentConcurrency.
+                }
             break;
             case < 0:
                 _ = Task.Run(async () =>

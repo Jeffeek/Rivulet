@@ -6,7 +6,8 @@ namespace Rivulet.Pipeline.Internal.Stages;
 /// <summary>
 /// A stage that transforms each item in parallel using the provided selector.
 /// </summary>
-internal sealed class SelectStage<TIn, TOut>(Func<TIn, CancellationToken, ValueTask<TOut>> selector,
+internal sealed class SelectStage<TIn, TOut>(
+    Func<TIn, CancellationToken, ValueTask<TOut>> selector,
     StageOptions options,
     string name
 ) : IInternalPipelineStage, IPipelineStage<TIn, TOut>

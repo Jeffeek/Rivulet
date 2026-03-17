@@ -14,6 +14,7 @@ internal sealed class CircuitBreaker
     private readonly CircuitBreakerOptions _options;
     private int _consecutiveFailures;
     private int _consecutiveSuccesses;
+    private int _halfOpenPermits;
     private long _openedAtTicks;
 
     private CircuitBreakerState _state;
@@ -78,7 +79,11 @@ internal sealed class CircuitBreaker
                     Environment.TickCount64 - _openedAtTicks >= (long)_options.OpenTimeout.TotalMilliseconds)
                     TransitionToHalfOpen();
 
-                if (_state == CircuitBreakerState.Open) throw new CircuitBreakerOpenException(_state);
+                if (_state == CircuitBreakerState.Open || (_state == CircuitBreakerState.HalfOpen && _halfOpenPermits <= 0))
+                    throw new CircuitBreakerOpenException(_state);
+
+                if (_state == CircuitBreakerState.HalfOpen)
+                    _halfOpenPermits--;
             });
 
         return ValueTask.CompletedTask;
@@ -163,6 +168,7 @@ internal sealed class CircuitBreaker
         _state = CircuitBreakerState.HalfOpen;
         _consecutiveSuccesses = 0;
         _consecutiveFailures = 0;
+        _halfOpenPermits = _options.SuccessThreshold;
 
         if (oldState != CircuitBreakerState.HalfOpen)
             CallbackHelper.InvokeFireAndForget(_options.OnStateChange, oldState, CircuitBreakerState.HalfOpen, nameof(CircuitBreakerOptions.OnStateChange));

@@ -41,7 +41,7 @@ internal static class RetryPolicy
                     ref previousDelay);
                 await Task.Delay(delay, ct).ConfigureAwait(false);
             }
-            catch (Exception ex) when (options.OnFallback is not null)
+            catch (Exception ex) when (ex is not OperationCanceledException && options.OnFallback is not null)
             {
                 var fallbackValue = options.OnFallback(itemIndex, ex);
                 return fallbackValue switch

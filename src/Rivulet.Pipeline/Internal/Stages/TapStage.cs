@@ -6,7 +6,8 @@ namespace Rivulet.Pipeline.Internal.Stages;
 /// <summary>
 /// A stage that executes a side effect on each item without transforming it.
 /// </summary>
-internal sealed class TapStage<T>(Func<T, CancellationToken, ValueTask> action,
+internal sealed class TapStage<T>(
+    Func<T, CancellationToken, ValueTask> action,
     StageOptions options,
     string name
 ) : IInternalPipelineStage, IPipelineStage<T, T>

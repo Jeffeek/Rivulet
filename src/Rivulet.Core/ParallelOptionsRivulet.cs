@@ -269,10 +269,10 @@ public sealed class ParallelOptionsRivulet
         OnFallback = original.OnFallback;
         ChannelCapacity = original.ChannelCapacity;
         OrderedOutput = original.OrderedOutput;
-        Progress = new ProgressOptions(original.Progress);
-        Metrics = new MetricsOptions(original.Metrics);
-        RateLimit = new RateLimitOptions(original.RateLimit);
-        CircuitBreaker = new CircuitBreakerOptions(original.CircuitBreaker);
-        AdaptiveConcurrency = new AdaptiveConcurrencyOptions(original.AdaptiveConcurrency);
+        Progress = original.Progress is not null ? new ProgressOptions(original.Progress) : null;
+        Metrics = original.Metrics is not null ? new MetricsOptions(original.Metrics) : null;
+        RateLimit = original.RateLimit is not null ? new RateLimitOptions(original.RateLimit) : null;
+        CircuitBreaker = original.CircuitBreaker is not null ? new CircuitBreakerOptions(original.CircuitBreaker) : null;
+        AdaptiveConcurrency = original.AdaptiveConcurrency is not null ? new AdaptiveConcurrencyOptions(original.AdaptiveConcurrency) : null;
     }
 }

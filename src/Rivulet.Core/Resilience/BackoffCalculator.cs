@@ -68,7 +68,7 @@ public static class BackoffCalculator
         }
 
         var maxDelayMs = previousDelay.TotalMilliseconds * 3;
-        var delayMs = baseDelayMs + Random.Shared.NextDouble() * (maxDelayMs - baseDelayMs);
+        var delayMs = baseDelayMs + (Random.Shared.NextDouble() * (maxDelayMs - baseDelayMs));
 
         previousDelay = TimeSpan.FromMilliseconds(delayMs);
         return previousDelay;
