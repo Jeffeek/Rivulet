@@ -68,6 +68,12 @@ internal sealed class CircuitBreaker
         }
     }
 
+    /// <summary>
+    /// Enforces circuit-breaker state checks and adjusts HalfOpen permits before an operation runs.
+    /// </summary>
+    /// <returns>A completed ValueTask representing the pre-execution checks.</returns>
+    /// <exception cref="OperationCanceledException">Thrown if <paramref name="cancellationToken"/> has cancellation requested.</exception>
+    /// <exception cref="CircuitBreakerOpenException">Thrown if the circuit is Open, or HalfOpen with no remaining permits.</exception>
     private ValueTask BeforeExecuteAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -162,6 +168,12 @@ internal sealed class CircuitBreaker
             CallbackHelper.InvokeFireAndForget(_options.OnStateChange, oldState, CircuitBreakerState.Open, nameof(CircuitBreakerOptions.OnStateChange));
     }
 
+    /// <summary>
+    /// Transition the circuit breaker into the HalfOpen state, reset success and failure counters, and initialize the HalfOpen permit count.
+    /// </summary>
+    /// <remarks>
+    /// If the state was not already HalfOpen, invokes the configured OnStateChange callback asynchronously.
+    /// </remarks>
     private void TransitionToHalfOpen()
     {
         var oldState = _state;

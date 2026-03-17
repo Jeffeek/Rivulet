@@ -247,7 +247,14 @@ public sealed class ParallelOptionsRivulet
     /// <summary>
     ///     Initializes a new instance of the <see cref="ParallelOptionsRivulet"/> class by copying values from another instance.
     /// </summary>
+    /// <summary>
+    /// Creates a new ParallelOptionsRivulet by copying configuration values from an existing instance.
+    /// </summary>
     /// <param name="original">The original instance to copy from. If null, default values are used.</param>
+    /// <remarks>
+    /// Simple value and delegate properties are copied directly. Nested option properties (Progress, Metrics, RateLimit, CircuitBreaker, AdaptiveConcurrency)
+    /// are cloned into new instances when the corresponding original property is non-null; otherwise the cloned property remains null.
+    /// </remarks>
     public ParallelOptionsRivulet(ParallelOptionsRivulet? original)
     {
         if (original is null)

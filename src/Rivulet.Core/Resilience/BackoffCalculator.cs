@@ -57,7 +57,13 @@ public static class BackoffCalculator
 
     /// <summary>
     ///     Calculates decorrelated jitter delay: Random(BaseDelay, PreviousDelay * 3).
+    /// <summary>
+    /// Computes a decorrelated jitter delay for the given retry attempt and updates the provided previous delay.
     /// </summary>
+    /// <param name="baseDelayMs">Base delay in milliseconds used as the minimum scale for the jitter.</param>
+    /// <param name="attempt">One-based retry attempt number.</param>
+    /// <param name="previousDelay">Reference to the previously computed delay; updated to the newly computed delay.</param>
+    /// <returns>The computed delay as a <see cref="TimeSpan"/> for this retry attempt.</returns>
     private static TimeSpan CalculateDecorrelatedJitter(double baseDelayMs, int attempt, ref TimeSpan previousDelay)
     {
         if (attempt == 1 || previousDelay == TimeSpan.Zero)
