@@ -70,7 +70,6 @@ public sealed class RateLimitOptions
         TokensPerSecond = original.TokensPerSecond;
         BurstCapacity = original.BurstCapacity;
         TokensPerOperation = original.TokensPerOperation;
-        BurstCapacity = original.BurstCapacity;
     }
 
     /// <summary>

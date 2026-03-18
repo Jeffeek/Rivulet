@@ -16,7 +16,7 @@ internal sealed class AdaptiveConcurrencyController : IAsyncDisposable
     private readonly SemaphoreSlim _semaphore;
 
     private int _currentConcurrency;
-    private bool _disposed;
+    private volatile bool _disposed;
     private int _failureCount;
     private int _successCount;
 
@@ -70,6 +70,8 @@ internal sealed class AdaptiveConcurrencyController : IAsyncDisposable
     /// <param name="success">Whether the operation succeeded.</param>
     public void Release(TimeSpan latency, bool success)
     {
+        if (_disposed) return;
+
         LockHelper.Execute(_lock,
             () =>
             {
@@ -81,7 +83,14 @@ internal sealed class AdaptiveConcurrencyController : IAsyncDisposable
                     _failureCount++;
             });
 
-        _semaphore.Release();
+        try
+        {
+            _semaphore.Release();
+        }
+        catch (ObjectDisposedException)
+        {
+            // Disposed concurrently — safe to ignore
+        }
     }
 
     /// <summary>

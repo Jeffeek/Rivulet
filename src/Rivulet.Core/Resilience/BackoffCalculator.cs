@@ -8,6 +8,8 @@ namespace Rivulet.Core.Resilience;
 [SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public static class BackoffCalculator
 {
+    private static readonly double MaxDelayMs = TimeSpan.FromMinutes(5).TotalMilliseconds;
+
     /// <summary>
     ///     Calculates the delay for a retry attempt based on the specified backoff strategy.
     /// </summary>
@@ -41,7 +43,7 @@ public static class BackoffCalculator
     /// </summary>
     private static TimeSpan CalculateExponential(double baseDelayMs, int attempt)
     {
-        var delayMs = baseDelayMs * Math.Pow(2, attempt - 1);
+        var delayMs = Math.Min(baseDelayMs * Math.Pow(2, attempt - 1), MaxDelayMs);
         return TimeSpan.FromMilliseconds(delayMs);
     }
 
@@ -50,15 +52,13 @@ public static class BackoffCalculator
     /// </summary>
     private static TimeSpan CalculateExponentialJitter(double baseDelayMs, int attempt)
     {
-        var maxDelayMs = baseDelayMs * Math.Pow(2, attempt - 1);
+        var maxDelayMs = Math.Min(baseDelayMs * Math.Pow(2, attempt - 1), MaxDelayMs);
         var jitteredDelayMs = Random.Shared.NextDouble() * maxDelayMs;
         return TimeSpan.FromMilliseconds(jitteredDelayMs);
     }
 
     /// <summary>
-    ///     Calculates decorrelated jitter delay: Random(BaseDelay, PreviousDelay * 3).
-    /// <summary>
-    /// Computes a decorrelated jitter delay for the given retry attempt and updates the provided previous delay.
+    ///     Calculates decorrelated jitter delay: Random(BaseDelay, max(BaseDelay, PreviousDelay * 3)).
     /// </summary>
     /// <param name="baseDelayMs">Base delay in milliseconds used as the minimum scale for the jitter.</param>
     /// <param name="attempt">One-based retry attempt number.</param>
@@ -68,12 +68,11 @@ public static class BackoffCalculator
     {
         if (attempt == 1 || previousDelay == TimeSpan.Zero)
         {
-            var firstDelayMs = Random.Shared.NextDouble() * baseDelayMs;
-            previousDelay = TimeSpan.FromMilliseconds(firstDelayMs);
+            previousDelay = TimeSpan.FromMilliseconds(baseDelayMs);
             return previousDelay;
         }
 
-        var maxDelayMs = previousDelay.TotalMilliseconds * 3;
+        var maxDelayMs = Math.Min(Math.Max(baseDelayMs, previousDelay.TotalMilliseconds * 3), MaxDelayMs);
         var delayMs = baseDelayMs + (Random.Shared.NextDouble() * (maxDelayMs - baseDelayMs));
 
         previousDelay = TimeSpan.FromMilliseconds(delayMs);
@@ -85,7 +84,7 @@ public static class BackoffCalculator
     /// </summary>
     private static TimeSpan CalculateLinear(double baseDelayMs, int attempt)
     {
-        var delayMs = baseDelayMs * attempt;
+        var delayMs = Math.Min(baseDelayMs * attempt, MaxDelayMs);
         return TimeSpan.FromMilliseconds(delayMs);
     }
 
@@ -94,7 +93,7 @@ public static class BackoffCalculator
     /// </summary>
     private static TimeSpan CalculateLinearJitter(double baseDelayMs, int attempt)
     {
-        var maxDelayMs = baseDelayMs * attempt;
+        var maxDelayMs = Math.Min(baseDelayMs * attempt, MaxDelayMs);
         var jitteredDelayMs = Random.Shared.NextDouble() * maxDelayMs;
         return TimeSpan.FromMilliseconds(jitteredDelayMs);
     }

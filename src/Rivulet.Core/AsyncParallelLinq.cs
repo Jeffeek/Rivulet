@@ -165,6 +165,16 @@ public static class AsyncParallelLinq
             {
                 // Errors are collected in the errors list and handled after cleanup
             }
+            catch when (options.ErrorMode == ErrorMode.FailFast)
+            {
+                // FailFast: throw the first real exception, not cancellation exceptions from cancelled workers.
+                // Consistent with SelectParallelStreamAsync behavior.
+                var firstRealError = errors.FirstOrDefault(static e => e is not OperationCanceledException);
+                if (firstRealError != null)
+                    ExceptionDispatchInfo.Capture(firstRealError).Throw();
+
+                throw;
+            }
 
             if (options.ErrorMode == ErrorMode.CollectAndContinue && !errors.IsEmpty)
                 throw new AggregateException(errors);
