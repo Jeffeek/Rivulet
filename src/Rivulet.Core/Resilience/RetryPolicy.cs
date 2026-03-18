@@ -15,7 +15,7 @@ internal static class RetryPolicy
     /// <param name="ct">Cancellation token that cancels the operation and any per-item timeout.</param>
     /// <returns>
     /// The result produced by <paramref name="func"/>, or a value produced by the configured fallback.
-    /// If the fallback returns null and <typeparamref name="TResult"/> is a reference type, the method returns null (default). 
+    /// If the fallback returns null and <typeparamref name="TResult"/> is a reference type, the method returns null (default).
     /// </returns>
     /// <exception cref="OperationCanceledException">Thrown if <paramref name="ct"/> is canceled before or during execution.</exception>
     /// <exception cref="InvalidOperationException">Thrown when a configured fallback returns a value that cannot be converted to <typeparamref name="TResult"/>.</exception>

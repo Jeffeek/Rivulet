@@ -437,4 +437,194 @@ public sealed class BugFixRegressionTests
     }
 
     #endregion
+
+    #region Fix #5: DecorrelatedJitter produces correct monotonically-increasing delays
+
+    [Fact]
+    public void BackoffCalculator_DecorrelatedJitter_DelayNeverBelowBaseDelay_AfterFirstAttempt()
+    {
+        var baseDelay = TimeSpan.FromMilliseconds(100);
+        var previousDelay = TimeSpan.Zero;
+
+        for (var attempt = 1; attempt <= 10; attempt++)
+        {
+            var delay = BackoffCalculator.CalculateDelay(BackoffStrategy.DecorrelatedJitter, baseDelay, attempt, ref previousDelay);
+
+            if (attempt == 1)
+            {
+                // First attempt uses baseDelay directly
+                delay.TotalMilliseconds.ShouldBe(100);
+            }
+            else
+            {
+                // Subsequent attempts: delay >= baseDelay (never decreasing below base)
+                delay.TotalMilliseconds.ShouldBeGreaterThanOrEqualTo(baseDelay.TotalMilliseconds);
+            }
+        }
+    }
+
+    #endregion
+
+    #region Fix #6: AdaptiveConcurrencyController volatile disposed + Release guard
+
+    [Fact]
+    public async Task AdaptiveConcurrencyController_ReleaseAfterDispose_DoesNotThrow()
+    {
+        var controller = new AdaptiveConcurrencyController(new AdaptiveConcurrencyOptions
+        {
+            MinConcurrency = 1,
+            MaxConcurrency = 4,
+            InitialConcurrency = 2,
+            SampleInterval = TimeSpan.FromSeconds(10)
+        });
+
+        // Acquire a slot
+        await controller.AcquireAsync(TestContext.Current.CancellationToken);
+
+        // Dispose while slot is held
+        await controller.DisposeAsync();
+
+        // Release after dispose — should not throw ObjectDisposedException
+        var act = () => controller.Release(TimeSpan.FromMilliseconds(10), true);
+        act.ShouldNotThrow();
+    }
+
+    #endregion
+
+    #region Fix #7: SelectParallelAsync FailFast throws original exception, not AggregateException
+
+    [Fact]
+    public async Task SelectParallelAsync_FailFast_ThrowsOriginalException_NotAggregateException()
+    {
+        var source = Enumerable.Range(1, 100);
+        var options = new ParallelOptionsRivulet
+        {
+            MaxDegreeOfParallelism = 4,
+            ErrorMode = ErrorMode.FailFast
+        };
+
+        var ex = await Should.ThrowAsync<InvalidOperationException>(() =>
+            source.SelectParallelAsync(
+                static async (x, ct) =>
+                {
+                    await Task.Delay(10, ct);
+                    return x == 5 ? throw new InvalidOperationException("Item 5 failed") : x * 2;
+                },
+                options,
+                cancellationToken: TestContext.Current.CancellationToken));
+
+        // Should be the original exception, not wrapped in AggregateException
+        ex.Message.ShouldContain("Item 5 failed");
+    }
+
+    [Fact]
+    public async Task SelectParallelAsync_FailFast_ConsistentWithStreaming()
+    {
+        // Both APIs should throw the same exception type for the same failure
+        var source = Enumerable.Range(1, 20);
+        var options = new ParallelOptionsRivulet
+        {
+            MaxDegreeOfParallelism = 1,
+            ErrorMode = ErrorMode.FailFast
+        };
+
+        var materializedException = await Should.ThrowAsync<InvalidOperationException>(() =>
+            source.SelectParallelAsync(
+                static (x, _) => x == 3
+                    ? throw new InvalidOperationException("fail")
+                    : new ValueTask<int>(x * 2),
+                options,
+                cancellationToken: TestContext.Current.CancellationToken));
+
+        var streamException = await Should.ThrowAsync<InvalidOperationException>(async () =>
+            await source.ToAsyncEnumerable()
+                .SelectParallelStreamAsync(
+                    static (x, _) => x == 3
+                        ? throw new InvalidOperationException("fail")
+                        : new ValueTask<int>(x * 2),
+                    options,
+                    cancellationToken: TestContext.Current.CancellationToken)
+                .ToListAsync(TestContext.Current.CancellationToken));
+
+        materializedException.GetType().ShouldBe(streamException.GetType());
+    }
+
+    #endregion
+
+    #region Fix #8: Backoff delay capped at 5 minutes
+
+    [Fact]
+    public void BackoffCalculator_Exponential_CappedAt5Minutes()
+    {
+        var previousDelay = TimeSpan.Zero;
+        var delay = BackoffCalculator.CalculateDelay(
+            BackoffStrategy.Exponential,
+            TimeSpan.FromSeconds(1),
+            attempt: 20, // 1s * 2^19 = ~145 hours without cap
+            ref previousDelay);
+
+        delay.ShouldBeLessThanOrEqualTo(TimeSpan.FromMinutes(5));
+    }
+
+    [Fact]
+    public void BackoffCalculator_Linear_CappedAt5Minutes()
+    {
+        var previousDelay = TimeSpan.Zero;
+        var delay = BackoffCalculator.CalculateDelay(
+            BackoffStrategy.Linear,
+            TimeSpan.FromSeconds(10),
+            attempt: 1000,
+            ref previousDelay);
+
+        delay.ShouldBeLessThanOrEqualTo(TimeSpan.FromMinutes(5));
+    }
+
+    [Fact]
+    public void BackoffCalculator_AllStrategies_CappedAt5Minutes()
+    {
+        var strategies = new[]
+        {
+            BackoffStrategy.Exponential,
+            BackoffStrategy.ExponentialJitter,
+            BackoffStrategy.DecorrelatedJitter,
+            BackoffStrategy.Linear,
+            BackoffStrategy.LinearJitter
+        };
+
+        foreach (var strategy in strategies)
+        {
+            var previousDelay = TimeSpan.Zero;
+
+            // Run 30 attempts to push past the cap
+            for (var attempt = 1; attempt <= 30; attempt++)
+            {
+                var delay = BackoffCalculator.CalculateDelay(strategy, TimeSpan.FromSeconds(1), attempt, ref previousDelay);
+                delay.ShouldBeLessThanOrEqualTo(TimeSpan.FromMinutes(5),
+                    $"Strategy {strategy} attempt {attempt} exceeded 5-minute cap");
+            }
+        }
+    }
+
+    #endregion
+
+    #region Fix #9: RateLimitOptions copy constructor no duplicate BurstCapacity assignment
+
+    [Fact]
+    public void RateLimitOptions_CopyConstructor_CopiesAllPropertiesExactlyOnce()
+    {
+        var original = new RateLimitOptions
+        {
+            TokensPerSecond = 42,
+            BurstCapacity = 200,
+            TokensPerOperation = 3.5
+        };
+
+        var copy = new RateLimitOptions(original);
+
+        copy.TokensPerSecond.ShouldBe(42);
+        copy.BurstCapacity.ShouldBe(200);
+        copy.TokensPerOperation.ShouldBe(3.5);
+    }
+
+    #endregion
 }

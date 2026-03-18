@@ -16,24 +16,17 @@ namespace Rivulet.Core;
 public static class AsyncParallelLinq
 {
     /// <summary>
-    ///     Applies a transformation function to each element in a collection in parallel with bounded concurrency,
-    ///     returning a materialized list of results. Supports retry policies, per-item timeouts, and configurable error
-    ///     handling.
+    /// Processes the source sequence in parallel using the provided asynchronous selector, applying the supplied parallel options for concurrency, ordering, and error-handling policy.
     /// </summary>
-    /// <typeparam name="TSource">The type of elements in the source collection.</typeparam>
-    /// <typeparam name="TResult">The type of elements in the result collection.</typeparam>
-    /// <param name="source">The source enumerable to process.</param>
-    /// <param name="taskSelector">The async transformation function to apply to each element.</param>
-    /// <param name="options">
-    ///     Configuration options for parallel execution, including concurrency limits, retry policies, and
-    ///     lifecycle hooks. If null, defaults are used.
-    /// </param>
-    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-    /// <returns>A task representing the asynchronous operation, containing a list of all transformed results.</returns>
-    /// <exception cref="AggregateException">
-    ///     Thrown when <see cref="ErrorMode.CollectAndContinue" /> is enabled and one or more
-    ///     errors occurred during processing.
-    /// </exception>
+    /// <param name="source">The sequence of items to process.</param>
+    /// <param name="taskSelector">An asynchronous selector that produces a result for each source item. The selector receives the item and a <see cref="CancellationToken"/>.</param>
+    /// <param name="options">Parallelization and behavior options; controls max degree of parallelism, ordered vs unordered output, error mode, throttling hooks, and related settings. If null, defaults are used.</param>
+    /// <param name="cancellationToken">Token to observe for cancellation.</param>
+    /// <returns>
+    /// A list of results produced by applying <paramref name="taskSelector"/> to each item. If <see cref="ParallelOptionsRivulet.OrderedOutput"/> is true, results are returned in the original source order; otherwise the order is unspecified.
+    /// </returns>
+    /// <exception cref="AggregateException">Thrown when <c>ErrorMode.CollectAndContinue</c> is used and one or more item processors failed; the aggregate contains all collected exceptions.</exception>
+    /// <exception cref="Exception">When <c>ErrorMode.FailFast</c> is used, the first non-<see cref="OperationCanceledException"/> error encountered is propagated after worker cleanup.</exception>
     /// <exception cref="OperationCanceledException">Thrown when the operation is cancelled via the cancellation token.</exception>
     public static async Task<List<TResult>> SelectParallelAsync<TSource, TResult>(
         this IEnumerable<TSource> source,
@@ -52,6 +45,7 @@ public static class AsyncParallelLinq
                 ? new ConcurrentDictionary<int, TResult>()
                 : null;
             var errors = new ConcurrentBag<Exception>();
+            var sharedFirstRealError = new StrongBox<Exception?>(null);
 
             var sourceList = source as ICollection<TSource> ?? [..source];
             var totalItems = sourceList.Count;
@@ -140,7 +134,8 @@ public static class AsyncParallelLinq
                                     infrastructure,
                                     cts,
                                     // ReSharper restore AccessToDisposedClosure
-                                    errors).ConfigureAwait(false);
+                                    errors,
+                                    sharedFirstRealError).ConfigureAwait(false);
                             }
                             finally
                             {
@@ -164,6 +159,16 @@ public static class AsyncParallelLinq
 #pragma warning restore CA1031
             {
                 // Errors are collected in the errors list and handled after cleanup
+            }
+            catch when (options.ErrorMode == ErrorMode.FailFast)
+            {
+                // FailFast: throw the first real exception, not cancellation exceptions from cancelled workers.
+                // sharedFirstRealError is set atomically via Interlocked.CompareExchange in HandleProcessingErrorAsync,
+                // ensuring deterministic selection regardless of ConcurrentBag ordering.
+                if (sharedFirstRealError.Value is { } captured)
+                    ExceptionDispatchInfo.Capture(captured).Throw();
+
+                throw;
             }
 
             if (options.ErrorMode == ErrorMode.CollectAndContinue && !errors.IsEmpty)
@@ -220,6 +225,7 @@ public static class AsyncParallelLinq
 
             var effectiveMaxWorkers = infrastructure.EffectiveMaxWorkers;
             var errors = new ConcurrentBag<Exception>();
+            var sharedFirstRealError = new StrongBox<Exception?>(null);
 
             var input = CreateBoundedInputChannel<(int idx, TSource item)>(options.ChannelCapacity);
             var output = Channel.CreateBounded<(int idx, TResult result)>(
@@ -292,7 +298,8 @@ public static class AsyncParallelLinq
                                         options,
                                         infrastructure,
                                         cts,
-                                        errors)
+                                        errors,
+                                        sharedFirstRealError)
                                     .ConfigureAwait(false);
                             }
                             finally
@@ -397,12 +404,10 @@ public static class AsyncParallelLinq
                     case ErrorMode.FailFast:
                     {
                         // FailFast: Throw the first real exception, not cancellation exceptions.
-                        // When an exception occurs, we cancel the token to stop other workers,
-                        // but this causes other workers to throw OperationCanceledException.
-                        // Filter out cancellation exceptions to find the real error.
-                        var firstRealError = errors.FirstOrDefault(static e => e is not OperationCanceledException);
-                        if (firstRealError != null)
-                            ExceptionDispatchInfo.Capture(firstRealError).Throw();
+                        // sharedFirstRealError is set atomically via Interlocked.CompareExchange in HandleProcessingErrorAsync,
+                        // ensuring deterministic selection regardless of ConcurrentBag ordering.
+                        if (sharedFirstRealError.Value is { } captured)
+                            ExceptionDispatchInfo.Capture(captured).Throw();
 
                         // If no real errors but task failed, propagate that (e.g., source error)
                         if (taskException != null)
@@ -692,10 +697,14 @@ public static class AsyncParallelLinq
         ParallelOptionsRivulet options,
         ParallelInfrastructure infrastructure,
         CancellationTokenSource cts,
-        ConcurrentBag<Exception>? errors
+        ConcurrentBag<Exception>? errors,
+        StrongBox<Exception?>? sharedFirstRealError = null
     )
     {
         errors?.Add(ex);
+
+        if (sharedFirstRealError is not null && ex is not OperationCanceledException)
+            Interlocked.CompareExchange(ref sharedFirstRealError.Value, ex, null);
 
         infrastructure.ProgressTracker?.IncrementErrors();
         infrastructure.MetricsTracker.IncrementFailures();

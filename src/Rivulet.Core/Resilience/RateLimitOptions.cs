@@ -56,10 +56,10 @@ public sealed class RateLimitOptions
     public RateLimitOptions() { }
 
     /// <summary>
-    ///     Initializes a new instance of the <see cref="RateLimitOptions"/> class by copying values from another instance.
+    /// Initializes a new instance of the <see cref="RateLimitOptions"/> class by copying values from another instance.
     /// </summary>
     /// <param name="original">The original instance to copy from. If null, default values are used.</param>
-    // ReSharper disable once MemberCanBeInternal
+    /// <exception cref="ArgumentException">Thrown when <paramref name="original"/> contains invalid settings (non-positive values or burst capacity smaller than tokens per operation).</exception>
     public RateLimitOptions(RateLimitOptions? original)
     {
         if (original is null)
@@ -70,7 +70,6 @@ public sealed class RateLimitOptions
         TokensPerSecond = original.TokensPerSecond;
         BurstCapacity = original.BurstCapacity;
         TokensPerOperation = original.TokensPerOperation;
-        BurstCapacity = original.BurstCapacity;
     }
 
     /// <summary>
