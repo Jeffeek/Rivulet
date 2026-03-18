@@ -95,9 +95,8 @@ public static class BackoffCalculator
     }
 
     /// <summary>
-    ///     Calculates linear backoff delay: BaseDelay * attempt.
-    /// <summary>
-    /// Compute a linearly scaled retry delay and clamp it to the configured maximum.
+    /// Computes a linearly scaled retry delay and clamps it to the configured maximum.
+    /// Formula: BaseDelay * attempt.
     /// </summary>
     /// <param name="baseDelayMs">Base delay in milliseconds used as the unit for scaling.</param>
     /// <param name="attempt">1-based retry attempt number used to scale the base delay.</param>
