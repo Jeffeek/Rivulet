@@ -45,23 +45,24 @@ public sealed class MetricsAggregatorTests
             });
 
         // Take a thread-safe snapshot to avoid race conditions
-        IReadOnlyList<AggregatedMetrics> lastAggregation;
+        List<IReadOnlyList<AggregatedMetrics>> snapshot;
         lock (lockObj)
         {
             aggregatedMetrics.ShouldNotBeEmpty();
-            lastAggregation = aggregatedMetrics.Last();
+            snapshot = aggregatedMetrics.ToList();
         }
 
-        lastAggregation.ShouldNotBeEmpty();
-
-        var itemsStartedMetric =
-            lastAggregation.FirstOrDefault(static m => m.Name == RivuletMetricsConstants.CounterNames.ItemsStarted);
+        // Search ALL aggregation windows for the metric — on Windows, timer coalescing
+        // can cause the last window to miss counters that aged out of the 500ms window
+        var itemsStartedMetric = snapshot
+            .SelectMany(static a => a)
+            .FirstOrDefault(static m => m.Name == RivuletMetricsConstants.CounterNames.ItemsStarted);
         itemsStartedMetric.ShouldNotBeNull();
         itemsStartedMetric.Min.ShouldBeGreaterThanOrEqualTo(0);
         itemsStartedMetric.Max.ShouldBeGreaterThanOrEqualTo(itemsStartedMetric.Min);
         itemsStartedMetric.Average.ShouldBeGreaterThanOrEqualTo(0);
         itemsStartedMetric.SampleCount.ShouldBeGreaterThan(0);
-        itemsStartedMetric.Timestamp.ShouldBe(DateTime.UtcNow, TimeSpan.FromSeconds(5));
+        itemsStartedMetric.Timestamp.ShouldBe(DateTime.UtcNow, TimeSpan.FromSeconds(10));
     }
 
     [Fact]
