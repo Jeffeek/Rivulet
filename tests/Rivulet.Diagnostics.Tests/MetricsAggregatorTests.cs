@@ -1,3 +1,4 @@
+using Rivulet.Base.Tests;
 using Rivulet.Core;
 using Rivulet.Core.Observability;
 
@@ -32,8 +33,16 @@ public sealed class MetricsAggregatorTests
                 cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync(TestContext.Current.CancellationToken);
 
-        // Wait for EventCounters to poll and write metrics, then for aggregation window to fire
-        await Task.Delay(5000, CancellationToken.None);
+        // Poll until EventCounters fire and aggregation window produces results
+        var deadline = DateTime.UtcNow.AddSeconds(10);
+        await DeadlineExtensions.ApplyDeadlineAsync(
+            deadline,
+            static () => Task.Delay(50, CancellationToken.None),
+            () =>
+            {
+                lock (lockObj)
+                    return aggregatedMetrics.Count == 0;
+            });
 
         // Take a thread-safe snapshot to avoid race conditions
         IReadOnlyList<AggregatedMetrics> lastAggregation;
@@ -82,8 +91,16 @@ public sealed class MetricsAggregatorTests
                 cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync(TestContext.Current.CancellationToken);
 
-        // Wait for at least 2x the aggregation window to ensure timer fires reliably
-        await Task.Delay(3000, CancellationToken.None); // Fixed delay for timer-based aggregation
+        // Poll until aggregation fires and produces results
+        var deadline = DateTime.UtcNow.AddSeconds(10);
+        await DeadlineExtensions.ApplyDeadlineAsync(
+            deadline,
+            static () => Task.Delay(50, CancellationToken.None),
+            () =>
+            {
+                lock (lockObj)
+                    return aggregatedMetrics.Count == 0;
+            });
 
         // Take a thread-safe snapshot of the list to avoid race conditions
         List<IReadOnlyList<AggregatedMetrics>> snapshot;
@@ -132,8 +149,16 @@ public sealed class MetricsAggregatorTests
                 cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync(TestContext.Current.CancellationToken);
 
-        // Wait for EventCounters to poll (~1s interval) + aggregation timer to fire
-        await Task.Delay(2000, CancellationToken.None); // Fixed delay for timer-based aggregation
+        // Poll until EventCounters fire and aggregation timer produces results
+        var deadline = DateTime.UtcNow.AddSeconds(10);
+        await DeadlineExtensions.ApplyDeadlineAsync(
+            deadline,
+            static () => Task.Delay(50, CancellationToken.None),
+            () =>
+            {
+                lock (lockObj)
+                    return aggregatedMetrics.Count == 0;
+            });
 
         // Take a thread-safe snapshot for initial checks
         IReadOnlyList<AggregatedMetrics> firstAggregation;

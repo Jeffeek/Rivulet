@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Rivulet.Base.Tests;
 using Rivulet.Core;
 
 namespace Rivulet.Diagnostics.Tests;
@@ -194,11 +195,12 @@ public sealed class EdgeCaseCoverageTests
                         cancellationToken: TestContext.Current.CancellationToken)
                     .ToListAsync(TestContext.Current.CancellationToken);
 
-                // Wait for EventSource counters to fire (1s default interval)
-                await Task.Delay(1500, CancellationToken.None);
+                var deadline = DateTime.UtcNow.AddSeconds(10);
+                await DeadlineExtensions.ApplyDeadlineAsync(
+                    deadline,
+                    static () => Task.Delay(50, CancellationToken.None),
+                    () => !File.Exists(testFile) || new FileInfo(testFile).Length == 0);
             }
-
-            await Task.Delay(100, CancellationToken.None);
 
             File.Exists(testFile).ShouldBeTrue();
             var jsonContent = await File.ReadAllTextAsync(testFile, TestContext.Current.CancellationToken);
