@@ -63,7 +63,11 @@ public sealed class RateLimitOptions
     /// Creates a new RateLimitOptions by copying configuration values from an existing instance.
     /// </summary>
     /// <param name="original">The source instance to copy from. If null, the new instance retains the default values.</param>
-    /// <exception cref="ArgumentException">Thrown when the source instance contains invalid settings (e.g., non-positive rates or burst capacity smaller than tokens per operation).</exception>
+    /// <summary>
+    /// Initializes a new instance by copying rate-limit settings from an existing instance.
+    /// </summary>
+    /// <param name="original">The source options to copy; if <c>null</c>, the new instance keeps default values.</param>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="original"/> contains invalid settings (non-positive values or burst capacity smaller than tokens per operation).</exception>
     public RateLimitOptions(RateLimitOptions? original)
     {
         if (original is null)

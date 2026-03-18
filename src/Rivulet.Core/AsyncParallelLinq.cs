@@ -43,7 +43,18 @@ public static class AsyncParallelLinq
     /// <param name="cancellationToken">Token to observe for cooperative cancellation.</param>
     /// <returns>A List&lt;TResult&gt; containing the results; when <c>options.OrderedOutput</c> is true results are returned in input order, otherwise order is unspecified.</returns>
     /// <exception cref="OperationCanceledException">Thrown when the operation is cancelled via the cancellation token.</exception>
+    /// <summary>
+    /// Processes the source sequence in parallel using the provided asynchronous selector, applying the supplied parallel options for concurrency, ordering, and error-handling policy.
+    /// </summary>
+    /// <param name="source">The sequence of items to process.</param>
+    /// <param name="taskSelector">An asynchronous selector that produces a result for each source item. The selector receives the item and a <see cref="CancellationToken"/>.</param>
+    /// <param name="options">Parallelization and behavior options; controls max degree of parallelism, ordered vs unordered output, error mode, throttling hooks, and related settings. If null, defaults are used.</param>
+    /// <param name="cancellationToken">Token to observe for cancellation.</param>
+    /// <returns>
+    /// A list of results produced by applying <paramref name="taskSelector"/> to each item. If <see cref="ParallelOptionsRivulet.OrderedOutput"/> is true, results are returned in the original source order; otherwise the order is unspecified.
+    /// </returns>
     /// <exception cref="AggregateException">Thrown when <c>ErrorMode.CollectAndContinue</c> is used and one or more item processors failed; the aggregate contains all collected exceptions.</exception>
+    /// <exception cref="Exception">When <c>ErrorMode.FailFast</c> is used, the first non-<see cref="OperationCanceledException"/> error encountered is propagated after worker cleanup.</exception>
     public static async Task<List<TResult>> SelectParallelAsync<TSource, TResult>(
         this IEnumerable<TSource> source,
         Func<TSource, CancellationToken, ValueTask<TResult>> taskSelector,
