@@ -39,9 +39,8 @@ public static class BackoffCalculator
     }
 
     /// <summary>
-    ///     Calculates exponential backoff delay: BaseDelay * 2^(attempt - 1).
-    /// <summary>
     /// Calculates an exponential backoff delay capped at the configured maximum.
+    /// Formula: BaseDelay * 2^(attempt - 1).
     /// </summary>
     /// <param name="baseDelayMs">Base delay in milliseconds used as the exponential multiplier.</param>
     /// <param name="attempt">1-based retry attempt number (1 yields the base delay).</param>
