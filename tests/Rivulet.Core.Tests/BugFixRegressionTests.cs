@@ -448,8 +448,7 @@ public sealed class BugFixRegressionTests
 
         for (var attempt = 1; attempt <= 10; attempt++)
         {
-            var delay = BackoffCalculator.CalculateDelay(
-                BackoffStrategy.DecorrelatedJitter, baseDelay, attempt, ref previousDelay);
+            var delay = BackoffCalculator.CalculateDelay(BackoffStrategy.DecorrelatedJitter, baseDelay, attempt, ref previousDelay);
 
             if (attempt == 1)
             {
@@ -599,9 +598,7 @@ public sealed class BugFixRegressionTests
             // Run 30 attempts to push past the cap
             for (var attempt = 1; attempt <= 30; attempt++)
             {
-                var delay = BackoffCalculator.CalculateDelay(
-                    strategy, TimeSpan.FromSeconds(1), attempt, ref previousDelay);
-
+                var delay = BackoffCalculator.CalculateDelay(strategy, TimeSpan.FromSeconds(1), attempt, ref previousDelay);
                 delay.ShouldBeLessThanOrEqualTo(TimeSpan.FromMinutes(5),
                     $"Strategy {strategy} attempt {attempt} exceeded 5-minute cap");
             }

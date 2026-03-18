@@ -56,14 +56,6 @@ public sealed class RateLimitOptions
     public RateLimitOptions() { }
 
     /// <summary>
-    ///     Initializes a new instance of the <see cref="RateLimitOptions"/> class by copying values from another instance.
-    /// </summary>
-    /// <param name="original">The original instance to copy from. If null, default values are used.</param>
-    /// <summary>
-    /// Creates a new RateLimitOptions by copying configuration values from an existing instance.
-    /// </summary>
-    /// <param name="original">The source instance to copy from. If null, the new instance retains the default values.</param>
-    /// <summary>
     /// Initializes a new instance by copying rate-limit settings from an existing instance.
     /// </summary>
     /// <param name="original">The source options to copy; if <c>null</c>, the new instance keeps default values.</param>

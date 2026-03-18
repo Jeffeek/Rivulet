@@ -64,14 +64,6 @@ internal sealed class AdaptiveConcurrencyController : IAsyncDisposable
         await _semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
 
     /// <summary>
-    ///     Releases a slot after operation completion.
-    /// </summary>
-    /// <param name="latency">Operation latency.</param>
-    /// <summary>
-    /// Records the outcome and observed latency of a completed operation and returns a concurrency slot to the controller.
-    /// </summary>
-    /// <param name="latency">Observed duration of the completed operation.</param>
-    /// <summary>
     /// Records an operation's latency and success/failure outcome, updates internal counters used for sampling, and releases a concurrency slot back to the controller.
     /// </summary>
     /// <param name="latency">The operation's elapsed time.</param>

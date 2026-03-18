@@ -11,13 +11,6 @@ public static class BackoffCalculator
     private static readonly double MaxDelayMs = TimeSpan.FromMinutes(5).TotalMilliseconds;
 
     /// <summary>
-    ///     Calculates the delay for a retry attempt based on the specified backoff strategy.
-    /// </summary>
-    /// <param name="strategy">The backoff strategy to use.</param>
-    /// <param name="baseDelay">The base delay for calculations.</param>
-    /// <param name="attempt">The retry attempt number (1-based).</param>
-    /// <param name="previousDelay">Reference to the previous delay (used for decorrelated jitter).</param>
-    /// <summary>
     /// Computes the retry delay for a given attempt using the specified backoff strategy.
     /// </summary>
     /// <param name="strategy">The backoff algorithm to use.</param>
@@ -46,14 +39,10 @@ public static class BackoffCalculator
     }
 
     /// <summary>
-    /// Calculates an exponential backoff delay capped at the configured maximum.
-    /// Formula: BaseDelay * 2^(attempt - 1).
+    /// Compute the exponential backoff delay for the specified retry attempt, clamped to the configured maximum.
     /// </summary>
     /// <param name="baseDelayMs">Base delay in milliseconds used as the exponential multiplier.</param>
     /// <param name="attempt">1-based retry attempt number (1 yields the base delay).</param>
-    /// <summary>
-    /// Compute the exponential backoff delay for the specified retry attempt, clamped to the configured maximum.
-    /// </summary>
     /// <returns>A TimeSpan equal to baseDelayMs * 2^(attempt - 1), clamped to the maximum allowed delay.</returns>
     private static TimeSpan CalculateExponential(double baseDelayMs, int attempt)
     {
@@ -61,13 +50,6 @@ public static class BackoffCalculator
         return TimeSpan.FromMilliseconds(delayMs);
     }
 
-    /// <summary>
-    ///     Calculates exponential backoff with full jitter: Random(0, BaseDelay * 2^(attempt - 1)).
-    /// <summary>
-    /// Compute an exponential backoff delay with full jitter, capped by the configured maximum delay.
-    /// </summary>
-    /// <param name="baseDelayMs">Base delay in milliseconds used as the multiplier for exponential growth.</param>
-    /// <param name="attempt">1-based retry attempt number.</param>
     /// <summary>
     /// Computes an exponential backoff delay with uniform jitter.
     /// </summary>
@@ -81,18 +63,6 @@ public static class BackoffCalculator
         return TimeSpan.FromMilliseconds(jitteredDelayMs);
     }
 
-    /// <summary>
-    ///     Calculates decorrelated jitter delay: Random(BaseDelay, max(BaseDelay, PreviousDelay * 3)).
-    /// </summary>
-    /// <param name="baseDelayMs">Base delay in milliseconds used as the minimum scale for the jitter.</param>
-    /// <param name="attempt">One-based retry attempt number.</param>
-    /// <param name="previousDelay">Reference to the previously computed delay; updated to the newly computed delay.</param>
-    /// <summary>
-    /// Calculates a decorrelated-jitter retry delay and updates the running previous delay to reduce retry synchronization.
-    /// </summary>
-    /// <param name="baseDelayMs">The base delay in milliseconds used as a minimum for the calculation.</param>
-    /// <param name="attempt">The 1-based retry attempt number.</param>
-    /// <param name="previousDelay">Reference to the previous delay; initialized to <paramref name="baseDelayMs"/> on the first attempt and updated with the computed delay for subsequent calls.</param>
     /// <summary>
     /// Computes a decorrelated jitter delay for the given retry attempt and updates <paramref name="previousDelay"/> with the chosen delay.
     /// </summary>
@@ -116,13 +86,6 @@ public static class BackoffCalculator
     }
 
     /// <summary>
-    ///     Calculates linear backoff delay: BaseDelay * attempt.
-    /// <summary>
-    /// Compute a linearly scaled retry delay and clamp it to the configured maximum.
-    /// </summary>
-    /// <param name="baseDelayMs">Base delay in milliseconds used as the unit for scaling.</param>
-    /// <param name="attempt">1-based retry attempt number used to scale the base delay.</param>
-    /// <summary>
     /// Compute the linear backoff delay as the base delay multiplied by the retry attempt, capped to the class maximum.
     /// </summary>
     /// <param name="baseDelayMs">Base delay in milliseconds.</param>
@@ -135,15 +98,10 @@ public static class BackoffCalculator
     }
 
     /// <summary>
-    ///     Calculates linear backoff with jitter: Random(0, BaseDelay * attempt).
-    /// <summary>
-    /// Computes a linear backoff delay with jitter, capped by the global maximum delay.
+    /// Computes a linear backoff delay with jitter, selecting a random value between 0 and the capped linear delay.
     /// </summary>
     /// <param name="baseDelayMs">Base delay in milliseconds used as the unit step for linear scaling.</param>
     /// <param name="attempt">1-based retry attempt number used to scale the maximum linear delay.</param>
-    /// <summary>
-    /// Computes a linear backoff delay with jitter, selecting a random value between 0 and the capped linear delay.
-    /// </summary>
     /// <returns>A TimeSpan representing a randomized delay between 0 and min(baseDelayMs * attempt, MaxDelayMs) milliseconds.</returns>
     private static TimeSpan CalculateLinearJitter(double baseDelayMs, int attempt)
     {

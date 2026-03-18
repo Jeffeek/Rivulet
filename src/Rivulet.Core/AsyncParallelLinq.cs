@@ -16,34 +16,6 @@ namespace Rivulet.Core;
 public static class AsyncParallelLinq
 {
     /// <summary>
-    ///     Applies a transformation function to each element in a collection in parallel with bounded concurrency,
-    ///     returning a materialized list of results. Supports retry policies, per-item timeouts, and configurable error
-    ///     handling.
-    /// </summary>
-    /// <typeparam name="TSource">The type of elements in the source collection.</typeparam>
-    /// <typeparam name="TResult">The type of elements in the result collection.</typeparam>
-    /// <param name="source">The source enumerable to process.</param>
-    /// <param name="taskSelector">The async transformation function to apply to each element.</param>
-    /// <param name="options">
-    ///     Configuration options for parallel execution, including concurrency limits, retry policies, and
-    ///     lifecycle hooks. If null, defaults are used.
-    /// </param>
-    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-    /// <returns>A task representing the asynchronous operation, containing a list of all transformed results.</returns>
-    /// <exception cref="AggregateException">
-    ///     Thrown when <see cref="ErrorMode.CollectAndContinue" /> is enabled and one or more
-    ///     errors occurred during processing.
-    /// </exception>
-    /// <summary>
-    /// Process a sequence in parallel by applying an asynchronous selector to each element and return a materialized list of results.
-    /// </summary>
-    /// <param name="source">The input sequence of items to process.</param>
-    /// <param name="taskSelector">An asynchronous selector invoked for each item; receives the item and a cancellation token and returns the result.</param>
-    /// <param name="options">Parallelization and resilience settings (null uses defaults).</param>
-    /// <param name="cancellationToken">Token to observe for cooperative cancellation.</param>
-    /// <returns>A List&lt;TResult&gt; containing the results; when <c>options.OrderedOutput</c> is true results are returned in input order, otherwise order is unspecified.</returns>
-    /// <exception cref="OperationCanceledException">Thrown when the operation is cancelled via the cancellation token.</exception>
-    /// <summary>
     /// Processes the source sequence in parallel using the provided asynchronous selector, applying the supplied parallel options for concurrency, ordering, and error-handling policy.
     /// </summary>
     /// <param name="source">The sequence of items to process.</param>
@@ -55,6 +27,7 @@ public static class AsyncParallelLinq
     /// </returns>
     /// <exception cref="AggregateException">Thrown when <c>ErrorMode.CollectAndContinue</c> is used and one or more item processors failed; the aggregate contains all collected exceptions.</exception>
     /// <exception cref="Exception">When <c>ErrorMode.FailFast</c> is used, the first non-<see cref="OperationCanceledException"/> error encountered is propagated after worker cleanup.</exception>
+    /// <exception cref="OperationCanceledException">Thrown when the operation is cancelled via the cancellation token.</exception>
     public static async Task<List<TResult>> SelectParallelAsync<TSource, TResult>(
         this IEnumerable<TSource> source,
         Func<TSource, CancellationToken, ValueTask<TResult>> taskSelector,
