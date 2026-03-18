@@ -59,7 +59,11 @@ public sealed class RateLimitOptions
     ///     Initializes a new instance of the <see cref="RateLimitOptions"/> class by copying values from another instance.
     /// </summary>
     /// <param name="original">The original instance to copy from. If null, default values are used.</param>
-    // ReSharper disable once MemberCanBeInternal
+    /// <summary>
+    /// Creates a new RateLimitOptions by copying configuration values from an existing instance.
+    /// </summary>
+    /// <param name="original">The source instance to copy from. If null, the new instance retains the default values.</param>
+    /// <exception cref="ArgumentException">Thrown when the source instance contains invalid settings (e.g., non-positive rates or burst capacity smaller than tokens per operation).</exception>
     public RateLimitOptions(RateLimitOptions? original)
     {
         if (original is null)

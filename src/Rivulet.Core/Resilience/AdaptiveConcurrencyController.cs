@@ -67,6 +67,10 @@ internal sealed class AdaptiveConcurrencyController : IAsyncDisposable
     ///     Releases a slot after operation completion.
     /// </summary>
     /// <param name="latency">Operation latency.</param>
+    /// <summary>
+    /// Records the outcome and observed latency of a completed operation and returns a concurrency slot to the controller.
+    /// </summary>
+    /// <param name="latency">Observed duration of the completed operation.</param>
     /// <param name="success">Whether the operation succeeded.</param>
     public void Release(TimeSpan latency, bool success)
     {

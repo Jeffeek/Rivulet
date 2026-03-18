@@ -34,7 +34,16 @@ public static class AsyncParallelLinq
     ///     Thrown when <see cref="ErrorMode.CollectAndContinue" /> is enabled and one or more
     ///     errors occurred during processing.
     /// </exception>
+    /// <summary>
+    /// Process a sequence in parallel by applying an asynchronous selector to each element and return a materialized list of results.
+    /// </summary>
+    /// <param name="source">The input sequence of items to process.</param>
+    /// <param name="taskSelector">An asynchronous selector invoked for each item; receives the item and a cancellation token and returns the result.</param>
+    /// <param name="options">Parallelization and resilience settings (null uses defaults).</param>
+    /// <param name="cancellationToken">Token to observe for cooperative cancellation.</param>
+    /// <returns>A List&lt;TResult&gt; containing the results; when <c>options.OrderedOutput</c> is true results are returned in input order, otherwise order is unspecified.</returns>
     /// <exception cref="OperationCanceledException">Thrown when the operation is cancelled via the cancellation token.</exception>
+    /// <exception cref="AggregateException">Thrown when <c>ErrorMode.CollectAndContinue</c> is used and one or more item processors failed; the aggregate contains all collected exceptions.</exception>
     public static async Task<List<TResult>> SelectParallelAsync<TSource, TResult>(
         this IEnumerable<TSource> source,
         Func<TSource, CancellationToken, ValueTask<TResult>> taskSelector,
