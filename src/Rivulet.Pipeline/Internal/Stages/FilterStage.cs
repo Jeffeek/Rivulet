@@ -6,7 +6,8 @@ namespace Rivulet.Pipeline.Internal.Stages;
 /// <summary>
 /// A stage that filters items in parallel using the provided predicate.
 /// </summary>
-internal sealed class FilterStage<T>(Func<T, CancellationToken, ValueTask<bool>> predicate,
+internal sealed class FilterStage<T>(
+    Func<T, CancellationToken, ValueTask<bool>> predicate,
     StageOptions options,
     string name
 ) : IInternalPipelineStage, IPipelineStage<T, T>

@@ -6,7 +6,8 @@ namespace Rivulet.Pipeline.Internal.Stages;
 /// <summary>
 /// A stage that batches items and transforms each batch in parallel.
 /// </summary>
-internal sealed class BatchSelectStage<TIn, TOut>(int batchSize,
+internal sealed class BatchSelectStage<TIn, TOut>(
+    int batchSize,
     Func<IReadOnlyList<TIn>, CancellationToken, ValueTask<TOut>> batchSelector,
     TimeSpan? flushTimeout,
     StageOptions options,

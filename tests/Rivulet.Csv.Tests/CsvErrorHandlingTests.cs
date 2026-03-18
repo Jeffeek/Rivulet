@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using Rivulet.Base.Tests;
 using Rivulet.Core;
 using Rivulet.Core.Resilience;
 
@@ -253,6 +254,12 @@ public sealed class CsvErrorHandlingTests : IDisposable
                     }
                 });
         });
+
+        // OnStateChange fires via Task.Run (fire-and-forget) — poll until it completes
+        await DeadlineExtensions.ApplyDeadlineAsync(
+            DateTime.UtcNow.AddSeconds(2),
+            static () => Task.Delay(50),
+            () => !circuitBreakerOpened);
 
         // Circuit breaker should have kicked in, preventing all 10 failures
         circuitBreakerOpened.ShouldBeTrue("Circuit breaker should have opened");

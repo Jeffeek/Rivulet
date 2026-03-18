@@ -207,10 +207,12 @@ public sealed class RivuletHealthCheckTests
         var result = await healthCheck.CheckHealthAsync(context, TestContext.Current.CancellationToken);
 
         result.Data.TryGetValue("error_rate", out var errorRateObj).ShouldBeTrue();
+        errorRateObj.ShouldNotBeNull();
         var errorRate = (double)errorRateObj;
         errorRate.ShouldBeGreaterThan(0.2);
 
         result.Data.TryGetValue("total_failures", out var failuresObj).ShouldBeTrue();
+        failuresObj.ShouldNotBeNull();
         var failures = (double)failuresObj;
         failures.ShouldBeLessThan(10000);
 

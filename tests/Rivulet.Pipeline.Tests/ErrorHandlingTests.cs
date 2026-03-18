@@ -237,7 +237,7 @@ public sealed class ErrorHandlingTests
                 })
             .Build();
 
-        var results = await pipeline.ExecuteAsync(new[] { 1 }, TestContext.Current.CancellationToken);
+        var results = await pipeline.ExecuteAsync([1], TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(1);
         failedOnce.ShouldBeTrue();

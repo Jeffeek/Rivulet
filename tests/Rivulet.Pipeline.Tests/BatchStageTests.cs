@@ -61,7 +61,7 @@ public sealed class BatchStageTests
             })
             .Build();
 
-        var results = await pipeline.ExecuteAsync(new[] { 42 }, TestContext.Current.CancellationToken);
+        var results = await pipeline.ExecuteAsync([42], TestContext.Current.CancellationToken);
 
         results.ShouldHaveSingleItem().ShouldBe(42);
         batchSizes.ShouldHaveSingleItem().ShouldBe(1);
@@ -74,7 +74,7 @@ public sealed class BatchStageTests
             .Batch(10)
             .Build();
 
-        var results = await pipeline.ExecuteAsync(Enumerable.Empty<int>(), TestContext.Current.CancellationToken);
+        var results = await pipeline.ExecuteAsync([], TestContext.Current.CancellationToken);
 
         results.ShouldBeEmpty();
     }
@@ -214,8 +214,8 @@ public sealed class BatchStageTests
         var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 9), TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(3);
-        results[0].ShouldBe(new[] { 1, 2, 3 });
-        results[1].ShouldBe(new[] { 4, 5, 6 });
-        results[2].ShouldBe(new[] { 7, 8, 9 });
+        results[0].ShouldBe([1, 2, 3]);
+        results[1].ShouldBe([4, 5, 6]);
+        results[2].ShouldBe([7, 8, 9]);
     }
 }

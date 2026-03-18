@@ -247,7 +247,14 @@ public sealed class ParallelOptionsRivulet
     /// <summary>
     ///     Initializes a new instance of the <see cref="ParallelOptionsRivulet"/> class by copying values from another instance.
     /// </summary>
+    /// <summary>
+    /// Creates a new ParallelOptionsRivulet by copying configuration values from an existing instance.
+    /// </summary>
     /// <param name="original">The original instance to copy from. If null, default values are used.</param>
+    /// <remarks>
+    /// Simple value and delegate properties are copied directly. Nested option properties (Progress, Metrics, RateLimit, CircuitBreaker, AdaptiveConcurrency)
+    /// are cloned into new instances when the corresponding original property is non-null; otherwise the cloned property remains null.
+    /// </remarks>
     public ParallelOptionsRivulet(ParallelOptionsRivulet? original)
     {
         if (original is null)
@@ -269,10 +276,10 @@ public sealed class ParallelOptionsRivulet
         OnFallback = original.OnFallback;
         ChannelCapacity = original.ChannelCapacity;
         OrderedOutput = original.OrderedOutput;
-        Progress = new ProgressOptions(original.Progress);
-        Metrics = new MetricsOptions(original.Metrics);
-        RateLimit = new RateLimitOptions(original.RateLimit);
-        CircuitBreaker = new CircuitBreakerOptions(original.CircuitBreaker);
-        AdaptiveConcurrency = new AdaptiveConcurrencyOptions(original.AdaptiveConcurrency);
+        Progress = original.Progress is not null ? new ProgressOptions(original.Progress) : null;
+        Metrics = original.Metrics is not null ? new MetricsOptions(original.Metrics) : null;
+        RateLimit = original.RateLimit is not null ? new RateLimitOptions(original.RateLimit) : null;
+        CircuitBreaker = original.CircuitBreaker is not null ? new CircuitBreakerOptions(original.CircuitBreaker) : null;
+        AdaptiveConcurrency = original.AdaptiveConcurrency is not null ? new AdaptiveConcurrencyOptions(original.AdaptiveConcurrency) : null;
     }
 }

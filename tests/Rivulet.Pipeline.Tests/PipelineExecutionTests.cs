@@ -13,7 +13,7 @@ public sealed class PipelineExecutionTests
             .SelectParallel(static x => x * 2)
             .Build();
 
-        var results = await pipeline.ExecuteAsync(Enumerable.Empty<int>(), TestContext.Current.CancellationToken);
+        var results = await pipeline.ExecuteAsync([], TestContext.Current.CancellationToken);
 
         results.ShouldBeEmpty();
     }
@@ -25,7 +25,7 @@ public sealed class PipelineExecutionTests
             .SelectParallel(static x => x * 2)
             .Build();
 
-        var results = await pipeline.ExecuteAsync(new[] { 5 }, TestContext.Current.CancellationToken);
+        var results = await pipeline.ExecuteAsync([5], TestContext.Current.CancellationToken);
 
         results.ShouldHaveSingleItem().ShouldBe(10);
     }
@@ -40,7 +40,7 @@ public sealed class PipelineExecutionTests
         var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 10), TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(10);
-        results.OrderBy(static x => x).ShouldBe(new[] { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20 });
+        results.OrderBy(static x => x).ShouldBe([2, 4, 6, 8, 10, 12, 14, 16, 18, 20]);
     }
 
     [Fact]
@@ -56,7 +56,7 @@ public sealed class PipelineExecutionTests
         // After doubling: 2, 4, 6, 8, 10, 12, 14, 16, 18, 20
         // After filtering (> 10): 12, 14, 16, 18, 20
         results.Count.ShouldBe(5);
-        results.OrderBy(static x => x).ShouldBe(new[] { 12, 14, 16, 18, 20 });
+        results.OrderBy(static x => x).ShouldBe([12, 14, 16, 18, 20]);
     }
 
     [Fact]
@@ -68,10 +68,10 @@ public sealed class PipelineExecutionTests
             .SelectParallel(static x => x.ToString())
             .Build();
 
-        var results = await pipeline.ExecuteAsync(new[] { 1, 2, 3 }, TestContext.Current.CancellationToken);
+        var results = await pipeline.ExecuteAsync([1, 2, 3], TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(3);
-        results.OrderBy(static x => x).ShouldBe(new[] { "3", "5", "7" });
+        results.OrderBy(static x => x).ShouldBe(["3", "5", "7"]);
     }
 
     [Fact]
@@ -88,7 +88,7 @@ public sealed class PipelineExecutionTests
         var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 5), TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(5);
-        results.OrderBy(static x => x).ShouldBe(new[] { 2, 4, 6, 8, 10 });
+        results.OrderBy(static x => x).ShouldBe([2, 4, 6, 8, 10]);
     }
 
     [Fact]
@@ -135,12 +135,12 @@ public sealed class PipelineExecutionTests
             .SelectManyParallel(static x => Enumerable.Range(1, x))
             .Build();
 
-        var results = await pipeline.ExecuteAsync(new[] { 1, 2, 3 }, TestContext.Current.CancellationToken);
+        var results = await pipeline.ExecuteAsync([1, 2, 3], TestContext.Current.CancellationToken);
 
         // 1 -> [1], 2 -> [1, 2], 3 -> [1, 2, 3]
         // Total: 1 + 2 + 3 = 6 items
         results.Count.ShouldBe(6);
-        results.OrderBy(static x => x).ShouldBe(new[] { 1, 1, 1, 2, 2, 3 });
+        results.OrderBy(static x => x).ShouldBe([1, 1, 1, 2, 2, 3]);
     }
 
     [Fact]
@@ -157,7 +157,7 @@ public sealed class PipelineExecutionTests
 
         results.Count.ShouldBe(5);
         tappedItems.Count.ShouldBe(5);
-        tappedItems.OrderBy(static x => x).ShouldBe(new[] { 2, 4, 6, 8, 10 });
+        tappedItems.OrderBy(static x => x).ShouldBe([2, 4, 6, 8, 10]);
     }
 
     [Fact]
@@ -190,7 +190,7 @@ public sealed class PipelineExecutionTests
             results.Add(result);
 
         results.Count.ShouldBe(5);
-        results.OrderBy(static x => x).ShouldBe(new[] { 2, 4, 6, 8, 10 });
+        results.OrderBy(static x => x).ShouldBe([2, 4, 6, 8, 10]);
     }
 
     [Fact]

@@ -75,7 +75,7 @@ public sealed class ThrottleStageTests
             .Throttle(10)
             .Build();
 
-        var results = await pipeline.ExecuteAsync(Enumerable.Empty<int>(), TestContext.Current.CancellationToken);
+        var results = await pipeline.ExecuteAsync([], TestContext.Current.CancellationToken);
 
         results.ShouldBeEmpty();
     }
@@ -88,7 +88,7 @@ public sealed class ThrottleStageTests
             .Build();
 
         var sw = Stopwatch.StartNew();
-        var results = await pipeline.ExecuteAsync(new[] { 42 }, TestContext.Current.CancellationToken);
+        var results = await pipeline.ExecuteAsync([42], TestContext.Current.CancellationToken);
         sw.Stop();
 
         results.ShouldHaveSingleItem().ShouldBe(42);

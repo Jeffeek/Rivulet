@@ -32,7 +32,7 @@ public sealed class LockHelperTests
     {
         const int value = 10;
 
-        var result = LockHelper.Execute(_lock, static () => value * 2 + 3);
+        var result = LockHelper.Execute(_lock, static () => (value * 2) + 3);
 
         result.ShouldBe(23);
     }

@@ -6,7 +6,8 @@ namespace Rivulet.Pipeline.Internal.Stages;
 /// <summary>
 /// A stage that flattens collections returned by the selector.
 /// </summary>
-internal sealed class SelectManyStage<TIn, TOut>(Func<TIn, CancellationToken, ValueTask<IEnumerable<TOut>>> selector,
+internal sealed class SelectManyStage<TIn, TOut>(
+    Func<TIn, CancellationToken, ValueTask<IEnumerable<TOut>>> selector,
     StageOptions options,
     string name
 ) : IInternalPipelineStage, IPipelineStage<TIn, TOut>

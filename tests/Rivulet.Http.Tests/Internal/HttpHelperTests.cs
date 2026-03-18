@@ -221,7 +221,7 @@ public sealed class HttpHelperTests
             ProgressInterval = TimeSpan.FromMilliseconds(10)
         };
         var uri = new Uri("https://example.com/file.zip");
-        var lastProgressReport = Stopwatch.GetTimestamp() - TimeSpan.FromSeconds(1).Ticks * Stopwatch.Frequency / TimeSpan.TicksPerSecond;
+        var lastProgressReport = Stopwatch.GetTimestamp() - (TimeSpan.FromSeconds(1).Ticks * Stopwatch.Frequency / TimeSpan.TicksPerSecond);
 
         var newLastProgressReport = await HttpHelper.ReportProgressIfNeededAsync(
             options,
@@ -255,7 +255,7 @@ public sealed class HttpHelperTests
             ProgressInterval = TimeSpan.FromMilliseconds(10)
         };
         var uri = new Uri("https://example.com/file.zip");
-        var lastProgressReport = Stopwatch.GetTimestamp() - TimeSpan.FromSeconds(1).Ticks * Stopwatch.Frequency / TimeSpan.TicksPerSecond;
+        var lastProgressReport = Stopwatch.GetTimestamp() - (TimeSpan.FromSeconds(1).Ticks * Stopwatch.Frequency / TimeSpan.TicksPerSecond);
 
         await HttpHelper.ReportProgressIfNeededAsync(
             options,
@@ -284,7 +284,7 @@ public sealed class HttpHelperTests
             ProgressInterval = TimeSpan.FromMilliseconds(10)
         };
         var uri = new Uri("https://example.com/file.zip");
-        var lastProgressReport = Stopwatch.GetTimestamp() - TimeSpan.FromSeconds(1).Ticks * Stopwatch.Frequency / TimeSpan.TicksPerSecond;
+        var lastProgressReport = Stopwatch.GetTimestamp() - (TimeSpan.FromSeconds(1).Ticks * Stopwatch.Frequency / TimeSpan.TicksPerSecond);
 
         await HttpHelper.ReportProgressIfNeededAsync(
             options,

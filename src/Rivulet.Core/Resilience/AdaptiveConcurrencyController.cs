@@ -142,6 +142,16 @@ internal sealed class AdaptiveConcurrencyController : IAsyncDisposable
             });
     }
 
+    /// <summary>
+    /// Update internal concurrency tracking and adjust the semaphore to match the new concurrency level.
+    /// </summary>
+    /// <param name="oldConcurrency">The previous concurrency level before the adjustment.</param>
+    /// <param name="newConcurrency">The target concurrency level to apply.</param>
+    /// <remarks>
+    /// If the concurrency increases, additional semaphore permits are released (a <see cref="SemaphoreFullException"/> is ignored if the semaphore is already at its limit).
+    /// If the concurrency decreases, permits are acquired in a background task to reduce available slots; any exceptions from that background operation are logged.
+    /// Invokes the configured <see cref="AdaptiveConcurrencyOptions.OnConcurrencyChange"/> callback with the old and new values.
+    /// </remarks>
     private void AdjustConcurrency(int oldConcurrency, int newConcurrency)
     {
         var delta = newConcurrency - oldConcurrency;
@@ -149,7 +159,15 @@ internal sealed class AdaptiveConcurrencyController : IAsyncDisposable
         switch (delta)
         {
             case > 0:
-                _semaphore.Release(delta);
+                try
+                {
+                    _semaphore.Release(delta);
+                }
+                catch (SemaphoreFullException)
+                {
+                    // Semaphore already at max capacity - workers have released their slots.
+                    // Concurrency update is still recorded in _currentConcurrency.
+                }
             break;
             case < 0:
                 _ = Task.Run(async () =>

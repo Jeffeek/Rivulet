@@ -56,6 +56,7 @@ public sealed class EdgeCaseCoverageTests
         var result = await healthCheck.CheckHealthAsync(context, TestContext.Current.CancellationToken);
 
         result.Data.TryGetValue("total_failures", out var failuresObj).ShouldBeTrue();
+        failuresObj.ShouldNotBeNull();
         var failures = (double)failuresObj;
         failures.ShouldBeGreaterThanOrEqualTo(50, "many operations should have failed");
 

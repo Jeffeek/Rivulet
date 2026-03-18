@@ -14,6 +14,7 @@ internal sealed class CircuitBreaker
     private readonly CircuitBreakerOptions _options;
     private int _consecutiveFailures;
     private int _consecutiveSuccesses;
+    private int _halfOpenPermits;
     private long _openedAtTicks;
 
     private CircuitBreakerState _state;
@@ -67,6 +68,12 @@ internal sealed class CircuitBreaker
         }
     }
 
+    /// <summary>
+    /// Enforces circuit-breaker state checks and adjusts HalfOpen permits before an operation runs.
+    /// </summary>
+    /// <returns>A completed ValueTask representing the pre-execution checks.</returns>
+    /// <exception cref="OperationCanceledException">Thrown if <paramref name="cancellationToken"/> has cancellation requested.</exception>
+    /// <exception cref="CircuitBreakerOpenException">Thrown if the circuit is Open, or HalfOpen with no remaining permits.</exception>
     private ValueTask BeforeExecuteAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -78,7 +85,11 @@ internal sealed class CircuitBreaker
                     Environment.TickCount64 - _openedAtTicks >= (long)_options.OpenTimeout.TotalMilliseconds)
                     TransitionToHalfOpen();
 
-                if (_state == CircuitBreakerState.Open) throw new CircuitBreakerOpenException(_state);
+                if (_state == CircuitBreakerState.Open || (_state == CircuitBreakerState.HalfOpen && _halfOpenPermits <= 0))
+                    throw new CircuitBreakerOpenException(_state);
+
+                if (_state == CircuitBreakerState.HalfOpen)
+                    _halfOpenPermits--;
             });
 
         return ValueTask.CompletedTask;
@@ -157,12 +168,19 @@ internal sealed class CircuitBreaker
             CallbackHelper.InvokeFireAndForget(_options.OnStateChange, oldState, CircuitBreakerState.Open, nameof(CircuitBreakerOptions.OnStateChange));
     }
 
+    /// <summary>
+    /// Transition the circuit breaker into the HalfOpen state, reset success and failure counters, and initialize the HalfOpen permit count.
+    /// </summary>
+    /// <remarks>
+    /// If the state was not already HalfOpen, invokes the configured OnStateChange callback asynchronously.
+    /// </remarks>
     private void TransitionToHalfOpen()
     {
         var oldState = _state;
         _state = CircuitBreakerState.HalfOpen;
         _consecutiveSuccesses = 0;
         _consecutiveFailures = 0;
+        _halfOpenPermits = _options.SuccessThreshold;
 
         if (oldState != CircuitBreakerState.HalfOpen)
             CallbackHelper.InvokeFireAndForget(_options.OnStateChange, oldState, CircuitBreakerState.HalfOpen, nameof(CircuitBreakerOptions.OnStateChange));

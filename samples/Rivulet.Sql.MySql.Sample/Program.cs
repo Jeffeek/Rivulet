@@ -69,7 +69,7 @@ try
             Enumerable.Range(0, 2000)
                 .Select(i =>
                 {
-                    var id = batchIndex * 2000 + i + 1;
+                    var id = (batchIndex * 2000) + i + 1;
                     return $"{id},Batch{batchIndex}_Item{i},{i}.99";
                 }))
         .ToList();
@@ -100,7 +100,7 @@ try
         {
             var filePath = Path.Join(Path.GetTempPath(), $"mysql_bulk_{fileIndex}.csv");
             var lines = Enumerable.Range(1, 500)
-                .Select(i => $"{fileIndex * 500 + i},Product_{fileIndex * 500 + i},{i * 9.99:F2}");
+                .Select(i => $"{(fileIndex * 500) + i},Product_{(fileIndex * 500) + i},{i * 9.99:F2}");
             File.WriteAllLines(filePath, lines);
             return filePath;
         })

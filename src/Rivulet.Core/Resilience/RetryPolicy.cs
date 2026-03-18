@@ -4,6 +4,21 @@ namespace Rivulet.Core.Resilience;
 
 internal static class RetryPolicy
 {
+    /// <summary>
+    /// Execute a function for a single item applying per-item timeout, retry with backoff for transient errors, and an optional fallback.
+    /// </summary>
+    /// <param name="item">The input item passed to <paramref name="func"/>.</param>
+    /// <param name="func">The operation to execute for the item; receives the item and a cancellation token.</param>
+    /// <param name="options">Retry, timeout, backoff and callback configuration used to control retries and fallback behavior.</param>
+    /// <param name="metricsTracker">Tracker used to record metrics such as retry counts.</param>
+    /// <param name="itemIndex">Index of the item (forwarded to retry/fallback callbacks).</param>
+    /// <param name="ct">Cancellation token that cancels the operation and any per-item timeout.</param>
+    /// <returns>
+    /// The result produced by <paramref name="func"/>, or a value produced by the configured fallback.
+    /// If the fallback returns null and <typeparamref name="TResult"/> is a reference type, the method returns null (default). 
+    /// </returns>
+    /// <exception cref="OperationCanceledException">Thrown if <paramref name="ct"/> is canceled before or during execution.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when a configured fallback returns a value that cannot be converted to <typeparamref name="TResult"/>.</exception>
     public static async ValueTask<TResult> ExecuteWithRetry<T, TResult>(
         T item,
         Func<T, CancellationToken, ValueTask<TResult>> func,
@@ -41,7 +56,7 @@ internal static class RetryPolicy
                     ref previousDelay);
                 await Task.Delay(delay, ct).ConfigureAwait(false);
             }
-            catch (Exception ex) when (options.OnFallback is not null)
+            catch (Exception ex) when (ex is not OperationCanceledException && options.OnFallback is not null)
             {
                 var fallbackValue = options.OnFallback(itemIndex, ex);
                 return fallbackValue switch

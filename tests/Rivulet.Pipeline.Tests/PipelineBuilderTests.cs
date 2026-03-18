@@ -236,7 +236,7 @@ public sealed class PipelineBuilderTests
             .AddStage(customStage)
             .Build();
 
-        var results = await pipeline.ExecuteAsync(new[] { 1, 2, 3, 4, 5 }, TestContext.Current.CancellationToken);
+        var results = await pipeline.ExecuteAsync([1, 2, 3, 4, 5], TestContext.Current.CancellationToken);
 
         results.ShouldBe(new[] { 3, 6, 9, 12, 15 });
         pipeline.StageCount.ShouldBe(1);
@@ -255,7 +255,7 @@ public sealed class PipelineBuilderTests
                 })
             .Build();
 
-        var results = await pipeline.ExecuteAsync(new[] { 1, 2, 3 }, TestContext.Current.CancellationToken);
+        var results = await pipeline.ExecuteAsync([1, 2, 3], TestContext.Current.CancellationToken);
 
         results.ShouldBe(new[] { 2, 4, 6 });
     }
@@ -271,14 +271,14 @@ public sealed class PipelineBuilderTests
             .WhereParallel(static x => x > 20)
             .Build();
 
-        var results = await pipeline.ExecuteAsync(new[] { 1, 2, 3, 4, 5 }, TestContext.Current.CancellationToken);
+        var results = await pipeline.ExecuteAsync([1, 2, 3, 4, 5], TestContext.Current.CancellationToken);
 
         // Input: 1,2,3,4,5
         // After SelectParallel(+1): 2,3,4,5,6
         // After custom(*10): 20,30,40,50,60
         // After WhereParallel(>20): 30,40,50,60
         // Order not guaranteed due to parallelism
-        results.ShouldBeSubsetOf(new[] { 30, 40, 50, 60 });
+        results.ShouldBeSubsetOf([30, 40, 50, 60]);
         results.Count.ShouldBe(4);
         pipeline.StageCount.ShouldBe(3);
     }
@@ -293,10 +293,10 @@ public sealed class PipelineBuilderTests
             .WhereParallel(static s => s.Length > 0)
             .Build();
 
-        var results = await pipeline.ExecuteAsync(new[] { 1, 22, 333 }, TestContext.Current.CancellationToken);
+        var results = await pipeline.ExecuteAsync([1, 22, 333], TestContext.Current.CancellationToken);
 
         // Order not guaranteed due to parallelism
-        results.ShouldBeSubsetOf(new[] { "1", "22", "333" });
+        results.ShouldBeSubsetOf(["1", "22", "333"]);
         results.Count.ShouldBe(3);
     }
 
