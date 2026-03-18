@@ -72,6 +72,7 @@ public static class AsyncParallelLinq
                 ? new ConcurrentDictionary<int, TResult>()
                 : null;
             var errors = new ConcurrentBag<Exception>();
+            var sharedFirstRealError = new StrongBox<Exception?>(null);
 
             var sourceList = source as ICollection<TSource> ?? [..source];
             var totalItems = sourceList.Count;
@@ -160,7 +161,8 @@ public static class AsyncParallelLinq
                                     infrastructure,
                                     cts,
                                     // ReSharper restore AccessToDisposedClosure
-                                    errors).ConfigureAwait(false);
+                                    errors,
+                                    sharedFirstRealError).ConfigureAwait(false);
                             }
                             finally
                             {
@@ -188,10 +190,10 @@ public static class AsyncParallelLinq
             catch when (options.ErrorMode == ErrorMode.FailFast)
             {
                 // FailFast: throw the first real exception, not cancellation exceptions from cancelled workers.
-                // Consistent with SelectParallelStreamAsync behavior.
-                var firstRealError = errors.FirstOrDefault(static e => e is not OperationCanceledException);
-                if (firstRealError != null)
-                    ExceptionDispatchInfo.Capture(firstRealError).Throw();
+                // sharedFirstRealError is set atomically via Interlocked.CompareExchange in HandleProcessingErrorAsync,
+                // ensuring deterministic selection regardless of ConcurrentBag ordering.
+                if (sharedFirstRealError.Value is { } captured)
+                    ExceptionDispatchInfo.Capture(captured).Throw();
 
                 throw;
             }
@@ -250,6 +252,7 @@ public static class AsyncParallelLinq
 
             var effectiveMaxWorkers = infrastructure.EffectiveMaxWorkers;
             var errors = new ConcurrentBag<Exception>();
+            var sharedFirstRealError = new StrongBox<Exception?>(null);
 
             var input = CreateBoundedInputChannel<(int idx, TSource item)>(options.ChannelCapacity);
             var output = Channel.CreateBounded<(int idx, TResult result)>(
@@ -322,7 +325,8 @@ public static class AsyncParallelLinq
                                         options,
                                         infrastructure,
                                         cts,
-                                        errors)
+                                        errors,
+                                        sharedFirstRealError)
                                     .ConfigureAwait(false);
                             }
                             finally
@@ -427,12 +431,10 @@ public static class AsyncParallelLinq
                     case ErrorMode.FailFast:
                     {
                         // FailFast: Throw the first real exception, not cancellation exceptions.
-                        // When an exception occurs, we cancel the token to stop other workers,
-                        // but this causes other workers to throw OperationCanceledException.
-                        // Filter out cancellation exceptions to find the real error.
-                        var firstRealError = errors.FirstOrDefault(static e => e is not OperationCanceledException);
-                        if (firstRealError != null)
-                            ExceptionDispatchInfo.Capture(firstRealError).Throw();
+                        // sharedFirstRealError is set atomically via Interlocked.CompareExchange in HandleProcessingErrorAsync,
+                        // ensuring deterministic selection regardless of ConcurrentBag ordering.
+                        if (sharedFirstRealError.Value is { } captured)
+                            ExceptionDispatchInfo.Capture(captured).Throw();
 
                         // If no real errors but task failed, propagate that (e.g., source error)
                         if (taskException != null)
@@ -722,10 +724,14 @@ public static class AsyncParallelLinq
         ParallelOptionsRivulet options,
         ParallelInfrastructure infrastructure,
         CancellationTokenSource cts,
-        ConcurrentBag<Exception>? errors
+        ConcurrentBag<Exception>? errors,
+        StrongBox<Exception?>? sharedFirstRealError = null
     )
     {
         errors?.Add(ex);
+
+        if (sharedFirstRealError is not null && ex is not OperationCanceledException)
+            Interlocked.CompareExchange(ref sharedFirstRealError.Value, ex, null);
 
         infrastructure.ProgressTracker?.IncrementErrors();
         infrastructure.MetricsTracker.IncrementFailures();
