@@ -18,9 +18,11 @@ public sealed class ParallelBackgroundServiceTests
         using var cts = new CancellationTokenSource();
         await service.StartAsync(cts.Token);
 
-        // Increased from 50ms → 200ms for Windows CI/CD reliability
-        // BackgroundService needs time to start ExecuteAsync and process all items
-        await Task.Delay(200, cts.Token);
+        var deadline = DateTime.UtcNow.AddSeconds(5);
+        await DeadlineExtensions.ApplyDeadlineAsync(
+            deadline,
+            static () => Task.Delay(25, CancellationToken.None),
+            () => service.ProcessedItems.Count < 5);
         await cts.CancelAsync();
 
         await service.StopAsync(CancellationToken.None);
@@ -40,8 +42,8 @@ public sealed class ParallelBackgroundServiceTests
         using var cts = new CancellationTokenSource();
         await service.StartAsync(cts.Token);
 
-        // Increased from 50ms → 200ms for Windows CI/CD reliability
-        await Task.Delay(200, cts.Token);
+        var deadline = DateTime.UtcNow.AddSeconds(5);
+        await DeadlineExtensions.ApplyDeadlineAsync(deadline, () => Task.Delay(25), () => service.ProcessedItems.Count < 10);
         await cts.CancelAsync();
 
         await service.StopAsync(CancellationToken.None);
@@ -71,8 +73,8 @@ public sealed class ParallelBackgroundServiceTests
         using var cts = new CancellationTokenSource();
         await service.StartAsync(cts.Token);
 
-        // Increased from 50ms → 200ms for Windows CI/CD reliability
-        await Task.Delay(200, cts.Token);
+        var deadline = DateTime.UtcNow.AddSeconds(5);
+        await DeadlineExtensions.ApplyDeadlineAsync(deadline, () => Task.Delay(25), () => service.ProcessedItems.Count < 3);
         await cts.CancelAsync();
 
         await service.StopAsync(CancellationToken.None);
@@ -109,8 +111,8 @@ public sealed class ParallelBackgroundServiceTests
         using var cts = new CancellationTokenSource();
         await service.StartAsync(cts.Token);
 
-        // Increased from 50ms → 200ms for Windows CI/CD reliability
-        await Task.Delay(200, cts.Token);
+        var deadline = DateTime.UtcNow.AddSeconds(5);
+        await DeadlineExtensions.ApplyDeadlineAsync(deadline, () => Task.Delay(25), () => service.ProcessCallCount < 7);
         await cts.CancelAsync();
 
         await service.StopAsync(CancellationToken.None);

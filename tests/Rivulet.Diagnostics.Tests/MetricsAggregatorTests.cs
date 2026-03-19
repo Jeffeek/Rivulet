@@ -1,3 +1,4 @@
+using Rivulet.Base.Tests;
 using Rivulet.Core;
 using Rivulet.Core.Observability;
 
@@ -32,27 +33,36 @@ public sealed class MetricsAggregatorTests
                 cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync(TestContext.Current.CancellationToken);
 
-        // Wait for EventCounters to poll and write metrics, then for aggregation window to fire
-        await Task.Delay(5000, CancellationToken.None);
+        // Poll until EventCounters fire and aggregation window produces results
+        var deadline = DateTime.UtcNow.AddSeconds(10);
+        await DeadlineExtensions.ApplyDeadlineAsync(
+            deadline,
+            static () => Task.Delay(50, CancellationToken.None),
+            () =>
+            {
+                lock (lockObj)
+                    return aggregatedMetrics.Count == 0;
+            });
 
         // Take a thread-safe snapshot to avoid race conditions
-        IReadOnlyList<AggregatedMetrics> lastAggregation;
+        List<IReadOnlyList<AggregatedMetrics>> snapshot;
         lock (lockObj)
         {
             aggregatedMetrics.ShouldNotBeEmpty();
-            lastAggregation = aggregatedMetrics.Last();
+            snapshot = aggregatedMetrics.ToList();
         }
 
-        lastAggregation.ShouldNotBeEmpty();
-
-        var itemsStartedMetric =
-            lastAggregation.FirstOrDefault(static m => m.Name == RivuletMetricsConstants.CounterNames.ItemsStarted);
+        // Search ALL aggregation windows for the metric — on Windows, timer coalescing
+        // can cause the last window to miss counters that aged out of the 500ms window
+        var itemsStartedMetric = snapshot
+            .SelectMany(static a => a)
+            .FirstOrDefault(static m => m.Name == RivuletMetricsConstants.CounterNames.ItemsStarted);
         itemsStartedMetric.ShouldNotBeNull();
         itemsStartedMetric.Min.ShouldBeGreaterThanOrEqualTo(0);
         itemsStartedMetric.Max.ShouldBeGreaterThanOrEqualTo(itemsStartedMetric.Min);
         itemsStartedMetric.Average.ShouldBeGreaterThanOrEqualTo(0);
         itemsStartedMetric.SampleCount.ShouldBeGreaterThan(0);
-        itemsStartedMetric.Timestamp.ShouldBe(DateTime.UtcNow, TimeSpan.FromSeconds(5));
+        itemsStartedMetric.Timestamp.ShouldBe(DateTime.UtcNow, TimeSpan.FromSeconds(10));
     }
 
     [Fact]
@@ -82,8 +92,16 @@ public sealed class MetricsAggregatorTests
                 cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync(TestContext.Current.CancellationToken);
 
-        // Wait for at least 2x the aggregation window to ensure timer fires reliably
-        await Task.Delay(3000, CancellationToken.None); // Fixed delay for timer-based aggregation
+        // Poll until aggregation fires and produces results
+        var deadline = DateTime.UtcNow.AddSeconds(10);
+        await DeadlineExtensions.ApplyDeadlineAsync(
+            deadline,
+            static () => Task.Delay(50, CancellationToken.None),
+            () =>
+            {
+                lock (lockObj)
+                    return aggregatedMetrics.Count == 0;
+            });
 
         // Take a thread-safe snapshot of the list to avoid race conditions
         List<IReadOnlyList<AggregatedMetrics>> snapshot;
@@ -132,8 +150,16 @@ public sealed class MetricsAggregatorTests
                 cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync(TestContext.Current.CancellationToken);
 
-        // Wait for EventCounters to poll (~1s interval) + aggregation timer to fire
-        await Task.Delay(2000, CancellationToken.None); // Fixed delay for timer-based aggregation
+        // Poll until EventCounters fire and aggregation timer produces results
+        var deadline = DateTime.UtcNow.AddSeconds(10);
+        await DeadlineExtensions.ApplyDeadlineAsync(
+            deadline,
+            static () => Task.Delay(50, CancellationToken.None),
+            () =>
+            {
+                lock (lockObj)
+                    return aggregatedMetrics.Count == 0;
+            });
 
         // Take a thread-safe snapshot for initial checks
         IReadOnlyList<AggregatedMetrics> firstAggregation;
