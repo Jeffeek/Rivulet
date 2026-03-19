@@ -25,6 +25,7 @@ public sealed class RivuletFileListener : RivuletEventListenerBase, IAsyncDispos
     private readonly object _lock = LockFactory.CreateLock();
     private readonly long _maxFileSizeBytes;
     private long _currentFileSize;
+    private bool _disposed;
     private StreamWriter? _writer;
 
     /// <summary>
@@ -48,6 +49,10 @@ public sealed class RivuletFileListener : RivuletEventListenerBase, IAsyncDispos
         await StreamWriterDisposalHelper.ExtractAndDisposeAsync(_lock,
             () =>
             {
+                if (_disposed)
+                    return null;
+
+                _disposed = true;
                 var w = _writer;
                 _writer = null;
                 return w;
@@ -87,9 +92,10 @@ public sealed class RivuletFileListener : RivuletEventListenerBase, IAsyncDispos
         var directory = Path.GetDirectoryName(_filePath);
         if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory)) Directory.CreateDirectory(directory);
 
+        // Read size before creating the writer — the constructor creates the file if absent,
+        // which would make a post-creation File.Exists check always true
+        _currentFileSize = File.Exists(_filePath) ? new FileInfo(_filePath).Length : 0;
         _writer = new(_filePath, true, Encoding.UTF8) { AutoFlush = false };
-
-        if (File.Exists(_filePath)) _currentFileSize = new FileInfo(_filePath).Length;
     }
 
     private void CheckRotation()
@@ -120,6 +126,10 @@ public sealed class RivuletFileListener : RivuletEventListenerBase, IAsyncDispos
         StreamWriterDisposalHelper.ExtractAndDispose(_lock,
             () =>
             {
+                if (_disposed)
+                    return null;
+
+                _disposed = true;
                 var w = _writer;
                 _writer = null;
                 return w;

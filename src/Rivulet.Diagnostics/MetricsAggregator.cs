@@ -63,7 +63,7 @@ public sealed class MetricsAggregator : RivuletEventListenerBase, IAsyncDisposab
     private readonly TimeSpan _aggregationWindow;
     private readonly ConcurrentDictionary<string, (string DisplayName, string DisplayUnits)> _metricMetadata = new();
     private readonly ConcurrentDictionary<string, List<(double Value, DateTime Timestamp)>> _samples = new();
-    private bool _disposed;
+    private volatile bool _disposed;
 
     /// <summary>
     ///     Initializes a new instance of the <see cref="MetricsAggregator" /> class.

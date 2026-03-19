@@ -28,6 +28,7 @@ public sealed class RivuletStructuredLogListener : RivuletEventListenerBase, IAs
     private readonly JsonSerializerOptions _jsonOptions;
     private readonly object _lock = LockFactory.CreateLock();
     private readonly Action<string>? _logAction;
+    private bool _disposed;
     private StreamWriter? _writer;
 
     /// <summary>
@@ -63,6 +64,10 @@ public sealed class RivuletStructuredLogListener : RivuletEventListenerBase, IAs
         await StreamWriterDisposalHelper.ExtractAndDisposeAsync(_lock,
             () =>
             {
+                if (_disposed)
+                    return null;
+
+                _disposed = true;
                 var w = _writer;
                 _writer = null;
                 return w;
@@ -121,6 +126,10 @@ public sealed class RivuletStructuredLogListener : RivuletEventListenerBase, IAs
         StreamWriterDisposalHelper.ExtractAndDispose(_lock,
             () =>
             {
+                if (_disposed)
+                    return null;
+
+                _disposed = true;
                 var w = _writer;
                 _writer = null;
                 return w;
