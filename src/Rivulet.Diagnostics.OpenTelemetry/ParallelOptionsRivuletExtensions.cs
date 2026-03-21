@@ -53,6 +53,7 @@ public static class ParallelOptionsRivuletExtensions
             Progress = options.Progress,
             Metrics = options.Metrics,
             RateLimit = options.RateLimit,
+            OnFallback = options.OnFallback,
             OnThrottleAsync = options.OnThrottleAsync,
             OnDrainAsync = options.OnDrainAsync,
             OnStartItemAsync = index =>
