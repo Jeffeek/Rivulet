@@ -32,8 +32,8 @@
     <File Path="packages.yml" />
     <File Path="README-RESHARPER.md" />
     <File Path="README.md" />
-    <File Path="Rivulet.sln.DotSettings" />
-    <File Path="Rivulet.sln.DotSettings.user" />
+    <File Path="Rivulet.slnx.DotSettings" />
+    <File Path="Rivulet.slnx.DotSettings.user" />
     <File Path="ROADMAP.md" />
     <File Path="SECURITY.md" />
   </Folder>
