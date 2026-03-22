@@ -685,3 +685,7 @@ resharper_with_expression_instead_of_initializer_highlighting = warning
 resharper_wrong_indent_size_highlighting = warning
 resharper_wrong_metadata_use_highlighting = warning
 resharper_xaml_constructor_warning_highlighting = error
+
+[tests/**/*.cs]
+dotnet_diagnostic.CA2007.severity = none
+dotnet_diagnostic.IDE0058.severity = none
