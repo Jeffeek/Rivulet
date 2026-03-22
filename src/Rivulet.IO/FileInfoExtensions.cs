@@ -68,21 +68,7 @@ public static class FileInfoExtensions
     {
         ArgumentNullException.ThrowIfNull(file);
 
-        options ??= new();
-
-        return FileOperationHelper.ExecuteFileOperationAsync(
-            file.FullName,
-            async () =>
-            {
-#pragma warning disable CA2007
-                await using var stream = FileOperationHelper.CreateReadStream(file.FullName, options);
-#pragma warning restore CA2007
-
-                using var reader = new StreamReader(stream, options.Encoding);
-                return await reader.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
-            },
-            options,
-            static content => new FileOperationResult { BytesProcessed = content.Length });
+        return FileOperationHelper.ReadFileTextAsync(file.FullName, options ?? new(), cancellationToken);
     }
 
     /// <summary>
@@ -101,22 +87,7 @@ public static class FileInfoExtensions
     {
         ArgumentNullException.ThrowIfNull(file);
 
-        options ??= new();
-
-        return FileOperationHelper.ExecuteFileOperationAsync(
-            file.FullName,
-            async () =>
-            {
-#pragma warning disable CA2007
-                await using var stream = FileOperationHelper.CreateReadStream(file.FullName, options);
-#pragma warning restore CA2007
-
-                var buffer = new byte[stream.Length];
-                _ = await stream.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
-                return buffer;
-            },
-            options,
-            static bytes => new FileOperationResult { BytesProcessed = bytes.Length });
+        return FileOperationHelper.ReadFileBytesAsync(file.FullName, options ?? new(), cancellationToken);
     }
 
     /// <summary>
@@ -129,7 +100,7 @@ public static class FileInfoExtensions
     /// <returns>File length.</returns>
     /// <exception cref="ArgumentNullException">Thrown when file is null.</exception>
     /// <exception cref="IOException">Thrown when file exists and OverwriteExisting is false.</exception>
-    public static ValueTask<int> WriteAllTextAsync(
+    public static async ValueTask<int> WriteAllTextAsync(
         this FileInfo file,
         string content,
         FileOperationOptions? options = null,
@@ -138,26 +109,10 @@ public static class FileInfoExtensions
     {
         ArgumentNullException.ThrowIfNull(file);
 
-        options ??= new();
+        await FileOperationHelper.WriteFileTextAsync(file.FullName, content, options ?? new(), cancellationToken)
+            .ConfigureAwait(false);
 
-        return FileOperationHelper.ExecuteFileOperationAsync(
-            file.FullName,
-            async () =>
-            {
-                FileOperationHelper.EnsureDirectoryExists(file.FullName, options);
-                FileOperationHelper.ValidateOverwrite(file.FullName, options);
-
-#pragma warning disable CA2007
-                await using var stream = FileOperationHelper.CreateWriteStream(file.FullName, options);
-                await using var writer = new StreamWriter(stream, options.Encoding);
-#pragma warning restore CA2007
-                await writer.WriteAsync(content.AsMemory(), cancellationToken).ConfigureAwait(false);
-                await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
-
-                return content.Length;
-            },
-            options,
-            static length => new FileOperationResult { BytesProcessed = length });
+        return content.Length;
     }
 
     /// <summary>
@@ -170,7 +125,7 @@ public static class FileInfoExtensions
     /// <returns>File length.</returns>
     /// <exception cref="ArgumentNullException">Thrown when file is null.</exception>
     /// <exception cref="IOException">Thrown when file exists and OverwriteExisting is false.</exception>
-    public static ValueTask<int> WriteAllBytesAsync(
+    public static async ValueTask<int> WriteAllBytesAsync(
         this FileInfo file,
         byte[] content,
         FileOperationOptions? options = null,
@@ -179,26 +134,10 @@ public static class FileInfoExtensions
     {
         ArgumentNullException.ThrowIfNull(file);
 
-        options ??= new();
+        await FileOperationHelper.WriteFileBytesAsync(file.FullName, content, options ?? new(), cancellationToken)
+            .ConfigureAwait(false);
 
-        return FileOperationHelper.ExecuteFileOperationAsync(
-            file.FullName,
-            async () =>
-            {
-                FileOperationHelper.EnsureDirectoryExists(file.FullName, options);
-                FileOperationHelper.ValidateOverwrite(file.FullName, options);
-
-#pragma warning disable CA2007
-                await using var stream = FileOperationHelper.CreateWriteStream(file.FullName, options);
-#pragma warning restore CA2007
-
-                await stream.WriteAsync(content, cancellationToken).ConfigureAwait(false);
-                await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
-
-                return content.Length;
-            },
-            options,
-            static length => new FileOperationResult { BytesProcessed = length });
+        return content.Length;
     }
 
     /// <summary>
@@ -211,7 +150,7 @@ public static class FileInfoExtensions
     /// <returns>Stream length.</returns>
     /// <exception cref="ArgumentNullException">Thrown when file is null.</exception>
     /// <exception cref="IOException">Thrown when destination exists and OverwriteExisting is false.</exception>
-    public static ValueTask<long> CopyToAsync(
+    public static async ValueTask<long> CopyToAsync(
         this FileInfo file,
         string destinationPath,
         FileOperationOptions? options = null,
@@ -220,31 +159,10 @@ public static class FileInfoExtensions
     {
         ArgumentNullException.ThrowIfNull(file);
 
-        options ??= new();
+        await FileOperationHelper.CopyFileAsync(file.FullName, destinationPath, options ?? new(), cancellationToken)
+            .ConfigureAwait(false);
 
-        return FileOperationHelper.ExecuteFileOperationAsync(
-            file.FullName,
-            async () =>
-            {
-                FileOperationHelper.EnsureDirectoryExists(destinationPath, options);
-                FileOperationHelper.ValidateOverwrite(destinationPath, options);
-
-#pragma warning disable CA2007
-                var (sourceStream, destStream) =
-                    FileOperationHelper.CreateCopyStreams(file.FullName, destinationPath, options);
-                await using (sourceStream)
-                await using (destStream)
-                {
-#pragma warning restore CA2007
-                    await sourceStream.CopyToAsync(destStream, options.BufferSize, cancellationToken)
-                        .ConfigureAwait(false);
-                    await destStream.FlushAsync(cancellationToken).ConfigureAwait(false);
-
-                    return sourceStream.Length;
-                }
-            },
-            options,
-            static length => new FileOperationResult { BytesProcessed = length });
+        return file.Length;
     }
 
     /// <summary>
@@ -257,7 +175,7 @@ public static class FileInfoExtensions
     ///     <value>0</value>
     /// </returns>
     /// <exception cref="ArgumentNullException">Thrown when file is null.</exception>
-    public static ValueTask<int> DeleteAsync(
+    public static async ValueTask<int> DeleteAsync(
         this FileInfo file,
         FileOperationOptions? options = null,
         CancellationToken cancellationToken = default
@@ -265,15 +183,9 @@ public static class FileInfoExtensions
     {
         ArgumentNullException.ThrowIfNull(file);
 
-        options ??= new();
+        await FileOperationHelper.DeleteFileAsync(file.FullName, options ?? new(), cancellationToken)
+            .ConfigureAwait(false);
 
-        return FileOperationHelper.ExecuteFileOperationAsync(
-            file.FullName,
-            async () =>
-            {
-                await Task.Run(() => File.Delete(file.FullName), cancellationToken).ConfigureAwait(false);
-                return 0;
-            },
-            options);
+        return 0;
     }
 }
