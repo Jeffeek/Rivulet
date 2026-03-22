@@ -206,12 +206,10 @@ public static class HttpStreamingExtensions
             fileMode = FileMode.Create;
         }
 
-        var totalBytes = existingFileSize + (response.Content.Headers.ContentLength ?? 0);
-
-        // Pre-compute the reported total: for resumed downloads (206 Partial Content),
-        // use the total including existing bytes; otherwise use raw Content-Length
+        // For 206 Partial Content, extract total length from Content-Range header (e.g. "bytes 1000-1999/5000").
+        // Do not fabricate a total from existingFileSize when Content-Length is absent.
         var reportedTotalBytes = response.StatusCode == HttpStatusCode.PartialContent
-            ? totalBytes
+            ? response.Content.Headers.ContentRange?.Length
             : response.Content.Headers.ContentLength;
 
 #pragma warning disable CA2007 // ConfigureAwait not applicable to await using declarations
