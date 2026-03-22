@@ -21,11 +21,11 @@ public sealed class ParallelBackgroundServiceTests
         var deadline = DateTime.UtcNow.AddSeconds(5);
         await DeadlineExtensions.ApplyDeadlineAsync(
             deadline,
-            static () => Task.Delay(25, CancellationToken.None),
+            static () => Task.Delay(25, TestContext.Current.CancellationToken),
             () => service.ProcessedItems.Count < 5);
         await cts.CancelAsync();
 
-        await service.StopAsync(CancellationToken.None);
+        await service.StopAsync(TestContext.Current.CancellationToken);
 
         service.ProcessedItems.Count.ShouldBe(5);
         service.ProcessedItems.OrderBy(static x => x).ShouldBe([1, 2, 3, 4, 5]);
@@ -46,7 +46,7 @@ public sealed class ParallelBackgroundServiceTests
         await DeadlineExtensions.ApplyDeadlineAsync(deadline, static () => Task.Delay(25, TestContext.Current.CancellationToken), () => service.ProcessedItems.Count < 10);
         await cts.CancelAsync();
 
-        await service.StopAsync(CancellationToken.None);
+        await service.StopAsync(TestContext.Current.CancellationToken);
 
         service.ProcessedItems.Count.ShouldBe(10);
     }
@@ -77,7 +77,7 @@ public sealed class ParallelBackgroundServiceTests
         await DeadlineExtensions.ApplyDeadlineAsync(deadline, static () => Task.Delay(25, TestContext.Current.CancellationToken), () => service.ProcessedItems.Count < 3);
         await cts.CancelAsync();
 
-        await service.StopAsync(CancellationToken.None);
+        await service.StopAsync(TestContext.Current.CancellationToken);
 
         service.ProcessedItems.Count.ShouldBe(3);
     }
@@ -95,7 +95,7 @@ public sealed class ParallelBackgroundServiceTests
         await Task.Delay(30, cts.Token);
         await cts.CancelAsync();
 
-        await service.StopAsync(CancellationToken.None);
+        await service.StopAsync(TestContext.Current.CancellationToken);
 
         service.ProcessedItems.ShouldBeEmpty();
         service.ProcessCallCount.ShouldBe(0);
@@ -115,7 +115,7 @@ public sealed class ParallelBackgroundServiceTests
         await DeadlineExtensions.ApplyDeadlineAsync(deadline, static () => Task.Delay(25, TestContext.Current.CancellationToken), () => service.ProcessCallCount < 7);
         await cts.CancelAsync();
 
-        await service.StopAsync(CancellationToken.None);
+        await service.StopAsync(TestContext.Current.CancellationToken);
 
         service.ProcessCallCount.ShouldBe(7);
     }
@@ -133,9 +133,9 @@ public sealed class ParallelBackgroundServiceTests
 
         // Act
         await service.StartAsync(cts.Token);
-        await Task.Delay(20, CancellationToken.None); // Let it start
+        await Task.Delay(20, TestContext.Current.CancellationToken); // Let it start
         await cts.CancelAsync();                      // Cancel it
-        await service.StopAsync(CancellationToken.None);
+        await service.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert - should exit gracefully without throwing
         service.ProcessedItems.Count.ShouldBeLessThan(100);
@@ -145,7 +145,7 @@ public sealed class ParallelBackgroundServiceTests
         {
             for (var i = 1; i <= 100; i++)
             {
-                await Task.Delay(50, CancellationToken.None); // Slow enough to get cancelled
+                await Task.Delay(50, TestContext.Current.CancellationToken); // Slow enough to get cancelled
                 yield return i;
             }
         }
@@ -171,7 +171,7 @@ public sealed class ParallelBackgroundServiceTests
 
         // The service should have logged the error
         // Since we can't easily verify logs in this test, we verify the behavior continues
-        await service.StopAsync(CancellationToken.None);
+        await service.StopAsync(TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -190,8 +190,8 @@ public sealed class ParallelBackgroundServiceTests
         // propagated by StopAsync. This test verifies the service handles exceptions gracefully
         // without crashing the test host.
         await service.StartAsync(cts.Token);
-        await Task.Delay(100, CancellationToken.None);
-        await service.StopAsync(CancellationToken.None);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
 
         // The service should have logged the error and stopped gracefully
         // No unhandled exception should crash the test

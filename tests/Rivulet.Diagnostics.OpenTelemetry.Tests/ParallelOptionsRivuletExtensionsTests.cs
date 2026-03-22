@@ -44,7 +44,7 @@ public sealed class ParallelOptionsRivuletExtensionsTests
 
         // Wait for all activities to be started and added
         allActivitiesStarted.Wait(TimeSpan.FromSeconds(2), TestContext.Current.CancellationToken);
-        await Task.Delay(50, CancellationToken.None); // Extra buffer
+        await Task.Delay(50, TestContext.Current.CancellationToken); // Extra buffer
 
         results.Count.ShouldBe(5);
         activities.Count.ShouldBe(5, "should have one activity per item");
@@ -83,7 +83,7 @@ public sealed class ParallelOptionsRivuletExtensionsTests
 
         // Wait for all activities to be stopped and added
         allActivitiesStopped.Wait(TimeSpan.FromSeconds(2), TestContext.Current.CancellationToken);
-        await Task.Delay(50, CancellationToken.None); // Extra buffer
+        await Task.Delay(50, TestContext.Current.CancellationToken); // Extra buffer
 
         results.Count.ShouldBe(3);
 
@@ -136,7 +136,7 @@ public sealed class ParallelOptionsRivuletExtensionsTests
 
         // Wait for all activities to be stopped and added
         allActivitiesStopped.Wait(TimeSpan.FromSeconds(2), TestContext.Current.CancellationToken);
-        await Task.Delay(50, CancellationToken.None); // Extra buffer
+        await Task.Delay(50, TestContext.Current.CancellationToken); // Extra buffer
 
         var errorActivities = activities.Where(static a => a.OperationName == "Rivulet.ErrorOperation.Item").ToList();
         errorActivities.Count.ShouldBe(3);
@@ -258,7 +258,7 @@ public sealed class ParallelOptionsRivuletExtensionsTests
                 {
                     stateChanged.Set();
                     // Add delay to ensure state change is recorded while activities are still active
-                    await Task.Delay(50, CancellationToken.None); // Reduced from 200ms for faster tests
+                    await Task.Delay(50, TestContext.Current.CancellationToken); // Reduced from 200ms for faster tests
                 }
             }
         }.WithOpenTelemetryTracing("CircuitBreakerOperation");
@@ -293,7 +293,7 @@ public sealed class ParallelOptionsRivuletExtensionsTests
         // Give time for event to be recorded on activity and for activities to complete
         // Need to wait for the in-flight activities to complete so they're captured
         // Activities stop asynchronously after the operation completes
-        await Task.Delay(1000, CancellationToken.None); // Reduced from 10000ms for faster tests
+        await Task.Delay(1000, TestContext.Current.CancellationToken); // Reduced from 10000ms for faster tests
 
         // Some activities should have circuit breaker state change events
         // Filter out null activities and those with null Events collections
@@ -348,7 +348,7 @@ public sealed class ParallelOptionsRivuletExtensionsTests
 
         // Wait for all activities to be stopped and events to be recorded
         // Activities are stopped asynchronously after the operation completes
-        await Task.Delay(100, CancellationToken.None);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
 
         // Adaptive concurrency integration is verified:
         // 1. Activities are created and tracked
@@ -403,7 +403,7 @@ public sealed class ParallelOptionsRivuletExtensionsTests
 
         // Wait for all activities to be stopped and added to the collection
         allActivitiesStopped.Wait(TimeSpan.FromSeconds(2), TestContext.Current.CancellationToken);
-        await Task.Delay(50, CancellationToken.None); // Extra buffer for activity processing
+        await Task.Delay(50, TestContext.Current.CancellationToken); // Extra buffer for activity processing
 
         var indexActivities =
             activities.Where(static a => a.OperationName == "Rivulet.IndexTagsOperation.Item").ToList();

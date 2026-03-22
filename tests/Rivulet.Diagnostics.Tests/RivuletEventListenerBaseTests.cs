@@ -63,7 +63,7 @@ public sealed class RivuletEventListenerBaseTests : IDisposable
         // Increased to 8000ms for Windows CI/CD reliability
         var deadline = DateTime.UtcNow.AddMilliseconds(8000);
         while (_listener.ReceivedCounters.IsEmpty && DateTime.UtcNow < deadline)
-            await Task.Delay(100, CancellationToken.None);
+            await Task.Delay(100, TestContext.Current.CancellationToken);
 
         _listener.ReceivedCounters.ShouldNotBeEmpty();
         foreach (var counter in _listener.ReceivedCounters) counter.Value.DisplayName.ShouldNotBeNullOrEmpty();
@@ -89,7 +89,7 @@ public sealed class RivuletEventListenerBaseTests : IDisposable
         // Increased to 8000ms for Windows CI/CD reliability
         var deadline = DateTime.UtcNow.AddMilliseconds(8000);
         while (_listener.ReceivedCounters.IsEmpty && DateTime.UtcNow < deadline)
-            await Task.Delay(100, CancellationToken.None);
+            await Task.Delay(100, TestContext.Current.CancellationToken);
 
         _listener.ReceivedCounters.ShouldNotBeEmpty();
         foreach (var counter in _listener.ReceivedCounters) counter.Value.DisplayUnits.ShouldNotBeNull();
@@ -122,7 +122,7 @@ public sealed class RivuletEventListenerBaseTests : IDisposable
         var listener = new TestEventListener();
 
         // Wait a moment to let the listener initialize and receive any pending events
-        await Task.Delay(200, CancellationToken.None);
+        await Task.Delay(200, TestContext.Current.CancellationToken);
 
         // Create a custom EventSource with a different name (NOT "Rivulet.Core")
         // The listener should ignore this entirely since it only listens to "Rivulet.Core"
@@ -130,7 +130,7 @@ public sealed class RivuletEventListenerBaseTests : IDisposable
         customSource.WriteEvent(1, "test");
 
         // Give it a moment for any events to be processed
-        await Task.Delay(150, CancellationToken.None);
+        await Task.Delay(150, TestContext.Current.CancellationToken);
 
         // The counter count should not have increased from the custom source
         // Note: It might have increased from the real Rivulet.Core EventSource if operations
@@ -173,7 +173,7 @@ public sealed class RivuletEventListenerBaseTests : IDisposable
         customSource.EmitCounterWithoutDisplayUnits();
 
         // Wait a bit for the event to be processed
-        await Task.Delay(1000, CancellationToken.None);
+        await Task.Delay(1000, TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -343,7 +343,7 @@ public sealed class RivuletEventListenerBaseTests : IDisposable
         // Increased to 8000ms for CI/CD reliability
         var deadline = DateTime.UtcNow.AddMilliseconds(8000);
         while (listener.ReceivedCounters.IsEmpty && DateTime.UtcNow < deadline)
-            await Task.Delay(100, CancellationToken.None);
+            await Task.Delay(100, TestContext.Current.CancellationToken);
 
         listener.ReceivedCounters.ShouldNotBeEmpty();
     }

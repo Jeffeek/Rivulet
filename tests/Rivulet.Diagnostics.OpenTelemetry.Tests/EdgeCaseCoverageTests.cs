@@ -141,7 +141,7 @@ public sealed class EdgeCaseCoverageTests
             // Expected - test intentionally throws
         }
 
-        await Task.Delay(100, CancellationToken.None);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
 
         onStartCalled.ShouldBeGreaterThan(0);
         onCompleteCalled.ShouldBeGreaterThan(0);
@@ -170,7 +170,7 @@ public sealed class EdgeCaseCoverageTests
     {
         using var exporter = new RivuletMetricsExporter();
 
-        await Task.Delay(100, CancellationToken.None);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
 
         await Enumerable.Range(1, 5)
             .ToAsyncEnumerable()
@@ -183,7 +183,7 @@ public sealed class EdgeCaseCoverageTests
                 cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync(TestContext.Current.CancellationToken);
 
-        await Task.Delay(100, CancellationToken.None);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -245,7 +245,7 @@ public sealed class EdgeCaseCoverageTests
 
         // Wait for all activities to be captured by the listener
         // On slower systems (CI/CD), activities may take longer to be recorded
-        await Task.Delay(300, CancellationToken.None);
+        await Task.Delay(300, TestContext.Current.CancellationToken);
 
         // Filter out null activities (can happen during async callback execution)
         var successActivities = activities.Where(static a => a?.Status == ActivityStatusCode.Ok).ToList();
@@ -294,7 +294,7 @@ public sealed class EdgeCaseCoverageTests
 
         // Wait for all activities to be captured by the listener
         // On slower systems (CI/CD), activities may take longer to be recorded
-        await Task.Delay(300, CancellationToken.None);
+        await Task.Delay(300, TestContext.Current.CancellationToken);
 
         // Filter out null activities (can happen during async callback execution)
         var errorActivities = activities.Where(static a => a?.Status == ActivityStatusCode.Error).ToList();

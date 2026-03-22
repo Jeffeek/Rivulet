@@ -99,7 +99,7 @@ public sealed class SelectParallelStreamAsyncTests
                            cancellationToken: TestContext.Current.CancellationToken))
         {
             results.Add(item);
-            await Task.Delay(1, CancellationToken.None);
+            await Task.Delay(1, TestContext.Current.CancellationToken);
         }
 
         results.Count.ShouldBe(100);
@@ -172,7 +172,7 @@ public sealed class SelectParallelStreamAsyncTests
         {
             for (var i = 1; i <= 5; i++)
             {
-                await Task.Delay(50, CancellationToken.None);
+                await Task.Delay(50, TestContext.Current.CancellationToken);
                 yield return i;
             }
         }

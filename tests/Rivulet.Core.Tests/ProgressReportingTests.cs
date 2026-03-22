@@ -683,7 +683,7 @@ public sealed class ProgressReportingTests
                 OnProgress = async _ =>
                 {
                     callbackExecuted = true;
-                    await Task.Delay(100, CancellationToken.None);
+                    await Task.Delay(100, TestContext.Current.CancellationToken);
                 }
             }
         };

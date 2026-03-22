@@ -40,7 +40,7 @@ public sealed class MetricsTests
             options,
             cancellationToken: TestContext.Current.CancellationToken);
 
-        await Task.Delay(100, CancellationToken.None);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(100);
         capturedSnapshot.ShouldNotBeNull();
@@ -86,7 +86,7 @@ public sealed class MetricsTests
         // 2. Any remaining async state machine cleanup
         // Using Task.Yield() to force a context switch, ensuring all memory writes are globally visible
         await Task.Yield();
-        await Task.Delay(500, CancellationToken.None);
+        await Task.Delay(500, TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(40); // 50 - 10 failures
         capturedSnapshot.ShouldNotBeNull();
@@ -127,7 +127,7 @@ public sealed class MetricsTests
             options,
             cancellationToken: TestContext.Current.CancellationToken);
 
-        await Task.Delay(100, CancellationToken.None);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(20);
         capturedSnapshot.ShouldNotBeNull();
@@ -169,7 +169,7 @@ public sealed class MetricsTests
             options,
             cancellationToken: TestContext.Current.CancellationToken);
 
-        await Task.Delay(100, CancellationToken.None);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(100);
         capturedSnapshot.ShouldNotBeNull();
@@ -205,7 +205,7 @@ public sealed class MetricsTests
             options,
             cancellationToken: TestContext.Current.CancellationToken);
 
-        await Task.Delay(100, CancellationToken.None);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(100);
         capturedSnapshot.ShouldNotBeNull();
@@ -242,7 +242,7 @@ public sealed class MetricsTests
                 cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync(TestContext.Current.CancellationToken);
 
-        await Task.Delay(100, CancellationToken.None);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(50);
         capturedSnapshot.ShouldNotBeNull();
@@ -501,7 +501,7 @@ public sealed class MetricsTests
                 return max1 != 20 || max2 != 30;
             });
 
-        await Task.Delay(200, CancellationToken.None);
+        await Task.Delay(200, TestContext.Current.CancellationToken);
 
         snapshots1.ShouldNotBeEmpty("first operation should have captured at least one metrics sample");
         snapshots2.ShouldNotBeEmpty("second operation should have captured at least one metrics sample");
@@ -546,7 +546,7 @@ public sealed class MetricsTests
             options,
             cancellationToken: TestContext.Current.CancellationToken);
 
-        await Task.Delay(100, CancellationToken.None);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(50);
         results.ShouldBeInOrder();
@@ -610,7 +610,7 @@ public sealed class MetricsTests
             options,
             cancellationToken: TestContext.Current.CancellationToken);
 
-        await Task.Delay(100, CancellationToken.None);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(100);
         sampleCount.ShouldBeGreaterThan(1);
@@ -702,7 +702,7 @@ public sealed class MetricsTests
         // Wait for timers to fire multiple times after completion
         // Both sample intervals are 50ms, so wait 200ms (4x interval) to ensure
         // final state is fully captured in both metrics and progress snapshots
-        await Task.Delay(200, CancellationToken.None);
+        await Task.Delay(200, TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(50);
         metricsSnapshot.ShouldNotBeNull();
@@ -827,7 +827,7 @@ public sealed class MetricsTests
                 }
             }
 
-            await Task.Delay(100, CancellationToken.None);
+            await Task.Delay(100, TestContext.Current.CancellationToken);
 
             capturedSnapshot.ShouldNotBeNull($"Error mode: {errorMode}");
             capturedSnapshot!.ItemsStarted.ShouldBeGreaterThan(0, $"Error mode: {errorMode}");
@@ -850,7 +850,7 @@ public sealed class MetricsTests
             }
         };
 
-        await using var tracker = new MetricsTracker(options, CancellationToken.None);
+        await using var tracker = new MetricsTracker(options, TestContext.Current.CancellationToken);
 
         tracker.IncrementDrainEvents();
         tracker.IncrementDrainEvents();
@@ -859,7 +859,7 @@ public sealed class MetricsTests
         // Wait for metrics sample to capture the drain events
         // SampleInterval is 50ms, so we wait for multiple intervals plus buffer
         // Race condition fixed by 50ms delay before final sample in MetricsTracker
-        await Task.Delay(150, CancellationToken.None);
+        await Task.Delay(150, TestContext.Current.CancellationToken);
 
         capturedSnapshot.ShouldNotBeNull();
         capturedSnapshot!.DrainEvents.ShouldBe(3);
@@ -880,14 +880,14 @@ public sealed class MetricsTests
             }
         };
 
-        await using var tracker = new MetricsTracker(options, CancellationToken.None);
+        await using var tracker = new MetricsTracker(options, TestContext.Current.CancellationToken);
 
         tracker.SetQueueDepth(42);
         tracker.IncrementItemsStarted();
 
         // Wait for metrics timer to fire - sample interval is 50ms
         // Using 200ms (4x interval) for reliability in CI/CD
-        await Task.Delay(200, CancellationToken.None);
+        await Task.Delay(200, TestContext.Current.CancellationToken);
 
         capturedSnapshot.ShouldNotBeNull();
         capturedSnapshot!.QueueDepth.ShouldBe(42);
@@ -899,12 +899,12 @@ public sealed class MetricsTests
         var options = new MetricsOptions
             { SampleInterval = TimeSpan.FromMilliseconds(50), OnMetricsSample = static _ => ValueTask.CompletedTask };
 
-        var tracker = new MetricsTracker(options, CancellationToken.None);
+        var tracker = new MetricsTracker(options, TestContext.Current.CancellationToken);
 
         try
         {
             tracker.IncrementItemsStarted();
-            await Task.Delay(100, CancellationToken.None);
+            await Task.Delay(100, TestContext.Current.CancellationToken);
 
             var act = async () => await tracker.DisposeAsync();
             await act.ShouldNotThrowAsync();
@@ -918,7 +918,7 @@ public sealed class MetricsTests
     [Fact]
     public async Task MetricsTrackerBase_WithoutMetrics_UsesNoOpTracker()
     {
-        await using var tracker = MetricsTrackerBase.Create(null, CancellationToken.None);
+        await using var tracker = MetricsTrackerBase.Create(null, TestContext.Current.CancellationToken);
 
         // Should be NoOpMetricsTracker (lightweight, no allocations)
         tracker.ShouldBeOfType<NoOpMetricsTracker>();
@@ -948,7 +948,7 @@ public sealed class MetricsTests
             }
         };
 
-        await using var tracker = new MetricsTracker(options, CancellationToken.None);
+        await using var tracker = new MetricsTracker(options, TestContext.Current.CancellationToken);
 
         // Poll for the snapshot with a timeout to avoid flakiness
         await DeadlineExtensions.ApplyDeadlineAsync(
@@ -975,7 +975,7 @@ public sealed class MetricsTests
         var tracker = new MetricsTracker(options, cts.Token);
         tracker.IncrementItemsStarted();
 
-        await Task.Delay(50, CancellationToken.None);
+        await Task.Delay(50, TestContext.Current.CancellationToken);
 
         await cts.CancelAsync();
 
@@ -1021,7 +1021,7 @@ public sealed class MetricsTests
             options,
             cancellationToken: TestContext.Current.CancellationToken);
 
-        await Task.Delay(100, CancellationToken.None);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
 
         capturedSnapshot.ShouldNotBeNull();
         capturedSnapshot!.ItemsStarted.ShouldBe(30);
@@ -1072,14 +1072,14 @@ public sealed class MetricsTests
             OnMetricsSample = async _ => { await longRunningTcs.Task; }
         };
 
-        var tracker = new MetricsTracker(options, CancellationToken.None);
+        var tracker = new MetricsTracker(options, TestContext.Current.CancellationToken);
         tracker.IncrementItemsStarted();
 
-        await Task.Delay(50, CancellationToken.None);
+        await Task.Delay(50, TestContext.Current.CancellationToken);
 
         var disposeTask = Task.Run(async () => { await tracker.DisposeAsync(); }, TestContext.Current.CancellationToken);
 
-        await Task.Delay(100, CancellationToken.None);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
 
         longRunningTcs.SetResult(true);
 
@@ -1091,7 +1091,7 @@ public sealed class MetricsTests
     [Fact]
     public async Task MetricsTracker_WithNullCallback_SampleMetricsReturnsEarly()
     {
-        var tracker = new MetricsTracker(new() { OnMetricsSample = null }, CancellationToken.None);
+        var tracker = new MetricsTracker(new() { OnMetricsSample = null }, TestContext.Current.CancellationToken);
 
         try
         {
@@ -1117,7 +1117,7 @@ public sealed class MetricsTests
                     throw new InvalidOperationException("Metrics callback error!");
                 }
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         try
         {
@@ -1127,7 +1127,7 @@ public sealed class MetricsTests
             // Wait for metrics timer to fire - sample interval is 20ms
             // Using 500ms (25x interval) for reliability in CI/CD environments
             // Timer needs time to initialize and fire at least once
-            await Task.Delay(500, CancellationToken.None);
+            await Task.Delay(500, TestContext.Current.CancellationToken);
 
             // Should not crash despite exception
             callbackCount.ShouldBeGreaterThan(0,
@@ -1147,7 +1147,7 @@ public sealed class MetricsTests
                 SampleInterval = TimeSpan.FromMilliseconds(100),
                 OnMetricsSample = static _ => throw new InvalidOperationException("Error!")
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         tracker.IncrementItemsCompleted();
 
@@ -1214,7 +1214,7 @@ public sealed class MetricsTests
             options,
             cancellationToken: TestContext.Current.CancellationToken);
 
-        await Task.Delay(150, CancellationToken.None); // Wait for sampling
+        await Task.Delay(150, TestContext.Current.CancellationToken); // Wait for sampling
 
         snapshot.ShouldNotBeNull();
         snapshot!.TotalRetries.ShouldBeGreaterThan(0);
@@ -1224,7 +1224,7 @@ public sealed class MetricsTests
     public async Task NoOpMetricsTracker_AllMethods_DoNotThrow()
     {
         // Test that all NoOpMetricsTracker methods can be called without throwing
-        await using var tracker = MetricsTrackerBase.Create(null, CancellationToken.None);
+        await using var tracker = MetricsTrackerBase.Create(null, TestContext.Current.CancellationToken);
 
         tracker.ShouldBeOfType<NoOpMetricsTracker>();
 

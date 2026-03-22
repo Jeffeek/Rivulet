@@ -37,7 +37,7 @@ public sealed class MetricsAggregatorTests
         var deadline = DateTime.UtcNow.AddSeconds(10);
         await DeadlineExtensions.ApplyDeadlineAsync(
             deadline,
-            static () => Task.Delay(50, CancellationToken.None),
+            static () => Task.Delay(50, TestContext.Current.CancellationToken),
             () =>
             {
                 lock (lockObj)
@@ -96,7 +96,7 @@ public sealed class MetricsAggregatorTests
         var deadline = DateTime.UtcNow.AddSeconds(10);
         await DeadlineExtensions.ApplyDeadlineAsync(
             deadline,
-            static () => Task.Delay(50, CancellationToken.None),
+            static () => Task.Delay(50, TestContext.Current.CancellationToken),
             () =>
             {
                 lock (lockObj)
@@ -154,7 +154,7 @@ public sealed class MetricsAggregatorTests
         var deadline = DateTime.UtcNow.AddSeconds(10);
         await DeadlineExtensions.ApplyDeadlineAsync(
             deadline,
-            static () => Task.Delay(50, CancellationToken.None),
+            static () => Task.Delay(50, TestContext.Current.CancellationToken),
             () =>
             {
                 lock (lockObj)
@@ -173,7 +173,7 @@ public sealed class MetricsAggregatorTests
 
         // Wait for another aggregation window to potentially expire samples
         // This verifies that the aggregator handles sample expiration gracefully
-        await Task.Delay(2000, CancellationToken.None);
+        await Task.Delay(2000, TestContext.Current.CancellationToken);
 
         // Take a thread-safe snapshot for final checks
         List<IReadOnlyList<AggregatedMetrics>> snapshot;

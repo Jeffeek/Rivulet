@@ -564,7 +564,7 @@ public sealed class RivuletToPollyConverterTests
                 static sc => sc.To.ShouldBe(CircuitBreakerState.Open));
 
         // Wait for circuit to transition to HalfOpen
-        await Task.Delay(600, CancellationToken.None);
+        await Task.Delay(600, TestContext.Current.CancellationToken);
 
         // Next call should trigger HalfOpen -> Closed transition on success
         var result = await pipeline.ExecuteAsync(static _ => ValueTask.FromResult(42),
@@ -620,7 +620,7 @@ public sealed class RivuletToPollyConverterTests
                 static sc => sc.To.ShouldBe(CircuitBreakerState.Open));
 
         // Wait for circuit to transition to HalfOpen
-        await Task.Delay(600, CancellationToken.None);
+        await Task.Delay(600, TestContext.Current.CancellationToken);
 
         // Success should trigger HalfOpen -> Closed
         var result = await pipeline.ExecuteAsync(static _ => ValueTask.FromResult(42),

@@ -248,7 +248,7 @@ public sealed class BugFixRegressionTests
 
         // Wait for sampling timer to fire and attempt to increase concurrency
         // The SemaphoreSlim.Release(delta) should not throw SemaphoreFullException
-        await Task.Delay(200, CancellationToken.None);
+        await Task.Delay(200, TestContext.Current.CancellationToken);
 
         // Verify the controller is still functional
         var act = async () =>
@@ -308,7 +308,7 @@ public sealed class BugFixRegressionTests
             {
                 await cb.ExecuteAsync<int>(
                     static () => throw new InvalidOperationException("fail"),
-                    CancellationToken.None);
+                    TestContext.Current.CancellationToken);
             }
             catch (InvalidOperationException) { }
         }
@@ -316,7 +316,7 @@ public sealed class BugFixRegressionTests
         cb.State.ShouldBe(CircuitBreakerState.Open);
 
         // Wait for OpenTimeout to allow HalfOpen transition
-        await Task.Delay(150, CancellationToken.None);
+        await Task.Delay(150, TestContext.Current.CancellationToken);
 
         // Now fire many concurrent requests — only SuccessThreshold should be allowed through
         var allowedCount = 0;
@@ -327,10 +327,10 @@ public sealed class BugFixRegressionTests
             {
                 await cb.ExecuteAsync(static async () =>
                     {
-                        await Task.Delay(50, CancellationToken.None); // Hold the slot
+                        await Task.Delay(50, TestContext.Current.CancellationToken); // Hold the slot
                         return 1;
                     },
-                    CancellationToken.None);
+                    TestContext.Current.CancellationToken);
 
                 Interlocked.Increment(ref allowedCount);
             }
@@ -362,31 +362,31 @@ public sealed class BugFixRegressionTests
         {
             await cb.ExecuteAsync<int>(
                 static () => throw new InvalidOperationException("fail"),
-                CancellationToken.None);
+                TestContext.Current.CancellationToken);
         }
         catch (InvalidOperationException) { }
 
         cb.State.ShouldBe(CircuitBreakerState.Open);
 
         // Wait for HalfOpen
-        await Task.Delay(100, CancellationToken.None);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
 
         // First probe — fail it to re-open
         try
         {
             await cb.ExecuteAsync<int>(
                 static () => throw new InvalidOperationException("probe fail"),
-                CancellationToken.None);
+                TestContext.Current.CancellationToken);
         }
         catch (InvalidOperationException) { }
 
         cb.State.ShouldBe(CircuitBreakerState.Open);
 
         // Wait for HalfOpen again
-        await Task.Delay(100, CancellationToken.None);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
 
         // Permits should be refreshed — should be able to probe again
-        var result = await cb.ExecuteAsync(static () => ValueTask.FromResult(42), CancellationToken.None);
+        var result = await cb.ExecuteAsync(static () => ValueTask.FromResult(42), TestContext.Current.CancellationToken);
         result.ShouldBe(42);
     }
 
@@ -407,28 +407,28 @@ public sealed class BugFixRegressionTests
             {
                 await cb.ExecuteAsync<int>(
                     static () => throw new InvalidOperationException("fail"),
-                    CancellationToken.None);
+                    TestContext.Current.CancellationToken);
             }
             catch (InvalidOperationException) { }
         }
 
         // Wait for HalfOpen
-        await Task.Delay(100, CancellationToken.None);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
 
         // Use the one permit (SuccessThreshold = 1)
         // Hold it open with a long-running task so it doesn't close the circuit
         var holdPermit = cb.ExecuteAsync(static async () =>
             {
-                await Task.Delay(500, CancellationToken.None);
+                await Task.Delay(500, TestContext.Current.CancellationToken);
                 return 1;
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Additional request while permit is held should be rejected with HalfOpen state
         var ex = await Should.ThrowAsync<CircuitBreakerOpenException>(async () =>
             await cb.ExecuteAsync(
                 static () => ValueTask.FromResult(1),
-                CancellationToken.None));
+                TestContext.Current.CancellationToken));
 
         ex.State.ShouldBe(CircuitBreakerState.HalfOpen);
 

@@ -124,17 +124,17 @@ public sealed class StreamingDownloadOptionsTests
             OnProgressAsync = async (_, _, _) =>
             {
                 progressCount++;
-                await Task.Delay(1, CancellationToken.None);
+                await Task.Delay(1, TestContext.Current.CancellationToken);
             },
             OnResumeAsync = async (_, _) =>
             {
                 resumeCount++;
-                await Task.Delay(1, CancellationToken.None);
+                await Task.Delay(1, TestContext.Current.CancellationToken);
             },
             OnCompleteAsync = async (_, _, _) =>
             {
                 completeCount++;
-                await Task.Delay(1, CancellationToken.None);
+                await Task.Delay(1, TestContext.Current.CancellationToken);
             }
         };
 

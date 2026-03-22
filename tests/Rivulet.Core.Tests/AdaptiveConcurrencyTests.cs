@@ -261,7 +261,7 @@ public sealed class AdaptiveConcurrencyTests
         results.Count.ShouldBe(200);
 
         // Poll for callbacks with timeout (may not change if already optimal)
-        await Task.Delay(500, CancellationToken.None);
+        await Task.Delay(500, TestContext.Current.CancellationToken);
 
         lock (concurrencyLevels) concurrencyLevels.ShouldAllBe(static c => c >= 3 && c <= 5);
     }
@@ -531,7 +531,7 @@ public sealed class AdaptiveConcurrencyTests
 
         results.Count.ShouldBe(100);
         // Operation should complete despite callback exceptions
-        await Task.Delay(500, CancellationToken.None);
+        await Task.Delay(500, TestContext.Current.CancellationToken);
         callbackCount.ShouldBeGreaterThan(0);
     }
 
@@ -548,9 +548,9 @@ public sealed class AdaptiveConcurrencyTests
         await controller.AcquireAsync(TestContext.Current.CancellationToken);
         controller.Release(TimeSpan.FromMilliseconds(10), true);
 
-        await Task.Delay(20, CancellationToken.None); // Let sampling happen
+        await Task.Delay(20, TestContext.Current.CancellationToken); // Let sampling happen
 
         // Should not throw
-        await Task.Delay(50, CancellationToken.None);
+        await Task.Delay(50, TestContext.Current.CancellationToken);
     }
 }

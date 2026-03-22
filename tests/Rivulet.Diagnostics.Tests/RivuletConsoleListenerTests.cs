@@ -46,7 +46,7 @@ public sealed class RivuletConsoleListenerTests : IDisposable
                 .ToListAsync(TestContext.Current.CancellationToken);
 
             // Wait for EventCounters to fire
-            await Task.Delay(1500, CancellationToken.None);
+            await Task.Delay(1500, TestContext.Current.CancellationToken);
         }
         finally
         {
@@ -86,13 +86,13 @@ public sealed class RivuletConsoleListenerTests : IDisposable
             }
 
             // Wait for EventCounters to fire - increased for CI/CD reliability
-            await Task.Delay(2000, CancellationToken.None);
+            await Task.Delay(2000, TestContext.Current.CancellationToken);
 
             // Dispose listener before reading output to prevent race condition
             // where background EventSource writes conflict with ToString()
             // ReSharper disable once DisposeOnUsingVariable
             listener.Dispose();
-            await Task.Delay(100, CancellationToken.None);
+            await Task.Delay(100, TestContext.Current.CancellationToken);
 
             var output = consoleOutput.ToString();
 
@@ -141,7 +141,7 @@ public sealed class RivuletConsoleListenerTests : IDisposable
                 .ToListAsync(TestContext.Current.CancellationToken);
 
             // Wait for EventCounters to fire - increased for CI/CD reliability
-            await Task.Delay(2000, CancellationToken.None);
+            await Task.Delay(2000, TestContext.Current.CancellationToken);
         }
         finally
         {
@@ -175,10 +175,10 @@ public sealed class RivuletConsoleListenerTests : IDisposable
                 .ToListAsync(TestContext.Current.CancellationToken);
 
             // EventCounters fire every 1 second. Wait for at least 1.5 intervals
-            await Task.Delay(1500, CancellationToken.None);
+            await Task.Delay(1500, TestContext.Current.CancellationToken);
 
             // Give a brief moment for console output to be written
-            await Task.Delay(100, CancellationToken.None);
+            await Task.Delay(100, TestContext.Current.CancellationToken);
 
             var output = _stringWriter.ToString();
             output.ShouldContain("Items Started");
@@ -235,7 +235,7 @@ public sealed class RivuletConsoleListenerTests : IDisposable
                     cancellationToken: TestContext.Current.CancellationToken)
                 .ToListAsync(TestContext.Current.CancellationToken);
 
-            await Task.Delay(1100, CancellationToken.None);
+            await Task.Delay(1100, TestContext.Current.CancellationToken);
         }
         finally
         {
@@ -266,12 +266,12 @@ public sealed class RivuletConsoleListenerTests : IDisposable
                     cancellationToken: TestContext.Current.CancellationToken)
                 .ToListAsync(TestContext.Current.CancellationToken);
 
-            await Task.Delay(1500, CancellationToken.None);
+            await Task.Delay(1500, TestContext.Current.CancellationToken);
 
             // Dispose listener before checking output
             // ReSharper disable once DisposeOnUsingVariable
             listener.Dispose();
-            await Task.Delay(100, CancellationToken.None);
+            await Task.Delay(100, TestContext.Current.CancellationToken);
 
             _ = consoleOutput.ToString();
             // Should format large numbers with M or K suffix
@@ -306,11 +306,11 @@ public sealed class RivuletConsoleListenerTests : IDisposable
                     cancellationToken: TestContext.Current.CancellationToken)
                 .ToListAsync(TestContext.Current.CancellationToken);
 
-            await Task.Delay(1500, CancellationToken.None);
+            await Task.Delay(1500, TestContext.Current.CancellationToken);
 
             // ReSharper disable once DisposeOnUsingVariable
             listener.Dispose();
-            await Task.Delay(100, CancellationToken.None);
+            await Task.Delay(100, TestContext.Current.CancellationToken);
         }
         finally
         {
@@ -341,7 +341,7 @@ public sealed class RivuletConsoleListenerTests : IDisposable
                     cancellationToken: TestContext.Current.CancellationToken)
                 .ToListAsync(TestContext.Current.CancellationToken);
 
-            await Task.Delay(1100, CancellationToken.None);
+            await Task.Delay(1100, TestContext.Current.CancellationToken);
         }
         finally
         {

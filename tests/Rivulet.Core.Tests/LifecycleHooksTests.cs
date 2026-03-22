@@ -292,12 +292,12 @@ public sealed class LifecycleHooksTests
         {
             OnStartItemAsync = async idx =>
             {
-                await Task.Delay(10, CancellationToken.None);
+                await Task.Delay(10, TestContext.Current.CancellationToken);
                 asyncWorkDone.Add(idx);
             },
             OnCompleteItemAsync = async idx =>
             {
-                await Task.Delay(10, CancellationToken.None);
+                await Task.Delay(10, TestContext.Current.CancellationToken);
                 asyncWorkDone.Add(idx);
             }
         };

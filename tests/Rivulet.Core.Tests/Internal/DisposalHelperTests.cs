@@ -24,7 +24,7 @@ public sealed class DisposalHelperTests
                     taskCanceled.SetResult(true);
                 }
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Wait for task to start
         await taskStarted.Task;
@@ -33,7 +33,7 @@ public sealed class DisposalHelperTests
         await DisposalHelper.DisposePeriodicTaskAsync(cts, backgroundTask, TimeSpan.FromSeconds(5));
 
         // Verify task was canceled
-        await taskCanceled.Task.WaitAsync(TimeSpan.FromSeconds(1), CancellationToken.None);
+        await taskCanceled.Task.WaitAsync(TimeSpan.FromSeconds(1), TestContext.Current.CancellationToken);
         taskCanceled.Task.IsCompleted.ShouldBeTrue();
     }
 
@@ -114,7 +114,7 @@ public sealed class DisposalHelperTests
                     // Ignored
                 }
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Wait for task to start
         await taskStarted.Task;
@@ -136,7 +136,7 @@ public sealed class DisposalHelperTests
                 taskStarted.SetResult(true);
                 await Task.Delay(Timeout.Infinite, cts.Token);
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Wait for task to start
         await taskStarted.Task;
@@ -160,20 +160,20 @@ public sealed class DisposalHelperTests
                         {
                             await Task.Delay(Timeout.Infinite, cts.Token);
                         },
-                        CancellationToken.None),
+                        TestContext.Current.CancellationToken),
                     Task.Run(async () =>
                         {
                             await Task.Delay(Timeout.Infinite, cts.Token);
                         },
-                        CancellationToken.None)
+                        TestContext.Current.CancellationToken)
                 };
 
                 return Task.WhenAll(tasks);
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Small delay to ensure tasks are started
-        await Task.Delay(50, CancellationToken.None);
+        await Task.Delay(50, TestContext.Current.CancellationToken);
 
         // Dispose - may result in AggregateException
         await DisposalHelper.DisposePeriodicTaskAsync(cts, backgroundTask, TimeSpan.FromSeconds(5));
@@ -194,7 +194,7 @@ public sealed class DisposalHelperTests
                 taskStarted.SetResult(true);
                 await Task.Delay(Timeout.Infinite, cts.Token);
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Wait for task to start
         await taskStarted.Task;
@@ -241,7 +241,7 @@ public sealed class DisposalHelperTests
             TimeSpan.FromSeconds(1),
             finalWork: async () =>
             {
-                await Task.Delay(100, CancellationToken.None);
+                await Task.Delay(100, TestContext.Current.CancellationToken);
                 finalWorkCompleted = true;
             });
 
@@ -260,11 +260,11 @@ public sealed class DisposalHelperTests
                 // Don't use cts.Token here - this simulates a task that completes quickly on its own
                 await Task.Delay(50, CancellationToken.None);
             },
-            CancellationToken.None);
+            TestContext.Current.CancellationToken);
 
         // Wait for task to start and complete
         await taskStarted.Task;
-        await Task.Delay(100, CancellationToken.None); // Give it time to complete
+        await Task.Delay(100, TestContext.Current.CancellationToken); // Give it time to complete
 
         await DisposalHelper.DisposePeriodicTaskAsync(cts, backgroundTask, TimeSpan.FromSeconds(5));
 

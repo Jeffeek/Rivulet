@@ -73,7 +73,7 @@ public sealed class CircuitBreakerTests
             {
                 await cb.ExecuteAsync(static async () =>
                     {
-                        await Task.Delay(1, CancellationToken.None);
+                        await Task.Delay(1, TestContext.Current.CancellationToken);
                         throw new InvalidOperationException("Test failure");
 #pragma warning disable CS0162 // Unreachable code detected
                         return 0;
@@ -94,10 +94,11 @@ public sealed class CircuitBreakerTests
 
         // Next call should fail fast without executing
         var act = async () => await cb.ExecuteAsync(static async () =>
-        {
-            await Task.Delay(1, CancellationToken.None);
-            return 1;
-        });
+            {
+                await Task.Delay(1, TestContext.Current.CancellationToken);
+                return 1;
+            },
+            TestContext.Current.CancellationToken);
 
         await act.ShouldThrowAsync<CircuitBreakerOpenException>();
     }
@@ -114,7 +115,7 @@ public sealed class CircuitBreakerTests
             {
                 await cb.ExecuteAsync(static async () =>
                     {
-                        await Task.Delay(1, CancellationToken.None);
+                        await Task.Delay(1, TestContext.Current.CancellationToken);
                         throw new InvalidOperationException("Test failure");
 #pragma warning disable CS0162 // Unreachable code detected
                         return 0;
@@ -131,12 +132,12 @@ public sealed class CircuitBreakerTests
         cb.State.ShouldBe(CircuitBreakerState.Open);
 
         // Wait for timeout
-        await Task.Delay(150, CancellationToken.None);
+        await Task.Delay(150, TestContext.Current.CancellationToken);
 
         // Next execution attempt should transition to HalfOpen
         var result = await cb.ExecuteAsync(static async () =>
             {
-                await Task.Delay(1, CancellationToken.None);
+                await Task.Delay(1, TestContext.Current.CancellationToken);
                 return 42;
             },
             TestContext.Current.CancellationToken);
@@ -168,14 +169,14 @@ public sealed class CircuitBreakerTests
         cb.State.ShouldBe(CircuitBreakerState.Open);
 
         // Wait and transition to HalfOpen
-        await Task.Delay(150, CancellationToken.None);
+        await Task.Delay(150, TestContext.Current.CancellationToken);
 
         // Execute 2 successful operations
         for (var i = 0; i < 2; i++)
         {
             var result = await cb.ExecuteAsync(async () =>
                 {
-                    await Task.Delay(1, CancellationToken.None);
+                    await Task.Delay(1, TestContext.Current.CancellationToken);
                     return i;
                 },
                 TestContext.Current.CancellationToken);
@@ -207,12 +208,12 @@ public sealed class CircuitBreakerTests
         }
 
         // Wait and transition to HalfOpen
-        await Task.Delay(150, CancellationToken.None);
+        await Task.Delay(150, TestContext.Current.CancellationToken);
 
         // Execute one successful operation
         await cb.ExecuteAsync(static async () =>
             {
-                await Task.Delay(1, CancellationToken.None);
+                await Task.Delay(1, TestContext.Current.CancellationToken);
                 return 1;
             },
             TestContext.Current.CancellationToken);
@@ -261,7 +262,7 @@ public sealed class CircuitBreakerTests
         cb.State.ShouldBe(CircuitBreakerState.Closed);
 
         // Wait for sampling window to expire
-        await Task.Delay(250, CancellationToken.None);
+        await Task.Delay(250, TestContext.Current.CancellationToken);
 
         // Old failures should be outside window, circuit should remain closed
         // Execute 2 more failures (total 2 in current window)
@@ -333,12 +334,12 @@ public sealed class CircuitBreakerTests
         }
 
         // Wait long enough for HalfOpen timeout (100ms + buffer)
-        await Task.Delay(200, CancellationToken.None);
+        await Task.Delay(200, TestContext.Current.CancellationToken);
 
         // Execute successful operation - this triggers HalfOpen transition and then closes circuit
         await cb.ExecuteAsync(static async () =>
             {
-                await Task.Delay(1, CancellationToken.None);
+                await Task.Delay(1, TestContext.Current.CancellationToken);
                 return 1;
             },
             TestContext.Current.CancellationToken);
@@ -385,7 +386,7 @@ public sealed class CircuitBreakerTests
         // Should execute normally
         var result = await cb.ExecuteAsync(static async () =>
             {
-                await Task.Delay(1, CancellationToken.None);
+                await Task.Delay(1, TestContext.Current.CancellationToken);
                 return 42;
             },
             TestContext.Current.CancellationToken);
@@ -584,7 +585,7 @@ public sealed class CircuitBreakerTests
             try
             {
                 await cb.ExecuteAsync<int>(static () => throw new InvalidOperationException("Test"),
-                    CancellationToken.None);
+                    TestContext.Current.CancellationToken);
             }
             catch (InvalidOperationException)
             {
@@ -627,7 +628,7 @@ public sealed class CircuitBreakerTests
         {
             try
             {
-                await cb.ExecuteAsync<int>(static () => throw new InvalidOperationException(), CancellationToken.None);
+                await cb.ExecuteAsync<int>(static () => throw new InvalidOperationException(), TestContext.Current.CancellationToken);
             }
             catch
             {
@@ -635,16 +636,16 @@ public sealed class CircuitBreakerTests
             }
         }
 
-        await Task.Delay(100, CancellationToken.None);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
         cb.State.ShouldBe(CircuitBreakerState.Open);
 
         // Open -> HalfOpen (after timeout)
-        await Task.Delay(100, CancellationToken.None);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
         cb.State.ShouldBe(CircuitBreakerState.Open);
 
         // Trigger HalfOpen by successful execution after timeout
-        await Task.Delay(50, CancellationToken.None);
-        await cb.ExecuteAsync(static () => ValueTask.FromResult(1), CancellationToken.None);
+        await Task.Delay(50, TestContext.Current.CancellationToken);
+        await cb.ExecuteAsync(static () => ValueTask.FromResult(1), TestContext.Current.CancellationToken);
 
         // Poll for expected transitions to be captured (state changes may be delayed in CI)
         await DeadlineExtensions.ApplyDeadlineAsync(
