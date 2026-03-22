@@ -4,7 +4,7 @@ This directory contains complete working examples demonstrating how to use all R
 
 ## Available Samples
 
-### 1. Rivulet.ConsoleSample
+### 1. Rivulet.Console.Sample
 **Package:** `Rivulet.Core`
 
 Core parallel processing operators with bounded concurrency, retry policies, and error handling
@@ -117,6 +117,7 @@ Testing utilities for deterministic tests with time control, chaos injection, an
 - **ChaosInjector** - Inject failures and latency
 - **ConcurrencyAsserter** - Verify concurrency limits
 - **FakeChannel** - Deterministic channel behavior
+- **DeterministicScheduler** - Predictable task execution
 
 **Run:**
 ```bash

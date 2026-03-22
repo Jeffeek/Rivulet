@@ -25,7 +25,7 @@ packages:
     path: src/Rivulet.Core
     test_path: tests/Rivulet.Core.Tests
     sample_path: samples/Rivulet.Console.Sample
-    sample_name: Rivulet.ConsoleSample
+    sample_name: Rivulet.Console.Sample
     features:
       - SelectParallelAsync - Process items and collect results
       - SelectParallelStreamAsync - Stream results as they complete
