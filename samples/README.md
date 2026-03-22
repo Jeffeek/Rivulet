@@ -4,7 +4,7 @@ This directory contains complete working examples demonstrating how to use all R
 
 ## Available Samples
 
-### 1. Rivulet.ConsoleSample
+### 1. Rivulet.Console.Sample
 **Package:** `Rivulet.Core`
 
 Core parallel processing operators with bounded concurrency, retry policies, and error handling
@@ -16,7 +16,7 @@ Core parallel processing operators with bounded concurrency, retry policies, and
 
 **Run:**
 ```bash
-cd Rivulet.ConsoleSample
+cd Rivulet.Console.Sample
 dotnet run
 ```
 

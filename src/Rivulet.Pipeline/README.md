@@ -56,10 +56,9 @@ var results = await pipeline.ExecuteAsync(urls);
 ```csharp
 var pipeline = PipelineBuilder.Create<string>("ResilientPipeline")
     .SelectParallel(ProcessAsync)
-    .WithRetries(3, BackoffStrategy.ExponentialJitter)
+    .WithRetries(3, strategy: BackoffStrategy.ExponentialJitter)
     .WithCircuitBreaker(5, TimeSpan.FromSeconds(30))
     .WithRateLimit(100, burstCapacity: 200)
-    .WithProgress(p => Console.WriteLine($"Progress: {p.ItemsProcessed}"))
     .Build();
 ```
 

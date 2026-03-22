@@ -20,7 +20,7 @@ Execute multiple queries in parallel with automatic retry for transient SQL erro
 
 ```csharp
 using Rivulet.Sql;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 
 var userIds = new[] { 1, 2, 3, 4, 5 };
 var queries = userIds.Select(id => $"SELECT * FROM Users WHERE Id = {id}");

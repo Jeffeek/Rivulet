@@ -60,6 +60,7 @@ public sealed class RateLimitOptions
     /// </summary>
     /// <param name="original">The original instance to copy from. If null, default values are used.</param>
     /// <exception cref="ArgumentException">Thrown when <paramref name="original"/> contains invalid settings (non-positive values or burst capacity smaller than tokens per operation).</exception>
+    // ReSharper disable once MemberCanBeInternal
     public RateLimitOptions(RateLimitOptions? original)
     {
         if (original is null)

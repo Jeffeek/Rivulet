@@ -131,8 +131,10 @@ await foreach (var result in source.SelectParallelStreamAsync(
 - ✅ **Streaming Support** - Process results incrementally via `IAsyncEnumerable<T>`
 - ✅ **Ordered Output** - Maintain input sequence order when needed
 - ✅ **Runtime Metrics** - Built-in monitoring via EventCounters and custom callbacks
+- ✅ **Progress Reporting** - Periodic snapshots with throughput, ETA, and percent-complete
 - ✅ **Cancellation** - Full `CancellationToken` support throughout
-- ✅ **Lifecycle Hooks** - OnStart, OnComplete, OnError, OnThrottle callbacks
+- ✅ **Lifecycle Hooks** - OnStart, OnComplete, OnRetry, OnError, OnThrottle, OnDrain callbacks
+- ✅ **Fallback Values** - Supply default results for failed items instead of throwing
 - ✅ **Per-Item Timeouts** - Enforce timeouts for individual operations
 - ✅ **Works with both** `IEnumerable<T>` and `IAsyncEnumerable<T>`
 
@@ -166,6 +168,7 @@ new ParallelOptionsRivulet
     BackoffStrategy = BackoffStrategy.ExponentialJitter,
 
     // Circuit breaker (fail-fast when service is unhealthy)
+    // Throws CircuitBreakerOpenException when circuit is open
     CircuitBreaker = new CircuitBreakerOptions
     {
         FailureThreshold = 5,
@@ -186,8 +189,29 @@ new ParallelOptionsRivulet
     // Lifecycle hooks
     OnStartItemAsync = async (index) => { /* ... */ },
     OnCompleteItemAsync = async (index) => { /* ... */ },
+    OnRetryAsync = async (index, attempt, ex) => { /* called before backoff delay */ },
     OnThrottleAsync = async (count) => { /* ... */ },
-    OnDrainAsync = async (count) => { /* ... */ }
+    OnDrainAsync = async (count) => { /* ... */ },
+
+    // Fallback value when all retries are exhausted (keeps result count == input count)
+    OnFallback = (index, ex) => ex is TimeoutException ? (object?)"timeout" : null,
+
+    // Progress reporting (ETL jobs, bulk imports)
+    Progress = new ProgressOptions
+    {
+        ReportInterval = TimeSpan.FromSeconds(5),
+        OnProgress = async snapshot =>
+        {
+            Console.WriteLine($"{snapshot.PercentComplete:F1}% — {snapshot.ItemsPerSecond:F0} items/s");
+        }
+    },
+
+    // Runtime metrics (export to Prometheus, App Insights, DataDog, etc.)
+    Metrics = new MetricsOptions
+    {
+        SampleInterval = TimeSpan.FromSeconds(10),
+        OnMetricsSample = async snapshot => { /* export snapshot */ }
+    }
 }
 ```
 
