@@ -195,123 +195,59 @@ public static class SqlParallelExtensions
 #pragma warning restore CA2007
     }
 
-    private static async ValueTask<TResult> ExecuteQueryAsync<TResult>(
+    private static ValueTask<TResult> ExecuteQueryAsync<TResult>(
         string query,
         Func<IDbConnection> connectionFactory,
         Func<IDataReader, TResult> readerMapper,
         SqlOptions options,
         CancellationToken cancellationToken,
         Action<IDbCommand>? configureParams = null
-    )
-    {
-        var connection = SqlConnectionHelper.CreateAndValidate(connectionFactory);
-        using (connection)
-        {
-            try
+    ) =>
+        SqlConnectionHelper.ExecuteWithConnectionAsync(
+            connectionFactory,
+            query,
+            options,
+            async (cmd, ct) =>
             {
-                await SqlConnectionHelper.OpenConnectionIfNeededAsync(connection, options, cancellationToken)
-                    .ConfigureAwait(false);
-
-                using var command = SqlConnectionHelper.CreateAndConfigureCommand(
-                    connection,
-                    query,
-                    options.CommandTimeout,
-                    configureParams);
-
-                using var reader = await SqlConnectionHelper.ExecuteReaderAsync(command, cancellationToken)
-                    .ConfigureAwait(false);
+                using var reader = await SqlConnectionHelper.ExecuteReaderAsync(cmd, ct).ConfigureAwait(false);
                 return readerMapper(reader);
-            }
-            catch (Exception ex)
-            {
-                if (options.OnSqlErrorAsync != null)
-                    await options.OnSqlErrorAsync(query, ex, 0).ConfigureAwait(false);
-                throw;
-            }
-            finally
-            {
-                SqlConnectionHelper.CloseConnectionIfNeeded(connection, options);
-            }
-        }
-    }
+            },
+            cancellationToken,
+            configureParams);
 
-    private static async ValueTask<int> ExecuteCommandAsync(
+    private static ValueTask<int> ExecuteCommandAsync(
         string commandText,
         Func<IDbConnection> connectionFactory,
         SqlOptions options,
         CancellationToken cancellationToken,
         Action<IDbCommand>? configureParams = null
-    )
-    {
-        var connection = SqlConnectionHelper.CreateAndValidate(connectionFactory);
-        using (connection)
-        {
-            try
-            {
-                await SqlConnectionHelper.OpenConnectionIfNeededAsync(connection, options, cancellationToken)
-                    .ConfigureAwait(false);
+    ) =>
+        SqlConnectionHelper.ExecuteWithConnectionAsync(
+            connectionFactory,
+            commandText,
+            options,
+            SqlConnectionHelper.ExecuteNonQueryAsync,
+            cancellationToken,
+            configureParams);
 
-                using var command = SqlConnectionHelper.CreateAndConfigureCommand(
-                    connection,
-                    commandText,
-                    options.CommandTimeout,
-                    configureParams);
-
-                return await SqlConnectionHelper.ExecuteNonQueryAsync(command, cancellationToken)
-                    .ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                if (options.OnSqlErrorAsync != null)
-                    await options.OnSqlErrorAsync(commandText, ex, 0).ConfigureAwait(false);
-                throw;
-            }
-            finally
-            {
-                SqlConnectionHelper.CloseConnectionIfNeeded(connection, options);
-            }
-        }
-    }
-
-    private static async ValueTask<TResult?> ExecuteScalarAsync<TResult>(
+    private static ValueTask<TResult?> ExecuteScalarAsync<TResult>(
         string query,
         Func<IDbConnection> connectionFactory,
         SqlOptions options,
         CancellationToken cancellationToken,
         Action<IDbCommand>? configureParams = null
-    )
-    {
-        var connection = SqlConnectionHelper.CreateAndValidate(connectionFactory);
-        using (connection)
-        {
-            try
+    ) =>
+        SqlConnectionHelper.ExecuteWithConnectionAsync(
+            connectionFactory,
+            query,
+            options,
+            static async (cmd, ct) =>
             {
-                await SqlConnectionHelper.OpenConnectionIfNeededAsync(connection, options, cancellationToken)
-                    .ConfigureAwait(false);
-
-                using var command = SqlConnectionHelper.CreateAndConfigureCommand(
-                    connection,
-                    query,
-                    options.CommandTimeout,
-                    configureParams);
-
-                var result = await SqlConnectionHelper.ExecuteScalarAsync(command, cancellationToken)
-                    .ConfigureAwait(false);
-
+                var result = await SqlConnectionHelper.ExecuteScalarAsync(cmd, ct).ConfigureAwait(false);
                 return result == null || result == DBNull.Value
                     ? default
-                    : (TResult)Convert.ChangeType(result, typeof(TResult));
-            }
-            catch (Exception ex)
-            {
-                if (options.OnSqlErrorAsync != null)
-                    await options.OnSqlErrorAsync(query, ex, 0).ConfigureAwait(false);
-                throw;
-            }
-            finally
-            {
-                SqlConnectionHelper.CloseConnectionIfNeeded(connection, options);
-            }
-        }
-    }
+                    : (TResult?)Convert.ChangeType(result, typeof(TResult));
+            },
+            cancellationToken,
+            configureParams);
 }
