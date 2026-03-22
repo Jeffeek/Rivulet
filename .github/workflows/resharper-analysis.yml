@@ -35,7 +35,6 @@ jobs:
         persist-credentials: false
 
     - name: Setup .NET environment
-      id: dotnet-setup
       uses: ./.github/actions/dotnet-setup
 
     - name: ReSharper CLI InspectCode
@@ -48,7 +47,6 @@ jobs:
         solutionWideAnalysis: true
         minimumReportSeverity: WARNING
         minimumSeverity: warning
-        dotnetVersion: ${{ steps.dotnet-setup.outputs.dotnet-version }}
         include: 'src/**/**.cs'
         exclude: '**/obj/**;**/bin/**;**/TestResults/**'
         properties: 'Configuration=Release'
