@@ -445,7 +445,7 @@ public sealed class RateLimitingTests
         bucket.GetAvailableTokens().ShouldBeLessThan(2.0);
 
         // Wait for refill
-        await Task.Delay(200, CancellationToken.None); // 200ms should add ~20 tokens (100 tokens/sec = 0.1 tokens/ms)
+        await Task.Delay(200, TestContext.Current.CancellationToken); // 200ms should add ~20 tokens (100 tokens/sec = 0.1 tokens/ms)
 
         var tokens = bucket.GetAvailableTokens();
         tokens.ShouldBeGreaterThan(5);

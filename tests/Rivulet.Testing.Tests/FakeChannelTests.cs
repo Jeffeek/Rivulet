@@ -177,7 +177,7 @@ public sealed class FakeChannelTests
 
         var writeTask = channel.WriteAsync(3, TestContext.Current.CancellationToken);
 
-        await Task.Delay(100, CancellationToken.None);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
         writeTask.IsCompleted.ShouldBeFalse();
 
         await channel.ReadAsync(TestContext.Current.CancellationToken);

@@ -86,7 +86,7 @@ public sealed class EdgeCaseCoverageTests
                 options,
                 cancellationToken: TestContext.Current.CancellationToken);
 
-        await Task.Delay(150, CancellationToken.None);
+        await Task.Delay(150, TestContext.Current.CancellationToken);
 
         await Enumerable.Range(1, 2)
             .SelectParallelAsync<int, int>(static async (_, ct) =>
@@ -278,7 +278,7 @@ public sealed class EdgeCaseCoverageTests
                 options,
                 cancellationToken: TestContext.Current.CancellationToken);
 
-        await Task.Delay(50, CancellationToken.None);
+        await Task.Delay(50, TestContext.Current.CancellationToken);
 
         var result = await task;
 

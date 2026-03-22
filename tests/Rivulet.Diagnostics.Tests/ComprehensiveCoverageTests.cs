@@ -16,7 +16,7 @@ public sealed class ComprehensiveCoverageTests
         // without performing any operations, even when metrics may be flowing from other tests
         var listener = new TestRivuletEventListener();
 
-        await Task.Delay(100, CancellationToken.None);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
 
         // Should not throw when disposed
         var act = () => listener.Dispose();
@@ -82,11 +82,11 @@ public sealed class ComprehensiveCoverageTests
                     .ToListAsync(TestContext.Current.CancellationToken);
 
                 // Wait for EventSource counters to fire and be written to file
-                await Task.Delay(2000, CancellationToken.None);
+                await Task.Delay(2000, TestContext.Current.CancellationToken);
             }
 
             // Brief wait for file handle release
-            await Task.Delay(100, CancellationToken.None);
+            await Task.Delay(100, TestContext.Current.CancellationToken);
 
             File.Exists(testFile).ShouldBeTrue();
         }

@@ -16,7 +16,7 @@ public sealed class EdgeCaseCoverageTests
         using var exporter = new PrometheusExporter();
         var healthCheck = new RivuletHealthCheck(exporter);
 
-        await Task.Delay(100, CancellationToken.None);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
 
         var context = new HealthCheckContext();
         var result = await healthCheck.CheckHealthAsync(context, TestContext.Current.CancellationToken);
@@ -51,7 +51,7 @@ public sealed class EdgeCaseCoverageTests
 
         // Wait for EventSource counters to fire (1s default interval)
         // Increased from 1100ms to 2000ms to handle CI/CD timing variability
-        await Task.Delay(2000, CancellationToken.None);
+        await Task.Delay(2000, TestContext.Current.CancellationToken);
 
         var context = new HealthCheckContext();
         var result = await healthCheck.CheckHealthAsync(context, TestContext.Current.CancellationToken);
@@ -109,7 +109,7 @@ public sealed class EdgeCaseCoverageTests
 
             // Wait for EventSource counters to fire (1s default interval)
             // Increased from 1100ms to 2000ms to handle CI/CD timing variability
-            await Task.Delay(2000, CancellationToken.None);
+            await Task.Delay(2000, TestContext.Current.CancellationToken);
         }
         finally
         {
@@ -158,10 +158,10 @@ public sealed class EdgeCaseCoverageTests
                 }
 
                 // Wait for EventSource counters to fire
-                await Task.Delay(1500, CancellationToken.None);
+                await Task.Delay(1500, TestContext.Current.CancellationToken);
             }
 
-            await Task.Delay(100, CancellationToken.None);
+            await Task.Delay(100, TestContext.Current.CancellationToken);
 
             File.Exists(testFile).ShouldBeTrue();
             var content = await File.ReadAllTextAsync(testFile, TestContext.Current.CancellationToken);
@@ -198,7 +198,7 @@ public sealed class EdgeCaseCoverageTests
                 var deadline = DateTime.UtcNow.AddSeconds(10);
                 await DeadlineExtensions.ApplyDeadlineAsync(
                     deadline,
-                    static () => Task.Delay(50, CancellationToken.None),
+                    static () => Task.Delay(50, TestContext.Current.CancellationToken),
                     () => !File.Exists(testFile) || new FileInfo(testFile).Length == 0);
             }
 
@@ -234,7 +234,7 @@ public sealed class EdgeCaseCoverageTests
 
             // Wait for EventSource counters to fire (1s default interval)
             // Increased from 1100ms to 2000ms to handle CI/CD timing variability
-            await Task.Delay(1500, CancellationToken.None);
+            await Task.Delay(1500, TestContext.Current.CancellationToken);
 
             listener.ReceivedCounters.ShouldNotBeEmpty();
         }
@@ -264,7 +264,7 @@ public sealed class EdgeCaseCoverageTests
 
         // Wait for EventSource counters to fire (1s default interval)
         // Increased from 1100ms to 2000ms to handle CI/CD timing variability
-        await Task.Delay(1500, CancellationToken.None);
+        await Task.Delay(1500, TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -273,7 +273,7 @@ public sealed class EdgeCaseCoverageTests
         await using var aggregator = new MetricsAggregator(TimeSpan.FromMilliseconds(500));
         aggregator.OnAggregation += metrics => { _ = true; };
 
-        await Task.Delay(1000, CancellationToken.None);
+        await Task.Delay(1000, TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -284,7 +284,7 @@ public sealed class EdgeCaseCoverageTests
         for (var i = 0; i < 5; i++)
         {
             _ = exporter.ExportDictionary();
-            await Task.Delay(10, CancellationToken.None);
+            await Task.Delay(10, TestContext.Current.CancellationToken);
         }
 
         // Operations must run long enough for EventCounter polling (1 second interval)
@@ -301,7 +301,7 @@ public sealed class EdgeCaseCoverageTests
             .ToListAsync(TestContext.Current.CancellationToken);
 
         // Wait for EventSource counters to fire (1s default interval)
-        await Task.Delay(1500, CancellationToken.None);
+        await Task.Delay(1500, TestContext.Current.CancellationToken);
 
         var finalMetrics = exporter.ExportDictionary();
         finalMetrics.ShouldNotBeEmpty();

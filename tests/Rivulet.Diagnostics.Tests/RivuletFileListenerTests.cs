@@ -39,11 +39,11 @@ public sealed class RivuletFileListenerTests : IDisposable
 
             // Wait for EventCounters to poll and write metrics after operation completes
             // Polling interval is ~1 second, wait 2 seconds for CI/CD reliability
-            await Task.Delay(2000, CancellationToken.None);
+            await Task.Delay(2000, TestContext.Current.CancellationToken);
         } // Dispose listener to flush and close file
 
         // Wait for file handle to be fully released
-        await Task.Delay(500, CancellationToken.None);
+        await Task.Delay(500, TestContext.Current.CancellationToken);
 
         File.Exists(_testFilePath).ShouldBeTrue();
         var content = await File.ReadAllTextAsync(_testFilePath, TestContext.Current.CancellationToken);
@@ -75,11 +75,11 @@ public sealed class RivuletFileListenerTests : IDisposable
                 .ToListAsync(TestContext.Current.CancellationToken);
 
             // Wait for EventCounters to fire and write to file
-            await Task.Delay(1500, CancellationToken.None);
+            await Task.Delay(1500, TestContext.Current.CancellationToken);
         }
 
         // Wait for final flush and rotation to complete
-        await Task.Delay(1000, CancellationToken.None);
+        await Task.Delay(1000, TestContext.Current.CancellationToken);
 
         var directory = Path.GetDirectoryName(_testFilePath) ?? string.Empty;
         var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(_testFilePath);

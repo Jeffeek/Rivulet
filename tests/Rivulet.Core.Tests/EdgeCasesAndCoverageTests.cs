@@ -406,7 +406,7 @@ public sealed class EdgeCasesAndCoverageTests
     {
         for (var i = 1; i <= 5; i++)
         {
-            await Task.Delay(1, CancellationToken.None);
+            await Task.Delay(1, TestContext.Current.CancellationToken);
             yield return i;
         }
 

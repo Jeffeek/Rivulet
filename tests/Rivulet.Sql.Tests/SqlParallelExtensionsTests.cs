@@ -336,7 +336,7 @@ public sealed class SqlParallelExtensionsTests
                     maxConcurrent = Math.Max(maxConcurrent, currentConcurrent);
                 }
 
-                Task.Delay(50, CancellationToken.None).Wait();
+                Task.Delay(50, TestContext.Current.CancellationToken).Wait();
 
                 lock (lockObj) currentConcurrent--;
 

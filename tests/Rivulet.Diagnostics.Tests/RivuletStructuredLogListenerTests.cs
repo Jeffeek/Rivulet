@@ -47,10 +47,10 @@ public sealed class RivuletStructuredLogListenerTests : IDisposable
                 .ToListAsync(TestContext.Current.CancellationToken);
 
             // Wait for EventCounters to fire - increased for CI/CD reliability
-            await Task.Delay(1500, CancellationToken.None);
+            await Task.Delay(1500, TestContext.Current.CancellationToken);
         }
 
-        await Task.Delay(200, CancellationToken.None);
+        await Task.Delay(200, TestContext.Current.CancellationToken);
 
         Directory.Exists(directory).ShouldBeTrue();
         File.Exists(filePath).ShouldBeTrue();
@@ -78,11 +78,11 @@ public sealed class RivuletStructuredLogListenerTests : IDisposable
                 .ToListAsync(TestContext.Current.CancellationToken);
 
             // Wait for EventCounters to poll and write metrics after operation completes
-            await Task.Delay(1500, CancellationToken.None);
+            await Task.Delay(1500, TestContext.Current.CancellationToken);
         } // Dispose listener to flush and close file
 
         // Wait for file handle to be fully released
-        await Task.Delay(200, CancellationToken.None);
+        await Task.Delay(200, TestContext.Current.CancellationToken);
 
         File.Exists(_testFilePath).ShouldBeTrue();
         var lines = await File.ReadAllLinesAsync(_testFilePath, TestContext.Current.CancellationToken);
@@ -114,7 +114,7 @@ public sealed class RivuletStructuredLogListenerTests : IDisposable
             .ToListAsync(TestContext.Current.CancellationToken);
 
         // Wait for EventCounters to fire - increased for CI/CD reliability
-        await Task.Delay(1500, CancellationToken.None);
+        await Task.Delay(1500, TestContext.Current.CancellationToken);
 
         loggedLines.ShouldNotBeEmpty();
 
@@ -142,7 +142,7 @@ public sealed class RivuletStructuredLogListenerTests : IDisposable
             .ToListAsync(TestContext.Current.CancellationToken);
 
         // Wait for EventCounters to fire - increased for CI/CD reliability
-        await Task.Delay(1500, CancellationToken.None);
+        await Task.Delay(1500, TestContext.Current.CancellationToken);
 
         loggedLines.ShouldNotBeEmpty();
 

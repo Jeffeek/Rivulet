@@ -265,7 +265,7 @@ public sealed class HttpParallelExtensionsTests
                 maxConcurrent = Math.Max(maxConcurrent, currentConcurrent);
             }
 
-            await Task.Delay(50, CancellationToken.None);
+            await Task.Delay(50, TestContext.Current.CancellationToken);
 
             lock (lockObj) currentConcurrent--;
 

@@ -68,7 +68,7 @@ public sealed class RivuletHealthCheckTests
                 cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync(TestContext.Current.CancellationToken);
 
-        await Task.Delay(2000, CancellationToken.None);
+        await Task.Delay(2000, TestContext.Current.CancellationToken);
 
         var context = new HealthCheckContext();
         var result = await healthCheck.CheckHealthAsync(context, TestContext.Current.CancellationToken);
@@ -111,7 +111,7 @@ public sealed class RivuletHealthCheckTests
             // ignored
         }
 
-        await Task.Delay(2000, CancellationToken.None);
+        await Task.Delay(2000, TestContext.Current.CancellationToken);
 
         var context = new HealthCheckContext();
         var result = await healthCheck.CheckHealthAsync(context, TestContext.Current.CancellationToken);
@@ -152,7 +152,7 @@ public sealed class RivuletHealthCheckTests
             // ignored
         }
 
-        await Task.Delay(2000, CancellationToken.None);
+        await Task.Delay(2000, TestContext.Current.CancellationToken);
 
         var context = new HealthCheckContext();
         var result = await healthCheck.CheckHealthAsync(context, TestContext.Current.CancellationToken);
@@ -201,7 +201,7 @@ public sealed class RivuletHealthCheckTests
 
         await Task.Yield();
         // Wait for EventCounters to fire
-        await Task.Delay(2000, CancellationToken.None);
+        await Task.Delay(2000, TestContext.Current.CancellationToken);
 
         var context = new HealthCheckContext();
         var result = await healthCheck.CheckHealthAsync(context, TestContext.Current.CancellationToken);
@@ -274,7 +274,7 @@ public sealed class RivuletHealthCheckTests
                 cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync(TestContext.Current.CancellationToken);
 
-        await Task.Delay(2000, CancellationToken.None);
+        await Task.Delay(2000, TestContext.Current.CancellationToken);
 
         var context = new HealthCheckContext();
         var result = await healthCheck.CheckHealthAsync(context, TestContext.Current.CancellationToken);
@@ -293,7 +293,7 @@ public sealed class RivuletHealthCheckTests
         var healthCheck = new RivuletHealthCheck(exporter);
 
         // Fresh exporter - may or may not have received counter events yet depending on test order
-        await Task.Delay(100, CancellationToken.None);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
 
         var context = new HealthCheckContext();
 

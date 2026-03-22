@@ -163,7 +163,7 @@ public sealed class RivuletMetricsExporterTests : IDisposable
 
         // Force flush to get latest metrics
         _meterProvider.ForceFlush();
-        await Task.Delay(50, CancellationToken.None); // Give time for metrics to be exported
+        await Task.Delay(50, TestContext.Current.CancellationToken); // Give time for metrics to be exported
 
         _exportedMetrics.ShouldContain(static m => m.Name == "rivulet.items.started");
         _exportedMetrics.ShouldContain(static m => m.Name == "rivulet.items.completed");

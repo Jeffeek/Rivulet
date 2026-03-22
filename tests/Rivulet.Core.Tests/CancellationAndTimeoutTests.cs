@@ -316,7 +316,7 @@ public sealed class CancellationAndTimeoutTests
             options,
             cts.Token);
 
-        await Task.Delay(10, CancellationToken.None);
+        await Task.Delay(10, TestContext.Current.CancellationToken);
         await cts.CancelAsync();
 
         var results = await task;

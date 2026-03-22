@@ -22,7 +22,7 @@ public sealed class ParallelWorkerServiceTests
         // BackgroundService needs time to start ExecuteAsync, process items, and collect results
         await Task.Delay(200, cts.Token);
         await cts.CancelAsync();
-        await service.StopAsync(CancellationToken.None);
+        await service.StopAsync(TestContext.Current.CancellationToken);
 
         service.ProcessedItems.Count.ShouldBe(5);
         service.Results.Count.ShouldBe(5);
@@ -45,7 +45,7 @@ public sealed class ParallelWorkerServiceTests
         await Task.Delay(200, cts.Token);
         await cts.CancelAsync();
 
-        await service.StopAsync(CancellationToken.None);
+        await service.StopAsync(TestContext.Current.CancellationToken);
 
         service.Results.Count.ShouldBe(3);
         service.Results.ShouldContain("Processed-1");
@@ -68,7 +68,7 @@ public sealed class ParallelWorkerServiceTests
         await Task.Delay(500, cts.Token);
         await cts.CancelAsync();
 
-        await service.StopAsync(CancellationToken.None);
+        await service.StopAsync(TestContext.Current.CancellationToken);
 
         var elapsed = DateTime.UtcNow - startTime;
         // Increased tolerance significantly for Windows CI/CD environments where thread pool
@@ -93,7 +93,7 @@ public sealed class ParallelWorkerServiceTests
         await Task.Delay(200, cts.Token);
         await cts.CancelAsync();
 
-        await service.StopAsync(CancellationToken.None);
+        await service.StopAsync(TestContext.Current.CancellationToken);
 
         service.ProcessedItems.Count.ShouldBeLessThan(100);
     }
@@ -110,7 +110,7 @@ public sealed class ParallelWorkerServiceTests
         await service.StartAsync(cts.Token);
         await Task.Delay(100, cts.Token);
 
-        await service.StopAsync(CancellationToken.None);
+        await service.StopAsync(TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -137,7 +137,7 @@ public sealed class ParallelWorkerServiceTests
         await Task.Delay(200, cts.Token);
         await cts.CancelAsync();
 
-        await service.StopAsync(CancellationToken.None);
+        await service.StopAsync(TestContext.Current.CancellationToken);
 
         service.ProcessedItems.Count.ShouldBe(3);
     }
@@ -155,7 +155,7 @@ public sealed class ParallelWorkerServiceTests
         await Task.Delay(30, cts.Token);
         await cts.CancelAsync();
 
-        await service.StopAsync(CancellationToken.None);
+        await service.StopAsync(TestContext.Current.CancellationToken);
 
         service.ProcessedItems.ShouldBeEmpty();
         service.Results.ShouldBeEmpty();
@@ -176,7 +176,7 @@ public sealed class ParallelWorkerServiceTests
         await Task.Delay(200, cts.Token);
         await cts.CancelAsync();
 
-        await service.StopAsync(CancellationToken.None);
+        await service.StopAsync(TestContext.Current.CancellationToken);
 
         service.ProcessCallCount.ShouldBe(7);
     }
@@ -194,7 +194,7 @@ public sealed class ParallelWorkerServiceTests
         // Increased from 50ms → 5s for CI/CD reliability
         await Task.Delay(TimeSpan.FromSeconds(5), cts.Token);
         await cts.CancelAsync();
-        await service.StopAsync(CancellationToken.None);
+        await service.StopAsync(TestContext.Current.CancellationToken);
 
         service.ProcessedItems.Count.ShouldBe(3);
     }
@@ -213,7 +213,7 @@ public sealed class ParallelWorkerServiceTests
         await service.StartAsync(cts.Token);
         await Task.Delay(20, cts.Token); // Let it start
         await cts.CancelAsync();         // Cancel it
-        await service.StopAsync(CancellationToken.None);
+        await service.StopAsync(TestContext.Current.CancellationToken);
 
         service.ProcessedItems.Count.ShouldBeLessThan(100);
         return;
@@ -222,7 +222,7 @@ public sealed class ParallelWorkerServiceTests
         {
             for (var i = 1; i <= 100; i++)
             {
-                await Task.Delay(50, CancellationToken.None); // Slow enough to get cancelled
+                await Task.Delay(50, TestContext.Current.CancellationToken); // Slow enough to get cancelled
                 yield return i;
             }
         }
@@ -244,7 +244,7 @@ public sealed class ParallelWorkerServiceTests
         await Task.Delay(100, cts.Token);
 
         // The service should have logged the fatal error
-        await service.StopAsync(CancellationToken.None);
+        await service.StopAsync(TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -260,8 +260,8 @@ public sealed class ParallelWorkerServiceTests
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
 
         await service.StartAsync(cts.Token);
-        await Task.Delay(50, CancellationToken.None); // Give time for exception
-        await service.StopAsync(CancellationToken.None);
+        await Task.Delay(50, TestContext.Current.CancellationToken); // Give time for exception
+        await service.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert - no crash, error was logged
         // The test passes if we reach here without unhandled exception
@@ -284,8 +284,8 @@ public sealed class ParallelWorkerServiceTests
         // propagated by StopAsync. This test verifies the service handles exceptions gracefully
         // without crashing the test host.
         await service.StartAsync(cts.Token);
-        await Task.Delay(100, CancellationToken.None);
-        await service.StopAsync(CancellationToken.None);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+        await service.StopAsync(TestContext.Current.CancellationToken);
 
         // The service should have logged the error and stopped gracefully
         // No unhandled exception should crash the test

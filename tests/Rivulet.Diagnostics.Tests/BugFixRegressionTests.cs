@@ -21,13 +21,13 @@ public sealed class BugFixRegressionTests
         aggregator.OnAggregation += _ => Interlocked.Increment(ref callbackCount);
 
         // Let a few callbacks fire
-        await Task.Delay(200, CancellationToken.None);
+        await Task.Delay(200, TestContext.Current.CancellationToken);
 
         await aggregator.DisposeAsync();
         var countAfterDispose = Volatile.Read(ref callbackCount);
 
         // Wait long enough for several more timer ticks — none should fire
-        await Task.Delay(300, CancellationToken.None);
+        await Task.Delay(300, TestContext.Current.CancellationToken);
 
         Volatile.Read(ref callbackCount).ShouldBe(countAfterDispose);
     }

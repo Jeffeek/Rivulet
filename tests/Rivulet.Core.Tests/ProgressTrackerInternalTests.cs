@@ -45,7 +45,7 @@ public sealed class ProgressTrackerInternalTests
         tracker.IncrementStarted();
         tracker.IncrementCompleted();
 
-        await Task.Delay(50, CancellationToken.None);
+        await Task.Delay(50, TestContext.Current.CancellationToken);
 
         var act = async () => await tracker.DisposeAsync();
         await act.ShouldNotThrowAsync();
@@ -91,7 +91,7 @@ public sealed class ProgressTrackerInternalTests
         tracker.IncrementCompleted();
 
         // Wait for callback to actually fire (with timeout for safety)
-        var completedInTime = await Task.WhenAny(callbackFired.Task, Task.Delay(500, CancellationToken.None)) ==
+        var completedInTime = await Task.WhenAny(callbackFired.Task, Task.Delay(500, TestContext.Current.CancellationToken)) ==
                               callbackFired.Task;
         completedInTime.ShouldBeTrue("callback should fire within 500ms");
 
@@ -121,7 +121,7 @@ public sealed class ProgressTrackerInternalTests
         tracker.IncrementStarted();
         tracker.IncrementCompleted();
 
-        await Task.Delay(20, CancellationToken.None);
+        await Task.Delay(20, TestContext.Current.CancellationToken);
 
         await cts.CancelAsync();
         var act = async () => await tracker.DisposeAsync();
@@ -158,7 +158,7 @@ public sealed class ProgressTrackerInternalTests
             // Poll for snapshot to be captured (timer fires every 10ms but may be delayed in CI)
             await DeadlineExtensions.ApplyDeadlineAsync(
                 DateTime.UtcNow.AddMilliseconds(500),
-                static () => Task.Delay(20, CancellationToken.None),
+                static () => Task.Delay(20, TestContext.Current.CancellationToken),
                 () => lastSnapshot == null);
 
             lastSnapshot.ShouldNotBeNull();
@@ -194,7 +194,7 @@ public sealed class ProgressTrackerInternalTests
         {
             // Small delay before starting to allow timer to initialize
             // This ensures the background reporter task has started
-            await Task.Delay(20, CancellationToken.None);
+            await Task.Delay(20, TestContext.Current.CancellationToken);
 
             for (var i = 0; i < 15; i++)
             {
@@ -207,18 +207,18 @@ public sealed class ProgressTrackerInternalTests
                 // Add delay after every iteration to ensure timer has time to fire
                 // Report interval is 10ms, so 15ms delay ensures timer can capture each state
                 // This is especially important on Windows where timer resolution is ~15ms
-                await Task.Delay(30, CancellationToken.None);
+                await Task.Delay(30, TestContext.Current.CancellationToken);
             }
 
             // Disposal completes after the loop, ensure memory visibility
             // Using Task.Yield() to force a context switch, ensuring all memory writes are globally visible
             await Task.Yield();
-            await Task.Delay(200, CancellationToken.None);
+            await Task.Delay(200, TestContext.Current.CancellationToken);
 
             // Poll for snapshot to capture all errors (timer fires every 10ms but may be delayed in CI)
             await DeadlineExtensions.ApplyDeadlineAsync(
                 DateTime.UtcNow.AddMilliseconds(1500),
-                static () => Task.Delay(20, CancellationToken.None),
+                static () => Task.Delay(20, TestContext.Current.CancellationToken),
                 () => lastSnapshot is not { ErrorCount: 5 });
 
             lastSnapshot.ShouldNotBeNull();

@@ -64,7 +64,7 @@ public sealed class ConcurrencyAsserterTests
             .Select(async _ =>
             {
                 using var scope = asserter.Enter();
-                await Task.Delay(50, CancellationToken.None);
+                await Task.Delay(50, TestContext.Current.CancellationToken);
             })
             .ToArray();
 
@@ -98,7 +98,7 @@ public sealed class ConcurrencyAsserterTests
             .Select(async _ =>
             {
                 using var scope = asserter.Enter();
-                await Task.Delay(1, CancellationToken.None);
+                await Task.Delay(1, TestContext.Current.CancellationToken);
             })
             .ToArray();
 
@@ -164,7 +164,7 @@ public sealed class ConcurrencyAsserterTests
                     if (concurrentExecutions > maxObserved) maxObserved = concurrentExecutions;
                 }
 
-                await Task.Delay(10, CancellationToken.None);
+                await Task.Delay(10, TestContext.Current.CancellationToken);
 
                 lock (lockObj) concurrentExecutions--;
             })
@@ -222,15 +222,16 @@ public sealed class ConcurrencyAsserterTests
 
         var tasks = Enumerable.Range(0, 100)
             .Select(_ => Task.Run(async () =>
-            {
-                await startSignal.Task; // Wait for signal to start all at once
-                using var scope = asserter.Enter();
-                await Task.Delay(1, CancellationToken.None);
-            }))
+                {
+                    await startSignal.Task; // Wait for signal to start all at once
+                    using var scope = asserter.Enter();
+                    await Task.Delay(1, TestContext.Current.CancellationToken);
+                },
+                TestContext.Current.CancellationToken))
             .ToArray();
 
         // Give threads time to all reach the wait point
-        await Task.Delay(50, CancellationToken.None);
+        await Task.Delay(50, TestContext.Current.CancellationToken);
 
         // Release all threads at once to create maximum contention
         startSignal.SetResult(true);
@@ -271,7 +272,7 @@ public sealed class ConcurrencyAsserterTests
         {
             using (asserter.Enter())
             {
-                await Task.Delay(1, CancellationToken.None);
+                await Task.Delay(1, TestContext.Current.CancellationToken);
                 asserter.CurrentConcurrency.ShouldBe(1);
                 asserter.MaxConcurrency.ShouldBe(1);
             }
