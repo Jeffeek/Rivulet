@@ -18,6 +18,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false  # Never cancel long-running flaky detection runs
+
 # Note: For PR-triggered flaky test detection, see the ci.yml workflow
 # This workflow is for manual and scheduled comprehensive testing only
 
@@ -27,7 +31,8 @@ jobs:
     uses: ./.github/workflows/reusable-flaky-test-detection.yml
     with:
       # Manual: use input value (default 10), Scheduled: 70 iterations
-      iterations: ${{ github.event_name == 'workflow_dispatch' && fromJSON(inputs.iterations) || 10 }}
-      # Default: 10 iterations = 50 minutes, 70 iterations = 350 minutes
+      iterations: ${{ github.event_name == 'workflow_dispatch' && fromJSON(inputs.iterations) || 70 }}
+      # Manual (10 iterations default): 10 * 5 = 50 min → use caller-supplied timeout or 50min default
+      # Scheduled (70 iterations): 70 * 5 = 350 minutes
       # Formula: timeout = iterations * 5
       timeout-minutes: ${{ github.event_name == 'workflow_dispatch' && inputs.timeout-minutes != '' && fromJSON(inputs.timeout-minutes) || 350 }}

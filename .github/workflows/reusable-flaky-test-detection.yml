@@ -5,11 +5,11 @@ on:
     inputs:
       iterations:
         description: 'Number of test iterations to run'
-        required: true
+        required: false
         type: number
         default: 20
       timeout-minutes:
-        description: 'Timeout in minutes (recommended: iterations * 3, e.g., 50 iterations = 150 minutes)'
+        description: 'Timeout in minutes (recommended: iterations * 5, e.g., 20 iterations = 100 minutes)'
         required: false
         type: number
         default: 100
@@ -27,34 +27,8 @@ jobs:
       fail-fast: false
 
     steps:
-    - name: Harden the runner (Audit all outbound calls)
-      uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
-      with:
-        egress-policy: audit
-
-    - name: Checkout
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      with:
-        fetch-depth: 0
-
-    - name: Setup .NET 9.0.x
-      uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
-      with:
-        dotnet-version: 9.0.x
-
-    - name: Cache NuGet packages
-      uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
-      with:
-        path: ~/.nuget/packages  # Cross-platform: works on Windows, Linux, and macOS
-        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
-        restore-keys: |
-          ${{ runner.os }}-nuget-
-
-    - name: Restore NuGet packages
-      run: dotnet restore Rivulet.slnx
-
-    - name: Build solution (Release)
-      run: dotnet build Rivulet.slnx -c Release --no-restore
+    - name: Setup .NET environment
+      uses: ./.github/actions/dotnet-setup
 
     - name: Run flaky test detection - Windows
       if: runner.os == 'Windows'
