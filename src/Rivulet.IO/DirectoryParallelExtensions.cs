@@ -122,32 +122,22 @@ public static class DirectoryParallelExtensions
 
         var files = Directory.GetFiles(directoryPath, searchPattern, searchOption);
 
-        // Ensure ordered output so Zip matches files with their contents correctly
         options ??= new();
-        var parallelOpts = options.ParallelOptions ?? new();
+        var parallelOptions = options.GetMergedParallelOptions();
 
-        var orderedOptions = new FileOperationOptions
-        {
-            BufferSize = options.BufferSize,
-            Encoding = options.Encoding,
-            CreateDirectoriesIfNotExist = options.CreateDirectoriesIfNotExist,
-            OverwriteExisting = options.OverwriteExisting,
-            ReadFileShare = options.ReadFileShare,
-            WriteFileShare = options.WriteFileShare,
-            OnFileStartAsync = options.OnFileStartAsync,
-            OnFileCompleteAsync = options.OnFileCompleteAsync,
-            OnFileErrorAsync = options.OnFileErrorAsync,
-            ParallelOptions = new()
-            {
-                MaxDegreeOfParallelism = parallelOpts.MaxDegreeOfParallelism,
-                OrderedOutput = true // Force ordered output for correct Zip alignment
-            }
-        };
+        // Return (filePath, content) tuples so order doesn't matter for dictionary construction
+        var results = await files.SelectParallelAsync(
+                async (filePath, ct) =>
+                {
+                    var content = await FileOperationHelper.ReadFileTextAsync(filePath, options, ct)
+                        .ConfigureAwait(false);
+                    return (filePath, content);
+                },
+                parallelOptions,
+                cancellationToken)
+            .ConfigureAwait(false);
 
-        var contents = await files.ReadAllTextParallelAsync(orderedOptions, cancellationToken).ConfigureAwait(false);
-
-        return files.Zip(contents, static (file, content) => (file, content))
-            .ToDictionary(static x => x.file, static x => x.content);
+        return results.ToDictionary(static x => x.filePath, static x => x.content);
     }
 
     /// <summary>

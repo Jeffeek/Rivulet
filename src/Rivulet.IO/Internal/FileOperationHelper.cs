@@ -122,6 +122,156 @@ internal static class FileOperationHelper
     ) => (CreateReadStream(sourcePath, options), CreateWriteStream(destinationPath, options));
 
     /// <summary>
+    ///     Reads a file as text with lifecycle callbacks.
+    /// </summary>
+    internal static ValueTask<string> ReadFileTextAsync(
+        string filePath,
+        FileOperationOptions options,
+        CancellationToken cancellationToken
+    ) =>
+        ExecuteFileOperationAsync(
+            filePath,
+            async () =>
+            {
+#pragma warning disable CA2007
+                await using var stream = CreateReadStream(filePath, options);
+#pragma warning restore CA2007
+
+                using var reader = new StreamReader(stream, options.Encoding);
+                return await reader.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
+            },
+            options,
+            static content => new FileOperationResult { BytesProcessed = content.Length });
+
+    /// <summary>
+    ///     Reads a file as bytes with lifecycle callbacks.
+    /// </summary>
+    internal static ValueTask<byte[]> ReadFileBytesAsync(
+        string filePath,
+        FileOperationOptions options,
+        CancellationToken cancellationToken
+    ) =>
+        ExecuteFileOperationAsync(
+            filePath,
+            async () =>
+            {
+#pragma warning disable CA2007
+                await using var stream = CreateReadStream(filePath, options);
+#pragma warning restore CA2007
+
+                var buffer = new byte[stream.Length];
+                await stream.ReadExactlyAsync(buffer, cancellationToken).ConfigureAwait(false);
+                return buffer;
+            },
+            options,
+            static bytes => new FileOperationResult { BytesProcessed = bytes.Length });
+
+    /// <summary>
+    ///     Writes text to a file with lifecycle callbacks.
+    /// </summary>
+    internal static async ValueTask WriteFileTextAsync(
+        string filePath,
+        string content,
+        FileOperationOptions options,
+        CancellationToken cancellationToken
+    ) =>
+        await ExecuteFileOperationAsync(
+            filePath,
+            async () =>
+            {
+                EnsureDirectoryExists(filePath, options);
+                ValidateOverwrite(filePath, options);
+
+#pragma warning disable CA2007
+                await using var stream = CreateWriteStream(filePath, options);
+                await using var writer = new StreamWriter(stream, options.Encoding);
+#pragma warning restore CA2007
+                await writer.WriteAsync(content.AsMemory(), cancellationToken).ConfigureAwait(false);
+                await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
+
+                return content.Length;
+            },
+            options,
+            static length => new FileOperationResult { BytesProcessed = length }).ConfigureAwait(false);
+
+    /// <summary>
+    ///     Writes bytes to a file with lifecycle callbacks.
+    /// </summary>
+    internal static async ValueTask WriteFileBytesAsync(
+        string filePath,
+        byte[] content,
+        FileOperationOptions options,
+        CancellationToken cancellationToken
+    ) =>
+        await ExecuteFileOperationAsync(
+            filePath,
+            async () =>
+            {
+                EnsureDirectoryExists(filePath, options);
+                ValidateOverwrite(filePath, options);
+
+#pragma warning disable CA2007
+                await using var stream = CreateWriteStream(filePath, options);
+#pragma warning restore CA2007
+
+                await stream.WriteAsync(content, cancellationToken).ConfigureAwait(false);
+                await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
+
+                return content.Length;
+            },
+            options,
+            static length => new FileOperationResult { BytesProcessed = length }).ConfigureAwait(false);
+
+    /// <summary>
+    ///     Copies a file with lifecycle callbacks.
+    /// </summary>
+    internal static async ValueTask CopyFileAsync(
+        string sourcePath,
+        string destinationPath,
+        FileOperationOptions options,
+        CancellationToken cancellationToken
+    ) =>
+        await ExecuteFileOperationAsync(
+            sourcePath,
+            async () =>
+            {
+                EnsureDirectoryExists(destinationPath, options);
+                ValidateOverwrite(destinationPath, options);
+
+#pragma warning disable CA2007
+                var (sourceStream, destStream) = CreateCopyStreams(sourcePath, destinationPath, options);
+                await using (sourceStream)
+                await using (destStream)
+                {
+#pragma warning restore CA2007
+                    await sourceStream.CopyToAsync(destStream, options.BufferSize, cancellationToken)
+                        .ConfigureAwait(false);
+                    await destStream.FlushAsync(cancellationToken).ConfigureAwait(false);
+
+                    return sourceStream.Length;
+                }
+            },
+            options,
+            static length => new FileOperationResult { BytesProcessed = length }).ConfigureAwait(false);
+
+    /// <summary>
+    ///     Deletes a file with lifecycle callbacks.
+    /// </summary>
+    internal static async ValueTask DeleteFileAsync(
+        string filePath,
+        FileOperationOptions options,
+        CancellationToken cancellationToken
+    ) =>
+        await ExecuteFileOperationAsync(
+            filePath,
+            async () =>
+            {
+                await Task.Run(() => File.Delete(filePath), cancellationToken).ConfigureAwait(false);
+                return 0;
+            },
+            options).ConfigureAwait(false);
+
+    /// <summary>
     ///     Computes destination path from source path and destination directory, preserving relative structure.
     /// </summary>
     /// <param name="sourcePath">The full path to the source file.</param>
