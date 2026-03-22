@@ -1,7 +1,10 @@
 # Rivulet.Sql.MySql
 
+<!-- DESCRIPTION_START -->
 MySQL-specific optimizations for Rivulet.Sql including MySqlBulkCopy and MySqlBulkLoader (LOAD DATA INFILE) integration for **10-100x faster bulk inserts**.
+<!-- DESCRIPTION_END -->
 
+<!-- KEY_FEATURES_START -->
 ## Features
 
 - **MySqlBulkCopy**: High-performance bulk inserts for in-memory data
@@ -10,6 +13,13 @@ MySQL-specific optimizations for Rivulet.Sql including MySqlBulkCopy and MySqlBu
 - **Parallel Operations**: Process multiple batches in parallel
 - **Custom Delimiters**: Support for any field separator
 - **Automatic Column Mapping**: Maps columns automatically
+<!-- KEY_FEATURES_END -->
+
+<!-- FEATURES_START -->
+## API
+
+- **BulkInsertUsingMySqlBulkLoaderAsync** - MySqlBulkLoader integration
+<!-- FEATURES_END -->
 
 ## Installation
 

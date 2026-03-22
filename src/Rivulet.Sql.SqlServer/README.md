@@ -1,7 +1,10 @@
 # Rivulet.Sql.SqlServer
 
+<!-- DESCRIPTION_START -->
 SQL Server-specific optimizations for Rivulet.Sql including SqlBulkCopy integration for **10-100x faster bulk inserts**.
+<!-- DESCRIPTION_END -->
 
+<!-- KEY_FEATURES_START -->
 ## Features
 
 - **SqlBulkCopy Integration**: Ultra-high performance bulk inserts (50,000+ rows/sec)
@@ -10,6 +13,14 @@ SQL Server-specific optimizations for Rivulet.Sql including SqlBulkCopy integrat
 - **Custom Column Mappings**: Support for explicit source-to-destination column mappings
 - **DataReader Support**: Bulk insert from IDataReader sources
 - **Configurable Batching**: Control batch size and timeout settings
+<!-- KEY_FEATURES_END -->
+
+<!-- FEATURES_START -->
+## API
+
+- **BulkInsertUsingSqlBulkCopyAsync** - Optimized bulk insert
+- **BulkInsertUsingSqlBulkCopyAsync (3 overloads)**
+<!-- FEATURES_END -->
 
 ## Installation
 

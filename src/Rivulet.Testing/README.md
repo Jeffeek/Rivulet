@@ -1,13 +1,27 @@
 ﻿# Rivulet.Testing
 
+<!-- DESCRIPTION_START -->
 Testing utilities for Rivulet parallel operations including deterministic schedulers, virtual time, fake channels, and chaos injection.
+<!-- DESCRIPTION_END -->
 
+<!-- KEY_FEATURES_START -->
 ## Features
 
 - **VirtualTimeProvider**: Control time in tests without actual delays
 - **FakeChannel**: Testable channel implementation with operation tracking
 - **ChaosInjector**: Inject failures and delays for resilience testing
 - **ConcurrencyAsserter**: Assert and verify concurrency behavior
+<!-- KEY_FEATURES_END -->
+
+<!-- FEATURES_START -->
+## API
+
+- **VirtualTimeProvider** - Control time for deterministic tests
+- **ChaosInjector** - Inject failures and latency
+- **ConcurrencyAsserter** - Verify concurrency limits
+- **FakeChannel** - Deterministic channel behavior
+- **DeterministicScheduler** - Predictable task execution
+<!-- FEATURES_END -->
 
 ## Installation
 

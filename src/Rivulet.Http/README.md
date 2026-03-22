@@ -1,6 +1,8 @@
 ﻿# Rivulet.Http
 
+<!-- DESCRIPTION_START -->
 **Parallel HTTP operations with automatic retries, resilient downloads, and HttpClientFactory integration.**
+<!-- DESCRIPTION_END -->
 
 Built on top of Rivulet.Core, this package provides HTTP-aware parallel operators that automatically handle transient failures, respect rate limits, and support resumable downloads.
 
@@ -11,6 +13,24 @@ dotnet add package Rivulet.Http
 ```
 
 Requires `Rivulet.Core` (automatically included).
+
+<!-- KEY_FEATURES_START -->
+## Features
+
+- HttpClientFactory integration
+- Connection pooling awareness
+- Transient error handling (timeouts, 5xx responses)
+- Bounded concurrency to avoid overwhelming servers
+- Progress reporting for downloads
+<!-- KEY_FEATURES_END -->
+
+<!-- FEATURES_START -->
+## API
+
+- **GetParallelAsync** - Fetch multiple URLs concurrently
+- **PostParallelAsync** - Submit data in parallel
+- **DownloadParallelAsync** - Download files in parallel
+<!-- FEATURES_END -->
 
 ## Quick Start
 

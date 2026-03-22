@@ -1,6 +1,8 @@
 # Rivulet.Diagnostics.OpenTelemetry
 
+<!-- DESCRIPTION_START -->
 OpenTelemetry integration for Rivulet.Core providing distributed tracing, metrics export, and comprehensive observability.
+<!-- DESCRIPTION_END -->
 
 ## Installation
 
@@ -8,6 +10,7 @@ OpenTelemetry integration for Rivulet.Core providing distributed tracing, metric
 dotnet add package Rivulet.Diagnostics.OpenTelemetry
 ```
 
+<!-- KEY_FEATURES_START -->
 ## Features
 
 - **Distributed Tracing**: Automatic activity creation with parent-child relationships
@@ -16,6 +19,18 @@ dotnet add package Rivulet.Diagnostics.OpenTelemetry
 - **Circuit Breaker Events**: Track circuit state changes in traces
 - **Adaptive Concurrency**: Monitor concurrency adjustments
 - **Error Correlation**: Link errors with retry attempts and transient classification
+<!-- KEY_FEATURES_END -->
+
+<!-- FEATURES_START -->
+## API
+
+- **Activity/Span creation** - Automatic distributed tracing
+- **Retry tracking** - Record retry attempts with context
+- **Error recording** - Detailed error tracking with transient classification
+- **Custom attributes** - Attach business context to spans
+- **Circuit breaker events** - Track state changes
+- **Adaptive concurrency** - Monitor concurrency adjustments
+<!-- FEATURES_END -->
 
 ## Quick Start
 

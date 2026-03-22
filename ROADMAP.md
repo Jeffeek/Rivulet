@@ -11,32 +11,32 @@
 <!-- VERSIONS_START -->
 ### ✅ 1.0.0 - Released
 
-- **Rivulet.Core** - Core parallel processing operators with bounded concurrency, retry policies, and error handling
+- **Rivulet.Core** - Safe, async-first parallel operators with bounded concurrency, retries, and backpressure for I/O-heavy workloads.
 
 ### ✅ 1.1.0 - Released
 
-- **Rivulet.Diagnostics** - Production-ready observability with EventSource metrics, structured logging, and health checks
-- **Rivulet.Diagnostics.OpenTelemetry** - OpenTelemetry integration for distributed tracing and W3C Trace Context propagation
+- **Rivulet.Diagnostics** - Enterprise observability for Rivulet.Core with EventListener wrappers, metric aggregators, and health check integration.
+- **Rivulet.Diagnostics.OpenTelemetry** - OpenTelemetry integration for Rivulet.Core providing distributed tracing, metrics export, and comprehensive observability.
 
 ### ✅ 1.2.0 - Released
 
-- **Rivulet.Hosting** - ASP.NET Core integration with background services, dependency injection, and configuration binding
-- **Rivulet.Testing** - Testing utilities for deterministic tests with time control, chaos injection, and concurrency verification
+- **Rivulet.Hosting** - Integration package for using Rivulet with Microsoft.Extensions.Hosting, ASP.NET Core, and the .NET Generic Host.
+- **Rivulet.Testing** - Testing utilities for Rivulet parallel operations including deterministic schedulers, virtual time, fake channels, and chaos injection.
 
 ### ✅ 1.3.0 - Released
 
-- **Rivulet.Http** - Parallel HTTP operations with HttpClientFactory integration and connection pooling awareness
-- **Rivulet.IO** - Parallel file operations with safe directory processing and file transformations
-- **Rivulet.Sql** - Provider-agnostic parallel SQL operations with connection pooling awareness
-- **Rivulet.Sql.SqlServer** - SQL Server optimizations with SqlBulkCopy integration (10-100x faster bulk inserts)
-- **Rivulet.Sql.PostgreSql** - PostgreSQL optimizations with COPY command integration (10-100x faster bulk operations)
-- **Rivulet.Sql.MySql** - MySQL optimizations with LOAD DATA INFILE integration using MySqlBulkLoader
-- **Rivulet.Polly** - Polly v8 integration with hedging, result-based retry, and resilience pipeline composition
+- **Rivulet.Http** - Parallel HTTP operations with automatic retries, resilient downloads, and HttpClientFactory integration.
+- **Rivulet.IO** - Parallel file and directory operations with bounded concurrency, resilience, and streaming support for efficient I/O processing.
+- **Rivulet.Sql** - Safe parallel SQL operations with connection pooling awareness and bulk operations.
+- **Rivulet.Sql.SqlServer** - SQL Server-specific optimizations for Rivulet.Sql including SqlBulkCopy integration for 10-100x faster bulk inserts.
+- **Rivulet.Sql.PostgreSql** - PostgreSQL-specific optimizations for Rivulet.Sql including COPY command integration for 10-100x faster bulk inserts.
+- **Rivulet.Sql.MySql** - MySQL-specific optimizations for Rivulet.Sql including MySqlBulkCopy and MySqlBulkLoader (LOAD DATA INFILE) integration for 10-100x faster bulk inserts.
+- **Rivulet.Polly** - Integration between Rivulet parallel processing and [Polly](https://github.com/App-vNext/Polly) resilience policies.
 
 ### 🚧 1.4.0 - In Development
 
-- **Rivulet.Csv** - Parallel CSV parsing and writing for Rivulet with CsvHelper integration, bounded concurrency, and batching support for high-throughput data processing
-- **Rivulet.Pipeline** - Multi-stage pipeline composition for Rivulet with fluent API, per-stage concurrency, backpressure management between stages, and streaming support
+- **Rivulet.Csv** - Parallel CSV parsing and writing with CsvHelper integration, bounded concurrency, and batching support for high-throughput data processing.
+- **Rivulet.Pipeline** - Multi-stage pipeline composition for Rivulet with fluent API, per-stage concurrency, backpressure management between stages, and streaming support.
 <!-- VERSIONS_END -->
 
 ---

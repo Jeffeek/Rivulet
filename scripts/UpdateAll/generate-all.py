@@ -83,22 +83,26 @@ class ReadmeGenerator(FileGenerator):
         return new_content
 
     def _generate_package_list(self) -> str:
-        """Generate markdown package list."""
+        """Generate markdown package list grouped by category."""
         lines = []
 
         # Core packages
-        lines.append("### Core Packages")
-        lines.append("")
-        for pkg in self.registry.get_core_packages():
-            lines.append(self._format_package(pkg))
+        core_packages = self.registry.get_core_packages()
+        if core_packages:
+            lines.append("### Core Packages")
             lines.append("")
+            for pkg in core_packages:
+                lines.append(self._format_package(pkg))
+                lines.append("")
 
         # Integration packages
-        lines.append("### Integration Packages (v1.4.0 🚧)")
-        lines.append("")
-        for pkg in self.registry.get_integration_packages():
-            lines.append(self._format_package(pkg))
+        integration_packages = self.registry.get_integration_packages()
+        if integration_packages:
+            lines.append("### Integration Packages")
             lines.append("")
+            for pkg in integration_packages:
+                lines.append(self._format_package(pkg))
+                lines.append("")
 
         return '\n'.join(lines).rstrip()
 
@@ -198,9 +202,9 @@ class SamplesReadmeGenerator(FileGenerator):
             "",
             "## Learning Path",
             "",
-            "1. **Start with Rivulet.Console.Sample** to understand core operators",
+            "1. **Start with Rivulet.Core.Sample** to understand core operators",
             "2. **Explore Rivulet.Diagnostics.Sample** for production observability",
-            "3. **Review Rivulet.OpenTelemetry.Sample** for distributed tracing",
+            "3. **Review Rivulet.Diagnostics.OpenTelemetry.Sample** for distributed tracing",
             "4. **Study Rivulet.Testing.Sample** for testing strategies",
             "5. **Examine Rivulet.Hosting.Sample** for enterprise integration",
             "",
@@ -444,6 +448,61 @@ class DependabotGenerator(FileGenerator):
 
         return '\n'.join(lines)
 
+class MkDocsNavGenerator(FileGenerator):
+    """Generates mkdocs.yml navigation section from packages.yml."""
+
+    def generate(self) -> str:
+        """Generate mkdocs.yml with updated nav section."""
+        self.log("Generating mkdocs.yml navigation...")
+
+        mkdocs_path = self.repo_root / 'mkdocs.yml'
+        if not mkdocs_path.exists():
+            self.log("  [WARN]  mkdocs.yml not found - skipping")
+            return ""
+
+        with open(mkdocs_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        # Generate nav entries
+        nav_section = self._generate_nav_section()
+
+        # Replace nav section between markers
+        pattern = r'  # NAV_PACKAGES_START\n.*?  # NAV_PACKAGES_END'
+        replacement = f'  # NAV_PACKAGES_START\n{nav_section}\n  # NAV_PACKAGES_END'
+
+        if re.search(pattern, content, re.DOTALL):
+            new_content = re.sub(pattern, replacement, content, flags=re.DOTALL)
+        else:
+            self.log("  [WARN]  Nav markers not found in mkdocs.yml")
+            return content
+
+        return new_content
+
+    def _package_to_doc_path(self, pkg: dict) -> str:
+        """Convert package name to docs path: Rivulet.Core -> packages/rivulet-core.md"""
+        return f"packages/{pkg['name'].lower().replace('.', '-')}.md"
+
+    def _generate_nav_section(self) -> str:
+        """Generate YAML nav entries grouped by category, core first then integration."""
+        lines = []
+        lines.append("  - Packages:")
+
+        core_packages = self.registry.get_core_packages()
+        integration_packages = self.registry.get_integration_packages()
+
+        # Core packages listed first (no sub-header needed if no integration packages)
+        for pkg in core_packages:
+            doc_path = self._package_to_doc_path(pkg)
+            lines.append(f"      - {pkg['name']}: {doc_path}")
+
+        # Integration packages listed after core
+        for pkg in integration_packages:
+            doc_path = self._package_to_doc_path(pkg)
+            lines.append(f"      - {pkg['name']}: {doc_path}")
+
+        return '\n'.join(lines)
+
+
 def generate_all(check_only: bool = False, verbose: bool = False) -> int:
     """
     Generate all files.
@@ -478,6 +537,7 @@ def generate_all(check_only: bool = False, verbose: bool = False) -> int:
             ('README.md', ReadmeGenerator(registry, verbose)),
             ('samples/README.md', SamplesReadmeGenerator(registry, verbose)),
             ('ROADMAP.md', RoadmapGenerator(registry, verbose)),
+            ('mkdocs.yml', MkDocsNavGenerator(registry, verbose)),
             ('.github/workflows/release.yml', ReleaseWorkflowGenerator(registry, verbose)),
             ('.github/workflows/nuget-activity-monitor.yml', NugetActivityMonitorGenerator(registry, verbose)),
             ('.github/dependabot.yml', DependabotGenerator(registry, verbose)),
@@ -492,20 +552,11 @@ def generate_all(check_only: bool = False, verbose: bool = False) -> int:
                     continue  # Generator skipped this file
 
                 # Determine file path
-                if file_desc == 'README.md':
-                    file_path = registry.repo_root / 'README.md'
-                elif file_desc == 'samples/README.md':
-                    file_path = registry.repo_root / 'samples' / 'README.md'
-                elif file_desc == 'ROADMAP.md':
+                # Resolve file path from descriptor
+                file_path = registry.repo_root / file_desc
+                # Special case: ROADMAP.md may be in docs/ or root
+                if file_desc == 'ROADMAP.md' and not file_path.exists():
                     file_path = registry.repo_root / 'docs' / 'ROADMAP.md'
-                    if not file_path.exists():
-                        file_path = registry.repo_root / 'ROADMAP.md'
-                elif file_desc == '.github/workflows/release.yml':
-                    file_path = registry.repo_root / '.github' / 'workflows' / 'release.yml'
-                elif file_desc == '.github/workflows/nuget-activity-monitor.yml':
-                    file_path = registry.repo_root / '.github' / 'workflows' / 'nuget-activity-monitor.yml'
-                elif file_desc == '.github/dependabot.yml':
-                    file_path = registry.repo_root / '.github' / 'dependabot.yml'
 
                 # Check if changed
                 if file_path.exists():

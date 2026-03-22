@@ -1,7 +1,10 @@
 ﻿# Rivulet.Diagnostics
 
+<!-- DESCRIPTION_START -->
 Enterprise observability for Rivulet.Core with EventListener wrappers, metric aggregators, and health check integration.
+<!-- DESCRIPTION_END -->
 
+<!-- KEY_FEATURES_START -->
 ## Features
 
 - **EventListener Wrappers**: Console, File, and Structured JSON logging
@@ -9,6 +12,19 @@ Enterprise observability for Rivulet.Core with EventListener wrappers, metric ag
 - **Prometheus Export**: Export metrics in Prometheus text format
 - **Health Check Integration**: Microsoft.Extensions.Diagnostics.HealthChecks support
 - **Fluent Builder API**: Easy configuration with DiagnosticsBuilder
+<!-- KEY_FEATURES_END -->
+
+<!-- FEATURES_START -->
+## API
+
+- **RivuletEventSource** - EventSource-based metrics
+- **RivuletConsoleListener** - Real-time console metrics
+- **RivuletFileListener** - File-based logging with rotation
+- **RivuletStructuredLogListener** - JSON structured logging
+- **PrometheusExporter** - Prometheus text format export
+- **RivuletHealthCheck** - Health check integration
+- **MetricsAggregator** - Statistical analysis
+<!-- FEATURES_END -->
 
 ## Installation
 

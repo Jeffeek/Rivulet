@@ -125,21 +125,23 @@ extra:
 # Navigation structure
 nav:
   - Home: index.md
+  # NAV_PACKAGES_START
   - Packages:
       - Rivulet.Core: packages/rivulet-core.md
       - Rivulet.Diagnostics: packages/rivulet-diagnostics.md
       - Rivulet.Diagnostics.OpenTelemetry: packages/rivulet-diagnostics-opentelemetry.md
-      - Rivulet.Testing: packages/rivulet-testing.md
       - Rivulet.Hosting: packages/rivulet-hosting.md
+      - Rivulet.Testing: packages/rivulet-testing.md
       - Rivulet.Http: packages/rivulet-http.md
+      - Rivulet.IO: packages/rivulet-io.md
       - Rivulet.Sql: packages/rivulet-sql.md
       - Rivulet.Sql.SqlServer: packages/rivulet-sql-sqlserver.md
       - Rivulet.Sql.PostgreSql: packages/rivulet-sql-postgresql.md
       - Rivulet.Sql.MySql: packages/rivulet-sql-mysql.md
       - Rivulet.Polly: packages/rivulet-polly.md
-      - Rivulet.IO: packages/rivulet-io.md
-      - Rivulet.Csv: packages/rivulet-csv.md
       - Rivulet.Pipeline: packages/rivulet-pipeline.md
+      - Rivulet.Csv: packages/rivulet-csv.md
+  # NAV_PACKAGES_END
   - Development:
       - Contributing: CONTRIBUTING.md
       - Roadmap: ROADMAP.md

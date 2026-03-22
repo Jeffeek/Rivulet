@@ -1,7 +1,10 @@
 # Rivulet.Sql.PostgreSql
 
+<!-- DESCRIPTION_START -->
 PostgreSQL-specific optimizations for Rivulet.Sql including COPY command integration for **10-100x faster bulk inserts**.
+<!-- DESCRIPTION_END -->
 
+<!-- KEY_FEATURES_START -->
 ## Features
 
 - **COPY Command Integration**: Ultra-high performance bulk inserts using COPY
@@ -10,6 +13,13 @@ PostgreSQL-specific optimizations for Rivulet.Sql including COPY command integra
 - **Streaming Import**: Efficient memory usage with streaming
 - **Custom Delimiters**: Support for CSV with custom delimiters
 - **Header Support**: Handle CSV files with headers
+<!-- KEY_FEATURES_END -->
+
+<!-- FEATURES_START -->
+## API
+
+- **BulkInsertUsingCopyAsync** - COPY command integration
+<!-- FEATURES_END -->
 
 ## Installation
 

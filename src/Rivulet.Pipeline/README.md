@@ -1,7 +1,10 @@
 # Rivulet.Pipeline
 
+<!-- DESCRIPTION_START -->
 Multi-stage pipeline composition for Rivulet with fluent API, per-stage concurrency, backpressure management between stages, and streaming support.
+<!-- DESCRIPTION_END -->
 
+<!-- KEY_FEATURES_START -->
 ## Features
 
 - **Fluent Builder API** - Type-safe pipeline construction with IntelliSense support
@@ -9,6 +12,23 @@ Multi-stage pipeline composition for Rivulet with fluent API, per-stage concurre
 - **Backpressure Management** - Automatic flow control between stages using channels
 - **Streaming & Buffered Modes** - Memory-efficient streaming or materialized results
 - **Full Rivulet.Core Integration** - Retries, circuit breakers, rate limiting, metrics
+<!-- KEY_FEATURES_END -->
+
+<!-- FEATURES_START -->
+## API
+
+- **PipelineBuilder.Create** - Create type-safe pipeline builders with fluent API
+- **SelectParallel** - Parallel transform stage with async/sync selectors
+- **WhereParallel** - Parallel filter stage with async/sync predicates
+- **Batch** - Group items into fixed-size batches with optional timeout
+- **BatchSelectParallel** - Batch and transform items in parallel
+- **SelectManyParallel** - Flatten/expand collections in parallel
+- **Tap** - Execute side effects without transforming items
+- **Buffer** - Decouple upstream/downstream with channel-based buffering
+- **Throttle** - Rate limit items using token bucket algorithm
+- **ExecuteAsync** - Execute pipeline and collect all results
+- **ExecuteStreamAsync** - Stream results as IAsyncEnumerable
+<!-- FEATURES_END -->
 
 ## Quick Start
 

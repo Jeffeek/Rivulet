@@ -1,7 +1,10 @@
 ﻿# Rivulet.Hosting
 
+<!-- DESCRIPTION_START -->
 Integration package for using Rivulet with Microsoft.Extensions.Hosting, ASP.NET Core, and the .NET Generic Host.
+<!-- DESCRIPTION_END -->
 
+<!-- KEY_FEATURES_START -->
 ## Features
 
 - Dependency Injection integration
@@ -9,6 +12,16 @@ Integration package for using Rivulet with Microsoft.Extensions.Hosting, ASP.NET
 - Base classes for parallel background services
 - Health checks for monitoring parallel operations
 - Support for ASP.NET Core and Worker Services
+<!-- KEY_FEATURES_END -->
+
+<!-- FEATURES_START -->
+## API
+
+- **ParallelWorkerService** - Background worker base class
+- **ParallelBackgroundService** - Queue processor base class
+- **AddRivulet()** - DI integration
+- **RivuletOptions** - Configuration binding
+<!-- FEATURES_END -->
 
 ## Installation
 
