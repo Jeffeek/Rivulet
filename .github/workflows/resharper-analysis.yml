@@ -42,7 +42,7 @@ jobs:
       uses: muno92/resharper_inspectcode@3a8a8fc8fc48c0ca9eb1c7e69f887a5068bdaba8 # 1.16.0
       with:
         solutionPath: ./Rivulet.slnx
-        version: 2025.3.2
+        version: 2025.3.3
         failOnIssue: '1'
         noBuild: true
         solutionWideAnalysis: true
