@@ -160,7 +160,7 @@ internal static class FileOperationHelper
 #pragma warning restore CA2007
 
                 var buffer = new byte[stream.Length];
-                _ = await stream.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
+                await stream.ReadExactlyAsync(buffer, cancellationToken).ConfigureAwait(false);
                 return buffer;
             },
             options,
