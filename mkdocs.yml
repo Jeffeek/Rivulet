@@ -13,7 +13,7 @@ repo_url: https://github.com/Jeffeek/Rivulet
 edit_uri: edit/master/docs/readthedocs/
 
 # Copyright
-copyright: Copyright &copy; 2024 Rivulet Contributors
+copyright: Copyright &copy; 2024-2026 Rivulet Contributors
 
 # Theme configuration
 theme:

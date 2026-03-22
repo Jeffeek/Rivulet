@@ -83,50 +83,71 @@ class ReadmeGenerator(FileGenerator):
         return new_content
 
     def _generate_package_list(self) -> str:
-        """Generate markdown package list grouped by category."""
+        """Generate markdown package list grouped by status: released first, then in-development."""
         lines = []
 
-        # Core packages
-        core_packages = self.registry.get_core_packages()
-        if core_packages:
-            lines.append("### Core Packages")
+        released = self.registry.get_released_packages()
+        in_dev = self.registry.get_in_development_packages()
+
+        if released:
+            lines.append("### Released")
             lines.append("")
-            for pkg in core_packages:
-                lines.append(self._format_package(pkg))
+            for pkg in released:
+                lines.append(self._format_released_package(pkg))
                 lines.append("")
 
-        # Integration packages
-        integration_packages = self.registry.get_integration_packages()
-        if integration_packages:
-            lines.append("### Integration Packages")
+        if in_dev:
+            lines.append("### In Development")
             lines.append("")
-            for pkg in integration_packages:
-                lines.append(self._format_package(pkg))
+            for pkg in in_dev:
+                lines.append(self._format_in_dev_package(pkg))
                 lines.append("")
 
         return '\n'.join(lines).rstrip()
 
-    def _format_package(self, pkg: dict) -> str:
-        """Format a single package entry."""
+    def _format_released_package(self, pkg: dict) -> str:
+        """Format a released package entry with NuGet badges and docs link."""
         name = pkg['name']
         description = pkg['description']
         nuget_badge = self.registry.get_nuget_badge_url(pkg)
         nuget_url = self.registry.get_nuget_url(pkg)
         downloads_badge = self.registry.get_nuget_downloads_badge_url(pkg)
-
-        status_emoji = "✅" if pkg['status'] == 'released' else "🚧"
+        docs_path = f"src/{name}/README.md"
 
         lines = [
-            f"#### {status_emoji} [{name}]({nuget_url})",
+            f"#### [{name}]({nuget_url})",
             f"[![NuGet]({nuget_badge})]({nuget_url}) [![Downloads]({downloads_badge})]({nuget_url})",
             "",
-            description,
-            "",
-            "**Key Features:**"
+            f"{description} [**Docs**]({docs_path})",
         ]
 
-        for feature in pkg.get('key_features', []):
-            lines.append(f"- {feature}")
+        key_features = pkg.get('key_features', [])
+        if key_features:
+            lines.append("")
+            lines.append("**Key Features:**")
+            for feature in key_features:
+                lines.append(f"- {feature}")
+
+        return '\n'.join(lines)
+
+    def _format_in_dev_package(self, pkg: dict) -> str:
+        """Format an in-development package entry without badges."""
+        name = pkg['name']
+        description = pkg['description']
+        docs_path = f"src/{name}/README.md"
+
+        lines = [
+            f"#### {name}",
+            "",
+            f"{description} [**Docs**]({docs_path})",
+        ]
+
+        key_features = pkg.get('key_features', [])
+        if key_features:
+            lines.append("")
+            lines.append("**Key Features:**")
+            for feature in key_features:
+                lines.append(f"- {feature}")
 
         return '\n'.join(lines)
 
@@ -147,8 +168,12 @@ class SamplesReadmeGenerator(FileGenerator):
             ""
         ]
 
-        # Generate sample entries
-        for i, pkg in enumerate(self.registry.packages, 1):
+        # Generate sample entries (only for packages with actual sample projects on disk)
+        sample_packages = [
+            pkg for pkg in self.registry.packages
+            if (self.repo_root / pkg.get('sample_path', '')).exists()
+        ]
+        for i, pkg in enumerate(sample_packages, 1):
             if 'sample_path' not in pkg:
                 continue
 
@@ -266,9 +291,9 @@ class RoadmapGenerator(FileGenerator):
         for version_data in self.registry.versions:
             version = version_data['version']
             status = version_data['status']
-            packages = self.registry.get_packages_by_version(version)
+            package_ids = version_data.get('packages', [])
 
-            if not packages:
+            if not package_ids:
                 continue
 
             # Version header
@@ -281,9 +306,13 @@ class RoadmapGenerator(FileGenerator):
             lines.append(f"### {status_emoji} {version} - {status.replace('_', ' ').title()}")
             lines.append("")
 
-            # Package list
-            for pkg in packages:
-                lines.append(f"- **{pkg['name']}** - {pkg['description']}")
+            # Package list — use full package data if available, else just the ID
+            for pid in package_ids:
+                pkg = self.registry.get_package(pid)
+                if pkg:
+                    lines.append(f"- **{pkg['name']}** - {pkg['description']}")
+                else:
+                    lines.append(f"- **{pid}** *(planned)*")
 
             lines.append("")
 
@@ -483,20 +512,11 @@ class MkDocsNavGenerator(FileGenerator):
         return f"packages/{pkg['name'].lower().replace('.', '-')}.md"
 
     def _generate_nav_section(self) -> str:
-        """Generate YAML nav entries grouped by category, core first then integration."""
+        """Generate YAML nav entries for all packages."""
         lines = []
         lines.append("  - Packages:")
 
-        core_packages = self.registry.get_core_packages()
-        integration_packages = self.registry.get_integration_packages()
-
-        # Core packages listed first (no sub-header needed if no integration packages)
-        for pkg in core_packages:
-            doc_path = self._package_to_doc_path(pkg)
-            lines.append(f"      - {pkg['name']}: {doc_path}")
-
-        # Integration packages listed after core
-        for pkg in integration_packages:
+        for pkg in self.registry.packages:
             doc_path = self._package_to_doc_path(pkg)
             lines.append(f"      - {pkg['name']}: {doc_path}")
 

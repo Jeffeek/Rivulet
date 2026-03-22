@@ -8,7 +8,7 @@
 #   - dependencies: parsed from .csproj (ProjectReference + PackageReference)
 #   - targets: global default, validated against .csproj TargetFrameworks
 #
-# Only specify: name, id, category, version, status.
+# Only specify: name, id, version, status.
 
 metadata:
   schema_version: "2.0"
@@ -24,138 +24,82 @@ defaults:
 
 packages:
   # ============================================================================
-  # CORE PACKAGES
+  # RELEASED
   # ============================================================================
 
   - name: Rivulet.Core
     id: core
-    category: core
     version: 1.0.0
     status: released
 
   - name: Rivulet.Diagnostics
     id: diagnostics
-    category: core
     version: 1.1.0
     status: released
 
   - name: Rivulet.Diagnostics.OpenTelemetry
     id: diagnostics-otel
-    category: core
     version: 1.1.0
     status: released
 
   - name: Rivulet.Hosting
     id: hosting
-    category: core
     version: 1.2.0
     status: released
 
   - name: Rivulet.Testing
     id: testing
-    category: core
     version: 1.2.0
     status: released
 
   - name: Rivulet.Http
     id: http
-    category: core
     version: 1.3.0
     status: released
 
   - name: Rivulet.IO
     id: io
-    category: core
     version: 1.3.0
     status: released
 
   - name: Rivulet.Sql
     id: sql
-    category: core
     version: 1.3.0
     status: released
 
   - name: Rivulet.Sql.SqlServer
     id: sql-sqlserver
-    category: core
     version: 1.3.0
     status: released
 
   - name: Rivulet.Sql.PostgreSql
     id: sql-postgresql
-    category: core
     version: 1.3.0
     status: released
 
   - name: Rivulet.Sql.MySql
     id: sql-mysql
-    category: core
     version: 1.3.0
     status: released
 
   - name: Rivulet.Polly
     id: polly
-    category: core
     version: 1.3.0
     status: released
 
+  # ============================================================================
+  # IN DEVELOPMENT
+  # ============================================================================
+
   - name: Rivulet.Pipeline
     id: pipeline
-    category: core
     version: 2.0.0
     status: in_development
 
-  # ============================================================================
-  # INTEGRATION PACKAGES (external library dependencies)
-  # ============================================================================
-
   - name: Rivulet.Csv
     id: csv
-    category: integration
-    version: 1.4.0
+    version: 2.0.0
     status: in_development
-
-# ============================================================================
-# GENERATION RULES
-# ============================================================================
-
-generation:
-  targets:
-    - type: readme
-      output: README.md
-    - type: roadmap
-      output: ROADMAP.md
-    - type: samples_readme
-      output: samples/README.md
-    - type: mkdocs_nav
-      output: mkdocs.yml
-    - type: release_workflow
-      output: .github/workflows/release.yml
-    - type: nuget_monitor
-      output: .github/workflows/nuget-activity-monitor.yml
-    - type: dependabot
-      output: .github/dependabot.yml
-
-  validation:
-    check_paths: true
-    check_unique_ids: true
-    check_dependencies: true
-    check_targets: true
-
-# ============================================================================
-# CATEGORIZATION
-# ============================================================================
-
-categories:
-  core:
-    display_name: "Core Packages"
-    description: "Essential packages providing core functionality"
-    badge_color: "blue"
-
-  integration:
-    display_name: "Integration Packages"
-    description: "Packages integrating with external systems and libraries"
-    badge_color: "green"
 
 # ============================================================================
 # VERSION ROADMAP
@@ -194,33 +138,12 @@ versions:
       - sql-mysql
       - polly
 
-  - version: "1.4.0"
-    release_date: "2025-12-30"
-    status: in_development
-    packages:
-      - csv
-      - pipeline
-
-  - version: "1.5.0"
-    release_date: "2026-06-15"
-    status: planned
-    packages:
-      - grpc
-      - messaging
-      - caching
-
-  - version: "1.6.0"
-    release_date: "2026-09-15"
-    status: planned
-    packages:
-      - azure
-      - aws
-
   - version: "2.0.0"
     release_date: "2027-01-15"
-    status: planned
+    status: in_development
     packages:
-      - core-v2
+      - pipeline
+      - csv
 
 # ============================================================================
 # BADGES AND LINKS

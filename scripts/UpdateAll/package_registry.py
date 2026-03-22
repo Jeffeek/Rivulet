@@ -34,7 +34,6 @@ class PackageRegistry:
             self.data = yaml.safe_load(f)
 
         self.metadata = self.data.get('metadata', {})
-        self.categories = self.data.get('categories', {})
         self.versions = self.data.get('versions', [])
         self.badges = self.data.get('badges', {})
         self.links = self.data.get('links', {})
@@ -55,8 +54,6 @@ class PackageRegistry:
             if candidate.exists():
                 return candidate
             if (current / '.git').exists():
-                if candidate.exists():
-                    return candidate
                 raise FileNotFoundError(f"packages.yml not found in repository root: {current}")
             parent = current.parent
             if parent == current:
@@ -168,9 +165,6 @@ class PackageRegistry:
         """Get package by ID or name."""
         return self._package_by_id.get(identifier) or self._package_by_name.get(identifier)
 
-    def get_packages_by_category(self, category: str) -> List[Dict[str, Any]]:
-        return [pkg for pkg in self.packages if pkg.get('category') == category]
-
     def get_packages_by_status(self, status: str) -> List[Dict[str, Any]]:
         return [pkg for pkg in self.packages if pkg.get('status') == status]
 
@@ -180,12 +174,6 @@ class PackageRegistry:
             return []
         package_ids = version_data.get('packages', [])
         return [self._package_by_id[pid] for pid in package_ids if pid in self._package_by_id]
-
-    def get_core_packages(self) -> List[Dict[str, Any]]:
-        return self.get_packages_by_category('core')
-
-    def get_integration_packages(self) -> List[Dict[str, Any]]:
-        return self.get_packages_by_category('integration')
 
     def get_released_packages(self) -> List[Dict[str, Any]]:
         return self.get_packages_by_status('released')
@@ -242,13 +230,9 @@ class PackageRegistry:
             print(f"  Validating {name}...")
 
         # Required YAML fields
-        for field in ['name', 'id', 'category', 'version', 'status']:
+        for field in ['name', 'id', 'version', 'status']:
             if field not in pkg or not pkg[field]:
                 errors.append(f"{name}: Missing required field '{field}'")
-
-        # Category must be valid
-        if pkg.get('category') and pkg['category'] not in self.categories:
-            errors.append(f"{name}: Unknown category: {pkg['category']}")
 
         # Source path must exist
         src_path = self.repo_root / pkg['path']

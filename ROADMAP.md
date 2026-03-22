@@ -33,10 +33,10 @@
 - **Rivulet.Sql.MySql** - MySQL-specific optimizations for Rivulet.Sql including MySqlBulkCopy and MySqlBulkLoader (LOAD DATA INFILE) integration for 10-100x faster bulk inserts.
 - **Rivulet.Polly** - Integration between Rivulet parallel processing and [Polly](https://github.com/App-vNext/Polly) resilience policies.
 
-### 🚧 1.4.0 - In Development
+### 🚧 2.0.0 - In Development
 
-- **Rivulet.Csv** - Parallel CSV parsing and writing with CsvHelper integration, bounded concurrency, and batching support for high-throughput data processing.
 - **Rivulet.Pipeline** - Multi-stage pipeline composition for Rivulet with fluent API, per-stage concurrency, backpressure management between stages, and streaming support.
+- **Rivulet.Csv** - Parallel CSV parsing and writing with CsvHelper integration, bounded concurrency, and batching support for high-throughput data processing.
 <!-- VERSIONS_END -->
 
 ---
