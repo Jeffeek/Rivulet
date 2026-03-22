@@ -1,16 +1,9 @@
 name: .NET Setup
 description: >
-  Hardens the runner, checks out the repository, sets up .NET 9,
-  caches and restores NuGet packages, and builds the solution in Release mode.
-  Used by CI, release, ReSharper, and flaky-test-detection workflows.
+  Sets up .NET 9, caches and restores NuGet packages, and builds the solution
+  in Release mode. Caller must run actions/checkout before using this action.
 
 inputs:
-  fetch-depth:
-    description: 'Git fetch depth (0 = full history, 1 = shallow)'
-    default: '10'
-  submodules:
-    description: 'Whether to checkout submodules (false/true/recursive)'
-    default: 'false'
   solution-file:
     description: 'Solution file to restore and build'
     default: 'Rivulet.slnx'
@@ -23,18 +16,6 @@ outputs:
 runs:
   using: composite
   steps:
-    - name: Harden the runner (Audit all outbound calls)
-      uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
-      with:
-        egress-policy: audit
-
-    - name: Checkout
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      with:
-        fetch-depth: ${{ inputs.fetch-depth }}
-        submodules: ${{ inputs.submodules }}
-        persist-credentials: false
-
     - name: Setup .NET 9.0.x
       id: setup-dotnet
       uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
