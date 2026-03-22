@@ -118,20 +118,8 @@ public static class RivuletToPollyConverter
         MinimumThroughput = options.FailureThreshold,
         BreakDuration = options.OpenTimeout,
         ShouldHandle = new PredicateBuilder().Handle<Exception>(),
-        OnOpened = _ =>
-        {
-            options.OnStateChange?.Invoke(CircuitBreakerState.Closed, CircuitBreakerState.Open);
-            return ValueTask.CompletedTask;
-        },
-        OnClosed = _ =>
-        {
-            options.OnStateChange?.Invoke(CircuitBreakerState.HalfOpen, CircuitBreakerState.Closed);
-            return ValueTask.CompletedTask;
-        },
-        OnHalfOpened = _ =>
-        {
-            options.OnStateChange?.Invoke(CircuitBreakerState.Open, CircuitBreakerState.HalfOpen);
-            return ValueTask.CompletedTask;
-        }
+        OnOpened = _ => options.OnStateChange?.Invoke(CircuitBreakerState.Closed, CircuitBreakerState.Open) ?? ValueTask.CompletedTask,
+        OnClosed = _ => options.OnStateChange?.Invoke(CircuitBreakerState.HalfOpen, CircuitBreakerState.Closed) ?? ValueTask.CompletedTask,
+        OnHalfOpened = _ => options.OnStateChange?.Invoke(CircuitBreakerState.Open, CircuitBreakerState.HalfOpen) ?? ValueTask.CompletedTask
     };
 }
