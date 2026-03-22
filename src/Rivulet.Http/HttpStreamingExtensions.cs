@@ -197,6 +197,15 @@ public static class HttpStreamingExtensions
 
         response.EnsureSuccessStatusCode();
 
+        // If we requested a Range but the server returned 200 OK (not 206 Partial Content),
+        // it ignored the Range header and is sending the full content.
+        // Reset resume state to overwrite the file instead of appending full body to partial file.
+        if (existingFileSize > 0 && response.StatusCode != HttpStatusCode.PartialContent)
+        {
+            existingFileSize = 0;
+            fileMode = FileMode.Create;
+        }
+
         var totalBytes = existingFileSize + (response.Content.Headers.ContentLength ?? 0);
 
         // Pre-compute the reported total: for resumed downloads (206 Partial Content),
