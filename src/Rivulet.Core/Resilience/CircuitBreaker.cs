@@ -85,11 +85,19 @@ internal sealed class CircuitBreaker
                     Environment.TickCount64 - _openedAtTicks >= (long)_options.OpenTimeout.TotalMilliseconds)
                     TransitionToHalfOpen();
 
-                if (_state == CircuitBreakerState.Open || (_state == CircuitBreakerState.HalfOpen && _halfOpenPermits <= 0))
-                    throw new CircuitBreakerOpenException(_state);
-
-                if (_state == CircuitBreakerState.HalfOpen)
-                    _halfOpenPermits--;
+                switch (_state)
+                {
+                    case CircuitBreakerState.Open:
+                    case CircuitBreakerState.HalfOpen when _halfOpenPermits <= 0:
+                        throw new CircuitBreakerOpenException(_state);
+                    case CircuitBreakerState.HalfOpen:
+                        _halfOpenPermits--;
+                    break;
+                    case CircuitBreakerState.Closed:
+                    break;
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(_state), _state, "Unknown value");
+                }
             });
 
         return ValueTask.CompletedTask;
