@@ -1,5 +1,4 @@
 using System.Diagnostics.CodeAnalysis;
-using Rivulet.IO.Base;
 using Rivulet.IO.Internal;
 
 namespace Rivulet.IO;

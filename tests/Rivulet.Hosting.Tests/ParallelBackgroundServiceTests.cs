@@ -43,7 +43,7 @@ public sealed class ParallelBackgroundServiceTests
         await service.StartAsync(cts.Token);
 
         var deadline = DateTime.UtcNow.AddSeconds(5);
-        await DeadlineExtensions.ApplyDeadlineAsync(deadline, () => Task.Delay(25), () => service.ProcessedItems.Count < 10);
+        await DeadlineExtensions.ApplyDeadlineAsync(deadline, static () => Task.Delay(25, TestContext.Current.CancellationToken), () => service.ProcessedItems.Count < 10);
         await cts.CancelAsync();
 
         await service.StopAsync(CancellationToken.None);
@@ -74,7 +74,7 @@ public sealed class ParallelBackgroundServiceTests
         await service.StartAsync(cts.Token);
 
         var deadline = DateTime.UtcNow.AddSeconds(5);
-        await DeadlineExtensions.ApplyDeadlineAsync(deadline, () => Task.Delay(25), () => service.ProcessedItems.Count < 3);
+        await DeadlineExtensions.ApplyDeadlineAsync(deadline, static () => Task.Delay(25, TestContext.Current.CancellationToken), () => service.ProcessedItems.Count < 3);
         await cts.CancelAsync();
 
         await service.StopAsync(CancellationToken.None);
@@ -112,7 +112,7 @@ public sealed class ParallelBackgroundServiceTests
         await service.StartAsync(cts.Token);
 
         var deadline = DateTime.UtcNow.AddSeconds(5);
-        await DeadlineExtensions.ApplyDeadlineAsync(deadline, () => Task.Delay(25), () => service.ProcessCallCount < 7);
+        await DeadlineExtensions.ApplyDeadlineAsync(deadline, static () => Task.Delay(25, TestContext.Current.CancellationToken), () => service.ProcessCallCount < 7);
         await cts.CancelAsync();
 
         await service.StopAsync(CancellationToken.None);

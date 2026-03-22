@@ -288,5 +288,4 @@ public static class FileParallelExtensions
             static lines => new FileOperationResult { BytesProcessed = lines.Length });
 #pragma warning restore CA2007
     }
-
 }
