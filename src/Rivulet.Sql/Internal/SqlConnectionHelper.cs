@@ -56,7 +56,7 @@ internal static class SqlConnectionHelper
     /// <summary>
     ///     Creates a command with standard configuration.
     /// </summary>
-    internal static IDbCommand CreateAndConfigureCommand(
+    private static IDbCommand CreateAndConfigureCommand(
         IDbConnection connection,
         string commandText,
         int commandTimeout,
@@ -68,6 +68,48 @@ internal static class SqlConnectionHelper
         command.CommandTimeout = commandTimeout;
         configureParams?.Invoke(command);
         return command;
+    }
+
+    /// <summary>
+    ///     Executes an operation within a managed connection lifecycle:
+    ///     create → open → configure command → execute → error callback → close.
+    /// </summary>
+    internal static async ValueTask<TResult> ExecuteWithConnectionAsync<TResult>(
+        Func<IDbConnection> connectionFactory,
+        string sql,
+        SqlOptions options,
+        Func<IDbCommand, CancellationToken, ValueTask<TResult>> executor,
+        CancellationToken cancellationToken,
+        Action<IDbCommand>? configureParams = null
+    )
+    {
+        var connection = CreateAndValidate(connectionFactory);
+        using (connection)
+        {
+            try
+            {
+                await OpenConnectionIfNeededAsync(connection, options, cancellationToken)
+                    .ConfigureAwait(false);
+
+                using var command = CreateAndConfigureCommand(
+                    connection,
+                    sql,
+                    options.CommandTimeout,
+                    configureParams);
+
+                return await executor(command, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                if (options.OnSqlErrorAsync != null)
+                    await options.OnSqlErrorAsync(sql, ex, 0).ConfigureAwait(false);
+                throw;
+            }
+            finally
+            {
+                CloseConnectionIfNeeded(connection, options);
+            }
+        }
     }
 
     /// <summary>
