@@ -1,0 +1,173 @@
+# CodeRabbit configuration for Rivulet
+# Docs: https://docs.coderabbit.ai/configure/configuration-file
+
+language: "en-US"
+
+tone_instructions: "Senior .NET concurrency expert. Be direct: lead with the issue, then why it matters. No praise padding. For bugs, state the failure scenario concretely. For improvements, state the consequence of skipping them."
+
+chat:
+  auto_reply: true
+
+reviews:
+  profile: "assertive"
+  high_level_summary: true
+  sequence_diagrams: true
+  poem: false
+  collapse_walkthrough: true
+  suggested_labels: true
+  auto_apply_labels: false
+  assess_linked_issues: true
+  related_issues: false
+  path_filters:
+    - "!**/obj/**"
+    - "!**/bin/**"
+    - "!**/*.g.cs"
+    - "!**/*.g.i.cs"
+    - "!**/AssemblyInfo.cs"
+    - "!**/*.Designer.cs"
+    - "!docs/readthedocs/requirements.txt"
+  path_instructions:
+    - path: "src/**/*.cs"
+      instructions: |
+        You are reviewing a high-performance async parallel processing library. Apply the strictest possible scrutiny to every change.
+
+        **Thread safety**
+        - Every field accessed from multiple threads must be protected: `Interlocked`, `volatile`, `lock`, `SemaphoreSlim`, or `Channel<T>`. Flag any unprotected shared mutable state.
+        - Check for TOCTOU races: reading a field, making a decision, then acting on it without re-checking under a lock.
+        - `volatile bool _disposed` is required on all `IAsyncDisposable` implementations — not just `bool`.
+
+        **CancellationToken**
+        - Every `async` method must accept and forward a `CancellationToken` to all awaited calls. No silent swallowing.
+        - `CancellationToken.None` and `default(CancellationToken)` are forbidden in production code unless the comment explicitly justifies why cancellation must be suppressed (e.g., cleanup that must run to completion).
+        - `ThrowIfCancellationRequested()` must appear before expensive work, not only inside loops.
+
+        **ValueTask / Task allocation**
+        - Hot paths must use `ValueTask<T>` — flag any method on the critical path that returns `Task<T>` unnecessarily.
+        - Never `await` a `ValueTask` more than once. Never store it in a variable and await it later unless converted to `Task` first.
+        - `async` methods that return `ValueTask` and always complete synchronously should use `ValueTask.FromResult` or `ValueTask.CompletedTask` instead.
+
+        **IAsyncDisposable**
+        - `DisposeAsync` must be idempotent — check and set a `_disposed` flag atomically before doing work.
+        - After disposal, all public methods must return silently (check `if (_disposed) return`) rather than throwing or continuing.
+        - Timers must be disposed before the semaphore/channel they interact with.
+
+        **Public API surface**
+        - All public options classes must be `sealed` with `init`-only properties.
+        - Every public type and member must have XML documentation (`<summary>`, `<param>`, `<returns>` where applicable).
+        - No breaking changes to existing public API without explicit justification in the PR description.
+        - Extension methods must follow the `{Operation}ParallelAsync` / `{Operation}ParallelStreamAsync` naming convention.
+
+        **Error handling**
+        - `ErrorMode.FailFast` must propagate the original exception unwrapped — never wrap in `AggregateException`.
+        - `ErrorMode.CollectAndContinue` must never lose exceptions — verify they are collected and rethrown after all items complete.
+        - `OperationCanceledException` must never be caught by general error handlers or fallback logic — it must always propagate.
+
+        **Backoff / resilience math**
+        - Verify delay calculations: exponential backoff must cap at 5 minutes, jitter must be applied correctly, `DecorrelatedJitter` must never produce a delay below `baseDelay` after the first attempt.
+        - Circuit breaker state transitions: Closed→Open on failure threshold, Open→HalfOpen after timeout, HalfOpen→Closed on success threshold. Flag any path that could skip a transition.
+
+    - path: "src/**/*Options.cs"
+      instructions: |
+        Options classes have a strict contract in this codebase. Flag any violation:
+        - Class must be `sealed`.
+        - All properties must use `init` accessor — no `set`.
+        - A copy constructor `public XOptions(XOptions other)` must exist and copy **every** property — flag any property missing from the copy constructor.
+        - A `Validate()` method must exist and throw `ArgumentOutOfRangeException` for invalid combinations (e.g., `MinConcurrency > MaxConcurrency`).
+        - No nullable reference types on properties that have a sensible default — use the default instead.
+        - New properties added to an options class must also be added to: the copy constructor, `Validate()`, and XML docs.
+
+    - path: "tests/**/*.cs"
+      instructions: |
+        You are reviewing tests for a concurrent async library. Correctness and reliability of tests is as important as the production code.
+
+        **CancellationToken**
+        - Every `await` call inside a test method that accepts a `CancellationToken` must use `TestContext.Current.CancellationToken` — never `CancellationToken.None`, `default`, or a manually created `CancellationTokenSource` for this purpose.
+        - `Task.Delay(n, CancellationToken.None)` is forbidden unless the comment explicitly documents it as intentional (e.g., simulating a stuck task). Flag every occurrence without such a comment.
+        - Exception: `static` lambdas and `static` local functions can use `TestContext.Current.CancellationToken` directly — no need to remove `static`.
+
+        **Test naming**
+        - All test methods must follow `MethodUnderTest_Scenario_ExpectedBehavior` pattern. Flag any deviation.
+        - Names must be specific enough to understand the failure without reading the code.
+
+        **Test isolation**
+        - No shared mutable state between tests — every test must create its own instances.
+        - `CancellationTokenSource` created in a test must be disposed (use `using`).
+        - Any `IAsyncDisposable` or `IDisposable` created in a test must be disposed — flag missing `await using` / `using`.
+
+        **Assertions**
+        - All assertions must use Shouldly (`ShouldBe`, `ShouldThrowAsync`, etc.) — no raw `Assert.*`.
+        - `ShouldThrowAsync` must be used for async exception assertions — never `try/catch` in tests unless explicitly testing catch block behavior.
+        - Timing assertions (e.g., `elapsed.ShouldBeLessThan`) must have a comment justifying the threshold value and accounting for CI variability.
+
+        **Async correctness**
+        - No `Task.Result` or `.Wait()` in async tests — always `await`.
+        - `Task.WhenAll` without `await` is a bug — flag it.
+        - Tests that rely on timing (e.g., `Task.Delay` for synchronization) must use `DeadlineExtensions.ApplyDeadlineAsync` or a `TaskCompletionSource` instead where possible.
+
+        **Integration tests**
+        - Any test requiring Docker containers (MySQL, PostgreSQL, SQL Server) must have `[Trait("Category", "Integration")]`.
+        - Integration tests must not run in the Windows CI matrix.
+
+    - path: ".github/workflows/*.yml"
+      instructions: |
+        You are reviewing GitHub Actions workflows for a security-hardened open-source project. Apply strict scrutiny.
+
+        **Action pinning**
+        - Every `uses:` must be pinned to a full commit SHA, not a floating tag (`@v3`) or branch (`@main`). Flag any non-SHA pin.
+        - The SHA must be accompanied by a version comment: `# v2.16.0`. Flag missing version comments.
+
+        **Security**
+        - Every job must start with `step-security/harden-runner` as the first step.
+        - Every `actions/checkout` must include `persist-credentials: false`.
+        - `permissions:` must follow least privilege — flag any `write` permission that isn't explicitly needed by that job.
+        - `egress-policy: audit` is the minimum; flag any workflow missing the harden-runner step entirely.
+
+        **Composite action usage**
+        - `./.github/actions/dotnet-setup` must only be called **after** `actions/checkout` has already run in that job. Flag any job where the composite is the first step.
+
+        **Correctness**
+        - `required: true` and `default:` on the same `workflow_call` input is contradictory — flag it.
+        - Scheduled workflows: verify `timeout-minutes` is consistent with iteration count × per-iteration time if documented.
+        - `dotnet restore` must always specify the solution file `Rivulet.slnx` — flag bare `dotnet restore`.
+        - Test steps on release pipelines must include `--filter "Category!=Integration"` unless service containers are explicitly configured.
+
+        **Best practices**
+        - Every workflow triggered by PR or push must have a `concurrency:` group to cancel stale runs.
+        - Matrix jobs must have `fail-fast: false` unless there is a documented reason to fail fast.
+        - `upload-artifact` steps must include `retention-days`.
+
+    - path: ".github/actions/**/action.yml"
+      instructions: |
+        - All `run:` steps must specify `shell: bash` (or `shell: pwsh` explicitly) — composite actions have no default shell.
+        - All `uses:` must be pinned to SHA with a version comment.
+        - Every input and output must have a `description`.
+        - The action `description` must document that the caller is responsible for running `actions/checkout` before invoking this action.
+
+    - path: "packages.yml"
+      instructions: |
+        This file is the single source of truth for the package registry. Changes here drive auto-generation of dependabot config, release pack commands, and nuget-activity-monitor matrix. Review strictly.
+        - Every new package entry must include: `name`, `description`, `nuget-package`, `project-path`, `test-project-path`.
+        - Package names must follow the `Rivulet.X` convention (PascalCase, dot-separated).
+        - After any change to this file, the PR description must confirm that `./scripts/UpdateAll/update-all.sh` was run and the generated files are committed.
+        - Flag any PR that modifies `packages.yml` without also updating the generated files (`dependabot.yml`, `release.yml` pack section, `nuget-activity-monitor.yml` matrix).
+
+    - path: "src/Rivulet.Core/Resilience/**/*.cs"
+      instructions: |
+        This is the most critical and complex part of the codebase — resilience primitives (circuit breaker, adaptive concurrency, rate limiter, retry). Maximum scrutiny.
+        - State machine transitions must be exhaustive and atomic. Every state (Closed/Open/HalfOpen for circuit breaker, AIMD increase/decrease for adaptive concurrency) must be reachable and correctly guarded.
+        - Semaphore operations: `Release()` after `Dispose()` must not throw. `WaitAsync()` after `Dispose()` must be handled gracefully.
+        - `SemaphoreFullException` from `Release(delta)` must be caught and handled — it means all slots were already free.
+        - Background tasks (e.g., semaphore reduction) must use `CancellationToken.None` for the `Task.Run` wrapper but check `_disposed` inside. Flag any background task that can silently swallow exceptions.
+        - Timer callbacks must check `_disposed` as their first action.
+        - Concurrency decrease must happen in a background task with proper exception logging — never block the caller.
+  abort_on_close: true
+  finishing_touches:
+    docstrings:
+      enabled: true
+  auto_review:
+    enabled: false
+    auto_incremental_review: true
+    drafts: false
+    ignore_title_keywords:
+      - "WIP"
+      - "DO NOT MERGE"

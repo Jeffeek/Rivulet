@@ -1,0 +1,39 @@
+name: .NET Setup
+description: >
+  Sets up .NET 9, caches and restores NuGet packages, and builds the solution
+  in Release mode. Caller must run actions/checkout before using this action.
+
+inputs:
+  solution-file:
+    description: 'Solution file to restore and build'
+    default: 'Rivulet.slnx'
+
+outputs:
+  dotnet-version:
+    description: 'The installed .NET SDK version (e.g. 9.0.301)'
+    value: ${{ steps.setup-dotnet.outputs.dotnet-version }}
+
+runs:
+  using: composite
+  steps:
+    - name: Setup .NET 9.0.x
+      id: setup-dotnet
+      uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
+      with:
+        dotnet-version: 9.0.x
+
+    - name: Cache NuGet packages
+      uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+
+    - name: Restore dependencies
+      shell: bash
+      run: dotnet restore ${{ inputs.solution-file }}
+
+    - name: Build (Release)
+      shell: bash
+      run: dotnet build ${{ inputs.solution-file }} -c Release --no-restore

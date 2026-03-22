@@ -8,6 +8,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false  # Never cancel an in-progress release
+
 jobs:
   build-and-publish:
     name: Build and Publish NuGet Package
@@ -26,19 +30,10 @@ jobs:
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         fetch-depth: 0
+        persist-credentials: false
 
-    - name: Setup .NET 9.0.x
-      uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
-      with:
-        dotnet-version: 9.0.x
-
-    - name: Cache NuGet packages
-      uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
-      with:
-        path: ~/.nuget/packages
-        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
-        restore-keys: |
-          ${{ runner.os }}-nuget-
+    - name: Setup .NET environment
+      uses: ./.github/actions/dotnet-setup
 
     - name: Extract version from tag
       id: get_version
@@ -48,14 +43,10 @@ jobs:
         echo "tag=$GITHUB_REF_NAME" >> $GITHUB_OUTPUT
         echo "Version: $VERSION"
 
-    - name: Restore dependencies
-      run: dotnet restore
-
-    - name: Build (Release)
-      run: dotnet build Rivulet.slnx -c Release --no-restore
-
     - name: Run tests
-      run: dotnet test Rivulet.slnx -c Release --no-build --verbosity normal
+      # Unit tests only — integration tests require Linux containers not available here.
+      # Full integration test suite already ran in CI before this tag was pushed.
+      run: dotnet test Rivulet.slnx -c Release --no-build --verbosity normal --filter "Category!=Integration"
       timeout-minutes: 5
 
     - name: Pack NuGet packages

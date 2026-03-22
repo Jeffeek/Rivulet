@@ -1,6 +1,7 @@
 name: CI - Build and Test
 
 on:
+  workflow_dispatch:
   pull_request:
     branches:
       - "master"
@@ -12,6 +13,10 @@ on:
 
 permissions:
   contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   quick-test:
@@ -32,27 +37,10 @@ jobs:
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         fetch-depth: 0
+        persist-credentials: false
 
-    - name: Setup .NET 9.0.x
-      uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
-      with:
-        dotnet-version: 9.0.x
-      # Note: Test projects multi-target net8.0;net9.0
-      # .NET 9 SDK automatically runs tests for BOTH frameworks
-
-    - name: Cache NuGet packages
-      uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
-      with:
-        path: ~/.nuget/packages
-        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
-        restore-keys: |
-          ${{ runner.os }}-nuget-
-
-    - name: Restore dependencies
-      run: dotnet restore Rivulet.slnx
-
-    - name: Build (Release)
-      run: dotnet build Rivulet.slnx -c Release --no-restore
+    - name: Setup .NET environment
+      uses: ./.github/actions/dotnet-setup
 
     - name: Run tests for net8.0 and net9.0 (Ubuntu - All tests including integration)
       if: runner.os == 'Linux'
@@ -79,25 +67,10 @@ jobs:
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         fetch-depth: 0
+        persist-credentials: false
 
-    - name: Setup .NET 9.0.x
-      uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
-      with:
-        dotnet-version: 9.0.x
-
-    - name: Cache NuGet packages
-      uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
-      with:
-        path: ~/.nuget/packages
-        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
-        restore-keys: |
-          ${{ runner.os }}-nuget-
-
-    - name: Restore dependencies
-      run: dotnet restore Rivulet.slnx
-
-    - name: Build (Release)
-      run: dotnet build Rivulet.slnx -c Release --no-restore
+    - name: Setup .NET environment
+      uses: ./.github/actions/dotnet-setup
 
     - name: Run tests with coverage
       run: dotnet test Rivulet.slnx -c Release --no-build --collect:"XPlat Code Coverage" --results-directory ./coverage
