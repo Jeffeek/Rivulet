@@ -113,7 +113,7 @@ dotnet_style_predefined_type_for_locals_parameters_members = true:warning
 dotnet_style_predefined_type_for_member_access = true:warning
 
 # .NET Code Style - Parentheses preferences
-dotnet_style_parentheses_in_arithmetic_binary_operators = never_if_unnecessary:warning
+dotnet_style_parentheses_in_arithmetic_binary_operators = always_for_clarity:warning
 dotnet_style_parentheses_in_relational_binary_operators = never_if_unnecessary:warning
 dotnet_style_parentheses_in_other_binary_operators = always_for_clarity:warning
 dotnet_style_parentheses_in_other_operators = never_if_unnecessary:warning
@@ -283,8 +283,8 @@ resharper_arguments_style_anonymous_function_highlighting = none
 resharper_arguments_style_literal_highlighting = none
 resharper_arrange_redundant_parentheses_highlighting = none
 resharper_arguments_style_named_expression_highlighting = none
-resharper_arguments_style_other_highlighting = warning
-resharper_arguments_style_string_literal_highlighting = warning
+resharper_arguments_style_other_highlighting = none
+resharper_arguments_style_string_literal_highlighting = none
 resharper_arrange_attributes_highlighting = warning
 resharper_arrange_default_value_when_type_evident_highlighting = warning
 resharper_arrange_default_value_when_type_not_evident_highlighting = warning
@@ -429,6 +429,8 @@ resharper_loop_can_be_converted_to_query_highlighting = warning
 resharper_loop_can_be_partly_converted_to_query_highlighting = warning
 resharper_markup_attribute_typo_highlighting = warning
 resharper_markup_text_typo_highlighting = warning
+resharper_internal_or_private_member_not_documented_highlighting = none
+resharper_member_can_be_file_local_highlighting = none
 resharper_member_can_be_internal_highlighting = warning
 resharper_member_can_be_made_static_global_highlighting = warning
 resharper_member_can_be_made_static_local_highlighting = warning
@@ -473,7 +475,9 @@ resharper_parameter_only_used_for_precondition_check_global_highlighting = warni
 resharper_parameter_type_can_be_enumerable_global_highlighting = warning
 resharper_parameter_type_can_be_enumerable_local_highlighting = warning
 resharper_pass_string_interpolation_highlighting = warning
+resharper_place_assignment_expression_into_block_highlighting = none
 resharper_possible_unintended_queryable_as_enumerable_highlighting = warning
+resharper_primary_constructor_parameter_capture_disallowed_highlighting = none
 resharper_prefer_concrete_value_over_default_highlighting = warning
 resharper_prefer_explicitly_provided_tuple_component_name_highlighting = warning
 resharper_property_can_be_made_init_only_global_highlighting = warning
@@ -685,3 +689,7 @@ resharper_with_expression_instead_of_initializer_highlighting = warning
 resharper_wrong_indent_size_highlighting = warning
 resharper_wrong_metadata_use_highlighting = warning
 resharper_xaml_constructor_warning_highlighting = error
+
+[tests/**/*.cs]
+dotnet_diagnostic.CA2007.severity = none
+dotnet_diagnostic.IDE0058.severity = none

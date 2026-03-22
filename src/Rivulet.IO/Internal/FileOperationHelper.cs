@@ -99,7 +99,7 @@ internal static class FileOperationHelper
     /// <param name="filePath">The path to the file to write.</param>
     /// <param name="options">Configuration options containing buffer size and file share settings.</param>
     /// <returns>A FileStream configured for async sequential writing.</returns>
-    public static FileStream CreateWriteStream(string filePath, FileOperationOptions options) =>
+    private static FileStream CreateWriteStream(string filePath, FileOperationOptions options) =>
         new(
             filePath,
             FileMode.Create,
@@ -115,7 +115,7 @@ internal static class FileOperationHelper
     /// <param name="destinationPath">The path to the destination file to write.</param>
     /// <param name="options">Configuration options for both streams.</param>
     /// <returns>A tuple containing the source read stream and destination write stream.</returns>
-    public static (FileStream sourceStream, FileStream destStream) CreateCopyStreams(
+    private static (FileStream sourceStream, FileStream destStream) CreateCopyStreams(
         string sourcePath,
         string destinationPath,
         FileOperationOptions options
