@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using Rivulet.Core;
@@ -200,6 +199,12 @@ public static class HttpStreamingExtensions
 
         var totalBytes = existingFileSize + (response.Content.Headers.ContentLength ?? 0);
 
+        // Pre-compute the reported total: for resumed downloads (206 Partial Content),
+        // use the total including existing bytes; otherwise use raw Content-Length
+        var reportedTotalBytes = response.StatusCode == HttpStatusCode.PartialContent
+            ? totalBytes
+            : response.Content.Headers.ContentLength;
+
 #pragma warning disable CA2007 // ConfigureAwait not applicable to await using declarations
         await using var fileStream = new FileStream(
             destinationPath,
@@ -222,19 +227,14 @@ public static class HttpStreamingExtensions
             await fileStream.WriteAsync(buffer.AsMemory(0, bytesRead), cancellationToken).ConfigureAwait(false);
             bytesDownloaded += bytesRead;
 
-            if (options.OnProgressAsync is null) continue;
-
             // Report progress if callback is provided and interval has elapsed
-            var elapsed = Stopwatch.GetTimestamp() - lastProgressReport;
-            if (elapsed < progressIntervalTicks * (Stopwatch.Frequency / TimeSpan.TicksPerSecond)) continue;
-
-            await options.OnProgressAsync(uri,
-                    bytesDownloaded,
-                    response.StatusCode == HttpStatusCode.PartialContent
-                        ? totalBytes
-                        : response.Content.Headers.ContentLength)
-                .ConfigureAwait(false);
-            lastProgressReport = Stopwatch.GetTimestamp();
+            lastProgressReport = await HttpHelper.ReportProgressIfNeededAsync(
+                options,
+                uri,
+                bytesDownloaded,
+                reportedTotalBytes,
+                lastProgressReport,
+                progressIntervalTicks).ConfigureAwait(false);
         }
 
         // Ensure all data is written to disk
@@ -242,27 +242,13 @@ public static class HttpStreamingExtensions
 
         // Final progress report
         if (options.OnProgressAsync is not null)
-        {
-            await options.OnProgressAsync(uri,
-                    bytesDownloaded,
-                    response.StatusCode == HttpStatusCode.PartialContent
-                        ? totalBytes
-                        : response.Content.Headers.ContentLength)
-                .ConfigureAwait(false);
-        }
+            await options.OnProgressAsync(uri, bytesDownloaded, reportedTotalBytes).ConfigureAwait(false);
 
         // Validate content length if requested
-        if (options.ValidateContentLength)
+        if (options.ValidateContentLength && reportedTotalBytes.HasValue && bytesDownloaded != reportedTotalBytes.Value)
         {
-            var expectedSize = response.StatusCode == HttpStatusCode.PartialContent
-                ? totalBytes
-                : response.Content.Headers.ContentLength;
-
-            if (expectedSize.HasValue && bytesDownloaded != expectedSize.Value)
-            {
-                throw new HttpRequestException(
-                    $"Content length mismatch for {uri}: expected {expectedSize.Value} bytes, but downloaded {bytesDownloaded} bytes");
-            }
+            throw new HttpRequestException(
+                $"Content length mismatch for {uri}: expected {reportedTotalBytes.Value} bytes, but downloaded {bytesDownloaded} bytes");
         }
 
         // Invoke completion callback
