@@ -47,6 +47,5 @@ jobs:
         solutionWideAnalysis: true
         minimumReportSeverity: WARNING
         minimumSeverity: warning
-        include: 'src/**/**.cs'
-        exclude: '**/obj/**;**/bin/**;**/TestResults/**'
+        exclude: '**/obj/**;**/bin/**;**/TestResults/**;**/tests/**'
         properties: 'Configuration=Release'
