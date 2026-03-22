@@ -106,6 +106,7 @@ public sealed class HttpOptions
             Progress = baseOptions.Progress,
             Metrics = baseOptions.Metrics,
             RateLimit = baseOptions.RateLimit,
+            OnFallback = baseOptions.OnFallback,
             CircuitBreaker = baseOptions.CircuitBreaker,
             AdaptiveConcurrency = baseOptions.AdaptiveConcurrency
         };
