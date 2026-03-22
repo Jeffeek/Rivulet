@@ -836,7 +836,7 @@ await CsvParallelExtensions.WriteCsvParallelAsync(
 
 **`ParseCsvParallelAsync<T>`**
 - Parse multiple CSV files in parallel
-- Returns: `Task<List<T>>` - Flattened list of all records from all files
+- Returns: `Task<IReadOnlyList<T>>` - Flattened list of all records from all files
 
 **`ParseCsvParallelGroupedAsync<T>`**
 - Parse multiple CSV files in parallel, preserving file source

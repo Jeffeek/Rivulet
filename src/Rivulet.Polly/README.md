@@ -86,4 +86,4 @@ MIT License - see LICENSE file for details
 
 ---
 
-**Made with ❤️ by Jeffeek** | [NuGet](https://www.nuget.org/packages/Rivulet.IO/) | [GitHub](https://github.com/Jeffeek/Rivulet)
+**Made with ❤️ by Jeffeek** | [NuGet](https://www.nuget.org/packages/Rivulet.Polly/) | [GitHub](https://github.com/Jeffeek/Rivulet)

@@ -360,7 +360,10 @@ var options = new HttpOptions
     RespectRetryAfterHeader = true,
     RetriableStatusCodes = new HashSet<HttpStatusCode> { /* ... */ },
     BufferSize = 81920,
+    FollowRedirects = true,       // Follow HTTP redirects (default: true)
+    MaxRedirects = 50,            // Maximum redirects to follow (default: 50)
     OnHttpErrorAsync = async (uri, status, ex) => { /* ... */ },
+    OnRedirectAsync = (original, redirected) => { /* ... */ return ValueTask.CompletedTask; },
     ParallelOptions = new ParallelOptionsRivulet
     {
         MaxDegreeOfParallelism = 10,

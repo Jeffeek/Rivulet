@@ -710,182 +710,13 @@ Uses AIMD (Additive Increase Multiplicative Decrease) algorithm similar to TCP c
 
 ### Rivulet.Diagnostics - Enterprise Observability
 
-`Rivulet.Diagnostics` extends the core library with production-ready observability features for comprehensive monitoring and health checks.
-
-#### Features
-- **EventListener Wrappers**: Console, File, and Structured JSON logging
-- **Metrics Aggregation**: Time-window statistics with min/max/avg/current values
-- **Prometheus Export**: Export metrics in Prometheus text format
-- **Health Check Integration**: Microsoft.Extensions.Diagnostics.HealthChecks support
-- **Fluent Builder API**: Easy configuration with DiagnosticsBuilder
-
-#### Quick Examples
-
-**Console Listener** - Development and debugging
-```csharp
-using var listener = new RivuletConsoleListener();
-
-await urls.SelectParallelAsync(ProcessAsync, options);
-// Console output:
-// [2025-01-15 10:30:45] Items Started: 100.00
-// [2025-01-15 10:30:46] Items Completed: 100.00
-```
-
-**File Listener with Rotation** - Production logging
-```csharp
-using var listener = new RivuletFileListener(
-    "metrics.log",
-    maxFileSizeBytes: 10 * 1024 * 1024 // 10MB
-);
-```
-
-**Structured JSON Logging** - Log aggregation (ELK, Splunk, Azure Monitor)
-```csharp
-using var listener = new RivuletStructuredLogListener("metrics.json");
-// Or custom action for your logging system
-using var listener = new RivuletStructuredLogListener(json =>
-{
-    logger.LogInformation(json);
-});
-```
-
-**Metrics Aggregation** - Time-window statistics
-```csharp
-using var aggregator = new MetricsAggregator(TimeSpan.FromSeconds(10));
-aggregator.OnAggregation += metrics =>
-{
-    foreach (var metric in metrics)
-    {
-        Console.WriteLine($"{metric.DisplayName}:");
-        Console.WriteLine($"  Min: {metric.Min:F2}, Max: {metric.Max:F2}");
-        Console.WriteLine($"  Avg: {metric.Average:F2}, Current: {metric.Current:F2}");
-    }
-};
-```
-
-**Prometheus Export** - Scraping endpoint
-```csharp
-using var exporter = new PrometheusExporter();
-
-// In your ASP.NET Core app
-app.MapGet("/metrics", () => exporter.Export());
-
-// Output:
-// # HELP rivulet_items_started Total number of items started
-// # TYPE rivulet_items_started gauge
-// rivulet_items_started 1000.00
-```
-
-**Health Check Integration** - ASP.NET Core health checks
-```csharp
-// Startup/Program.cs
-builder.Services.AddHealthChecks()
-    .AddCheck<RivuletHealthCheck>("rivulet", tags: new[] { "ready" });
-
-builder.Services.Configure<RivuletHealthCheckOptions>(options =>
-{
-    options.ErrorRateThreshold = 0.1;  // 10% error rate
-    options.FailureCountThreshold = 100;
-});
-
-app.MapHealthChecks("/health");
-```
-
-**Fluent Builder** - Configure multiple listeners
-```csharp
-using var diagnostics = new DiagnosticsBuilder()
-    .AddConsoleListener()
-    .AddFileListener("metrics.log")
-    .AddStructuredLogListener("metrics.json")
-    .AddMetricsAggregator(TimeSpan.FromSeconds(10), metrics =>
-    {
-        // Handle aggregated metrics
-    })
-    .AddPrometheusExporter(out var exporter)
-    .Build();
-
-// All listeners capture metrics simultaneously
-await urls.SelectParallelAsync(ProcessAsync, options);
-
-// Export Prometheus metrics
-var prometheusText = exporter.Export();
-```
+`Rivulet.Diagnostics` adds EventListener wrappers (console, file, structured JSON), time-window metric aggregation, Prometheus export, and ASP.NET Core health check integration via a fluent `DiagnosticsBuilder` API.
 
 See the [Rivulet.Diagnostics README](src/Rivulet.Diagnostics/README.md) for complete documentation.
 
 ### Rivulet.Diagnostics.OpenTelemetry - Distributed Tracing & Metrics
 
-`Rivulet.Diagnostics.OpenTelemetry` provides industry-standard observability through OpenTelemetry integration with distributed tracing, metrics export, and comprehensive telemetry.
-
-#### Features
-- **Distributed Tracing**: Automatic activity creation with parent-child relationships
-- **Metrics Export**: Bridge EventCounters to OpenTelemetry Meters
-- **Retry Tracking**: Record retry attempts as activity events
-- **Circuit Breaker Events**: Track circuit state changes in traces
-- **Adaptive Concurrency**: Monitor concurrency adjustments
-- **Multi-Platform Support**: Export to Jaeger, Zipkin, Azure Monitor, DataDog, and more
-
-#### Quick Start
-
-**1. Configure OpenTelemetry**
-```csharp
-using OpenTelemetry;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
-using OpenTelemetry.Metrics;
-using Rivulet.Diagnostics.OpenTelemetry;
-
-// At application startup
-using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("MyService"))
-    .AddSource(RivuletActivitySource.SourceName)
-    .AddJaegerExporter()
-    .Build();
-
-using var meterProvider = Sdk.CreateMeterProviderBuilder()
-    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("MyService"))
-    .AddMeter(RivuletMetricsExporter.MeterName)
-    .AddPrometheusExporter()
-    .Build();
-
-// Create metrics exporter
-using var metricsExporter = new RivuletMetricsExporter();
-```
-
-**2. Use with Rivulet Operations**
-```csharp
-var options = new ParallelOptionsRivulet
-{
-    MaxDegreeOfParallelism = 32,
-    MaxRetries = 3,
-    IsTransient = ex => ex is HttpRequestException
-}.WithOpenTelemetryTracing("FetchUrls");
-
-var results = await urls.SelectParallelAsync(
-    async (url, ct) => await httpClient.GetAsync(url, ct),
-    options);
-```
-
-**Activity Hierarchy**
-```
-Rivulet.FetchUrls                    [Root Activity]
-├── Rivulet.FetchUrls.Item          [Item 0] - Status: Ok
-├── Rivulet.FetchUrls.Item          [Item 1] - Retry attempt 1 - Status: Ok
-└── Rivulet.FetchUrls.Item          [Item 2] - Error - Status: Error
-```
-
-**Export to Azure Monitor**
-```csharp
-using Azure.Monitor.OpenTelemetry.Exporter;
-
-var tracerProvider = Sdk.CreateTracerProviderBuilder()
-    .AddSource(RivuletActivitySource.SourceName)
-    .AddAzureMonitorTraceExporter(options =>
-    {
-        options.ConnectionString = "InstrumentationKey=...";
-    })
-    .Build();
-```
+`Rivulet.Diagnostics.OpenTelemetry` bridges Rivulet's EventCounters to OpenTelemetry Meters and creates activity spans for each parallel operation, supporting Jaeger, Zipkin, Azure Monitor, DataDog, and any OTLP exporter.
 
 See the [Rivulet.Diagnostics.OpenTelemetry README](src/Rivulet.Diagnostics.OpenTelemetry/README.md) for complete documentation.
 
@@ -959,33 +790,33 @@ Analyzes how performance scales with different MaxDegreeOfParallelism values (1,
 
 Based on benchmark runs on modern hardware:
 
-- **I/O-Bound Operations**: 10-30x faster than sequential processing with optimal parallelism
-- **Memory Efficiency**: ~60-80% less allocation than unbounded `Task.WhenAll` for large workloads
-- **Advanced Features Overhead**: <5-10% overhead when features are not actively triggered
+- **I/O-Bound Operations**: ~31x faster than sequential with `MaxDegreeOfParallelism = 32`; scales linearly up to 128
+- **Memory Efficiency**: Minimal allocation growth (only ~15%) across concurrency 1–128
+- **Advanced Features Overhead**: <1% for circuit breaker, rate limiting, progress, and metrics; adaptive concurrency adds ~3.5x due to continuous sampling
 - **Optimal Parallelism**: Typically 16-64 for I/O-bound, 2-8 for CPU-bound (varies by hardware)
-- **.NET 9.0 Performance**: Generally 5-15% faster than .NET 8.0 due to runtime improvements
+- **.NET 8.0 vs .NET 9.0**: Virtually identical for I/O-bound; .NET 9.0 shows ~22% faster success-path for CPU-light operations
 
 ### Example Results
 
 ```
-BenchmarkDotNet v0.14.0, Windows
-Intel Core, 16 cores
+BenchmarkDotNet v0.14.0, Windows 11
+AMD Ryzen 9 9950X, 32 logical / 16 physical cores, 64 GB DDR5
 
-|                Method | Runtime |     Mean | Allocated |
-|---------------------- |-------- |---------:|----------:|
-| SelectParallelAsync   | .NET 8  | 498.3 ms |   1.05 MB |
-| SelectParallelAsync   | .NET 9  | 474.1 ms |   0.92 MB |  5% faster!
-| Sequential Processing | .NET 8  | 1004  ms |   0.51 MB |
-| Task.WhenAll          | .NET 8  | 45.2  ms |   4.82 MB |  Unbounded!
+|                 Method |  Runtime |      Mean | Allocated |
+|----------------------- |--------- |---------: |----------:|
+|    SelectParallelAsync | .NET 8.0 |   499 ms  |   563 KB  |
+|    SelectParallelAsync | .NET 9.0 |   498 ms  |   565 KB  |
+| Sequential Processing  | .NET 8.0 | 15,617 ms |   173 KB  |
+|         Task.WhenAll   | .NET 8.0 |    16 ms  |   286 KB  | (Unbounded!)
 
 // 1000 items, 1ms I/O delay each, MaxDegreeOfParallelism = 32
-// SelectParallelAsync achieves ~20x speedup with controlled memory usage
+// SelectParallelAsync achieves ~31x speedup with controlled memory usage
 ```
 
 **Key Insights**:
 - Rivulet provides near-optimal performance while maintaining bounded concurrency
-- Memory usage is significantly lower than unbounded parallelism
-- .NET 9.0 shows measurable improvements in both speed and memory
+- Memory usage grows only ~15% from concurrency 1 to 128
+- .NET 8.0 and .NET 9.0 show virtually identical performance for I/O-bound workloads
 - Advanced features add minimal overhead when not actively engaged
 
 ### Interpreting Benchmark Results
@@ -995,16 +826,7 @@ Intel Core, 16 cores
 - **Gen0/Gen1/Gen2**: Garbage collection counts
 - **Baseline**: Reference implementation for comparison (usually marked with `*`)
 
-### Contributing Benchmarks
-
-When adding new benchmarks:
-1. Focus each benchmark on measuring one specific aspect
-2. Include a baseline for meaningful comparison
-3. Use realistic workload sizes (avoid micro-benchmarks)
-4. Add descriptive names and documentation
-5. Test on both .NET 8.0 and .NET 9.0
-
-See [tests/Rivulet.Benchmarks/README.md](tests/Rivulet.Benchmarks/README.md) for detailed documentation.
+See [tests/Rivulet.Benchmarks/README.md](tests/Rivulet.Benchmarks/README.md) for detailed documentation and full benchmark results.
 
 ---
 
@@ -1020,18 +842,16 @@ See the full [Roadmap](ROADMAP.md) for detailed plans.
 - **Rivulet.Sql.PostgreSql** ✅ - COPY command integration (10-100x faster)
 - **Rivulet.Sql.MySql** ✅ - LOAD DATA INFILE with MySqlBulkLoader (10-100x faster)
 - **Rivulet.Polly** ✅ - Polly v8 integration, hedging, result-based retry
+- **Rivulet.Csv** ✅ - Parallel CSV parsing and writing with CsvHelper integration
+- **Rivulet.Pipeline** ✅ - Multi-stage pipeline composition with fluent API
 
 ### v1.4.0 (Q1-Q2 2026) - JSON + Cloud Storage
 - **Rivulet.Json** 🆕 - Parallel JSON processing, deserialization, JsonPath queries
 - **Rivulet.Azure.Storage** - Blob Storage parallel operations
 - **Rivulet.Aws.S3** - S3 parallel operations
 
-### v1.5.0 (Q2-Q3 2026) - ORM + Data Formats
+### v1.5.0 (Q2-Q3 2026) - ORM
 - **Rivulet.EntityFramework** - EF Core parallel queries, multi-tenant support
-- **Rivulet.Csv** 🆕 - Parallel CSV parsing and writing
-
-### v2.0.0 (Q4 2026 - Q1 2027) - Pipeline Composition
-- **Pipeline Composition API** - Multi-stage processing with different concurrency per stage
 
 ---
 

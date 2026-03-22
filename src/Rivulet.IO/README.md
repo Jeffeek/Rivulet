@@ -332,9 +332,9 @@ var options = new FileOperationOptions
     {
         Console.WriteLine($"Starting: {filePath}");
     },
-    OnFileCompleteAsync = async (filePath, bytesProcessed) =>
+    OnFileCompleteAsync = async (filePath, result) =>
     {
-        Console.WriteLine($"Completed: {filePath} ({bytesProcessed:N0} bytes)");
+        Console.WriteLine($"Completed: {filePath} ({result.BytesProcessed:N0} bytes)");
     },
     OnFileErrorAsync = async (filePath, exception) =>
     {
@@ -545,40 +545,10 @@ var options = new FileOperationOptions
 
 ## Architecture
 
-### Efficient Code Design
+The library provides two public layers of extension methods:
 
-Rivulet.IO uses an internal `FileOperationHelper` utility to eliminate code duplication and ensure consistent behavior across all file operations:
-
-- **Centralized Lifecycle Management**: All file operations use a single helper for start/complete/error callbacks
-- **Consistent Error Handling**: Unified exception handling and callback invocation
-- **Validation Helpers**: Shared validation logic for directory creation and overwrite protection
-- **~60% Less Duplication**: Significantly reduced code duplication across all file operation methods
-
-This design ensures that:
-- All file operations behave consistently
-- Changes to lifecycle management apply everywhere automatically
-- Code is easier to maintain and test
-- Performance optimizations benefit all operations
-
-### Extension Method Architecture
-
-The library provides three layers of extension methods:
-
-1. **String Path Extensions** (`FileParallelExtensions`, `DirectoryParallelExtensions`):
-   - Work with file/directory paths as strings
-   - Direct access to all operations
-
-2. **FileInfo/DirectoryInfo Extensions** (`FileInfoExtensions`, `DirectoryInfoExtensions`):
-   - Idiomatic .NET API
-   - Work with `System.IO` types
-   - Delegate to string-based implementations
-
-3. **Internal Helpers** (`FileOperationHelper`):
-   - Shared logic for all operations
-   - Lifecycle callback management
-   - Validation and error handling
-
-This layered architecture provides flexibility while maintaining a single source of truth for core functionality.
+- **String Path Extensions** (`FileParallelExtensions`, `DirectoryParallelExtensions`): work with file/directory paths as strings.
+- **FileInfo/DirectoryInfo Extensions** (`FileInfoExtensions`, `DirectoryInfoExtensions`): idiomatic .NET API, delegating to the string-based layer.
 
 ## Requirements
 

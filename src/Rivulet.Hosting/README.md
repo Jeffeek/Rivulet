@@ -32,11 +32,8 @@ builder.Services.AddRivulet(builder.Configuration);
 builder.Services.AddRivulet(options =>
 {
     options.MaxDegreeOfParallelism = 10;
-    options.RetryPolicy = new RetryPolicyOptions
-    {
-        MaxRetries = 3,
-        BackoffType = BackoffType.Exponential
-    };
+    options.MaxRetries = 3;
+    options.BackoffStrategy = BackoffStrategy.Exponential;
 });
 
 var app = builder.Build();
@@ -145,7 +142,7 @@ public class DataProcessorService : ParallelBackgroundService<DataItem>
         }
     }
 
-    protected override async Task ProcessItemAsync(DataItem item, CancellationToken cancellationToken)
+    protected override async ValueTask ProcessItemAsync(DataItem item, CancellationToken cancellationToken)
     {
         // Process single item
         await _repository.ProcessAsync(item, cancellationToken);
@@ -326,7 +323,7 @@ builder.Services.AddHostedService<NotificationWorker>();
 
 // Add health checks
 builder.Services.AddHealthChecks()
-    .AddCheck<RivuletOperationHealthCheck>("rivulet");
+    .AddCheck<RivuletHealthCheck>("rivulet");
 
 var host = builder.Build();
 host.Run();
@@ -430,13 +427,12 @@ protected override async Task<Result> ProcessAsync(Job job, CancellationToken ca
     try
     {
         var result = await ProcessJobAsync(job, cancellationToken);
-        _healthCheck.RecordSuccess();
+        _logger.LogDebug("Processed job {JobId}", job.Id);
         return result;
     }
     catch (Exception ex)
     {
         _logger.LogError(ex, "Failed to process job {JobId}", job.Id);
-        _healthCheck.RecordFailure();
         throw;
     }
 }

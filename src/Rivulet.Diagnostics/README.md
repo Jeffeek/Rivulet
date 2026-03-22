@@ -110,8 +110,8 @@ builder.Services.AddHealthChecks()
 // Step 3: Configure thresholds (optional)
 builder.Services.Configure<RivuletHealthCheckOptions>(options =>
 {
-    options.ErrorRateThreshold = 0.1;     // 10% error rate triggers degraded status
-    options.FailureCountThreshold = 100;  // 100 failures triggers unhealthy status
+    options.ErrorRateThreshold = 0.1;      // 10% error rate triggers degraded status
+    options.FailureCountThreshold = 1000;  // 1000 failures triggers unhealthy status
 });
 
 // Step 4: Add health check endpoint

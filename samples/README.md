@@ -16,7 +16,7 @@ Core parallel processing operators with bounded concurrency, retry policies, and
 
 **Run:**
 ```bash
-cd Rivulet.ConsoleSample
+cd Rivulet.Console.Sample
 dotnet run
 ```
 
@@ -117,7 +117,6 @@ Testing utilities for deterministic tests with time control, chaos injection, an
 - **ChaosInjector** - Inject failures and latency
 - **ConcurrencyAsserter** - Verify concurrency limits
 - **FakeChannel** - Deterministic channel behavior
-- **DeterministicScheduler** - Predictable task execution
 
 **Run:**
 ```bash
