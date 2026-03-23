@@ -9,6 +9,7 @@ No hardcoding of package paths!
 """
 import re
 import shutil
+from urllib.parse import urlsplit, urlunsplit
 import yaml
 from pathlib import Path
 
@@ -263,15 +264,10 @@ def convert_markdown_links(content: str, source_dir: Path) -> str:
         if link_path.startswith(('http://', 'https://', '#')):
             return match.group(0)
 
-        # Strip query string and fragment before resolving
-        fragment = ''
-        query = ''
-        if '?' in link_path:
-            link_path, query = link_path.split('?', 1)
-            query = '?' + query
-        if '#' in link_path:
-            link_path, fragment = link_path.split('#', 1)
-            fragment = '#' + fragment
+        # Strip fragment and query string before resolving
+        parts = urlsplit(link_path)
+        link_path = parts.path
+        suffix = urlunsplit(('', '', '', parts.query, parts.fragment))  # ?query#fragment
 
         # Special case: LICENSE (without extension) -> LICENSE.txt
         if link_path == 'LICENSE':
@@ -284,7 +280,7 @@ def convert_markdown_links(content: str, source_dir: Path) -> str:
         if linked_file in resolved_sync:
             dest_path, _ = resolved_sync[linked_file]
             rel_path = dest_path.relative_to(DOCS_DIR)
-            return f'[{link_text}]({rel_path.as_posix()}{query}{fragment})'
+            return f'[{link_text}]({rel_path.as_posix()}{suffix})'
 
         # File exists in repo but NOT synced to docs — remove for versioned docs
         if linked_file.exists():

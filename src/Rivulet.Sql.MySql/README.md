@@ -70,9 +70,12 @@ record User(int Id, string Name, string Email);
 
 var users = GetUsers();
 
-// Convert objects to CSV lines, then bulk load
-// Note: for fields containing commas/quotes, use CsvHelper or proper RFC 4180 escaping
-var csvLines = users.Select(u => $"{u.Id},{u.Name},{u.Email}");
+// Convert objects to CSV lines with RFC 4180 quoting, then bulk load
+static string CsvQuote(string field) =>
+    field.Contains(',') || field.Contains('"') || field.Contains('\n')
+        ? $"\"{field.Replace("\"", "\"\"")}\"" : field;
+
+var csvLines = users.Select(u => $"{u.Id},{CsvQuote(u.Name)},{CsvQuote(u.Email)}");
 
 await csvLines.BulkInsertUsingMySqlBulkLoaderAsync(
     () => new MySqlConnection(connectionString),
