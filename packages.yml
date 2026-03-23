@@ -2,485 +2,104 @@
 # This file is the SINGLE SOURCE OF TRUTH for all package information.
 # When you add a new package, update this file and run: ./scripts/UpdateAll/update-all.sh (or update-all.ps1 on Windows)
 #
-# All documentation, workflows, and scripts are generated from this file.
-# See PACKAGE_MANAGEMENT.md for complete documentation.
+# Most fields are AUTO-DERIVED from the codebase:
+#   - nuget_id, path, test_path, sample_path, sample_name: derived from 'name'
+#   - description, features, key_features: parsed from README.md markers
+#   - dependencies: parsed from .csproj (ProjectReference + PackageReference)
+#   - targets: global default, validated against .csproj TargetFrameworks
+#
+# Only specify: name, id, version, status.
 
 metadata:
-  schema_version: "1.0"
-  last_updated: "2025-12-30"
+  schema_version: "2.0"
+  last_updated: "2026-03-23"
   repository: "https://github.com/Jeffeek/Rivulet"
+
+# Global defaults — all packages MUST share these targets.
+# If a .csproj disagrees, validation fails (it's a bug in the .csproj).
+defaults:
+  targets:
+    - net8.0
+    - net9.0
 
 packages:
   # ============================================================================
-  # CORE PACKAGES (v1.0.0+)
+  # RELEASED
   # ============================================================================
 
   - name: Rivulet.Core
     id: core
-    category: core
     version: 1.0.0
     status: released
-    nuget_id: Rivulet.Core
-    description: Core parallel processing operators with bounded concurrency, retry policies, and error handling
-    path: src/Rivulet.Core
-    test_path: tests/Rivulet.Core.Tests
-    sample_path: samples/Rivulet.Console.Sample
-    sample_name: Rivulet.Console.Sample
-    features:
-      - SelectParallelAsync - Process items and collect results
-      - SelectParallelStreamAsync - Stream results as they complete
-      - ForEachParallelAsync - Fire-and-forget parallel processing
-      - BatchParallelAsync - Process items in configurable batches
-    key_features:
-      - Bounded concurrency control
-      - Retry policies with exponential backoff
-      - Circuit breaker pattern
-      - Error handling modes (StopOnFirstError, CollectAndContinue)
-      - Ordered and unordered output
-    dependencies: []
-    targets:
-      - net8.0
-      - net9.0
 
   - name: Rivulet.Diagnostics
     id: diagnostics
-    category: core
     version: 1.1.0
     status: released
-    nuget_id: Rivulet.Diagnostics
-    description: Production-ready observability with EventSource metrics, structured logging, and health checks
-    path: src/Rivulet.Diagnostics
-    test_path: tests/Rivulet.Diagnostics.Tests
-    sample_path: samples/Rivulet.Diagnostics.Sample
-    sample_name: Rivulet.Diagnostics.Sample
-    features:
-      - RivuletEventSource - EventSource-based metrics
-      - RivuletConsoleListener - Real-time console metrics
-      - RivuletFileListener - File-based logging with rotation
-      - RivuletStructuredLogListener - JSON structured logging
-      - PrometheusExporter - Prometheus text format export
-      - RivuletHealthCheck - Health check integration
-      - MetricsAggregator - Statistical analysis
-    key_features:
-      - EventSource-based metrics (ETW, EventPipe)
-      - Multiple export formats
-      - Health monitoring
-      - Throughput and error rate tracking
-      - Zero allocation in hot paths
-    dependencies:
-      - Rivulet.Core
-    targets:
-      - net8.0
-      - net9.0
 
   - name: Rivulet.Diagnostics.OpenTelemetry
     id: diagnostics-otel
-    category: core
     version: 1.1.0
     status: released
-    nuget_id: Rivulet.Diagnostics.OpenTelemetry
-    description: OpenTelemetry integration for distributed tracing and W3C Trace Context propagation
-    path: src/Rivulet.Diagnostics.OpenTelemetry
-    test_path: tests/Rivulet.Diagnostics.OpenTelemetry.Tests
-    sample_path: samples/Rivulet.OpenTelemetry.Sample
-    sample_name: Rivulet.OpenTelemetry.Sample
-    features:
-      - Activity/Span creation - Automatic distributed tracing
-      - Retry tracking - Record retry attempts with context
-      - Error recording - Detailed error tracking with transient classification
-      - Custom attributes - Attach business context to spans
-      - Circuit breaker events - Track state changes
-      - Adaptive concurrency - Monitor concurrency adjustments
-    key_features:
-      - W3C Trace Context propagation
-      - OpenTelemetry Metrics and Traces
-      - Correlation across distributed systems
-      - Integration with Jaeger/Zipkin/OTLP exporters
-    dependencies:
-      - Rivulet.Core
-      - Rivulet.Diagnostics
-    targets:
-      - net8.0
-      - net9.0
 
   - name: Rivulet.Hosting
     id: hosting
-    category: core
     version: 1.2.0
     status: released
-    nuget_id: Rivulet.Hosting
-    description: ASP.NET Core integration with background services, dependency injection, and configuration binding
-    path: src/Rivulet.Hosting
-    test_path: tests/Rivulet.Hosting.Tests
-    sample_path: samples/Rivulet.Hosting.Sample
-    sample_name: Rivulet.Hosting.Sample
-    features:
-      - ParallelWorkerService - Background worker base class
-      - ParallelBackgroundService - Queue processor base class
-      - AddRivulet() - DI integration
-      - RivuletOptions - Configuration binding
-    key_features:
-      - Dependency injection integration
-      - Configuration binding (appsettings.json)
-      - Background services
-      - Health checks
-      - Graceful shutdown support
-    dependencies:
-      - Rivulet.Core
-    targets:
-      - net8.0
-      - net9.0
 
   - name: Rivulet.Testing
     id: testing
-    category: core
     version: 1.2.0
     status: released
-    nuget_id: Rivulet.Testing
-    description: Testing utilities for deterministic tests with time control, chaos injection, and concurrency verification
-    path: src/Rivulet.Testing
-    test_path: tests/Rivulet.Testing.Tests
-    sample_path: samples/Rivulet.Testing.Sample
-    sample_name: Rivulet.Testing.Sample
-    features:
-      - VirtualTimeProvider - Control time for deterministic tests
-      - ChaosInjector - Inject failures and latency
-      - ConcurrencyAsserter - Verify concurrency limits
-      - FakeChannel - Deterministic channel behavior
-      - DeterministicScheduler - Predictable task execution
-    key_features:
-      - Fast deterministic tests
-      - Fault injection testing
-      - Concurrency verification
-      - No actual delays needed
-      - Integration with xUnit/NUnit/MSTest
-    dependencies:
-      - Rivulet.Core
-    targets:
-      - net8.0
-      - net9.0
 
   - name: Rivulet.Http
     id: http
-    category: core
     version: 1.3.0
     status: released
-    nuget_id: Rivulet.Http
-    description: Parallel HTTP operations with HttpClientFactory integration and connection pooling awareness
-    path: src/Rivulet.Http
-    test_path: tests/Rivulet.Http.Tests
-    sample_path: samples/Rivulet.Http.Sample
-    sample_name: Rivulet.Http.Sample
-    features:
-      - GetParallelAsync - Fetch multiple URLs concurrently
-      - PostParallelAsync - Submit data in parallel
-      - DownloadParallelAsync - Download files in parallel
-    key_features:
-      - HttpClientFactory integration
-      - Connection pooling awareness
-      - Transient error handling (timeouts, 5xx responses)
-      - Bounded concurrency to avoid overwhelming servers
-      - Progress reporting for downloads
-    dependencies:
-      - Rivulet.Core
-    targets:
-      - net8.0
-      - net9.0
 
   - name: Rivulet.IO
     id: io
-    category: core
     version: 1.3.0
     status: released
-    nuget_id: Rivulet.IO
-    description: Parallel file operations with safe directory processing and file transformations
-    path: src/Rivulet.IO
-    test_path: tests/Rivulet.IO.Tests
-    sample_path: samples/Rivulet.IO.Sample
-    sample_name: Rivulet.IO.Sample
-    features:
-      - ReadAllTextParallelAsync - Read multiple files
-      - WriteAllTextParallelAsync - Write multiple files
-      - ProcessFilesParallelAsync - Process files in directory
-      - TransformFilesParallelAsync - Transform files
-    key_features:
-      - Safe concurrent file access
-      - Directory tree processing
-      - File pattern matching (glob patterns)
-      - Progress reporting
-      - Atomic write operations
-    dependencies:
-      - Rivulet.Core
-    targets:
-      - net8.0
-      - net9.0
 
   - name: Rivulet.Sql
     id: sql
-    category: core
     version: 1.3.0
     status: released
-    nuget_id: Rivulet.Sql
-    description: Provider-agnostic parallel SQL operations with connection pooling awareness
-    path: src/Rivulet.Sql
-    test_path: tests/Rivulet.Sql.Tests
-    sample_path: samples/Rivulet.Sql.Sample
-    sample_name: Rivulet.Sql.Sample
-    features:
-      - ExecuteQueriesParallelAsync - Execute multiple queries
-      - ExecuteCommandsParallelAsync - Execute multiple commands
-      - BulkInsertAsync - Provider-agnostic bulk insert
-    key_features:
-      - Works with any ADO.NET provider
-      - Connection pooling awareness
-      - Transaction support
-      - Parameterized queries
-      - Respects database connection pool limits
-    dependencies:
-      - Rivulet.Core
-    targets:
-      - net8.0
-      - net9.0
 
   - name: Rivulet.Sql.SqlServer
     id: sql-sqlserver
-    category: core
     version: 1.3.0
     status: released
-    nuget_id: Rivulet.Sql.SqlServer
-    description: SQL Server optimizations with SqlBulkCopy integration (10-100x faster bulk inserts)
-    path: src/Rivulet.Sql.SqlServer
-    test_path: tests/Rivulet.Sql.SqlServer.Tests
-    sample_path: samples/Rivulet.Sql.SqlServer.Sample
-    sample_name: Rivulet.Sql.SqlServer.Sample
-    features:
-      - BulkInsertUsingSqlBulkCopyAsync - Optimized bulk insert
-      - BulkInsertUsingSqlBulkCopyAsync (3 overloads)
-    key_features:
-      - SqlBulkCopy integration (10-100x faster)
-      - Batch size optimization
-      - Table-valued parameters
-      - Progress reporting
-      - Automatic table creation
-    dependencies:
-      - Rivulet.Core
-      - Rivulet.Sql
-    targets:
-      - net8.0
-      - net9.0
 
   - name: Rivulet.Sql.PostgreSql
     id: sql-postgresql
-    category: core
     version: 1.3.0
     status: released
-    nuget_id: Rivulet.Sql.PostgreSql
-    description: PostgreSQL optimizations with COPY command integration (10-100x faster bulk operations)
-    path: src/Rivulet.Sql.PostgreSql
-    test_path: tests/Rivulet.Sql.PostgreSql.Tests
-    sample_path: samples/Rivulet.Sql.PostgreSql.Sample
-    sample_name: Rivulet.Sql.PostgreSql.Sample
-    features:
-      - BulkInsertUsingCopyAsync - COPY command integration
-    key_features:
-      - COPY command integration (10-100x faster)
-      - Binary and text format support
-      - Progress reporting
-      - Automatic table creation
-    dependencies:
-      - Rivulet.Core
-      - Rivulet.Sql
-    targets:
-      - net8.0
-      - net9.0
 
   - name: Rivulet.Sql.MySql
     id: sql-mysql
-    category: core
     version: 1.3.0
     status: released
-    nuget_id: Rivulet.Sql.MySql
-    description: MySQL optimizations with LOAD DATA INFILE integration using MySqlBulkLoader
-    path: src/Rivulet.Sql.MySql
-    test_path: tests/Rivulet.Sql.MySql.Tests
-    sample_path: samples/Rivulet.Sql.MySql.Sample
-    sample_name: Rivulet.Sql.MySql.Sample
-    features:
-      - BulkInsertUsingMySqlBulkLoaderAsync - MySqlBulkLoader integration
-    key_features:
-      - MySqlBulkLoader integration (10-100x faster)
-      - Local and remote file loading
-      - Progress reporting
-      - Automatic table creation
-    dependencies:
-      - Rivulet.Core
-      - Rivulet.Sql
-    targets:
-      - net8.0
-      - net9.0
 
   - name: Rivulet.Polly
     id: polly
-    category: core
     version: 1.3.0
     status: released
-    nuget_id: Rivulet.Polly
-    description: Polly v8 integration with hedging, result-based retry, and resilience pipeline composition
-    path: src/Rivulet.Polly
-    test_path: tests/Rivulet.Polly.Tests
-    sample_path: samples/Rivulet.Polly.Sample
-    sample_name: Rivulet.Polly.Sample
-    features:
-      - SelectParallelWithPolicyAsync - Apply Polly policies to parallel operations
-      - SelectParallelWithHedgingAsync - Hedging pattern (parallel redundant requests)
-      - ToPollyRetryPipeline - Convert Rivulet retry to Polly pipeline
-    key_features:
-      - Polly v8 ResiliencePipeline integration
-      - Hedging pattern support
-      - Result-based retry policies
-      - Policy composition
-      - Fallback strategies
-    dependencies:
-      - Rivulet.Core
-    targets:
-      - net8.0
-      - net9.0
 
-# ============================================================================
-# INTEGRATION PACKAGES (v1.4.0)
-# ============================================================================
-
-  - name: Rivulet.Csv
-    id: csv
-    category: core
-    version: 1.4.0
-    status: in_development
-    nuget_id: Rivulet.Csv
-    description: Parallel CSV parsing and writing for Rivulet with CsvHelper integration, bounded concurrency, and batching support for high-throughput data processing
-    path: src/Rivulet.Csv
-    test_path: tests/Rivulet.Csv.Tests
-    sample_path: samples/Rivulet.Csv.Sample
-    sample_name: Rivulet.Csv.Sample
-    features:
-      - ParseCsvParallelAsync - Parse multiple CSV files in parallel and return all records as a flattened list
-      - ParseCsvParallelGroupedAsync - Parse multiple CSV file groups in parallel with per-file configuration, returning records grouped by file path
-      - ParseCsvParallelGroupedAsync (Multi-Type) - Parse 2-5 different record types concurrently with grouped results
-      - StreamCsvParallelAsync - Stream CSV records as IAsyncEnumerable with memory-efficient processing
-      - WriteCsvParallelAsync - Write collections of records to multiple CSV files in parallel with per-file configuration
-      - WriteCsvParallelAsync (Multi-Type) - Write 2-5 different record types to separate files concurrently
-      - TransformCsvParallelAsync - Transform CSV files in parallel applying sync or async transformation functions
-    key_features:
-      - CsvHelper integration for robust CSV parsing
-      - Multi-type operations (2-5 generic type parameters)
-      - Memory-efficient streaming with IAsyncEnumerable
-      - Per-file CSV configuration (delimiters, culture, class maps)
-      - Progress tracking and lifecycle callbacks
-      - Error handling modes (FailFast, CollectAndContinue, BestEffort)
-      - Circuit breaker and retry support
-      - Ordered and unordered output options
-    dependencies:
-      - Rivulet.IO
-    targets:
-      - net8.0
-      - net9.0
+  # ============================================================================
+  # IN DEVELOPMENT
+  # ============================================================================
 
   - name: Rivulet.Pipeline
     id: pipeline
-    category: core
     version: 2.0.0
     status: in_development
-    nuget_id: Rivulet.Pipeline
-    description: Multi-stage pipeline composition for Rivulet with fluent API, per-stage concurrency, backpressure management between stages, and streaming support
-    path: src/Rivulet.Pipeline
-    test_path: tests/Rivulet.Pipeline.Tests
-    sample_path: samples/Rivulet.Pipeline.Sample
-    sample_name: Rivulet.Pipeline.Sample
-    features:
-      - PipelineBuilder.Create - Create type-safe pipeline builders with fluent API
-      - SelectParallel - Parallel transform stage with async/sync selectors
-      - WhereParallel - Parallel filter stage with async/sync predicates
-      - Batch - Group items into fixed-size batches with optional timeout
-      - BatchSelectParallel - Batch and transform items in parallel
-      - SelectManyParallel - Flatten/expand collections in parallel
-      - Tap - Execute side effects without transforming items
-      - Buffer - Decouple upstream/downstream with channel-based buffering
-      - Throttle - Rate limit items using token bucket algorithm
-      - ExecuteAsync - Execute pipeline and collect all results
-      - ExecuteStreamAsync - Stream results as IAsyncEnumerable
-    key_features:
-      - Fluent builder API with type-safe stage chaining
-      - Per-stage concurrency configuration via StageOptions
-      - Backpressure management using System.Threading.Channels
-      - Reuses Core components (TokenBucket, ParallelOptionsRivulet)
-      - Pipeline lifecycle callbacks (start, complete, stage events)
-      - Per-stage metrics tracking (items in/out, timing)
-      - Retry policies, circuit breaker, and error modes per stage
-      - Cancellation support propagated through all stages
-      - Streaming execution with IAsyncEnumerable
-    dependencies:
-      - Rivulet.Core
-    targets:
-      - net8.0
-      - net9.0
 
-# ============================================================================
-# GENERATION RULES
-# ============================================================================
-
-generation:
-  # Files to generate from this registry
-  targets:
-    - type: readme
-      template: templates/README.md.mustache
-      output: README.md
-
-    - type: roadmap
-      template: templates/ROADMAP.md.mustache
-      output: docs/ROADMAP.md
-
-    - type: samples_readme
-      template: templates/samples-README.md.mustache
-      output: samples/README.md
-
-    - type: workflow_matrix
-      template: templates/ci-matrix.yml.mustache
-      output: .github/workflows/ci.yml
-
-    - type: mkdocs_nav
-      template: templates/mkdocs-nav.yml.mustache
-      output: mkdocs.yml
-
-  # Validation rules
-  validation:
-    # Ensure all paths exist
-    check_paths: true
-
-    # Ensure no duplicate IDs
-    check_unique_ids: true
-
-    # Ensure test projects exist for all packages
-    require_tests: true
-
-    # Ensure sample projects exist for all packages
-    require_samples: true
-
-    # Ensure all dependencies are valid package IDs
-    check_dependencies: true
-
-# ============================================================================
-# CATEGORIZATION
-# ============================================================================
-
-categories:
-  core:
-    display_name: "Core Packages"
-    description: "Essential packages providing core functionality"
-    badge_color: "blue"
-
-  integration:
-    display_name: "Integration Packages"
-    description: "Packages integrating with external systems and libraries"
-    badge_color: "green"
+  - name: Rivulet.Csv
+    id: csv
+    version: 2.0.0
+    status: in_development
 
 # ============================================================================
 # VERSION ROADMAP
@@ -519,33 +138,12 @@ versions:
       - sql-mysql
       - polly
 
-  - version: "1.4.0"
-    release_date: "2025-12-30"
-    status: in_development
-    packages:
-      - csv
-      - pipeline
-
-  - version: "1.5.0"
-    release_date: "2026-06-15"
-    status: planned
-    packages:
-      - grpc
-      - messaging
-      - caching
-
-  - version: "1.6.0"
-    release_date: "2026-09-15"
-    status: planned
-    packages:
-      - azure
-      - aws
-
   - version: "2.0.0"
     release_date: "2027-01-15"
-    status: planned
+    status: in_development
     packages:
-      - core-v2
+      - pipeline
+      - csv
 
 # ============================================================================
 # BADGES AND LINKS

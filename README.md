@@ -32,71 +32,88 @@
 ## 📦 Packages
 
 <!-- PACKAGES_START -->
-### Core Packages
+### Released
 
-#### ✅ [Rivulet.Core](https://www.nuget.org/packages/Rivulet.Core)
+#### [Rivulet.Core](https://www.nuget.org/packages/Rivulet.Core)
+
 [![NuGet](https://img.shields.io/nuget/v/Rivulet.Core.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Core) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Core.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Core)
 
-Core parallel processing operators with bounded concurrency, retry policies, and error handling
+Safe, async-first parallel operators with bounded concurrency, retries, and backpressure for I/O-heavy workloads. [**Docs**](src/Rivulet.Core/README.md)
 
 **Key Features:**
-- Bounded concurrency control
-- Retry policies with exponential backoff
-- Circuit breaker pattern
-- Error handling modes (StopOnFirstError, CollectAndContinue)
-- Ordered and unordered output
+- ✅ Bounded Concurrency - Control max parallel operations with backpressure
+- ✅ Adaptive Concurrency - Auto-scale workers based on latency and success rate (AIMD algorithm)
+- ✅ Retry Policies - Automatic retries with exponential backoff for transient errors
+- ✅ Circuit Breaker - Prevent cascading failures with automatic service protection
+- ✅ Rate Limiting - Token bucket algorithm for controlling operation rates
+- ✅ Error Handling Modes - FailFast, CollectAndContinue, or BestEffort
+- ✅ Streaming Support - Process results incrementally via `IAsyncEnumerable<T>`
+- ✅ Ordered Output - Maintain input sequence order when needed
+- ✅ Runtime Metrics - Built-in monitoring via EventCounters and custom callbacks
+- ✅ Progress Reporting - Periodic snapshots with throughput, ETA, and percent-complete
+- ✅ Cancellation - Full `CancellationToken` support throughout
+- ✅ Lifecycle Hooks - OnStart, OnComplete, OnRetry, OnError, OnThrottle, OnDrain callbacks
+- ✅ Fallback Values - Supply default results for failed items instead of throwing
+- ✅ Per-Item Timeouts - Enforce timeouts for individual operations
+- ✅ Works with both `IEnumerable<T>` and `IAsyncEnumerable<T>`
 
-#### ✅ [Rivulet.Diagnostics](https://www.nuget.org/packages/Rivulet.Diagnostics)
+#### [Rivulet.Diagnostics](https://www.nuget.org/packages/Rivulet.Diagnostics)
+
 [![NuGet](https://img.shields.io/nuget/v/Rivulet.Diagnostics.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Diagnostics) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Diagnostics.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Diagnostics)
 
-Production-ready observability with EventSource metrics, structured logging, and health checks
+Enterprise observability for Rivulet.Core with EventListener wrappers, metric aggregators, and health check integration. [**Docs**](src/Rivulet.Diagnostics/README.md)
 
 **Key Features:**
-- EventSource-based metrics (ETW, EventPipe)
-- Multiple export formats
-- Health monitoring
-- Throughput and error rate tracking
-- Zero allocation in hot paths
+- EventListener Wrappers: Console, File, and Structured JSON logging
+- Metrics Aggregation: Time-window based metric aggregation with statistics
+- Prometheus Export: Export metrics in Prometheus text format
+- Health Check Integration: Microsoft.Extensions.Diagnostics.HealthChecks support
+- Fluent Builder API: Easy configuration with DiagnosticsBuilder
 
-#### ✅ [Rivulet.Diagnostics.OpenTelemetry](https://www.nuget.org/packages/Rivulet.Diagnostics.OpenTelemetry)
+#### [Rivulet.Diagnostics.OpenTelemetry](https://www.nuget.org/packages/Rivulet.Diagnostics.OpenTelemetry)
+
 [![NuGet](https://img.shields.io/nuget/v/Rivulet.Diagnostics.OpenTelemetry.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Diagnostics.OpenTelemetry) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Diagnostics.OpenTelemetry.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Diagnostics.OpenTelemetry)
 
-OpenTelemetry integration for distributed tracing and W3C Trace Context propagation
+OpenTelemetry integration for Rivulet.Core providing distributed tracing, metrics export, and comprehensive observability. [**Docs**](src/Rivulet.Diagnostics.OpenTelemetry/README.md)
 
 **Key Features:**
-- W3C Trace Context propagation
-- OpenTelemetry Metrics and Traces
-- Correlation across distributed systems
-- Integration with Jaeger/Zipkin/OTLP exporters
+- Distributed Tracing: Automatic activity creation with parent-child relationships
+- Metrics Export: Bridge EventCounters to OpenTelemetry Meters
+- Retry Tracking: Record retry attempts as activity events
+- Circuit Breaker Events: Track circuit state changes in traces
+- Adaptive Concurrency: Monitor concurrency adjustments
+- Error Correlation: Link errors with retry attempts and transient classification
 
-#### ✅ [Rivulet.Hosting](https://www.nuget.org/packages/Rivulet.Hosting)
+#### [Rivulet.Hosting](https://www.nuget.org/packages/Rivulet.Hosting)
+
 [![NuGet](https://img.shields.io/nuget/v/Rivulet.Hosting.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Hosting) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Hosting.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Hosting)
 
-ASP.NET Core integration with background services, dependency injection, and configuration binding
+Integration package for using Rivulet with Microsoft.Extensions.Hosting, ASP.NET Core, and the .NET Generic Host. [**Docs**](src/Rivulet.Hosting/README.md)
 
 **Key Features:**
-- Dependency injection integration
-- Configuration binding (appsettings.json)
-- Background services
-- Health checks
-- Graceful shutdown support
+- Dependency Injection integration
+- Configuration binding for `ParallelOptionsRivulet`
+- Base classes for parallel background services
+- Health checks for monitoring parallel operations
+- Support for ASP.NET Core and Worker Services
 
-#### ✅ [Rivulet.Testing](https://www.nuget.org/packages/Rivulet.Testing)
+#### [Rivulet.Testing](https://www.nuget.org/packages/Rivulet.Testing)
+
 [![NuGet](https://img.shields.io/nuget/v/Rivulet.Testing.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Testing) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Testing.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Testing)
 
-Testing utilities for deterministic tests with time control, chaos injection, and concurrency verification
+Testing utilities for Rivulet parallel operations including deterministic schedulers, virtual time, fake channels, and chaos injection. [**Docs**](src/Rivulet.Testing/README.md)
 
 **Key Features:**
-- Fast deterministic tests
-- Fault injection testing
-- Concurrency verification
-- No actual delays needed
-- Integration with xUnit/NUnit/MSTest
+- VirtualTimeProvider: Control time in tests without actual delays
+- FakeChannel: Testable channel implementation with operation tracking
+- ChaosInjector: Inject failures and delays for resilience testing
+- ConcurrencyAsserter: Assert and verify concurrency behavior
 
-#### ✅ [Rivulet.Http](https://www.nuget.org/packages/Rivulet.Http)
+#### [Rivulet.Http](https://www.nuget.org/packages/Rivulet.Http)
+
 [![NuGet](https://img.shields.io/nuget/v/Rivulet.Http.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Http) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Http.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Http)
 
-Parallel HTTP operations with HttpClientFactory integration and connection pooling awareness
+Parallel HTTP operations with automatic retries, resilient downloads, and HttpClientFactory integration. [**Docs**](src/Rivulet.Http/README.md)
 
 **Key Features:**
 - HttpClientFactory integration
@@ -105,10 +122,11 @@ Parallel HTTP operations with HttpClientFactory integration and connection pooli
 - Bounded concurrency to avoid overwhelming servers
 - Progress reporting for downloads
 
-#### ✅ [Rivulet.IO](https://www.nuget.org/packages/Rivulet.IO)
+#### [Rivulet.IO](https://www.nuget.org/packages/Rivulet.IO)
+
 [![NuGet](https://img.shields.io/nuget/v/Rivulet.IO.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.IO) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.IO.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.IO)
 
-Parallel file operations with safe directory processing and file transformations
+Parallel file and directory operations with bounded concurrency, resilience, and streaming support for efficient I/O processing. [**Docs**](src/Rivulet.IO/README.md)
 
 **Key Features:**
 - Safe concurrent file access
@@ -117,10 +135,11 @@ Parallel file operations with safe directory processing and file transformations
 - Progress reporting
 - Atomic write operations
 
-#### ✅ [Rivulet.Sql](https://www.nuget.org/packages/Rivulet.Sql)
+#### [Rivulet.Sql](https://www.nuget.org/packages/Rivulet.Sql)
+
 [![NuGet](https://img.shields.io/nuget/v/Rivulet.Sql.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Sql) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Sql.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Sql)
 
-Provider-agnostic parallel SQL operations with connection pooling awareness
+Safe parallel SQL operations with connection pooling awareness and bulk operations. [**Docs**](src/Rivulet.Sql/README.md)
 
 **Key Features:**
 - Works with any ADO.NET provider
@@ -129,56 +148,76 @@ Provider-agnostic parallel SQL operations with connection pooling awareness
 - Parameterized queries
 - Respects database connection pool limits
 
-#### ✅ [Rivulet.Sql.SqlServer](https://www.nuget.org/packages/Rivulet.Sql.SqlServer)
+#### [Rivulet.Sql.SqlServer](https://www.nuget.org/packages/Rivulet.Sql.SqlServer)
+
 [![NuGet](https://img.shields.io/nuget/v/Rivulet.Sql.SqlServer.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Sql.SqlServer) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Sql.SqlServer.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Sql.SqlServer)
 
-SQL Server optimizations with SqlBulkCopy integration (10-100x faster bulk inserts)
+SQL Server-specific optimizations for Rivulet.Sql including SqlBulkCopy integration for 10-100x faster bulk inserts. [**Docs**](src/Rivulet.Sql.SqlServer/README.md)
 
 **Key Features:**
-- SqlBulkCopy integration (10-100x faster)
-- Batch size optimization
-- Table-valued parameters
-- Progress reporting
-- Automatic table creation
+- SqlBulkCopy Integration: Ultra-high performance bulk inserts (50,000+ rows/sec)
+- Parallel Bulk Operations: Process multiple batches in parallel
+- Automatic Column Mapping: Maps DataTable columns to SQL Server table columns
+- Custom Column Mappings: Support for explicit source-to-destination column mappings
+- DataReader Support: Bulk insert from IDataReader sources
+- Configurable Batching: Control batch size and timeout settings
 
-#### ✅ [Rivulet.Sql.PostgreSql](https://www.nuget.org/packages/Rivulet.Sql.PostgreSql)
+#### [Rivulet.Sql.PostgreSql](https://www.nuget.org/packages/Rivulet.Sql.PostgreSql)
+
 [![NuGet](https://img.shields.io/nuget/v/Rivulet.Sql.PostgreSql.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Sql.PostgreSql) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Sql.PostgreSql.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Sql.PostgreSql)
 
-PostgreSQL optimizations with COPY command integration (10-100x faster bulk operations)
+PostgreSQL-specific optimizations for Rivulet.Sql including COPY command integration for 10-100x faster bulk inserts. [**Docs**](src/Rivulet.Sql.PostgreSql/README.md)
 
 **Key Features:**
-- COPY command integration (10-100x faster)
-- Binary and text format support
-- Progress reporting
-- Automatic table creation
+- COPY Command Integration: Ultra-high performance bulk inserts using COPY
+- Multiple Formats: Binary, CSV, and text formats supported
+- Parallel Operations: Process multiple batches in parallel
+- Streaming Import: Efficient memory usage with streaming
+- Custom Delimiters: Support for CSV with custom delimiters
+- Header Support: Handle CSV files with headers
 
-#### ✅ [Rivulet.Sql.MySql](https://www.nuget.org/packages/Rivulet.Sql.MySql)
+#### [Rivulet.Sql.MySql](https://www.nuget.org/packages/Rivulet.Sql.MySql)
+
 [![NuGet](https://img.shields.io/nuget/v/Rivulet.Sql.MySql.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Sql.MySql) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Sql.MySql.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Sql.MySql)
 
-MySQL optimizations with LOAD DATA INFILE integration using MySqlBulkLoader
+MySQL-specific optimizations for Rivulet.Sql including MySqlBulkCopy and MySqlBulkLoader (LOAD DATA INFILE) integration for 10-100x faster bulk inserts. [**Docs**](src/Rivulet.Sql.MySql/README.md)
 
 **Key Features:**
-- MySqlBulkLoader integration (10-100x faster)
-- Local and remote file loading
-- Progress reporting
-- Automatic table creation
+- MySqlBulkCopy: High-performance bulk inserts for in-memory data
+- MySqlBulkLoader: LOAD DATA LOCAL INFILE for maximum performance with CSV data
+- File-based Loading: Direct file import support
+- Parallel Operations: Process multiple batches in parallel
+- Custom Delimiters: Support for any field separator
+- Automatic Column Mapping: Maps columns automatically
 
-#### ✅ [Rivulet.Polly](https://www.nuget.org/packages/Rivulet.Polly)
+#### [Rivulet.Polly](https://www.nuget.org/packages/Rivulet.Polly)
+
 [![NuGet](https://img.shields.io/nuget/v/Rivulet.Polly.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Polly) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Polly.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Polly)
 
-Polly v8 integration with hedging, result-based retry, and resilience pipeline composition
+Integration between Rivulet parallel processing and [Polly](https://github.com/App-vNext/Polly) resilience policies. [**Docs**](src/Rivulet.Polly/README.md)
 
 **Key Features:**
-- Polly v8 ResiliencePipeline integration
-- Hedging pattern support
-- Result-based retry policies
-- Policy composition
-- Fallback strategies
+- Use Polly policies with Rivulet - Apply any Polly policy to parallel operations
+- Convert Rivulet to Polly - Use Rivulet configuration as standalone Polly policies
+- Advanced resilience patterns - Hedging, result-based retry, and more
+- Battle-tested - Built on Polly's production-proven resilience library
 
-#### 🚧 [Rivulet.Csv](https://www.nuget.org/packages/Rivulet.Csv)
-[![NuGet](https://img.shields.io/nuget/v/Rivulet.Csv.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Csv) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Csv.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Csv)
+### In Development
 
-Parallel CSV parsing and writing for Rivulet with CsvHelper integration, bounded concurrency, and batching support for high-throughput data processing
+#### Rivulet.Pipeline
+
+Multi-stage pipeline composition for Rivulet with fluent API, per-stage concurrency, backpressure management between stages, and streaming support. [**Docs**](src/Rivulet.Pipeline/README.md)
+
+**Key Features:**
+- Fluent Builder API - Type-safe pipeline construction with IntelliSense support
+- Per-Stage Concurrency - Different parallelism levels for each processing stage
+- Backpressure Management - Automatic flow control between stages using channels
+- Streaming & Buffered Modes - Memory-efficient streaming or materialized results
+- Full Rivulet.Core Integration - Retries, circuit breakers, rate limiting, metrics
+
+#### Rivulet.Csv
+
+Parallel CSV parsing and writing with CsvHelper integration, bounded concurrency, and batching support for high-throughput data processing. [**Docs**](src/Rivulet.Csv/README.md)
 
 **Key Features:**
 - CsvHelper integration for robust CSV parsing
@@ -189,24 +228,6 @@ Parallel CSV parsing and writing for Rivulet with CsvHelper integration, bounded
 - Error handling modes (FailFast, CollectAndContinue, BestEffort)
 - Circuit breaker and retry support
 - Ordered and unordered output options
-
-#### 🚧 [Rivulet.Pipeline](https://www.nuget.org/packages/Rivulet.Pipeline)
-[![NuGet](https://img.shields.io/nuget/v/Rivulet.Pipeline.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Pipeline) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Pipeline.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Pipeline)
-
-Multi-stage pipeline composition for Rivulet with fluent API, per-stage concurrency, backpressure management between stages, and streaming support
-
-**Key Features:**
-- Fluent builder API with type-safe stage chaining
-- Per-stage concurrency configuration via StageOptions
-- Backpressure management using System.Threading.Channels
-- Reuses Core components (TokenBucket, ParallelOptionsRivulet)
-- Pipeline lifecycle callbacks (start, complete, stage events)
-- Per-stage metrics tracking (items in/out, timing)
-- Retry policies, circuit breaker, and error modes per stage
-- Cancellation support propagated through all stages
-- Streaming execution with IAsyncEnumerable
-
-### Integration Packages (v1.4.0 🚧)
 <!-- PACKAGES_END -->
 
 ---
@@ -706,273 +727,14 @@ Uses AIMD (Additive Increase Multiplicative Decrease) algorithm similar to TCP c
 
 ---
 
-## 📦 Package Guides
-
-### Rivulet.Diagnostics - Enterprise Observability
-
-`Rivulet.Diagnostics` adds EventListener wrappers (console, file, structured JSON), time-window metric aggregation, Prometheus export, and ASP.NET Core health check integration via a fluent `DiagnosticsBuilder` API.
-
-See the [Rivulet.Diagnostics README](src/Rivulet.Diagnostics/README.md) for complete documentation.
-
-### Rivulet.Diagnostics.OpenTelemetry - Distributed Tracing & Metrics
-
-`Rivulet.Diagnostics.OpenTelemetry` bridges Rivulet's EventCounters to OpenTelemetry Meters and creates activity spans for each parallel operation, supporting Jaeger, Zipkin, Azure Monitor, DataDog, and any OTLP exporter.
-
-See the [Rivulet.Diagnostics.OpenTelemetry README](src/Rivulet.Diagnostics.OpenTelemetry/README.md) for complete documentation.
-
----
-
-## ⚡ Performance Benchmarks
-
-Rivulet.Core includes comprehensive benchmarks using BenchmarkDotNet to measure performance across .NET 8.0 and .NET 9.0. The benchmarks help validate performance characteristics, identify regressions, and guide optimization efforts.
-
-### Running Benchmarks
-
-```powershell
-# Run all benchmarks
-cd tests\Rivulet.Benchmarks
-dotnet run -c Release
-
-# Run specific benchmark suite
-dotnet run -c Release -- --filter "*CoreOperatorsBenchmarks*"
-
-# Quick run with fewer iterations
-dotnet run -c Release -- --job short
-
-# Export results to multiple formats
-dotnet run -c Release -- --exporters json,html,markdown
-```
-
-### Benchmark Suites
-
-#### 1. CoreOperatorsBenchmarks
-Measures performance of core parallel operators:
-- `SelectParallelAsync` (CPU-bound and I/O-bound workloads)
-- `SelectParallelStreamAsync` (streaming results)
-- `ForEachParallelAsync` (side effects)
-- Comparison with sequential processing and unbounded `Task.WhenAll`
-
-**Configuration**: 1,000 items with various MaxDegreeOfParallelism settings
-
-#### 2. BatchingBenchmarks
-Evaluates batch processing performance with different batch sizes (100, 500, 1000):
-- `BatchParallelAsync` performance characteristics
-- `BatchParallelStreamAsync` streaming behavior
-- Optimal batch sizing analysis
-
-**Configuration**: 10,000 items, MaxDegreeOfParallelism = 4
-
-#### 3. ErrorHandlingBenchmarks
-Quantifies the overhead of error handling and retry mechanisms:
-- Retry policy overhead with transient failures (10% failure rate)
-- Different error modes (FailFast, BestEffort, CollectAndContinue)
-- Backoff strategy performance (Exponential, ExponentialJitter)
-
-**Configuration**: 500 items with simulated failures
-
-#### 4. AdvancedFeaturesBenchmarks
-Measures the performance cost of production-grade features:
-- Circuit breaker overhead
-- Rate limiting (token bucket) overhead
-- Adaptive concurrency overhead
-- Progress tracking overhead
-- Metrics tracking overhead
-- Combined feature overhead
-
-**Configuration**: 500 items to isolate feature-specific costs
-
-#### 5. ConcurrencyScalingBenchmarks
-Analyzes how performance scales with different MaxDegreeOfParallelism values (1, 2, 4, 8, 16, 32, 64, 128) to help identify optimal concurrency levels for various workload types.
-
-**Configuration**: 1,000 items with 1ms I/O simulation per item
-
-### Typical Performance Characteristics
-
-Based on benchmark runs on modern hardware:
-
-- **I/O-Bound Operations**: ~31x faster than sequential with `MaxDegreeOfParallelism = 32`; scales linearly up to 128
-- **Memory Efficiency**: Minimal allocation growth (only ~15%) across concurrency 1–128
-- **Advanced Features Overhead**: <1% for circuit breaker, rate limiting, progress, and metrics; adaptive concurrency adds ~3.5x due to continuous sampling
-- **Optimal Parallelism**: Typically 16-64 for I/O-bound, 2-8 for CPU-bound (varies by hardware)
-- **.NET 8.0 vs .NET 9.0**: Virtually identical for I/O-bound; .NET 9.0 shows ~22% faster success-path for CPU-light operations
-
-### Example Results
-
-```
-BenchmarkDotNet v0.14.0, Windows 11
-AMD Ryzen 9 9950X, 32 logical / 16 physical cores, 64 GB DDR5
-
-|                 Method |  Runtime |      Mean | Allocated |
-|----------------------- |--------- |---------: |----------:|
-|    SelectParallelAsync | .NET 8.0 |   499 ms  |   563 KB  |
-|    SelectParallelAsync | .NET 9.0 |   498 ms  |   565 KB  |
-| Sequential Processing  | .NET 8.0 | 15,617 ms |   173 KB  |
-|         Task.WhenAll   | .NET 8.0 |    16 ms  |   286 KB  | (Unbounded!)
-
-// 1000 items, 1ms I/O delay each, MaxDegreeOfParallelism = 32
-// SelectParallelAsync achieves ~31x speedup with controlled memory usage
-```
-
-**Key Insights**:
-- Rivulet provides near-optimal performance while maintaining bounded concurrency
-- Memory usage grows only ~15% from concurrency 1 to 128
-- .NET 8.0 and .NET 9.0 show virtually identical performance for I/O-bound workloads
-- Advanced features add minimal overhead when not actively engaged
-
-### Interpreting Benchmark Results
-
-- **Mean**: Average execution time across iterations
-- **Allocated**: Total memory allocated per operation (lower is better)
-- **Gen0/Gen1/Gen2**: Garbage collection counts
-- **Baseline**: Reference implementation for comparison (usually marked with `*`)
-
-See [tests/Rivulet.Benchmarks/README.md](tests/Rivulet.Benchmarks/README.md) for detailed documentation and full benchmark results.
-
----
-
-## 🗺️ Roadmap
-
-See the full [Roadmap](ROADMAP.md) for detailed plans.
-
-### v1.3.0 - ✅ Released
-- **Rivulet.Http** ✅ - Parallel HTTP operations with HttpClientFactory integration
-- **Rivulet.IO** ✅ - Parallel file operations, directory processing
-- **Rivulet.Sql** ✅ - Provider-agnostic parallel SQL operations
-- **Rivulet.Sql.SqlServer** ✅ - SqlBulkCopy integration (10-100x faster bulk inserts)
-- **Rivulet.Sql.PostgreSql** ✅ - COPY command integration (10-100x faster)
-- **Rivulet.Sql.MySql** ✅ - LOAD DATA INFILE with MySqlBulkLoader (10-100x faster)
-- **Rivulet.Polly** ✅ - Polly v8 integration, hedging, result-based retry
-- **Rivulet.Csv** ✅ - Parallel CSV parsing and writing with CsvHelper integration
-- **Rivulet.Pipeline** ✅ - Multi-stage pipeline composition with fluent API
-
-### v1.4.0 (Q1-Q2 2026) - JSON + Cloud Storage
-- **Rivulet.Json** 🆕 - Parallel JSON processing, deserialization, JsonPath queries
-- **Rivulet.Azure.Storage** - Blob Storage parallel operations
-- **Rivulet.Aws.S3** - S3 parallel operations
-
-### v1.5.0 (Q2-Q3 2026) - ORM
-- **Rivulet.EntityFramework** - EF Core parallel queries, multi-tenant support
-
----
-
-## 🛠️ Development
-
-The repository includes PowerShell scripts to streamline development and release workflows.
-
-### Build Script
-
-Build, restore, and test the solution locally.
-
-```powershell
-# Debug build with tests (default)
-.\Build.ps1
-
-# Release build with tests
-.\Build.ps1 -Configuration Release
-
-# Skip tests
-.\Build.ps1 -SkipTests
-```
-
-### Package Script
-
-Build and inspect NuGet packages locally before releasing.
-
-```powershell
-# Build all packages with test version
-.\NugetPackage.ps1
-
-# Build specific package
-.\NugetPackage.ps1 -Project Core
-.\NugetPackage.ps1 -Project Diagnostics
-
-# Build with specific version
-.\NugetPackage.ps1 -Version "1.2.3" -Project All
-```
-
-Creates packages in `./test-packages` and extracts contents to `./test-extract` for verification.
-
-### Commit Script
-
-Generate high-quality commit messages using AI (Claude, Gemini, or OpenAI).
-
-```powershell
-# Quick setup - set API key for your preferred provider
-$env:ANTHROPIC_API_KEY = "your-key"  # For Claude
-$env:GOOGLE_API_KEY = "your-key"      # For Gemini
-$env:OPENAI_API_KEY = "your-key"      # For OpenAI
-
-# Auto-detect provider from environment
-.\SmartCommit.ps1
-
-# Or specify provider explicitly
-.\SmartCommit.ps1 -Provider Claude
-.\SmartCommit.ps1 -Provider Gemini
-.\SmartCommit.ps1 -Provider OpenAI
-```
-
-**Advanced**: Create `.smartcommit.config.json` (see `.smartcommit.config.example.json`) to configure:
-- Default provider
-- API keys (alternative to environment variables)
-- Model versions (claude-3-5-sonnet, gemini-2.0-flash, gpt-4o, etc.)
-
-This script:
-- Analyzes your staged changes using git diff
-- Calls your chosen AI provider to generate a meaningful commit message
-- Shows the suggested message and allows you to:
-  - **[y]** Accept and commit
-  - **[r]** Request revision with feedback (e.g., "make it shorter", "add more detail")
-  - **[n]** Cancel
-- Iteratively refines the message based on your feedback
-- Commits changes when you accept
-
-**Get API keys**:
-- Claude: [console.anthropic.com](https://console.anthropic.com/)
-- Gemini: [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
-- OpenAI: [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
-
-### Release Script
-
-Create release branch, tag, and trigger automated publishing.
-
-```powershell
-# Create release for version 1.0.0 (creates branch release/1.0.x, tag v1.0.0)
-.\Release.ps1 -Version "1.0.0"
-
-# Create patch release 1.0.1 (uses existing branch release/1.0.x, tag v1.0.1)
-.\Release.ps1 -Version "1.0.1"
-
-# Create pre-release (creates branch release/2.0.x, tag v2.0.0-beta)
-.\Release.ps1 -Version "2.0.0-beta"
-```
-
-**Branching Strategy**:
-- Branches: `release/{major}.{minor}.x` (e.g., `release/1.0.x` for all 1.0.* versions)
-- Tags: `v{full.version}` (e.g., `v1.0.0`, `v1.0.1`, `v1.0.2`)
-- Master branch for active development
-- Patch releases reuse the same release branch
-
-This script:
-- Creates/switches to `release/{major}.{minor}.x` branch
-- Displays release information (commit details, author, version, repository)
-- **Asks for confirmation (y/Y) before proceeding**
-- Creates git tag `v{version}` and pushes to GitHub
-- Triggers the release workflow that builds, tests, and publishes to NuGet.org
-
-The confirmation step shows:
-- Version and tag information
-- Current commit hash, author, date, and message
-- List of actions that will be performed
-- Allows you to cancel before any changes are pushed
-
----
-
 ## 📚 Documentation
 
+- [Full Documentation](https://rivulet2.readthedocs.io/)
 - [Contributing Guide](CONTRIBUTING.md)
-- [Roadmap](ROADMAP.md) - Future plans
-- [Security Policy](SECURITY.md) - Vulnerability reporting
+- [Roadmap](ROADMAP.md)
+- [Security Policy](SECURITY.md)
 - [Code of Conduct](CODE_OF_CONDUCT.md)
+- [Benchmarks](tests/Rivulet.Benchmarks/README.md)
 
 ---
 

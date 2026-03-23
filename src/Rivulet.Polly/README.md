@@ -1,13 +1,26 @@
 ﻿# Rivulet.Polly
 
+<!-- DESCRIPTION_START -->
 Integration between Rivulet parallel processing and [Polly](https://github.com/App-vNext/Polly) resilience policies.
+<!-- DESCRIPTION_END -->
 
+<!-- KEY_FEATURES_START -->
 ## Features
 
 - **Use Polly policies with Rivulet** - Apply any Polly policy to parallel operations
 - **Convert Rivulet to Polly** - Use Rivulet configuration as standalone Polly policies
 - **Advanced resilience patterns** - Hedging, result-based retry, and more
 - **Battle-tested** - Built on Polly's production-proven resilience library
+<!-- KEY_FEATURES_END -->
+
+<!-- FEATURES_START -->
+## API
+
+- **SelectParallelWithPolicyAsync** - Apply Polly policies to parallel operations
+- **SelectParallelWithHedgingAsync** - Hedging pattern (parallel redundant requests)
+- **SelectParallelWithResultRetryAsync** - Result-based retry with Polly policies
+- **ToPollyRetryPipeline** - Convert Rivulet retry to Polly pipeline
+<!-- FEATURES_END -->
 
 ## Installation
 

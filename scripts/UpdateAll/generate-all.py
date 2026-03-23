@@ -83,46 +83,72 @@ class ReadmeGenerator(FileGenerator):
         return new_content
 
     def _generate_package_list(self) -> str:
-        """Generate markdown package list."""
+        """Generate markdown package list grouped by status: released first, then in-development."""
         lines = []
 
-        # Core packages
-        lines.append("### Core Packages")
-        lines.append("")
-        for pkg in self.registry.get_core_packages():
-            lines.append(self._format_package(pkg))
-            lines.append("")
+        released = self.registry.get_released_packages()
+        in_dev = self.registry.get_in_development_packages()
 
-        # Integration packages
-        lines.append("### Integration Packages (v1.4.0 🚧)")
-        lines.append("")
-        for pkg in self.registry.get_integration_packages():
-            lines.append(self._format_package(pkg))
+        if released:
+            lines.append("### Released")
             lines.append("")
+            for pkg in released:
+                lines.append(self._format_released_package(pkg))
+                lines.append("")
+
+        if in_dev:
+            lines.append("### In Development")
+            lines.append("")
+            for pkg in in_dev:
+                lines.append(self._format_in_dev_package(pkg))
+                lines.append("")
 
         return '\n'.join(lines).rstrip()
 
-    def _format_package(self, pkg: dict) -> str:
-        """Format a single package entry."""
+    def _format_released_package(self, pkg: dict) -> str:
+        """Format a released package entry with NuGet badges and docs link."""
         name = pkg['name']
         description = pkg['description']
         nuget_badge = self.registry.get_nuget_badge_url(pkg)
         nuget_url = self.registry.get_nuget_url(pkg)
         downloads_badge = self.registry.get_nuget_downloads_badge_url(pkg)
-
-        status_emoji = "✅" if pkg['status'] == 'released' else "🚧"
+        docs_path = f"src/{name}/README.md"
 
         lines = [
-            f"#### {status_emoji} [{name}]({nuget_url})",
+            f"#### [{name}]({nuget_url})",
+            "",
             f"[![NuGet]({nuget_badge})]({nuget_url}) [![Downloads]({downloads_badge})]({nuget_url})",
             "",
-            description,
-            "",
-            "**Key Features:**"
+            f"{description} [**Docs**]({docs_path})",
         ]
 
-        for feature in pkg.get('key_features', []):
-            lines.append(f"- {feature}")
+        key_features = pkg.get('key_features', [])
+        if key_features:
+            lines.append("")
+            lines.append("**Key Features:**")
+            for feature in key_features:
+                lines.append(f"- {feature}")
+
+        return '\n'.join(lines)
+
+    def _format_in_dev_package(self, pkg: dict) -> str:
+        """Format an in-development package entry without badges."""
+        name = pkg['name']
+        description = pkg['description']
+        docs_path = f"src/{name}/README.md"
+
+        lines = [
+            f"#### {name}",
+            "",
+            f"{description} [**Docs**]({docs_path})",
+        ]
+
+        key_features = pkg.get('key_features', [])
+        if key_features:
+            lines.append("")
+            lines.append("**Key Features:**")
+            for feature in key_features:
+                lines.append(f"- {feature}")
 
         return '\n'.join(lines)
 
@@ -143,12 +169,17 @@ class SamplesReadmeGenerator(FileGenerator):
             ""
         ]
 
-        # Generate sample entries
-        for i, pkg in enumerate(self.registry.packages, 1):
+        # Generate sample entries (only for packages with actual sample projects on disk)
+        sample_packages = [
+            pkg for pkg in self.registry.packages
+            if (self.repo_root / pkg.get('sample_path', '')).exists()
+        ]
+        for i, pkg in enumerate(sample_packages, 1):
             if 'sample_path' not in pkg:
                 continue
 
             lines.append(f"### {i}. {pkg['sample_name']}")
+            lines.append("")
             lines.append(f"**Package:** `{pkg['name']}`")
             lines.append("")
             lines.append(f"{pkg['description']}")
@@ -166,6 +197,7 @@ class SamplesReadmeGenerator(FileGenerator):
                 lines.append("")
 
             lines.append("**Run:**")
+            lines.append("")
             lines.append("```bash")
             lines.append(f"cd {pkg['sample_name']}")
             lines.append("dotnet run")
@@ -198,9 +230,9 @@ class SamplesReadmeGenerator(FileGenerator):
             "",
             "## Learning Path",
             "",
-            "1. **Start with Rivulet.Console.Sample** to understand core operators",
+            "1. **Start with Rivulet.Core.Sample** to understand core operators",
             "2. **Explore Rivulet.Diagnostics.Sample** for production observability",
-            "3. **Review Rivulet.OpenTelemetry.Sample** for distributed tracing",
+            "3. **Review Rivulet.Diagnostics.OpenTelemetry.Sample** for distributed tracing",
             "4. **Study Rivulet.Testing.Sample** for testing strategies",
             "5. **Examine Rivulet.Hosting.Sample** for enterprise integration",
             "",
@@ -262,9 +294,9 @@ class RoadmapGenerator(FileGenerator):
         for version_data in self.registry.versions:
             version = version_data['version']
             status = version_data['status']
-            packages = self.registry.get_packages_by_version(version)
+            package_ids = version_data.get('packages', [])
 
-            if not packages:
+            if not package_ids:
                 continue
 
             # Version header
@@ -277,9 +309,13 @@ class RoadmapGenerator(FileGenerator):
             lines.append(f"### {status_emoji} {version} - {status.replace('_', ' ').title()}")
             lines.append("")
 
-            # Package list
-            for pkg in packages:
-                lines.append(f"- **{pkg['name']}** - {pkg['description']}")
+            # Package list — use full package data if available, else just the ID
+            for pid in package_ids:
+                pkg = self.registry.get_package(pid)
+                if pkg:
+                    lines.append(f"- **{pkg['name']}** - {pkg['description']}")
+                else:
+                    lines.append(f"- **{pid}** *(planned)*")
 
             lines.append("")
 
@@ -444,6 +480,52 @@ class DependabotGenerator(FileGenerator):
 
         return '\n'.join(lines)
 
+class MkDocsNavGenerator(FileGenerator):
+    """Generates mkdocs.yml navigation section from packages.yml."""
+
+    def generate(self) -> str:
+        """Generate mkdocs.yml with updated nav section."""
+        self.log("Generating mkdocs.yml navigation...")
+
+        mkdocs_path = self.repo_root / 'mkdocs.yml'
+        if not mkdocs_path.exists():
+            self.log("  [WARN]  mkdocs.yml not found - skipping")
+            return ""
+
+        with open(mkdocs_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        # Generate nav entries
+        nav_section = self._generate_nav_section()
+
+        # Replace nav section between markers
+        pattern = r'  # NAV_PACKAGES_START\n.*?  # NAV_PACKAGES_END'
+        replacement = f'  # NAV_PACKAGES_START\n{nav_section}\n  # NAV_PACKAGES_END'
+
+        if re.search(pattern, content, re.DOTALL):
+            new_content = re.sub(pattern, replacement, content, flags=re.DOTALL)
+        else:
+            self.log("  [WARN]  Nav markers not found in mkdocs.yml")
+            return content
+
+        return new_content
+
+    def _package_to_doc_path(self, pkg: dict) -> str:
+        """Convert package name to docs path: Rivulet.Core -> packages/rivulet-core.md"""
+        return f"packages/{pkg['name'].lower().replace('.', '-')}.md"
+
+    def _generate_nav_section(self) -> str:
+        """Generate YAML nav entries for all packages."""
+        lines = []
+        lines.append("  - Packages:")
+
+        for pkg in self.registry.packages:
+            doc_path = self._package_to_doc_path(pkg)
+            lines.append(f"      - {pkg['name']}: {doc_path}")
+
+        return '\n'.join(lines)
+
+
 def generate_all(check_only: bool = False, verbose: bool = False) -> int:
     """
     Generate all files.
@@ -478,6 +560,7 @@ def generate_all(check_only: bool = False, verbose: bool = False) -> int:
             ('README.md', ReadmeGenerator(registry, verbose)),
             ('samples/README.md', SamplesReadmeGenerator(registry, verbose)),
             ('ROADMAP.md', RoadmapGenerator(registry, verbose)),
+            ('mkdocs.yml', MkDocsNavGenerator(registry, verbose)),
             ('.github/workflows/release.yml', ReleaseWorkflowGenerator(registry, verbose)),
             ('.github/workflows/nuget-activity-monitor.yml', NugetActivityMonitorGenerator(registry, verbose)),
             ('.github/dependabot.yml', DependabotGenerator(registry, verbose)),
@@ -492,20 +575,11 @@ def generate_all(check_only: bool = False, verbose: bool = False) -> int:
                     continue  # Generator skipped this file
 
                 # Determine file path
-                if file_desc == 'README.md':
-                    file_path = registry.repo_root / 'README.md'
-                elif file_desc == 'samples/README.md':
-                    file_path = registry.repo_root / 'samples' / 'README.md'
-                elif file_desc == 'ROADMAP.md':
+                # Resolve file path from descriptor
+                file_path = registry.repo_root / file_desc
+                # Special case: ROADMAP.md may be in docs/ or root
+                if file_desc == 'ROADMAP.md' and not file_path.exists():
                     file_path = registry.repo_root / 'docs' / 'ROADMAP.md'
-                    if not file_path.exists():
-                        file_path = registry.repo_root / 'ROADMAP.md'
-                elif file_desc == '.github/workflows/release.yml':
-                    file_path = registry.repo_root / '.github' / 'workflows' / 'release.yml'
-                elif file_desc == '.github/workflows/nuget-activity-monitor.yml':
-                    file_path = registry.repo_root / '.github' / 'workflows' / 'nuget-activity-monitor.yml'
-                elif file_desc == '.github/dependabot.yml':
-                    file_path = registry.repo_root / '.github' / 'dependabot.yml'
 
                 # Check if changed
                 if file_path.exists():

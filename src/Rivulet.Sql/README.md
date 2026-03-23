@@ -1,6 +1,8 @@
 ﻿# Rivulet.Sql
 
+<!-- DESCRIPTION_START -->
 **Safe parallel SQL operations with connection pooling awareness and bulk operations.**
+<!-- DESCRIPTION_END -->
 
 Built on top of Rivulet.Core, this package provides SQL-aware parallel operators that automatically handle transient database failures, respect connection pooling limits, and support efficient bulk operations.
 
@@ -11,6 +13,24 @@ dotnet add package Rivulet.Sql
 ```
 
 Requires `Rivulet.Core` (automatically included).
+
+<!-- KEY_FEATURES_START -->
+## Features
+
+- Works with any ADO.NET provider
+- Connection pooling awareness
+- Transaction support
+- Parameterized queries
+- Respects database connection pool limits
+<!-- KEY_FEATURES_END -->
+
+<!-- FEATURES_START -->
+## API
+
+- **ExecuteQueriesParallelAsync** - Execute multiple queries
+- **ExecuteCommandsParallelAsync** - Execute multiple commands
+- **BulkInsertAsync** - Provider-agnostic bulk insert
+<!-- FEATURES_END -->
 
 ## Quick Start
 

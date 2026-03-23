@@ -1,6 +1,8 @@
 # Rivulet.Core
 
+<!-- DESCRIPTION_START -->
 **Safe, async-first parallel operators with bounded concurrency, retries, and backpressure for I/O-heavy workloads.**
+<!-- DESCRIPTION_END -->
 
 Transform collections in parallel while maintaining control over concurrency, errors, and resource usage.
 
@@ -120,6 +122,7 @@ await foreach (var result in source.SelectParallelStreamAsync(
 }
 ```
 
+<!-- KEY_FEATURES_START -->
 ## Key Features
 
 - ✅ **Bounded Concurrency** - Control max parallel operations with backpressure
@@ -137,6 +140,17 @@ await foreach (var result in source.SelectParallelStreamAsync(
 - ✅ **Fallback Values** - Supply default results for failed items instead of throwing
 - ✅ **Per-Item Timeouts** - Enforce timeouts for individual operations
 - ✅ **Works with both** `IEnumerable<T>` and `IAsyncEnumerable<T>`
+<!-- KEY_FEATURES_END -->
+
+<!-- FEATURES_START -->
+## API
+
+- **SelectParallelAsync** - Process items and collect results
+- **SelectParallelStreamAsync** - Stream results as they complete
+- **ForEachParallelAsync** - Fire-and-forget parallel processing
+- **BatchParallelAsync** - Process items in configurable batches
+- **BatchParallelStreamAsync** - Stream processed items in configurable batches
+<!-- FEATURES_END -->
 
 ## Configuration Options
 

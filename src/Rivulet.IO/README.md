@@ -1,6 +1,8 @@
 ﻿# Rivulet.IO
 
+<!-- DESCRIPTION_START -->
 **Parallel file and directory operations with bounded concurrency, resilience, and streaming support for efficient I/O processing.**
+<!-- DESCRIPTION_END -->
 
 Built on top of Rivulet.Core, this package provides file system-aware parallel operators that enable safe and efficient parallel processing of files and directories with automatic error handling, progress tracking, and configurable file operations.
 
@@ -11,6 +13,25 @@ dotnet add package Rivulet.IO
 ```
 
 Requires `Rivulet.Core` (automatically included).
+
+<!-- KEY_FEATURES_START -->
+## Features
+
+- Safe concurrent file access
+- Directory tree processing
+- File pattern matching (glob patterns)
+- Progress reporting
+- Atomic write operations
+<!-- KEY_FEATURES_END -->
+
+<!-- FEATURES_START -->
+## API
+
+- **ReadAllTextParallelAsync** - Read multiple files
+- **WriteAllTextParallelAsync** - Write multiple files
+- **ProcessFilesParallelAsync** - Process files in directory
+- **TransformFilesParallelAsync** - Transform files
+<!-- FEATURES_END -->
 
 ## Quick Start
 

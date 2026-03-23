@@ -118,12 +118,12 @@ updates:
       interval: weekly
 
   - package-ecosystem: nuget
-    directory: /src/Rivulet.Csv
+    directory: /src/Rivulet.Pipeline
     schedule:
       interval: weekly
 
   - package-ecosystem: nuget
-    directory: /src/Rivulet.Pipeline
+    directory: /src/Rivulet.Csv
     schedule:
       interval: weekly
 
@@ -188,12 +188,12 @@ updates:
       interval: weekly
 
   - package-ecosystem: nuget
-    directory: /tests/Rivulet.Csv.Tests
+    directory: /tests/Rivulet.Pipeline.Tests
     schedule:
       interval: weekly
 
   - package-ecosystem: nuget
-    directory: /tests/Rivulet.Pipeline.Tests
+    directory: /tests/Rivulet.Csv.Tests
     schedule:
       interval: weekly
 
@@ -214,7 +214,7 @@ updates:
       interval: weekly
 
   - package-ecosystem: nuget
-    directory: /samples/Rivulet.Console.Sample
+    directory: /samples/Rivulet.Core.Sample
     schedule:
       interval: weekly
 
@@ -239,7 +239,7 @@ updates:
       interval: weekly
 
   - package-ecosystem: nuget
-    directory: /samples/Rivulet.OpenTelemetry.Sample
+    directory: /samples/Rivulet.Diagnostics.OpenTelemetry.Sample
     schedule:
       interval: weekly
 
