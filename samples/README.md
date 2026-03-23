@@ -290,10 +290,10 @@ dotnet run
 
 **Package:** `Rivulet.Sql.MySql`
 
-MySQL-specific optimizations for Rivulet.Sql including MySqlBulkCopy and MySqlBulkLoader (LOAD DATA INFILE) integration for 10-100x faster bulk inserts.
+MySQL-specific optimizations for Rivulet.Sql using MySqlBulkLoader (LOAD DATA LOCAL INFILE) for 10-100x faster bulk inserts.
 
-- **BulkInsertUsingMySqlBulkLoaderAsync** - MySqlBulkLoader integration
-- **BulkInsertFromFilesUsingMySqlBulkLoaderAsync** - Bulk insert directly from CSV files
+- **BulkInsertUsingMySqlBulkLoaderAsync** - Parallel bulk insert from CSV strings using MySqlBulkLoader
+- **BulkInsertFromFilesUsingMySqlBulkLoaderAsync** - Parallel bulk insert directly from CSV files
 
 **Run:**
 
@@ -303,8 +303,7 @@ dotnet run
 ```
 
 **Key Features:**
-- MySqlBulkCopy: High-performance bulk inserts for in-memory data
-- MySqlBulkLoader: LOAD DATA LOCAL INFILE for maximum performance with CSV data
+- MySqlBulkLoader: LOAD DATA LOCAL INFILE for maximum performance
 - File-based Loading: Direct file import support
 - Parallel Operations: Process multiple batches in parallel
 - Custom Delimiters: Support for any field separator
@@ -420,11 +419,20 @@ dotnet run
 
 ## Learning Path
 
-1. **Start with Rivulet.Core.Sample** to understand core operators
-2. **Explore Rivulet.Diagnostics.Sample** for production observability
-3. **Review Rivulet.Diagnostics.OpenTelemetry.Sample** for distributed tracing
-4. **Study Rivulet.Testing.Sample** for testing strategies
-5. **Examine Rivulet.Hosting.Sample** for enterprise integration
+1. **Rivulet.Core.Sample** - Safe, async-first parallel operators with bounded concurrency, retries, and...
+2. **Rivulet.Diagnostics.Sample** - Enterprise observability for Rivulet.Core with EventListener wrappers, metric...
+3. **Rivulet.Diagnostics.OpenTelemetry.Sample** - OpenTelemetry integration for Rivulet.Core providing distributed tracing,...
+4. **Rivulet.Hosting.Sample** - Integration package for using Rivulet with Microsoft.Extensions.Hosting,...
+5. **Rivulet.Testing.Sample** - Testing utilities for Rivulet parallel operations including deterministic...
+6. **Rivulet.Http.Sample** - Parallel HTTP operations with automatic retries, resilient downloads, and...
+7. **Rivulet.IO.Sample** - Parallel file and directory operations with bounded concurrency, resilience,...
+8. **Rivulet.Sql.Sample** - Safe parallel SQL operations with connection pooling awareness and bulk...
+9. **Rivulet.Sql.SqlServer.Sample** - SQL Server-specific optimizations for Rivulet.Sql including SqlBulkCopy...
+10. **Rivulet.Sql.PostgreSql.Sample** - PostgreSQL-specific optimizations for Rivulet.Sql including COPY command...
+11. **Rivulet.Sql.MySql.Sample** - MySQL-specific optimizations for Rivulet.Sql using MySqlBulkLoader (LOAD DATA...
+12. **Rivulet.Polly.Sample** - Integration between Rivulet parallel processing and...
+13. **Rivulet.Pipeline.Sample** - Multi-stage pipeline composition for Rivulet with fluent API, per-stage...
+14. **Rivulet.Csv.Sample** - Parallel CSV parsing and writing with CsvHelper integration, bounded...
 
 ## Next Steps
 

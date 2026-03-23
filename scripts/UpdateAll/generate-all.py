@@ -50,6 +50,15 @@ class FileGenerator:
         if self.verbose:
             print(message)
 
+    def resolve_path(self, file_desc: str) -> Path:
+        """Resolve a file path, preferring repo root then docs/ fallback."""
+        path = self.repo_root / file_desc
+        if not path.exists():
+            fallback = self.repo_root / 'docs' / file_desc
+            if fallback.exists():
+                return fallback
+        return path
+
 
 class ReadmeGenerator(FileGenerator):
     """Generates README.md package list section."""
@@ -230,11 +239,14 @@ class SamplesReadmeGenerator(FileGenerator):
             "",
             "## Learning Path",
             "",
-            "1. **Start with Rivulet.Core.Sample** to understand core operators",
-            "2. **Explore Rivulet.Diagnostics.Sample** for production observability",
-            "3. **Review Rivulet.Diagnostics.OpenTelemetry.Sample** for distributed tracing",
-            "4. **Study Rivulet.Testing.Sample** for testing strategies",
-            "5. **Examine Rivulet.Hosting.Sample** for enterprise integration",
+        ])
+        for i, pkg in enumerate(sample_packages, 1):
+            desc = pkg['description']
+            if len(desc) > 80:
+                pos = desc.rfind(' ', 0, 80)
+                desc = desc[:pos if pos > 0 else 80] + '...'
+            lines.append(f"{i}. **{pkg['sample_name']}** - {desc}")
+        lines.extend([
             "",
             "## Next Steps",
             "",
@@ -261,9 +273,7 @@ class RoadmapGenerator(FileGenerator):
         """Generate ROADMAP.md content."""
         self.log("Generating ROADMAP.md...")
 
-        roadmap_path = self.repo_root / 'docs' / 'ROADMAP.md'
-        if not roadmap_path.exists():
-            roadmap_path = self.repo_root / 'ROADMAP.md'
+        roadmap_path = self.resolve_path('ROADMAP.md')
 
         if not roadmap_path.exists():
             self.log("  [WARN] ROADMAP.md not found - skipping")
@@ -574,12 +584,8 @@ def generate_all(check_only: bool = False, verbose: bool = False) -> int:
                 if not new_content:
                     continue  # Generator skipped this file
 
-                # Determine file path
-                # Resolve file path from descriptor
-                file_path = registry.repo_root / file_desc
-                # Special case: ROADMAP.md may be in docs/ or root
-                if file_desc == 'ROADMAP.md' and not file_path.exists():
-                    file_path = registry.repo_root / 'docs' / 'ROADMAP.md'
+                # Resolve file path (prefer root, fall back to docs/)
+                file_path = generator.resolve_path(file_desc)
 
                 # Check if changed
                 if file_path.exists():
