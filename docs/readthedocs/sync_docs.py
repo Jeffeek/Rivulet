@@ -263,8 +263,12 @@ def convert_markdown_links(content: str, source_dir: Path) -> str:
         if link_path.startswith(('http://', 'https://', '#')):
             return match.group(0)
 
-        # Strip fragment (e.g., #section) and query string before resolving
+        # Strip query string and fragment before resolving
         fragment = ''
+        query = ''
+        if '?' in link_path:
+            link_path, query = link_path.split('?', 1)
+            query = '?' + query
         if '#' in link_path:
             link_path, fragment = link_path.split('#', 1)
             fragment = '#' + fragment
@@ -280,7 +284,7 @@ def convert_markdown_links(content: str, source_dir: Path) -> str:
         if linked_file in resolved_sync:
             dest_path, _ = resolved_sync[linked_file]
             rel_path = dest_path.relative_to(DOCS_DIR)
-            return f'[{link_text}]({rel_path}{fragment})'
+            return f'[{link_text}]({rel_path}{query}{fragment})'
 
         # File exists in repo but NOT synced to docs — remove for versioned docs
         if linked_file.exists():

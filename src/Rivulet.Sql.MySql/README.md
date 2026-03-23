@@ -1,14 +1,13 @@
 # Rivulet.Sql.MySql
 
 <!-- DESCRIPTION_START -->
-MySQL-specific optimizations for Rivulet.Sql including MySqlBulkCopy and MySqlBulkLoader (LOAD DATA INFILE) integration for **10-100x faster bulk inserts**.
+MySQL-specific optimizations for Rivulet.Sql using MySqlBulkLoader (LOAD DATA LOCAL INFILE) for **10-100x faster bulk inserts**.
 <!-- DESCRIPTION_END -->
 
 <!-- KEY_FEATURES_START -->
 ## Features
 
-- **MySqlBulkCopy**: High-performance bulk inserts for in-memory data
-- **MySqlBulkLoader**: LOAD DATA LOCAL INFILE for maximum performance with CSV data
+- **MySqlBulkLoader**: LOAD DATA LOCAL INFILE for maximum performance
 - **File-based Loading**: Direct file import support
 - **Parallel Operations**: Process multiple batches in parallel
 - **Custom Delimiters**: Support for any field separator
@@ -18,8 +17,8 @@ MySQL-specific optimizations for Rivulet.Sql including MySqlBulkCopy and MySqlBu
 <!-- FEATURES_START -->
 ## API
 
-- **BulkInsertUsingMySqlBulkLoaderAsync** - MySqlBulkLoader integration
-- **BulkInsertFromFilesUsingMySqlBulkLoaderAsync** - Bulk insert directly from CSV files
+- **BulkInsertUsingMySqlBulkLoaderAsync** - Parallel bulk insert from CSV strings using MySqlBulkLoader
+- **BulkInsertFromFilesUsingMySqlBulkLoaderAsync** - Parallel bulk insert directly from CSV files
 <!-- FEATURES_END -->
 
 ## Installation
@@ -30,26 +29,12 @@ dotnet add package Rivulet.Sql.MySql
 
 ## Usage
 
-### MySqlBulkCopy (In-Memory Data)
+### Bulk Insert from CSV Strings
 
 ```csharp
 using MySqlConnector;
 using Rivulet.Sql.MySql;
 
-var rows = GetRows(); // IEnumerable<object?[]>
-
-await rows.BulkInsertUsingMySqlBulkCopyAsync(
-    () => new MySqlConnection(connectionString),
-    "users",
-    columnNames: new[] { "id", "name", "email" },
-    options: new ParallelOptionsRivulet { MaxDegreeOfParallelism = 4 },
-    batchSize: 5000
-);
-```
-
-### MySqlBulkLoader (CSV Data)
-
-```csharp
 var csvLines = File.ReadLines("users.csv");
 
 await csvLines.BulkInsertUsingMySqlBulkLoaderAsync(
@@ -63,7 +48,7 @@ await csvLines.BulkInsertUsingMySqlBulkLoaderAsync(
 );
 ```
 
-### File-Based Bulk Loading
+### Bulk Insert from Files
 
 ```csharp
 var csvFiles = Directory.GetFiles("data", "*.csv");
@@ -78,16 +63,17 @@ await csvFiles.BulkInsertFromFilesUsingMySqlBulkLoaderAsync(
 );
 ```
 
-### Advanced: Custom Data Mapping
+### Advanced: Object-to-CSV Mapping
 
 ```csharp
 record User(int Id, string Name, string Email);
 
 var users = GetUsers();
 
-var rows = users.Select(u => new object?[] { u.Id, u.Name, u.Email });
+// Convert objects to CSV lines, then bulk load
+var csvLines = users.Select(u => $"{u.Id},{u.Name},{u.Email}");
 
-await rows.BulkInsertUsingMySqlBulkCopyAsync(
+await csvLines.BulkInsertUsingMySqlBulkLoaderAsync(
     () => new MySqlConnection(connectionString),
     "users",
     columnNames: new[] { "id", "name", "email" },
@@ -101,27 +87,19 @@ await rows.BulkInsertUsingMySqlBulkCopyAsync(
 
 ## Performance
 
-### Comparison: Standard Insert vs Bulk Operations
+### Comparison: Standard Insert vs MySqlBulkLoader
 
 | Method | Rows/sec | Time for 100k rows |
 |--------|----------|-------------------|
 | Standard Batched Insert | ~1,000 | ~100 seconds |
-| MySqlBulkCopy | ~40,000+ | ~2.5 seconds |
 | MySqlBulkLoader (LOAD DATA) | ~50,000+ | ~2 seconds |
-| **Performance Gain** | **40-50x faster** | **40-50x faster** |
-
-### Method Selection Guide
-
-| Method | Speed | Use Case |
-|--------|-------|----------|
-| MySqlBulkCopy | Very Fast | In-memory data, typed objects |
-| MySqlBulkLoader | Fastest | CSV files, text data, very large datasets |
+| **Performance Gain** | **50x faster** | **50x faster** |
 
 ### Recommended Settings
 
 - **Batch Size**: 5,000-10,000 rows per batch
 - **Max Parallelism**: 2-4 for most workloads
-- **MySqlBulkLoader**: Best for files > 10MB or > 50,000 rows
+- **File-based loading**: Best for files > 10MB or > 50,000 rows
 
 ## When to Use
 

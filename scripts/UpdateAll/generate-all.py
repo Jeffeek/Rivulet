@@ -230,11 +230,10 @@ class SamplesReadmeGenerator(FileGenerator):
             "",
             "## Learning Path",
             "",
-            "1. **Start with Rivulet.Core.Sample** to understand core operators",
-            "2. **Explore Rivulet.Diagnostics.Sample** for production observability",
-            "3. **Review Rivulet.Diagnostics.OpenTelemetry.Sample** for distributed tracing",
-            "4. **Study Rivulet.Testing.Sample** for testing strategies",
-            "5. **Examine Rivulet.Hosting.Sample** for enterprise integration",
+        ])
+        for i, pkg in enumerate(sample_packages, 1):
+            lines.append(f"{i}. **{pkg['sample_name']}** - {pkg['description'][:60]}...")
+        lines.extend([
             "",
             "## Next Steps",
             "",
@@ -261,9 +260,9 @@ class RoadmapGenerator(FileGenerator):
         """Generate ROADMAP.md content."""
         self.log("Generating ROADMAP.md...")
 
-        roadmap_path = self.repo_root / 'docs' / 'ROADMAP.md'
+        roadmap_path = self.repo_root / 'ROADMAP.md'
         if not roadmap_path.exists():
-            roadmap_path = self.repo_root / 'ROADMAP.md'
+            roadmap_path = self.repo_root / 'docs' / 'ROADMAP.md'
 
         if not roadmap_path.exists():
             self.log("  [WARN] ROADMAP.md not found - skipping")
@@ -577,9 +576,9 @@ def generate_all(check_only: bool = False, verbose: bool = False) -> int:
                 # Determine file path
                 # Resolve file path from descriptor
                 file_path = registry.repo_root / file_desc
-                # Special case: ROADMAP.md may be in docs/ or root
+                # ROADMAP.md: prefer root, fall back to docs/
                 if file_desc == 'ROADMAP.md' and not file_path.exists():
-                    file_path = registry.repo_root / 'docs' / 'ROADMAP.md'
+                    file_path = registry.repo_root / 'docs' / file_desc
 
                 # Check if changed
                 if file_path.exists():

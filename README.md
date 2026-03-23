@@ -180,11 +180,10 @@ PostgreSQL-specific optimizations for Rivulet.Sql including COPY command integra
 
 [![NuGet](https://img.shields.io/nuget/v/Rivulet.Sql.MySql.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Sql.MySql) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Sql.MySql.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Sql.MySql)
 
-MySQL-specific optimizations for Rivulet.Sql including MySqlBulkCopy and MySqlBulkLoader (LOAD DATA INFILE) integration for 10-100x faster bulk inserts. [**Docs**](src/Rivulet.Sql.MySql/README.md)
+MySQL-specific optimizations for Rivulet.Sql using MySqlBulkLoader (LOAD DATA LOCAL INFILE) for 10-100x faster bulk inserts. [**Docs**](src/Rivulet.Sql.MySql/README.md)
 
 **Key Features:**
-- MySqlBulkCopy: High-performance bulk inserts for in-memory data
-- MySqlBulkLoader: LOAD DATA LOCAL INFILE for maximum performance with CSV data
+- MySqlBulkLoader: LOAD DATA LOCAL INFILE for maximum performance
 - File-based Loading: Direct file import support
 - Parallel Operations: Process multiple batches in parallel
 - Custom Delimiters: Support for any field separator

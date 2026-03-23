@@ -30,7 +30,7 @@
 - **Rivulet.Sql** - Safe parallel SQL operations with connection pooling awareness and bulk operations.
 - **Rivulet.Sql.SqlServer** - SQL Server-specific optimizations for Rivulet.Sql including SqlBulkCopy integration for 10-100x faster bulk inserts.
 - **Rivulet.Sql.PostgreSql** - PostgreSQL-specific optimizations for Rivulet.Sql including COPY command integration for 10-100x faster bulk inserts.
-- **Rivulet.Sql.MySql** - MySQL-specific optimizations for Rivulet.Sql including MySqlBulkCopy and MySqlBulkLoader (LOAD DATA INFILE) integration for 10-100x faster bulk inserts.
+- **Rivulet.Sql.MySql** - MySQL-specific optimizations for Rivulet.Sql using MySqlBulkLoader (LOAD DATA LOCAL INFILE) for 10-100x faster bulk inserts.
 - **Rivulet.Polly** - Integration between Rivulet parallel processing and [Polly](https://github.com/App-vNext/Polly) resilience policies.
 
 ### 🚧 2.0.0 - In Development
@@ -71,6 +71,7 @@
 ## Roadmap by Version
 
 ### v2.0.0 - Pipeline Composition + CSV (In Development)
+
 **Goal**: Multi-stage processing framework and CSV integration
 
 | Package | Description | Impact | Status |
@@ -150,33 +151,42 @@ var records = await csvFiles
 ## Common Scenarios
 
 ### Production Web API
-```
+
+```text
 Rivulet.Core + Rivulet.Http + Rivulet.Diagnostics.OpenTelemetry + Rivulet.Hosting
 ```
 
 ### High-Throughput Data Processing
-```
+
+```text
 Rivulet.Core + Rivulet.Sql.SqlServer (or .PostgreSql/.MySql) + Rivulet.IO
 + Rivulet.Diagnostics + Rivulet.Hosting
 ```
+
 *Use provider-specific SQL packages for 10-100x bulk operation performance*
 
 ### Data Import/Export Pipeline
-```
+
+```text
 Rivulet.Core + Rivulet.IO + Rivulet.Sql + Rivulet.Csv + Rivulet.Diagnostics
 ```
+
 *Process CSV files and load into database in parallel*
 
 ### Cross-Database Application
-```
+
+```text
 Rivulet.Core + Rivulet.Sql (provider-agnostic) + Rivulet.Diagnostics
 ```
+
 *Use base Rivulet.Sql for applications that need to support multiple database providers*
 
 ### Multi-Stage Pipeline
-```
+
+```text
 Rivulet.Core + Rivulet.Pipeline + Rivulet.Diagnostics
 ```
+
 *Chain parallel stages with per-stage concurrency and backpressure*
 
 ---
