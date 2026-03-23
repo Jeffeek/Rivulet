@@ -232,7 +232,10 @@ class SamplesReadmeGenerator(FileGenerator):
             "",
         ])
         for i, pkg in enumerate(sample_packages, 1):
-            lines.append(f"{i}. **{pkg['sample_name']}** - {pkg['description'][:60]}...")
+            desc = pkg['description']
+            if len(desc) > 80:
+                desc = desc[:desc.rfind(' ', 0, 80)] + '...'
+            lines.append(f"{i}. **{pkg['sample_name']}** - {desc}")
         lines.extend([
             "",
             "## Next Steps",
