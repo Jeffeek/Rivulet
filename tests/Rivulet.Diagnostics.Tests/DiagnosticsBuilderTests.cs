@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using Rivulet.Base.Tests;
 using Rivulet.Core;
 
 namespace Rivulet.Diagnostics.Tests;
@@ -52,11 +53,19 @@ public sealed class DiagnosticsBuilderTests : IDisposable
                     new() { MaxDegreeOfParallelism = 2 },
                     cancellationToken: TestContext.Current.CancellationToken);
 
-            // Wait for at least 2x the aggregation interval to ensure timer fires reliably
-            await Task.Delay(2000, TestContext.Current.CancellationToken);
+            // Poll until both file content and aggregated metrics are available.
+            // Fixed delays are unreliable on loaded systems where EventCounter polling
+            // (1s interval) can be delayed by thread pool starvation or timer coalescing.
+            var deadline = DateTime.UtcNow.AddSeconds(10);
+            await DeadlineExtensions.ApplyDeadlineAsync(
+                deadline,
+                static () => Task.Delay(100, TestContext.Current.CancellationToken),
+                () => !aggregatedMetrics.Any()
+                      || !File.Exists(_testFilePath)
+                      || new FileInfo(_testFilePath).Length == 0);
         } // Dispose to flush all listeners
 
-        // Wait for file handle to be released and final aggregations to complete
+        // Brief wait for file handle release after dispose
         await Task.Delay(500, TestContext.Current.CancellationToken);
 
         // Note: Console output timing is unreliable in parallel tests due to async flushing,

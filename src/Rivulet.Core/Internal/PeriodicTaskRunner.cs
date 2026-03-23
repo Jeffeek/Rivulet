@@ -30,9 +30,14 @@ internal static class PeriodicTaskRunner
         }
         catch (OperationCanceledException)
         {
-            // Cancellation is expected - execute final work if provided
-            if (finalWork is not null)
-                await finalWork().ConfigureAwait(false);
+            // Cancellation is expected
         }
+
+        // Always execute final work on exit, regardless of whether the loop ended
+        // via cancellation (OCE from Task.Delay) or natural exit (token checked in while condition).
+        // This ensures the final snapshot captures all state changes (e.g., error counts)
+        // that occurred before disposal.
+        if (finalWork is not null)
+            await finalWork().ConfigureAwait(false);
     }
 }

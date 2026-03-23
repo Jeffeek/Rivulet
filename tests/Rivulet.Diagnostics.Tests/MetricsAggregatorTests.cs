@@ -13,7 +13,10 @@ public sealed class MetricsAggregatorTests
         var aggregatedMetrics = new List<IReadOnlyList<AggregatedMetrics>>();
         var lockObj = new object();
 
-        await using var aggregator = new MetricsAggregator(TimeSpan.FromMilliseconds(500));
+        // Use aggregation window >= EventCounter polling interval (1s) to avoid samples
+        // expiring between polls. A 500ms window can miss counters when the aggregation
+        // timer fires mid-delivery of EventCounter data (6 counters delivered as separate calls).
+        await using var aggregator = new MetricsAggregator(TimeSpan.FromSeconds(2));
         aggregator.OnAggregation += metrics =>
         {
             lock (lockObj) aggregatedMetrics.Add(metrics);
@@ -33,7 +36,9 @@ public sealed class MetricsAggregatorTests
                 cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync(TestContext.Current.CancellationToken);
 
-        // Poll until EventCounters fire and aggregation window produces results
+        // Poll until the specific "items-started" metric appears in an aggregation.
+        // Don't exit on the first non-empty aggregation — the aggregation timer can fire
+        // mid-delivery of EventCounter data, producing aggregations with only some counters.
         var deadline = DateTime.UtcNow.AddSeconds(10);
         await DeadlineExtensions.ApplyDeadlineAsync(
             deadline,
@@ -41,7 +46,11 @@ public sealed class MetricsAggregatorTests
             () =>
             {
                 lock (lockObj)
-                    return aggregatedMetrics.Count == 0;
+                {
+                    return !aggregatedMetrics
+                        .SelectMany(static a => a)
+                        .Any(static m => m.Name == RivuletMetricsConstants.CounterNames.ItemsStarted);
+                }
             });
 
         // Take a thread-safe snapshot to avoid race conditions
@@ -52,8 +61,7 @@ public sealed class MetricsAggregatorTests
             snapshot = aggregatedMetrics.ToList();
         }
 
-        // Search ALL aggregation windows for the metric — on Windows, timer coalescing
-        // can cause the last window to miss counters that aged out of the 500ms window
+        // Search ALL aggregation windows for the metric
         var itemsStartedMetric = snapshot
             .SelectMany(static a => a)
             .FirstOrDefault(static m => m.Name == RivuletMetricsConstants.CounterNames.ItemsStarted);
