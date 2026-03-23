@@ -72,7 +72,7 @@ var users = GetUsers();
 
 // Convert objects to CSV lines with RFC 4180 quoting, then bulk load
 static string CsvQuote(string field) =>
-    field.Contains(',') || field.Contains('"') || field.Contains('\n')
+    field.Contains(',') || field.Contains('"') || field.Contains('\n') || field.Contains('\r')
         ? $"\"{field.Replace("\"", "\"\"")}\"" : field;
 
 var csvLines = users.Select(u => $"{u.Id},{CsvQuote(u.Name)},{CsvQuote(u.Email)}");
