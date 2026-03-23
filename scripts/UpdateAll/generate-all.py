@@ -116,6 +116,7 @@ class ReadmeGenerator(FileGenerator):
 
         lines = [
             f"#### [{name}]({nuget_url})",
+            "",
             f"[![NuGet]({nuget_badge})]({nuget_url}) [![Downloads]({downloads_badge})]({nuget_url})",
             "",
             f"{description} [**Docs**]({docs_path})",
@@ -178,6 +179,7 @@ class SamplesReadmeGenerator(FileGenerator):
                 continue
 
             lines.append(f"### {i}. {pkg['sample_name']}")
+            lines.append("")
             lines.append(f"**Package:** `{pkg['name']}`")
             lines.append("")
             lines.append(f"{pkg['description']}")
@@ -195,6 +197,7 @@ class SamplesReadmeGenerator(FileGenerator):
                 lines.append("")
 
             lines.append("**Run:**")
+            lines.append("")
             lines.append("```bash")
             lines.append(f"cd {pkg['sample_name']}")
             lines.append("dotnet run")

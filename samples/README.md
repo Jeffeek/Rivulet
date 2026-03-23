@@ -5,6 +5,7 @@ This directory contains complete working examples demonstrating how to use all R
 ## Available Samples
 
 ### 1. Rivulet.Core.Sample
+
 **Package:** `Rivulet.Core`
 
 Safe, async-first parallel operators with bounded concurrency, retries, and backpressure for I/O-heavy workloads.
@@ -13,8 +14,10 @@ Safe, async-first parallel operators with bounded concurrency, retries, and back
 - **SelectParallelStreamAsync** - Stream results as they complete
 - **ForEachParallelAsync** - Fire-and-forget parallel processing
 - **BatchParallelAsync** - Process items in configurable batches
+- **BatchParallelStreamAsync** - Stream processed items in configurable batches
 
 **Run:**
+
 ```bash
 cd Rivulet.Core.Sample
 dotnet run
@@ -40,6 +43,7 @@ dotnet run
 ---
 
 ### 2. Rivulet.Diagnostics.Sample
+
 **Package:** `Rivulet.Diagnostics`
 
 Enterprise observability for Rivulet.Core with EventListener wrappers, metric aggregators, and health check integration.
@@ -53,6 +57,7 @@ Enterprise observability for Rivulet.Core with EventListener wrappers, metric ag
 - **MetricsAggregator** - Statistical analysis
 
 **Run:**
+
 ```bash
 cd Rivulet.Diagnostics.Sample
 dotnet run
@@ -68,6 +73,7 @@ dotnet run
 ---
 
 ### 3. Rivulet.Diagnostics.OpenTelemetry.Sample
+
 **Package:** `Rivulet.Diagnostics.OpenTelemetry`
 
 OpenTelemetry integration for Rivulet.Core providing distributed tracing, metrics export, and comprehensive observability.
@@ -80,6 +86,7 @@ OpenTelemetry integration for Rivulet.Core providing distributed tracing, metric
 - **Adaptive concurrency** - Monitor concurrency adjustments
 
 **Run:**
+
 ```bash
 cd Rivulet.Diagnostics.OpenTelemetry.Sample
 dotnet run
@@ -96,6 +103,7 @@ dotnet run
 ---
 
 ### 4. Rivulet.Hosting.Sample
+
 **Package:** `Rivulet.Hosting`
 
 Integration package for using Rivulet with Microsoft.Extensions.Hosting, ASP.NET Core, and the .NET Generic Host.
@@ -103,9 +111,10 @@ Integration package for using Rivulet with Microsoft.Extensions.Hosting, ASP.NET
 - **ParallelWorkerService** - Background worker base class
 - **ParallelBackgroundService** - Queue processor base class
 - **AddRivulet()** - DI integration
-- **RivuletOptions** - Configuration binding
+- **ParallelOptionsRivulet** - Configuration binding
 
 **Run:**
+
 ```bash
 cd Rivulet.Hosting.Sample
 dotnet run
@@ -121,6 +130,7 @@ dotnet run
 ---
 
 ### 5. Rivulet.Testing.Sample
+
 **Package:** `Rivulet.Testing`
 
 Testing utilities for Rivulet parallel operations including deterministic schedulers, virtual time, fake channels, and chaos injection.
@@ -129,9 +139,9 @@ Testing utilities for Rivulet parallel operations including deterministic schedu
 - **ChaosInjector** - Inject failures and latency
 - **ConcurrencyAsserter** - Verify concurrency limits
 - **FakeChannel** - Deterministic channel behavior
-- **DeterministicScheduler** - Predictable task execution
 
 **Run:**
+
 ```bash
 cd Rivulet.Testing.Sample
 dotnet run
@@ -146,6 +156,7 @@ dotnet run
 ---
 
 ### 6. Rivulet.Http.Sample
+
 **Package:** `Rivulet.Http`
 
 Parallel HTTP operations with automatic retries, resilient downloads, and HttpClientFactory integration.
@@ -155,6 +166,7 @@ Parallel HTTP operations with automatic retries, resilient downloads, and HttpCl
 - **DownloadParallelAsync** - Download files in parallel
 
 **Run:**
+
 ```bash
 cd Rivulet.Http.Sample
 dotnet run
@@ -170,6 +182,7 @@ dotnet run
 ---
 
 ### 7. Rivulet.IO.Sample
+
 **Package:** `Rivulet.IO`
 
 Parallel file and directory operations with bounded concurrency, resilience, and streaming support for efficient I/O processing.
@@ -180,6 +193,7 @@ Parallel file and directory operations with bounded concurrency, resilience, and
 - **TransformFilesParallelAsync** - Transform files
 
 **Run:**
+
 ```bash
 cd Rivulet.IO.Sample
 dotnet run
@@ -195,6 +209,7 @@ dotnet run
 ---
 
 ### 8. Rivulet.Sql.Sample
+
 **Package:** `Rivulet.Sql`
 
 Safe parallel SQL operations with connection pooling awareness and bulk operations.
@@ -204,6 +219,7 @@ Safe parallel SQL operations with connection pooling awareness and bulk operatio
 - **BulkInsertAsync** - Provider-agnostic bulk insert
 
 **Run:**
+
 ```bash
 cd Rivulet.Sql.Sample
 dotnet run
@@ -219,14 +235,15 @@ dotnet run
 ---
 
 ### 9. Rivulet.Sql.SqlServer.Sample
+
 **Package:** `Rivulet.Sql.SqlServer`
 
 SQL Server-specific optimizations for Rivulet.Sql including SqlBulkCopy integration for 10-100x faster bulk inserts.
 
-- **BulkInsertUsingSqlBulkCopyAsync** - Optimized bulk insert
-- **BulkInsertUsingSqlBulkCopyAsync (3 overloads)**
+- **BulkInsertUsingSqlBulkCopyAsync** - Optimized bulk insert (3 overloads)
 
 **Run:**
+
 ```bash
 cd Rivulet.Sql.SqlServer.Sample
 dotnet run
@@ -243,13 +260,17 @@ dotnet run
 ---
 
 ### 10. Rivulet.Sql.PostgreSql.Sample
+
 **Package:** `Rivulet.Sql.PostgreSql`
 
 PostgreSQL-specific optimizations for Rivulet.Sql including COPY command integration for 10-100x faster bulk inserts.
 
-- **BulkInsertUsingCopyAsync** - COPY command integration
+- **BulkInsertUsingCopyAsync** - COPY command binary integration
+- **BulkInsertUsingCopyCsvAsync** - COPY command CSV format integration
+- **BulkInsertUsingCopyTextAsync** - COPY command text format integration
 
 **Run:**
+
 ```bash
 cd Rivulet.Sql.PostgreSql.Sample
 dotnet run
@@ -266,13 +287,16 @@ dotnet run
 ---
 
 ### 11. Rivulet.Sql.MySql.Sample
+
 **Package:** `Rivulet.Sql.MySql`
 
 MySQL-specific optimizations for Rivulet.Sql including MySqlBulkCopy and MySqlBulkLoader (LOAD DATA INFILE) integration for 10-100x faster bulk inserts.
 
 - **BulkInsertUsingMySqlBulkLoaderAsync** - MySqlBulkLoader integration
+- **BulkInsertFromFilesUsingMySqlBulkLoaderAsync** - Bulk insert directly from CSV files
 
 **Run:**
+
 ```bash
 cd Rivulet.Sql.MySql.Sample
 dotnet run
@@ -289,15 +313,18 @@ dotnet run
 ---
 
 ### 12. Rivulet.Polly.Sample
+
 **Package:** `Rivulet.Polly`
 
 Integration between Rivulet parallel processing and [Polly](https://github.com/App-vNext/Polly) resilience policies.
 
 - **SelectParallelWithPolicyAsync** - Apply Polly policies to parallel operations
 - **SelectParallelWithHedgingAsync** - Hedging pattern (parallel redundant requests)
+- **SelectParallelWithResultRetryAsync** - Result-based retry with Polly policies
 - **ToPollyRetryPipeline** - Convert Rivulet retry to Polly pipeline
 
 **Run:**
+
 ```bash
 cd Rivulet.Polly.Sample
 dotnet run
@@ -312,6 +339,7 @@ dotnet run
 ---
 
 ### 13. Rivulet.Pipeline.Sample
+
 **Package:** `Rivulet.Pipeline`
 
 Multi-stage pipeline composition for Rivulet with fluent API, per-stage concurrency, backpressure management between stages, and streaming support.
@@ -329,6 +357,7 @@ Multi-stage pipeline composition for Rivulet with fluent API, per-stage concurre
 - **ExecuteStreamAsync** - Stream results as IAsyncEnumerable
 
 **Run:**
+
 ```bash
 cd Rivulet.Pipeline.Sample
 dotnet run
@@ -344,6 +373,7 @@ dotnet run
 ---
 
 ### 14. Rivulet.Csv.Sample
+
 **Package:** `Rivulet.Csv`
 
 Parallel CSV parsing and writing with CsvHelper integration, bounded concurrency, and batching support for high-throughput data processing.
@@ -357,6 +387,7 @@ Parallel CSV parsing and writing with CsvHelper integration, bounded concurrency
 - **TransformCsvParallelAsync** - Transform CSV files in parallel applying sync or async transformation functions
 
 **Run:**
+
 ```bash
 cd Rivulet.Csv.Sample
 dotnet run

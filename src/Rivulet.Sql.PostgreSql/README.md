@@ -18,7 +18,9 @@ PostgreSQL-specific optimizations for Rivulet.Sql including COPY command integra
 <!-- FEATURES_START -->
 ## API
 
-- **BulkInsertUsingCopyAsync** - COPY command integration
+- **BulkInsertUsingCopyAsync** - COPY command binary integration
+- **BulkInsertUsingCopyCsvAsync** - COPY command CSV format integration
+- **BulkInsertUsingCopyTextAsync** - COPY command text format integration
 <!-- FEATURES_END -->
 
 ## Installation

@@ -39,8 +39,15 @@ class PackageRegistry:
         self.links = self.data.get('links', {})
         self.defaults = self.data.get('defaults', {})
 
-        # Enrich packages with derived fields
-        self.packages = [self._enrich(pkg) for pkg in self.data.get('packages', [])]
+        # Enrich packages with derived fields (guard against malformed entries)
+        self.packages = []
+        for pkg in self.data.get('packages', []):
+            if not pkg.get('name') or not pkg.get('id'):
+                raise ValueError(
+                    f"Package entry missing 'name' or 'id': {pkg}. "
+                    "Every entry in packages.yml must have at least name, id, version, status."
+                )
+            self.packages.append(self._enrich(pkg))
 
         # Create lookup maps
         self._package_by_id = {pkg['id']: pkg for pkg in self.packages}
@@ -138,22 +145,21 @@ class PackageRegistry:
             tree = ET.parse(csproj_path)
             root = tree.getroot()
 
-            # ProjectReference: <ProjectReference Include="..\..\src\Rivulet.IO\Rivulet.IO.csproj" />
             for ref in root.iter('ProjectReference'):
                 include = ref.get('Include', '')
-                # Extract project name from path: ..\Rivulet.IO\Rivulet.IO.csproj -> Rivulet.IO
-                proj_file = Path(include).stem  # "Rivulet.IO"
+                # Normalize backslashes for cross-platform: ..\Rivulet.IO\Rivulet.IO.csproj
+                normalized = include.replace('\\', '/')
+                proj_file = Path(normalized).stem  # "Rivulet.IO"
                 if proj_file.startswith('Rivulet.'):
                     result['project_refs'].append(proj_file)
 
-            # PackageReference: <PackageReference Include="CsvHelper" Version="33.1.0" />
             for ref in root.iter('PackageReference'):
                 include = ref.get('Include', '')
                 if include:
                     result['package_refs'].append(include)
 
-        except ET.ParseError:
-            pass
+        except ET.ParseError as e:
+            raise ValueError(f"Failed to parse {csproj_path}: {e}")
 
         return result
 
@@ -243,11 +249,10 @@ class PackageRegistry:
             if not csproj.exists():
                 errors.append(f"{name}: .csproj not found: {csproj}")
 
-        # Test path (optional — warn if missing, not error)
+        # Test path must exist
         test_path = self.repo_root / pkg['test_path']
         if not test_path.exists():
-            if verbose:
-                print(f"    [WARN] No test project: {pkg['test_path']}")
+            errors.append(f"{name}: Test path does not exist: {pkg['test_path']}")
 
         # Sample path (optional — warn if missing)
         sample_path = self.repo_root / pkg['sample_path']
@@ -289,12 +294,11 @@ class PackageRegistry:
             tree = ET.parse(csproj_path)
             root = tree.getroot()
             for elem in root.iter('TargetFrameworks'):
-                # "net9.0;net8.0;" -> {"net9.0", "net8.0"}
                 return set(t.strip() for t in elem.text.split(';') if t.strip())
             for elem in root.iter('TargetFramework'):
                 return {elem.text.strip()}
-        except (ET.ParseError, AttributeError):
-            pass
+        except ET.ParseError as e:
+            raise ValueError(f"Failed to parse {csproj_path}: {e}")
         return set()
 
 

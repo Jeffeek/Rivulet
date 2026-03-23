@@ -20,7 +20,6 @@ Testing utilities for Rivulet parallel operations including deterministic schedu
 - **ChaosInjector** - Inject failures and latency
 - **ConcurrencyAsserter** - Verify concurrency limits
 - **FakeChannel** - Deterministic channel behavior
-- **DeterministicScheduler** - Predictable task execution
 <!-- FEATURES_END -->
 
 ## Installation

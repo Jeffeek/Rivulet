@@ -20,7 +20,7 @@ Integration package for using Rivulet with Microsoft.Extensions.Hosting, ASP.NET
 - **ParallelWorkerService** - Background worker base class
 - **ParallelBackgroundService** - Queue processor base class
 - **AddRivulet()** - DI integration
-- **RivuletOptions** - Configuration binding
+- **ParallelOptionsRivulet** - Configuration binding
 <!-- FEATURES_END -->
 
 ## Installation

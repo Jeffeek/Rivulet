@@ -19,6 +19,7 @@ MySQL-specific optimizations for Rivulet.Sql including MySqlBulkCopy and MySqlBu
 ## API
 
 - **BulkInsertUsingMySqlBulkLoaderAsync** - MySqlBulkLoader integration
+- **BulkInsertFromFilesUsingMySqlBulkLoaderAsync** - Bulk insert directly from CSV files
 <!-- FEATURES_END -->
 
 ## Installation

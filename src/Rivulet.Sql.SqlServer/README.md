@@ -18,8 +18,7 @@ SQL Server-specific optimizations for Rivulet.Sql including SqlBulkCopy integrat
 <!-- FEATURES_START -->
 ## API
 
-- **BulkInsertUsingSqlBulkCopyAsync** - Optimized bulk insert
-- **BulkInsertUsingSqlBulkCopyAsync (3 overloads)**
+- **BulkInsertUsingSqlBulkCopyAsync** - Optimized bulk insert (3 overloads)
 <!-- FEATURES_END -->
 
 ## Installation

@@ -35,6 +35,7 @@
 ### Released
 
 #### [Rivulet.Core](https://www.nuget.org/packages/Rivulet.Core)
+
 [![NuGet](https://img.shields.io/nuget/v/Rivulet.Core.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Core) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Core.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Core)
 
 Safe, async-first parallel operators with bounded concurrency, retries, and backpressure for I/O-heavy workloads. [**Docs**](src/Rivulet.Core/README.md)
@@ -57,6 +58,7 @@ Safe, async-first parallel operators with bounded concurrency, retries, and back
 - ✅ Works with both `IEnumerable<T>` and `IAsyncEnumerable<T>`
 
 #### [Rivulet.Diagnostics](https://www.nuget.org/packages/Rivulet.Diagnostics)
+
 [![NuGet](https://img.shields.io/nuget/v/Rivulet.Diagnostics.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Diagnostics) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Diagnostics.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Diagnostics)
 
 Enterprise observability for Rivulet.Core with EventListener wrappers, metric aggregators, and health check integration. [**Docs**](src/Rivulet.Diagnostics/README.md)
@@ -69,6 +71,7 @@ Enterprise observability for Rivulet.Core with EventListener wrappers, metric ag
 - Fluent Builder API: Easy configuration with DiagnosticsBuilder
 
 #### [Rivulet.Diagnostics.OpenTelemetry](https://www.nuget.org/packages/Rivulet.Diagnostics.OpenTelemetry)
+
 [![NuGet](https://img.shields.io/nuget/v/Rivulet.Diagnostics.OpenTelemetry.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Diagnostics.OpenTelemetry) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Diagnostics.OpenTelemetry.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Diagnostics.OpenTelemetry)
 
 OpenTelemetry integration for Rivulet.Core providing distributed tracing, metrics export, and comprehensive observability. [**Docs**](src/Rivulet.Diagnostics.OpenTelemetry/README.md)
@@ -82,6 +85,7 @@ OpenTelemetry integration for Rivulet.Core providing distributed tracing, metric
 - Error Correlation: Link errors with retry attempts and transient classification
 
 #### [Rivulet.Hosting](https://www.nuget.org/packages/Rivulet.Hosting)
+
 [![NuGet](https://img.shields.io/nuget/v/Rivulet.Hosting.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Hosting) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Hosting.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Hosting)
 
 Integration package for using Rivulet with Microsoft.Extensions.Hosting, ASP.NET Core, and the .NET Generic Host. [**Docs**](src/Rivulet.Hosting/README.md)
@@ -94,6 +98,7 @@ Integration package for using Rivulet with Microsoft.Extensions.Hosting, ASP.NET
 - Support for ASP.NET Core and Worker Services
 
 #### [Rivulet.Testing](https://www.nuget.org/packages/Rivulet.Testing)
+
 [![NuGet](https://img.shields.io/nuget/v/Rivulet.Testing.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Testing) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Testing.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Testing)
 
 Testing utilities for Rivulet parallel operations including deterministic schedulers, virtual time, fake channels, and chaos injection. [**Docs**](src/Rivulet.Testing/README.md)
@@ -105,6 +110,7 @@ Testing utilities for Rivulet parallel operations including deterministic schedu
 - ConcurrencyAsserter: Assert and verify concurrency behavior
 
 #### [Rivulet.Http](https://www.nuget.org/packages/Rivulet.Http)
+
 [![NuGet](https://img.shields.io/nuget/v/Rivulet.Http.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Http) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Http.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Http)
 
 Parallel HTTP operations with automatic retries, resilient downloads, and HttpClientFactory integration. [**Docs**](src/Rivulet.Http/README.md)
@@ -117,6 +123,7 @@ Parallel HTTP operations with automatic retries, resilient downloads, and HttpCl
 - Progress reporting for downloads
 
 #### [Rivulet.IO](https://www.nuget.org/packages/Rivulet.IO)
+
 [![NuGet](https://img.shields.io/nuget/v/Rivulet.IO.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.IO) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.IO.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.IO)
 
 Parallel file and directory operations with bounded concurrency, resilience, and streaming support for efficient I/O processing. [**Docs**](src/Rivulet.IO/README.md)
@@ -129,6 +136,7 @@ Parallel file and directory operations with bounded concurrency, resilience, and
 - Atomic write operations
 
 #### [Rivulet.Sql](https://www.nuget.org/packages/Rivulet.Sql)
+
 [![NuGet](https://img.shields.io/nuget/v/Rivulet.Sql.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Sql) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Sql.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Sql)
 
 Safe parallel SQL operations with connection pooling awareness and bulk operations. [**Docs**](src/Rivulet.Sql/README.md)
@@ -141,6 +149,7 @@ Safe parallel SQL operations with connection pooling awareness and bulk operatio
 - Respects database connection pool limits
 
 #### [Rivulet.Sql.SqlServer](https://www.nuget.org/packages/Rivulet.Sql.SqlServer)
+
 [![NuGet](https://img.shields.io/nuget/v/Rivulet.Sql.SqlServer.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Sql.SqlServer) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Sql.SqlServer.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Sql.SqlServer)
 
 SQL Server-specific optimizations for Rivulet.Sql including SqlBulkCopy integration for 10-100x faster bulk inserts. [**Docs**](src/Rivulet.Sql.SqlServer/README.md)
@@ -154,6 +163,7 @@ SQL Server-specific optimizations for Rivulet.Sql including SqlBulkCopy integrat
 - Configurable Batching: Control batch size and timeout settings
 
 #### [Rivulet.Sql.PostgreSql](https://www.nuget.org/packages/Rivulet.Sql.PostgreSql)
+
 [![NuGet](https://img.shields.io/nuget/v/Rivulet.Sql.PostgreSql.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Sql.PostgreSql) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Sql.PostgreSql.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Sql.PostgreSql)
 
 PostgreSQL-specific optimizations for Rivulet.Sql including COPY command integration for 10-100x faster bulk inserts. [**Docs**](src/Rivulet.Sql.PostgreSql/README.md)
@@ -167,6 +177,7 @@ PostgreSQL-specific optimizations for Rivulet.Sql including COPY command integra
 - Header Support: Handle CSV files with headers
 
 #### [Rivulet.Sql.MySql](https://www.nuget.org/packages/Rivulet.Sql.MySql)
+
 [![NuGet](https://img.shields.io/nuget/v/Rivulet.Sql.MySql.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Sql.MySql) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Sql.MySql.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Sql.MySql)
 
 MySQL-specific optimizations for Rivulet.Sql including MySqlBulkCopy and MySqlBulkLoader (LOAD DATA INFILE) integration for 10-100x faster bulk inserts. [**Docs**](src/Rivulet.Sql.MySql/README.md)
@@ -180,6 +191,7 @@ MySQL-specific optimizations for Rivulet.Sql including MySqlBulkCopy and MySqlBu
 - Automatic Column Mapping: Maps columns automatically
 
 #### [Rivulet.Polly](https://www.nuget.org/packages/Rivulet.Polly)
+
 [![NuGet](https://img.shields.io/nuget/v/Rivulet.Polly.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Polly) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Polly.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Polly)
 
 Integration between Rivulet parallel processing and [Polly](https://github.com/App-vNext/Polly) resilience policies. [**Docs**](src/Rivulet.Polly/README.md)

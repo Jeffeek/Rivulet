@@ -252,6 +252,9 @@ def convert_markdown_links(content: str, source_dir: Path) -> str:
         source_dir: Directory of the source file (for resolving relative links).
     """
 
+    # Pre-resolve SYNC_FILES keys for reliable cross-platform comparison
+    resolved_sync = {k.resolve(): v for k, v in SYNC_FILES.items()}
+
     def convert_link(match):
         link_text = match.group(1)
         link_path = match.group(2)
@@ -259,6 +262,12 @@ def convert_markdown_links(content: str, source_dir: Path) -> str:
         # Skip external URLs and anchors
         if link_path.startswith(('http://', 'https://', '#')):
             return match.group(0)
+
+        # Strip fragment (e.g., #section) and query string before resolving
+        fragment = ''
+        if '#' in link_path:
+            link_path, fragment = link_path.split('#', 1)
+            fragment = '#' + fragment
 
         # Special case: LICENSE (without extension) -> LICENSE.txt
         if link_path == 'LICENSE':
@@ -268,10 +277,10 @@ def convert_markdown_links(content: str, source_dir: Path) -> str:
         linked_file = (source_dir / link_path).resolve()
 
         # Check if this file is in SYNC_FILES (will be synced to docs)
-        if linked_file in SYNC_FILES:
-            dest_path, _ = SYNC_FILES[linked_file]
+        if linked_file in resolved_sync:
+            dest_path, _ = resolved_sync[linked_file]
             rel_path = dest_path.relative_to(DOCS_DIR)
-            return f'[{link_text}]({rel_path})'
+            return f'[{link_text}]({rel_path}{fragment})'
 
         # File exists in repo but NOT synced to docs — remove for versioned docs
         if linked_file.exists():

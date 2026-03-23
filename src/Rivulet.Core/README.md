@@ -149,6 +149,7 @@ await foreach (var result in source.SelectParallelStreamAsync(
 - **SelectParallelStreamAsync** - Stream results as they complete
 - **ForEachParallelAsync** - Fire-and-forget parallel processing
 - **BatchParallelAsync** - Process items in configurable batches
+- **BatchParallelStreamAsync** - Stream processed items in configurable batches
 <!-- FEATURES_END -->
 
 ## Configuration Options

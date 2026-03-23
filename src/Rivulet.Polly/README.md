@@ -18,6 +18,7 @@ Integration between Rivulet parallel processing and [Polly](https://github.com/A
 
 - **SelectParallelWithPolicyAsync** - Apply Polly policies to parallel operations
 - **SelectParallelWithHedgingAsync** - Hedging pattern (parallel redundant requests)
+- **SelectParallelWithResultRetryAsync** - Result-based retry with Polly policies
 - **ToPollyRetryPipeline** - Convert Rivulet retry to Polly pipeline
 <!-- FEATURES_END -->
 
