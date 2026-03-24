@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using Rivulet.Core;
 using Rivulet.Core.Observability;
@@ -124,7 +125,7 @@ public sealed class CsvProgressAndMetricsTests : IDisposable
             })
             .ToArray();
 
-        var completedFiles = new List<int>();
+        var completedFiles = new ConcurrentBag<int>();
 
         // Act
         await files.ParseCsvParallelAsync<Product>(
@@ -132,10 +133,10 @@ public sealed class CsvProgressAndMetricsTests : IDisposable
             {
                 ParallelOptions = new ParallelOptionsRivulet
                 {
-                    OnCompleteItemAsync = async index =>
+                    OnCompleteItemAsync = index =>
                     {
                         completedFiles.Add(index);
-                        await Task.CompletedTask;
+                        return ValueTask.CompletedTask;
                     }
                 }
             },
