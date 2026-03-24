@@ -60,9 +60,7 @@ public sealed class DiagnosticsBuilderTests : IDisposable
             await DeadlineExtensions.ApplyDeadlineAsync(
                 deadline,
                 static () => Task.Delay(100, TestContext.Current.CancellationToken),
-                () => !aggregatedMetrics.Any()
-                      || !File.Exists(_testFilePath)
-                      || new FileInfo(_testFilePath).Length == 0);
+                () => !aggregatedMetrics.Any() || GetFileLengthOrZero(_testFilePath) == 0);
         } // Dispose to flush all listeners
 
         // Brief wait for file handle release after dispose
@@ -98,8 +96,11 @@ public sealed class DiagnosticsBuilderTests : IDisposable
                 cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync(TestContext.Current.CancellationToken);
 
-        // Wait for EventCounters to fire - increased for CI/CD reliability
-        await Task.Delay(2000, TestContext.Current.CancellationToken);
+        // Poll until EventCounters deliver prometheus metrics
+        await DeadlineExtensions.ApplyDeadlineAsync(
+            DateTime.UtcNow.AddSeconds(10),
+            static () => Task.Delay(100, TestContext.Current.CancellationToken),
+            () => !exporter.Export().Contains("rivulet_items_started"));
 
         var prometheusText = exporter.Export();
         prometheusText.ShouldContain("rivulet_items_started");
@@ -127,10 +128,14 @@ public sealed class DiagnosticsBuilderTests : IDisposable
                     cancellationToken: TestContext.Current.CancellationToken)
                 .ToListAsync(TestContext.Current.CancellationToken);
 
-            // Wait for EventCounters to fire - increased for CI/CD reliability
-            await Task.Delay(2000, TestContext.Current.CancellationToken);
+            // Poll until structured log file has content
+            await DeadlineExtensions.ApplyDeadlineAsync(
+                DateTime.UtcNow.AddSeconds(10),
+                static () => Task.Delay(100, TestContext.Current.CancellationToken),
+                () => GetFileLengthOrZero(logFile) == 0);
         }
 
+        // Brief wait for file handle release after dispose
         await Task.Delay(200, TestContext.Current.CancellationToken);
 
         File.Exists(logFile).ShouldBeTrue();
@@ -158,8 +163,11 @@ public sealed class DiagnosticsBuilderTests : IDisposable
                 cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync(TestContext.Current.CancellationToken);
 
-        // Wait for EventCounters to be polled and metrics to be available - increased for CI/CD reliability
-        await Task.Delay(2000, TestContext.Current.CancellationToken);
+        // Poll until EventCounters deliver prometheus metrics
+        await DeadlineExtensions.ApplyDeadlineAsync(
+            DateTime.UtcNow.AddSeconds(10),
+            static () => Task.Delay(100, TestContext.Current.CancellationToken),
+            () => !exporter.Export().Contains("rivulet_items_started"));
 
         var prometheusText = exporter.Export();
         prometheusText.ShouldContain("rivulet_items_started");
@@ -198,8 +206,11 @@ public sealed class DiagnosticsBuilderTests : IDisposable
                 cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync(TestContext.Current.CancellationToken);
 
-        // Wait for EventCounters to fire - increased for CI/CD reliability
-        await Task.Delay(2000, TestContext.Current.CancellationToken);
+        // Poll until structured log callback receives at least one entry
+        await DeadlineExtensions.ApplyDeadlineAsync(
+            DateTime.UtcNow.AddSeconds(10),
+            static () => Task.Delay(100, TestContext.Current.CancellationToken),
+            () => loggedLines.IsEmpty);
 
         loggedLines.ShouldNotBeEmpty();
     }
@@ -400,5 +411,21 @@ public sealed class DiagnosticsBuilderTests : IDisposable
             .Build();
 
         diagnostics.ShouldNotBeNull();
+    }
+
+    /// <summary>
+    ///     Returns file length or 0 if the file does not exist, avoiding TOCTOU races
+    ///     between File.Exists and FileInfo.Length in polling predicates.
+    /// </summary>
+    private static long GetFileLengthOrZero(string path)
+    {
+        try
+        {
+            return new FileInfo(path).Length;
+        }
+        catch (FileNotFoundException)
+        {
+            return 0;
+        }
     }
 }

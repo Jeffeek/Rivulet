@@ -100,7 +100,9 @@ public sealed class MetricsAggregatorTests
                 cancellationToken: TestContext.Current.CancellationToken)
             .ToListAsync(TestContext.Current.CancellationToken);
 
-        // Poll until aggregation fires and produces results
+        // Poll until the specific "items-started" metric appears, not just any aggregation.
+        // The aggregation timer can fire mid-delivery of EventCounter data, producing
+        // aggregations with only some counters.
         var deadline = DateTime.UtcNow.AddSeconds(10);
         await DeadlineExtensions.ApplyDeadlineAsync(
             deadline,
@@ -108,7 +110,11 @@ public sealed class MetricsAggregatorTests
             () =>
             {
                 lock (lockObj)
-                    return aggregatedMetrics.Count == 0;
+                {
+                    return !aggregatedMetrics
+                        .SelectMany(static a => a)
+                        .Any(static m => m.Name == RivuletMetricsConstants.CounterNames.ItemsStarted);
+                }
             });
 
         // Take a thread-safe snapshot of the list to avoid race conditions

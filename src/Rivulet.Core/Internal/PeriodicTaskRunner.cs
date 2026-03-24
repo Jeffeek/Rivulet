@@ -36,8 +36,22 @@ internal static class PeriodicTaskRunner
         // Always execute final work on exit, regardless of whether the loop ended
         // via cancellation (OCE from Task.Delay) or natural exit (token checked in while condition).
         // This ensures the final snapshot captures all state changes (e.g., error counts)
-        // that occurred before disposal.
+        // that occurred before disposal. Cancellation is intentionally not checked here because
+        // finalWork performs a necessary final snapshot that must run to completion.
+        // Best-effort: exceptions are swallowed because finalWork is a diagnostic/observability
+        // concern and must never crash the caller's operation during disposal.
         if (finalWork is not null)
-            await finalWork().ConfigureAwait(false);
+        {
+            try
+            {
+                await finalWork().ConfigureAwait(false);
+            }
+#pragma warning disable CA1031 // finalWork is diagnostic cleanup — must not propagate to caller during disposal
+            catch
+#pragma warning restore CA1031
+            {
+                // Swallowed intentionally — see comment above
+            }
+        }
     }
 }
