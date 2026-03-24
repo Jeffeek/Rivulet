@@ -201,9 +201,9 @@ Integration between Rivulet parallel processing and [Polly](https://github.com/A
 - Advanced resilience patterns - Hedging, result-based retry, and more
 - Battle-tested - Built on Polly's production-proven resilience library
 
-### In Development
+#### [Rivulet.Pipeline](https://www.nuget.org/packages/Rivulet.Pipeline)
 
-#### Rivulet.Pipeline
+[![NuGet](https://img.shields.io/nuget/v/Rivulet.Pipeline.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Pipeline) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Pipeline.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Pipeline)
 
 Multi-stage pipeline composition for Rivulet with fluent API, per-stage concurrency, backpressure management between stages, and streaming support. [**Docs**](src/Rivulet.Pipeline/README.md)
 
@@ -214,7 +214,9 @@ Multi-stage pipeline composition for Rivulet with fluent API, per-stage concurre
 - Streaming & Buffered Modes - Memory-efficient streaming or materialized results
 - Full Rivulet.Core Integration - Retries, circuit breakers, rate limiting, metrics
 
-#### Rivulet.Csv
+#### [Rivulet.Csv](https://www.nuget.org/packages/Rivulet.Csv)
+
+[![NuGet](https://img.shields.io/nuget/v/Rivulet.Csv.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Csv) [![Downloads](https://img.shields.io/nuget/dt/Rivulet.Csv.svg?style=flat-square)](https://www.nuget.org/packages/Rivulet.Csv)
 
 Parallel CSV parsing and writing with CsvHelper integration, bounded concurrency, and batching support for high-throughput data processing. [**Docs**](src/Rivulet.Csv/README.md)
 
