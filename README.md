@@ -464,6 +464,7 @@ await foreach (var result in dataStream.BatchParallelStreamAsync(
 ```
 
 **Key Features:**
+
 - **Size-based batching**: Groups items into batches of specified size
 - **Timeout-based flushing**: Optional timeout to flush incomplete batches (async streams only)
 - **Parallel batch processing**: Process multiple batches concurrently with bounded parallelism
@@ -540,6 +541,7 @@ dotnet-counters monitor --process-id <PID> --counters Rivulet.Core
 ```
 
 **Key Features:**
+
 - **Zero-cost when not monitored**: EventCounters have minimal overhead
 - **Thread-safe**: Uses lock-free Interlocked operations
 - **Callback isolation**: Exceptions in callbacks don't break operations
@@ -589,6 +591,7 @@ var results = await heavyTasks.SelectParallelAsync(
 ```
 
 **Key Features:**
+
 - **Token bucket algorithm**: Allows controlled bursts while maintaining average rate
 - **Configurable rates**: Set tokens per second and burst capacity
 - **Weighted operations**: Different operations can consume different token amounts
@@ -646,6 +649,7 @@ var results = await requests.SelectParallelAsync(
 - **HalfOpen**: After `OpenTimeout` expires, circuit allows limited operations to test recovery. Success transitions to Closed. Failure transitions back to Open.
 
 **Key Features:**
+
 - **Fail-fast protection**: Prevents overwhelming failing services
 - **Automatic recovery testing**: Transitions to HalfOpen after timeout to probe health
 - **Flexible failure tracking**: Consecutive failures or time-window based (with `SamplingDuration`)
@@ -712,6 +716,7 @@ Uses AIMD (Additive Increase Multiplicative Decrease) algorithm similar to TCP c
 - **Gradual**: Same increase (+1), gentler decrease (-25%) - For stable workloads
 
 **Key Features:**
+
 - **Self-tuning**: Automatically finds optimal concurrency for current load
 - **Latency-aware**: Reduces workers when operations are too slow
 - **Error-aware**: Scales down when success rate drops below threshold
