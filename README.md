@@ -41,6 +41,7 @@
 Safe, async-first parallel operators with bounded concurrency, retries, and backpressure for I/O-heavy workloads. [**Docs**](src/Rivulet.Core/README.md)
 
 **Key Features:**
+
 - Bounded Concurrency - Control max parallel operations with backpressure
 - Adaptive Concurrency - Auto-scale workers based on latency and success rate (AIMD algorithm)
 - Retry Policies - Automatic retries with exponential backoff for transient errors
@@ -64,6 +65,7 @@ Safe, async-first parallel operators with bounded concurrency, retries, and back
 Enterprise observability for Rivulet.Core with EventListener wrappers, metric aggregators, and health check integration. [**Docs**](src/Rivulet.Diagnostics/README.md)
 
 **Key Features:**
+
 - EventListener Wrappers: Console, File, and Structured JSON logging
 - Metrics Aggregation: Time-window based metric aggregation with statistics
 - Prometheus Export: Export metrics in Prometheus text format
@@ -77,6 +79,7 @@ Enterprise observability for Rivulet.Core with EventListener wrappers, metric ag
 OpenTelemetry integration for Rivulet.Core providing distributed tracing, metrics export, and comprehensive observability. [**Docs**](src/Rivulet.Diagnostics.OpenTelemetry/README.md)
 
 **Key Features:**
+
 - Distributed Tracing: Automatic activity creation with parent-child relationships
 - Metrics Export: Bridge EventCounters to OpenTelemetry Meters
 - Retry Tracking: Record retry attempts as activity events
@@ -104,6 +107,7 @@ Integration package for using Rivulet with Microsoft.Extensions.Hosting, ASP.NET
 Testing utilities for Rivulet parallel operations including deterministic schedulers, virtual time, fake channels, and chaos injection. [**Docs**](src/Rivulet.Testing/README.md)
 
 **Key Features:**
+
 - VirtualTimeProvider: Control time in tests without actual delays
 - FakeChannel: Testable channel implementation with operation tracking
 - ChaosInjector: Inject failures and delays for resilience testing
@@ -116,6 +120,7 @@ Testing utilities for Rivulet parallel operations including deterministic schedu
 Parallel HTTP operations with automatic retries, resilient downloads, and HttpClientFactory integration. [**Docs**](src/Rivulet.Http/README.md)
 
 **Key Features:**
+
 - HttpClientFactory integration
 - Connection pooling awareness
 - Transient error handling (timeouts, 5xx responses)
@@ -129,6 +134,7 @@ Parallel HTTP operations with automatic retries, resilient downloads, and HttpCl
 Parallel file and directory operations with bounded concurrency, resilience, and streaming support for efficient I/O processing. [**Docs**](src/Rivulet.IO/README.md)
 
 **Key Features:**
+
 - Safe concurrent file access
 - Directory tree processing
 - File pattern matching (glob patterns)
@@ -142,6 +148,7 @@ Parallel file and directory operations with bounded concurrency, resilience, and
 Safe parallel SQL operations with connection pooling awareness and bulk operations. [**Docs**](src/Rivulet.Sql/README.md)
 
 **Key Features:**
+
 - Works with any ADO.NET provider
 - Connection pooling awareness
 - Transaction support
@@ -155,6 +162,7 @@ Safe parallel SQL operations with connection pooling awareness and bulk operatio
 SQL Server-specific optimizations for Rivulet.Sql including SqlBulkCopy integration for 10-100x faster bulk inserts. [**Docs**](src/Rivulet.Sql.SqlServer/README.md)
 
 **Key Features:**
+
 - SqlBulkCopy Integration: Ultra-high performance bulk inserts (50,000+ rows/sec)
 - Parallel Bulk Operations: Process multiple batches in parallel
 - Automatic Column Mapping: Maps DataTable columns to SQL Server table columns
@@ -169,6 +177,7 @@ SQL Server-specific optimizations for Rivulet.Sql including SqlBulkCopy integrat
 PostgreSQL-specific optimizations for Rivulet.Sql including COPY command integration for 10-100x faster bulk inserts. [**Docs**](src/Rivulet.Sql.PostgreSql/README.md)
 
 **Key Features:**
+
 - COPY Command Integration: Ultra-high performance bulk inserts using COPY
 - Multiple Formats: Binary, CSV, and text formats supported
 - Parallel Operations: Process multiple batches in parallel
@@ -183,6 +192,7 @@ PostgreSQL-specific optimizations for Rivulet.Sql including COPY command integra
 MySQL-specific optimizations for Rivulet.Sql using MySqlBulkLoader (LOAD DATA LOCAL INFILE) for 10-100x faster bulk inserts. [**Docs**](src/Rivulet.Sql.MySql/README.md)
 
 **Key Features:**
+
 - MySqlBulkLoader: LOAD DATA LOCAL INFILE for maximum performance
 - File-based Loading: Direct file import support
 - Parallel Operations: Process multiple batches in parallel
@@ -196,6 +206,7 @@ MySQL-specific optimizations for Rivulet.Sql using MySqlBulkLoader (LOAD DATA LO
 Integration between Rivulet parallel processing and [Polly](https://github.com/App-vNext/Polly) resilience policies. [**Docs**](src/Rivulet.Polly/README.md)
 
 **Key Features:**
+
 - Use Polly policies with Rivulet - Apply any Polly policy to parallel operations
 - Convert Rivulet to Polly - Use Rivulet configuration as standalone Polly policies
 - Advanced resilience patterns - Hedging, result-based retry, and more
@@ -208,6 +219,7 @@ Integration between Rivulet parallel processing and [Polly](https://github.com/A
 Multi-stage pipeline composition for Rivulet with fluent API, per-stage concurrency, backpressure management between stages, and streaming support. [**Docs**](src/Rivulet.Pipeline/README.md)
 
 **Key Features:**
+
 - Fluent Builder API - Type-safe pipeline construction with IntelliSense support
 - Per-Stage Concurrency - Different parallelism levels for each processing stage
 - Backpressure Management - Automatic flow control between stages using channels
@@ -221,6 +233,7 @@ Multi-stage pipeline composition for Rivulet with fluent API, per-stage concurre
 Parallel CSV parsing and writing with CsvHelper integration, bounded concurrency, and batching support for high-throughput data processing. [**Docs**](src/Rivulet.Csv/README.md)
 
 **Key Features:**
+
 - CsvHelper integration for robust CSV parsing
 - Multi-type operations (2-5 generic type parameters)
 - Memory-efficient streaming with IAsyncEnumerable
