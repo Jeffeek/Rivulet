@@ -910,6 +910,21 @@ await CsvParallelExtensions.WriteCsvParallelAsync(
 - [Rivulet.Core Documentation](../Rivulet.Core/README.md)
 - [Rivulet.IO Documentation](../Rivulet.IO/README.md)
 
+## Framework Support
+
+- .NET 8.0
+- .NET 9.0
+
+## Documentation & Source
+
+- **GitHub Repository**: [https://github.com/Jeffeek/Rivulet](https://github.com/Jeffeek/Rivulet)
+- **Report Issues**: [https://github.com/Jeffeek/Rivulet/issues](https://github.com/Jeffeek/Rivulet/issues)
+- **License**: MIT
+
 ## License
 
-MIT License - see [LICENSE](../../LICENSE.txt) for details.
+MIT License - see LICENSE file for details
+
+---
+
+**Made with ❤️ by Jeffeek** | [NuGet](https://www.nuget.org/packages/Rivulet.Csv/) | [GitHub](https://github.com/Jeffeek/Rivulet)

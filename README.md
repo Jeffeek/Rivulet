@@ -41,21 +41,21 @@
 Safe, async-first parallel operators with bounded concurrency, retries, and backpressure for I/O-heavy workloads. [**Docs**](src/Rivulet.Core/README.md)
 
 **Key Features:**
-- ✅ Bounded Concurrency - Control max parallel operations with backpressure
-- ✅ Adaptive Concurrency - Auto-scale workers based on latency and success rate (AIMD algorithm)
-- ✅ Retry Policies - Automatic retries with exponential backoff for transient errors
-- ✅ Circuit Breaker - Prevent cascading failures with automatic service protection
-- ✅ Rate Limiting - Token bucket algorithm for controlling operation rates
-- ✅ Error Handling Modes - FailFast, CollectAndContinue, or BestEffort
-- ✅ Streaming Support - Process results incrementally via `IAsyncEnumerable<T>`
-- ✅ Ordered Output - Maintain input sequence order when needed
-- ✅ Runtime Metrics - Built-in monitoring via EventCounters and custom callbacks
-- ✅ Progress Reporting - Periodic snapshots with throughput, ETA, and percent-complete
-- ✅ Cancellation - Full `CancellationToken` support throughout
-- ✅ Lifecycle Hooks - OnStart, OnComplete, OnRetry, OnError, OnThrottle, OnDrain callbacks
-- ✅ Fallback Values - Supply default results for failed items instead of throwing
-- ✅ Per-Item Timeouts - Enforce timeouts for individual operations
-- ✅ Works with both `IEnumerable<T>` and `IAsyncEnumerable<T>`
+- Bounded Concurrency - Control max parallel operations with backpressure
+- Adaptive Concurrency - Auto-scale workers based on latency and success rate (AIMD algorithm)
+- Retry Policies - Automatic retries with exponential backoff for transient errors
+- Circuit Breaker - Prevent cascading failures with automatic service protection
+- Rate Limiting - Token bucket algorithm for controlling operation rates
+- Error Handling Modes - FailFast, CollectAndContinue, or BestEffort
+- Streaming Support - Process results incrementally via `IAsyncEnumerable<T>`
+- Ordered Output - Maintain input sequence order when needed
+- Runtime Metrics - Built-in monitoring via EventCounters and custom callbacks
+- Progress Reporting - Periodic snapshots with throughput, ETA, and percent-complete
+- Cancellation - Full `CancellationToken` support throughout
+- Lifecycle Hooks - OnStart, OnComplete, OnRetry, OnError, OnThrottle, OnDrain callbacks
+- Fallback Values - Supply default results for failed items instead of throwing
+- Per-Item Timeouts - Enforce timeouts for individual operations
+- Works with both `IEnumerable<T>` and `IAsyncEnumerable<T>`
 
 #### [Rivulet.Diagnostics](https://www.nuget.org/packages/Rivulet.Diagnostics)
 
