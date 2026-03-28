@@ -912,4 +912,8 @@ await CsvParallelExtensions.WriteCsvParallelAsync(
 
 ## License
 
-MIT License - see [LICENSE](../../LICENSE.txt) for details.
+MIT License - see LICENSE file for details
+
+---
+
+**Made with ❤️ by Jeffeek** | [NuGet](https://www.nuget.org/packages/Rivulet.Core/) | [GitHub](https://github.com/Jeffeek/Rivulet)
