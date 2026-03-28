@@ -356,6 +356,17 @@ public async Task TestParallelOperationsWithTestingTools()
 3. **ChaosInjector**: Start with low failure rates (0.1-0.3) and increase gradually
 4. **ConcurrencyAsserter**: Reset between test cases to avoid contamination
 
+## Framework Support
+
+- .NET 8.0
+- .NET 9.0
+
+## Documentation & Source
+
+- **GitHub Repository**: [https://github.com/Jeffeek/Rivulet](https://github.com/Jeffeek/Rivulet)
+- **Report Issues**: [https://github.com/Jeffeek/Rivulet/issues](https://github.com/Jeffeek/Rivulet/issues)
+- **License**: MIT
+
 ## License
 
 MIT License - see LICENSE file for details

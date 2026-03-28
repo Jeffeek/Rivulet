@@ -515,6 +515,17 @@ Configure appropriate parallelism based on workload:
 
 Contributions are welcome! Please see the main Rivulet repository for guidelines.
 
+## Framework Support
+
+- .NET 8.0
+- .NET 9.0
+
+## Documentation & Source
+
+- **GitHub Repository**: [https://github.com/Jeffeek/Rivulet](https://github.com/Jeffeek/Rivulet)
+- **Report Issues**: [https://github.com/Jeffeek/Rivulet/issues](https://github.com/Jeffeek/Rivulet/issues)
+- **License**: MIT
+
 ## License
 
 MIT License - see LICENSE file for details

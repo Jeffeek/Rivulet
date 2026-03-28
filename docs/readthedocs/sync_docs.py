@@ -142,6 +142,67 @@ def filter_badges_for_versioned_docs(content: str) -> str:
     return content
 
 
+def _strip_comment_markers(content: str) -> str:
+    """
+    Remove HTML comment markers used only by code-generation scripts.
+
+    These markers (e.g. <!-- KEY_FEATURES_START -->) are used by generate-all.py
+    to locate sections for auto-update but are meaningless in MkDocs output.
+    Keeping them in the generated Markdown breaks list rendering: Python-Markdown
+    treats a bare <!-- --> line as an HTML block, which can prevent adjacent list
+    items from being parsed as <ul>/<li> elements.
+    """
+    return re.sub(r'<!--\s*\w+_(?:START|END)\s*-->\n?', '', content)
+
+
+# Footer headings that are standardized and injected by the sync script.
+# Existing occurrences in source files are stripped and replaced.
+_FOOTER_HEADINGS = ['## Framework Support', '## Documentation & Source', '## License']
+
+
+def _strip_package_footer(content: str) -> str:
+    """
+    Remove the standardized footer zone from converted package content.
+
+    The footer zone starts at the earliest occurrence of any of the canonical
+    footer headings, or at the bare '---' + 'Made with' block if no heading is
+    found first.
+    """
+    earliest = len(content)
+    for heading in _FOOTER_HEADINGS:
+        idx = content.find('\n' + heading + '\n')
+        if idx != -1 and idx < earliest:
+            earliest = idx
+    # Also catch the lone --- + footer line when headings are absent
+    m = re.search(r'\n\n---\n\n\*\*Made with', content)
+    if m and m.start() < earliest:
+        earliest = m.start()
+    return content[:earliest].rstrip()
+
+
+def _build_package_footer(package_name: str) -> str:
+    """
+    Build the canonical footer appended to every package documentation page.
+
+    The NuGet URL is the only per-package variable; everything else is identical
+    across all packages so the footer is easy to keep in sync.
+    """
+    nuget_url = f"https://www.nuget.org/packages/{package_name}/"
+    return (
+        "\n\n## Framework Support\n\n"
+        "- .NET 8.0\n"
+        "- .NET 9.0\n"
+        "\n## Documentation & Source\n\n"
+        "- **GitHub Repository**: [https://github.com/Jeffeek/Rivulet](https://github.com/Jeffeek/Rivulet)\n"
+        "- **Report Issues**: [https://github.com/Jeffeek/Rivulet/issues](https://github.com/Jeffeek/Rivulet/issues)\n"
+        "- **License**: MIT\n"
+        "\n## License\n\n"
+        "MIT License - see [LICENSE](../license.md) for details\n"
+        "\n---\n\n"
+        f"**Made with ❤️ by Jeffeek** | [NuGet]({nuget_url}) | [GitHub](https://github.com/Jeffeek/Rivulet)\n"
+    )
+
+
 def convert_github_to_mkdocs(content: str, source_path: Path) -> str:
     """
     Convert GitHub-specific markdown to MkDocs-compatible format.
@@ -151,6 +212,10 @@ def convert_github_to_mkdocs(content: str, source_path: Path) -> str:
         source_path: Path to the source file (for resolving relative links).
     """
     source_dir = source_path.parent
+
+    # Strip source-only HTML comment markers before any other processing.
+    # Must be done first so that comment blocks don't interfere with list parsing.
+    content = _strip_comment_markers(content)
 
     # Process <div align="center"> blocks
     def process_center_div(match):
@@ -353,7 +418,23 @@ def sync_docs():
         if convert:
             content = source.read_text(encoding='utf-8')
             converted_content = convert_github_to_mkdocs(content, source)
-            dest.write_text(converted_content, encoding='utf-8')
+
+            # Inject canonical footer for package READMEs.
+            # src/<PackageName>/README.md -> strip any existing footer zone and
+            # append the standardised Framework Support / Documentation & Source /
+            # License sections so every package page is identical in structure.
+            if source.parent.parent == REPO_ROOT / 'src' and source.name == 'README.md':
+                package_name = source.parent.name
+                converted_content = _strip_package_footer(converted_content)
+                converted_content += _build_package_footer(package_name)
+
+            # Normalise to LF line endings so the committed files are consistent
+            # regardless of the OS the script is run on, and MkDocs/Python-Markdown
+            # on the ReadTheDocs Linux server receives clean input.
+            converted_content = converted_content.replace('\r\n', '\n')
+
+            with dest.open('w', encoding='utf-8', newline='\n') as f:
+                f.write(converted_content)
             print(f"  [OK] {source.name} -> {dest.relative_to(DOCS_DIR)} (converted)")
         else:
             shutil.copy2(source, dest)
