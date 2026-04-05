@@ -426,12 +426,18 @@ public sealed class RateLimitingTests
     }
 
     [Fact]
-    public void TokenBucket_GetAvailableTokens_ReturnsCorrectValue()
+    public void TokenBucket_GetAvailableTokens_ReflectsConsumption()
     {
         var bucket = new TokenBucket(new() { TokensPerSecond = 100, BurstCapacity = 50, TokensPerOperation = 5 });
 
+        bucket.TryAcquire().ShouldBeTrue(); // consumes 5 tokens
+        bucket.TryAcquire().ShouldBeTrue(); // consumes 5 tokens
+        bucket.TryAcquire().ShouldBeTrue(); // consumes 5 tokens
+
+        // 50 - (3 × 5) = 35 remaining; allow tiny upward variance from time-based refill between acquires
         var tokens = bucket.GetAvailableTokens();
-        tokens.ShouldBe(50);
+        tokens.ShouldBeGreaterThanOrEqualTo(35.0);
+        tokens.ShouldBeLessThan(36.0);
     }
 
     [Fact]

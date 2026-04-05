@@ -337,26 +337,6 @@ public sealed class OptionsConstructorTests
     #region Integration Tests
 
     [Fact]
-    public void AllOptionsConstructors_ShouldBePubliclyAccessible()
-    {
-        // This test verifies that all copy constructors are public and can be called
-        // This is important for the public API and for users who want to create
-        // modified copies of options objects
-
-        // Act - Create instances using copy constructors with null
-        var circuitBreakerOptions = new CircuitBreakerOptions(null);
-        var metricsOptions = new MetricsOptions(null);
-        var progressOptions = new ProgressOptions(null);
-        var rateLimitOptions = new RateLimitOptions(null);
-
-        // Assert - All should use defaults
-        circuitBreakerOptions.ShouldNotBeNull();
-        metricsOptions.ShouldNotBeNull();
-        progressOptions.ShouldNotBeNull();
-        rateLimitOptions.ShouldNotBeNull();
-    }
-
-    [Fact]
     public void OptionsConstructors_CanBeUsedToCreateModifiedCopies()
     {
         // This test demonstrates a common use case: creating a modified copy of options

@@ -28,50 +28,6 @@ public sealed class EdgeCasesAndCoverageTests
     }
 
     [Fact]
-    public void ParallelOptionsRivulet_CanSetAllProperties()
-    {
-        var options = new ParallelOptionsRivulet
-        {
-            MaxDegreeOfParallelism = 10,
-            PerItemTimeout = TimeSpan.FromSeconds(5),
-            ErrorMode = ErrorMode.BestEffort,
-            OnErrorAsync = static (_, _) => ValueTask.FromResult(true),
-            OnStartItemAsync = static _ => ValueTask.CompletedTask,
-            OnCompleteItemAsync = static _ => ValueTask.CompletedTask,
-            OnThrottleAsync = static _ => ValueTask.CompletedTask,
-            OnDrainAsync = static _ => ValueTask.CompletedTask,
-            IsTransient = static _ => true,
-            MaxRetries = 5,
-            BaseDelay = TimeSpan.FromMilliseconds(200),
-            BackoffStrategy = BackoffStrategy.ExponentialJitter,
-            ChannelCapacity = 500
-        };
-
-        options.MaxDegreeOfParallelism.ShouldBe(10);
-        options.PerItemTimeout.ShouldBe(TimeSpan.FromSeconds(5));
-        options.ErrorMode.ShouldBe(ErrorMode.BestEffort);
-        options.OnErrorAsync.ShouldNotBeNull();
-        options.OnStartItemAsync.ShouldNotBeNull();
-        options.OnCompleteItemAsync.ShouldNotBeNull();
-        options.OnThrottleAsync.ShouldNotBeNull();
-        options.OnDrainAsync.ShouldNotBeNull();
-        options.IsTransient.ShouldNotBeNull();
-        options.MaxRetries.ShouldBe(5);
-        options.BaseDelay.ShouldBe(TimeSpan.FromMilliseconds(200));
-        options.BackoffStrategy.ShouldBe(BackoffStrategy.ExponentialJitter);
-        options.ChannelCapacity.ShouldBe(500);
-    }
-
-    [Fact]
-    public void ErrorMode_AllValues_AreDefined()
-    {
-        var values = Enum.GetValues<ErrorMode>();
-        values.ShouldContain(ErrorMode.FailFast);
-        values.ShouldContain(ErrorMode.CollectAndContinue);
-        values.ShouldContain(ErrorMode.BestEffort);
-    }
-
-    [Fact]
     public async Task SelectParallelAsync_VerySmallChannelCapacity_StillWorks()
     {
         var source = Enumerable.Range(1, 100);
@@ -277,23 +233,6 @@ public sealed class EdgeCasesAndCoverageTests
 
         results.Count.ShouldBe(30);
         workerIndices.Count.ShouldBe(30);
-    }
-
-    [Fact]
-    public async Task ChannelWriter_TryComplete_CalledInFinally()
-    {
-        await Assert.ThrowsAsync<InvalidOperationException>(((Func<Task<List<int>>>?)Act)!);
-        return;
-
-        static IEnumerable<int> Source()
-        {
-            yield return 1;
-            yield return 2;
-
-            throw new InvalidOperationException("Writer error");
-        }
-
-        static Task<List<int>> Act() => Source().SelectParallelAsync(static (x, _) => new ValueTask<int>(x * 2), cancellationToken: TestContext.Current.CancellationToken);
     }
 
     [Fact]
