@@ -88,59 +88,6 @@ public sealed class RivuletEventSourceTests
     }
 
     [Fact]
-    public void OnEventCommand_WithEnableCommand_ShouldCreateCounters()
-    {
-        using var listener = new TestEventListener();
-        listener.EnableEvents(RivuletEventSource.Log, EventLevel.Verbose);
-
-        // Enabling the event source should trigger OnEventCommand with Enable
-        // This tests the counter creation branches (??= when null)
-        RivuletEventSource.Log.ShouldNotBeNull();
-    }
-
-    [Fact]
-    public void OnEventCommand_CalledMultipleTimes_ShouldReuseCounters()
-    {
-        using var listener1 = new TestEventListener();
-        using var listener2 = new TestEventListener();
-
-        // First enable - creates counters
-        listener1.EnableEvents(RivuletEventSource.Log, EventLevel.Verbose);
-
-        // Second enable - reuses existing counters (hits the "already exists" branch of ??=)
-        listener2.EnableEvents(RivuletEventSource.Log, EventLevel.Verbose);
-
-        RivuletEventSource.Log.ShouldNotBeNull();
-    }
-
-    [Fact]
-    public void OnEventCommand_WithDisableCommand_ShouldNotCreateCounters()
-    {
-        using var listener = new TestEventListener();
-
-        // Enable first
-        listener.EnableEvents(RivuletEventSource.Log, EventLevel.Verbose);
-
-        // Disable - should trigger OnEventCommand but with Disable command (early return)
-        listener.DisableEvents(RivuletEventSource.Log);
-
-        RivuletEventSource.Log.ShouldNotBeNull();
-    }
-
-    [Fact]
-    public void OnEventCommand_WithUpdateCommand_ShouldNotCreateCounters()
-    {
-        using var listener = new TestEventListener();
-
-        // This triggers OnEventCommand with different command types
-        listener.EnableEvents(RivuletEventSource.Log, EventLevel.Verbose);
-        listener.DisableEvents(RivuletEventSource.Log);
-        listener.EnableEvents(RivuletEventSource.Log, EventLevel.Warning);
-
-        RivuletEventSource.Log.ShouldNotBeNull();
-    }
-
-    [Fact]
     public void Dispose_ShouldDisposeCounters()
     {
         // Create a listener to enable counters

@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using Rivulet.Core.Observability;
 using Rivulet.Core.Resilience;
 
 namespace Rivulet.Core.Tests;
@@ -10,17 +12,34 @@ public sealed class EdgeCaseCoverageTests
     [Fact]
     public async Task MetricsTracker_ShouldHandleVeryFastExecution()
     {
-        var options = new ParallelOptionsRivulet { MaxDegreeOfParallelism = 10 };
+        MetricsSnapshot? lastSnapshot = null;
+        var options = new ParallelOptionsRivulet
+        {
+            MaxDegreeOfParallelism = 10,
+            Metrics = new()
+            {
+                SampleInterval = TimeSpan.FromMilliseconds(10),
+                OnMetricsSample = snapshot =>
+                {
+                    lastSnapshot = snapshot;
+                    return ValueTask.CompletedTask;
+                }
+            }
+        };
 
         var result = await Enumerable.Range(1, 3)
             .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x), options, cancellationToken: TestContext.Current.CancellationToken);
 
         result.Count.ShouldBe(3);
+        lastSnapshot.ShouldNotBeNull();
+        lastSnapshot!.ItemsCompleted.ShouldBe(3);
     }
 
     [Fact]
-    public async Task RetryPolicy_ShouldHandleNullMetricsTracker()
+    public async Task RetryPolicy_WithNoMetricsCallback_TransientRetriesSucceed()
     {
+        // When no Metrics callback is configured, NoOpMetricsTracker is used internally.
+        // Verify that retry logic still works correctly on this path.
         var attemptCount = 0;
 
         var options = new ParallelOptionsRivulet
@@ -44,14 +63,26 @@ public sealed class EdgeCaseCoverageTests
     }
 
     [Fact]
-    public async Task TokenBucket_ShouldHandleRapidExecution()
+    public async Task TokenBucket_ThrottlesExecution()
     {
-        var options = new ParallelOptionsRivulet { MaxDegreeOfParallelism = 5 };
+        var sw = Stopwatch.StartNew();
+        var options = new ParallelOptionsRivulet
+        {
+            MaxDegreeOfParallelism = 5,
+            RateLimit = new()
+            {
+                TokensPerSecond = 10,
+                BurstCapacity = 5
+            }
+        };
 
         var result = await Enumerable.Range(1, 10)
             .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x), options, cancellationToken: TestContext.Current.CancellationToken);
 
+        sw.Stop();
         result.Count.ShouldBe(10);
+        // First 5 use burst capacity, remaining 5 at 10 tokens/sec = 500ms minimum
+        sw.Elapsed.ShouldBeGreaterThan(TimeSpan.FromMilliseconds(400));
     }
 
     [Fact]
@@ -103,12 +134,28 @@ public sealed class EdgeCaseCoverageTests
     [Fact]
     public async Task ProgressTracker_ShouldHandleRapidProgressUpdates()
     {
-        var options = new ParallelOptionsRivulet { MaxDegreeOfParallelism = 10 };
+        ProgressSnapshot? lastSnapshot = null;
+        var options = new ParallelOptionsRivulet
+        {
+            MaxDegreeOfParallelism = 10,
+            Progress = new()
+            {
+                ReportInterval = TimeSpan.FromMilliseconds(10),
+                OnProgress = snapshot =>
+                {
+                    lastSnapshot = snapshot;
+                    return ValueTask.CompletedTask;
+                }
+            }
+        };
 
         var result = await Enumerable.Range(1, 20)
             .SelectParallelAsync(static (x, _) => ValueTask.FromResult(x * 2), options, cancellationToken: TestContext.Current.CancellationToken);
 
         result.Count.ShouldBe(20);
+        lastSnapshot.ShouldNotBeNull();
+        lastSnapshot!.ItemsCompleted.ShouldBe(20);
+        lastSnapshot.TotalItems.ShouldBe(20);
     }
 
     [Fact]
