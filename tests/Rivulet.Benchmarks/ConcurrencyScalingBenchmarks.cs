@@ -11,14 +11,14 @@ namespace Rivulet.Benchmarks;
     MarkdownExporter
 ]
 // ReSharper disable once MemberCanBeFileLocal
-public sealed class ConcurrencyScalingBenchmarks
+// ReSharper disable once ClassCanBeSealed.Global
+public class ConcurrencyScalingBenchmarks
 {
     private const int ItemCount = 1000;
     private IEnumerable<int> _source = null!;
 
     // ReSharper disable once UnassignedField.Global
-    [Params(1,
-        2,
+    [Params(
         4,
         8,
         16,

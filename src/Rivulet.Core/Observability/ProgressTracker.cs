@@ -27,11 +27,7 @@ internal sealed class ProgressTracker : IAsyncDisposable
             ReportProgress,
             _options.ReportInterval,
             _reporterCts.Token,
-            async () =>
-            {
-                await Task.Delay(100).ConfigureAwait(false);
-                await ReportProgress().ConfigureAwait(false);
-            });
+            ReportProgress);
     }
 
     private static TimeSpan DisposeWait => TimeSpan.FromSeconds(5);

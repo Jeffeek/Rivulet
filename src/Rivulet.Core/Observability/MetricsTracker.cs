@@ -126,10 +126,6 @@ internal sealed class MetricsTracker : MetricsTrackerBase
             _samplerTask,
             DisposeWait,
             _stopwatch,
-            async () =>
-            {
-                await Task.Delay(100).ConfigureAwait(false);
-                await SampleMetrics().ConfigureAwait(false);
-            });
+            SampleMetrics);
     }
 }
