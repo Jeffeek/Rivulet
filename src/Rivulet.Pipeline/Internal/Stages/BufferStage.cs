@@ -1,17 +1,13 @@
 using System.Runtime.CompilerServices;
 using System.Threading.Channels;
+using Rivulet.Core;
 
 namespace Rivulet.Pipeline.Internal.Stages;
 
-/// <summary>
-/// A stage that buffers items to decouple upstream and downstream processing.
-/// </summary>
-internal sealed class BufferStage<T>(int capacity, string name) : IInternalPipelineStage, IPipelineStage<T, T>
+internal sealed class BufferStage<T>(int capacity, string name)
+    : PipelineStageBase<T, T>(name, new StageOptions())
 {
-    public string Name { get; } = name ?? throw new ArgumentNullException(nameof(name));
-    public StageOptions Options { get; } = new();
-
-    public async IAsyncEnumerable<T> ExecuteAsync(
+    public override async IAsyncEnumerable<T> ExecuteAsync(
         IAsyncEnumerable<T> input,
         PipelineContext context,
         [EnumeratorCancellation]
@@ -61,12 +57,10 @@ internal sealed class BufferStage<T>(int capacity, string name) : IInternalPipel
         }
     }
 
-    public IAsyncEnumerable<object> ExecuteUntypedAsync(
-        IAsyncEnumerable<object> input,
-        PipelineContext context,
-        CancellationToken cancellationToken
-    ) => StageExecutionHelper.ExecuteUntypedAsync<T, T>(
-        input,
-        typedInput => ExecuteAsync(typedInput, context, cancellationToken),
-        cancellationToken);
+    protected override IAsyncEnumerable<T> ExecuteCoreAsync(
+        IAsyncEnumerable<T> _,
+        ParallelOptionsRivulet __,
+        PipelineContext ___,
+        CancellationToken ____
+    ) => throw new NotSupportedException();
 }

@@ -1,7 +1,5 @@
-using System.Text;
 using System.Text.Json;
 using Rivulet.Core;
-using Rivulet.Core.Internal;
 using Rivulet.Diagnostics.Internal;
 
 namespace Rivulet.Diagnostics;
@@ -22,14 +20,10 @@ namespace Rivulet.Diagnostics;
 ///     });
 /// </code>
 /// </example>
-public sealed class RivuletStructuredLogListener : RivuletEventListenerBase, IAsyncDisposable
+public sealed class RivuletStructuredLogListener : FileEventListenerBase
 {
-    private readonly string? _filePath;
     private readonly JsonSerializerOptions _jsonOptions;
-    private readonly object _lock = LockFactory.CreateLock();
     private readonly Action<string>? _logAction;
-    private bool _disposed;
-    private StreamWriter? _writer;
 
     /// <summary>
     ///     Initializes a new instance of the <see cref="RivuletStructuredLogListener" /> class that writes to a file.
@@ -38,9 +32,9 @@ public sealed class RivuletStructuredLogListener : RivuletEventListenerBase, IAs
     /// <param name="writeIndented">Whether to format JSON with indentation. Default is false for compact output.</param>
     public RivuletStructuredLogListener(string filePath, bool writeIndented = false)
     {
-        _filePath = filePath ?? throw new ArgumentNullException(nameof(filePath));
+        var filePath1 = filePath ?? throw new ArgumentNullException(nameof(filePath));
         _jsonOptions = new() { WriteIndented = writeIndented };
-        InitializeWriter();
+        InitializeWriter(filePath1);
     }
 
     /// <summary>
@@ -53,27 +47,6 @@ public sealed class RivuletStructuredLogListener : RivuletEventListenerBase, IAs
     {
         _logAction = logAction ?? throw new ArgumentNullException(nameof(logAction));
         _jsonOptions = new() { WriteIndented = writeIndented };
-    }
-
-    /// <summary>
-    ///     Disposes the structured log listener asynchronously and closes the file if applicable.
-    /// </summary>
-    public async ValueTask DisposeAsync()
-    {
-        // Extract writer under lock to ensure thread-safety and dispose outside lock to avoid holding lock during async I/O
-        await StreamWriterDisposalHelper.ExtractAndDisposeAsync(_lock,
-            () =>
-            {
-                if (_disposed)
-                    return null;
-
-                _disposed = true;
-                var w = _writer;
-                _writer = null;
-                return w;
-            }).ConfigureAwait(false);
-
-        base.Dispose();
     }
 
     /// <summary>
@@ -95,46 +68,15 @@ public sealed class RivuletStructuredLogListener : RivuletEventListenerBase, IAs
 
         var json = JsonSerializer.Serialize(logEntry, _jsonOptions);
 
-        LockHelper.Execute(_lock,
-            () =>
+        ExecuteUnderLock(() =>
+        {
+            if (Writer != null)
             {
-                if (_writer != null)
-                {
-                    _writer.WriteLine(json);
-                    _writer.Flush();
-                }
-                else
-                    _logAction?.Invoke(json);
-            });
-    }
-
-    private void InitializeWriter()
-    {
-        if (_filePath == null) return;
-
-        var directory = Path.GetDirectoryName(_filePath);
-        if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory)) Directory.CreateDirectory(directory);
-
-        _writer = new(_filePath, true, Encoding.UTF8) { AutoFlush = false };
-    }
-
-    /// <summary>
-    ///     Disposes the structured log listener and closes the file if applicable.
-    /// </summary>
-    public override void Dispose()
-    {
-        StreamWriterDisposalHelper.ExtractAndDispose(_lock,
-            () =>
-            {
-                if (_disposed)
-                    return null;
-
-                _disposed = true;
-                var w = _writer;
-                _writer = null;
-                return w;
-            });
-
-        base.Dispose();
+                Writer.WriteLine(json);
+                Writer.Flush();
+            }
+            else
+                _logAction?.Invoke(json);
+        });
     }
 }

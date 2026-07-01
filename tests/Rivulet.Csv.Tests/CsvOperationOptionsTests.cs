@@ -2,31 +2,18 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text;
 using CsvHelper.Configuration;
+using Rivulet.Base.Tests;
 using Rivulet.Core;
 
 namespace Rivulet.Csv.Tests;
 
-public sealed class CsvOperationOptionsTests : IDisposable
+public sealed class CsvOperationOptionsTests : TempDirectoryFixture
 {
-    private readonly string _testDirectory;
-
-    public CsvOperationOptionsTests()
-    {
-        _testDirectory = Path.Join(Path.GetTempPath(), $"RivuletCsvOptionsTests_{Guid.NewGuid()}");
-        Directory.CreateDirectory(_testDirectory);
-    }
-
-    public void Dispose()
-    {
-        if (Directory.Exists(_testDirectory))
-            Directory.Delete(_testDirectory, true);
-    }
-
     [Fact]
     public async Task ParseCsvParallelAsync_WithTrimWhitespace_ShouldTrimFields()
     {
         // Arrange
-        var csvPath = Path.Join(_testDirectory, "whitespace.csv");
+        var csvPath = Path.Join(TestDirectory, "whitespace.csv");
         // ReSharper disable once GrammarMistakeInStringLiteral
         const string csvContent = """
                                   Id,Name,Price
@@ -59,7 +46,7 @@ public sealed class CsvOperationOptionsTests : IDisposable
     public async Task ParseCsvParallelAsync_WithoutTrimWhitespace_ShouldPreserveWhitespace()
     {
         // Arrange
-        var csvPath = Path.Join(_testDirectory, "whitespace.csv");
+        var csvPath = Path.Join(TestDirectory, "whitespace.csv");
         const string csvContent = """
                                   Id,Name,Price
                                   1,  Product A  ,10.50
@@ -88,7 +75,7 @@ public sealed class CsvOperationOptionsTests : IDisposable
     public async Task ParseCsvParallelAsync_WithDifferentEncoding_ShouldParseCorrectly()
     {
         // Arrange
-        var csvPath = Path.Join(_testDirectory, "utf16.csv");
+        var csvPath = Path.Join(TestDirectory, "utf16.csv");
         const string csvContent = """
                                   Id,Name,Price
                                   1,Prøduct Â,10.50
@@ -114,7 +101,7 @@ public sealed class CsvOperationOptionsTests : IDisposable
     public async Task ParseCsvParallelAsync_WithDifferentCulture_ShouldParseDecimalsCorrectly()
     {
         // Arrange
-        var csvPath = Path.Join(_testDirectory, "culture.csv");
+        var csvPath = Path.Join(TestDirectory, "culture.csv");
         const string csvContent = """
                                   Id,Name,Price
                                   1,Product A,10.50
@@ -140,7 +127,7 @@ public sealed class CsvOperationOptionsTests : IDisposable
     public async Task ParseCsvParallelAsync_WithBlankLines_ShouldIgnoreByDefault()
     {
         // Arrange
-        var csvPath = Path.Join(_testDirectory, "blank_lines.csv");
+        var csvPath = Path.Join(TestDirectory, "blank_lines.csv");
         const string csvContent = """
                                   Id,Name,Price
                                   1,Product A,10.50
@@ -178,7 +165,7 @@ public sealed class CsvOperationOptionsTests : IDisposable
             new Product { Id = 2, Name = "Prödüct B", Price = 20.00m }
         };
 
-        var csvPath = Path.Join(_testDirectory, "utf16-output.csv");
+        var csvPath = Path.Join(TestDirectory, "utf16-output.csv");
         var fileWrites = new[]
         {
             new RivuletCsvWriteFile<Product>(csvPath, products, null)
@@ -208,7 +195,7 @@ public sealed class CsvOperationOptionsTests : IDisposable
             new Product { Id = 1, Name = "Product A", Price = 10.50m }
         };
 
-        var csvPath = Path.Join(_testDirectory, "output.tsv");
+        var csvPath = Path.Join(TestDirectory, "output.tsv");
         var fileWrites = new[]
         {
             new RivuletCsvWriteFile<Product>(
@@ -242,7 +229,7 @@ public sealed class CsvOperationOptionsTests : IDisposable
     public async Task ParseCsvParallelAsync_WithoutHeaders_ShouldParseByPosition()
     {
         // Arrange
-        var csvPath = Path.Join(_testDirectory, "no_header.csv");
+        var csvPath = Path.Join(TestDirectory, "no_header.csv");
         const string csvContent = """
                                   1,Product A,10.50
                                   2,Product B,20.00
@@ -278,7 +265,7 @@ public sealed class CsvOperationOptionsTests : IDisposable
             new Product { Id = 1, Name = "Product A", Price = 10.50m }
         };
 
-        var csvPath = Path.Join(_testDirectory, "no_header-output.csv");
+        var csvPath = Path.Join(TestDirectory, "no_header-output.csv");
         var fileWrites = new[]
         {
             new RivuletCsvWriteFile<Product>(
@@ -311,7 +298,7 @@ public sealed class CsvOperationOptionsTests : IDisposable
     public async Task ParseCsvParallelAsync_WithBufferSize_ShouldUseCustomBuffer()
     {
         // Arrange
-        var csvPath = Path.Join(_testDirectory, "buffer.csv");
+        var csvPath = Path.Join(TestDirectory, "buffer.csv");
         const string csvContent = """
                                   Id,Name,Price
                                   1,Product A,10.50
@@ -339,7 +326,7 @@ public sealed class CsvOperationOptionsTests : IDisposable
             new Product { Id = 1, Name = "Product A", Price = 10.50m }
         };
 
-        var csvPath = Path.Join(_testDirectory, "sub_dir1", "sub_dir2", "output.csv");
+        var csvPath = Path.Join(TestDirectory, "sub_dir1", "sub_dir2", "output.csv");
         var fileWrites = new[]
         {
             new RivuletCsvWriteFile<Product>(csvPath, products, null)
@@ -367,7 +354,7 @@ public sealed class CsvOperationOptionsTests : IDisposable
             new Product { Id = 1, Name = "Product A", Price = 10.50m }
         };
 
-        var csvPath = Path.Join(_testDirectory, "nonexistent", "output.csv");
+        var csvPath = Path.Join(TestDirectory, "nonexistent", "output.csv");
         var fileWrites = new[]
         {
             new RivuletCsvWriteFile<Product>(csvPath, products, null)
@@ -395,7 +382,7 @@ public sealed class CsvOperationOptionsTests : IDisposable
     public async Task ParseCsvParallelAsync_WithCsvContextAction_ShouldApplyContextConfiguration()
     {
         // Arrange
-        var csvPath = Path.Join(_testDirectory, "context.csv");
+        var csvPath = Path.Join(TestDirectory, "context.csv");
         // ReSharper disable once GrammarMistakeInStringLiteral
         const string csvContent = """
                                   Id,Name,Price
@@ -436,7 +423,7 @@ public sealed class CsvOperationOptionsTests : IDisposable
             new Product { Id = 1, Name = "Product A", Price = 10.50m }
         };
 
-        var csvPath = Path.Join(_testDirectory, "context-output.csv");
+        var csvPath = Path.Join(TestDirectory, "context-output.csv");
         var contextActionCalled = false;
 
         var fileWrites = new[]
@@ -471,7 +458,7 @@ public sealed class CsvOperationOptionsTests : IDisposable
     public async Task CsvOperationOptions_WithNullParallelOptions_ShouldUseDefaults()
     {
         // Arrange
-        var csvPath = Path.Join(_testDirectory, "null_options.csv");
+        var csvPath = Path.Join(TestDirectory, "null_options.csv");
         const string csvContent = """
                                   Id,Name,Price
                                   1,Product A,10.50

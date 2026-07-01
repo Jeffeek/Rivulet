@@ -3,59 +3,26 @@ using Rivulet.Core;
 
 namespace Rivulet.Pipeline.Internal.Stages;
 
-/// <summary>
-/// A stage that flattens collections returned by the selector.
-/// </summary>
 internal sealed class SelectManyStage<TIn, TOut>(
     Func<TIn, CancellationToken, ValueTask<IEnumerable<TOut>>> selector,
     StageOptions options,
     string name
-) : IInternalPipelineStage, IPipelineStage<TIn, TOut>
+) : PipelineStageBase<TIn, TOut>(name, options)
 {
-    private readonly Func<TIn, CancellationToken, ValueTask<IEnumerable<TOut>>> _selector = selector ?? throw new ArgumentNullException(nameof(selector));
-
-    public string Name { get; } = name ?? throw new ArgumentNullException(nameof(name));
-    public StageOptions Options { get; } = options ?? throw new ArgumentNullException(nameof(options));
-
-    public async IAsyncEnumerable<TOut> ExecuteAsync(
+    protected override async IAsyncEnumerable<TOut> ExecuteCoreAsync(
         IAsyncEnumerable<TIn> input,
+        ParallelOptionsRivulet parallelOptions,
         PipelineContext context,
         [EnumeratorCancellation]
         CancellationToken cancellationToken
     )
     {
-        var parallelOptions = Options.GetMergedOptions(context.DefaultStageOptions);
-        var metrics = context.GetStageMetrics(Name);
-
-        metrics.Start();
-
-        try
+        await foreach (var collection in input
+                           .SelectParallelStreamAsync(selector, parallelOptions, cancellationToken)
+                           .ConfigureAwait(false))
         {
-            // Process items in parallel, each returning a collection
-            await foreach (var collection in input
-                               .SelectParallelStreamAsync(_selector, parallelOptions, cancellationToken)
-                               .ConfigureAwait(false))
-            {
-                // Flatten: yield each item from the collection
-                foreach (var item in collection)
-                {
-                    metrics.IncrementItemsOut();
-                    yield return item;
-                }
-            }
-        }
-        finally
-        {
-            metrics.Stop();
+            foreach (var item in collection)
+                yield return item;
         }
     }
-
-    public IAsyncEnumerable<object> ExecuteUntypedAsync(
-        IAsyncEnumerable<object> input,
-        PipelineContext context,
-        CancellationToken cancellationToken
-    ) => StageExecutionHelper.ExecuteUntypedAsync<TIn, TOut>(
-        input,
-        typedInput => ExecuteAsync(typedInput, context, cancellationToken),
-        cancellationToken);
 }

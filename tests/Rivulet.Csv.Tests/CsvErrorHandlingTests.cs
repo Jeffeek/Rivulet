@@ -5,30 +5,15 @@ using Rivulet.Core.Resilience;
 
 namespace Rivulet.Csv.Tests;
 
-public sealed class CsvErrorHandlingTests : IDisposable
+public sealed class CsvErrorHandlingTests : TempDirectoryFixture
 {
-    private readonly string _testDirectory;
-
-    public CsvErrorHandlingTests()
-    {
-        _testDirectory = Path.Join(Path.GetTempPath(), $"RivuletCsvErrorTests_{Guid.NewGuid()}");
-        Directory.CreateDirectory(_testDirectory);
-    }
-
-    public void Dispose()
-    {
-        if (Directory.Exists(_testDirectory))
-            // ReSharper disable once ArgumentsStyleLiteral
-            Directory.Delete(_testDirectory, recursive: true);
-    }
-
     [Fact]
     public async Task ParseCsvParallelAsync_WithFailFast_ShouldStopOnFirstError()
     {
         // Arrange
-        var csvPath1 = Path.Join(_testDirectory, "file1.csv");
-        var csvPath2 = Path.Join(_testDirectory, "missing.csv"); // This doesn't exist
-        var csvPath3 = Path.Join(_testDirectory, "file3.csv");
+        var csvPath1 = Path.Join(TestDirectory, "file1.csv");
+        var csvPath2 = Path.Join(TestDirectory, "missing.csv"); // This doesn't exist
+        var csvPath3 = Path.Join(TestDirectory, "file3.csv");
 
         await File.WriteAllTextAsync(csvPath1, "Id,Name,Price\n1,Product A,10.50", TestContext.Current.CancellationToken);
         await File.WriteAllTextAsync(csvPath3, "Id,Name,Price\n3,Product C,30.50", TestContext.Current.CancellationToken);
@@ -57,9 +42,9 @@ public sealed class CsvErrorHandlingTests : IDisposable
     public async Task ParseCsvParallelAsync_WithCollectAndContinue_ShouldProcessAllFiles()
     {
         // Arrange
-        var csvPath1 = Path.Join(_testDirectory, "file1.csv");
-        var csvPath2 = Path.Join(_testDirectory, "missing.csv"); // This doesn't exist
-        var csvPath3 = Path.Join(_testDirectory, "file3.csv");
+        var csvPath1 = Path.Join(TestDirectory, "file1.csv");
+        var csvPath2 = Path.Join(TestDirectory, "missing.csv"); // This doesn't exist
+        var csvPath3 = Path.Join(TestDirectory, "file3.csv");
 
         await File.WriteAllTextAsync(csvPath1, "Id,Name,Price\n1,Product A,10.50", TestContext.Current.CancellationToken);
         await File.WriteAllTextAsync(csvPath3, "Id,Name,Price\n3,Product C,30.50", TestContext.Current.CancellationToken);
@@ -88,7 +73,7 @@ public sealed class CsvErrorHandlingTests : IDisposable
     public async Task ParseCsvParallelAsync_WithRetries_ShouldRetryTransientErrors()
     {
         // Arrange
-        var csvPath = Path.Join(_testDirectory, "locked.csv");
+        var csvPath = Path.Join(TestDirectory, "locked.csv");
         await File.WriteAllTextAsync(csvPath, "Id,Name,Price\n1,Product A,10.50", TestContext.Current.CancellationToken);
 
         var attemptCount = 0;
@@ -124,7 +109,7 @@ public sealed class CsvErrorHandlingTests : IDisposable
     public async Task ParseCsvParallelAsync_WithOnErrorCallback_ShouldInvokeOnError()
     {
         // Arrange
-        var csvPath = Path.Join(_testDirectory, "missing.csv"); // Doesn't exist
+        var csvPath = Path.Join(TestDirectory, "missing.csv"); // Doesn't exist
         var errorOccurred = false;
         Exception? capturedException = null;
 
@@ -165,7 +150,7 @@ public sealed class CsvErrorHandlingTests : IDisposable
     public async Task WriteCsvParallelAsync_WithErrorCallback_ShouldInvokeOnFileError()
     {
         // Arrange
-        var nonExistentPath = Path.Join(_testDirectory, "nonexistent");
+        var nonExistentPath = Path.Join(TestDirectory, "nonexistent");
         // Don't create the directory - this will cause a DirectoryNotFoundException
 
         var products = new[] { new Product { Id = 1, Name = "Test", Price = 10m } };
@@ -212,7 +197,7 @@ public sealed class CsvErrorHandlingTests : IDisposable
     {
         // Arrange
         var files = Enumerable.Range(1, 10)
-            .Select(i => Path.Join(_testDirectory, $"missing{i}.csv"))
+            .Select(i => Path.Join(TestDirectory, $"missing{i}.csv"))
             .ToArray();
 
         var fileErrorCount = 0;
@@ -274,7 +259,7 @@ public sealed class CsvErrorHandlingTests : IDisposable
         var files = Enumerable.Range(1, 5)
             .Select(i =>
             {
-                var path = Path.Join(_testDirectory, $"file{i}.csv");
+                var path = Path.Join(TestDirectory, $"file{i}.csv");
                 File.WriteAllText(path, $"Id,Name,Price\n{i},Product {i},10.50");
                 return path;
             })

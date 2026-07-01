@@ -115,12 +115,7 @@ public static class DirectoryParallelExtensions
         CancellationToken cancellationToken = default
     )
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(directoryPath);
-
-        if (!Directory.Exists(directoryPath))
-            throw new DirectoryNotFoundException($"Directory not found: {directoryPath}");
-
-        var files = Directory.GetFiles(directoryPath, searchPattern, searchOption);
+        var files = FileOperationHelper.ValidateAndGetFiles(directoryPath, searchPattern, searchOption);
 
         options ??= new();
         var parallelOptions = options.GetMergedParallelOptions();
@@ -161,21 +156,9 @@ public static class DirectoryParallelExtensions
         CancellationToken cancellationToken = default
     )
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(sourceDirectory);
-        ArgumentException.ThrowIfNullOrWhiteSpace(destinationDirectory);
         ArgumentNullException.ThrowIfNull(transformFunc);
 
-        if (!Directory.Exists(sourceDirectory))
-            throw new DirectoryNotFoundException($"Source directory not found: {sourceDirectory}");
-
-        var sourceFiles = Directory.GetFiles(sourceDirectory, searchPattern, searchOption);
-
-        var filePairs = sourceFiles.Select(sourcePath =>
-        {
-            var destPath =
-                FileOperationHelper.ComputeDestinationPath(sourcePath, sourceDirectory, destinationDirectory);
-            return (sourcePath, destPath);
-        });
+        var filePairs = FileOperationHelper.ComputeFilePairs(sourceDirectory, destinationDirectory, searchPattern, searchOption);
 
         return filePairs.TransformFilesParallelAsync(transformFunc, options, cancellationToken);
     }
@@ -199,20 +182,11 @@ public static class DirectoryParallelExtensions
         CancellationToken cancellationToken = default
     )
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(sourceDirectory);
-        ArgumentException.ThrowIfNullOrWhiteSpace(destinationDirectory);
-
-        if (!Directory.Exists(sourceDirectory))
-            throw new DirectoryNotFoundException($"Source directory not found: {sourceDirectory}");
-
-        var sourceFiles = Directory.GetFiles(sourceDirectory, searchPattern, searchOption);
-
-        var filePairs = sourceFiles.Select(sourcePath =>
-        {
-            var destPath =
-                FileOperationHelper.ComputeDestinationPath(sourcePath, sourceDirectory, destinationDirectory);
-            return (sourcePath, destPath);
-        });
+        var filePairs = FileOperationHelper.ComputeFilePairs(
+            sourceDirectory,
+            destinationDirectory,
+            searchPattern,
+            searchOption);
 
         return filePairs.CopyFilesParallelAsync(options, cancellationToken);
     }
@@ -234,12 +208,7 @@ public static class DirectoryParallelExtensions
         CancellationToken cancellationToken = default
     )
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(directoryPath);
-
-        if (!Directory.Exists(directoryPath))
-            throw new DirectoryNotFoundException($"Directory not found: {directoryPath}");
-
-        var files = Directory.GetFiles(directoryPath, searchPattern, searchOption);
+        var files = FileOperationHelper.ValidateAndGetFiles(directoryPath, searchPattern, searchOption);
         return files.DeleteFilesParallelAsync(options, cancellationToken);
     }
 

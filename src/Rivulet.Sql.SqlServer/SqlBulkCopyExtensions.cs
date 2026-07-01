@@ -37,61 +37,22 @@ public static class SqlBulkCopyExtensions
         int batchSize = 5000,
         int bulkCopyTimeout = 30,
         CancellationToken cancellationToken = default
-    )
-    {
-        // ReSharper disable once PossibleMultipleEnumeration
-        SqlValidationHelper.ValidateCommonBulkParameters(source, connectionFactory, destinationTable, batchSize);
-        ArgumentNullException.ThrowIfNull(mapToDataTable);
-        SqlValidationHelper.ValidateTimeout(bulkCopyTimeout, nameof(bulkCopyTimeout));
-
-        options ??= new();
-
-        // ReSharper disable once PossibleMultipleEnumeration
-        return source
-            .Chunk(batchSize)
-            .ForEachParallelAsync(async (batch, ct) =>
-                {
-                    using var dataTable = mapToDataTable(batch);
-
-                    var connection = SqlConnectionHelper.CreateAndValidate(connectionFactory);
-
-                    await using (connection)
-                    {
-                        await SqlConnectionHelper.OpenConnectionAsync(connection, ct).ConfigureAwait(false);
-
-                        using var bulkCopy = CreateAndConfigureBulkCopy(
-                            connection,
-                            destinationTable,
-                            bulkCopyOptions,
-                            batchSize,
-                            bulkCopyTimeout);
-
-                        // Map columns automatically if not specified
-                        if (bulkCopy.ColumnMappings.Count == 0)
-                        {
-                            foreach (DataColumn column in dataTable.Columns)
-                                bulkCopy.ColumnMappings.Add(column.ColumnName, column.ColumnName);
-                        }
-
-                        try
-                        {
-                            await bulkCopy.WriteToServerAsync(dataTable, ct).ConfigureAwait(false);
-                        }
-#pragma warning disable CA1031 // Do not catch general exception types - wrapping all SQL exceptions with operation context
-                        catch (Exception ex)
-#pragma warning restore CA1031
-                        {
-                            throw SqlErrorHelper.WrapBulkOperationException(
-                                ex,
-                                "bulk insert",
-                                batch.Length,
-                                destinationTable);
-                        }
-                    }
-                },
-                options,
-                cancellationToken);
-    }
+    ) => ExecuteSqlBulkCopyAsync(
+        source,
+        connectionFactory,
+        destinationTable,
+        mapToDataTable,
+        options,
+        bulkCopyOptions,
+        batchSize,
+        bulkCopyTimeout,
+        cancellationToken,
+        static (bulkCopy, dataTable) =>
+        {
+            // ReSharper disable once AccessToDisposedClosure
+            foreach (DataColumn column in dataTable.Columns)
+                bulkCopy.ColumnMappings.Add(column.ColumnName, column.ColumnName);
+        });
 
     /// <summary>
     ///     Performs parallel bulk insert operations using SqlBulkCopy with explicit column mappings.
@@ -121,14 +82,48 @@ public static class SqlBulkCopyExtensions
         CancellationToken cancellationToken = default
     )
     {
-        // ReSharper disable once PossibleMultipleEnumeration
-        SqlValidationHelper.ValidateCommonBulkParameters(source, connectionFactory, destinationTable, batchSize);
-        ArgumentNullException.ThrowIfNull(mapToDataTable);
         ArgumentNullException.ThrowIfNull(columnMappings);
-        SqlValidationHelper.ValidateTimeout(bulkCopyTimeout, nameof(bulkCopyTimeout));
 
         if (columnMappings.Count == 0)
             throw new ArgumentException("Column mappings dictionary cannot be empty", nameof(columnMappings));
+
+        return ExecuteSqlBulkCopyAsync(
+            source,
+            connectionFactory,
+            destinationTable,
+            mapToDataTable,
+            options,
+            bulkCopyOptions,
+            batchSize,
+            bulkCopyTimeout,
+            cancellationToken,
+            (bulkCopy, _) =>
+            {
+                foreach (var (sourceColumn, destColumn) in columnMappings)
+                    bulkCopy.ColumnMappings.Add(sourceColumn, destColumn);
+            });
+    }
+
+    /// <summary>
+    ///     Shared implementation for DataTable-based SqlBulkCopy overloads.
+    /// </summary>
+    private static Task ExecuteSqlBulkCopyAsync<T>(
+        IEnumerable<T> source,
+        Func<SqlConnection> connectionFactory,
+        string destinationTable,
+        Func<IEnumerable<T>, DataTable> mapToDataTable,
+        ParallelOptionsRivulet? options,
+        SqlBulkCopyOptions bulkCopyOptions,
+        int batchSize,
+        int bulkCopyTimeout,
+        CancellationToken cancellationToken,
+        Action<SqlBulkCopy, DataTable> configureColumnMappings
+    )
+    {
+        // ReSharper disable once PossibleMultipleEnumeration
+        SqlValidationHelper.ValidateCommonBulkParameters(source, connectionFactory, destinationTable, batchSize);
+        ArgumentNullException.ThrowIfNull(mapToDataTable);
+        SqlValidationHelper.ValidateTimeout(bulkCopyTimeout, nameof(bulkCopyTimeout));
 
         options ??= new();
 
@@ -138,42 +133,65 @@ public static class SqlBulkCopyExtensions
             .ForEachParallelAsync(async (batch, ct) =>
                 {
                     using var dataTable = mapToDataTable(batch);
-
-                    var connection = SqlConnectionHelper.CreateAndValidate(connectionFactory);
-
-                    await using (connection)
-                    {
-                        await SqlConnectionHelper.OpenConnectionAsync(connection, ct).ConfigureAwait(false);
-
-                        using var bulkCopy = CreateAndConfigureBulkCopy(
-                            connection,
-                            destinationTable,
-                            bulkCopyOptions,
-                            batchSize,
-                            bulkCopyTimeout);
-
-                        // Apply explicit column mappings
-                        foreach (var (sourceColumn, destColumn) in columnMappings)
-                            bulkCopy.ColumnMappings.Add(sourceColumn, destColumn);
-
-                        try
-                        {
-                            await bulkCopy.WriteToServerAsync(dataTable, ct).ConfigureAwait(false);
-                        }
-#pragma warning disable CA1031 // Do not catch general exception types - wrapping all SQL exceptions with operation context
-                        catch (Exception ex)
-#pragma warning restore CA1031
-                        {
-                            throw SqlErrorHelper.WrapBulkOperationException(
-                                ex,
-                                "bulk insert",
-                                batch.Length,
-                                destinationTable);
-                        }
-                    }
+                    await ExecuteBulkCopyBatchAsync(
+                        connectionFactory,
+                        destinationTable,
+                        bulkCopyOptions,
+                        batchSize,
+                        bulkCopyTimeout,
+                        dataTable,
+                        ct,
+                        // ReSharper disable once AccessToDisposedClosure
+                        bc => configureColumnMappings(bc, dataTable)).ConfigureAwait(false);
                 },
                 options,
                 cancellationToken);
+    }
+
+    /// <summary>
+    ///     Executes a single SqlBulkCopy batch with column mapping callback.
+    /// </summary>
+    private static async Task ExecuteBulkCopyBatchAsync(
+        Func<SqlConnection> connectionFactory,
+        string destinationTable,
+        SqlBulkCopyOptions bulkCopyOptions,
+        int batchSize,
+        int bulkCopyTimeout,
+        DataTable dataTable,
+        CancellationToken ct,
+        Action<SqlBulkCopy> configureColumnMappings
+    )
+    {
+        var connection = SqlConnectionHelper.CreateAndValidate(connectionFactory);
+
+        await using (connection)
+        {
+            await SqlConnectionHelper.OpenConnectionAsync(connection, ct).ConfigureAwait(false);
+
+            using var bulkCopy = CreateAndConfigureBulkCopy(
+                connection,
+                destinationTable,
+                bulkCopyOptions,
+                batchSize,
+                bulkCopyTimeout);
+
+            configureColumnMappings(bulkCopy);
+
+            try
+            {
+                await bulkCopy.WriteToServerAsync(dataTable, ct).ConfigureAwait(false);
+            }
+#pragma warning disable CA1031 // Do not catch general exception types - wrapping all SQL exceptions with operation context
+            catch (Exception ex)
+#pragma warning restore CA1031
+            {
+                throw SqlErrorHelper.WrapBulkOperationException(
+                    ex,
+                    "bulk insert",
+                    dataTable.Rows.Count,
+                    destinationTable);
+            }
+        }
     }
 
     /// <summary>

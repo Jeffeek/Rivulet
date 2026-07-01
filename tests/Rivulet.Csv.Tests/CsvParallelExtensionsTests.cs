@@ -1,29 +1,16 @@
 using System.Diagnostics.CodeAnalysis;
+using Rivulet.Base.Tests;
 using Rivulet.Core;
 
 namespace Rivulet.Csv.Tests;
 
-public sealed class CsvParallelExtensionsTests : IDisposable
+public sealed class CsvParallelExtensionsTests : TempDirectoryFixture
 {
-    private readonly string _testDirectory;
-
-    public CsvParallelExtensionsTests()
-    {
-        _testDirectory = Path.Join(Path.GetTempPath(), $"RivuletCsvTests_{Guid.NewGuid()}");
-        Directory.CreateDirectory(_testDirectory);
-    }
-
-    public void Dispose()
-    {
-        if (Directory.Exists(_testDirectory))
-            Directory.Delete(_testDirectory, true);
-    }
-
     [Fact]
     public async Task ParseCsvParallelAsync_WithSingleFile_ShouldParseSuccessfully()
     {
         // Arrange
-        var csvPath = Path.Join(_testDirectory, "products.csv");
+        var csvPath = Path.Join(TestDirectory, "products.csv");
         // ReSharper disable once GrammarMistakeInStringLiteral
         const string csvContent = """
                                   Id,Name,Price
@@ -47,8 +34,8 @@ public sealed class CsvParallelExtensionsTests : IDisposable
     public async Task ParseCsvParallelAsync_WithMultipleFiles_ShouldParseAllFiles()
     {
         // Arrange
-        var csvPath1 = Path.Join(_testDirectory, "products1.csv");
-        var csvPath2 = Path.Join(_testDirectory, "products2.csv");
+        var csvPath1 = Path.Join(TestDirectory, "products1.csv");
+        var csvPath2 = Path.Join(TestDirectory, "products2.csv");
 
         await File.WriteAllTextAsync(
             csvPath1,
@@ -100,7 +87,7 @@ public sealed class CsvParallelExtensionsTests : IDisposable
             new Product { Id = 2, Name = "Product B", Price = 20.00m }
         };
 
-        var csvPath = Path.Join(_testDirectory, "output.csv");
+        var csvPath = Path.Join(TestDirectory, "output.csv");
         var fileWrites = new[]
         {
             new RivuletCsvWriteFile<Product>(
@@ -135,8 +122,8 @@ public sealed class CsvParallelExtensionsTests : IDisposable
         var products1 = new[] { new Product { Id = 1, Name = "Product A", Price = 10.50m } };
         var products2 = new[] { new Product { Id = 2, Name = "Product B", Price = 20.00m } };
 
-        var csvPath1 = Path.Join(_testDirectory, "output1.csv");
-        var csvPath2 = Path.Join(_testDirectory, "output2.csv");
+        var csvPath1 = Path.Join(TestDirectory, "output1.csv");
+        var csvPath2 = Path.Join(TestDirectory, "output2.csv");
 
         var fileWrites = new[]
         {
@@ -165,8 +152,8 @@ public sealed class CsvParallelExtensionsTests : IDisposable
     public async Task TransformCsvParallelAsync_ShouldParseTransformAndWrite()
     {
         // Arrange
-        var inputPath = Path.Join(_testDirectory, "input.csv");
-        var outputPath = Path.Join(_testDirectory, "output.csv");
+        var inputPath = Path.Join(TestDirectory, "input.csv");
+        var outputPath = Path.Join(TestDirectory, "output.csv");
 
         await File.WriteAllTextAsync(inputPath,
             """
@@ -211,8 +198,8 @@ public sealed class CsvParallelExtensionsTests : IDisposable
     public async Task TransformCsvParallelAsync_WithAsyncTransform_ShouldParseTransformAndWrite()
     {
         // Arrange
-        var inputPath = Path.Join(_testDirectory, "input_async.csv");
-        var outputPath = Path.Join(_testDirectory, "output_async.csv");
+        var inputPath = Path.Join(TestDirectory, "input_async.csv");
+        var outputPath = Path.Join(TestDirectory, "output_async.csv");
 
         await File.WriteAllTextAsync(inputPath,
             // ReSharper disable once GrammarMistakeInStringLiteral
@@ -264,8 +251,8 @@ public sealed class CsvParallelExtensionsTests : IDisposable
     public async Task TransformCsvParallelAsync_WithAsyncTransformAndCancellation_ShouldRespectCancellation()
     {
         // Arrange
-        var inputPath = Path.Join(_testDirectory, "input_cancel.csv");
-        var outputPath = Path.Join(_testDirectory, "output_cancel.csv");
+        var inputPath = Path.Join(TestDirectory, "input_cancel.csv");
+        var outputPath = Path.Join(TestDirectory, "output_cancel.csv");
 
         var records = Enumerable.Range(1, 100)
             .Select(static i => $"{i},Product {i},{i * 10.0:F2}")
@@ -318,7 +305,7 @@ public sealed class CsvParallelExtensionsTests : IDisposable
     public async Task ParseCsvParallelAsync_WithCustomDelimiter_ShouldParseCorrectly()
     {
         // Arrange
-        var csvPath = Path.Join(_testDirectory, "semicolon.csv");
+        var csvPath = Path.Join(TestDirectory, "semicolon.csv");
         // ReSharper disable once GrammarMistakeInStringLiteral
         const string csvContent = """
                                   Id;Name;Price
@@ -348,7 +335,7 @@ public sealed class CsvParallelExtensionsTests : IDisposable
     public async Task WriteCsvParallelAsync_WithOverwriteFalse_ShouldThrowIfFileExists()
     {
         // Arrange
-        var csvPath = Path.Join(_testDirectory, "existing.csv");
+        var csvPath = Path.Join(TestDirectory, "existing.csv");
         await File.WriteAllTextAsync(csvPath, "existing content", TestContext.Current.CancellationToken);
 
         var products = new[] { new Product { Id = 1, Name = "Test", Price = 10m } };
@@ -380,7 +367,7 @@ public sealed class CsvParallelExtensionsTests : IDisposable
     public async Task ParseCsvParallelAsync_WithCallbacks_ShouldInvokeCallbacks()
     {
         // Arrange
-        var csvPath = Path.Join(_testDirectory, "products.csv");
+        var csvPath = Path.Join(TestDirectory, "products.csv");
         await File.WriteAllTextAsync(csvPath,
             """
             Id,Name,Price
@@ -423,8 +410,8 @@ public sealed class CsvParallelExtensionsTests : IDisposable
     public async Task ParseCsvParallelGroupedAsync_WithSingleType_ShouldGroupByFilePath()
     {
         // Arrange
-        var csvPath1 = Path.Join(_testDirectory, "file1.csv");
-        var csvPath2 = Path.Join(_testDirectory, "file2.csv");
+        var csvPath1 = Path.Join(TestDirectory, "file1.csv");
+        var csvPath2 = Path.Join(TestDirectory, "file2.csv");
 
         await File.WriteAllTextAsync(csvPath1, "Id,Name,Price\n1,Product A,10.50", TestContext.Current.CancellationToken);
         await File.WriteAllTextAsync(csvPath2, "Id,Name,Price\n2,Product B,20.00", TestContext.Current.CancellationToken);
@@ -450,8 +437,8 @@ public sealed class CsvParallelExtensionsTests : IDisposable
     public async Task ParseCsvParallelGroupedAsync_WithTwoTypes_ShouldGroupBothTypes()
     {
         // Arrange
-        var productPath = Path.Join(_testDirectory, "products.csv");
-        var customerPath = Path.Join(_testDirectory, "customers.csv");
+        var productPath = Path.Join(TestDirectory, "products.csv");
+        var customerPath = Path.Join(TestDirectory, "customers.csv");
 
         await File.WriteAllTextAsync(productPath, "Id,Name,Price\n1,Product A,10.50", TestContext.Current.CancellationToken);
         await File.WriteAllTextAsync(customerPath, "Id,Name\n1,Customer A", TestContext.Current.CancellationToken);
@@ -477,7 +464,7 @@ public sealed class CsvParallelExtensionsTests : IDisposable
     {
         // Arrange
         var products = new[] { new Product { Id = 1, Name = "Test", Price = 10m } };
-        var csvPath = Path.Join(_testDirectory, "metrics.csv");
+        var csvPath = Path.Join(TestDirectory, "metrics.csv");
 
         var fileWrites = new[] { new RivuletCsvWriteFile<Product>(csvPath, products, null) };
 

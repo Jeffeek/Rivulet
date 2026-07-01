@@ -1,4 +1,5 @@
 using System.Text;
+using Rivulet.Base.Tests;
 
 namespace Rivulet.Diagnostics.Tests;
 
