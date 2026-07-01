@@ -10,14 +10,11 @@ internal sealed class TapStage<T>(
     Func<T, CancellationToken, ValueTask> action,
     StageOptions options,
     string name
-) : IInternalPipelineStage, IPipelineStage<T, T>
+) : PipelineStageBase<T, T>(name, options)
 {
     private readonly Func<T, CancellationToken, ValueTask> _action = action ?? throw new ArgumentNullException(nameof(action));
 
-    public string Name { get; } = name ?? throw new ArgumentNullException(nameof(name));
-    public StageOptions Options { get; } = options ?? throw new ArgumentNullException(nameof(options));
-
-    public async IAsyncEnumerable<T> ExecuteAsync(
+    public override async IAsyncEnumerable<T> ExecuteAsync(
         IAsyncEnumerable<T> input,
         PipelineContext context,
         [EnumeratorCancellation]
@@ -31,7 +28,6 @@ internal sealed class TapStage<T>(
 
         try
         {
-            // Execute action and return the same item
             await foreach (var item in input
                                .SelectParallelStreamAsync(
                                    async (item, ct) =>
@@ -52,13 +48,4 @@ internal sealed class TapStage<T>(
             metrics.Stop();
         }
     }
-
-    public IAsyncEnumerable<object> ExecuteUntypedAsync(
-        IAsyncEnumerable<object> input,
-        PipelineContext context,
-        CancellationToken cancellationToken
-    ) => StageExecutionHelper.ExecuteUntypedAsync<T, T>(
-        input,
-        typedInput => ExecuteAsync(typedInput, context, cancellationToken),
-        cancellationToken);
 }

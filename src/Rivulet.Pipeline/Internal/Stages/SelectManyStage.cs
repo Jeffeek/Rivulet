@@ -10,14 +10,11 @@ internal sealed class SelectManyStage<TIn, TOut>(
     Func<TIn, CancellationToken, ValueTask<IEnumerable<TOut>>> selector,
     StageOptions options,
     string name
-) : IInternalPipelineStage, IPipelineStage<TIn, TOut>
+) : PipelineStageBase<TIn, TOut>(name, options)
 {
     private readonly Func<TIn, CancellationToken, ValueTask<IEnumerable<TOut>>> _selector = selector ?? throw new ArgumentNullException(nameof(selector));
 
-    public string Name { get; } = name ?? throw new ArgumentNullException(nameof(name));
-    public StageOptions Options { get; } = options ?? throw new ArgumentNullException(nameof(options));
-
-    public async IAsyncEnumerable<TOut> ExecuteAsync(
+    public override async IAsyncEnumerable<TOut> ExecuteAsync(
         IAsyncEnumerable<TIn> input,
         PipelineContext context,
         [EnumeratorCancellation]
@@ -31,12 +28,10 @@ internal sealed class SelectManyStage<TIn, TOut>(
 
         try
         {
-            // Process items in parallel, each returning a collection
             await foreach (var collection in input
                                .SelectParallelStreamAsync(_selector, parallelOptions, cancellationToken)
                                .ConfigureAwait(false))
             {
-                // Flatten: yield each item from the collection
                 foreach (var item in collection)
                 {
                     metrics.IncrementItemsOut();
@@ -49,13 +44,4 @@ internal sealed class SelectManyStage<TIn, TOut>(
             metrics.Stop();
         }
     }
-
-    public IAsyncEnumerable<object> ExecuteUntypedAsync(
-        IAsyncEnumerable<object> input,
-        PipelineContext context,
-        CancellationToken cancellationToken
-    ) => StageExecutionHelper.ExecuteUntypedAsync<TIn, TOut>(
-        input,
-        typedInput => ExecuteAsync(typedInput, context, cancellationToken),
-        cancellationToken);
 }

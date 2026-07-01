@@ -7,19 +7,15 @@ namespace Rivulet.Pipeline.Internal.Stages;
 /// A stage that groups items into fixed-size batches.
 /// </summary>
 internal sealed class BatchStage<T>(int batchSize, TimeSpan? flushTimeout, string name)
-    : IInternalPipelineStage, IPipelineStage<T, IReadOnlyList<T>>
+    : PipelineStageBase<T, IReadOnlyList<T>>(name, new StageOptions())
 {
-    public string Name { get; } = name ?? throw new ArgumentNullException(nameof(name));
-    public StageOptions Options { get; } = new();
-
-    public async IAsyncEnumerable<IReadOnlyList<T>> ExecuteAsync(
+    public override async IAsyncEnumerable<IReadOnlyList<T>> ExecuteAsync(
         IAsyncEnumerable<T> input,
         PipelineContext context,
         [EnumeratorCancellation]
         CancellationToken cancellationToken
     )
     {
-        // Try to get metrics - may be null if this stage is used internally
         var metrics = context.TryGetStageMetrics(Name);
         metrics?.Start();
 
@@ -72,10 +68,6 @@ internal sealed class BatchStage<T>(int batchSize, TimeSpan? flushTimeout, strin
             yield return batch;
     }
 
-    /// <summary>
-    /// Batches items with a timeout - flushes when batch is full OR timeout expires.
-    /// Uses a channel to coordinate between producer (batching) and consumer (yielding).
-    /// </summary>
     private async IAsyncEnumerable<IReadOnlyList<T>> ExecuteWithTimeoutAsync(
         IAsyncEnumerable<T> input,
         [EnumeratorCancellation]
@@ -84,7 +76,6 @@ internal sealed class BatchStage<T>(int batchSize, TimeSpan? flushTimeout, strin
     {
         var timeout = flushTimeout!.Value;
 
-        // Channel buffers batches between producer and consumer
         var channel = Channel.CreateBounded<IReadOnlyList<T>>(new BoundedChannelOptions(16)
         {
             SingleReader = true,
@@ -92,21 +83,14 @@ internal sealed class BatchStage<T>(int batchSize, TimeSpan? flushTimeout, strin
             FullMode = BoundedChannelFullMode.Wait
         });
 
-        // Producer task: accumulate items into batches and flush on size or timeout
         var producerTask = ProduceBatchesAsync(input, channel.Writer, timeout, cancellationToken);
 
-        // Consumer: yield batches as they become available
         await foreach (var batch in channel.Reader.ReadAllAsync(cancellationToken).ConfigureAwait(false))
             yield return batch;
 
-        // Ensure producer completes without errors
         await producerTask.ConfigureAwait(false);
     }
 
-    /// <summary>
-    /// Accumulates items into batches and writes them to the channel.
-    /// Flushes when batch reaches batchSize OR when timeout expires.
-    /// </summary>
     private async Task ProduceBatchesAsync(
         IAsyncEnumerable<T> input,
         ChannelWriter<IReadOnlyList<T>> writer,
@@ -123,7 +107,6 @@ internal sealed class BatchStage<T>(int batchSize, TimeSpan? flushTimeout, strin
             {
                 batch.Add(item);
 
-                // Flush if batch is full OR if timeout expired and we have items
                 var batchFull = batch.Count >= batchSize;
                 var timeoutExpired = flushTimer.IsCompleted && batch.Count > 0;
 
@@ -135,7 +118,6 @@ internal sealed class BatchStage<T>(int batchSize, TimeSpan? flushTimeout, strin
                 flushTimer = Task.Delay(timeout, cancellationToken);
             }
 
-            // Flush any remaining items
             if (batch.Count > 0)
                 await writer.WriteAsync(batch, cancellationToken).ConfigureAwait(false);
         }
@@ -144,13 +126,4 @@ internal sealed class BatchStage<T>(int batchSize, TimeSpan? flushTimeout, strin
             writer.TryComplete();
         }
     }
-
-    public IAsyncEnumerable<object> ExecuteUntypedAsync(
-        IAsyncEnumerable<object> input,
-        PipelineContext context,
-        CancellationToken cancellationToken
-    ) => StageExecutionHelper.ExecuteUntypedAsync<T, IReadOnlyList<T>>(
-        input,
-        typedInput => ExecuteAsync(typedInput, context, cancellationToken),
-        cancellationToken);
 }

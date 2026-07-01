@@ -10,14 +10,11 @@ internal sealed class FilterStage<T>(
     Func<T, CancellationToken, ValueTask<bool>> predicate,
     StageOptions options,
     string name
-) : IInternalPipelineStage, IPipelineStage<T, T>
+) : PipelineStageBase<T, T>(name, options)
 {
     private readonly Func<T, CancellationToken, ValueTask<bool>> _predicate = predicate ?? throw new ArgumentNullException(nameof(predicate));
 
-    public string Name { get; } = name ?? throw new ArgumentNullException(nameof(name));
-    public StageOptions Options { get; } = options ?? throw new ArgumentNullException(nameof(options));
-
-    public async IAsyncEnumerable<T> ExecuteAsync(
+    public override async IAsyncEnumerable<T> ExecuteAsync(
         IAsyncEnumerable<T> input,
         PipelineContext context,
         [EnumeratorCancellation]
@@ -31,8 +28,6 @@ internal sealed class FilterStage<T>(
 
         try
         {
-            // Use SelectParallelStreamAsync with a wrapper that returns (item, shouldKeep)
-            // Then filter on the result
             await foreach (var (item, keep) in input
                                .SelectParallelStreamAsync(
                                    async (item, ct) => (item, keep: await _predicate(item, ct).ConfigureAwait(false)),
@@ -54,13 +49,4 @@ internal sealed class FilterStage<T>(
             metrics.Stop();
         }
     }
-
-    public IAsyncEnumerable<object> ExecuteUntypedAsync(
-        IAsyncEnumerable<object> input,
-        PipelineContext context,
-        CancellationToken cancellationToken
-    ) => StageExecutionHelper.ExecuteUntypedAsync<T, T>(
-        input,
-        typedInput => ExecuteAsync(typedInput, context, cancellationToken),
-        cancellationToken);
 }

@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using Rivulet.Base.Tests;
 using Rivulet.Core;
 
 namespace Rivulet.Csv.Tests;
@@ -6,30 +7,16 @@ namespace Rivulet.Csv.Tests;
 /// <summary>
 ///     Tests for multi-type CSV read and write operations with 2-5 generic parameters.
 /// </summary>
-public sealed class CsvMultiTypeOperationsTests : IDisposable
+public sealed class CsvMultiTypeOperationsTests : TempDirectoryFixture
 {
-    private readonly string _testDirectory;
-
-    public CsvMultiTypeOperationsTests()
-    {
-        _testDirectory = Path.Join(Path.GetTempPath(), $"RivuletCsvMultiTypeTests_{Guid.NewGuid()}");
-        Directory.CreateDirectory(_testDirectory);
-    }
-
-    public void Dispose()
-    {
-        if (Directory.Exists(_testDirectory))
-            Directory.Delete(_testDirectory, true);
-    }
-
     #region Read Tests (2-5 Types)
 
     [Fact]
     public async Task ParseCsvParallelGroupedAsync_WithTwoTypes_ShouldParseAllFiles()
     {
         // Arrange
-        var productsPath = Path.Join(_testDirectory, "products.csv");
-        var customersPath = Path.Join(_testDirectory, "customers.csv");
+        var productsPath = Path.Join(TestDirectory, "products.csv");
+        var customersPath = Path.Join(TestDirectory, "customers.csv");
 
         await File.WriteAllTextAsync(
             productsPath,
@@ -76,9 +63,9 @@ public sealed class CsvMultiTypeOperationsTests : IDisposable
     public async Task ParseCsvParallelGroupedAsync_WithThreeTypes_ShouldParseAllFiles()
     {
         // Arrange
-        var productsPath = Path.Join(_testDirectory, "products.csv");
-        var customersPath = Path.Join(_testDirectory, "customers.csv");
-        var ordersPath = Path.Join(_testDirectory, "orders.csv");
+        var productsPath = Path.Join(TestDirectory, "products.csv");
+        var customersPath = Path.Join(TestDirectory, "customers.csv");
+        var ordersPath = Path.Join(TestDirectory, "orders.csv");
 
         await File.WriteAllTextAsync(productsPath, "Id,Name,Price\n1,Product A,10.50", TestContext.Current.CancellationToken);
         await File.WriteAllTextAsync(customersPath, "Id,Name,Email\n1,John Doe,john@example.com", TestContext.Current.CancellationToken);
@@ -106,10 +93,10 @@ public sealed class CsvMultiTypeOperationsTests : IDisposable
     public async Task ParseCsvParallelGroupedAsync_WithFourTypes_ShouldParseAllFiles()
     {
         // Arrange
-        var productsPath = Path.Join(_testDirectory, "products.csv");
-        var customersPath = Path.Join(_testDirectory, "customers.csv");
-        var ordersPath = Path.Join(_testDirectory, "orders.csv");
-        var categoriesPath = Path.Join(_testDirectory, "categories.csv");
+        var productsPath = Path.Join(TestDirectory, "products.csv");
+        var customersPath = Path.Join(TestDirectory, "customers.csv");
+        var ordersPath = Path.Join(TestDirectory, "orders.csv");
+        var categoriesPath = Path.Join(TestDirectory, "categories.csv");
 
         await File.WriteAllTextAsync(productsPath, "Id,Name,Price\n1,Product A,10.50", TestContext.Current.CancellationToken);
         await File.WriteAllTextAsync(customersPath, "Id,Name,Email\n1,John Doe,john@example.com", TestContext.Current.CancellationToken);
@@ -141,11 +128,11 @@ public sealed class CsvMultiTypeOperationsTests : IDisposable
     public async Task ParseCsvParallelGroupedAsync_WithFiveTypes_ShouldParseAllFiles()
     {
         // Arrange
-        var productsPath = Path.Join(_testDirectory, "products.csv");
-        var customersPath = Path.Join(_testDirectory, "customers.csv");
-        var ordersPath = Path.Join(_testDirectory, "orders.csv");
-        var categoriesPath = Path.Join(_testDirectory, "categories.csv");
-        var suppliersPath = Path.Join(_testDirectory, "suppliers.csv");
+        var productsPath = Path.Join(TestDirectory, "products.csv");
+        var customersPath = Path.Join(TestDirectory, "customers.csv");
+        var ordersPath = Path.Join(TestDirectory, "orders.csv");
+        var categoriesPath = Path.Join(TestDirectory, "categories.csv");
+        var suppliersPath = Path.Join(TestDirectory, "suppliers.csv");
 
         await File.WriteAllTextAsync(productsPath, "Id,Name,Price\n1,Product A,10.50", TestContext.Current.CancellationToken);
         await File.WriteAllTextAsync(customersPath, "Id,Name,Email\n1,John Doe,john@example.com", TestContext.Current.CancellationToken);
@@ -185,8 +172,8 @@ public sealed class CsvMultiTypeOperationsTests : IDisposable
     public async Task WriteCsvParallelAsync_WithTwoTypes_ShouldWriteAllFiles()
     {
         // Arrange
-        var productsPath = Path.Join(_testDirectory, "products_out.csv");
-        var customersPath = Path.Join(_testDirectory, "customers_out.csv");
+        var productsPath = Path.Join(TestDirectory, "products_out.csv");
+        var customersPath = Path.Join(TestDirectory, "customers_out.csv");
 
         var products = new[] { new Product { Id = 1, Name = "Product A", Price = 10.50m } };
         var customers = new[] { new Customer { Id = 1, Name = "John Doe", Email = "john@example.com" } };
@@ -215,9 +202,9 @@ public sealed class CsvMultiTypeOperationsTests : IDisposable
     public async Task WriteCsvParallelAsync_WithThreeTypes_ShouldWriteAllFiles()
     {
         // Arrange
-        var productsPath = Path.Join(_testDirectory, "products_out.csv");
-        var customersPath = Path.Join(_testDirectory, "customers_out.csv");
-        var ordersPath = Path.Join(_testDirectory, "orders_out.csv");
+        var productsPath = Path.Join(TestDirectory, "products_out.csv");
+        var customersPath = Path.Join(TestDirectory, "customers_out.csv");
+        var ordersPath = Path.Join(TestDirectory, "orders_out.csv");
 
         var products = new[] { new Product { Id = 1, Name = "Product A", Price = 10.50m } };
         var customers = new[] { new Customer { Id = 1, Name = "John Doe", Email = "john@example.com" } };
@@ -247,10 +234,10 @@ public sealed class CsvMultiTypeOperationsTests : IDisposable
     public async Task WriteCsvParallelAsync_WithFourTypes_ShouldWriteAllFiles()
     {
         // Arrange
-        var productsPath = Path.Join(_testDirectory, "products_out.csv");
-        var customersPath = Path.Join(_testDirectory, "customers_out.csv");
-        var ordersPath = Path.Join(_testDirectory, "orders_out.csv");
-        var categoriesPath = Path.Join(_testDirectory, "categories_out.csv");
+        var productsPath = Path.Join(TestDirectory, "products_out.csv");
+        var customersPath = Path.Join(TestDirectory, "customers_out.csv");
+        var ordersPath = Path.Join(TestDirectory, "orders_out.csv");
+        var categoriesPath = Path.Join(TestDirectory, "categories_out.csv");
 
         var products = new[] { new Product { Id = 1, Name = "Product A", Price = 10.50m } };
         var customers = new[] { new Customer { Id = 1, Name = "John Doe", Email = "john@example.com" } };
@@ -284,11 +271,11 @@ public sealed class CsvMultiTypeOperationsTests : IDisposable
     public async Task WriteCsvParallelAsync_WithFiveTypes_ShouldWriteAllFiles()
     {
         // Arrange
-        var productsPath = Path.Join(_testDirectory, "products_out.csv");
-        var customersPath = Path.Join(_testDirectory, "customers_out.csv");
-        var ordersPath = Path.Join(_testDirectory, "orders_out.csv");
-        var categoriesPath = Path.Join(_testDirectory, "categories_out.csv");
-        var suppliersPath = Path.Join(_testDirectory, "suppliers_out.csv");
+        var productsPath = Path.Join(TestDirectory, "products_out.csv");
+        var customersPath = Path.Join(TestDirectory, "customers_out.csv");
+        var ordersPath = Path.Join(TestDirectory, "orders_out.csv");
+        var categoriesPath = Path.Join(TestDirectory, "categories_out.csv");
+        var suppliersPath = Path.Join(TestDirectory, "suppliers_out.csv");
 
         var products = new[] { new Product { Id = 1, Name = "Product A", Price = 10.50m } };
         var customers = new[] { new Customer { Id = 1, Name = "John Doe", Email = "john@example.com" } };
@@ -327,8 +314,8 @@ public sealed class CsvMultiTypeOperationsTests : IDisposable
     public async Task WriteCsvParallelAsync_WithTwoTypes_WithParallelOptions_ShouldRespectConcurrency()
     {
         // Arrange
-        var productsPath = Path.Join(_testDirectory, "products_concurrent.csv");
-        var customersPath = Path.Join(_testDirectory, "customers_concurrent.csv");
+        var productsPath = Path.Join(TestDirectory, "products_concurrent.csv");
+        var customersPath = Path.Join(TestDirectory, "customers_concurrent.csv");
 
         var products = Enumerable.Range(1, 100)
             .Select(static i => new Product { Id = i, Name = $"Product {i}", Price = i * 1.5m })

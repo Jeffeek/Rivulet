@@ -1,28 +1,14 @@
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
+using Rivulet.Base.Tests;
 using Rivulet.Core;
 using Rivulet.Core.Observability;
 using Rivulet.Core.Resilience;
 
 namespace Rivulet.Csv.Tests;
 
-public sealed class CsvProgressAndMetricsTests : IDisposable
+public sealed class CsvProgressAndMetricsTests : TempDirectoryFixture
 {
-    private readonly string _testDirectory;
-
-    public CsvProgressAndMetricsTests()
-    {
-        _testDirectory = Path.Join(Path.GetTempPath(), $"RivuletCsvProgressTests_{Guid.NewGuid()}");
-        Directory.CreateDirectory(_testDirectory);
-    }
-
-    public void Dispose()
-    {
-        if (Directory.Exists(_testDirectory))
-            // ReSharper disable once ArgumentsStyleLiteral
-            Directory.Delete(_testDirectory, recursive: true);
-    }
-
     [Fact]
     public async Task ParseCsvParallelAsync_WithProgressReporting_ShouldReportProgress()
     {
@@ -30,7 +16,7 @@ public sealed class CsvProgressAndMetricsTests : IDisposable
         var files = Enumerable.Range(1, 5)
             .Select(i =>
             {
-                var path = Path.Join(_testDirectory, $"file{i}.csv");
+                var path = Path.Join(TestDirectory, $"file{i}.csv");
                 File.WriteAllText(path, $"Id,Name,Price\n{i},Product {i},10.50");
                 return path;
             })
@@ -78,7 +64,7 @@ public sealed class CsvProgressAndMetricsTests : IDisposable
         var files = Enumerable.Range(1, 3)
             .Select(i =>
             {
-                var path = Path.Join(_testDirectory, $"file{i}.csv");
+                var path = Path.Join(TestDirectory, $"file{i}.csv");
                 File.WriteAllText(path, $"Id,Name,Price\n{i},Product {i},10.50");
                 return path;
             })
@@ -119,7 +105,7 @@ public sealed class CsvProgressAndMetricsTests : IDisposable
         var files = Enumerable.Range(1, 3)
             .Select(i =>
             {
-                var path = Path.Join(_testDirectory, $"file{i}.csv");
+                var path = Path.Join(TestDirectory, $"file{i}.csv");
                 File.WriteAllText(path, $"Id,Name,Price\n{i},Product {i},10.50");
                 return path;
             })
@@ -156,7 +142,7 @@ public sealed class CsvProgressAndMetricsTests : IDisposable
         var fileWrites = Enumerable.Range(1, 4)
             .Select(i =>
             {
-                var path = Path.Join(_testDirectory, $"output{i}.csv");
+                var path = Path.Join(TestDirectory, $"output{i}.csv");
                 var products = new[] { new Product { Id = i, Name = $"Product {i}", Price = 10m * i } };
                 return new RivuletCsvWriteFile<Product>(path, products, null);
             })
@@ -200,7 +186,7 @@ public sealed class CsvProgressAndMetricsTests : IDisposable
         var files = Enumerable.Range(1, 5)
             .Select(i =>
             {
-                var path = Path.Join(_testDirectory, $"file{i}.csv");
+                var path = Path.Join(TestDirectory, $"file{i}.csv");
                 File.WriteAllText(path, $"Id,Name,Price\n{i},Product {i},{i * 10}.50");
                 return path;
             })
@@ -239,8 +225,8 @@ public sealed class CsvProgressAndMetricsTests : IDisposable
         var transformations = Enumerable.Range(1, 3)
             .Select(i =>
             {
-                var inputPath = Path.Join(_testDirectory, $"input{i}.csv");
-                var outputPath = Path.Join(_testDirectory, $"output{i}.csv");
+                var inputPath = Path.Join(TestDirectory, $"input{i}.csv");
+                var outputPath = Path.Join(TestDirectory, $"output{i}.csv");
                 File.WriteAllText(inputPath, $"Id,Name,Price\n{i},Product {i},10.00");
                 return (
                     Input: new RivuletCsvReadFile<Product>(inputPath, null),
@@ -289,7 +275,7 @@ public sealed class CsvProgressAndMetricsTests : IDisposable
         var files = Enumerable.Range(1, 10)
             .Select(i =>
             {
-                var path = Path.Join(_testDirectory, $"file{i}.csv");
+                var path = Path.Join(TestDirectory, $"file{i}.csv");
                 File.WriteAllText(path, $"Id,Name,Price\n{i},Product {i},10.50");
                 return path;
             })

@@ -1,34 +1,20 @@
 using System.Diagnostics.CodeAnalysis;
 using CsvHelper;
 using CsvHelper.Configuration;
+using Rivulet.Base.Tests;
 using Rivulet.Core;
 using MissingFieldException = CsvHelper.MissingFieldException;
 
 namespace Rivulet.Csv.Tests;
 
-public sealed class CsvClassMapTests : IDisposable
+public sealed class CsvClassMapTests : TempDirectoryFixture
 {
-    private readonly string _testDirectory;
-
-    public CsvClassMapTests()
-    {
-        _testDirectory = Path.Join(Path.GetTempPath(), $"RivuletCsvClassMapTests_{Guid.NewGuid()}");
-        Directory.CreateDirectory(_testDirectory);
-    }
-
-    public void Dispose()
-    {
-        if (Directory.Exists(_testDirectory))
-            // ReSharper disable once ArgumentsStyleLiteral
-            Directory.Delete(_testDirectory, recursive: true);
-    }
-
     [Fact]
     public async Task ParseCsvParallelAsync_WithSingleClassMap_ShouldApplyToAllFiles()
     {
         // Arrange
-        var csvPath1 = Path.Join(_testDirectory, "products1.csv");
-        var csvPath2 = Path.Join(_testDirectory, "products2.csv");
+        var csvPath1 = Path.Join(TestDirectory, "products1.csv");
+        var csvPath2 = Path.Join(TestDirectory, "products2.csv");
 
         await File.WriteAllTextAsync(csvPath1, "ProductID,ProductName,Price\n1,Widget,10.50", TestContext.Current.CancellationToken);
         await File.WriteAllTextAsync(csvPath2, "ProductID,ProductName,Price\n2,Gadget,20.00", TestContext.Current.CancellationToken);
@@ -55,8 +41,8 @@ public sealed class CsvClassMapTests : IDisposable
     public async Task ParseCsvParallelAsync_WithPerFileCallback_ShouldApplyDifferentMaps()
     {
         // Arrange
-        var csvPath1 = Path.Join(_testDirectory, "modern_products.csv");
-        var csvPath2 = Path.Join(_testDirectory, "legacy_products.csv");
+        var csvPath1 = Path.Join(TestDirectory, "modern_products.csv");
+        var csvPath2 = Path.Join(TestDirectory, "legacy_products.csv");
 
         await File.WriteAllTextAsync(csvPath1, "ProductID,ProductName,Price\n1,Widget,10.50", TestContext.Current.CancellationToken);
         await File.WriteAllTextAsync(csvPath2, "1|OldWidget|5.25", TestContext.Current.CancellationToken);
@@ -102,11 +88,11 @@ public sealed class CsvClassMapTests : IDisposable
     public async Task ParseCsvParallelAsync_WithCsvFileConfig_ShouldUsePerFileClassMaps()
     {
         // Arrange - Your exact scenario: 5 files with 3 different ClassMaps
-        var file1 = Path.Join(_testDirectory, "file1.csv");
-        var file2 = Path.Join(_testDirectory, "file2.csv");
-        var file3 = Path.Join(_testDirectory, "file3.csv");
-        var file4 = Path.Join(_testDirectory, "file4.csv");
-        var file5 = Path.Join(_testDirectory, "file5.csv");
+        var file1 = Path.Join(TestDirectory, "file1.csv");
+        var file2 = Path.Join(TestDirectory, "file2.csv");
+        var file3 = Path.Join(TestDirectory, "file3.csv");
+        var file4 = Path.Join(TestDirectory, "file4.csv");
+        var file5 = Path.Join(TestDirectory, "file5.csv");
 
         // Files 1-3 use ProductMapByName
         await File.WriteAllTextAsync(file1, "ProductID,ProductName,Price\n1,Widget,10.00", TestContext.Current.CancellationToken);
@@ -173,8 +159,8 @@ public sealed class CsvClassMapTests : IDisposable
         var products1 = new[] { new Product { Id = 1, Name = "Widget", Price = 10.50m } };
         var products2 = new[] { new Product { Id = 2, Name = "Gadget", Price = 20.00m } };
 
-        var csvPath1 = Path.Join(_testDirectory, "out1.csv");
-        var csvPath2 = Path.Join(_testDirectory, "out2.csv");
+        var csvPath1 = Path.Join(TestDirectory, "out1.csv");
+        var csvPath2 = Path.Join(TestDirectory, "out2.csv");
 
         // Act - Using single ClassMap for all writes via CsvContextAction
         await new[]
@@ -212,8 +198,8 @@ public sealed class CsvClassMapTests : IDisposable
         var products1 = new[] { new Product { Id = 1, Name = "Widget", Price = 10.50m } };
         var products2 = new[] { new Product { Id = 2, Name = "Gadget", Price = 20.00m, Description = "Special" } };
 
-        var csvPath1 = Path.Join(_testDirectory, "out_by_name.csv");
-        var csvPath2 = Path.Join(_testDirectory, "out_with_optional.csv");
+        var csvPath1 = Path.Join(TestDirectory, "out_by_name.csv");
+        var csvPath2 = Path.Join(TestDirectory, "out_with_optional.csv");
 
         var fileWrites = new[]
         {
@@ -254,7 +240,7 @@ public sealed class CsvClassMapTests : IDisposable
     public async Task ParseCsvParallelAsync_WithConfigureContext_ShouldAccessConfiguration()
     {
         // Arrange
-        var csvPath = Path.Join(_testDirectory, "semicolon.csv");
+        var csvPath = Path.Join(TestDirectory, "semicolon.csv");
         await File.WriteAllTextAsync(csvPath, "ProductID;ProductName;Price\n1;Widget;10.50", TestContext.Current.CancellationToken);
 
         // Act - Configure delimiter and ClassMap via CsvFileConfiguration
@@ -283,8 +269,8 @@ public sealed class CsvClassMapTests : IDisposable
         var products1 = new[] { new Product { Id = 1, Name = "Widget", Price = 10.50m } };
         var products2 = new[] { new Product { Id = 2, Name = "Gadget", Price = 20.00m } };
 
-        var csvPath1 = Path.Join(_testDirectory, "comma.csv");
-        var csvPath2 = Path.Join(_testDirectory, "pipe.csv");
+        var csvPath1 = Path.Join(TestDirectory, "comma.csv");
+        var csvPath2 = Path.Join(TestDirectory, "pipe.csv");
 
         // Act - Different delimiter per file using CsvFileConfiguration
         var writes = new[]
@@ -332,7 +318,7 @@ public sealed class CsvClassMapTests : IDisposable
     public async Task ParseCsvParallelAsync_WithClassMapIgnoringFields_ShouldIgnoreCorrectly()
     {
         // Arrange
-        var csvPath = Path.Join(_testDirectory, "with_extra.csv");
+        var csvPath = Path.Join(TestDirectory, "with_extra.csv");
         await File.WriteAllTextAsync(csvPath, "ProductID,ProductName,Price,Internal\n1,Widget,10.50,secret", TestContext.Current.CancellationToken);
 
         // Act - Using ClassMap that ignores Internal field via CsvContextAction
@@ -358,8 +344,8 @@ public sealed class CsvClassMapTests : IDisposable
     public async Task TransformCsvParallelAsync_WithSingleClassMaps_ShouldApplyToInputAndOutput()
     {
         // Arrange
-        var inputPath = Path.Join(_testDirectory, "input.csv");
-        var outputPath = Path.Join(_testDirectory, "output.csv");
+        var inputPath = Path.Join(TestDirectory, "input.csv");
+        var outputPath = Path.Join(TestDirectory, "output.csv");
         await File.WriteAllTextAsync(inputPath, "ProductID,ProductName,Price\n1,Widget,10.00", TestContext.Current.CancellationToken);
 
         var transformations = new[]
@@ -400,8 +386,8 @@ public sealed class CsvClassMapTests : IDisposable
     public async Task TransformCsvParallelAsync_WithSeparateContextConfigurations_ShouldApplyCorrectly()
     {
         // Arrange
-        var inputPath = Path.Join(_testDirectory, "legacy.csv");
-        var outputPath = Path.Join(_testDirectory, "modern.csv");
+        var inputPath = Path.Join(TestDirectory, "legacy.csv");
+        var outputPath = Path.Join(TestDirectory, "modern.csv");
         await File.WriteAllTextAsync(inputPath, "1,Widget,10.00", TestContext.Current.CancellationToken); // No header, comma-separated
 
         var transformations = new[]
@@ -454,7 +440,7 @@ public sealed class CsvClassMapTests : IDisposable
     public async Task ParseCsvParallelAsync_WithClassMapForNonExistentColumn_ShouldThrow()
     {
         // Arrange
-        var csvPath = Path.Join(_testDirectory, "file.csv");
+        var csvPath = Path.Join(TestDirectory, "file.csv");
         await File.WriteAllTextAsync(csvPath, "Id,Name,Price\n1,Widget,10.50", TestContext.Current.CancellationToken);
 
         // Act & Assert - ClassMap expects "ProductID" but file has "Id"

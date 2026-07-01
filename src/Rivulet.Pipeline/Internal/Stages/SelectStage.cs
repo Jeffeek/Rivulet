@@ -10,14 +10,11 @@ internal sealed class SelectStage<TIn, TOut>(
     Func<TIn, CancellationToken, ValueTask<TOut>> selector,
     StageOptions options,
     string name
-) : IInternalPipelineStage, IPipelineStage<TIn, TOut>
+) : PipelineStageBase<TIn, TOut>(name, options)
 {
     private readonly Func<TIn, CancellationToken, ValueTask<TOut>> _selector = selector ?? throw new ArgumentNullException(nameof(selector));
 
-    public string Name { get; } = name ?? throw new ArgumentNullException(nameof(name));
-    public StageOptions Options { get; } = options ?? throw new ArgumentNullException(nameof(options));
-
-    public async IAsyncEnumerable<TOut> ExecuteAsync(
+    public override async IAsyncEnumerable<TOut> ExecuteAsync(
         IAsyncEnumerable<TIn> input,
         PipelineContext context,
         [EnumeratorCancellation]
@@ -44,13 +41,4 @@ internal sealed class SelectStage<TIn, TOut>(
             metrics.Stop();
         }
     }
-
-    public IAsyncEnumerable<object> ExecuteUntypedAsync(
-        IAsyncEnumerable<object> input,
-        PipelineContext context,
-        CancellationToken cancellationToken
-    ) => StageExecutionHelper.ExecuteUntypedAsync<TIn, TOut>(
-        input,
-        typedInput => ExecuteAsync(typedInput, context, cancellationToken),
-        cancellationToken);
 }

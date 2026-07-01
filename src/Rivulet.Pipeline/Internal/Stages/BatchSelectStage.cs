@@ -12,14 +12,11 @@ internal sealed class BatchSelectStage<TIn, TOut>(
     TimeSpan? flushTimeout,
     StageOptions options,
     string name
-) : IInternalPipelineStage, IPipelineStage<TIn, TOut>
+) : PipelineStageBase<TIn, TOut>(name, options)
 {
     private readonly Func<IReadOnlyList<TIn>, CancellationToken, ValueTask<TOut>> _batchSelector = batchSelector ?? throw new ArgumentNullException(nameof(batchSelector));
 
-    public string Name { get; } = name ?? throw new ArgumentNullException(nameof(name));
-    public StageOptions Options { get; } = options ?? throw new ArgumentNullException(nameof(options));
-
-    public async IAsyncEnumerable<TOut> ExecuteAsync(
+    public override async IAsyncEnumerable<TOut> ExecuteAsync(
         IAsyncEnumerable<TIn> input,
         PipelineContext context,
         [EnumeratorCancellation]
@@ -33,11 +30,9 @@ internal sealed class BatchSelectStage<TIn, TOut>(
 
         try
         {
-            // First batch the input
             var batchStage = new BatchStage<TIn>(batchSize, flushTimeout, $"{Name}_Batch");
             var batches = batchStage.ExecuteAsync(input, context, cancellationToken);
 
-            // Then process batches in parallel
             await foreach (var result in batches
                                .SelectParallelStreamAsync(_batchSelector, parallelOptions, cancellationToken)
                                .ConfigureAwait(false))
@@ -51,13 +46,4 @@ internal sealed class BatchSelectStage<TIn, TOut>(
             metrics.Stop();
         }
     }
-
-    public IAsyncEnumerable<object> ExecuteUntypedAsync(
-        IAsyncEnumerable<object> input,
-        PipelineContext context,
-        CancellationToken cancellationToken
-    ) => StageExecutionHelper.ExecuteUntypedAsync<TIn, TOut>(
-        input,
-        typedInput => ExecuteAsync(typedInput, context, cancellationToken),
-        cancellationToken);
 }
