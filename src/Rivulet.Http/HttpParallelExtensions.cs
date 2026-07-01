@@ -12,21 +12,59 @@ namespace Rivulet.Http;
 public static class HttpParallelExtensions
 {
     /// <summary>
-    ///     Validates arguments, initializes options, and executes the parallel request.
+    ///     Executes parallel HTTP GET requests and returns the response content using the provided extractor.
     /// </summary>
-    private static Task<List<TR>> ExecuteParallelAsync<TSrc, TR>(
+    private static Task<List<TR>> ExecuteGetContentParallelAsync<TSrc, TR>(
         IEnumerable<TSrc> source,
         HttpClient httpClient,
         HttpOptions? options,
         CancellationToken cancellationToken,
-        Func<IEnumerable<TSrc>, HttpOptions, ParallelOptionsRivulet, CancellationToken, Task<List<TR>>> execute
+        Func<HttpResponseMessage, CancellationToken, Task<TR>> contentExtractor
+    )
+        where TSrc : Uri
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(httpClient);
+
+        (options, var parallelOptions) = HttpHelper.InitializeOptions(options);
+
+        return source.SelectParallelAsync(
+            async (item, ct) =>
+            {
+                using var response = await ExecuteHttpRequestAsync(
+                        item,
+                        () => httpClient.GetAsync(item, HttpCompletionOption.ResponseContentRead, ct),
+                        options,
+                        ct)
+                    .ConfigureAwait(false);
+
+                return await contentExtractor(response, ct).ConfigureAwait(false);
+            },
+            parallelOptions,
+            cancellationToken);
+    }
+
+    /// <summary>
+    ///     Executes parallel HTTP requests with bounded concurrency and automatic retries.
+    /// </summary>
+    private static Task<List<HttpResponseMessage>> ExecuteMethodParallelAsync<TSrc>(
+        IEnumerable<TSrc> source,
+        HttpClient httpClient,
+        HttpOptions? options,
+        CancellationToken cancellationToken,
+        Func<TSrc, Uri> uriExtractor,
+        Func<TSrc, CancellationToken, Task<HttpResponseMessage>> httpMethod
     )
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(httpClient);
 
         (options, var parallelOptions) = HttpHelper.InitializeOptions(options);
-        return execute(source, options, parallelOptions, cancellationToken);
+
+        return source.SelectParallelAsync(
+            (item, ct) => ExecuteHttpRequestAsync(uriExtractor(item), () => httpMethod(item, ct), options, ct),
+            parallelOptions,
+            cancellationToken);
     }
 
     /// <summary>
@@ -48,23 +86,13 @@ public static class HttpParallelExtensions
         HttpClient httpClient,
         HttpOptions? options = null,
         CancellationToken cancellationToken = default
-    ) => ExecuteParallelAsync(
+    ) => ExecuteMethodParallelAsync(
         uris,
         httpClient,
         options,
         cancellationToken,
-        (
-            s,
-            o,
-            po,
-            ct
-        ) => s.SelectParallelAsync((uri, c) => ExecuteHttpRequestAsync(
-                uri,
-                () => httpClient.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, c),
-                o,
-                c),
-            po,
-            ct));
+        static x => x,
+        (uri, ct) => httpClient.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, ct));
 
     /// <summary>
     ///     Executes parallel HTTP GET requests and returns the response content as strings.
@@ -83,28 +111,12 @@ public static class HttpParallelExtensions
         HttpClient httpClient,
         HttpOptions? options = null,
         CancellationToken cancellationToken = default
-    )
-    {
-        ArgumentNullException.ThrowIfNull(uris);
-        ArgumentNullException.ThrowIfNull(httpClient);
-
-        (options, var parallelOptions) = HttpHelper.InitializeOptions(options);
-
-        return uris.SelectParallelAsync(
-            async (uri, ct) =>
-            {
-                using var response = await ExecuteHttpRequestAsync(
-                        uri,
-                        () => httpClient.GetAsync(uri, HttpCompletionOption.ResponseContentRead, ct),
-                        options,
-                        ct)
-                    .ConfigureAwait(false);
-
-                return await response.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-            },
-            parallelOptions,
-            cancellationToken);
-    }
+    ) => ExecuteGetContentParallelAsync(
+        uris,
+        httpClient,
+        options,
+        cancellationToken,
+        static (response, ct) => response.Content.ReadAsStringAsync(ct));
 
     /// <summary>
     ///     Executes parallel HTTP GET requests and returns the response content as byte arrays.
@@ -123,28 +135,12 @@ public static class HttpParallelExtensions
         HttpClient httpClient,
         HttpOptions? options = null,
         CancellationToken cancellationToken = default
-    )
-    {
-        ArgumentNullException.ThrowIfNull(uris);
-        ArgumentNullException.ThrowIfNull(httpClient);
-
-        (options, var parallelOptions) = HttpHelper.InitializeOptions(options);
-
-        return uris.SelectParallelAsync(
-            async (uri, ct) =>
-            {
-                using var response = await ExecuteHttpRequestAsync(
-                        uri,
-                        () => httpClient.GetAsync(uri, HttpCompletionOption.ResponseContentRead, ct),
-                        options,
-                        ct)
-                    .ConfigureAwait(false);
-
-                return await response.Content.ReadAsByteArrayAsync(ct).ConfigureAwait(false);
-            },
-            parallelOptions,
-            cancellationToken);
-    }
+    ) => ExecuteGetContentParallelAsync(
+        uris,
+        httpClient,
+        options,
+        cancellationToken,
+        static (response, ct) => response.Content.ReadAsByteArrayAsync(ct));
 
     /// <summary>
     ///     Executes parallel HTTP POST requests with specified content.
@@ -166,23 +162,13 @@ public static class HttpParallelExtensions
         CancellationToken cancellationToken = default
     )
         where TContent : HttpContent =>
-        ExecuteParallelAsync(
+        ExecuteMethodParallelAsync(
             requests,
             httpClient,
             options,
             cancellationToken,
-            (
-                s,
-                o,
-                po,
-                ct
-            ) => s.SelectParallelAsync((request, c) => ExecuteHttpRequestAsync(
-                    request.uri,
-                    () => httpClient.PostAsync(request.uri, request.content, c),
-                    o,
-                    c),
-                po,
-                ct));
+            static r => r.uri,
+            (request, ct) => httpClient.PostAsync(request.uri, request.content, ct));
 
     /// <summary>
     ///     Executes parallel HTTP PUT requests with specified content.
@@ -204,23 +190,13 @@ public static class HttpParallelExtensions
         CancellationToken cancellationToken = default
     )
         where TContent : HttpContent =>
-        ExecuteParallelAsync(
+        ExecuteMethodParallelAsync(
             requests,
             httpClient,
             options,
             cancellationToken,
-            (
-                s,
-                o,
-                po,
-                ct
-            ) => s.SelectParallelAsync((request, c) => ExecuteHttpRequestAsync(
-                    request.uri,
-                    () => httpClient.PutAsync(request.uri, request.content, c),
-                    o,
-                    c),
-                po,
-                ct));
+            static r => r.uri,
+            (request, ct) => httpClient.PutAsync(request.uri, request.content, ct));
 
     /// <summary>
     ///     Executes parallel HTTP DELETE requests.
@@ -239,23 +215,13 @@ public static class HttpParallelExtensions
         HttpClient httpClient,
         HttpOptions? options = null,
         CancellationToken cancellationToken = default
-    ) => ExecuteParallelAsync(
+    ) => ExecuteMethodParallelAsync(
         uris,
         httpClient,
         options,
         cancellationToken,
-        (
-            s,
-            o,
-            po,
-            ct
-        ) => s.SelectParallelAsync((uri, c) => ExecuteHttpRequestAsync(
-                uri,
-                () => httpClient.DeleteAsync(uri, c),
-                o,
-                c),
-            po,
-            ct));
+        static x => x,
+        httpClient.DeleteAsync);
 
     /// <summary>
     ///     Executes an HTTP request with automatic Retry-After header handling and error callbacks.

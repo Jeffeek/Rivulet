@@ -115,36 +115,15 @@ public static class PollyAdvancedExtensions
         TimeSpan? delayBetweenRetries = null,
         ParallelOptionsRivulet? options = null,
         CancellationToken cancellationToken = default
-    )
-    {
-        ArgumentNullException.ThrowIfNull(source);
-        ArgumentNullException.ThrowIfNull(selector);
-        ArgumentNullException.ThrowIfNull(shouldRetry);
-
-        if (maxRetries < 0) throw new ArgumentOutOfRangeException(nameof(maxRetries), "Must be non-negative");
-
-        var delay = delayBetweenRetries ?? TimeSpan.FromMilliseconds(100);
-
-        var pipeline = new ResiliencePipelineBuilder<TResult>()
-            .AddRetry(new()
-            {
-                MaxRetryAttempts = maxRetries,
-                ShouldHandle = new PredicateBuilder<TResult>()
-                    .Handle<Exception>()
-                    .HandleResult(shouldRetry),
-                Delay = delay,
-                BackoffType = DelayBackoffType.Constant
-            })
-            .Build();
-
-        return source.SelectParallelAsync((item, ct) =>
-            {
-                return pipeline.ExecuteAsync(token => selector(item, token),
-                    ct);
-            },
-            options,
-            cancellationToken);
-    }
+    ) => SelectParallelWithResultRetryCoreAsync(
+        source,
+        selector,
+        shouldRetry,
+        maxRetries,
+        delayBetweenRetries,
+        DelayBackoffType.Constant,
+        options,
+        cancellationToken);
 
     /// <summary>
     ///     Processes items in parallel with exponential result-based retry.
@@ -177,6 +156,25 @@ public static class PollyAdvancedExtensions
         TimeSpan? baseDelay = null,
         ParallelOptionsRivulet? options = null,
         CancellationToken cancellationToken = default
+    ) => SelectParallelWithResultRetryCoreAsync(
+        source,
+        selector,
+        shouldRetry,
+        maxRetries,
+        baseDelay,
+        DelayBackoffType.Exponential,
+        options,
+        cancellationToken);
+
+    private static Task<List<TResult>> SelectParallelWithResultRetryCoreAsync<TSource, TResult>(
+        IEnumerable<TSource> source,
+        Func<TSource, CancellationToken, ValueTask<TResult>> selector,
+        Func<TResult, bool> shouldRetry,
+        int maxRetries,
+        TimeSpan? delay,
+        DelayBackoffType backoffType,
+        ParallelOptionsRivulet? options,
+        CancellationToken cancellationToken
     )
     {
         ArgumentNullException.ThrowIfNull(source);
@@ -185,7 +183,7 @@ public static class PollyAdvancedExtensions
 
         if (maxRetries < 0) throw new ArgumentOutOfRangeException(nameof(maxRetries), "Must be non-negative");
 
-        var delay = baseDelay ?? TimeSpan.FromMilliseconds(100);
+        var resolvedDelay = delay ?? TimeSpan.FromMilliseconds(100);
 
         var pipeline = new ResiliencePipelineBuilder<TResult>()
             .AddRetry(new()
@@ -194,9 +192,9 @@ public static class PollyAdvancedExtensions
                 ShouldHandle = new PredicateBuilder<TResult>()
                     .Handle<Exception>()
                     .HandleResult(shouldRetry),
-                Delay = delay,
-                BackoffType = DelayBackoffType.Exponential,
-                UseJitter = true
+                Delay = resolvedDelay,
+                BackoffType = backoffType,
+                UseJitter = backoffType == DelayBackoffType.Exponential
             })
             .Build();
 

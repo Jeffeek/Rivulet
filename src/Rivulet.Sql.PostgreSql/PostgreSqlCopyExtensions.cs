@@ -142,37 +142,15 @@ public static class PostgreSqlCopyExtensions
             $"COPY {escapedTableName} ({columnList}) FROM STDIN (FORMAT CSV, DELIMITER '{escapedDelimiter}'{headerOption})";
 
         // ReSharper disable once PossibleMultipleEnumeration
-        return source
-            .Chunk(batchSize)
-            .ForEachParallelAsync(async (batch, ct) =>
-                {
-                    var connection = SqlConnectionHelper.CreateAndValidate(connectionFactory);
-
-                    await using (connection)
-                    {
-                        await SqlConnectionHelper.OpenConnectionAsync(connection, ct).ConfigureAwait(false);
-
-                        try
-                        {
-#pragma warning disable CA2007 // ConfigureAwait not applicable to await using declarations
-                            await using var writer = await connection.BeginTextImportAsync(copyCommand, ct);
-#pragma warning restore CA2007
-                            foreach (var line in batch) await writer.WriteLineAsync(line).ConfigureAwait(false);
-                        }
-#pragma warning disable CA1031 // Do not catch general exception types
-                        catch (Exception ex)
-#pragma warning restore CA1031
-                        {
-                            throw SqlErrorHelper.WrapBulkOperationException(
-                                ex,
-                                "bulk insert CSV",
-                                batch.Length,
-                                tableName);
-                        }
-                    }
-                },
-                options,
-                cancellationToken);
+        return ExecuteTextCopyAsync(
+            source,
+            connectionFactory,
+            tableName,
+            batchSize,
+            copyCommand,
+            "bulk insert CSV",
+            options,
+            cancellationToken);
     }
 
     /// <summary>
@@ -207,6 +185,28 @@ public static class PostgreSqlCopyExtensions
         var copyCommand = $"COPY {escapedTableName} ({columnList}) FROM STDIN";
 
         // ReSharper disable once PossibleMultipleEnumeration
+        return ExecuteTextCopyAsync(
+            source,
+            connectionFactory,
+            tableName,
+            batchSize,
+            copyCommand,
+            "bulk insert text",
+            options,
+            cancellationToken);
+    }
+
+    private static Task ExecuteTextCopyAsync(
+        IEnumerable<string> source,
+        Func<NpgsqlConnection> connectionFactory,
+        string tableName,
+        int batchSize,
+        string copyCommand,
+        string operationName,
+        ParallelOptionsRivulet options,
+        CancellationToken cancellationToken
+    )
+    {
         return source
             .Chunk(batchSize)
             .ForEachParallelAsync(async (batch, ct) =>
@@ -230,7 +230,7 @@ public static class PostgreSqlCopyExtensions
                         {
                             throw SqlErrorHelper.WrapBulkOperationException(
                                 ex,
-                                "bulk insert text",
+                                operationName,
                                 batch.Length,
                                 tableName);
                         }

@@ -287,4 +287,41 @@ internal static class FileOperationHelper
         var relativePath = Path.GetRelativePath(sourceBaseDirectory, sourcePath);
         return Path.Join(destinationDirectory, relativePath);
     }
+
+    /// <summary>
+    ///     Validates source/destination directories and computes file pairs preserving relative structure.
+    /// </summary>
+    public static IEnumerable<(string sourcePath, string destPath)> ComputeFilePairs(
+        string sourceDirectory,
+        string destinationDirectory,
+        string searchPattern,
+        SearchOption searchOption
+    )
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(sourceDirectory);
+        ArgumentException.ThrowIfNullOrWhiteSpace(destinationDirectory);
+
+        if (!Directory.Exists(sourceDirectory))
+            throw new DirectoryNotFoundException($"Source directory not found: {sourceDirectory}");
+
+        return Directory.GetFiles(sourceDirectory, searchPattern, searchOption)
+            .Select(sourcePath => (sourcePath, ComputeDestinationPath(sourcePath, sourceDirectory, destinationDirectory)))
+            .ToArray();
+    }
+
+    /// <summary>
+    ///     Validates a single directory exists and returns its files matching the search pattern.
+    /// </summary>
+    public static IEnumerable<string> ValidateAndGetFiles(
+        string directoryPath,
+        string searchPattern,
+        SearchOption searchOption
+    )
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(directoryPath);
+
+        return !Directory.Exists(directoryPath)
+            ? throw new DirectoryNotFoundException($"Directory not found: {directoryPath}")
+            : Directory.GetFiles(directoryPath, searchPattern, searchOption);
+    }
 }

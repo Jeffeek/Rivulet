@@ -88,63 +88,28 @@ public static class AsyncParallelLinq
                     {
                         await foreach (var (idx, item) in channel.Reader.ReadAllAsync(token).ConfigureAwait(false))
                         {
-                            var startTime = Stopwatch.GetTimestamp();
-                            var success = false;
-                            var acquiredAdaptive = false;
-
-                            try
-                            {
-                                // ReSharper disable AccessToDisposedClosure
-                                // Acquire adaptive controller (must be in worker loop for proper finally cleanup)
-                                if (infrastructure.AdaptiveController is not null)
-                                {
-                                    await infrastructure.AdaptiveController.AcquireAsync(token).ConfigureAwait(false);
-                                    acquiredAdaptive = true;
-                                }
-
-                                // Process item
-                                var result = await ProcessItemCoreAsync(
-                                        item,
-                                        idx,
-                                        taskSelector,
-                                        options,
-                                        infrastructure,
-                                        token)
-                                    .ConfigureAwait(false);
-                                // ReSharper restore AccessToDisposedClosure
-
-                                // Store result (only difference between SelectParallelAsync and SelectParallelStreamAsync)
-                                if (options.OrderedOutput && orderedResults != null)
-                                    orderedResults[idx] = result;
-                                else
-                                    results?.Add(result);
-
-                                success = true;
-                            }
-#pragma warning disable CA1031 // Do not catch general exception types - user selector can throw any exception type
-                            catch (Exception ex)
-#pragma warning restore CA1031
-                            {
-                                // User-provided selector can throw any exception type - must catch all and handle via error policy
-                                await HandleProcessingErrorAsync(
-                                    ex,
-                                    idx,
-                                    options,
-                                    // ReSharper disable AccessToDisposedClosure
-                                    infrastructure,
-                                    cts,
-                                    // ReSharper restore AccessToDisposedClosure
-                                    errors,
-                                    sharedFirstRealError).ConfigureAwait(false);
-                            }
-                            finally
-                            {
+                            await ExecuteWorkerLoopBodyAsync(
+                                item,
+                                idx,
+                                taskSelector,
+                                options,
                                 // ReSharper disable once AccessToDisposedClosure
-                                ReleaseAdaptiveController(infrastructure.AdaptiveController,
-                                    acquiredAdaptive,
-                                    startTime,
-                                    success);
-                            }
+                                infrastructure,
+                                cts,
+                                errors,
+                                sharedFirstRealError,
+                                token,
+                                (result, ct) =>
+                                {
+                                    ct.ThrowIfCancellationRequested();
+
+                                    if (options.OrderedOutput && orderedResults != null)
+                                        orderedResults[idx] = result;
+                                    else
+                                        results?.Add(result);
+
+                                    return ValueTask.CompletedTask;
+                                }).ConfigureAwait(false);
                         }
                     },
                     token))
@@ -259,56 +224,18 @@ public static class AsyncParallelLinq
                     {
                         await foreach (var (idx, item) in input.Reader.ReadAllAsync(token).ConfigureAwait(false))
                         {
-                            var startTime = Stopwatch.GetTimestamp();
-                            var success = false;
-                            var acquiredAdaptive = false;
-
-                            try
-                            {
-                                // Acquire adaptive controller (must be in worker loop for proper finally cleanup)
-                                if (infrastructure.AdaptiveController is not null)
-                                {
-                                    await infrastructure.AdaptiveController.AcquireAsync(token).ConfigureAwait(false);
-                                    acquiredAdaptive = true;
-                                }
-
-                                // Process item
-                                var result = await ProcessItemCoreAsync(
-                                        item,
-                                        idx,
-                                        taskSelector,
-                                        options,
-                                        infrastructure,
-                                        token)
-                                    .ConfigureAwait(false);
-
-                                // Write result to output channel (only difference between SelectParallelAsync and SelectParallelStreamAsync)
-                                await output.Writer.WriteAsync((idx, result), token).ConfigureAwait(false);
-
-                                success = true;
-                            }
-#pragma warning disable CA1031 // Do not catch general exception types - user selector can throw any exception type
-                            catch (Exception ex)
-#pragma warning restore CA1031
-                            {
-                                // User-provided selector can throw any exception type - must catch all and handle via error policy
-                                await HandleProcessingErrorAsync(
-                                        ex,
-                                        idx,
-                                        options,
-                                        infrastructure,
-                                        cts,
-                                        errors,
-                                        sharedFirstRealError)
-                                    .ConfigureAwait(false);
-                            }
-                            finally
-                            {
-                                ReleaseAdaptiveController(infrastructure.AdaptiveController,
-                                    acquiredAdaptive,
-                                    startTime,
-                                    success);
-                            }
+                            await ExecuteWorkerLoopBodyAsync(
+                                    item,
+                                    idx,
+                                    taskSelector,
+                                    options,
+                                    infrastructure,
+                                    cts,
+                                    errors,
+                                    sharedFirstRealError,
+                                    token,
+                                    (result, ct) => output.Writer.WriteAsync((idx, result), ct))
+                                .ConfigureAwait(false);
                         }
                     },
                     token))
@@ -646,6 +573,66 @@ public static class AsyncParallelLinq
             }
 
             if (batch.Count > 0) yield return batch;
+        }
+    }
+
+    /// <summary>
+    ///     Executes a single item through the worker loop: acquire controller, process, handle result, handle errors, release.
+    /// </summary>
+    private static async Task ExecuteWorkerLoopBodyAsync<TSource, TResult>(
+        TSource item,
+        int idx,
+        Func<TSource, CancellationToken, ValueTask<TResult>> taskSelector,
+        ParallelOptionsRivulet options,
+        ParallelInfrastructure infrastructure,
+        CancellationTokenSource cts,
+        ConcurrentBag<Exception> errors,
+        StrongBox<Exception?> sharedFirstRealError,
+        CancellationToken token,
+        Func<TResult, CancellationToken, ValueTask> resultHandler
+    )
+    {
+        var startTime = Stopwatch.GetTimestamp();
+        var success = false;
+        var acquiredAdaptive = false;
+
+        try
+        {
+            if (infrastructure.AdaptiveController is not null)
+            {
+                await infrastructure.AdaptiveController.AcquireAsync(token).ConfigureAwait(false);
+                acquiredAdaptive = true;
+            }
+
+            var result = await ProcessItemCoreAsync(
+                    item,
+                    idx,
+                    taskSelector,
+                    options,
+                    infrastructure,
+                    token)
+                .ConfigureAwait(false);
+
+            await resultHandler(result, token).ConfigureAwait(false);
+            success = true;
+        }
+#pragma warning disable CA1031 // Do not catch general exception types - user selector can throw any exception type
+        catch (Exception ex)
+#pragma warning restore CA1031
+        {
+            await HandleProcessingErrorAsync(
+                    ex,
+                    idx,
+                    options,
+                    infrastructure,
+                    cts,
+                    errors,
+                    sharedFirstRealError)
+                .ConfigureAwait(false);
+        }
+        finally
+        {
+            ReleaseAdaptiveController(infrastructure.AdaptiveController, acquiredAdaptive, startTime, success);
         }
     }
 
