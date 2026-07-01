@@ -1,11 +1,9 @@
 using System.Runtime.CompilerServices;
 using System.Threading.Channels;
+using Rivulet.Core;
 
 namespace Rivulet.Pipeline.Internal.Stages;
 
-/// <summary>
-/// A stage that buffers items to decouple upstream and downstream processing.
-/// </summary>
 internal sealed class BufferStage<T>(int capacity, string name)
     : PipelineStageBase<T, T>(name, new StageOptions())
 {
@@ -58,4 +56,11 @@ internal sealed class BufferStage<T>(int capacity, string name)
             metrics.Stop();
         }
     }
+
+    protected override IAsyncEnumerable<T> ExecuteCoreAsync(
+        IAsyncEnumerable<T> _,
+        ParallelOptionsRivulet __,
+        PipelineContext ___,
+        CancellationToken ____
+    ) => throw new NotSupportedException();
 }

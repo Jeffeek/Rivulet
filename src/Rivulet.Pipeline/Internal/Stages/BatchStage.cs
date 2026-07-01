@@ -1,11 +1,9 @@
 using System.Runtime.CompilerServices;
 using System.Threading.Channels;
+using Rivulet.Core;
 
 namespace Rivulet.Pipeline.Internal.Stages;
 
-/// <summary>
-/// A stage that groups items into fixed-size batches.
-/// </summary>
 internal sealed class BatchStage<T>(int batchSize, TimeSpan? flushTimeout, string name)
     : PipelineStageBase<T, IReadOnlyList<T>>(name, new StageOptions())
 {
@@ -43,6 +41,13 @@ internal sealed class BatchStage<T>(int batchSize, TimeSpan? flushTimeout, strin
             metrics?.Stop();
         }
     }
+
+    protected override IAsyncEnumerable<IReadOnlyList<T>> ExecuteCoreAsync(
+        IAsyncEnumerable<T> _,
+        ParallelOptionsRivulet __,
+        PipelineContext ___,
+        CancellationToken ____
+    ) => throw new NotSupportedException();
 
     private async IAsyncEnumerable<IReadOnlyList<T>> ExecuteSimpleAsync(
         IAsyncEnumerable<T> input,

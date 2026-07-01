@@ -1,3 +1,6 @@
+using System.Runtime.CompilerServices;
+using Rivulet.Core;
+
 namespace Rivulet.Pipeline.Internal.Stages;
 
 /// <summary>
@@ -10,8 +13,39 @@ internal abstract class PipelineStageBase<TIn, TOut>(string name, StageOptions o
     public string Name { get; } = name ?? throw new ArgumentNullException(nameof(name));
     public StageOptions Options { get; } = options ?? throw new ArgumentNullException(nameof(options));
 
-    public abstract IAsyncEnumerable<TOut> ExecuteAsync(
+    public virtual async IAsyncEnumerable<TOut> ExecuteAsync(
         IAsyncEnumerable<TIn> input,
+        PipelineContext context,
+        [EnumeratorCancellation]
+        CancellationToken cancellationToken
+    )
+    {
+        var parallelOptions = Options.GetMergedOptions(context.DefaultStageOptions);
+        var metrics = context.GetStageMetrics(Name);
+
+        metrics.Start();
+
+        try
+        {
+            await foreach (var result in ExecuteCoreAsync(input, parallelOptions, context, cancellationToken).ConfigureAwait(false))
+            {
+                metrics.IncrementItemsOut();
+                yield return result;
+            }
+        }
+        finally
+        {
+            metrics.Stop();
+        }
+    }
+
+    /// <summary>
+    /// Core transformation logic for stages that use <see cref="ExecuteAsync"/> as-is.
+    /// Override this instead of <see cref="ExecuteAsync"/> to avoid repeating metrics/options boilerplate.
+    /// </summary>
+    protected abstract IAsyncEnumerable<TOut> ExecuteCoreAsync(
+        IAsyncEnumerable<TIn> input,
+        ParallelOptionsRivulet parallelOptions,
         PipelineContext context,
         CancellationToken cancellationToken
     );
