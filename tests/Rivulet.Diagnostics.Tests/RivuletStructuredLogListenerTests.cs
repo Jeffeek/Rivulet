@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
+using Rivulet.Base.Tests;
 using Rivulet.Core;
 
 namespace Rivulet.Diagnostics.Tests;

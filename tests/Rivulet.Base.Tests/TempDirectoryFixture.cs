@@ -29,7 +29,7 @@ public abstract class TempDirectoryFixture : IDisposable
 
         try
         {
-            Directory.Delete(TestDirectory, true);
+            TestCleanupHelper.RetryDeleteDirectory(TestDirectory);
         }
         catch
         {

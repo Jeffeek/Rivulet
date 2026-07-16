@@ -1,13 +1,11 @@
 using System.Runtime.CompilerServices;
+using Rivulet.Core;
 using Rivulet.Core.Resilience;
 
 namespace Rivulet.Pipeline.Internal.Stages;
 
-/// <summary>
-/// A stage that rate limits items flowing through using token bucket algorithm.
-/// Reuses TokenBucket implementation from Rivulet.Core.Resilience.
-/// </summary>
-internal sealed class ThrottleStage<T>(double tokensPerSecond, double burstCapacity, string name) : IInternalPipelineStage, IPipelineStage<T, T>
+internal sealed class ThrottleStage<T>(double tokensPerSecond, double burstCapacity, string name)
+    : PipelineStageBase<T, T>(name, new StageOptions())
 {
     private readonly RateLimitOptions _rateLimitOptions = new()
     {
@@ -16,10 +14,7 @@ internal sealed class ThrottleStage<T>(double tokensPerSecond, double burstCapac
         TokensPerOperation = 1.0
     };
 
-    public string Name { get; } = name ?? throw new ArgumentNullException(nameof(name));
-    public StageOptions Options { get; } = new();
-
-    public async IAsyncEnumerable<T> ExecuteAsync(
+    public override async IAsyncEnumerable<T> ExecuteAsync(
         IAsyncEnumerable<T> input,
         PipelineContext context,
         [EnumeratorCancellation]
@@ -29,7 +24,6 @@ internal sealed class ThrottleStage<T>(double tokensPerSecond, double burstCapac
         var metrics = context.GetStageMetrics(Name);
         metrics.Start();
 
-        // Reuse TokenBucket from Core instead of reimplementing
         var tokenBucket = new TokenBucket(_rateLimitOptions);
 
         try
@@ -38,7 +32,6 @@ internal sealed class ThrottleStage<T>(double tokensPerSecond, double burstCapac
             {
                 metrics.IncrementItemsIn();
 
-                // Wait for token using existing TokenBucket implementation
                 await tokenBucket.AcquireAsync(cancellationToken).ConfigureAwait(false);
 
                 metrics.IncrementItemsOut();
@@ -51,12 +44,10 @@ internal sealed class ThrottleStage<T>(double tokensPerSecond, double burstCapac
         }
     }
 
-    public IAsyncEnumerable<object> ExecuteUntypedAsync(
-        IAsyncEnumerable<object> input,
-        PipelineContext context,
-        CancellationToken cancellationToken
-    ) => StageExecutionHelper.ExecuteUntypedAsync<T, T>(
-        input,
-        typedInput => ExecuteAsync(typedInput, context, cancellationToken),
-        cancellationToken);
+    protected override IAsyncEnumerable<T> ExecuteCoreAsync(
+        IAsyncEnumerable<T> _,
+        ParallelOptionsRivulet __,
+        PipelineContext ___,
+        CancellationToken ____
+    ) => throw new NotSupportedException();
 }

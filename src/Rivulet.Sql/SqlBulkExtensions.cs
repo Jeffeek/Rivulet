@@ -28,21 +28,7 @@ public static class SqlBulkExtensions
         Func<IReadOnlyList<T>, IDbCommand, CancellationToken, ValueTask> commandBuilder,
         BulkOperationOptions? options = null,
         CancellationToken cancellationToken = default
-    )
-    {
-        ArgumentNullException.ThrowIfNull(items);
-        ArgumentNullException.ThrowIfNull(connectionFactory);
-        ArgumentNullException.ThrowIfNull(commandBuilder);
-
-        options ??= new();
-
-        return ExecuteBulkOperationAsync(
-            items,
-            connectionFactory,
-            commandBuilder,
-            options,
-            cancellationToken);
-    }
+    ) => BulkOperationAsync(items, connectionFactory, commandBuilder, options, cancellationToken);
 
     /// <summary>
     ///     Executes bulk update operations in parallel batches.
@@ -60,21 +46,7 @@ public static class SqlBulkExtensions
         Func<IReadOnlyList<T>, IDbCommand, CancellationToken, ValueTask> commandBuilder,
         BulkOperationOptions? options = null,
         CancellationToken cancellationToken = default
-    )
-    {
-        ArgumentNullException.ThrowIfNull(items);
-        ArgumentNullException.ThrowIfNull(connectionFactory);
-        ArgumentNullException.ThrowIfNull(commandBuilder);
-
-        options ??= new();
-
-        return ExecuteBulkOperationAsync(
-            items,
-            connectionFactory,
-            commandBuilder,
-            options,
-            cancellationToken);
-    }
+    ) => BulkOperationAsync(items, connectionFactory, commandBuilder, options, cancellationToken);
 
     /// <summary>
     ///     Executes bulk delete operations in parallel batches.
@@ -92,20 +64,21 @@ public static class SqlBulkExtensions
         Func<IReadOnlyList<T>, IDbCommand, CancellationToken, ValueTask> commandBuilder,
         BulkOperationOptions? options = null,
         CancellationToken cancellationToken = default
+    ) => BulkOperationAsync(items, connectionFactory, commandBuilder, options, cancellationToken);
+
+    private static Task<int> BulkOperationAsync<T>(
+        IEnumerable<T> items,
+        Func<IDbConnection> connectionFactory,
+        Func<IReadOnlyList<T>, IDbCommand, CancellationToken, ValueTask> commandBuilder,
+        BulkOperationOptions? options,
+        CancellationToken cancellationToken
     )
     {
         ArgumentNullException.ThrowIfNull(items);
         ArgumentNullException.ThrowIfNull(connectionFactory);
         ArgumentNullException.ThrowIfNull(commandBuilder);
-
         options ??= new();
-
-        return ExecuteBulkOperationAsync(
-            items,
-            connectionFactory,
-            commandBuilder,
-            options,
-            cancellationToken);
+        return ExecuteBulkOperationAsync(items, connectionFactory, commandBuilder, options, cancellationToken);
     }
 
     private static async Task<int> ExecuteBulkOperationAsync<T>(

@@ -80,7 +80,7 @@ public static class PollyParallelExtensions
     ///         MaxRetryAttempts = 3
     ///     })
     ///     .Build();
-    /// 
+    ///
     /// var results = await urls.SelectParallelWithPolicyAsync(
     ///     async (url, ct) => await httpClient.GetAsync(url, ct),
     ///     pipeline);
