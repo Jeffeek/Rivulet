@@ -33,7 +33,7 @@
   </ItemGroup>
   <ItemGroup>
   	<PackageReference Include="System.Diagnostics.DiagnosticSource" Version="10.0.9" />
-  	<PackageReference Include="OpenTelemetry.Api" Version="1.16.0" />
+  	<PackageReference Include="OpenTelemetry.Api" Version="1.17.0" />
   	<PackageReference Include="System.Diagnostics.DiagnosticSource" Version="10.0.8" />
   </ItemGroup>
 </Project>
