@@ -110,7 +110,7 @@ if [ "$SKIP_TESTS" = false ]; then
     echo -e "${YELLOW}======================================${NC}"
     echo ""
 
-    if ! dotnet test -c "$CONFIGURATION" --no-build --verbosity normal; then
+    if ! dotnet test --solution Rivulet.slnx -c "$CONFIGURATION" --no-build --verbosity normal; then
         echo ""
         echo -e "${RED}Error: Tests failed!${NC}"
         exit 1
