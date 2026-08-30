@@ -46,7 +46,12 @@ jobs:
     - name: Run tests
       # Unit tests only — integration tests require Linux containers not available here.
       # Full integration test suite already ran in CI before this tag was pushed.
-      run: dotnet test Rivulet.slnx -c Release --no-build --verbosity normal --filter "Category!=Integration"
+      run: dotnet test \
+           --solution Rivulet.slnx \
+           -c Release \
+           --no-build \
+           --verbosity normal \
+           --filter-not-trait Category=Integration
       timeout-minutes: 5
 
     - name: Pack NuGet packages

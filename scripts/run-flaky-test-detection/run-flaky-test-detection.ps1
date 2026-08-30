@@ -79,7 +79,7 @@ for ($i = 1; $i -le $Iterations; $i++) {
     $job = Start-Job -ScriptBlock {
         param($dir)
         Set-Location $dir
-        dotnet test --solution Rivulet.slnx -c Release --filter "Category!=Integration" 2>&1 | Out-String
+        dotnet test --solution Rivulet.slnx -c Release --filter-not-trait Category!=Integration 2>&1 | Out-String
     } -ArgumentList $currentDir
 
     $completed = Wait-Job -Job $job -Timeout 300 # 5 minutes
