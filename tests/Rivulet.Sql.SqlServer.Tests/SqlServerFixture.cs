@@ -10,6 +10,10 @@ internal abstract class SqlServerFixture : IAsyncLifetime
 {
     private MsSqlContainer? _container;
 
+    // ReSharper disable once PublicConstructorInAbstractClass
+    // ReSharper disable once EmptyConstructor
+    public SqlServerFixture() { }
+
     public async ValueTask InitializeAsync()
     {
         _container = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-latest")

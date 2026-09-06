@@ -6,6 +6,12 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <TestingPlatformCommandLineArguments>
+      $(TestingPlatformCommandLineArguments) --ignore-exit-code 8
+    </TestingPlatformCommandLineArguments>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Shouldly" Version="4.3.0" />
     <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="10.0.11" />

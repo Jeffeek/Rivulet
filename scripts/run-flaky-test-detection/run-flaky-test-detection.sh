@@ -106,7 +106,7 @@ for ((i = 1; i <= ITERATIONS; i++)); do
     # Run tests with 5-minute timeout per iteration to catch hangs
     # timeout returns 124 if command times out
     # FILTER: Exclude integration tests (Testcontainers) - they are deterministic but slow
-    output=$(timeout 300 dotnet test -c Release --filter "Category!=Integration" 2>&1) || test_exit=$?
+    output=$(timeout 300 dotnet test --solution Rivulet.slnx -c Release --filter-not-trait Category!=Integration 2>&1) || test_exit=$?
 
     # Check if timeout occurred (exit code 124)
     if [[ ${test_exit:-0} -eq 124 ]]; then

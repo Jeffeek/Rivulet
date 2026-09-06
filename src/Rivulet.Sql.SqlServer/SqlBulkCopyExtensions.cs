@@ -84,24 +84,23 @@ public static class SqlBulkCopyExtensions
     {
         ArgumentNullException.ThrowIfNull(columnMappings);
 
-        if (columnMappings.Count == 0)
-            throw new ArgumentException("Column mappings dictionary cannot be empty", nameof(columnMappings));
-
-        return ExecuteSqlBulkCopyAsync(
-            source,
-            connectionFactory,
-            destinationTable,
-            mapToDataTable,
-            options,
-            bulkCopyOptions,
-            batchSize,
-            bulkCopyTimeout,
-            cancellationToken,
-            (bulkCopy, _) =>
-            {
-                foreach (var (sourceColumn, destColumn) in columnMappings)
-                    bulkCopy.ColumnMappings.Add(sourceColumn, destColumn);
-            });
+        return columnMappings.Count == 0
+            ? throw new ArgumentException("Column mappings dictionary cannot be empty", nameof(columnMappings))
+            : ExecuteSqlBulkCopyAsync(
+                source,
+                connectionFactory,
+                destinationTable,
+                mapToDataTable,
+                options,
+                bulkCopyOptions,
+                batchSize,
+                bulkCopyTimeout,
+                cancellationToken,
+                (bulkCopy, _) =>
+                {
+                    foreach (var (sourceColumn, destColumn) in columnMappings)
+                        bulkCopy.ColumnMappings.Add(sourceColumn, destColumn);
+                });
     }
 
     /// <summary>

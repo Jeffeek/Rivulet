@@ -83,7 +83,7 @@ if (-not $SkipTests) {
     Write-Host "======================================" -ForegroundColor Yellow
     Write-Host ""
 
-    dotnet test Rivulet.slnx -c $Configuration --no-build --verbosity normal
+    dotnet test --solution Rivulet.slnx -c $Configuration --no-build --verbosity normal
 
     if ($LASTEXITCODE -ne 0) {
         Write-Host ""

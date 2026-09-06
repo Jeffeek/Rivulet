@@ -301,12 +301,11 @@ internal static class FileOperationHelper
         ArgumentException.ThrowIfNullOrWhiteSpace(sourceDirectory);
         ArgumentException.ThrowIfNullOrWhiteSpace(destinationDirectory);
 
-        if (!Directory.Exists(sourceDirectory))
-            throw new DirectoryNotFoundException($"Source directory not found: {sourceDirectory}");
-
-        return Directory.GetFiles(sourceDirectory, searchPattern, searchOption)
-            .Select(sourcePath => (sourcePath, ComputeDestinationPath(sourcePath, sourceDirectory, destinationDirectory)))
-            .ToArray();
+        return !Directory.Exists(sourceDirectory)
+            ? throw new DirectoryNotFoundException($"Source directory not found: {sourceDirectory}")
+            : Directory.GetFiles(sourceDirectory, searchPattern, searchOption)
+                .Select(sourcePath => (sourcePath, ComputeDestinationPath(sourcePath, sourceDirectory, destinationDirectory)))
+                .ToArray();
     }
 
     /// <summary>
