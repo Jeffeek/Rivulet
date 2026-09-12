@@ -52,10 +52,10 @@ jobs:
 
     - name: Run tests for net8.0 and net9.0 (Windows - Unit tests only, integration tests require Linux containers)
       if: runner.os == 'Windows'
-      run: dotnet test --solution Rivulet.slnx \
-        -c Release \
-        --no-build \
-        --verbosity normal \
+      run: dotnet test --solution Rivulet.slnx `
+        -c Release `
+        --no-build `
+        --verbosity normal `
         --filter-not-trait Category=Integration
       timeout-minutes: 5
 
