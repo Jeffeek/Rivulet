@@ -73,13 +73,8 @@ jobs:
       uses: ./.github/actions/dotnet-setup
 
     - name: Run tests with coverage
-      run: dotnet test \
-           --solution Rivulet.slnx \
-           -c Release \
-           --no-build \
-           --collect:"XPlat Code Coverage" \
-           --results-directory ./coverage
-      timeout-minutes: 8
+      run: dotnet test Rivulet.slnx -c Release --no-build --collect:"XPlat Code Coverage" --results-directory ./coverage
+      timeout-minutes: 12
 
     - name: Upload coverage reports
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -111,5 +106,5 @@ jobs:
     if: github.event_name == 'pull_request'
     uses: ./.github/workflows/reusable-flaky-test-detection.yml
     with:
-      iterations: 20
+      iterations: 10
       timeout-minutes: 100

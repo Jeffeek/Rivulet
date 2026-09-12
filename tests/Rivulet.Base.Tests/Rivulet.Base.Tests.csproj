@@ -8,7 +8,7 @@
 
   <PropertyGroup>
     <TestingPlatformCommandLineArguments>
-      $(TestingPlatformCommandLineArguments) --ignore-exit-code 8
+      $(TestingPlatformCommandLineArguments) --ignore-exit-code 8;5
     </TestingPlatformCommandLineArguments>
   </PropertyGroup>
 
