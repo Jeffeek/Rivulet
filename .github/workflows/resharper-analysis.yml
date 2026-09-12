@@ -43,7 +43,7 @@ jobs:
         solutionPath: ./Rivulet.slnx
         version: 2025.3.3
         failOnIssue: '1'
-        noBuild: true
+        noBuild: false
         solutionWideAnalysis: true
         minimumReportSeverity: WARNING
         minimumSeverity: warning
