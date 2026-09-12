@@ -42,12 +42,12 @@ jobs:
     - name: Setup .NET environment
       uses: ./.github/actions/dotnet-setup
 
-    - name: Run tests for net8.0 and net9.0 (Ubuntu - All tests including integration)
+    - name: Run tests for net8.0, net9.0, and net10.0 (Ubuntu - All tests including integration)
       if: runner.os == 'Linux'
       run: dotnet test --solution Rivulet.slnx -c Release --no-build --verbosity normal
       timeout-minutes: 12
 
-    - name: Run tests for net8.0 and net9.0 (Windows - Unit tests only, integration tests require Linux containers)
+    - name: Run tests for net8.0, net9.0, and net10.0 (Windows - Unit tests only, integration tests require Linux containers)
       if: runner.os == 'Windows'
       run: dotnet test --solution Rivulet.slnx -c Release --no-build --verbosity normal --filter-not-trait Category=Integration
       timeout-minutes: 5
