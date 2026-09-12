@@ -44,15 +44,12 @@ jobs:
 
     - name: Run tests for net8.0 and net9.0 (Ubuntu - All tests including integration)
       if: runner.os == 'Linux'
-      run: dotnet test --solution Rivulet.slnx \
-           -c Release \
-           --no-build \
-           --verbosity normal
+      run: dotnet test --solution Rivulet.slnx -c Release --no-build --verbosity normal
       timeout-minutes: 12
 
     - name: Run tests for net8.0 and net9.0 (Windows - Unit tests only, integration tests require Linux containers)
       if: runner.os == 'Windows'
-      run: dotnet test Rivulet.slnx -c Release --no-build --verbosity normal --filter "Category!=Integration"
+      run: dotnet test Rivulet.slnx -c Release --no-build --verbosity normal --filter-not-trait Category=Integration
       timeout-minutes: 5
 
   test-with-coverage:
