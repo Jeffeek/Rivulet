@@ -1,4 +1,4 @@
-﻿# Rivulet.IO
+# Rivulet.IO
 
 <!-- DESCRIPTION_START -->
 **Parallel file and directory operations with bounded concurrency, resilience, and streaming support for efficient I/O processing.**
@@ -573,13 +573,14 @@ The library provides two public layers of extension methods:
 
 ## Requirements
 
-- .NET 8.0 or .NET 9.0
+- .NET 8.0, .NET 9.0, .NET 10.0
 - Rivulet.Core (included)
 
 ## Framework Support
 
 - .NET 8.0
 - .NET 9.0
+- .NET 10.0
 
 ## Documentation & Source
 

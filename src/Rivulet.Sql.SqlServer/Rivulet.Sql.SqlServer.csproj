@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <!-- Compile settings -->
-	<TargetFrameworks>net9.0;net8.0;</TargetFrameworks>
+	<TargetFrameworks>net10.0;net9.0;net8.0;</TargetFrameworks>
 	<LangVersion>12</LangVersion>
   	<Nullable>enable</Nullable>
   	<ImplicitUsings>enable</ImplicitUsings>
@@ -32,6 +32,6 @@
   	<ProjectReference Include="..\Rivulet.Sql\Rivulet.Sql.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.Data.SqlClient" Version="7.0.2" />
+    <PackageReference Include="Microsoft.Data.SqlClient" />
   </ItemGroup>
 </Project>

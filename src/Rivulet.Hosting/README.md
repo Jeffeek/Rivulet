@@ -1,4 +1,4 @@
-﻿# Rivulet.Hosting
+# Rivulet.Hosting
 
 <!-- DESCRIPTION_START -->
 Integration package for using Rivulet with Microsoft.Extensions.Hosting, ASP.NET Core, and the .NET Generic Host.
@@ -519,6 +519,7 @@ Contributions are welcome! Please see the main Rivulet repository for guidelines
 
 - .NET 8.0
 - .NET 9.0
+- .NET 10.0
 
 ## Documentation & Source
 

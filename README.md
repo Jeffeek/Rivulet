@@ -753,7 +753,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE.txt) 
 ## 🙏 Acknowledgments
 
 Built with ❤️ using:
-- .NET 8.0 and .NET 9.0
+- .NET 8.0, .NET 9.0, .NET 10.0
 - System.Threading.Channels for backpressure
 - xUnit for testing
 - BenchmarkDotNet for performance validation

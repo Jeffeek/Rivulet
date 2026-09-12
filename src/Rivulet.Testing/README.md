@@ -1,4 +1,4 @@
-﻿# Rivulet.Testing
+# Rivulet.Testing
 
 <!-- DESCRIPTION_START -->
 Testing utilities for Rivulet parallel operations including deterministic schedulers, virtual time, fake channels, and chaos injection.
@@ -360,6 +360,7 @@ public async Task TestParallelOperationsWithTestingTools()
 
 - .NET 8.0
 - .NET 9.0
+- .NET 10.0
 
 ## Documentation & Source
 

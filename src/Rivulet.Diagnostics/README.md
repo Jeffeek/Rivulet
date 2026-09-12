@@ -1,4 +1,4 @@
-﻿# Rivulet.Diagnostics
+# Rivulet.Diagnostics
 
 <!-- DESCRIPTION_START -->
 Enterprise observability for Rivulet.Core with EventListener wrappers, metric aggregators, and health check integration.
@@ -248,7 +248,7 @@ app.MapGet("/metrics", () => exporter.Export());
 
 ## Requirements
 
-- .NET 8.0 or .NET 9.0
+- .NET 8.0, .NET 9.0, .NET 10.0
 - Rivulet.Core 1.2.0+
 - Microsoft.Extensions.Diagnostics.HealthChecks 9.0.0+ (for health checks)
 
@@ -256,6 +256,7 @@ app.MapGet("/metrics", () => exporter.Export());
 
 - .NET 8.0
 - .NET 9.0
+- .NET 10.0
 
 ## Documentation & Source
 

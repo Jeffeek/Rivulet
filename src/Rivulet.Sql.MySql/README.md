@@ -120,7 +120,7 @@ await csvLines.BulkInsertUsingMySqlBulkLoaderAsync(
 
 ## Requirements
 
-- .NET 8.0 or .NET 9.0
+- .NET 8.0, .NET 9.0, .NET 10.0
 - MySQL 5.7 or later / MariaDB 10.2 or later
 - MySqlConnector
 - **Important**: MySQL server must have `local_infile=1` enabled for MySqlBulkLoader
@@ -143,6 +143,7 @@ And in your connection string:
 
 - .NET 8.0
 - .NET 9.0
+- .NET 10.0
 
 ## Documentation & Source
 

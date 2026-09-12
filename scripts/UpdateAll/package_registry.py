@@ -82,7 +82,7 @@ class PackageRegistry:
         pkg['test_path'] = f"tests/{name}.Tests"
         pkg['sample_name'] = f"{name}.Sample"
         pkg['sample_path'] = f"samples/{name}.Sample"
-        pkg['targets'] = self.defaults.get('targets', ['net8.0', 'net9.0'])
+        pkg['targets'] = self.defaults.get('targets', ['net8.0', 'net9.0', 'net10.0'])
 
         # Derived from codebase files
         pkg['description'] = self._parse_readme_marker(name, 'DESCRIPTION')
