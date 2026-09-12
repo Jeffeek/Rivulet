@@ -1,6 +1,6 @@
 name: .NET Setup
 description: >
-  Sets up .NET 9, caches and restores NuGet packages, and builds the solution
+  Sets up .NET 10, caches and restores NuGet packages, and builds the solution
   in Release mode. Caller must run actions/checkout before using this action.
 
 inputs:
@@ -10,17 +10,17 @@ inputs:
 
 outputs:
   dotnet-version:
-    description: 'The installed .NET SDK version (e.g. 9.0.301)'
+    description: 'The installed .NET SDK version (e.g. 10.0.400)'
     value: ${{ steps.setup-dotnet.outputs.dotnet-version }}
 
 runs:
   using: composite
   steps:
-    - name: Setup .NET 9.0.x
+    - name: Setup .NET 10.0.x
       id: setup-dotnet
       uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
       with:
-        dotnet-version: 9.0.x
+        dotnet-version: 10.0.x
 
     - name: Cache NuGet packages
       uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3

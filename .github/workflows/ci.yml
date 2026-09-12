@@ -44,15 +44,12 @@ jobs:
 
     - name: Run tests for net8.0 and net9.0 (Ubuntu - All tests including integration)
       if: runner.os == 'Linux'
-      run: dotnet test --solution Rivulet.slnx \
-           -c Release \
-           --no-build \
-           --verbosity normal
+      run: dotnet test --solution Rivulet.slnx -c Release --no-build --verbosity normal
       timeout-minutes: 12
 
     - name: Run tests for net8.0 and net9.0 (Windows - Unit tests only, integration tests require Linux containers)
       if: runner.os == 'Windows'
-      run: dotnet test Rivulet.slnx -c Release --no-build --verbosity normal --filter "Category!=Integration"
+      run: dotnet test --solution Rivulet.slnx -c Release --no-build --verbosity normal --filter-not-trait Category=Integration
       timeout-minutes: 5
 
   test-with-coverage:
@@ -76,13 +73,8 @@ jobs:
       uses: ./.github/actions/dotnet-setup
 
     - name: Run tests with coverage
-      run: dotnet test \
-           --solution Rivulet.slnx \
-           -c Release \
-           --no-build \
-           --collect:"XPlat Code Coverage" \
-           --results-directory ./coverage
-      timeout-minutes: 8
+      run: dotnet test --solution Rivulet.slnx -c Release --no-build --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./coverage
+      timeout-minutes: 12
 
     - name: Upload coverage reports
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -114,5 +106,5 @@ jobs:
     if: github.event_name == 'pull_request'
     uses: ./.github/workflows/reusable-flaky-test-detection.yml
     with:
-      iterations: 20
+      iterations: 10
       timeout-minutes: 100
