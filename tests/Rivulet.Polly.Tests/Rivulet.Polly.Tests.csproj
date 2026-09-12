@@ -6,20 +6,16 @@
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
-    <ImplicitUsings>enable</ImplicitUsings>
     <OutputType>Exe</OutputType>
+    
+    
+    <ImplicitUsings>enable</ImplicitUsings>
+    
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="xunit.v3" />
-    <PackageReference Include="coverlet.collector">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="xunit.runner.visualstudio">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
+    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
   </ItemGroup>
 
   <ItemGroup>
@@ -30,6 +26,9 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Rivulet.Polly\Rivulet.Polly.csproj" />
     <ProjectReference Include="..\Rivulet.Base.Tests\Rivulet.Base.Tests.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
   </ItemGroup>
 
 </Project>

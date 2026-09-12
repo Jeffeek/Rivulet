@@ -7,18 +7,14 @@
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
     <OutputType>Exe</OutputType>
+    
+    
+    
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="xunit.v3" />
-    <PackageReference Include="coverlet.collector">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
-    <PackageReference Include="xunit.runner.visualstudio">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
+    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
   </ItemGroup>
 
   <ItemGroup>
@@ -29,5 +25,8 @@
   <ItemGroup>
     <Using Include="Xunit" />
     <Using Include="Shouldly" />
+  </ItemGroup>
+
+  <ItemGroup>
   </ItemGroup>
 </Project>
