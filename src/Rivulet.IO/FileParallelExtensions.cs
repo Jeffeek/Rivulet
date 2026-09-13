@@ -267,6 +267,7 @@ public static class FileParallelExtensions
     )
     {
 #pragma warning disable CA2007 // ConfigureAwait not applicable with 'await using' statements
+#pragma warning disable CA2024 // Use ReadLineAsync instead of EndOfStream in async methods
         return FileOperationHelper.ExecuteFileOperationAsync(
             filePath,
             async () =>
@@ -276,16 +277,20 @@ public static class FileParallelExtensions
                 using var reader = new StreamReader(stream, options.Encoding);
                 var lines = new List<string>();
 
-                while (!reader.EndOfStream)
+                while (true)
                 {
                     var line = await reader.ReadLineAsync(cancellationToken).ConfigureAwait(false);
-                    if (line != null) lines.Add(line);
+                    if (line == null)
+                        break;
+
+                    lines.Add(line);
                 }
 
                 return lines.ToArray();
             },
             options,
             static lines => new FileOperationResult { BytesProcessed = lines.Length });
+#pragma warning restore CA2024
 #pragma warning restore CA2007
     }
 }

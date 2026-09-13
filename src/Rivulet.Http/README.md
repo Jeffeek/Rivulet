@@ -1,4 +1,4 @@
-﻿# Rivulet.Http
+# Rivulet.Http
 
 <!-- DESCRIPTION_START -->
 **Parallel HTTP operations with automatic retries, resilient downloads, and HttpClientFactory integration.**
@@ -443,6 +443,7 @@ See the [samples directory](../../samples) for complete working examples includi
 
 - .NET 8.0
 - .NET 9.0
+- .NET 10.0
 
 ## Documentation & Source
 

@@ -11,7 +11,7 @@ cd tests\Rivulet.Benchmarks
 dotnet run -c Release
 ```
 
-> **Note**: The project targets .NET 9.0 for building, but BenchmarkDotNet automatically runs all benchmarks on both .NET 8.0 and .NET 9.0 as specified by the `[SimpleJob]` attributes in each benchmark class.
+> **Note**: The project targets .NET 9.0 for building, but BenchmarkDotNet automatically runs all benchmarks on .NET 8.0, .NET 9.0, and .NET 10.0 as specified by the `[SimpleJob]` attributes in each benchmark class.
 
 ### Run Specific Benchmark Suite
 

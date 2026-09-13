@@ -1,4 +1,4 @@
-﻿# Rivulet.Sql
+# Rivulet.Sql
 
 <!-- DESCRIPTION_START -->
 **Safe parallel SQL operations with connection pooling awareness and bulk operations.**
@@ -525,6 +525,7 @@ Works seamlessly with:
 
 - .NET 8.0
 - .NET 9.0
+- .NET 10.0
 
 ## Documentation & Source
 

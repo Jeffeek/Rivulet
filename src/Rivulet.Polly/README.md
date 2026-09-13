@@ -1,4 +1,4 @@
-﻿# Rivulet.Polly
+# Rivulet.Polly
 
 <!-- DESCRIPTION_START -->
 Integration between Rivulet parallel processing and [Polly](https://github.com/App-vNext/Polly) resilience policies.
@@ -97,6 +97,7 @@ var results = await urls.SelectParallelWithResultRetryAsync(
 
 - .NET 8.0
 - .NET 9.0
+- .NET 10.0
 
 ## Documentation & Source
 

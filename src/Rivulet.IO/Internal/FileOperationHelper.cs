@@ -278,7 +278,7 @@ internal static class FileOperationHelper
     /// <param name="sourceBaseDirectory">The base directory of the source file (used to compute relative path).</param>
     /// <param name="destinationDirectory">The target directory where the file should be copied.</param>
     /// <returns>The computed destination file path preserving the relative directory structure.</returns>
-    public static string ComputeDestinationPath(
+    private static string ComputeDestinationPath(
         string sourcePath,
         string sourceBaseDirectory,
         string destinationDirectory
