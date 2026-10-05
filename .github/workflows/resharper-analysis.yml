@@ -38,7 +38,7 @@ jobs:
       uses: ./.github/actions/dotnet-setup
 
     - name: ReSharper CLI InspectCode
-      uses: muno92/resharper_inspectcode@891d22b65b6fe0620a0ab2379f23fecc031eef88 # 1.17.5
+      uses: muno92/resharper_inspectcode@2af6977b69cb42002b50b5f7f185a339235e1e05 # 1.17.6
       with:
         solutionPath: ./Rivulet.slnx
         version: 2025.3.3
