@@ -12,4 +12,4 @@ mkdocs-minify-plugin>=0.8.0
 
 # Markdown extensions
 pymdown-extensions>=12.1
-markdown>=3.10.3
+markdown>=3.11
