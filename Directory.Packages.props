@@ -6,7 +6,7 @@
   <ItemGroup>
     <!-- Packages -->
     <PackageVersion Include="System.Linq.Async" Version="7.0.1" />
-    <PackageVersion Include="System.Threading.Channels" Version="10.0.12" />
+    <PackageVersion Include="System.Threading.Channels" Version="10.0.13" />
     <PackageVersion Include="CsvHelper" Version="33.1.0" />
     <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="10.0.12" />
     <PackageVersion Include="OpenTelemetry.Api" Version="1.19.1" />
