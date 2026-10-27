@@ -23,8 +23,8 @@
     <!-- Tests -->
     <PackageVersion Include="Shouldly" Version="4.3.0" />
     <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" />
-    <PackageVersion Include="xunit.v3" Version="4.0.1" />
     <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.12.0" />
+    <PackageVersion Include="xunit.v3" Version="4.0.2" />
     <PackageVersion Include="OpenTelemetry" Version="1.19.1" />
     <PackageVersion Include="OpenTelemetry.Exporter.InMemory" Version="1.19.1" />
     <PackageVersion Include="OpenTelemetry.Exporter.Console" Version="1.19.1" />
