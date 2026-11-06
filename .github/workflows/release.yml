@@ -16,9 +16,13 @@ jobs:
   build-and-publish:
     name: Build and Publish NuGet Package
     runs-on: ubuntu-latest
+    environment:
+      name: nuget
+      url: https://www.nuget.org/profiles/Jeffeek
     permissions:
       contents: write
       packages: write
+      id-token: write  # Required for OIDC token exchange
 
     steps:
     - name: Harden the runner (Audit all outbound calls)
@@ -42,6 +46,22 @@ jobs:
         echo "version=$VERSION" >> $GITHUB_OUTPUT
         echo "tag=$GITHUB_REF_NAME" >> $GITHUB_OUTPUT
         echo "Version: $VERSION"
+
+    - name: Verify .csproj versions match tag
+      run: |
+        VERSION="${GITHUB_REF#refs/tags/v}"
+        echo "Tag version: $VERSION"
+
+        # Check all .csproj files
+        find src -name "Rivulet.*.csproj" -type f | while read -r file; do
+          CSPROJ_VERSION=$(grep -oP '<Version>\K[0-9.]+(-[a-zA-Z0-9.]+)?' "$file")
+          if [ "$CSPROJ_VERSION" != "$VERSION" ]; then
+            echo "Error: $(basename $file) version $CSPROJ_VERSION != tag $VERSION"
+            echo "Run release.sh or release.ps1 to synchronize versions before tagging"
+            exit 1
+          fi
+          echo "✓ $(basename $file): $CSPROJ_VERSION"
+        done
 
     - name: Run tests
       # Unit tests only — integration tests require Linux containers not available here.
@@ -89,5 +109,16 @@ jobs:
         path: ./artifacts/*.nupkg
         retention-days: 30
 
+    - name: NuGet login (OIDC → short-lived API key)
+      uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1.2.0
+      id: nuget-login
+      with:
+        user: ${{ secrets.NUGET_USER }}
+
     - name: Publish to NuGet.org
-      run: dotnet nuget push ./artifacts/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+      run: >
+        dotnet nuget push ./artifacts/*.nupkg
+        --source "https://api.nuget.org/v3/index.json"
+        --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}"
+        --skip-duplicate
+      timeout-minutes: 10
