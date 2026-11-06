@@ -12,7 +12,7 @@ public static class RivuletOpenTelemetryConstants
     ///     Instrumentation version for OpenTelemetry ActivitySource and Meter.
     ///     Update this when releasing new versions.
     /// </summary>
-    public const string InstrumentationVersion = "1.3.0";
+    public const string InstrumentationVersion = "2.1.0";
 
     private const string RivuletPrefix = "rivulet.";
 
