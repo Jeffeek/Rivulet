@@ -21,7 +21,7 @@ public class RealHttpIoBenchmarks
     private const int MaxParallelism = 16;
 
     // Small JSON response — realistic for a lightweight API endpoint
-    private static readonly byte[] ResponseBody = """{"id":1,"status":"ok"}"""u8.ToArray();
+    private static readonly byte[] ResponseBody = [.. """{"id":1,"status":"ok"}"""u8];
 
     private HttpListener _listener = null!;
     private HttpClient _httpClient = null!;

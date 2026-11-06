@@ -19,7 +19,7 @@ public sealed class ComprehensiveCoverageTests
         await Task.Delay(100, TestContext.Current.CancellationToken);
 
         // Should not throw when disposed
-        var act = () => listener.Dispose();
+        var act = listener.Dispose;
         act.ShouldNotThrow();
 
         // Listener should have received metrics callback invocations without errors
@@ -100,7 +100,7 @@ public sealed class ComprehensiveCoverageTests
     private sealed class TestRivuletEventListener : RivuletEventListenerBase
     {
         // ReSharper disable once CollectionNeverQueried.Local
-        private List<string> ReceivedMetrics { get; } = new();
+        private List<string> ReceivedMetrics { get; } = [];
 
         protected override void OnCounterReceived(
             string name,

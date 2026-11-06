@@ -107,7 +107,7 @@ public sealed class VirtualTimeProviderTests
         var timeProvider = new VirtualTimeProvider();
 
         timeProvider.Dispose();
-        var act = () => timeProvider.Dispose();
+        var act = timeProvider.Dispose;
 
         act.ShouldNotThrow();
     }
@@ -253,7 +253,7 @@ public sealed class VirtualTimeProviderTests
         timeProvider.Reset();
         timeProvider.CurrentTime.ShouldBe(TimeSpan.Zero);
 
-        var act = () => timeProvider.Reset();
+        var act = timeProvider.Reset;
         act.ShouldNotThrow();
     }
 

@@ -150,7 +150,7 @@ public sealed class PipelineExecutionTests
 
         var pipeline = PipelineBuilder.Create<int>()
             .SelectParallel(static x => x * 2)
-            .Tap(x => tappedItems.Add(x))
+            .Tap(tappedItems.Add)
             .Build();
 
         var results = await pipeline.ExecuteAsync(Enumerable.Range(1, 5), TestContext.Current.CancellationToken);

@@ -130,7 +130,7 @@ var aggregatedMetricsList = new List<AggregatedMetrics>();
 await using (var aggregator = new MetricsAggregator(TimeSpan.FromSeconds(2)))
 {
     // Subscribe to aggregation events
-    aggregator.OnAggregation += metrics => { aggregatedMetricsList.AddRange(metrics); };
+    aggregator.OnAggregation += aggregatedMetricsList.AddRange;
 
     await Task.Delay(100); // Let aggregator initialize
 

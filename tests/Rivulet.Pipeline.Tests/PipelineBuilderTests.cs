@@ -37,7 +37,7 @@ public sealed class PipelineBuilderTests
     {
         var builder = PipelineBuilder.Create<int>("EmptyPipeline");
 
-        Should.Throw<InvalidOperationException>(() => builder.Build())
+        Should.Throw<InvalidOperationException>(builder.Build)
             .Message.ShouldContain("at least one stage");
     }
 
@@ -221,7 +221,7 @@ public sealed class PipelineBuilderTests
         var builder3 = builder2.SelectParallel(static x => x + 1);
 
         // Each builder should create pipelines with different stage counts
-        Should.Throw<InvalidOperationException>(() => builder1.Build());
+        Should.Throw<InvalidOperationException>(builder1.Build);
         builder2.Build().StageCount.ShouldBe(1);
         builder3.Build().StageCount.ShouldBe(2);
     }

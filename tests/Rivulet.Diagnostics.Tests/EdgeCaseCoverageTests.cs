@@ -309,7 +309,7 @@ public sealed class EdgeCaseCoverageTests
 
     private sealed class TestEventListener : RivuletEventListenerBase
     {
-        public List<string> ReceivedCounters { get; } = new();
+        public List<string> ReceivedCounters { get; } = [];
 
         protected override void OnCounterReceived(
             string name,

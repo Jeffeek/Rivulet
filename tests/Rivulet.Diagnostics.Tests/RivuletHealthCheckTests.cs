@@ -167,7 +167,7 @@ public sealed class RivuletHealthCheckTests
     {
         using var exporter = new PrometheusExporter();
         var healthCheck = new RivuletHealthCheck(exporter);
-        var act = () => healthCheck.Dispose();
+        var act = healthCheck.Dispose;
         act.ShouldNotThrow();
     }
 
@@ -251,7 +251,7 @@ public sealed class RivuletHealthCheckTests
     {
         using var exporter = new PrometheusExporter();
         var healthCheck = new RivuletHealthCheck(exporter);
-        var act = () => healthCheck.Dispose();
+        var act = healthCheck.Dispose;
         act.ShouldNotThrow();
     }
 

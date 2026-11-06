@@ -49,7 +49,6 @@ public static class HttpParallelExtensions
     /// </summary>
     private static Task<List<HttpResponseMessage>> ExecuteMethodParallelAsync<TSrc>(
         IEnumerable<TSrc> source,
-        HttpClient httpClient,
         HttpOptions? options,
         CancellationToken cancellationToken,
         Func<TSrc, Uri> uriExtractor,
@@ -57,7 +56,6 @@ public static class HttpParallelExtensions
     )
     {
         ArgumentNullException.ThrowIfNull(source);
-        ArgumentNullException.ThrowIfNull(httpClient);
 
         (options, var parallelOptions) = HttpHelper.InitializeOptions(options);
 
@@ -86,13 +84,17 @@ public static class HttpParallelExtensions
         HttpClient httpClient,
         HttpOptions? options = null,
         CancellationToken cancellationToken = default
-    ) => ExecuteMethodParallelAsync(
-        uris,
-        httpClient,
-        options,
-        cancellationToken,
-        static x => x,
-        (uri, ct) => httpClient.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, ct));
+    )
+    {
+        ArgumentNullException.ThrowIfNull(httpClient);
+
+        return ExecuteMethodParallelAsync(
+            uris,
+            options,
+            cancellationToken,
+            static x => x,
+            (uri, ct) => httpClient.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, ct));
+    }
 
     /// <summary>
     ///     Executes parallel HTTP GET requests and returns the response content as strings.
@@ -164,7 +166,6 @@ public static class HttpParallelExtensions
         where TContent : HttpContent =>
         ExecuteMethodParallelAsync(
             requests,
-            httpClient,
             options,
             cancellationToken,
             static r => r.uri,
@@ -192,7 +193,6 @@ public static class HttpParallelExtensions
         where TContent : HttpContent =>
         ExecuteMethodParallelAsync(
             requests,
-            httpClient,
             options,
             cancellationToken,
             static r => r.uri,
@@ -217,7 +217,6 @@ public static class HttpParallelExtensions
         CancellationToken cancellationToken = default
     ) => ExecuteMethodParallelAsync(
         uris,
-        httpClient,
         options,
         cancellationToken,
         static x => x,

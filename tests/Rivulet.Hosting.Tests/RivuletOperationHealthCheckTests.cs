@@ -253,7 +253,7 @@ public sealed class RivuletOperationHealthCheckTests
 
         // Concurrently record success
         var tasks = Enumerable.Range(0, 10)
-            .Select(_ => Task.Run(() => healthCheck.RecordSuccess()))
+            .Select(_ => Task.Run(healthCheck.RecordSuccess))
             .ToArray();
 
         await Task.WhenAll(tasks);
@@ -270,7 +270,7 @@ public sealed class RivuletOperationHealthCheckTests
 
         // Concurrently record failures
         var tasks = Enumerable.Range(0, 100)
-            .Select(_ => Task.Run(() => healthCheck.RecordFailure()))
+            .Select(_ => Task.Run(healthCheck.RecordFailure))
             .ToArray();
 
         await Task.WhenAll(tasks);

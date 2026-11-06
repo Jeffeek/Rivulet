@@ -20,8 +20,9 @@ public sealed class TestDbConnection(
     public override string DataSource => "TestDataSource";
     public override string ServerVersion => "1.0.0";
 
-    // ReSharper disable once ConvertToAutoPropertyWithPrivateSetter
+#pragma warning disable IDE0032
     public override ConnectionState State => _state;
+#pragma warning restore IDE0032
 
     protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel) =>
         new TestDbTransaction(this, isolationLevel);
@@ -176,8 +177,9 @@ public sealed class TestDataReader(List<Dictionary<string, object>> rows) : DbDa
     public override int FieldCount => rows.Count > 0 ? rows[0].Count : 0;
     public override bool HasRows => rows.Count > 0;
 
-    // ReSharper disable once ConvertToAutoPropertyWithPrivateSetter
+#pragma warning disable IDE0032
     public override bool IsClosed => _isClosed;
+#pragma warning restore IDE0032
 
     public override int RecordsAffected => rows.Count;
     public override int Depth => 0;
