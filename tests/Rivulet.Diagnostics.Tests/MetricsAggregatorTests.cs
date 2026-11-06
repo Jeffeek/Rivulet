@@ -58,7 +58,7 @@ public sealed class MetricsAggregatorTests
         lock (lockObj)
         {
             aggregatedMetrics.ShouldNotBeEmpty();
-            snapshot = aggregatedMetrics.ToList();
+            snapshot = [.. aggregatedMetrics];
         }
 
         // Search ALL aggregation windows for the metric
@@ -119,7 +119,7 @@ public sealed class MetricsAggregatorTests
 
         // Take a thread-safe snapshot of the list to avoid race conditions
         List<IReadOnlyList<AggregatedMetrics>> snapshot;
-        lock (lockObj) snapshot = aggregatedMetrics.ToList();
+        lock (lockObj) snapshot = [.. aggregatedMetrics];
 
         snapshot.ShouldNotBeEmpty();
 
@@ -195,7 +195,7 @@ public sealed class MetricsAggregatorTests
         lock (lockObj)
         {
             totalAggregations = aggregatedMetrics.Count;
-            snapshot = aggregatedMetrics.ToList();
+            snapshot = [.. aggregatedMetrics];
         }
 
         totalAggregations.ShouldBeGreaterThanOrEqualTo(1);
@@ -216,7 +216,7 @@ public sealed class MetricsAggregatorTests
     public void MetricsAggregator_ShouldNotThrow_WhenDisposed()
     {
         var aggregator = new MetricsAggregator();
-        var act = () => aggregator.Dispose();
+        var act = aggregator.Dispose;
         act.ShouldNotThrow();
     }
 
@@ -227,7 +227,7 @@ public sealed class MetricsAggregatorTests
         aggregator.Dispose();
 
         // Second dispose should not throw (tests disposal guard at line 137)
-        var act = () => aggregator.Dispose();
+        var act = aggregator.Dispose;
         act.ShouldNotThrow();
     }
 

@@ -151,7 +151,7 @@ public sealed class ParallelOptionsRivuletExtensionsTests
         using var listener = new ActivityListener();
         listener.ShouldListenTo = static source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
-        listener.ActivityStopped = activity => activities.Add(activity);
+        listener.ActivityStopped = activities.Add;
         ActivitySource.AddActivityListener(listener);
 
         var attemptCount = 0;
@@ -242,7 +242,7 @@ public sealed class ParallelOptionsRivuletExtensionsTests
         using var listener = new ActivityListener();
         listener.ShouldListenTo = static source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
-        listener.ActivityStopped = activity => activities.Add(activity);
+        listener.ActivityStopped = activities.Add;
         ActivitySource.AddActivityListener(listener);
 
         var items = Enumerable.Range(1, 20); // More items to ensure some are queued
@@ -311,7 +311,7 @@ public sealed class ParallelOptionsRivuletExtensionsTests
         using var listener = new ActivityListener();
         listener.ShouldListenTo = static source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
-        listener.ActivityStopped = activity => activities.Add(activity);
+        listener.ActivityStopped = activities.Add;
         ActivitySource.AddActivityListener(listener);
 
         var concurrencyChanged = false;

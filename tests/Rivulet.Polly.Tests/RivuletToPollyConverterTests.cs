@@ -240,7 +240,7 @@ public sealed class RivuletToPollyConverterTests
             FailureThreshold = 0 // Invalid
         };
 
-        var act = () => options.ToPollyCircuitBreakerPipeline();
+        var act = options.ToPollyCircuitBreakerPipeline;
 
         act.ShouldThrow<ArgumentException>();
     }
@@ -358,7 +358,7 @@ public sealed class RivuletToPollyConverterTests
             }
         };
 
-        var act = () => options.ToPollyPipeline();
+        var act = options.ToPollyPipeline;
 
         act.ShouldThrow<ArgumentException>();
     }

@@ -47,7 +47,7 @@ public static class AsyncParallelLinq
             var errors = new ConcurrentBag<Exception>();
             var sharedFirstRealError = new StrongBox<Exception?>(null);
 
-            var sourceList = source as ICollection<TSource> ?? [..source];
+            var sourceList = source as ICollection<TSource> ?? [.. source];
             var totalItems = sourceList.Count;
 
 #pragma warning disable CA2007

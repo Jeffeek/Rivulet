@@ -17,13 +17,11 @@ public static class HttpClientFactoryExtensions
     ///     Validates arguments, creates an HttpClient from the factory, and invokes the delegate.
     /// </summary>
     private static Task<T> CreateClientAndExecute<T>(
-        object collection,
         IHttpClientFactory httpClientFactory,
         string? clientName,
         Func<HttpClient, Task<T>> execute
     )
     {
-        ArgumentNullException.ThrowIfNull(collection);
         ArgumentNullException.ThrowIfNull(httpClientFactory);
 
         var httpClient = HttpHelper.CreateClient(httpClientFactory, clientName);
@@ -49,13 +47,11 @@ public static class HttpClientFactoryExtensions
         string? clientName = null,
         HttpOptions? options = null,
         CancellationToken cancellationToken = default
-    ) =>
-        CreateClientAndExecute(
-            uris,
-            httpClientFactory,
-            clientName,
-            client => uris.GetParallelAsync(client, options, cancellationToken)
-        );
+    ) => CreateClientAndExecute(
+        httpClientFactory,
+        clientName,
+        client => uris.GetParallelAsync(client, options, cancellationToken)
+    );
 
     /// <summary>
     ///     Executes parallel HTTP GET requests using a named HttpClient and returns response content as strings.
@@ -76,7 +72,11 @@ public static class HttpClientFactoryExtensions
         string? clientName = null,
         HttpOptions? options = null,
         CancellationToken cancellationToken = default
-    ) => CreateClientAndExecute(uris, httpClientFactory, clientName, client => uris.GetStringParallelAsync(client, options, cancellationToken));
+    ) => CreateClientAndExecute(
+        httpClientFactory,
+        clientName,
+        client => uris.GetStringParallelAsync(client, options, cancellationToken)
+    );
 
     /// <summary>
     ///     Executes parallel HTTP GET requests using a named HttpClient and returns response content as byte arrays.
@@ -97,7 +97,11 @@ public static class HttpClientFactoryExtensions
         string? clientName = null,
         HttpOptions? options = null,
         CancellationToken cancellationToken = default
-    ) => CreateClientAndExecute(uris, httpClientFactory, clientName, client => uris.GetByteArrayParallelAsync(client, options, cancellationToken));
+    ) => CreateClientAndExecute(
+        httpClientFactory,
+        clientName,
+        client => uris.GetByteArrayParallelAsync(client, options, cancellationToken)
+    );
 
     /// <summary>
     ///     Executes parallel HTTP POST requests using a named HttpClient.
@@ -120,8 +124,11 @@ public static class HttpClientFactoryExtensions
         HttpOptions? options = null,
         CancellationToken cancellationToken = default
     )
-        where TContent : HttpContent =>
-        CreateClientAndExecute(requests, httpClientFactory, clientName, client => requests.PostParallelAsync(client, options, cancellationToken));
+        where TContent : HttpContent => CreateClientAndExecute(
+        httpClientFactory,
+        clientName,
+        client => requests.PostParallelAsync(client, options, cancellationToken)
+    );
 
     /// <summary>
     ///     Executes parallel HTTP PUT requests using a named HttpClient.
@@ -145,7 +152,11 @@ public static class HttpClientFactoryExtensions
         CancellationToken cancellationToken = default
     )
         where TContent : HttpContent =>
-        CreateClientAndExecute(requests, httpClientFactory, clientName, client => requests.PutParallelAsync(client, options, cancellationToken));
+        CreateClientAndExecute(
+            httpClientFactory,
+            clientName,
+            client => requests.PutParallelAsync(client, options, cancellationToken)
+        );
 
     /// <summary>
     ///     Executes parallel HTTP DELETE requests using a named HttpClient.
@@ -166,8 +177,11 @@ public static class HttpClientFactoryExtensions
         string? clientName = null,
         HttpOptions? options = null,
         CancellationToken cancellationToken = default
-    ) =>
-        CreateClientAndExecute(uris, httpClientFactory, clientName, client => uris.DeleteParallelAsync(client, options, cancellationToken));
+    ) => CreateClientAndExecute(
+        httpClientFactory,
+        clientName,
+        client => uris.DeleteParallelAsync(client, options, cancellationToken)
+    );
 
     /// <summary>
     ///     Downloads files from multiple URIs in parallel using a named HttpClient.
@@ -185,5 +199,9 @@ public static class HttpClientFactoryExtensions
         string? clientName = null,
         StreamingDownloadOptions? options = null,
         CancellationToken cancellationToken = default
-    ) => CreateClientAndExecute(downloads, httpClientFactory, clientName, client => downloads.DownloadParallelAsync(client, options, cancellationToken));
+    ) => CreateClientAndExecute(
+        httpClientFactory,
+        clientName,
+        client => downloads.DownloadParallelAsync(client, options, cancellationToken)
+    );
 }

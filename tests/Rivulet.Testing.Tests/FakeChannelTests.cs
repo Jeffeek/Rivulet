@@ -232,7 +232,7 @@ public sealed class FakeChannelTests
         var channel = new FakeChannel<int>();
 
         channel.Dispose();
-        var act = () => channel.Dispose();
+        var act = channel.Dispose;
 
         act.ShouldNotThrow();
     }

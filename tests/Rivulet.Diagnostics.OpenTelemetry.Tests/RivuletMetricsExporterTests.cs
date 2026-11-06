@@ -8,7 +8,7 @@ namespace Rivulet.Diagnostics.OpenTelemetry.Tests;
 [Collection(TestCollections.Metrics)]
 public sealed class RivuletMetricsExporterTests : IDisposable
 {
-    private readonly List<Metric> _exportedMetrics = new();
+    private readonly List<Metric> _exportedMetrics = [];
     private readonly RivuletMetricsExporter _exporter;
     private readonly MeterProvider _meterProvider;
 

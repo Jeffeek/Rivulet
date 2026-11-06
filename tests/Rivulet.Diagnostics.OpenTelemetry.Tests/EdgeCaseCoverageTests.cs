@@ -64,7 +64,7 @@ public sealed class EdgeCaseCoverageTests
         using var listener = new ActivityListener();
         listener.ShouldListenTo = static source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
-        listener.ActivityStopped = activity => activities.Add(activity);
+        listener.ActivityStopped = activities.Add;
         ActivitySource.AddActivityListener(listener);
 
         var options =
@@ -195,7 +195,7 @@ public sealed class EdgeCaseCoverageTests
         using var listener = new ActivityListener();
         listener.ShouldListenTo = static source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
-        listener.ActivityStopped = activity => activities.Add(activity);
+        listener.ActivityStopped = activities.Add;
         ActivitySource.AddActivityListener(listener);
 
         var options = new ParallelOptionsRivulet { MaxDegreeOfParallelism = 10 }.WithOpenTelemetryTracing("LargeOp");
@@ -220,7 +220,7 @@ public sealed class EdgeCaseCoverageTests
         using var listener = new ActivityListener();
         listener.ShouldListenTo = static source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
-        listener.ActivityStopped = activity => activities.Add(activity);
+        listener.ActivityStopped = activities.Add;
         ActivitySource.AddActivityListener(listener);
 
         var options = new ParallelOptionsRivulet
@@ -263,7 +263,7 @@ public sealed class EdgeCaseCoverageTests
         using var listener = new ActivityListener();
         listener.ShouldListenTo = static source => source.Name == RivuletSharedConstants.RivuletCore;
         listener.Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
-        listener.ActivityStopped = activity => activities.Add(activity);
+        listener.ActivityStopped = activities.Add;
         ActivitySource.AddActivityListener(listener);
 
         var options = new ParallelOptionsRivulet

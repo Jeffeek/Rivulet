@@ -40,37 +40,37 @@ public sealed class RivuletMetricsExporter : IDisposable
 
         _itemsStartedGauge = CreateMetricGauge(
             RivuletOpenTelemetryConstants.MetricNames.ItemsStarted,
-            () => eventSource.GetItemsStarted(),
+            eventSource.GetItemsStarted,
             RivuletOpenTelemetryConstants.MetricUnits.Items,
             RivuletOpenTelemetryConstants.MetricDescriptions.ItemsStarted);
 
         _itemsCompletedGauge = CreateMetricGauge(
             RivuletOpenTelemetryConstants.MetricNames.ItemsCompleted,
-            () => eventSource.GetItemsCompleted(),
+            eventSource.GetItemsCompleted,
             RivuletOpenTelemetryConstants.MetricUnits.Items,
             RivuletOpenTelemetryConstants.MetricDescriptions.ItemsCompleted);
 
         _totalRetriesGauge = CreateMetricGauge(
             RivuletOpenTelemetryConstants.MetricNames.RetriesTotal,
-            () => eventSource.GetTotalRetries(),
+            eventSource.GetTotalRetries,
             RivuletOpenTelemetryConstants.MetricUnits.Retries,
             RivuletOpenTelemetryConstants.MetricDescriptions.RetriesTotal);
 
         _totalFailuresGauge = CreateMetricGauge(
             RivuletOpenTelemetryConstants.MetricNames.FailuresTotal,
-            () => eventSource.GetTotalFailures(),
+            eventSource.GetTotalFailures,
             RivuletOpenTelemetryConstants.MetricUnits.Failures,
             RivuletOpenTelemetryConstants.MetricDescriptions.FailuresTotal);
 
         _throttleEventsGauge = CreateMetricGauge(
             RivuletOpenTelemetryConstants.MetricNames.ThrottleEvents,
-            () => eventSource.GetThrottleEvents(),
+            eventSource.GetThrottleEvents,
             RivuletOpenTelemetryConstants.MetricUnits.Events,
             RivuletOpenTelemetryConstants.MetricDescriptions.ThrottleEvents);
 
         _drainEventsGauge = CreateMetricGauge(
             RivuletOpenTelemetryConstants.MetricNames.DrainEvents,
-            () => eventSource.GetDrainEvents(),
+            eventSource.GetDrainEvents,
             RivuletOpenTelemetryConstants.MetricUnits.Events,
             RivuletOpenTelemetryConstants.MetricDescriptions.DrainEvents);
 

@@ -28,9 +28,11 @@ public class FileIoBenchmarks
         _tempDir = Path.Combine(Path.GetTempPath(), $"rivulet-bench-{Guid.NewGuid():N}");
         Directory.CreateDirectory(_tempDir);
 
-        _filePaths = Enumerable.Range(1, ItemCount)
-            .Select(i => Path.Combine(_tempDir, $"item-{i}.json"))
-            .ToArray();
+        _filePaths =
+        [
+            .. Enumerable.Range(1, ItemCount)
+                .Select(i => Path.Combine(_tempDir, $"item-{i}.json"))
+        ];
 
         // Each file holds a small JSON payload (~80 bytes) — realistic for config or record files
         const string content = """{"id":0,"name":"Sample","value":42,"tags":["alpha","beta","gamma"]}""";

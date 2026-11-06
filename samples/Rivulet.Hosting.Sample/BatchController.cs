@@ -61,6 +61,7 @@ public class BatchController(
 
         logger.LogInformation("Fetching {Count} URLs", urls.Length);
 
+        // ReSharper disable once ShortLivedHttpClient
         using var httpClient = new HttpClient();
 
         var fetchOptions = new ParallelOptionsRivulet

@@ -195,7 +195,7 @@ public sealed class RivuletConsoleListenerTests : IDisposable
     public void ConsoleListener_ShouldNotThrow_WhenDisposed()
     {
         var listener = new RivuletConsoleListener();
-        var act = () => listener.Dispose();
+        var act = listener.Dispose;
         act.ShouldNotThrow();
     }
 

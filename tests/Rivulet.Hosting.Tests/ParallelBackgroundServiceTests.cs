@@ -204,7 +204,7 @@ public sealed class ParallelBackgroundServiceTests
     ) : ParallelBackgroundService<int>(logger, options)
     {
         private int _processCallCount;
-        public ConcurrentBag<int> ProcessedItems { get; } = new();
+        public ConcurrentBag<int> ProcessedItems { get; } = [];
         public int ProcessCallCount => _processCallCount;
 
         protected override IAsyncEnumerable<int> GetItemsAsync(CancellationToken cancellationToken) =>

@@ -39,7 +39,7 @@ public sealed class DiagnosticsBuilderTests : IDisposable
         await using (new DiagnosticsBuilder()
                          .AddConsoleListener(false)
                          .AddFileListener(_testFilePath)
-                         .AddMetricsAggregator(TimeSpan.FromSeconds(2), metrics => aggregatedMetrics.Add(metrics))
+                         .AddMetricsAggregator(TimeSpan.FromSeconds(2), aggregatedMetrics.Add)
                          .Build())
         {
             // Operations must run long enough for EventCounter polling (1 second interval)
@@ -180,7 +180,7 @@ public sealed class DiagnosticsBuilderTests : IDisposable
             .AddConsoleListener()
             .Build();
 
-        var act = () => diagnostics.Dispose();
+        var act = diagnostics.Dispose;
         act.ShouldNotThrow();
     }
 
@@ -299,7 +299,7 @@ public sealed class DiagnosticsBuilderTests : IDisposable
         diagnostics.Dispose();
 
         // Second dispose should not throw
-        var act = () => diagnostics.Dispose();
+        var act = diagnostics.Dispose;
         act.ShouldNotThrow();
     }
 
@@ -327,7 +327,7 @@ public sealed class DiagnosticsBuilderTests : IDisposable
         var diagnostics = new DiagnosticsBuilder().Build();
         diagnostics.ShouldNotBeNull();
 
-        var act = () => diagnostics.Dispose();
+        var act = diagnostics.Dispose;
         act.ShouldNotThrow();
     }
 
