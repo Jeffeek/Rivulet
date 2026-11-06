@@ -30,72 +30,72 @@ packages:
 
   - name: Rivulet.Core
     id: core
-    version: 2.0.0
+    version: 2.1.0
     status: released
 
   - name: Rivulet.Diagnostics
     id: diagnostics
-    version: 2.0.0
+    version: 2.1.0
     status: released
 
   - name: Rivulet.Diagnostics.OpenTelemetry
     id: diagnostics-otel
-    version: 2.0.0
+    version: 2.1.0
     status: released
 
   - name: Rivulet.Hosting
     id: hosting
-    version: 2.0.0
+    version: 2.1.0
     status: released
 
   - name: Rivulet.Testing
     id: testing
-    version: 2.0.0
+    version: 2.1.0
     status: released
 
   - name: Rivulet.Http
     id: http
-    version: 2.0.0
+    version: 2.1.0
     status: released
 
   - name: Rivulet.IO
     id: io
-    version: 2.0.0
+    version: 2.1.0
     status: released
 
   - name: Rivulet.Sql
     id: sql
-    version: 2.0.0
+    version: 2.1.0
     status: released
 
   - name: Rivulet.Sql.SqlServer
     id: sql-sqlserver
-    version: 2.0.0
+    version: 2.1.0
     status: released
 
   - name: Rivulet.Sql.PostgreSql
     id: sql-postgresql
-    version: 2.0.0
+    version: 2.1.0
     status: released
 
   - name: Rivulet.Sql.MySql
     id: sql-mysql
-    version: 2.0.0
+    version: 2.1.0
     status: released
 
   - name: Rivulet.Polly
     id: polly
-    version: 2.0.0
+    version: 2.1.0
     status: released
 
   - name: Rivulet.Pipeline
     id: pipeline
-    version: 2.0.0
+    version: 2.1.0
     status: released
 
   - name: Rivulet.Csv
     id: csv
-    version: 2.0.0
+    version: 2.1.0
     status: released
 
 # ============================================================================

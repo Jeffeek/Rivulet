@@ -1,6 +1,6 @@
 # Rivulet Roadmap & Packages
 
-## Current Status (v1.3.0 - Released)
+## Current Status (v2.1.0 - Released)
 
 ### ✅ Implemented in Rivulet.Core v1.1.x
 - EventCounters + Metrics
