@@ -579,15 +579,23 @@ public static class CsvParallelExtensions
             var parallelism = fileConfig.Configuration?.CsvHelperParallelism
                               ?? options.FileConfiguration.CsvHelperParallelism;
 
-            var records = parallelism.HasValue
-                ? csv.ParallelEnumerate<T>(maxDegreeOfParallelism: parallelism.Value)
-                : csv.GetRecords<T>();
-
-            foreach (var record in records)
+            if (parallelism.HasValue)
             {
-                cancellationToken.ThrowIfCancellationRequested();
-                recordCount++;
-                yield return record;
+                foreach (var record in csv.ParallelEnumerate<T>(maxDegreeOfParallelism: parallelism.Value))
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    recordCount++;
+                    yield return record;
+                }
+            }
+            else
+            {
+                await foreach (var record in csv.GetRecordsAsync<T>(cancellationToken: cancellationToken).ConfigureAwait(false))
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    recordCount++;
+                    yield return record;
+                }
             }
 
             if (options.OnFileCompleteAsync == null)
