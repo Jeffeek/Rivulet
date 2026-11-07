@@ -41,6 +41,7 @@ public sealed class CsvFileConfiguration
     ///     Gets or sets a function to configure CsvHelper's reader options (separator, header detection, etc.).
     ///     The function receives the default options and returns a modified copy using <c>with</c> expressions.
     /// </summary>
+    // ReSharper disable once MemberCanBeInternal
     public Func<CsvReaderOptions, CsvReaderOptions>? ReaderConfigurationAction { get; init; }
 
     /// <summary>
@@ -56,6 +57,7 @@ public sealed class CsvFileConfiguration
     ///     -1 uses one thread per processor.
     ///     Positive values specify the exact thread count.
     /// </summary>
+    // ReSharper disable once MemberCanBeInternal
     public int? CsvHelperParallelism { get; init; }
 }
 
