@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
+using CsvHelper;
 using Rivulet.Base.Tests;
 using Rivulet.Core;
 using Rivulet.Core.Observability;
@@ -7,7 +8,7 @@ using Rivulet.Core.Resilience;
 
 namespace Rivulet.Csv.Tests;
 
-public sealed class CsvProgressAndMetricsTests : TempDirectoryFixture
+public sealed partial class CsvProgressAndMetricsTests : TempDirectoryFixture
 {
     [Fact]
     public async Task ParseCsvParallelAsync_WithProgressReporting_ShouldReportProgress()
@@ -311,16 +312,22 @@ public sealed class CsvProgressAndMetricsTests : TempDirectoryFixture
         concurrencyChanges.Count.ShouldBeGreaterThanOrEqualTo(0);
     }
 
-    [SuppressMessage("ReSharper", "PropertyCanBeMadeInitOnly.Local")]
-    private sealed class Product
+    [
+        CsvRecord,
+        SuppressMessage("ReSharper", "PropertyCanBeMadeInitOnly.Local")
+    ]
+    internal sealed partial class Product
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public decimal Price { get; set; }
     }
 
-    [SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Local")]
-    private sealed class EnrichedProduct
+    [
+        CsvRecord,
+        SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Local")
+    ]
+    internal sealed partial class EnrichedProduct
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;

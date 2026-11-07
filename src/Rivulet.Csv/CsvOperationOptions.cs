@@ -1,7 +1,6 @@
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using CsvHelper;
-using CsvHelper.Configuration;
 using Rivulet.Core;
 using Rivulet.IO.Base;
 
@@ -39,16 +38,25 @@ public sealed record RivuletCsvWriteFile<T>(string Path, ICollection<T> Records,
 public sealed class CsvFileConfiguration
 {
     /// <summary>
-    ///     Gets or sets an action to configure CsvHelper's reader/writer settings (delimiter, culture, header detection,
-    ///     etc.).
+    ///     Gets or sets a function to configure CsvHelper's reader options (separator, header detection, etc.).
+    ///     The function receives the default options and returns a modified copy using <c>with</c> expressions.
     /// </summary>
-    public Action<CsvConfiguration>? ConfigurationAction { get; init; }
+    public Func<CsvReaderOptions, CsvReaderOptions>? ReaderConfigurationAction { get; init; }
 
     /// <summary>
-    ///     Gets or sets an action to configure the CsvHelper context (ClassMap registration, type conversion, etc.).
+    ///     Gets or sets a function to configure CsvHelper's writer options (separator, quoting, etc.).
+    ///     The function receives the default options and returns a modified copy using <c>with</c> expressions.
     /// </summary>
-    // ReSharper disable once MemberCanBeInternal
-    public Action<CsvContext>? CsvContextAction { get; init; }
+    public Func<CsvWriterOptions, CsvWriterOptions>? WriterConfigurationAction { get; init; }
+
+    /// <summary>
+    ///     Gets or sets the degree of parallelism for CsvHelper's within-file parallel operations
+    ///     (ParallelEnumerate for reading, ParallelWriteRecords for writing).
+    ///     Null (default) uses sequential CsvHelper operations.
+    ///     -1 uses one thread per processor.
+    ///     Positive values specify the exact thread count.
+    /// </summary>
+    public int? CsvHelperParallelism { get; init; }
 }
 
 /// <summary>
@@ -57,7 +65,7 @@ public sealed class CsvFileConfiguration
 public sealed class CsvOperationOptions : BaseFileOperationOptions
 {
     /// <summary>
-    ///     Gets or sets the culture info to use for parsing and formatting values.
+    ///     Gets or sets the culture used for parsing and formatting values.
     ///     Default is InvariantCulture.
     /// </summary>
     // ReSharper disable once MemberCanBeInternal

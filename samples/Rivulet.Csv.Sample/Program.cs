@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using CsvHelper;
 using Rivulet.Core;
 using Rivulet.Core.Observability;
 using Rivulet.Core.Resilience;
@@ -217,11 +218,7 @@ Directory.CreateDirectory(outputDir);
 
     var customConfig = new CsvFileConfiguration
     {
-        ConfigurationAction = static config =>
-        {
-            config.Delimiter = "|"; // Use pipe delimiter instead of comma
-            config.HasHeaderRecord = true;
-        }
+        WriterConfigurationAction = static opts => opts with { Separator = '|' }
     };
 
     var customWrite = new[]
@@ -309,10 +306,11 @@ Directory.CreateDirectory(outputDir);
 #region Model Classes
 
 [
+    CsvRecord,
     SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Local"),
     SuppressMessage("ReSharper", "PropertyCanBeMadeInitOnly.Local")
 ]
-file sealed class Product
+internal sealed partial class Product
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
@@ -320,8 +318,8 @@ file sealed class Product
     public string Category { get; set; } = string.Empty;
 }
 
-[SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Local")]
-file sealed class Customer
+[CsvRecord, SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Local")]
+internal sealed partial class Customer
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;

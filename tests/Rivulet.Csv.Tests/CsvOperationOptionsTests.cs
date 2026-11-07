@@ -1,13 +1,13 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text;
-using CsvHelper.Configuration;
+using CsvHelper;
 using Rivulet.Base.Tests;
 using Rivulet.Core;
 
 namespace Rivulet.Csv.Tests;
 
-public sealed class CsvOperationOptionsTests : TempDirectoryFixture
+public sealed partial class CsvOperationOptionsTests : TempDirectoryFixture
 {
     [Fact]
     public async Task ParseCsvParallelAsync_WithTrimWhitespace_ShouldTrimFields()
@@ -28,10 +28,7 @@ public sealed class CsvOperationOptionsTests : TempDirectoryFixture
             {
                 FileConfiguration = new CsvFileConfiguration
                 {
-                    ConfigurationAction = static cfg =>
-                    {
-                        cfg.TrimOptions = TrimOptions.Trim;
-                    }
+                    ReaderConfigurationAction = static opts => opts with { TrimWhitespace = true }
                 }
             },
             cancellationToken: TestContext.Current.CancellationToken);
@@ -59,10 +56,7 @@ public sealed class CsvOperationOptionsTests : TempDirectoryFixture
             {
                 FileConfiguration = new CsvFileConfiguration
                 {
-                    ConfigurationAction = static cfg =>
-                    {
-                        cfg.TrimOptions = TrimOptions.None;
-                    }
+                    ReaderConfigurationAction = static opts => opts with { TrimWhitespace = false }
                 }
             },
             cancellationToken: TestContext.Current.CancellationToken);
@@ -95,6 +89,20 @@ public sealed class CsvOperationOptionsTests : TempDirectoryFixture
         results.Count.ShouldBe(2);
         results.ShouldContain(static p => p.Name == "Prøduct Â");
         results.ShouldContain(static p => p.Name == "Prödüct B");
+    }
+
+    [Fact]
+    public async Task ParseCsvParallelAsync_WithNonBomEncoding_ShouldParseCorrectly()
+    {
+        var csvPath = Path.Join(TestDirectory, "latin1.csv");
+        var encoding = Encoding.Latin1;
+        await File.WriteAllTextAsync(csvPath, "Id,Name,Price\n1,Café,10.50", encoding, TestContext.Current.CancellationToken);
+
+        var results = await new[] { csvPath }.ParseCsvParallelAsync<Product>(
+            new CsvOperationOptions { Encoding = encoding },
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        results.Single().Name.ShouldBe("Café");
     }
 
     [Fact]
@@ -143,10 +151,7 @@ public sealed class CsvOperationOptionsTests : TempDirectoryFixture
             {
                 FileConfiguration = new CsvFileConfiguration
                 {
-                    ConfigurationAction = static cfg =>
-                    {
-                        cfg.IgnoreBlankLines = true;
-                    }
+                    ReaderConfigurationAction = static opts => opts with { SkipEmptyLines = true }
                 }
             },
             cancellationToken: TestContext.Current.CancellationToken);
@@ -203,11 +208,7 @@ public sealed class CsvOperationOptionsTests : TempDirectoryFixture
                 products,
                 new CsvFileConfiguration
                 {
-                    ConfigurationAction = static cfg =>
-                    {
-                        cfg.Delimiter = "\t";
-                        cfg.HasHeaderRecord = true;
-                    }
+                    WriterConfigurationAction = static opts => opts with { Separator = '\t', HasHeader = true }
                 })
         };
 
@@ -242,10 +243,7 @@ public sealed class CsvOperationOptionsTests : TempDirectoryFixture
             {
                 FileConfiguration = new CsvFileConfiguration
                 {
-                    ConfigurationAction = static cfg =>
-                    {
-                        cfg.HasHeaderRecord = false;
-                    }
+                    ReaderConfigurationAction = static opts => opts with { HasHeader = false }
                 }
             },
             cancellationToken: TestContext.Current.CancellationToken);
@@ -273,10 +271,7 @@ public sealed class CsvOperationOptionsTests : TempDirectoryFixture
                 products,
                 new CsvFileConfiguration
                 {
-                    ConfigurationAction = static cfg =>
-                    {
-                        cfg.HasHeaderRecord = false;
-                    }
+                    WriterConfigurationAction = static opts => opts with { HasHeader = false }
                 })
         };
 
@@ -361,8 +356,6 @@ public sealed class CsvOperationOptionsTests : TempDirectoryFixture
         };
 
         // Act & Assert
-        // Use CollectAndContinue to ensure the DirectoryNotFoundException is properly collected and re-thrown
-        // instead of being masked by TaskCanceledException from FailFast cancellation
         var exception = await Should.ThrowAsync<AggregateException>(() => fileWrites.WriteCsvParallelAsync(
             new CsvOperationOptions
             {
@@ -379,7 +372,7 @@ public sealed class CsvOperationOptionsTests : TempDirectoryFixture
     }
 
     [Fact]
-    public async Task ParseCsvParallelAsync_WithCsvContextAction_ShouldApplyContextConfiguration()
+    public async Task ParseCsvParallelAsync_WithReaderConfigurationAction_ShouldFireCallback()
     {
         // Arrange
         var csvPath = Path.Join(TestDirectory, "context.csv");
@@ -391,7 +384,7 @@ public sealed class CsvOperationOptionsTests : TempDirectoryFixture
                                   """;
         await File.WriteAllTextAsync(csvPath, csvContent, TestContext.Current.CancellationToken);
 
-        var contextActionCalled = false;
+        var actionCalled = false;
 
         // Act
         var results = await new[] { csvPath }.ParseCsvParallelAsync<Product>(
@@ -399,11 +392,10 @@ public sealed class CsvOperationOptionsTests : TempDirectoryFixture
             {
                 FileConfiguration = new CsvFileConfiguration
                 {
-                    CsvContextAction = ctx =>
+                    ReaderConfigurationAction = opts =>
                     {
-                        contextActionCalled = true;
-                        // Context configuration can register class maps, type converters, etc.
-                        ctx.ShouldNotBeNull();
+                        actionCalled = true;
+                        return opts with { HasHeader = true };
                     }
                 }
             },
@@ -411,11 +403,11 @@ public sealed class CsvOperationOptionsTests : TempDirectoryFixture
 
         // Assert
         results.Count.ShouldBe(2);
-        contextActionCalled.ShouldBeTrue();
+        actionCalled.ShouldBeTrue();
     }
 
     [Fact]
-    public async Task WriteCsvParallelAsync_WithCsvContextAction_ShouldApplyContextConfiguration()
+    public async Task WriteCsvParallelAsync_WithWriterConfigurationAction_ShouldFireCallback()
     {
         // Arrange
         var products = new[]
@@ -424,7 +416,7 @@ public sealed class CsvOperationOptionsTests : TempDirectoryFixture
         };
 
         var csvPath = Path.Join(TestDirectory, "context-output.csv");
-        var contextActionCalled = false;
+        var actionCalled = false;
 
         var fileWrites = new[]
         {
@@ -433,10 +425,10 @@ public sealed class CsvOperationOptionsTests : TempDirectoryFixture
                 products,
                 new CsvFileConfiguration
                 {
-                    CsvContextAction = ctx =>
+                    WriterConfigurationAction = opts =>
                     {
-                        contextActionCalled = true;
-                        ctx.ShouldNotBeNull();
+                        actionCalled = true;
+                        return opts with { HasHeader = true };
                     }
                 })
         };
@@ -451,7 +443,7 @@ public sealed class CsvOperationOptionsTests : TempDirectoryFixture
 
         // Assert
         File.Exists(csvPath).ShouldBeTrue();
-        contextActionCalled.ShouldBeTrue();
+        actionCalled.ShouldBeTrue();
     }
 
     [Fact]
@@ -495,13 +487,13 @@ public sealed class CsvOperationOptionsTests : TempDirectoryFixture
         // Act
         var config = new CsvFileConfiguration
         {
-            ConfigurationAction = static cfg => cfg.Delimiter = ",",
-            CsvContextAction = static _ => { }
+            ReaderConfigurationAction = static opts => opts with { Separator = ',' },
+            WriterConfigurationAction = static opts => opts with { Separator = ',' }
         };
 
         // Assert
-        config.ConfigurationAction.ShouldNotBeNull();
-        config.CsvContextAction.ShouldNotBeNull();
+        config.ReaderConfigurationAction.ShouldNotBeNull();
+        config.WriterConfigurationAction.ShouldNotBeNull();
     }
 
     [Fact]
@@ -531,11 +523,19 @@ public sealed class CsvOperationOptionsTests : TempDirectoryFixture
         writeFile.Configuration.ShouldBe(config);
     }
 
-    [SuppressMessage("ReSharper", "PropertyCanBeMadeInitOnly.Local")]
-    private sealed class Product
+    [
+        CsvRecord,
+        SuppressMessage("ReSharper", "PropertyCanBeMadeInitOnly.Local")
+    ]
+    internal sealed partial class Product
     {
+        [CsvColumn(Index = 0)]
         public int Id { get; set; }
+
+        [CsvColumn(Index = 1)]
         public string Name { get; set; } = string.Empty;
+
+        [CsvColumn(Index = 2)]
         public decimal Price { get; set; }
     }
 }

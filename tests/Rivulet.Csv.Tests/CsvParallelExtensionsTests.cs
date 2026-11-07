@@ -1,10 +1,11 @@
 using System.Diagnostics.CodeAnalysis;
+using CsvHelper;
 using Rivulet.Base.Tests;
 using Rivulet.Core;
 
 namespace Rivulet.Csv.Tests;
 
-public sealed class CsvParallelExtensionsTests : TempDirectoryFixture
+public sealed partial class CsvParallelExtensionsTests : TempDirectoryFixture
 {
     [Fact]
     public async Task ParseCsvParallelAsync_WithSingleFile_ShouldParseSuccessfully()
@@ -95,7 +96,7 @@ public sealed class CsvParallelExtensionsTests : TempDirectoryFixture
                 products,
                 new CsvFileConfiguration
                 {
-                    ConfigurationAction = static cfg => cfg.HasHeaderRecord = true
+                    WriterConfigurationAction = static opts => opts with { HasHeader = true }
                 })
         };
 
@@ -320,7 +321,7 @@ public sealed class CsvParallelExtensionsTests : TempDirectoryFixture
             {
                 FileConfiguration = new CsvFileConfiguration
                 {
-                    ConfigurationAction = static cfg => cfg.Delimiter = ";"
+                    ReaderConfigurationAction = static opts => opts with { Separator = ';' }
                 }
             },
             cancellationToken: TestContext.Current.CancellationToken);
@@ -490,8 +491,11 @@ public sealed class CsvParallelExtensionsTests : TempDirectoryFixture
         recordsWritten.ShouldBe(1);
     }
 
-    [SuppressMessage("ReSharper", "PropertyCanBeMadeInitOnly.Local")]
-    private sealed class Product
+    [
+        CsvRecord,
+        SuppressMessage("ReSharper", "PropertyCanBeMadeInitOnly.Local")
+    ]
+    internal sealed partial class Product
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
@@ -499,18 +503,22 @@ public sealed class CsvParallelExtensionsTests : TempDirectoryFixture
     }
 
     [
+        CsvRecord,
         SuppressMessage("ReSharper", "PropertyCanBeMadeInitOnly.Local"),
         SuppressMessage("ReSharper", "ClassNeverInstantiated.Local"),
         SuppressMessage("ReSharper", "UnusedMember.Local")
     ]
-    private sealed class Customer
+    internal sealed partial class Customer
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
     }
 
-    [SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Local")]
-    private sealed class EnrichedProduct
+    [
+        CsvRecord,
+        SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Local")
+    ]
+    internal sealed partial class EnrichedProduct
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;

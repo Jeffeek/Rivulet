@@ -1,159 +1,41 @@
 using System.Diagnostics.CodeAnalysis;
 using CsvHelper;
-using CsvHelper.Configuration;
 using Rivulet.Base.Tests;
 using Rivulet.Core;
-using MissingFieldException = CsvHelper.MissingFieldException;
 
 namespace Rivulet.Csv.Tests;
 
-public sealed class CsvClassMapTests : TempDirectoryFixture
+/// <summary>
+///     Tests for CSV parsing and writing using CsvHelper v34 source-generated records.
+/// </summary>
+public sealed partial class CsvClassMapTests : TempDirectoryFixture
 {
     [Fact]
-    public async Task ParseCsvParallelAsync_WithSingleClassMap_ShouldApplyToAllFiles()
+    public async Task ParseCsvParallelAsync_WithMatchingColumnNames_ShouldMapAllFiles()
     {
-        // Arrange
+        // Arrange - columns match property names exactly
         var csvPath1 = Path.Join(TestDirectory, "products1.csv");
         var csvPath2 = Path.Join(TestDirectory, "products2.csv");
 
-        await File.WriteAllTextAsync(csvPath1, "ProductID,ProductName,Price\n1,Widget,10.50", TestContext.Current.CancellationToken);
-        await File.WriteAllTextAsync(csvPath2, "ProductID,ProductName,Price\n2,Gadget,20.00", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(csvPath1, "Id,Name,Price\n1,Widget,10.50", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(csvPath2, "Id,Name,Price\n2,Gadget,20.00", TestContext.Current.CancellationToken);
 
-        // Act - Using single ClassMap for all files via CsvContextAction
+        // Act
         var results = await new[] { csvPath1, csvPath2 }.ParseCsvParallelAsync<Product>(
             new CsvOperationOptions
             {
-                FileConfiguration = new CsvFileConfiguration
-                {
-                    CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByName>()
-                },
                 ParallelOptions = new ParallelOptionsRivulet { OrderedOutput = true }
             },
             cancellationToken: TestContext.Current.CancellationToken);
 
-        // Assert - order-independent
+        // Assert
         results.Count.ShouldBe(2);
         results.ShouldContain(static p => p.Id == 1 && p.Name == "Widget");
         results.ShouldContain(static p => p.Id == 2 && p.Name == "Gadget");
     }
 
     [Fact]
-    public async Task ParseCsvParallelAsync_WithPerFileCallback_ShouldApplyDifferentMaps()
-    {
-        // Arrange
-        var csvPath1 = Path.Join(TestDirectory, "modern_products.csv");
-        var csvPath2 = Path.Join(TestDirectory, "legacy_products.csv");
-
-        await File.WriteAllTextAsync(csvPath1, "ProductID,ProductName,Price\n1,Widget,10.50", TestContext.Current.CancellationToken);
-        await File.WriteAllTextAsync(csvPath2, "1|OldWidget|5.25", TestContext.Current.CancellationToken);
-
-        // Act - Configure per file using record-based approach
-        var fileReads = new[]
-        {
-            new RivuletCsvReadFile<dynamic>(csvPath1,
-                new CsvFileConfiguration
-                {
-                    CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByName>()
-                }),
-            new RivuletCsvReadFile<dynamic>(csvPath2,
-                new CsvFileConfiguration
-                {
-                    ConfigurationAction = static cfg =>
-                    {
-                        cfg.Delimiter = "|";
-                        cfg.HasHeaderRecord = false;
-                    },
-                    CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByIndex>()
-                })
-        };
-
-        var results = await fileReads.ParseCsvParallelGroupedAsync(
-            new CsvOperationOptions
-            {
-                ParallelOptions = new ParallelOptionsRivulet { OrderedOutput = true }
-            },
-            cancellationToken: TestContext.Current.CancellationToken);
-
-        // Assert - use dynamic access with COLUMN names
-        // csvPath1 has headers: ProductID,ProductName,Price
-        // csvPath2 is headerless so uses Field1,Field2,Field3
-        results.Count.ShouldBe(2);
-        var record1 = results[csvPath1][0];
-        ((string)record1.ProductName).ShouldBe("Widget");
-        var record2 = results[csvPath2][0];
-        ((string)record2.Field2).ShouldBe("OldWidget"); // Headerless file
-    }
-
-    [Fact]
-    public async Task ParseCsvParallelAsync_WithCsvFileConfig_ShouldUsePerFileClassMaps()
-    {
-        // Arrange - Your exact scenario: 5 files with 3 different ClassMaps
-        var file1 = Path.Join(TestDirectory, "file1.csv");
-        var file2 = Path.Join(TestDirectory, "file2.csv");
-        var file3 = Path.Join(TestDirectory, "file3.csv");
-        var file4 = Path.Join(TestDirectory, "file4.csv");
-        var file5 = Path.Join(TestDirectory, "file5.csv");
-
-        // Files 1-3 use ProductMapByName
-        await File.WriteAllTextAsync(file1, "ProductID,ProductName,Price\n1,Widget,10.00", TestContext.Current.CancellationToken);
-        await File.WriteAllTextAsync(file2, "ProductID,ProductName,Price\n2,Gadget,20.00", TestContext.Current.CancellationToken);
-        await File.WriteAllTextAsync(file3, "ProductID,ProductName,Price\n3,Doohickey,30.00", TestContext.Current.CancellationToken);
-
-        // File 4 uses ProductMapByIndex (no header,
-        await File.WriteAllTextAsync(file4, "4,Thingamajig,40.00", TestContext.Current.CancellationToken);
-
-        // File 5 uses ProductMapWithOptional (has optional Description column,
-        await File.WriteAllTextAsync(file5, "ProductID,ProductName,Price,Description\n5,Whatsit,50.00,Special", TestContext.Current.CancellationToken);
-
-        var fileReads = new[]
-        {
-            new RivuletCsvReadFile<dynamic>(file1,
-                new CsvFileConfiguration { CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByName>() }),
-            new RivuletCsvReadFile<dynamic>(file2,
-                new CsvFileConfiguration { CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByName>() }),
-            new RivuletCsvReadFile<dynamic>(file3,
-                new CsvFileConfiguration { CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByName>() }),
-            new RivuletCsvReadFile<dynamic>(file4,
-                new CsvFileConfiguration
-                {
-                    ConfigurationAction = static cfg =>
-                    {
-                        cfg.HasHeaderRecord = false;
-                    },
-                    CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByIndex>()
-                }),
-            new RivuletCsvReadFile<dynamic>(file5,
-                new CsvFileConfiguration
-                    { CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapWithOptional>() })
-        };
-
-        // Act
-        var results = await fileReads.ParseCsvParallelGroupedAsync(
-            new CsvOperationOptions
-            {
-                ParallelOptions = new ParallelOptionsRivulet { OrderedOutput = true }
-            },
-            cancellationToken: TestContext.Current.CancellationToken);
-
-        // Assert - Verify all 5 files parsed with correct ClassMaps - use dynamic access with COLUMN names
-        // Note: dynamic objects return all values as strings, must parse to int
-        results.Count.ShouldBe(5);
-        var rec1 = results[file1][0];
-        int.Parse((string)rec1.ProductID).ShouldBe(1);
-        ((string)rec1.ProductName).ShouldBe("Widget");
-        var rec2 = results[file2][0];
-        int.Parse((string)rec2.ProductID).ShouldBe(2);
-        var rec3 = results[file3][0];
-        int.Parse((string)rec3.ProductID).ShouldBe(3);
-        var rec4 = results[file4][0];
-        ((string)rec4.Field1).ShouldBe("4"); // Headerless file with dynamic returns strings
-        var rec5 = results[file5][0];
-        int.Parse((string)rec5.ProductID).ShouldBe(5);
-        ((string)rec5.Description).ShouldBe("Special");
-    }
-
-    [Fact]
-    public async Task WriteCsvParallelAsync_WithSingleClassMap_ShouldApplyToAllFiles()
+    public async Task WriteCsvParallelAsync_ThenParseCsvParallelAsync_ShouldRoundTrip()
     {
         // Arrange
         var products1 = new[] { new Product { Id = 1, Name = "Widget", Price = 10.50m } };
@@ -162,140 +44,149 @@ public sealed class CsvClassMapTests : TempDirectoryFixture
         var csvPath1 = Path.Join(TestDirectory, "out1.csv");
         var csvPath2 = Path.Join(TestDirectory, "out2.csv");
 
-        // Act - Using single ClassMap for all writes via CsvContextAction
+        // Act - write
         await new[]
             {
                 new RivuletCsvWriteFile<Product>(csvPath1, products1, null),
                 new RivuletCsvWriteFile<Product>(csvPath2, products2, null)
             }
             .WriteCsvParallelAsync(
-                new CsvOperationOptions
-                {
-                    FileConfiguration = new CsvFileConfiguration
-                    {
-                        CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByName>()
-                    },
-                    OverwriteExisting = true
-                },
+                new CsvOperationOptions { OverwriteExisting = true },
                 cancellationToken: TestContext.Current.CancellationToken);
 
-        // Assert
-        var content1 = await File.ReadAllTextAsync(csvPath1, TestContext.Current.CancellationToken);
-        var content2 = await File.ReadAllTextAsync(csvPath2, TestContext.Current.CancellationToken);
-
-        content1.ShouldContain("ProductID");
-        content1.ShouldContain("ProductName");
-        content1.ShouldContain("Widget");
-
-        content2.ShouldContain("ProductID");
-        content2.ShouldContain("Gadget");
-    }
-
-    [Fact]
-    public async Task WriteCsvParallelAsync_WithCsvFileConfig_ShouldUsePerFileClassMaps()
-    {
-        // Arrange
-        var products1 = new[] { new Product { Id = 1, Name = "Widget", Price = 10.50m } };
-        var products2 = new[] { new Product { Id = 2, Name = "Gadget", Price = 20.00m, Description = "Special" } };
-
-        var csvPath1 = Path.Join(TestDirectory, "out_by_name.csv");
-        var csvPath2 = Path.Join(TestDirectory, "out_with_optional.csv");
-
-        var fileWrites = new[]
-        {
-            new RivuletCsvWriteFile<Product>(
-                csvPath1,
-                products1,
-                new CsvFileConfiguration
-                {
-                    CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByName>()
-                }),
-            new RivuletCsvWriteFile<Product>(
-                csvPath2,
-                products2,
-                new CsvFileConfiguration
-                {
-                    CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapWithOptional>()
-                })
-        };
-
-        // Act
-        await fileWrites.WriteCsvParallelAsync(
-            new CsvOperationOptions { OverwriteExisting = true },
+        // Act - read back
+        var results = await new[] { csvPath1, csvPath2 }.ParseCsvParallelAsync<Product>(
+            new CsvOperationOptions
+            {
+                ParallelOptions = new ParallelOptionsRivulet { OrderedOutput = true }
+            },
             cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
-        var content1 = await File.ReadAllTextAsync(csvPath1, TestContext.Current.CancellationToken);
-        var content2 = await File.ReadAllTextAsync(csvPath2, TestContext.Current.CancellationToken);
-
-        content1.ShouldContain("ProductName");
-        content1.ShouldNotContain("Description");
-
-        content2.ShouldContain("ProductName");
-        content2.ShouldContain("Description");
-        content2.ShouldContain("Special");
+        results.Count.ShouldBe(2);
+        results.ShouldContain(static p => p.Id == 1 && p.Name == "Widget" && p.Price == 10.50m);
+        results.ShouldContain(static p => p.Id == 2 && p.Name == "Gadget" && p.Price == 20.00m);
     }
 
     [Fact]
-    public async Task ParseCsvParallelAsync_WithConfigureContext_ShouldAccessConfiguration()
+    public async Task ParseCsvParallelAsync_WithSemicolonSeparator_ShouldParse()
     {
         // Arrange
         var csvPath = Path.Join(TestDirectory, "semicolon.csv");
-        await File.WriteAllTextAsync(csvPath, "ProductID;ProductName;Price\n1;Widget;10.50", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(csvPath, "Id;Name;Price\n1;Widget;10.50", TestContext.Current.CancellationToken);
 
-        // Act - Configure delimiter and ClassMap via CsvFileConfiguration
+        // Act
         var results = await new[] { csvPath }.ParseCsvParallelAsync<Product>(
             new CsvOperationOptions
             {
                 FileConfiguration = new CsvFileConfiguration
                 {
-                    ConfigurationAction = static cfg =>
-                    {
-                        cfg.Delimiter = ";";
-                    },
-                    CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByName>()
+                    ReaderConfigurationAction = static opts => opts with { Separator = ';' }
                 }
             },
             cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
+        results.Count.ShouldBe(1);
+        results[0].Id.ShouldBe(1);
         results[0].Name.ShouldBe("Widget");
+        results[0].Price.ShouldBe(10.50m);
     }
 
     [Fact]
-    public async Task WriteCsvParallelAsync_WithTupleConfiguration_ShouldSupportPerFileSettings()
+    public async Task ParseCsvParallelAsync_WithPerFileSeparator_ShouldApplyCorrectly()
     {
-        // Arrange
+        // Arrange - different separators per file
+        var commaPath = Path.Join(TestDirectory, "comma.csv");
+        var pipePath = Path.Join(TestDirectory, "pipe.csv");
+
+        await File.WriteAllTextAsync(commaPath, "Id,Name,Price\n1,Widget,10.50", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(pipePath, "Id|Name|Price\n2|Gadget|20.00", TestContext.Current.CancellationToken);
+
+        var fileReads = new[]
+        {
+            new RivuletCsvReadFile<Product>(commaPath, null),
+            new RivuletCsvReadFile<Product>(pipePath,
+                new CsvFileConfiguration
+                {
+                    ReaderConfigurationAction = static opts => opts with { Separator = '|' }
+                })
+        };
+
+        // Act
+        var results = await fileReads.ParseCsvParallelGroupedAsync(
+            new CsvOperationOptions
+            {
+                ParallelOptions = new ParallelOptionsRivulet { OrderedOutput = true }
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        // Assert
+        results.Count.ShouldBe(2);
+        results[commaPath][0].Name.ShouldBe("Widget");
+        results[pipePath][0].Name.ShouldBe("Gadget");
+    }
+
+    [Fact]
+    public async Task ParseCsvParallelAsync_WithoutHeaders_ShouldMapByPosition()
+    {
+        // Arrange - headerless file, properties mapped by index attribute (Id=0, Name=1, Price=2)
+        var csvPath = Path.Join(TestDirectory, "no_header.csv");
+        await File.WriteAllTextAsync(csvPath, "1,Widget,10.50\n2,Gadget,20.00", TestContext.Current.CancellationToken);
+
+        // Act
+        var results = await new[] { csvPath }.ParseCsvParallelAsync<HeaderlessProduct>(
+            new CsvOperationOptions
+            {
+                FileConfiguration = new CsvFileConfiguration
+                {
+                    ReaderConfigurationAction = static opts => opts with { HasHeader = false }
+                }
+            },
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        // Assert
+        results.Count.ShouldBe(2);
+        results.ShouldContain(static p => p.Id == 1 && p.Name == "Widget" && p.Price == 10.50m);
+        results.ShouldContain(static p => p.Id == 2 && p.Name == "Gadget" && p.Price == 20.00m);
+    }
+
+    [Fact]
+    public async Task ParseCsvParallelAsync_WithMissingOptionalColumn_ShouldUseDefaultValue()
+    {
+        // Arrange - CSV has no Description column; auto-mapper skips it, leaves default null
+        var csvPath = Path.Join(TestDirectory, "no_description.csv");
+        await File.WriteAllTextAsync(csvPath, "Id,Name,Price\n1,Widget,10.50", TestContext.Current.CancellationToken);
+
+        // Act
+        var results = await new[] { csvPath }.ParseCsvParallelAsync<Product>(
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        // Assert
+        results.Count.ShouldBe(1);
+        results[0].Id.ShouldBe(1);
+        results[0].Description.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task WriteCsvParallelAsync_ThenParseCsvParallelAsync_WithPerFileSettings_ShouldRoundTrip()
+    {
+        // Arrange - write two files with different separators, read back
         var products1 = new[] { new Product { Id = 1, Name = "Widget", Price = 10.50m } };
         var products2 = new[] { new Product { Id = 2, Name = "Gadget", Price = 20.00m } };
 
         var csvPath1 = Path.Join(TestDirectory, "comma.csv");
         var csvPath2 = Path.Join(TestDirectory, "pipe.csv");
 
-        // Act - Different delimiter per file using CsvFileConfiguration
         var writes = new[]
         {
-            new RivuletCsvWriteFile<Product>(
-                csvPath1,
-                products1,
-                new CsvFileConfiguration
-                {
-                    ConfigurationAction = static cfg =>
-                    {
-                        cfg.Delimiter = ",";
-                    },
-                    CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByName>()
-                }),
+            new RivuletCsvWriteFile<Product>(csvPath1, products1, null),
             new RivuletCsvWriteFile<Product>(
                 csvPath2,
                 products2,
                 new CsvFileConfiguration
                 {
-                    ConfigurationAction = static cfg =>
-                    {
-                        cfg.Delimiter = "|";
-                    },
-                    CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByName>()
+                    WriterConfigurationAction = static opts => opts with { Separator = '|' }
                 })
         };
 
@@ -303,61 +194,44 @@ public sealed class CsvClassMapTests : TempDirectoryFixture
             new CsvOperationOptions { OverwriteExisting = true },
             cancellationToken: TestContext.Current.CancellationToken);
 
-        // Assert
+        // Verify separators
         var content1 = await File.ReadAllTextAsync(csvPath1, TestContext.Current.CancellationToken);
         var content2 = await File.ReadAllTextAsync(csvPath2, TestContext.Current.CancellationToken);
 
         content1.ShouldContain(",");
         content1.ShouldNotContain("|");
-
         content2.ShouldContain("|");
         content2.ShouldNotContain(",");
-    }
 
-    [Fact]
-    public async Task ParseCsvParallelAsync_WithClassMapIgnoringFields_ShouldIgnoreCorrectly()
-    {
-        // Arrange
-        var csvPath = Path.Join(TestDirectory, "with_extra.csv");
-        await File.WriteAllTextAsync(csvPath, "ProductID,ProductName,Price,Internal\n1,Widget,10.50,secret", TestContext.Current.CancellationToken);
-
-        // Act - Using ClassMap that ignores Internal field via CsvContextAction
-        var results = await new[] { csvPath }.ParseCsvParallelAsync<ProductWithInternal>(
+        // Read back pipe-separated file
+        var results = await new[] { csvPath2 }.ParseCsvParallelAsync<Product>(
             new CsvOperationOptions
             {
                 FileConfiguration = new CsvFileConfiguration
                 {
-                    CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapIgnoringInternal>()
+                    ReaderConfigurationAction = static opts => opts with { Separator = '|' }
                 }
             },
             cancellationToken: TestContext.Current.CancellationToken);
 
-        // Assert
-        results[0].Id.ShouldBe(1);
-        results[0].Name.ShouldBe("Widget");
-        results[0].Internal.ShouldBeNull(); // Should be ignored, remain null
+        results.Count.ShouldBe(1);
+        results[0].Id.ShouldBe(2);
+        results[0].Name.ShouldBe("Gadget");
     }
 
-    // Transform ClassMap tests
-
     [Fact]
-    public async Task TransformCsvParallelAsync_WithSingleClassMaps_ShouldApplyToInputAndOutput()
+    public async Task TransformCsvParallelAsync_WithAutoMapping_ShouldApplyToInputAndOutput()
     {
-        // Arrange
+        // Arrange - columns match property names
         var inputPath = Path.Join(TestDirectory, "input.csv");
         var outputPath = Path.Join(TestDirectory, "output.csv");
-        await File.WriteAllTextAsync(inputPath, "ProductID,ProductName,Price\n1,Widget,10.00", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(inputPath, "Id,Name,Price\n1,Widget,10.00", TestContext.Current.CancellationToken);
 
         var transformations = new[]
         {
             (
-                Input: new RivuletCsvReadFile<Product>(
-                    inputPath,
-                    new CsvFileConfiguration { CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByName>() }),
-                Output: new RivuletCsvWriteFile<EnrichedProduct>(
-                    outputPath,
-                    Array.Empty<EnrichedProduct>(),
-                    new CsvFileConfiguration { CsvContextAction = static ctx => ctx.RegisterClassMap<EnrichedProductMap>() })
+                Input: new RivuletCsvReadFile<Product>(inputPath, null),
+                Output: new RivuletCsvWriteFile<EnrichedProduct>(outputPath, Array.Empty<EnrichedProduct>(), null)
             )
         };
 
@@ -375,48 +249,40 @@ public sealed class CsvClassMapTests : TempDirectoryFixture
 
         // Assert
         var output = await File.ReadAllTextAsync(outputPath, TestContext.Current.CancellationToken);
-        output.ShouldContain("ProductID");
-        output.ShouldContain("ProductName");
+        output.ShouldContain("Id");
+        output.ShouldContain("Name");
         output.ShouldContain("OriginalPrice");
         output.ShouldContain("PriceWithTax");
         output.ShouldContain("12"); // 10.00 * 1.2
     }
 
     [Fact]
-    public async Task TransformCsvParallelAsync_WithSeparateContextConfigurations_ShouldApplyCorrectly()
+    public async Task TransformCsvParallelAsync_FromHeaderlessInput_ShouldMapByPosition()
     {
-        // Arrange
+        // Arrange - headerless input, tab-separated output
         var inputPath = Path.Join(TestDirectory, "legacy.csv");
         var outputPath = Path.Join(TestDirectory, "modern.csv");
-        await File.WriteAllTextAsync(inputPath, "1,Widget,10.00", TestContext.Current.CancellationToken); // No header, comma-separated
+        await File.WriteAllTextAsync(inputPath, "1,Widget,10.00", TestContext.Current.CancellationToken);
 
         var transformations = new[]
         {
             (
-                Input: new RivuletCsvReadFile<Product>(inputPath,
+                Input: new RivuletCsvReadFile<HeaderlessProduct>(inputPath,
                     new CsvFileConfiguration
                     {
-                        ConfigurationAction = static cfg =>
-                        {
-                            cfg.HasHeaderRecord = false;
-                        },
-                        CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByIndex>()
+                        ReaderConfigurationAction = static opts => opts with { HasHeader = false }
                     }),
                 Output: new RivuletCsvWriteFile<EnrichedProduct>(outputPath,
                     Array.Empty<EnrichedProduct>(),
                     new CsvFileConfiguration
                     {
-                        ConfigurationAction = static cfg =>
-                        {
-                            cfg.Delimiter = "\t";
-                        },
-                        CsvContextAction = static ctx => ctx.RegisterClassMap<EnrichedProductMap>()
+                        WriterConfigurationAction = static opts => opts with { Separator = '\t' }
                     })
             )
         };
 
-        // Act - Input: no header, comma; Output: header, tab-separated
-        await transformations.TransformCsvParallelAsync<Product, EnrichedProduct>(
+        // Act
+        await transformations.TransformCsvParallelAsync<HeaderlessProduct, EnrichedProduct>(
             static p => new EnrichedProduct
             {
                 Id = p.Id,
@@ -430,145 +296,137 @@ public sealed class CsvClassMapTests : TempDirectoryFixture
         // Assert
         var output = await File.ReadAllTextAsync(outputPath, TestContext.Current.CancellationToken);
         output.ShouldContain("\t"); // Tab-separated
-        output.ShouldContain("ProductID");
         output.ShouldContain("12"); // 10.00 * 1.2
     }
 
-    // Error scenario tests
-
     [Fact]
-    public async Task ParseCsvParallelAsync_WithClassMapForNonExistentColumn_ShouldThrow()
+    public async Task ParseCsvParallelAsync_WithCustomColumnNames_ShouldIgnoreUnmappedProperty()
     {
-        // Arrange
-        var csvPath = Path.Join(TestDirectory, "file.csv");
-        await File.WriteAllTextAsync(csvPath, "Id,Name,Price\n1,Widget,10.50", TestContext.Current.CancellationToken);
+        var csvPath = Path.Join(TestDirectory, "custom.csv");
+        await File.WriteAllTextAsync(csvPath,
+            "ProductName,Price,ProductID,InternalNotes\nWidget,10.50,1,Not imported",
+            TestContext.Current.CancellationToken);
 
-        // Act & Assert - ClassMap expects "ProductID" but file has "Id"
-        // Enable header validation to throw on mismatch
-        // Use CollectAndContinue to ensure HeaderValidationException is properly collected
-        var exception = await Should.ThrowAsync<AggregateException>(async () =>
-        {
-            await new[] { csvPath }.ParseCsvParallelAsync<Product>(
-                new CsvOperationOptions
-                {
-                    FileConfiguration = new CsvFileConfiguration
-                    {
-                        ConfigurationAction = static cfg =>
-                        {
-                            // Enable header validation - PrepareHeaderForMatch must return exact match
-                            cfg.PrepareHeaderForMatch = static args => args.Header;
-                            cfg.MissingFieldFound = static args =>
-                                throw new MissingFieldException(args.Context, "Missing field");
-                        },
-                        CsvContextAction = static ctx => ctx.RegisterClassMap<ProductMapByName>()
-                    },
-                    ParallelOptions = new ParallelOptionsRivulet
-                    {
-                        ErrorMode = ErrorMode.CollectAndContinue,
-                        MaxRetries = 0
-                    }
-                },
-                cancellationToken: TestContext.Current.CancellationToken);
-        });
+        var results = await new[] { csvPath }.ParseCsvParallelAsync<CustomProduct>(
+            cancellationToken: TestContext.Current.CancellationToken);
 
-        // Verify the exception contains HeaderValidationException
-        exception.InnerExceptions.ShouldContain(static e => e is HeaderValidationException);
+        results.Count.ShouldBe(1);
+        results[0].Id.ShouldBe(1);
+        results[0].Name.ShouldBe("Widget");
+        results[0].Price.ShouldBe(10.50m);
+        results[0].InternalNotes.ShouldBeNull();
     }
 
-    // Test classes and ClassMaps
+    [Fact]
+    public async Task WriteCsvParallelAsync_WithCustomColumnNames_ShouldRoundTrip()
+    {
+        var csvPath = Path.Join(TestDirectory, "custom_roundtrip.csv");
+        var products = new[]
+        {
+            new CustomProduct { Id = 1, Name = "Widget", Price = 10.5m, InternalNotes = "Not exported" }
+        };
 
-    [SuppressMessage("ReSharper", "PropertyCanBeMadeInitOnly.Local")]
-    private sealed class Product
+        await new[] { new RivuletCsvWriteFile<CustomProduct>(csvPath, products, null) }
+            .WriteCsvParallelAsync(cancellationToken: TestContext.Current.CancellationToken);
+
+        var content = await File.ReadAllTextAsync(csvPath, TestContext.Current.CancellationToken);
+        content.ShouldContain("ProductID,ProductName,Price");
+        content.ShouldContain("1,Widget,10.5");
+        content.ShouldNotContain("InternalNotes");
+        content.ShouldNotContain("Not exported");
+
+        var results = await new[] { csvPath }.ParseCsvParallelAsync<CustomProduct>(
+            cancellationToken: TestContext.Current.CancellationToken);
+        results.Count.ShouldBe(1);
+        results[0].Id.ShouldBe(1);
+        results[0].Name.ShouldBe("Widget");
+        results[0].Price.ShouldBe(10.5m);
+        results[0].InternalNotes.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task TransformCsvParallelAsync_WithCustomColumnNames_ShouldReadAndWriteMappedNames()
+    {
+        var inputPath = Path.Join(TestDirectory, "custom_input.csv");
+        var outputPath = Path.Join(TestDirectory, "custom_output.csv");
+        await File.WriteAllTextAsync(inputPath, "ProductID,ProductName,Price\n1,Widget,10.00", TestContext.Current.CancellationToken);
+        var transformations = new[]
+        {
+            (
+                Input: new RivuletCsvReadFile<CustomProduct>(inputPath, null),
+                Output: new RivuletCsvWriteFile<CustomProduct>(outputPath, Array.Empty<CustomProduct>(), null)
+            )
+        };
+
+        await transformations.TransformCsvParallelAsync(
+            static p => new CustomProduct { Id = p.Id, Name = p.Name, Price = p.Price * 1.2m },
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        var content = await File.ReadAllTextAsync(outputPath, TestContext.Current.CancellationToken);
+        content.ShouldContain("ProductID,ProductName,Price");
+        content.ShouldContain("1,Widget,12.00");
+    }
+
+    [CsvRecord]
+    internal sealed partial class CustomProduct
+    {
+        [CsvColumn("ProductID")]
+        public int Id { get; set; }
+
+        [CsvColumn("ProductName")]
+        public string Name { get; set; } = string.Empty;
+
+        public decimal Price { get; set; }
+
+        [
+            CsvColumn(Optional = true),
+            CsvFormat("yyyy-MM-dd")
+        ]
+        public DateTime CreatedDate { get; set; }
+
+        [CsvIgnore]
+        public string? InternalNotes { get; set; }
+    }
+
+    [
+        CsvRecord,
+        SuppressMessage("ReSharper", "PropertyCanBeMadeInitOnly.Local")
+    ]
+    internal sealed partial class Product
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public decimal Price { get; set; }
+
+        [CsvColumn(Optional = true)]
         public string? Description { get; set; }
     }
 
     [
-        SuppressMessage("ReSharper", "ClassNeverInstantiated.Local"),
-        SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Local"),
-        SuppressMessage("ReSharper", "AutoPropertyCanBeMadeGetOnly.Local")
+        CsvRecord,
+        SuppressMessage("ReSharper", "PropertyCanBeMadeInitOnly.Local")
     ]
-    private sealed class ProductWithInternal
+    internal sealed partial class HeaderlessProduct
     {
+        [CsvColumn(Index = 0)]
         public int Id { get; set; }
+
+        [CsvColumn(Index = 1)]
         public string Name { get; set; } = string.Empty;
+
+        [CsvColumn(Index = 2)]
         public decimal Price { get; set; }
-        public string? Internal { get; set; }
     }
 
-    // ClassMap that maps by name
-    [SuppressMessage("ReSharper", "ClassNeverInstantiated.Local")]
-    private sealed class ProductMapByName : ClassMap<Product>
-    {
-        public ProductMapByName()
-        {
-            Map(static m => m.Id).Name("ProductID");
-            Map(static m => m.Name).Name("ProductName");
-            Map(static m => m.Price);
-        }
-    }
-
-    // ClassMap that maps by index (for headerless files)
-    [SuppressMessage("ReSharper", "ClassNeverInstantiated.Local")]
-    private sealed class ProductMapByIndex : ClassMap<Product>
-    {
-        public ProductMapByIndex()
-        {
-            Map(static m => m.Id).Index(0);
-            Map(static m => m.Name).Index(1);
-            Map(static m => m.Price).Index(2);
-        }
-    }
-
-    // ClassMap with optional field
-    [SuppressMessage("ReSharper", "ClassNeverInstantiated.Local")]
-    private sealed class ProductMapWithOptional : ClassMap<Product>
-    {
-        public ProductMapWithOptional()
-        {
-            Map(static m => m.Id).Name("ProductID");
-            Map(static m => m.Name).Name("ProductName");
-            Map(static m => m.Price);
-            Map(static m => m.Description).Optional();
-        }
-    }
-
-    // ClassMap that ignores a field
-    [SuppressMessage("ReSharper", "ClassNeverInstantiated.Local")]
-    private sealed class ProductMapIgnoringInternal : ClassMap<ProductWithInternal>
-    {
-        public ProductMapIgnoringInternal()
-        {
-            Map(static m => m.Id).Name("ProductID");
-            Map(static m => m.Name).Name("ProductName");
-            Map(static m => m.Price);
-            Map(static m => m.Internal).Ignore();
-        }
-    }
-
-    // EnrichedProduct for Transform tests
-    [SuppressMessage("ReSharper", "PropertyCanBeMadeInitOnly.Local")]
-    private sealed class EnrichedProduct
+    [
+        CsvRecord,
+        SuppressMessage("ReSharper", "PropertyCanBeMadeInitOnly.Local")
+    ]
+    internal sealed partial class EnrichedProduct
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public decimal OriginalPrice { get; set; }
         public decimal PriceWithTax { get; set; }
-    }
-
-    // ClassMap for EnrichedProduct
-    [SuppressMessage("ReSharper", "ClassNeverInstantiated.Local")]
-    private sealed class EnrichedProductMap : ClassMap<EnrichedProduct>
-    {
-        public EnrichedProductMap()
-        {
-            Map(static m => m.Id).Name("ProductID");
-            Map(static m => m.Name).Name("ProductName");
-            Map(static m => m.OriginalPrice);
-            Map(static m => m.PriceWithTax);
-        }
     }
 }

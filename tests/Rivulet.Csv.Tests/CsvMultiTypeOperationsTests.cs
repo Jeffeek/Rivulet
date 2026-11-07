@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using CsvHelper;
 using Rivulet.Base.Tests;
 using Rivulet.Core;
 
@@ -7,7 +8,7 @@ namespace Rivulet.Csv.Tests;
 /// <summary>
 ///     Tests for multi-type CSV read and write operations with 2-5 generic parameters.
 /// </summary>
-public sealed class CsvMultiTypeOperationsTests : TempDirectoryFixture
+public sealed partial class CsvMultiTypeOperationsTests : TempDirectoryFixture
 {
     #region Read Tests (2-5 Types)
 
@@ -359,10 +360,11 @@ public sealed class CsvMultiTypeOperationsTests : TempDirectoryFixture
     #region Test Models
 
     [
+        CsvRecord,
         SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Local"),
         SuppressMessage("ReSharper", "PropertyCanBeMadeInitOnly.Local")
     ]
-    private sealed class Product
+    internal sealed partial class Product
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
@@ -370,10 +372,11 @@ public sealed class CsvMultiTypeOperationsTests : TempDirectoryFixture
     }
 
     [
+        CsvRecord,
         SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Local"),
         SuppressMessage("ReSharper", "PropertyCanBeMadeInitOnly.Local")
     ]
-    private sealed class Customer
+    internal sealed partial class Customer
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
@@ -381,10 +384,11 @@ public sealed class CsvMultiTypeOperationsTests : TempDirectoryFixture
     }
 
     [
+        CsvRecord,
         SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Local"),
         SuppressMessage("ReSharper", "PropertyCanBeMadeInitOnly.Local")
     ]
-    private sealed class Order
+    internal sealed partial class Order
     {
         public int Id { get; set; }
         public int ProductId { get; set; }
@@ -393,20 +397,22 @@ public sealed class CsvMultiTypeOperationsTests : TempDirectoryFixture
     }
 
     [
+        CsvRecord,
         SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Local"),
         SuppressMessage("ReSharper", "PropertyCanBeMadeInitOnly.Local")
     ]
-    private sealed class Category
+    internal sealed partial class Category
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
     }
 
     [
+        CsvRecord,
         SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Local"),
         SuppressMessage("ReSharper", "PropertyCanBeMadeInitOnly.Local")
     ]
-    private sealed class Supplier
+    internal sealed partial class Supplier
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
