@@ -17,10 +17,10 @@ Requires `Rivulet.Core` (automatically included) and `CsvHelper` (automatically 
 <!-- KEY_FEATURES_START -->
 ## Features
 
-- CsvHelper integration for robust CSV parsing
+- CsvHelper v34 source-generated mappings with `[CsvRecord]`
 - Multi-type operations (2-5 generic type parameters)
 - Memory-efficient streaming with IAsyncEnumerable
-- Per-file CSV configuration (delimiters, culture, class maps)
+- Per-file CSV reader and writer options
 - Progress tracking and lifecycle callbacks
 - Error handling modes (FailFast, CollectAndContinue, BestEffort)
 - Circuit breaker and retry support
@@ -33,7 +33,6 @@ Requires `Rivulet.Core` (automatically included) and `CsvHelper` (automatically 
 - **ParseCsvParallelAsync** - Parse multiple CSV files in parallel and return all records as a flattened list
 - **ParseCsvParallelGroupedAsync** - Parse multiple CSV file groups in parallel with per-file configuration, returning records grouped by file path
 - **ParseCsvParallelGroupedAsync (Multi-Type)** - Parse 2-5 different record types concurrently with grouped results
-- **StreamCsvParallelAsync** - Stream CSV records as IAsyncEnumerable with memory-efficient processing
 - **WriteCsvParallelAsync** - Write collections of records to multiple CSV files in parallel with per-file configuration
 - **WriteCsvParallelAsync (Multi-Type)** - Write 2-5 different record types to separate files concurrently
 - **TransformCsvParallelAsync** - Transform CSV files in parallel applying sync or async transformation functions
@@ -43,12 +42,13 @@ Requires `Rivulet.Core` (automatically included) and `CsvHelper` (automatically 
 
 ### Parallel CSV Parsing
 
-Parse multiple CSV files in parallel with bounded concurrency:
+Parse multiple CSV files in parallel with bounded concurrency. Record types must be `[CsvRecord]` and `partial`:
 
 ```csharp
 using Rivulet.Csv;
 
-public class Product
+[CsvRecord]
+internal sealed partial class Product
 {
     public int Id { get; set; }
     public string Name { get; set; }
@@ -104,15 +104,21 @@ await fileWrites.WriteCsvParallelAsync(
 Parse CSV files, transform the data, and write to new files:
 
 ```csharp
+[CsvRecord]
+internal sealed partial class EnrichedProduct
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public decimal Price { get; set; }
+    public decimal PriceWithTax { get; set; }
+    public DateTime Timestamp { get; set; }
+}
+
 var transformations = new[]
 {
     (
         Input: new RivuletCsvReadFile<Product>("input/raw-products.csv", null),
         Output: new RivuletCsvWriteFile<EnrichedProduct>("output/processed-products.csv", Array.Empty<EnrichedProduct>(), null)
-    ),
-    (
-        Input: new RivuletCsvReadFile<Product>("input/raw-customers.csv", null),
-        Output: new RivuletCsvWriteFile<EnrichedProduct>("output/processed-customers.csv", Array.Empty<EnrichedProduct>(), null)
     )
 };
 
@@ -135,307 +141,85 @@ await transformations.TransformCsvParallelAsync<Product, EnrichedProduct>(
     });
 ```
 
-## ClassMap Support
+## Source-Generated Mapping
 
-Rivulet.Csv provides full integration with CsvHelper's ClassMap feature, enabling powerful column mapping scenarios. Use ClassMaps when you need to map by column index, handle optional fields, ignore properties, or apply custom type converters.
-
-### Single ClassMap for All Files
-
-Apply the same ClassMap to all files in a batch operation:
+CsvHelper v34 uses source-generated mappings. Every record type passed to a read or write operation must be annotated with `[CsvRecord]` and declared `partial`. Use `[CsvColumn]` to rename or index columns, `[CsvFormat]` to control supported parsing formats, and `[CsvIgnore]` to exclude members. Mark input columns optional with `[CsvColumn(Optional = true)]`. Runtime `ClassMap` registration is no longer supported.
 
 ```csharp
-public class ProductMap : ClassMap<Product>
+[CsvRecord]
+internal sealed partial class Product
 {
-    public ProductMap()
-    {
-        Map(m => m.Id).Name("ProductID");
-        Map(m => m.Name).Name("ProductName");
-        Map(m => m.Price).Index(2);
-    }
+    [CsvColumn("product_id")]
+    public int Id { get; set; }
+
+    [CsvColumn("product_name")]
+    public string Name { get; set; } = string.Empty;
+
+    [CsvFormat("0.00")]
+    public decimal Price { get; set; }
+
+    [CsvIgnore]
+    public string? InternalNote { get; set; }
 }
-
-// Parse all files using the same ClassMap
-var results = await csvFiles.ParseCsvParallelAsync<Product>(
-    new CsvOperationOptions
-    {
-        FileConfiguration = new CsvFileConfiguration
-        {
-            CsvContextAction = ctx => ctx.RegisterClassMap<ProductMap>()
-        },
-        ParallelOptions = new() { MaxDegreeOfParallelism = 4 }
-    });
-
-// Write all files using the same ClassMap
-var writes = new[]
-{
-    new RivuletCsvWriteFile<Product>("output1.csv", productsGroup1, null),
-    new RivuletCsvWriteFile<Product>("output2.csv", productsGroup2, null)
-};
-
-await writes.WriteCsvParallelAsync(
-    new CsvOperationOptions
-    {
-        FileConfiguration = new CsvFileConfiguration
-        {
-            CsvContextAction = ctx => ctx.RegisterClassMap<ProductMap>()
-        },
-        OverwriteExisting = true
-    });
 ```
 
-### Per-File Configuration with RivuletCsvReadFile
-
-Configure each file differently using `RivuletCsvReadFile`:
+Record mapping is declared on the type and applies to every file using that record type. Per-file options customize CSV syntax:
 
 ```csharp
 var fileReads = new[]
 {
-    new RivuletCsvReadFile<Product>("modern_format.csv",
-        new CsvFileConfiguration
-        {
-            CsvContextAction = ctx => ctx.RegisterClassMap<ProductMapByName>()
-        }),
-    new RivuletCsvReadFile<Product>("legacy_format.csv",
-        new CsvFileConfiguration
-        {
-            ConfigurationAction = cfg =>
-            {
-                cfg.Delimiter = "|";
-                cfg.HasHeaderRecord = false;
-            },
-            CsvContextAction = ctx => ctx.RegisterClassMap<ProductMapByIndex>()
-        })
-};
-
-var results = await fileReads.ParseCsvParallelGroupedAsync();
-```
-
-### Explicit Per-File Configuration (Complex Scenario)
-
-Handle scenarios where you have multiple files with different schemas - like 5 files using 3 different ClassMaps:
-
-```csharp
-public class ProductMapByName : ClassMap<Product>
-{
-    public ProductMapByName()
+    new RivuletCsvReadFile<Product>("products.csv", new CsvFileConfiguration
     {
-        Map(m => m.Id).Name("ProductID");
-        Map(m => m.Name).Name("ProductName");
-        Map(m => m.Price);
-    }
-}
-
-public class ProductMapByIndex : ClassMap<Product>
-{
-    public ProductMapByIndex()
-    {
-        Map(m => m.Id).Index(0);
-        Map(m => m.Name).Index(1);
-        Map(m => m.Price).Index(2);
-    }
-}
-
-public class ProductMapWithOptional : ClassMap<Product>
-{
-    public ProductMapWithOptional()
-    {
-        Map(m => m.Id).Name("ProductID");
-        Map(m => m.Name).Name("ProductName");
-        Map(m => m.Price);
-        Map(m => m.Description).Optional();  // Optional field
-    }
-}
-
-// Scenario: 5 files with 3 different ClassMaps
-var fileReads = new[]
-{
-    // Files 1-3 use ProductMapByName
-    new RivuletCsvReadFile<Product>("file1.csv",
-        new CsvFileConfiguration { CsvContextAction = ctx => ctx.RegisterClassMap<ProductMapByName>() }),
-    new RivuletCsvReadFile<Product>("file2.csv",
-        new CsvFileConfiguration { CsvContextAction = ctx => ctx.RegisterClassMap<ProductMapByName>() }),
-    new RivuletCsvReadFile<Product>("file3.csv",
-        new CsvFileConfiguration { CsvContextAction = ctx => ctx.RegisterClassMap<ProductMapByName>() }),
-
-    // File 4 uses ProductMapByIndex (headerless)
-    new RivuletCsvReadFile<Product>("file4.csv",
-        new CsvFileConfiguration
+        ReaderConfigurationAction = static options => options with
         {
-            ConfigurationAction = cfg => cfg.HasHeaderRecord = false,
-            CsvContextAction = ctx => ctx.RegisterClassMap<ProductMapByIndex>()
-        }),
-
-    // File 5 uses ProductMapWithOptional
-    new RivuletCsvReadFile<Product>("file5.csv",
-        new CsvFileConfiguration { CsvContextAction = ctx => ctx.RegisterClassMap<ProductMapWithOptional>() })
-};
-
-var results = await fileReads.ParseCsvParallelGroupedAsync(
-    new CsvOperationOptions
-    {
-        ParallelOptions = new()
-        {
-            MaxDegreeOfParallelism = 3,
-            OrderedOutput = true  // Maintain input order
+            Separator = ';',
+            TrimWhitespace = true
         }
-    });
-```
+    })
+};
 
-### Writing with Per-File ClassMaps
-
-```csharp
 var fileWrites = new[]
 {
-    new RivuletCsvWriteFile<Product>(
-        "standard_output.csv",
-        standardProducts,
-        new CsvFileConfiguration
+    new RivuletCsvWriteFile<Product>("products.tsv", products, new CsvFileConfiguration
+    {
+        WriterConfigurationAction = static options => options with
         {
-            CsvContextAction = ctx => ctx.RegisterClassMap<ProductMapByName>()
-        }),
-
-    new RivuletCsvWriteFile<Product>(
-        "detailed_output.csv",
-        detailedProducts,
-        new CsvFileConfiguration
-        {
-            CsvContextAction = ctx => ctx.RegisterClassMap<ProductMapWithOptional>()
-        })
+            Separator = '\t',
+            HasHeader = false
+        }
+    })
 };
 
-await fileWrites.WriteCsvParallelAsync(
-    new CsvOperationOptions { OverwriteExisting = true });
+await fileReads.ParseCsvParallelGroupedAsync();
+await fileWrites.WriteCsvParallelAsync();
 ```
 
-### Advanced ClassMap Features
+`CsvReaderOptions` and `CsvWriterOptions` are immutable records; return a modified copy with `with`. Configure `CsvOperationOptions.Culture` for value parsing/formatting and `Encoding` for text encoding. `BufferSize` controls the underlying file stream buffer.
 
-ClassMaps support many advanced scenarios:
-
-```csharp
-public class AdvancedProductMap : ClassMap<Product>
-{
-    public AdvancedProductMap()
-    {
-        // Map by column name
-        Map(m => m.Id).Name("ProductID");
-
-        // Map by index for headerless files
-        Map(m => m.Name).Index(1);
-
-        // Optional fields (won't error if missing)
-        Map(m => m.Description).Optional();
-
-        // Ignore properties during read/write
-        Map(m => m.InternalNotes).Ignore();
-
-        // Auto-map with overrides
-        AutoMap(CultureInfo.InvariantCulture);
-        Map(m => m.Name).Name("ProductName");  // Override auto-mapped name
-    }
-}
-```
-
-### Combining FileConfiguration with CsvOperationOptions
-
-Separate CsvHelper-specific configuration from Rivulet parallel execution settings:
-
-```csharp
-var results = await csvFiles.ParseCsvParallelAsync<Product>(
-    new CsvOperationOptions
-    {
-        // CsvHelper configuration
-        FileConfiguration = new CsvFileConfiguration
-        {
-            ConfigurationAction = cfg =>
-            {
-                cfg.Delimiter = ";";
-                cfg.TrimOptions = TrimOptions.Trim;
-            },
-            CsvContextAction = ctx => ctx.RegisterClassMap<ProductMap>()
-        },
-
-        // Rivulet configuration
-        Encoding = Encoding.UTF8,
-        BufferSize = 4096,
-        ParallelOptions = new()
-        {
-            MaxDegreeOfParallelism = 8,
-            ErrorMode = ErrorMode.CollectAndContinue,
-            Progress = new() { /* progress tracking */ }
-        }
-    });
-```
-
-## Core Features
-
-### CsvHelper Integration
-
-Rivulet.Csv is built on top of [CsvHelper](https://joshclose.github.io/CsvHelper/), providing full access to CsvHelper's powerful features:
-
-```csharp
-// Use custom CsvHelper configuration
-await csvFiles.ParseCsvParallelAsync<Product>(
-    new CsvOperationOptions
-    {
-        FileConfiguration = new CsvFileConfiguration
-        {
-            ConfigurationAction = cfg =>
-            {
-                cfg.HasHeaderRecord = true;
-                cfg.Delimiter = ";";
-                cfg.TrimOptions = TrimOptions.Trim;
-                cfg.MissingFieldFound = null; // Ignore missing fields
-            }
-        },
-        ParallelOptions = new ParallelOptionsRivulet { MaxDegreeOfParallelism = 4 }
-    });
-
-// Write with custom configuration
-await fileWrites.WriteCsvParallelAsync(
-    new CsvOperationOptions
-    {
-        FileConfiguration = new CsvFileConfiguration
-        {
-            ConfigurationAction = cfg =>
-            {
-                cfg.Delimiter = "\t"; // Tab-separated values
-                cfg.HasHeaderRecord = true;
-                cfg.ShouldQuote = args => true; // Quote all fields
-            }
-        },
-        OverwriteExisting = true
-    });
-```
-
-### CSV Options
-
-Configure CSV operations with `CsvOperationOptions`:
+## CSV Options
 
 ```csharp
 var options = new CsvOperationOptions
 {
-    // CSV format settings (via FileConfiguration)
+    Culture = CultureInfo.InvariantCulture,
+    Encoding = Encoding.UTF8,
+    BufferSize = 81920,
     FileConfiguration = new CsvFileConfiguration
     {
-        ConfigurationAction = cfg =>
+        ReaderConfigurationAction = static reader => reader with
         {
-            cfg.HasHeaderRecord = true;           // CSV has header row
-            cfg.Delimiter = ",";                   // Field delimiter (default: comma)
-            cfg.TrimOptions = TrimOptions.Trim;   // Trim whitespace from fields
-            cfg.IgnoreBlankLines = true;          // Skip blank lines
+            Separator = ';',
+            TrimWhitespace = true,
+            SkipEmptyLines = true
+        },
+        WriterConfigurationAction = static writer => writer with
+        {
+            Separator = '\t',
+            HasHeader = true
         }
     },
-
-    // Encoding and culture
-    Encoding = Encoding.UTF8,         // Text encoding
-    Culture = CultureInfo.InvariantCulture, // Culture for parsing
-
-    // File I/O settings
-    BufferSize = 81920,               // Buffer size (80 KB)
-    CreateDirectoriesIfNotExist = true, // Auto-create directories
-    OverwriteExisting = false,        // Overwrite existing files
-
-    // Parallel execution
+    CreateDirectoriesIfNotExist = true,
+    OverwriteExisting = false,
     ParallelOptions = new ParallelOptionsRivulet
     {
         MaxDegreeOfParallelism = 8,
@@ -444,6 +228,50 @@ var options = new CsvOperationOptions
     }
 };
 ```
+
+## Core Features
+
+### CsvHelper Integration
+
+Rivulet.Csv uses CsvHelper v34. Configure parsing and writing independently with immutable options:
+
+```csharp
+var configuration = new CsvFileConfiguration
+{
+    ReaderConfigurationAction = static reader => reader with
+    {
+        Separator = ';',
+        TrimWhitespace = true
+    },
+    WriterConfigurationAction = static writer => writer with
+    {
+        Separator = '\t',
+        HasHeader = true
+    }
+};
+```
+
+Required columns missing from input cause `KeyNotFoundException`. Use `[CsvColumn(Optional = true)]` for optional input fields. Column names and formats belong on `[CsvRecord]` record types, not per-file options.
+
+### Within-File Parallelism (CsvHelper 34)
+
+CsvHelper 34 adds parallel APIs for single-file operations. Enable with `CsvHelperParallelism`:
+
+```csharp
+// Process 4 files in parallel, each using 2 threads for parsing
+var results = await files.ParseCsvParallelAsync<Product>(
+    new CsvOperationOptions
+    {
+        ParallelOptions = new ParallelOptionsRivulet { MaxDegreeOfParallelism = 4 }, // across files
+        FileConfiguration = new CsvFileConfiguration { CsvHelperParallelism = 2 }     // within each file
+    });
+```
+
+**Two levels of parallelism:**
+- **Rivulet** (`MaxDegreeOfParallelism`): process N files concurrently, each on one thread
+- **CsvHelper** (`CsvHelperParallelism`): parse/format records in parallel within each file
+
+Set `CsvHelperParallelism` to `-1` for one thread per processor, or a positive value for a specific count. Omit (default) for sequential within-file processing. Use when parsing/formatting is CPU-bound on large files.
 
 ### Progress Tracking
 
@@ -524,60 +352,6 @@ catch (AggregateException ex)
         Console.WriteLine($"Error: {innerEx.Message}");
     }
 }
-```
-
-### Custom Type Mapping
-
-Use CsvHelper's attribute-based mapping:
-
-```csharp
-using CsvHelper.Configuration.Attributes;
-
-public class Product
-{
-    [Name("product_id")]
-    public int Id { get; set; }
-
-    [Name("product_name")]
-    public string Name { get; set; }
-
-    [Name("price")]
-    [NumberStyles(NumberStyles.Currency)]
-    public decimal Price { get; set; }
-
-    [Name("created_date")]
-    [Format("yyyy-MM-dd")]
-    public DateTime CreatedDate { get; set; }
-
-    [Ignore]
-    public string InternalNote { get; set; } // Not in CSV
-}
-
-var products = await csvFiles.ParseCsvParallelAsync<Product>();
-```
-
-Or use ClassMap for complex scenarios:
-
-```csharp
-using CsvHelper.Configuration;
-
-public class ProductMap : ClassMap<Product>
-{
-    public ProductMap()
-    {
-        Map(m => m.Id).Name("ProductID");
-        Map(m => m.Name).Name("ProductName");
-        Map(m => m.Price).Name("Price").TypeConverter<DecimalConverter>();
-        Map(m => m.CreatedDate).Name("CreatedDate").TypeConverterOption.Format("yyyy-MM-dd");
-    }
-}
-
-// Register the map globally
-var config = new CsvConfiguration(CultureInfo.InvariantCulture)
-{
-    HasHeaderRecord = true
-};
-config.RegisterClassMap<ProductMap>();
 ```
 
 ## Advanced Features
@@ -869,10 +643,6 @@ await CsvParallelExtensions.WriteCsvParallelAsync(
 - Parse multiple CSV files in parallel, preserving file source
 - Returns: `Task<IReadOnlyDictionary<string, IReadOnlyList<T>>>` - Records grouped by file path
 
-**`StreamCsvParallelAsync<T>`**
-- Stream CSV records as they're parsed (memory-efficient)
-- Returns: `IAsyncEnumerable<T>` - Stream of records
-
 **`WriteCsvParallelAsync<T>`**
 - Write collections of records to multiple CSV files in parallel
 - Returns: `Task`
@@ -901,8 +671,9 @@ await CsvParallelExtensions.WriteCsvParallelAsync(
 - `OnFileStartAsync`, `OnFileCompleteAsync`, `OnFileErrorAsync`
 
 **`CsvFileConfiguration`**
-- `ConfigurationAction` - Configure CsvHelper settings (Delimiter, HasHeaderRecord, TrimOptions, etc.)
-- `CsvContextAction` - Register ClassMaps, configure CsvContext
+- `ReaderConfigurationAction` and `WriterConfigurationAction` - Transform immutable CsvHelper options with `with` expressions
+
+CSV record types must be annotated with `[CsvRecord]` and declared `partial`. Use `[CsvColumn]`, `[CsvFormat]`, and `[CsvIgnore]` for generated mappings.
 
 ## See Also
 

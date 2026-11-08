@@ -1,11 +1,12 @@
 using System.Diagnostics.CodeAnalysis;
+using CsvHelper;
 using Rivulet.Base.Tests;
 using Rivulet.Core;
 using Rivulet.Core.Resilience;
 
 namespace Rivulet.Csv.Tests;
 
-public sealed class CsvErrorHandlingTests : TempDirectoryFixture
+public sealed partial class CsvErrorHandlingTests : TempDirectoryFixture
 {
     [Fact]
     public async Task ParseCsvParallelAsync_WithFailFast_ShouldStopOnFirstError()
@@ -297,8 +298,24 @@ public sealed class CsvErrorHandlingTests : TempDirectoryFixture
         maxConcurrentTasks.ShouldBeLessThanOrEqualTo(2);
     }
 
-    [SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Local")]
-    private sealed class Product
+    [Fact]
+    public async Task ParseCsvParallelAsync_WithMissingRequiredColumn_ShouldThrowKeyNotFoundException()
+    {
+        var csvPath = Path.Join(TestDirectory, "missing_column.csv");
+        await File.WriteAllTextAsync(csvPath, "Id,Name\n1,Widget", TestContext.Current.CancellationToken);
+
+        var exception = await Should.ThrowAsync<KeyNotFoundException>(() =>
+            new[] { csvPath }.ParseCsvParallelAsync<Product>(
+                cancellationToken: TestContext.Current.CancellationToken));
+
+        exception.Message.ShouldContain("Price");
+    }
+
+    [
+        CsvRecord,
+        SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Local")
+    ]
+    internal sealed partial class Product
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;

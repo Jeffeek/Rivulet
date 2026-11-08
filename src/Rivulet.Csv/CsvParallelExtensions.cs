@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using CsvHelper;
-using CsvHelper.Configuration;
 using Rivulet.Core;
 using Rivulet.Csv.Internal;
 using Rivulet.IO.Base;
@@ -566,7 +565,6 @@ public static class CsvParallelExtensions
 
 #pragma warning disable CA2000 // Dispose objects before losing scope - all resources properly disposed in finally block
         Stream? stream = null;
-        StreamReader? reader = null;
         CsvReader? csv = null;
 #pragma warning restore CA2000
         long recordCount = 0;
@@ -574,18 +572,30 @@ public static class CsvParallelExtensions
         try
         {
             stream = CsvOperationHelper.CreateReadStream(fileConfig.Path, options);
-            reader = new StreamReader(stream, options.Encoding);
 
-            var readCsvConfig = CreateAndConfigureCsvConfiguration(fileConfig, options);
+            var readerOptions = CreateReaderOptions(fileConfig, options);
+            csv = CsvReader.Create(stream, readerOptions, leaveOpen: false);
 
-            csv = new CsvReader(reader, readCsvConfig);
+            var parallelism = fileConfig.Configuration?.CsvHelperParallelism
+                              ?? options.FileConfiguration.CsvHelperParallelism;
 
-            ConfigureCsvContext(fileConfig, options, csv.Context);
-
-            await foreach (var record in csv.GetRecordsAsync<T>(cancellationToken).ConfigureAwait(false))
+            if (parallelism.HasValue)
             {
-                recordCount++;
-                yield return record;
+                foreach (var record in csv.ParallelEnumerate<T>(maxDegreeOfParallelism: parallelism.Value))
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    recordCount++;
+                    yield return record;
+                }
+            }
+            else
+            {
+                await foreach (var record in csv.GetRecordsAsync<T>(cancellationToken: cancellationToken).ConfigureAwait(false))
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    recordCount++;
+                    yield return record;
+                }
             }
 
             if (options.OnFileCompleteAsync == null)
@@ -600,8 +610,8 @@ public static class CsvParallelExtensions
         }
         finally
         {
-            csv?.Dispose();
-            reader?.Dispose();
+            if (csv != null)
+                await csv.DisposeAsync().ConfigureAwait(false);
             if (stream != null)
                 await stream.DisposeAsync().ConfigureAwait(false);
         }
@@ -630,44 +640,46 @@ public static class CsvParallelExtensions
     }
 
     /// <summary>
-    ///     Creates and configures a CsvConfiguration by applying per-file or default configuration actions.
+    ///     Creates a <see cref="CsvReaderOptions"/> by applying per-file or default reader configuration actions.
     /// </summary>
-    /// <param name="fileConfig">File-specific configuration that may override defaults.</param>
-    /// <param name="options">Global CSV operation options containing default configuration.</param>
-    /// <returns>A configured CsvConfiguration instance ready for use with CsvHelper.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static CsvConfiguration CreateAndConfigureCsvConfiguration(
+    private static CsvReaderOptions CreateReaderOptions(
         RivuletCsvFile fileConfig,
         CsvOperationOptions options
     )
     {
-        var csvConfig = new CsvConfiguration(options.Culture);
+        var readerOptions = new CsvReaderOptions
+        {
+            FormatProvider = options.Culture,
+            HasHeader = true,
+            Encoding = options.Encoding
+        };
 
-        if (fileConfig.Configuration != null)
-            fileConfig.Configuration.ConfigurationAction?.Invoke(csvConfig);
-        else
-            options.FileConfiguration.ConfigurationAction?.Invoke(csvConfig);
+        var configure = fileConfig.Configuration?.ReaderConfigurationAction
+                        ?? options.FileConfiguration.ReaderConfigurationAction;
 
-        return csvConfig;
+        return configure != null ? configure(readerOptions) : readerOptions;
     }
 
     /// <summary>
-    ///     Configures the CsvHelper context by applying per-file or default context actions (ClassMap registration, type conversion, etc.).
+    ///     Creates a <see cref="CsvWriterOptions"/> by applying per-file or default writer configuration actions.
     /// </summary>
-    /// <param name="fileConfig">File-specific configuration that may override defaults.</param>
-    /// <param name="options">Global CSV operation options containing default configuration.</param>
-    /// <param name="context">The CsvHelper context to configure.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void ConfigureCsvContext(
+    private static CsvWriterOptions CreateWriterOptions(
         RivuletCsvFile fileConfig,
-        CsvOperationOptions options,
-        CsvContext context
+        CsvOperationOptions options
     )
     {
-        if (fileConfig.Configuration != null)
-            fileConfig.Configuration.CsvContextAction?.Invoke(context);
-        else
-            options.FileConfiguration.CsvContextAction?.Invoke(context);
+        var writerOptions = new CsvWriterOptions
+        {
+            FormatProvider = options.Culture,
+            HasHeader = true
+        };
+
+        var configure = fileConfig.Configuration?.WriterConfigurationAction
+                        ?? options.FileConfiguration.WriterConfigurationAction;
+
+        return configure != null ? configure(writerOptions) : writerOptions;
     }
 
     /// <summary>
@@ -693,19 +705,23 @@ public static class CsvParallelExtensions
 
 #pragma warning disable CA2007 // ConfigureAwait not applicable to await using
                 await using var stream = CsvOperationHelper.CreateWriteStream(write.Path, options);
-                await using var writer = new StreamWriter(stream, options.Encoding);
+                await using var textWriter = new StreamWriter(stream, options.Encoding, leaveOpen: true);
 #pragma warning restore CA2007
 
-                var writeCsvConfig = CreateAndConfigureCsvConfiguration(write, options);
+                var writerOptions = CreateWriterOptions(write, options);
 
 #pragma warning disable CA2007 // ConfigureAwait not applicable to await using
-                await using var csv = new CsvWriter(writer, writeCsvConfig);
+                await using var csv = CsvWriter.Create(textWriter, writerOptions, leaveOpen: false);
 #pragma warning restore CA2007
 
-                ConfigureCsvContext(write, options, csv.Context);
+                var parallelism = write.Configuration?.CsvHelperParallelism
+                                  ?? options.FileConfiguration.CsvHelperParallelism;
 
-                await csv.WriteRecordsAsync(write.Records, cancellationToken).ConfigureAwait(false);
-                await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
+                if (parallelism.HasValue)
+                    await csv.ParallelWriteRecordsAsync(write.Records, parallelism.Value, cancellationToken).ConfigureAwait(false);
+                else
+                    await csv.WriteRecordsAsync(write.Records, cancellationToken).ConfigureAwait(false);
+                await textWriter.FlushAsync(cancellationToken).ConfigureAwait(false);
 
                 return new FileOperationResult
                 {
