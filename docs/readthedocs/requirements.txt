@@ -11,5 +11,5 @@ mkdocs-git-revision-date-localized-plugin>=1.6.3
 mkdocs-minify-plugin>=0.8.0
 
 # Markdown extensions
-pymdown-extensions>=12.3
+pymdown-extensions>=13.1
 markdown>=3.11.3
