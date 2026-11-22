@@ -12,23 +12,24 @@ namespace Rivulet.Diagnostics.OpenTelemetry;
 [SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public static class ParallelOptionsRivuletExtensions
 {
-    /// <summary>
-    ///     Adds OpenTelemetry distributed tracing to Rivulet parallel operations.
-    /// </summary>
-    public static ParallelOptionsRivulet WithOpenTelemetryTracing(
-        this ParallelOptionsRivulet options,
-        string operationName
-    ) => CreateTracingOptions(options, operationName, false);
+    extension(ParallelOptionsRivulet options)
+    {
+        /// <summary>
+        ///     Adds OpenTelemetry distributed tracing to Rivulet parallel operations.
+        /// </summary>
+        public ParallelOptionsRivulet WithOpenTelemetryTracing(
+            string operationName
+        ) => CreateTracingOptions(options, operationName, false);
 
-    /// <summary>
-    ///     Adds OpenTelemetry distributed tracing with retry tracking to Rivulet parallel operations.
-    /// </summary>
-    public static ParallelOptionsRivulet WithOpenTelemetryTracingAndRetries(
-        this ParallelOptionsRivulet options,
-        string operationName,
-        bool trackRetries = true
-    ) =>
-        CreateTracingOptions(options, operationName, trackRetries && options.MaxRetries > 0);
+        /// <summary>
+        ///     Adds OpenTelemetry distributed tracing with retry tracking to Rivulet parallel operations.
+        /// </summary>
+        public ParallelOptionsRivulet WithOpenTelemetryTracingAndRetries(
+            string operationName,
+            bool trackRetries = true
+        ) =>
+            CreateTracingOptions(options, operationName, trackRetries && options.MaxRetries > 0);
+    }
 
     private static ParallelOptionsRivulet CreateTracingOptions(
         ParallelOptionsRivulet options,

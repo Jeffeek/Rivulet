@@ -190,8 +190,8 @@ def _build_package_footer(package_name: str) -> str:
     nuget_url = f"https://www.nuget.org/packages/{package_name}/"
     return (
         "\n\n## Framework Support\n\n"
-        "- .NET 8.0\n"
-        "- .NET 9.0\n"
+        "- .NET 10.0\n"
+        "- .NET 11.0\n"
         "\n## Documentation & Source\n\n"
         "- **GitHub Repository**: [https://github.com/Jeffeek/Rivulet](https://github.com/Jeffeek/Rivulet)\n"
         "- **Report Issues**: [https://github.com/Jeffeek/Rivulet/issues](https://github.com/Jeffeek/Rivulet/issues)\n"

@@ -142,15 +142,14 @@ await products.BulkInsertUsingCopyAsync(
 
 ## Requirements
 
-- .NET 8.0, .NET 9.0, .NET 10.0
+- .NET 10.0, .NET 11
 - PostgreSQL 10 or later
 - Npgsql
 
 ## Framework Support
 
-- .NET 8.0
-- .NET 9.0
 - .NET 10.0
+- .NET 11.0
 
 ## Documentation & Source
 

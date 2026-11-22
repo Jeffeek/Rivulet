@@ -37,8 +37,8 @@ What actually happened instead.
 
 ## Environment
 **Rivulet Version**: [e.g., 1.1.0]
-**Target Framework**: [e.g., net9.0, net8.0]
-**.NET SDK Version**: [e.g., 9.0.100]
+**Target Framework**: [e.g., net10.0, net11.0]
+**.NET SDK Version**: [e.g., 11.0.100]
 **Operating System**: [e.g., Windows 11, Ubuntu 22.04, macOS 14]
 **Runtime**: [e.g., CoreCLR, NativeAOT]
 

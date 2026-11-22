@@ -142,6 +142,6 @@ public sealed class SelectManyStageTests
         var results = await pipeline.ExecuteAsync(["hello world", "foo bar baz"], TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(5);
-        results.OrderBy(static x => x).ShouldBe(["bar", "baz", "foo", "hello", "world"]);
+        results.OrderBy(static x => x, StringComparer.OrdinalIgnoreCase).ShouldBe(["bar", "baz", "foo", "hello", "world"]);
     }
 }

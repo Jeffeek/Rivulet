@@ -1,15 +1,12 @@
 using System.Net;
 using System.Net.Sockets;
 using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Jobs;
 using Rivulet.Core;
 using Rivulet.Core.Observability;
 
 namespace Rivulet.Benchmarks;
 
 [
-    SimpleJob(RuntimeMoniker.Net80),
-    SimpleJob(RuntimeMoniker.Net90),
     MemoryDiagnoser,
     MarkdownExporter
 ]

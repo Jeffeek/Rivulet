@@ -26,7 +26,7 @@ public sealed class RivuletActivitySourceTests
     {
         using var listener = new ActivityListener();
         listener.ShouldListenTo = static source => source.Name == RivuletSharedConstants.RivuletCore;
-        listener.Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
+        listener.Sample = static (ref _) => ActivitySamplingResult.AllData;
         ActivitySource.AddActivityListener(listener);
 
         using var activity = RivuletActivitySource.StartOperation("TestOperation", 100);
@@ -41,7 +41,7 @@ public sealed class RivuletActivitySourceTests
     {
         using var listener = new ActivityListener();
         listener.ShouldListenTo = static source => source.Name == RivuletSharedConstants.RivuletCore;
-        listener.Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
+        listener.Sample = static (ref _) => ActivitySamplingResult.AllData;
         ActivitySource.AddActivityListener(listener);
 
         using var activity = RivuletActivitySource.StartItemActivity("ProcessItem", 42);
@@ -56,7 +56,7 @@ public sealed class RivuletActivitySourceTests
     {
         using var listener = new ActivityListener();
         listener.ShouldListenTo = static source => source.Name == RivuletSharedConstants.RivuletCore;
-        listener.Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
+        listener.Sample = static (ref _) => ActivitySamplingResult.AllData;
         ActivitySource.AddActivityListener(listener);
 
         using var activity = RivuletActivitySource.StartItemActivity("ProcessItem", 0);
@@ -80,7 +80,7 @@ public sealed class RivuletActivitySourceTests
     {
         using var listener = new ActivityListener();
         listener.ShouldListenTo = static source => source.Name == RivuletSharedConstants.RivuletCore;
-        listener.Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
+        listener.Sample = static (ref _) => ActivitySamplingResult.AllData;
         ActivitySource.AddActivityListener(listener);
 
         using var activity = RivuletActivitySource.StartItemActivity("ProcessItem", 0);
@@ -99,7 +99,7 @@ public sealed class RivuletActivitySourceTests
     {
         using var listener = new ActivityListener();
         listener.ShouldListenTo = static source => source.Name == RivuletSharedConstants.RivuletCore;
-        listener.Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
+        listener.Sample = static (ref _) => ActivitySamplingResult.AllData;
         ActivitySource.AddActivityListener(listener);
 
         using var activity = RivuletActivitySource.StartItemActivity("ProcessItem", 0);
@@ -116,7 +116,7 @@ public sealed class RivuletActivitySourceTests
     {
         using var listener = new ActivityListener();
         listener.ShouldListenTo = static source => source.Name == RivuletSharedConstants.RivuletCore;
-        listener.Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
+        listener.Sample = static (ref _) => ActivitySamplingResult.AllData;
         ActivitySource.AddActivityListener(listener);
 
         using var activity = RivuletActivitySource.StartOperation("TestOperation");
@@ -136,7 +136,7 @@ public sealed class RivuletActivitySourceTests
     {
         using var listener = new ActivityListener();
         listener.ShouldListenTo = static source => source.Name == RivuletSharedConstants.RivuletCore;
-        listener.Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
+        listener.Sample = static (ref _) => ActivitySamplingResult.AllData;
         ActivitySource.AddActivityListener(listener);
 
         using var activity = RivuletActivitySource.StartOperation("TestOperation");

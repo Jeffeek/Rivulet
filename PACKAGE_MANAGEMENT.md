@@ -51,8 +51,8 @@ All documentation, workflows, and scripts are **automatically generated** from `
   dependencies:
     - Rivulet.Core
   targets:
-    - net8.0
-    - net9.0
+    - net10.0
+    - net11.0
 ```
 
 2. **Run the update script:**
@@ -136,7 +136,7 @@ Every package **must** have these fields:
 | `features` | list | Feature list | `["GetParallelAsync - Fetch URLs"]` |
 | `key_features` | list | Key features | `["HttpClientFactory integration"]` |
 | `dependencies` | list | Package dependencies | `["Rivulet.Core"]` |
-| `targets` | list | Target frameworks | `["net8.0", "net9.0"]` |
+| `targets` | list | Target frameworks | `["net10.0", "net11.0"]` |
 
 ### Package Status Values
 

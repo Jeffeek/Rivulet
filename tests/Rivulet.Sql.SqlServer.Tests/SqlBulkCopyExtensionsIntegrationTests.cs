@@ -7,43 +7,68 @@ using Testcontainers.MsSql;
 namespace Rivulet.Sql.SqlServer.Tests;
 
 /// <summary>
-///     Integration tests for SqlBulkCopyExtensions using Testcontainers.
-///     Uses per-test-class container for isolation (IAsyncLifetime).
-///     For shared containers across test classes, use [Collection(TestCollections.SqlServer)] with SqlServerFixture.
+///     Shared SQL Server container for the integration test class. Started once per class (not per test method)
+///     and reused across <c>dotnet test</c> runs when Testcontainers reuse is enabled locally
+///     (<c>testcontainers.reuse.enable=true</c> in <c>~/.testcontainers.properties</c>).
+///     Reuse matters most here: the SQL Server image is large and slow to boot on Windows/Docker.
 /// </summary>
-[Trait("Category", "Integration")]
-public sealed class SqlBulkCopyExtensionsIntegrationTests : IAsyncLifetime
+public sealed class SqlServerFixture : IAsyncLifetime
 {
-    private string? _connectionString;
-    private MsSqlContainer? _container;
+    private readonly MsSqlContainer _container =
+        new MsSqlBuilder("mcr.microsoft.com/mssql/server:2025-latest")
+            .WithReuse(true)
+            .Build();
+
+    public string ConnectionString { get; private set; } = string.Empty;
 
     public async ValueTask InitializeAsync()
     {
-        _container = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-latest")
-            .Build();
-
         await _container.StartAsync();
-        _connectionString = _container.GetConnectionString();
+        ConnectionString = _container.GetConnectionString();
 
-        // Create test table
-        await using var connection = new SqlConnection(_connectionString);
+        // IF NOT EXISTS so a reused container (table already created in a prior run) does not fail
+        await using var connection = new SqlConnection(ConnectionString);
         await connection.OpenAsync();
 
         await using var command = connection.CreateCommand();
         command.CommandText = """
-
-                                          CREATE TABLE TestTable (
-                                              Id INT NOT NULL,
-                                              Name NVARCHAR(100) NOT NULL,
-                                              Email NVARCHAR(100) NOT NULL
-                                          )
+                              IF OBJECT_ID('TestTable', 'U') IS NULL
+                              CREATE TABLE TestTable (
+                                  Id INT NOT NULL,
+                                  Name NVARCHAR(100) NOT NULL,
+                                  Email NVARCHAR(100) NOT NULL
+                              )
                               """;
         await command.ExecuteNonQueryAsync();
     }
 
-    public ValueTask DisposeAsync() => _container?.DisposeAsync() ?? ValueTask.CompletedTask;
+    // Do not dispose the container: with reuse enabled it is kept alive for the next run.
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+}
 
-    private SqlConnection CreateConnection() => new(_connectionString!);
+/// <summary>
+///     Integration tests for SqlBulkCopyExtensions using a shared Testcontainers SQL Server container.
+///     Each test truncates TestTable first for isolation.
+/// </summary>
+[Trait("Category", "Integration")]
+public sealed class SqlBulkCopyExtensionsIntegrationTests(SqlServerFixture fixture)
+    : IClassFixture<SqlServerFixture>, IAsyncLifetime
+{
+    private readonly string _connectionString = fixture.ConnectionString;
+
+    // Runs per test method: reset shared table so tests are isolated despite sharing one container.
+    public async ValueTask InitializeAsync()
+    {
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+        await using var command = connection.CreateCommand();
+        command.CommandText = "TRUNCATE TABLE TestTable";
+        await command.ExecuteNonQueryAsync();
+    }
+
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+
+    private SqlConnection CreateConnection() => new(_connectionString);
 
     private static DataTable MapToDataTable(IEnumerable<TestRecord> records)
     {

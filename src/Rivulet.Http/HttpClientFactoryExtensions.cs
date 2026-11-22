@@ -28,160 +28,154 @@ public static class HttpClientFactoryExtensions
         return execute(httpClient);
     }
 
-    /// <summary>
-    ///     Executes parallel HTTP GET requests using a named HttpClient from IHttpClientFactory.
-    /// </summary>
     /// <param name="uris">The collection of URIs to fetch.</param>
-    /// <param name="httpClientFactory">The IHttpClientFactory instance to create HttpClient instances.</param>
-    /// <param name="clientName">The name of the HttpClient to use. If null, uses the default client.</param>
-    /// <param name="options">
-    ///     Configuration options for parallel execution and HTTP-specific resilience features. If null,
-    ///     defaults are used.
-    /// </param>
-    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-    /// <returns>A task representing the asynchronous operation, containing a list of HTTP response messages.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when uris or httpClientFactory is null.</exception>
-    public static Task<List<HttpResponseMessage>> GetParallelAsync(
-        this IEnumerable<Uri> uris,
-        IHttpClientFactory httpClientFactory,
-        string? clientName = null,
-        HttpOptions? options = null,
-        CancellationToken cancellationToken = default
-    ) => CreateClientAndExecute(
-        httpClientFactory,
-        clientName,
-        client => uris.GetParallelAsync(client, options, cancellationToken)
-    );
-
-    /// <summary>
-    ///     Executes parallel HTTP GET requests using a named HttpClient and returns response content as strings.
-    /// </summary>
-    /// <param name="uris">The collection of URIs to fetch.</param>
-    /// <param name="httpClientFactory">The IHttpClientFactory instance to create HttpClient instances.</param>
-    /// <param name="clientName">The name of the HttpClient to use. If null, uses the default client.</param>
-    /// <param name="options">
-    ///     Configuration options for parallel execution and HTTP-specific resilience features. If null,
-    ///     defaults are used.
-    /// </param>
-    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-    /// <returns>A task representing the asynchronous operation, containing a list of response content strings.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when uris or httpClientFactory is null.</exception>
-    public static Task<List<string>> GetStringParallelAsync(
-        this IEnumerable<Uri> uris,
-        IHttpClientFactory httpClientFactory,
-        string? clientName = null,
-        HttpOptions? options = null,
-        CancellationToken cancellationToken = default
-    ) => CreateClientAndExecute(
-        httpClientFactory,
-        clientName,
-        client => uris.GetStringParallelAsync(client, options, cancellationToken)
-    );
-
-    /// <summary>
-    ///     Executes parallel HTTP GET requests using a named HttpClient and returns response content as byte arrays.
-    /// </summary>
-    /// <param name="uris">The collection of URIs to fetch.</param>
-    /// <param name="httpClientFactory">The IHttpClientFactory instance to create HttpClient instances.</param>
-    /// <param name="clientName">The name of the HttpClient to use. If null, uses the default client.</param>
-    /// <param name="options">
-    ///     Configuration options for parallel execution and HTTP-specific resilience features. If null,
-    ///     defaults are used.
-    /// </param>
-    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-    /// <returns>A task representing the asynchronous operation, containing a list of byte arrays.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when uris or httpClientFactory is null.</exception>
-    public static Task<List<byte[]>> GetByteArrayParallelAsync(
-        this IEnumerable<Uri> uris,
-        IHttpClientFactory httpClientFactory,
-        string? clientName = null,
-        HttpOptions? options = null,
-        CancellationToken cancellationToken = default
-    ) => CreateClientAndExecute(
-        httpClientFactory,
-        clientName,
-        client => uris.GetByteArrayParallelAsync(client, options, cancellationToken)
-    );
-
-    /// <summary>
-    ///     Executes parallel HTTP POST requests using a named HttpClient.
-    /// </summary>
-    /// <typeparam name="TContent">The type of content to send in POST requests.</typeparam>
-    /// <param name="requests">The collection of tuples containing URIs and their corresponding content.</param>
-    /// <param name="httpClientFactory">The IHttpClientFactory instance to create HttpClient instances.</param>
-    /// <param name="clientName">The name of the HttpClient to use. If null, uses the default client.</param>
-    /// <param name="options">
-    ///     Configuration options for parallel execution and HTTP-specific resilience features. If null,
-    ///     defaults are used.
-    /// </param>
-    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-    /// <returns>A task representing the asynchronous operation, containing a list of HTTP response messages.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when requests or httpClientFactory is null.</exception>
-    public static Task<List<HttpResponseMessage>> PostParallelAsync<TContent>(
-        this IEnumerable<(Uri uri, TContent content)> requests,
-        IHttpClientFactory httpClientFactory,
-        string? clientName = null,
-        HttpOptions? options = null,
-        CancellationToken cancellationToken = default
-    )
-        where TContent : HttpContent => CreateClientAndExecute(
-        httpClientFactory,
-        clientName,
-        client => requests.PostParallelAsync(client, options, cancellationToken)
-    );
-
-    /// <summary>
-    ///     Executes parallel HTTP PUT requests using a named HttpClient.
-    /// </summary>
-    /// <typeparam name="TContent">The type of content to send in PUT requests.</typeparam>
-    /// <param name="requests">The collection of tuples containing URIs and their corresponding content.</param>
-    /// <param name="httpClientFactory">The IHttpClientFactory instance to create HttpClient instances.</param>
-    /// <param name="clientName">The name of the HttpClient to use. If null, uses the default client.</param>
-    /// <param name="options">
-    ///     Configuration options for parallel execution and HTTP-specific resilience features. If null,
-    ///     defaults are used.
-    /// </param>
-    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-    /// <returns>A task representing the asynchronous operation, containing a list of HTTP response messages.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when requests or httpClientFactory is null.</exception>
-    public static Task<List<HttpResponseMessage>> PutParallelAsync<TContent>(
-        this IEnumerable<(Uri uri, TContent content)> requests,
-        IHttpClientFactory httpClientFactory,
-        string? clientName = null,
-        HttpOptions? options = null,
-        CancellationToken cancellationToken = default
-    )
-        where TContent : HttpContent =>
-        CreateClientAndExecute(
+    extension(IEnumerable<Uri> uris)
+    {
+        /// <summary>
+        ///     Executes parallel HTTP GET requests using a named HttpClient from IHttpClientFactory.
+        /// </summary>
+        /// <param name="httpClientFactory">The IHttpClientFactory instance to create HttpClient instances.</param>
+        /// <param name="clientName">The name of the HttpClient to use. If null, uses the default client.</param>
+        /// <param name="options">
+        ///     Configuration options for parallel execution and HTTP-specific resilience features. If null,
+        ///     defaults are used.
+        /// </param>
+        /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+        /// <returns>A task representing the asynchronous operation, containing a list of HTTP response messages.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when uris or httpClientFactory is null.</exception>
+        public Task<List<HttpResponseMessage>> GetParallelAsync(
+            IHttpClientFactory httpClientFactory,
+            string? clientName = null,
+            HttpOptions? options = null,
+            CancellationToken cancellationToken = default
+        ) => CreateClientAndExecute(
             httpClientFactory,
             clientName,
-            client => requests.PutParallelAsync(client, options, cancellationToken)
+            client => uris.GetParallelAsync(client, options, cancellationToken)
         );
 
-    /// <summary>
-    ///     Executes parallel HTTP DELETE requests using a named HttpClient.
-    /// </summary>
-    /// <param name="uris">The collection of URIs to delete.</param>
-    /// <param name="httpClientFactory">The IHttpClientFactory instance to create HttpClient instances.</param>
-    /// <param name="clientName">The name of the HttpClient to use. If null, uses the default client.</param>
-    /// <param name="options">
-    ///     Configuration options for parallel execution and HTTP-specific resilience features. If null,
-    ///     defaults are used.
-    /// </param>
-    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-    /// <returns>A task representing the asynchronous operation, containing a list of HTTP response messages.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when uris or httpClientFactory is null.</exception>
-    public static Task<List<HttpResponseMessage>> DeleteParallelAsync(
-        this IEnumerable<Uri> uris,
-        IHttpClientFactory httpClientFactory,
-        string? clientName = null,
-        HttpOptions? options = null,
-        CancellationToken cancellationToken = default
-    ) => CreateClientAndExecute(
-        httpClientFactory,
-        clientName,
-        client => uris.DeleteParallelAsync(client, options, cancellationToken)
-    );
+        /// <summary>
+        ///     Executes parallel HTTP GET requests using a named HttpClient and returns response content as strings.
+        /// </summary>
+        /// <param name="httpClientFactory">The IHttpClientFactory instance to create HttpClient instances.</param>
+        /// <param name="clientName">The name of the HttpClient to use. If null, uses the default client.</param>
+        /// <param name="options">
+        ///     Configuration options for parallel execution and HTTP-specific resilience features. If null,
+        ///     defaults are used.
+        /// </param>
+        /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+        /// <returns>A task representing the asynchronous operation, containing a list of response content strings.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when uris or httpClientFactory is null.</exception>
+        public Task<List<string>> GetStringParallelAsync(
+            IHttpClientFactory httpClientFactory,
+            string? clientName = null,
+            HttpOptions? options = null,
+            CancellationToken cancellationToken = default
+        ) => CreateClientAndExecute(
+            httpClientFactory,
+            clientName,
+            client => uris.GetStringParallelAsync(client, options, cancellationToken)
+        );
+
+        /// <summary>
+        ///     Executes parallel HTTP GET requests using a named HttpClient and returns response content as byte arrays.
+        /// </summary>
+        /// <param name="httpClientFactory">The IHttpClientFactory instance to create HttpClient instances.</param>
+        /// <param name="clientName">The name of the HttpClient to use. If null, uses the default client.</param>
+        /// <param name="options">
+        ///     Configuration options for parallel execution and HTTP-specific resilience features. If null,
+        ///     defaults are used.
+        /// </param>
+        /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+        /// <returns>A task representing the asynchronous operation, containing a list of byte arrays.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when uris or httpClientFactory is null.</exception>
+        public Task<List<byte[]>> GetByteArrayParallelAsync(
+            IHttpClientFactory httpClientFactory,
+            string? clientName = null,
+            HttpOptions? options = null,
+            CancellationToken cancellationToken = default
+        ) => CreateClientAndExecute(
+            httpClientFactory,
+            clientName,
+            client => uris.GetByteArrayParallelAsync(client, options, cancellationToken)
+        );
+
+        /// <summary>
+        ///     Executes parallel HTTP DELETE requests using a named HttpClient.
+        /// </summary>
+        /// <param name="httpClientFactory">The IHttpClientFactory instance to create HttpClient instances.</param>
+        /// <param name="clientName">The name of the HttpClient to use. If null, uses the default client.</param>
+        /// <param name="options">
+        ///     Configuration options for parallel execution and HTTP-specific resilience features. If null,
+        ///     defaults are used.
+        /// </param>
+        /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+        /// <returns>A task representing the asynchronous operation, containing a list of HTTP response messages.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when uris or httpClientFactory is null.</exception>
+        public Task<List<HttpResponseMessage>> DeleteParallelAsync(
+            IHttpClientFactory httpClientFactory,
+            string? clientName = null,
+            HttpOptions? options = null,
+            CancellationToken cancellationToken = default
+        ) => CreateClientAndExecute(
+            httpClientFactory,
+            clientName,
+            client => uris.DeleteParallelAsync(client, options, cancellationToken)
+        );
+    }
+
+    /// <param name="requests">The collection of tuples containing URIs and their corresponding content.</param>
+    /// <typeparam name="TContent">The type of content to send in POST requests.</typeparam>
+    extension<TContent>(IEnumerable<(Uri uri, TContent content)> requests)
+        where TContent : HttpContent
+    {
+        /// <summary>
+        ///     Executes parallel HTTP POST requests using a named HttpClient.
+        /// </summary>
+        /// <param name="httpClientFactory">The IHttpClientFactory instance to create HttpClient instances.</param>
+        /// <param name="clientName">The name of the HttpClient to use. If null, uses the default client.</param>
+        /// <param name="options">
+        ///     Configuration options for parallel execution and HTTP-specific resilience features. If null,
+        ///     defaults are used.
+        /// </param>
+        /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+        /// <returns>A task representing the asynchronous operation, containing a list of HTTP response messages.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when requests or httpClientFactory is null.</exception>
+        public Task<List<HttpResponseMessage>> PostParallelAsync(
+            IHttpClientFactory httpClientFactory,
+            string? clientName = null,
+            HttpOptions? options = null,
+            CancellationToken cancellationToken = default
+        ) => CreateClientAndExecute(
+            httpClientFactory,
+            clientName,
+            client => requests.PostParallelAsync(client, options, cancellationToken)
+        );
+
+        /// <summary>
+        ///     Executes parallel HTTP PUT requests using a named HttpClient.
+        /// </summary>
+        /// <param name="httpClientFactory">The IHttpClientFactory instance to create HttpClient instances.</param>
+        /// <param name="clientName">The name of the HttpClient to use. If null, uses the default client.</param>
+        /// <param name="options">
+        ///     Configuration options for parallel execution and HTTP-specific resilience features. If null,
+        ///     defaults are used.
+        /// </param>
+        /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+        /// <returns>A task representing the asynchronous operation, containing a list of HTTP response messages.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when requests or httpClientFactory is null.</exception>
+        public Task<List<HttpResponseMessage>> PutParallelAsync(
+            IHttpClientFactory httpClientFactory,
+            string? clientName = null,
+            HttpOptions? options = null,
+            CancellationToken cancellationToken = default
+        ) =>
+            CreateClientAndExecute(
+                httpClientFactory,
+                clientName,
+                client => requests.PutParallelAsync(client, options, cancellationToken)
+            );
+    }
 
     /// <summary>
     ///     Downloads files from multiple URIs in parallel using a named HttpClient.

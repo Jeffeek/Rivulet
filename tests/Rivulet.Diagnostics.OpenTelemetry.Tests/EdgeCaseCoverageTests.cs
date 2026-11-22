@@ -15,7 +15,7 @@ public sealed class EdgeCaseCoverageTests
     {
         using var listener = new ActivityListener();
         listener.ShouldListenTo = static source => source.Name == RivuletSharedConstants.RivuletCore;
-        listener.Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
+        listener.Sample = static (ref _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = static _ => { };
         ActivitySource.AddActivityListener(listener);
 
@@ -38,7 +38,7 @@ public sealed class EdgeCaseCoverageTests
     {
         using var listener = new ActivityListener();
         listener.ShouldListenTo = static source => source.Name == RivuletSharedConstants.RivuletCore;
-        listener.Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
+        listener.Sample = static (ref _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = static _ => { };
         ActivitySource.AddActivityListener(listener);
 
@@ -63,7 +63,7 @@ public sealed class EdgeCaseCoverageTests
 
         using var listener = new ActivityListener();
         listener.ShouldListenTo = static source => source.Name == RivuletSharedConstants.RivuletCore;
-        listener.Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
+        listener.Sample = static (ref _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = activities.Add;
         ActivitySource.AddActivityListener(listener);
 
@@ -100,7 +100,7 @@ public sealed class EdgeCaseCoverageTests
 
         using var listener = new ActivityListener();
         listener.ShouldListenTo = static source => source.Name == RivuletSharedConstants.RivuletCore;
-        listener.Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
+        listener.Sample = static (ref _) => ActivitySamplingResult.AllData;
         ActivitySource.AddActivityListener(listener);
 
         var options = new ParallelOptionsRivulet
@@ -194,7 +194,7 @@ public sealed class EdgeCaseCoverageTests
 
         using var listener = new ActivityListener();
         listener.ShouldListenTo = static source => source.Name == RivuletSharedConstants.RivuletCore;
-        listener.Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
+        listener.Sample = static (ref _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = activities.Add;
         ActivitySource.AddActivityListener(listener);
 
@@ -219,7 +219,7 @@ public sealed class EdgeCaseCoverageTests
 
         using var listener = new ActivityListener();
         listener.ShouldListenTo = static source => source.Name == RivuletSharedConstants.RivuletCore;
-        listener.Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
+        listener.Sample = static (ref _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = activities.Add;
         ActivitySource.AddActivityListener(listener);
 
@@ -262,7 +262,7 @@ public sealed class EdgeCaseCoverageTests
 
         using var listener = new ActivityListener();
         listener.ShouldListenTo = static source => source.Name == RivuletSharedConstants.RivuletCore;
-        listener.Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
+        listener.Sample = static (ref _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = activities.Add;
         ActivitySource.AddActivityListener(listener);
 

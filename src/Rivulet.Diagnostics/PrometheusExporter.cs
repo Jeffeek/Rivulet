@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using Rivulet.Core.Internal;
 
@@ -10,14 +11,14 @@ namespace Rivulet.Diagnostics;
 /// <example>
 ///     <code>
 /// using var exporter = new PrometheusExporter();
-/// 
+///
 /// await Enumerable.Range(1, 100)
 ///     .ToAsyncEnumerable()
 ///     .SelectParallelAsync(async x => await ProcessAsync(x), new ParallelOptionsRivulet
 ///     {
 ///         MaxDegreeOfParallelism = 10
 ///     });
-/// 
+///
 /// var prometheusText = exporter.Export();
 /// await File.WriteAllTextAsync("metrics.prom", prometheusText);
 /// </code>
@@ -49,7 +50,7 @@ public sealed class PrometheusExporter : RivuletEventListenerBase
                 var sb = new StringBuilder();
                 sb.AppendLine(RivuletDiagnosticsConstants.PrometheusFormats.HeaderComment);
                 sb.AppendLine(string.Format(RivuletDiagnosticsConstants.PrometheusFormats.GeneratedAtCommentFormat,
-                    DateTime.UtcNow.ToString(RivuletDiagnosticsConstants.DateTimeFormats.Prometheus)));
+                    DateTime.UtcNow.ToString(RivuletDiagnosticsConstants.DateTimeFormats.Prometheus, CultureInfo.InvariantCulture)));
                 sb.AppendLine();
 
                 foreach (var kvp in _latestValues)
@@ -61,7 +62,8 @@ public sealed class PrometheusExporter : RivuletEventListenerBase
                         metricName,
                         displayName));
                     sb.AppendLine(string.Format(RivuletDiagnosticsConstants.PrometheusFormats.TypeFormat, metricName));
-                    sb.AppendLine(string.Format(RivuletDiagnosticsConstants.PrometheusFormats.MetricFormat,
+                    sb.AppendLine(string.Format(CultureInfo.InvariantCulture,
+                        RivuletDiagnosticsConstants.PrometheusFormats.MetricFormat,
                         metricName,
                         value));
                     sb.AppendLine();

@@ -322,15 +322,14 @@ var tracerProvider = Sdk.CreateTracerProviderBuilder()
 
 ## Framework Support
 
-- .NET 8.0
-- .NET 9.0
 - .NET 10.0
+- .NET 11.0
 
 ## Dependencies
 
-- **Rivulet.Core** (≥ 1.2.0)
-- **OpenTelemetry.Api** (≥ 1.13.1)
-- **System.Diagnostics.DiagnosticSource** (≥ 9.0.0)
+- **Rivulet.Core** (≥ 3.0.0)
+- **OpenTelemetry.Api** (≥ 1.21.0)
+- **System.Diagnostics.DiagnosticSource** (≥ 11.0.0)
 
 ## Documentation & Source
 

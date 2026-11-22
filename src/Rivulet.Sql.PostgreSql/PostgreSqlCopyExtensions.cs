@@ -101,99 +101,99 @@ public static class PostgreSqlCopyExtensions
                 cancellationToken);
     }
 
-    /// <summary>
-    ///     Performs parallel bulk insert operations using PostgreSQL COPY command with CSV format.
-    /// </summary>
     /// <param name="source">Source collection of CSV lines</param>
-    /// <param name="connectionFactory">Factory to create PostgreSQL connections</param>
-    /// <param name="tableName">Target table name</param>
-    /// <param name="columns">Column names to insert</param>
-    /// <param name="options">Parallel execution options</param>
-    /// <param name="batchSize">Number of rows per COPY batch (defaults to 5000)</param>
-    /// <param name="hasHeader">Whether the CSV has a header row (defaults to false)</param>
-    /// <param name="delimiter">CSV delimiter (defaults to comma)</param>
-    /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>Task representing the async operation</returns>
-    public static Task BulkInsertUsingCopyCsvAsync(
-        this IEnumerable<string> source,
-        Func<NpgsqlConnection> connectionFactory,
-        string tableName,
-        string[] columns,
-        ParallelOptionsRivulet? options = null,
-        int batchSize = 5000,
-        bool hasHeader = false,
-        char delimiter = ',',
-        CancellationToken cancellationToken = default
-    )
+    extension(IEnumerable<string> source)
     {
-        // ReSharper disable once PossibleMultipleEnumeration
-        SqlValidationHelper.ValidateCommonBulkParameters(source, connectionFactory, tableName, batchSize);
-        SqlValidationHelper.ValidateArrayNotEmpty(columns, nameof(columns));
+        /// <summary>
+        ///     Performs parallel bulk insert operations using PostgreSQL COPY command with CSV format.
+        /// </summary>
+        /// <param name="connectionFactory">Factory to create PostgreSQL connections</param>
+        /// <param name="tableName">Target table name</param>
+        /// <param name="columns">Column names to insert</param>
+        /// <param name="options">Parallel execution options</param>
+        /// <param name="batchSize">Number of rows per COPY batch (defaults to 5000)</param>
+        /// <param name="hasHeader">Whether the CSV has a header row (defaults to false)</param>
+        /// <param name="delimiter">CSV delimiter (defaults to comma)</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>Task representing the async operation</returns>
+        public Task BulkInsertUsingCopyCsvAsync(
+            Func<NpgsqlConnection> connectionFactory,
+            string tableName,
+            string[] columns,
+            ParallelOptionsRivulet? options = null,
+            int batchSize = 5000,
+            bool hasHeader = false,
+            char delimiter = ',',
+            CancellationToken cancellationToken = default
+        )
+        {
+            // ReSharper disable once PossibleMultipleEnumeration
+            SqlValidationHelper.ValidateCommonBulkParameters(source, connectionFactory, tableName, batchSize);
+            SqlValidationHelper.ValidateArrayNotEmpty(columns, nameof(columns));
 
-        options ??= new();
+            options ??= new();
 
-        // Escape table name and columns to prevent SQL injection
-        var (escapedTableName, columnList) = EscapeTableAndColumns(tableName, columns);
+            // Escape table name and columns to prevent SQL injection
+            var (escapedTableName, columnList) = EscapeTableAndColumns(tableName, columns);
 
-        // Escape delimiter (handle single quotes)
-        var escapedDelimiter = delimiter.ToString().Replace("'", "''");
-        var headerOption = hasHeader ? ", HEADER" : "";
-        var copyCommand =
-            $"COPY {escapedTableName} ({columnList}) FROM STDIN (FORMAT CSV, DELIMITER '{escapedDelimiter}'{headerOption})";
+            // Escape delimiter (handle single quotes)
+            var escapedDelimiter = delimiter.ToString().Replace("'", "''");
+            var headerOption = hasHeader ? ", HEADER" : "";
+            var copyCommand =
+                $"COPY {escapedTableName} ({columnList}) FROM STDIN (FORMAT CSV, DELIMITER '{escapedDelimiter}'{headerOption})";
 
-        // ReSharper disable once PossibleMultipleEnumeration
-        return ExecuteTextCopyAsync(
-            source,
-            connectionFactory,
-            tableName,
-            batchSize,
-            copyCommand,
-            "bulk insert CSV",
-            options,
-            cancellationToken);
-    }
+            // ReSharper disable once PossibleMultipleEnumeration
+            return ExecuteTextCopyAsync(
+                source,
+                connectionFactory,
+                tableName,
+                batchSize,
+                copyCommand,
+                "bulk insert CSV",
+                options,
+                cancellationToken);
+        }
 
-    /// <summary>
-    ///     Performs parallel bulk insert operations using PostgreSQL COPY command with raw text format.
-    /// </summary>
-    /// <param name="source">Source collection of tab-delimited text lines</param>
-    /// <param name="connectionFactory">Factory to create PostgreSQL connections</param>
-    /// <param name="tableName">Target table name</param>
-    /// <param name="columns">Column names to insert</param>
-    /// <param name="options">Parallel execution options</param>
-    /// <param name="batchSize">Number of rows per COPY batch (defaults to 5000)</param>
-    /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>Task representing the async operation</returns>
-    public static Task BulkInsertUsingCopyTextAsync(
-        this IEnumerable<string> source,
-        Func<NpgsqlConnection> connectionFactory,
-        string tableName,
-        string[] columns,
-        ParallelOptionsRivulet? options = null,
-        int batchSize = 5000,
-        CancellationToken cancellationToken = default
-    )
-    {
-        // ReSharper disable once PossibleMultipleEnumeration
-        SqlValidationHelper.ValidateCommonBulkParameters(source, connectionFactory, tableName, batchSize);
-        SqlValidationHelper.ValidateArrayNotEmpty(columns, nameof(columns));
+        /// <summary>
+        ///     Performs parallel bulk insert operations using PostgreSQL COPY command with raw text format.
+        /// </summary>
+        /// <param name="connectionFactory">Factory to create PostgreSQL connections</param>
+        /// <param name="tableName">Target table name</param>
+        /// <param name="columns">Column names to insert</param>
+        /// <param name="options">Parallel execution options</param>
+        /// <param name="batchSize">Number of rows per COPY batch (defaults to 5000)</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>Task representing the async operation</returns>
+        public Task BulkInsertUsingCopyTextAsync(
+            Func<NpgsqlConnection> connectionFactory,
+            string tableName,
+            string[] columns,
+            ParallelOptionsRivulet? options = null,
+            int batchSize = 5000,
+            CancellationToken cancellationToken = default
+        )
+        {
+            // ReSharper disable once PossibleMultipleEnumeration
+            SqlValidationHelper.ValidateCommonBulkParameters(source, connectionFactory, tableName, batchSize);
+            SqlValidationHelper.ValidateArrayNotEmpty(columns, nameof(columns));
 
-        options ??= new();
+            options ??= new();
 
-        // Escape table name and columns to prevent SQL injection
-        var (escapedTableName, columnList) = EscapeTableAndColumns(tableName, columns);
-        var copyCommand = $"COPY {escapedTableName} ({columnList}) FROM STDIN";
+            // Escape table name and columns to prevent SQL injection
+            var (escapedTableName, columnList) = EscapeTableAndColumns(tableName, columns);
+            var copyCommand = $"COPY {escapedTableName} ({columnList}) FROM STDIN";
 
-        // ReSharper disable once PossibleMultipleEnumeration
-        return ExecuteTextCopyAsync(
-            source,
-            connectionFactory,
-            tableName,
-            batchSize,
-            copyCommand,
-            "bulk insert text",
-            options,
-            cancellationToken);
+            // ReSharper disable once PossibleMultipleEnumeration
+            return ExecuteTextCopyAsync(
+                source,
+                connectionFactory,
+                tableName,
+                batchSize,
+                copyCommand,
+                "bulk insert text",
+                options,
+                cancellationToken);
+        }
     }
 
     private static Task ExecuteTextCopyAsync(

@@ -163,9 +163,9 @@ public sealed class SelectParallelAsyncTests
     {
         var source = new[] { "hello", "world", "test", "xunit" };
 
-        var results = await source.SelectParallelAsync(static (s, _) => new ValueTask<string>(s.ToUpper()), cancellationToken: TestContext.Current.CancellationToken);
+        var results = await source.SelectParallelAsync(static (s, _) => new ValueTask<string>(s.ToUpperInvariant()), cancellationToken: TestContext.Current.CancellationToken);
 
-        results.OrderBy(static x => x).ShouldBe(["HELLO", "TEST", "WORLD", "XUNIT"]);
+        results.OrderBy(static x => x, StringComparer.OrdinalIgnoreCase).ShouldBe(["HELLO", "TEST", "WORLD", "XUNIT"]);
     }
 
     [Fact]
@@ -218,12 +218,12 @@ public sealed class SelectParallelAsyncTests
         var source = new[] { "a", "b", "c" };
 
         var results = await source.SelectParallelAsync(
-            static (x, _) => x == "b" ? throw new InvalidOperationException() : new ValueTask<string>(x.ToUpper()),
+            static (x, _) => x == "b" ? throw new InvalidOperationException() : new ValueTask<string>(x.ToUpperInvariant()),
             new() { OnFallback = static (_, _) => null },
             cancellationToken: TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(3);
-        results.OrderBy(static x => x).ShouldBe([null, "A", "C"]);
+        results.OrderBy(static x => x, StringComparer.OrdinalIgnoreCase).ShouldBe([null, "A", "C"]);
     }
 
     [Fact]

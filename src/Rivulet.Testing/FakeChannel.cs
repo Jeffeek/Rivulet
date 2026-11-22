@@ -57,7 +57,7 @@ public sealed class FakeChannel<T> : IDisposable
     /// </summary>
     public async ValueTask<bool> WriteAsync(T item, CancellationToken cancellationToken = default)
     {
-        ObjectDisposedException.ThrowIf(_disposed, nameof(FakeChannel<T>));
+        ObjectDisposedException.ThrowIf(_disposed, nameof(FakeChannel<>));
 
         var result = await Writer.WaitToWriteAsync(cancellationToken).ConfigureAwait(false);
         if (!result) return result;
@@ -73,7 +73,7 @@ public sealed class FakeChannel<T> : IDisposable
     // ReSharper disable once MemberCanBeInternal
     public async ValueTask<T> ReadAsync(CancellationToken cancellationToken = default)
     {
-        ObjectDisposedException.ThrowIf(_disposed, nameof(FakeChannel<T>));
+        ObjectDisposedException.ThrowIf(_disposed, nameof(FakeChannel<>));
 
         var item = await Reader.ReadAsync(cancellationToken).ConfigureAwait(false);
         Interlocked.Increment(ref _readCount);

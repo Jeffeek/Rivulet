@@ -4,43 +4,66 @@ using Testcontainers.PostgreSql;
 namespace Rivulet.Sql.PostgreSql.Tests;
 
 /// <summary>
-///     Integration tests for PostgreSqlCopyExtensions using Testcontainers.
-///     Uses per-test-class container for isolation (IAsyncLifetime).
+///     Shared PostgreSQL container for the integration test class. Started once per class (not per test method)
+///     and reused across <c>dotnet test</c> runs when Testcontainers reuse is enabled locally
+///     (<c>testcontainers.reuse.enable=true</c> in <c>~/.testcontainers.properties</c>).
 ///     Requires Docker Desktop to be running.
 /// </summary>
-[Trait("Category", "Integration")]
-public sealed class PostgreSqlCopyExtensionsIntegrationTests : IAsyncLifetime
+public sealed class PostgreSqlFixture : IAsyncLifetime
 {
-    private string? _connectionString;
-    private PostgreSqlContainer? _container;
+    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder("postgres:15.20")
+        .WithReuse(true)
+        .Build();
+
+    public string ConnectionString { get; private set; } = string.Empty;
 
     public async ValueTask InitializeAsync()
     {
-        _container = new PostgreSqlBuilder("postgres:16-alpine")
-            .Build();
-
         await _container.StartAsync();
-        _connectionString = _container.GetConnectionString();
+        ConnectionString = _container.GetConnectionString();
 
-        // Create test table
-        await using var connection = new NpgsqlConnection(_connectionString);
+        // IF NOT EXISTS so a reused container (table already created in a prior run) does not fail
+        await using var connection = new NpgsqlConnection(ConnectionString);
         await connection.OpenAsync();
 
         await using var command = connection.CreateCommand();
         command.CommandText = """
-
-                                          CREATE TABLE "TestTable" (
-                                              "Id" INT NOT NULL,
-                                              "Name" VARCHAR(100) NOT NULL,
-                                              "Email" VARCHAR(100) NOT NULL
-                                          )
+                              CREATE TABLE IF NOT EXISTS "TestTable" (
+                                  "Id" INT NOT NULL,
+                                  "Name" VARCHAR(100) NOT NULL,
+                                  "Email" VARCHAR(100) NOT NULL
+                              )
                               """;
         await command.ExecuteNonQueryAsync();
     }
 
-    public ValueTask DisposeAsync() => _container?.DisposeAsync() ?? ValueTask.CompletedTask;
+    // Do not dispose the container: with reuse enabled it is kept alive for the next run.
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+}
 
-    private NpgsqlConnection CreateConnection() => new(_connectionString!);
+/// <summary>
+///     Integration tests for PostgreSqlCopyExtensions using a shared Testcontainers PostgreSQL container.
+///     Each test truncates TestTable first for isolation.
+/// </summary>
+[Trait("Category", "Integration")]
+public sealed class PostgreSqlCopyExtensionsIntegrationTests(PostgreSqlFixture fixture)
+    : IClassFixture<PostgreSqlFixture>, IAsyncLifetime
+{
+    private readonly string _connectionString = fixture.ConnectionString;
+
+    // Runs per test method: reset shared table so tests are isolated despite sharing one container.
+    public async ValueTask InitializeAsync()
+    {
+        await using var connection = new NpgsqlConnection(_connectionString);
+        await connection.OpenAsync();
+        await using var command = connection.CreateCommand();
+        command.CommandText = "TRUNCATE TABLE \"TestTable\"";
+        await command.ExecuteNonQueryAsync();
+    }
+
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+
+    private NpgsqlConnection CreateConnection() => new(_connectionString);
 
     private static object?[] MapToRow(TestRecord record) =>
         [record.Id, record.Name, record.Email];

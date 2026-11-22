@@ -8,190 +8,182 @@ namespace Rivulet.IO;
 [SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public static class DirectoryInfoExtensions
 {
-    /// <summary>
-    ///     Processes all files in a DirectoryInfo in parallel using a custom processing function.
-    /// </summary>
-    /// <typeparam name="TResult">The result type from processing each file.</typeparam>
     /// <param name="directory">The DirectoryInfo to process.</param>
-    /// <param name="processFunc">Function that processes each file.</param>
-    /// <param name="searchPattern">The search pattern (e.g., "*.csv", "*.txt"). Default is "*.*".</param>
-    /// <param name="searchOption">Specifies whether to search subdirectories.</param>
-    /// <param name="options">File operation options. If null, defaults are used.</param>
-    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-    /// <returns>A list of results from processing each file.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when directory or processFunc is null.</exception>
-    public static Task<IReadOnlyList<TResult>> ProcessFilesParallelAsync<TResult>(
-        this DirectoryInfo directory,
-        Func<string, CancellationToken, ValueTask<TResult>> processFunc,
-        string searchPattern = "*.*",
-        SearchOption searchOption = SearchOption.TopDirectoryOnly,
-        FileOperationOptions? options = null,
-        CancellationToken cancellationToken = default
-    )
+    extension(DirectoryInfo directory)
     {
-        ArgumentNullException.ThrowIfNull(directory);
-        ArgumentNullException.ThrowIfNull(processFunc);
+        /// <summary>
+        ///     Processes all files in a DirectoryInfo in parallel using a custom processing function.
+        /// </summary>
+        /// <typeparam name="TResult">The result type from processing each file.</typeparam>
+        /// <param name="processFunc">Function that processes each file.</param>
+        /// <param name="searchPattern">The search pattern (e.g., "*.csv", "*.txt"). Default is "*.*".</param>
+        /// <param name="searchOption">Specifies whether to search subdirectories.</param>
+        /// <param name="options">File operation options. If null, defaults are used.</param>
+        /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+        /// <returns>A list of results from processing each file.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when directory or processFunc is null.</exception>
+        public Task<IReadOnlyList<TResult>> ProcessFilesParallelAsync<TResult>(
+            Func<string, CancellationToken, ValueTask<TResult>> processFunc,
+            string searchPattern = "*.*",
+            SearchOption searchOption = SearchOption.TopDirectoryOnly,
+            FileOperationOptions? options = null,
+            CancellationToken cancellationToken = default
+        )
+        {
+            ArgumentNullException.ThrowIfNull(directory);
+            ArgumentNullException.ThrowIfNull(processFunc);
 
-        return !directory.Exists
-            ? throw new DirectoryNotFoundException($"Directory not found: {directory.FullName}")
-            : DirectoryParallelExtensions.ProcessDirectoryFilesParallelAsync(
-                directory.FullName,
-                searchPattern,
-                processFunc,
-                searchOption,
-                options,
-                cancellationToken);
-    }
+            return !directory.Exists
+                ? throw new DirectoryNotFoundException($"Directory not found: {directory.FullName}")
+                : DirectoryParallelExtensions.ProcessDirectoryFilesParallelAsync(
+                    directory.FullName,
+                    searchPattern,
+                    processFunc,
+                    searchOption,
+                    options,
+                    cancellationToken);
+        }
 
-    /// <summary>
-    ///     Reads all files in a DirectoryInfo as text in parallel.
-    /// </summary>
-    /// <param name="directory">The DirectoryInfo to read from.</param>
-    /// <param name="searchPattern">The search pattern. Default is "*.*".</param>
-    /// <param name="searchOption">Specifies whether to search subdirectories.</param>
-    /// <param name="options">File operation options. If null, defaults are used.</param>
-    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-    /// <returns>A dictionary mapping file paths to their contents.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when directory is null.</exception>
-    public static Task<IReadOnlyDictionary<string, string>> ReadAllFilesParallelAsync(
-        this DirectoryInfo directory,
-        string searchPattern = "*.*",
-        SearchOption searchOption = SearchOption.TopDirectoryOnly,
-        FileOperationOptions? options = null,
-        CancellationToken cancellationToken = default
-    )
-    {
-        ArgumentNullException.ThrowIfNull(directory);
+        /// <summary>
+        ///     Reads all files in a DirectoryInfo as text in parallel.
+        /// </summary>
+        /// <param name="searchPattern">The search pattern. Default is "*.*".</param>
+        /// <param name="searchOption">Specifies whether to search subdirectories.</param>
+        /// <param name="options">File operation options. If null, defaults are used.</param>
+        /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+        /// <returns>A dictionary mapping file paths to their contents.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when directory is null.</exception>
+        public Task<IReadOnlyDictionary<string, string>> ReadAllFilesParallelAsync(
+            string searchPattern = "*.*",
+            SearchOption searchOption = SearchOption.TopDirectoryOnly,
+            FileOperationOptions? options = null,
+            CancellationToken cancellationToken = default
+        )
+        {
+            ArgumentNullException.ThrowIfNull(directory);
 
-        return !directory.Exists
-            ? throw new DirectoryNotFoundException($"Directory not found: {directory.FullName}")
-            : DirectoryParallelExtensions.ReadDirectoryFilesParallelAsync(
-                directory.FullName,
-                searchPattern,
-                searchOption,
-                options,
-                cancellationToken);
-    }
+            return !directory.Exists
+                ? throw new DirectoryNotFoundException($"Directory not found: {directory.FullName}")
+                : DirectoryParallelExtensions.ReadDirectoryFilesParallelAsync(
+                    directory.FullName,
+                    searchPattern,
+                    searchOption,
+                    options,
+                    cancellationToken);
+        }
 
-    /// <summary>
-    ///     Gets all FileInfo objects matching the search pattern.
-    /// </summary>
-    /// <param name="directory">The DirectoryInfo to search.</param>
-    /// <param name="searchPattern">The search pattern.</param>
-    /// <param name="searchOption">Specifies whether to search subdirectories.</param>
-    /// <returns>An enumerable of FileInfo objects.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when directory is null.</exception>
-    public static IEnumerable<FileInfo> GetFilesEnumerable(
-        this DirectoryInfo directory,
-        string searchPattern = "*.*",
-        SearchOption searchOption = SearchOption.TopDirectoryOnly
-    )
-    {
-        ArgumentNullException.ThrowIfNull(directory);
+        /// <summary>
+        ///     Gets all FileInfo objects matching the search pattern.
+        /// </summary>
+        /// <param name="searchPattern">The search pattern.</param>
+        /// <param name="searchOption">Specifies whether to search subdirectories.</param>
+        /// <returns>An enumerable of FileInfo objects.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when directory is null.</exception>
+        public IEnumerable<FileInfo> GetFilesEnumerable(
+            string searchPattern = "*.*",
+            SearchOption searchOption = SearchOption.TopDirectoryOnly
+        )
+        {
+            ArgumentNullException.ThrowIfNull(directory);
 
-        return !directory.Exists
-            ? throw new DirectoryNotFoundException($"Directory not found: {directory.FullName}")
-            : directory.EnumerateFiles(searchPattern, searchOption);
-    }
+            return !directory.Exists
+                ? throw new DirectoryNotFoundException($"Directory not found: {directory.FullName}")
+                : directory.EnumerateFiles(searchPattern, searchOption);
+        }
 
-    /// <summary>
-    ///     Transforms all files in a DirectoryInfo to a destination directory in parallel.
-    /// </summary>
-    /// <param name="sourceDirectory">The source DirectoryInfo.</param>
-    /// <param name="destinationDirectory">The destination directory path.</param>
-    /// <param name="transformFunc">Function that transforms file content.</param>
-    /// <param name="searchPattern">The search pattern for source files.</param>
-    /// <param name="searchOption">Specifies whether to search subdirectories.</param>
-    /// <param name="options">File operation options. If null, defaults are used.</param>
-    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-    /// <returns>A list of destination file paths that were created.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when sourceDirectory or transformFunc is null.</exception>
-    public static Task<IReadOnlyList<string>> TransformFilesParallelAsync(
-        this DirectoryInfo sourceDirectory,
-        string destinationDirectory,
-        Func<string, string, ValueTask<string>> transformFunc,
-        string searchPattern = "*.*",
-        SearchOption searchOption = SearchOption.TopDirectoryOnly,
-        FileOperationOptions? options = null,
-        CancellationToken cancellationToken = default
-    )
-    {
-        ArgumentNullException.ThrowIfNull(sourceDirectory);
-        ArgumentNullException.ThrowIfNull(transformFunc);
+        /// <summary>
+        ///     Transforms all files in a DirectoryInfo to a destination directory in parallel.
+        /// </summary>
+        /// <param name="destinationDirectory">The destination directory path.</param>
+        /// <param name="transformFunc">Function that transforms file content.</param>
+        /// <param name="searchPattern">The search pattern for source files.</param>
+        /// <param name="searchOption">Specifies whether to search subdirectories.</param>
+        /// <param name="options">File operation options. If null, defaults are used.</param>
+        /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+        /// <returns>A list of destination file paths that were created.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when sourceDirectory or transformFunc is null.</exception>
+        public Task<IReadOnlyList<string>> TransformFilesParallelAsync(
+            string destinationDirectory,
+            Func<string, string, ValueTask<string>> transformFunc,
+            string searchPattern = "*.*",
+            SearchOption searchOption = SearchOption.TopDirectoryOnly,
+            FileOperationOptions? options = null,
+            CancellationToken cancellationToken = default
+        )
+        {
+            ArgumentNullException.ThrowIfNull(directory);
+            ArgumentNullException.ThrowIfNull(transformFunc);
 
-        return !sourceDirectory.Exists
-            ? throw new DirectoryNotFoundException($"Source directory not found: {sourceDirectory.FullName}")
-            : DirectoryParallelExtensions.TransformDirectoryFilesParallelAsync(
-                sourceDirectory.FullName,
-                destinationDirectory,
-                searchPattern,
-                transformFunc,
-                searchOption,
-                options,
-                cancellationToken);
-    }
+            return !directory.Exists
+                ? throw new DirectoryNotFoundException($"Source directory not found: {directory.FullName}")
+                : DirectoryParallelExtensions.TransformDirectoryFilesParallelAsync(
+                    directory.FullName,
+                    destinationDirectory,
+                    searchPattern,
+                    transformFunc,
+                    searchOption,
+                    options,
+                    cancellationToken);
+        }
 
-    /// <summary>
-    ///     Copies all files from a DirectoryInfo to a destination directory in parallel.
-    /// </summary>
-    /// <param name="sourceDirectory">The source DirectoryInfo.</param>
-    /// <param name="destinationDirectory">The destination directory path.</param>
-    /// <param name="searchPattern">The search pattern for source files.</param>
-    /// <param name="searchOption">Specifies whether to search subdirectories.</param>
-    /// <param name="options">File operation options. If null, defaults are used.</param>
-    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-    /// <returns>A list of destination file paths that were copied.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when sourceDirectory is null.</exception>
-    public static Task<IReadOnlyList<string>> CopyFilesToParallelAsync(
-        this DirectoryInfo sourceDirectory,
-        string destinationDirectory,
-        string searchPattern = "*.*",
-        SearchOption searchOption = SearchOption.TopDirectoryOnly,
-        FileOperationOptions? options = null,
-        CancellationToken cancellationToken = default
-    )
-    {
-        ArgumentNullException.ThrowIfNull(sourceDirectory);
+        /// <summary>
+        ///     Copies all files from a DirectoryInfo to a destination directory in parallel.
+        /// </summary>
+        /// <param name="destinationDirectory">The destination directory path.</param>
+        /// <param name="searchPattern">The search pattern for source files.</param>
+        /// <param name="searchOption">Specifies whether to search subdirectories.</param>
+        /// <param name="options">File operation options. If null, defaults are used.</param>
+        /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+        /// <returns>A list of destination file paths that were copied.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when sourceDirectory is null.</exception>
+        public Task<IReadOnlyList<string>> CopyFilesToParallelAsync(
+            string destinationDirectory,
+            string searchPattern = "*.*",
+            SearchOption searchOption = SearchOption.TopDirectoryOnly,
+            FileOperationOptions? options = null,
+            CancellationToken cancellationToken = default
+        )
+        {
+            ArgumentNullException.ThrowIfNull(directory);
 
-        return !sourceDirectory.Exists
-            ? throw new DirectoryNotFoundException($"Source directory not found: {sourceDirectory.FullName}")
-            : DirectoryParallelExtensions.CopyDirectoryFilesParallelAsync(
-                sourceDirectory.FullName,
-                destinationDirectory,
-                searchPattern,
-                searchOption,
-                options,
-                cancellationToken);
-    }
+            return !directory.Exists
+                ? throw new DirectoryNotFoundException($"Source directory not found: {directory.FullName}")
+                : DirectoryParallelExtensions.CopyDirectoryFilesParallelAsync(
+                    directory.FullName,
+                    destinationDirectory,
+                    searchPattern,
+                    searchOption,
+                    options,
+                    cancellationToken);
+        }
 
-    /// <summary>
-    ///     Deletes all files matching the search pattern from a DirectoryInfo in parallel.
-    /// </summary>
-    /// <param name="directory">The DirectoryInfo.</param>
-    /// <param name="searchPattern">The search pattern for files to delete.</param>
-    /// <param name="searchOption">Specifies whether to search subdirectories.</param>
-    /// <param name="options">File operation options. If null, defaults are used.</param>
-    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-    /// <returns>A list of file paths that were deleted.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when directory is null.</exception>
-    public static Task<IReadOnlyList<string>> DeleteFilesParallelAsync(
-        this DirectoryInfo directory,
-        string searchPattern,
-        SearchOption searchOption = SearchOption.TopDirectoryOnly,
-        FileOperationOptions? options = null,
-        CancellationToken cancellationToken = default
-    )
-    {
-        ArgumentNullException.ThrowIfNull(directory);
+        /// <summary>
+        ///     Deletes all files matching the search pattern from a DirectoryInfo in parallel.
+        /// </summary>
+        /// <param name="searchPattern">The search pattern for files to delete.</param>
+        /// <param name="searchOption">Specifies whether to search subdirectories.</param>
+        /// <param name="options">File operation options. If null, defaults are used.</param>
+        /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+        /// <returns>A list of file paths that were deleted.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when directory is null.</exception>
+        public Task<IReadOnlyList<string>> DeleteFilesParallelAsync(
+            string searchPattern,
+            SearchOption searchOption = SearchOption.TopDirectoryOnly,
+            FileOperationOptions? options = null,
+            CancellationToken cancellationToken = default
+        )
+        {
+            ArgumentNullException.ThrowIfNull(directory);
 
-        return !directory.Exists
-            ? throw new DirectoryNotFoundException($"Directory not found: {directory.FullName}")
-            : DirectoryParallelExtensions.DeleteDirectoryFilesParallelAsync(
-                directory.FullName,
-                searchPattern,
-                searchOption,
-                options,
-                cancellationToken);
+            return !directory.Exists
+                ? throw new DirectoryNotFoundException($"Directory not found: {directory.FullName}")
+                : DirectoryParallelExtensions.DeleteDirectoryFilesParallelAsync(
+                    directory.FullName,
+                    searchPattern,
+                    searchOption,
+                    options,
+                    cancellationToken);
+        }
     }
 
     /// <summary>

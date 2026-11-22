@@ -21,6 +21,7 @@ public sealed class TestDbConnection(
     public override string ServerVersion => "1.0.0";
 
 #pragma warning disable IDE0032
+    // ReSharper disable once ConvertToAutoPropertyWithPrivateSetter
     public override ConnectionState State => _state;
 #pragma warning restore IDE0032
 
@@ -178,6 +179,7 @@ public sealed class TestDataReader(List<Dictionary<string, object>> rows) : DbDa
     public override bool HasRows => rows.Count > 0;
 
 #pragma warning disable IDE0032
+    // ReSharper disable once ConvertToAutoPropertyWithPrivateSetter
     public override bool IsClosed => _isClosed;
 #pragma warning restore IDE0032
 
