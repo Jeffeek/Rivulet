@@ -7,7 +7,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Codecov](https://codecov.io/gh/Jeffeek/Rivulet/branch/master/graph/badge.svg)](https://codecov.io/gh/Jeffeek/Rivulet)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/Jeffeek/Rivulet/badge)](https://scorecard.dev/viewer/?uri=github.com/Jeffeek/Rivulet)
-[![.NET](https://img.shields.io/badge/.NET-8.0%20%7C%209.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
+[![.NET](https://img.shields.io/badge/.NET-10.0%20%7C%2011.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
 [![Documentation](https://img.shields.io/readthedocs/rivulet2?label=docs)](https://rivulet2.readthedocs.io/)
 
 ![CI/CD Pipeline](https://img.shields.io/github/actions/workflow/status/Jeffeek/Rivulet/release.yml?label=RELEASE)
@@ -753,7 +753,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE.txt) 
 ## 🙏 Acknowledgments
 
 Built with ❤️ using:
-- .NET 8.0, .NET 9.0, .NET 10.0
+- .NET 10.0, .NET 11.0
 - System.Threading.Channels for backpressure
 - xUnit for testing
 - BenchmarkDotNet for performance validation

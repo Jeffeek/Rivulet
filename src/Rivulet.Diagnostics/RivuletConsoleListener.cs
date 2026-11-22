@@ -1,3 +1,4 @@
+using System.Globalization;
 using Rivulet.Core.Internal;
 using Rivulet.Core.Observability;
 
@@ -10,7 +11,7 @@ namespace Rivulet.Diagnostics;
 /// <example>
 ///     <code>
 /// using var listener = new RivuletConsoleListener();
-/// 
+///
 /// await Enumerable.Range(1, 100)
 ///     .ToAsyncEnumerable()
 ///     .SelectParallelAsync(async x => await ProcessAsync(x), new ParallelOptionsRivulet
@@ -42,7 +43,7 @@ public sealed class RivuletConsoleListener : RivuletEventListenerBase
         LockHelper.Execute(_lock,
             () =>
             {
-                var timestamp = DateTime.UtcNow.ToString(RivuletDiagnosticsConstants.DateTimeFormats.Console);
+                var timestamp = DateTime.UtcNow.ToString(RivuletDiagnosticsConstants.DateTimeFormats.Console, CultureInfo.InvariantCulture);
                 var formattedValue = FormatValue(value, displayUnits);
 
                 if (_useColors)

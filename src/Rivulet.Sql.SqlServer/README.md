@@ -141,15 +141,14 @@ await users.BulkInsertUsingSqlBulkCopyAsync(
 
 ## Requirements
 
-- .NET 8.0, .NET 9.0, .NET 10.0
+- .NET 10.0, .NET 11.0
 - SQL Server 2012 or later
 - Microsoft.Data.SqlClient
 
 ## Framework Support
 
-- .NET 8.0
-- .NET 9.0
 - .NET 10.0
+- .NET 11.0
 
 ## Documentation & Source
 

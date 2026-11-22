@@ -88,9 +88,8 @@ See the [full documentation](https://rivulet2.readthedocs.io/) for detailed guid
 
 ## Framework Support
 
-- .NET 8.0
-- .NET 9.0
 - .NET 10.0
+- .NET 11.0
 
 ## Documentation & Source
 

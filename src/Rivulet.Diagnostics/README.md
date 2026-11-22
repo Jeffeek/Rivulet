@@ -248,15 +248,14 @@ app.MapGet("/metrics", () => exporter.Export());
 
 ## Requirements
 
-- .NET 8.0, .NET 9.0, .NET 10.0
+- .NET 10.0, .NET 11.0
 - Rivulet.Core 1.2.0+
-- Microsoft.Extensions.Diagnostics.HealthChecks 9.0.0+ (for health checks)
+- Microsoft.Extensions.Diagnostics.HealthChecks 11.0.0+ (for health checks)
 
 ## Framework Support
 
-- .NET 8.0
-- .NET 9.0
 - .NET 10.0
+- .NET 11.0
 
 ## Documentation & Source
 

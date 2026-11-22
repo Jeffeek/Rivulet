@@ -21,9 +21,13 @@ public sealed class ParallelOptionsRivuletExtensionsTests
 
         using var listener = new ActivityListener();
         listener.ShouldListenTo = static source => source.Name == RivuletSharedConstants.RivuletCore;
-        listener.Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
+        listener.Sample = static (ref _) => ActivitySamplingResult.AllData;
         listener.ActivityStarted = activity =>
         {
+            // Filter by operation name: the RivuletCore ActivitySource is process-global, so a parallel
+            // sibling test's activities would otherwise leak into this bag and break the count.
+            if (activity.OperationName != "Rivulet.TestOperation.Item") return;
+
             activities.Add(activity);
             if (Interlocked.Increment(ref activityCount) >= expectedCount) allActivitiesStarted.Set();
         };
@@ -61,7 +65,7 @@ public sealed class ParallelOptionsRivuletExtensionsTests
 
         using var listener = new ActivityListener();
         listener.ShouldListenTo = static source => source.Name == RivuletSharedConstants.RivuletCore;
-        listener.Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
+        listener.Sample = static (ref _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = activity =>
         {
             activities.Add(activity);
@@ -105,7 +109,7 @@ public sealed class ParallelOptionsRivuletExtensionsTests
 
         using var listener = new ActivityListener();
         listener.ShouldListenTo = static source => source.Name == RivuletSharedConstants.RivuletCore;
-        listener.Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
+        listener.Sample = static (ref _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = activity =>
         {
             activities.Add(activity);
@@ -150,7 +154,7 @@ public sealed class ParallelOptionsRivuletExtensionsTests
         var activities = new List<Activity>();
         using var listener = new ActivityListener();
         listener.ShouldListenTo = static source => source.Name == RivuletSharedConstants.RivuletCore;
-        listener.Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
+        listener.Sample = static (ref _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = activities.Add;
         ActivitySource.AddActivityListener(listener);
 
@@ -192,7 +196,7 @@ public sealed class ParallelOptionsRivuletExtensionsTests
 
         using var listener = new ActivityListener();
         listener.ShouldListenTo = static source => source.Name == RivuletSharedConstants.RivuletCore;
-        listener.Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
+        listener.Sample = static (ref _) => ActivitySamplingResult.AllData;
         ActivitySource.AddActivityListener(listener);
 
         var items = Enumerable.Range(1, 3);
@@ -241,7 +245,7 @@ public sealed class ParallelOptionsRivuletExtensionsTests
 
         using var listener = new ActivityListener();
         listener.ShouldListenTo = static source => source.Name == RivuletSharedConstants.RivuletCore;
-        listener.Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
+        listener.Sample = static (ref _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = activities.Add;
         ActivitySource.AddActivityListener(listener);
 
@@ -310,7 +314,7 @@ public sealed class ParallelOptionsRivuletExtensionsTests
         var activities = new List<Activity>();
         using var listener = new ActivityListener();
         listener.ShouldListenTo = static source => source.Name == RivuletSharedConstants.RivuletCore;
-        listener.Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
+        listener.Sample = static (ref _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = activities.Add;
         ActivitySource.AddActivityListener(listener);
 
@@ -381,7 +385,7 @@ public sealed class ParallelOptionsRivuletExtensionsTests
 
         using var listener = new ActivityListener();
         listener.ShouldListenTo = static source => source.Name == RivuletSharedConstants.RivuletCore;
-        listener.Sample = static (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData;
+        listener.Sample = static (ref _) => ActivitySamplingResult.AllData;
         listener.ActivityStopped = activity =>
         {
             activities.Add(activity);

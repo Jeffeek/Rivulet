@@ -462,86 +462,81 @@ public static class CsvParallelExtensions
         return Task.WhenAll(task1, task2, task3, task4, task5);
     }
 
-    /// <summary>
-    ///     Transforms CSV files in parallel with per-file configuration, applying a synchronous transformation function.
-    /// </summary>
+    /// <param name="transformations">Collection of input/output CSV file pairs with optional per-file configuration.</param>
     /// <typeparam name="TIn">The input record type to read from CSV files.</typeparam>
     /// <typeparam name="TOut">The output record type to write to CSV files.</typeparam>
-    /// <param name="transformations">Collection of input/output CSV file pairs with optional per-file configuration.</param>
-    /// <param name="transform">Synchronous function to transform input records to output records.</param>
-    /// <param name="options">CSV operation options. If null, defaults are used.</param>
-    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-    /// <returns>A task representing the asynchronous operation.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when transformations or transform is null.</exception>
-    public static Task TransformCsvParallelAsync<TIn, TOut>(
-        this IEnumerable<(RivuletCsvReadFile<TIn> Input, RivuletCsvWriteFile<TOut> Output)> transformations,
-        Func<TIn, TOut> transform,
-        CsvOperationOptions? options = null,
-        CancellationToken cancellationToken = default
-    )
-        where TIn : class
-        where TOut : class
+    extension<TIn, TOut>(IEnumerable<(RivuletCsvReadFile<TIn> Input, RivuletCsvWriteFile<TOut> Output)> transformations)
+        where TIn : class where TOut : class
     {
-        ArgumentNullException.ThrowIfNull(transformations);
-        ArgumentNullException.ThrowIfNull(transform);
+        /// <summary>
+        ///     Transforms CSV files in parallel with per-file configuration, applying a synchronous transformation function.
+        /// </summary>
+        /// <param name="transform">Synchronous function to transform input records to output records.</param>
+        /// <param name="options">CSV operation options. If null, defaults are used.</param>
+        /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when transformations or transform is null.</exception>
+        public Task TransformCsvParallelAsync(
+            Func<TIn, TOut> transform,
+            CsvOperationOptions? options = null,
+            CancellationToken cancellationToken = default
+        )
+        {
+            ArgumentNullException.ThrowIfNull(transformations);
+            ArgumentNullException.ThrowIfNull(transform);
 
-        return TransformCsvParallelAsync(
-            transformations,
-            (record, _) => new ValueTask<TOut>(transform(record)),
-            options,
-            cancellationToken
-        );
-    }
+            return TransformCsvParallelAsync(
+                transformations,
+                (record, _) => new ValueTask<TOut>(transform(record)),
+                options,
+                cancellationToken
+            );
+        }
 
-    /// <summary>
-    ///     Transforms CSV files in parallel with per-file configuration, applying an asynchronous transformation function.
-    /// </summary>
-    /// <typeparam name="TIn">The input record type to read from CSV files.</typeparam>
-    /// <typeparam name="TOut">The output record type to write to CSV files.</typeparam>
-    /// <param name="transformations">Collection of input/output CSV file pairs with optional per-file configuration.</param>
-    /// <param name="transformAsync">Asynchronous function to transform input records to output records. Receives the record and a cancellation token.</param>
-    /// <param name="options">CSV operation options. If null, defaults are used.</param>
-    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-    /// <returns>A task representing the asynchronous operation.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when transformations or transformAsync is null.</exception>
-    // ReSharper disable once MemberCanBeInternal
-    public static Task TransformCsvParallelAsync<TIn, TOut>(
-        this IEnumerable<(RivuletCsvReadFile<TIn> Input, RivuletCsvWriteFile<TOut> Output)> transformations,
-        Func<TIn, CancellationToken, ValueTask<TOut>> transformAsync,
-        CsvOperationOptions? options = null,
-        CancellationToken cancellationToken = default
-    )
-        where TIn : class
-        where TOut : class
-    {
-        ArgumentNullException.ThrowIfNull(transformations);
-        ArgumentNullException.ThrowIfNull(transformAsync);
+        /// <summary>
+        ///     Transforms CSV files in parallel with per-file configuration, applying an asynchronous transformation function.
+        /// </summary>
+        /// <param name="transformAsync">Asynchronous function to transform input records to output records. Receives the record and a cancellation token.</param>
+        /// <param name="options">CSV operation options. If null, defaults are used.</param>
+        /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when transformations or transformAsync is null.</exception>
+        // ReSharper disable once MemberCanBeInternal
+        public Task TransformCsvParallelAsync(
+            Func<TIn, CancellationToken, ValueTask<TOut>> transformAsync,
+            CsvOperationOptions? options = null,
+            CancellationToken cancellationToken = default
+        )
+        {
+            ArgumentNullException.ThrowIfNull(transformations);
+            ArgumentNullException.ThrowIfNull(transformAsync);
 
-        options ??= new();
-        var parallelOptions = options.GetMergedParallelOptions();
+            options ??= new();
+            var parallelOptions = options.GetMergedParallelOptions();
 
-        return transformations.ForEachParallelAsync(
-            async (item, ct) =>
-            {
-                var inputRecords = await ParseCsvFileAsync<TIn>(
-                    item.Input,
-                    options,
-                    ct
-                ).ConfigureAwait(false);
+            return transformations.ForEachParallelAsync(
+                async (item, ct) =>
+                {
+                    var inputRecords = await ParseCsvFileAsync<TIn>(
+                        item.Input,
+                        options,
+                        ct
+                    ).ConfigureAwait(false);
 
-                var outputRecords = new List<TOut>(inputRecords.Count);
-                foreach (var inputRecord in inputRecords)
-                    outputRecords.Add(await transformAsync(inputRecord, ct).ConfigureAwait(false));
+                    var outputRecords = new List<TOut>(inputRecords.Count);
+                    foreach (var inputRecord in inputRecords)
+                        outputRecords.Add(await transformAsync(inputRecord, ct).ConfigureAwait(false));
 
-                await WriteCsvFileAsync(
-                    new RivuletCsvWriteFile<TOut>(item.Output.Path, outputRecords, item.Output.Configuration),
-                    options,
-                    ct
-                ).ConfigureAwait(false);
-            },
-            parallelOptions,
-            cancellationToken
-        );
+                    await WriteCsvFileAsync(
+                        new RivuletCsvWriteFile<TOut>(item.Output.Path, outputRecords, item.Output.Configuration),
+                        options,
+                        ct
+                    ).ConfigureAwait(false);
+                },
+                parallelOptions,
+                cancellationToken
+            );
+        }
     }
 
     /// <summary>

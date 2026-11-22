@@ -178,7 +178,7 @@ public sealed class FileParallelExtensionsTests : TempDirectoryFixture
 
         // Act
         var results = await files.TransformFilesParallelAsync(
-            static (_, content) => ValueTask.FromResult(content.ToUpper()),
+            static (_, content) => ValueTask.FromResult(content.ToUpperInvariant()),
             new() { OverwriteExisting = true },
             TestContext.Current.CancellationToken);
 

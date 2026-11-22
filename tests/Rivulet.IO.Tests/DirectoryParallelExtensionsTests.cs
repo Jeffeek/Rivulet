@@ -165,7 +165,7 @@ public sealed class DirectoryParallelExtensionsTests : TempDirectoryFixture
             sourceDir,
             destDir,
             "*.txt",
-            static (_, content) => ValueTask.FromResult(content.ToUpper()),
+            static (_, content) => ValueTask.FromResult(content.ToUpperInvariant()),
             options: new() { OverwriteExisting = true },
             cancellationToken: TestContext.Current.CancellationToken);
 

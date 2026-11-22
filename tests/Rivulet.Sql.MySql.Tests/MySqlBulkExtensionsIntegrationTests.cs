@@ -4,47 +4,69 @@ using Testcontainers.MySql;
 namespace Rivulet.Sql.MySql.Tests;
 
 /// <summary>
-///     Integration tests for MySqlBulkExtensions using Testcontainers.
-///     Uses per-test-class container for isolation (IAsyncLifetime).
+///     Shared MySQL container for the integration test class. Started once per class (not per test method)
+///     and reused across <c>dotnet test</c> runs when Testcontainers reuse is enabled locally
+///     (<c>testcontainers.reuse.enable=true</c> in <c>~/.testcontainers.properties</c>).
 ///     Requires Docker Desktop to be running.
 /// </summary>
-[Trait("Category", "Integration")]
-public sealed class MySqlBulkExtensionsIntegrationTests : IAsyncLifetime
+public sealed class MySqlFixture : IAsyncLifetime
 {
-    private string? _connectionString;
-    private MySqlContainer? _container;
+    private readonly MySqlContainer _container = new MySqlBuilder("mysql:9.7.4")
+        .WithCommand("--local-infile=1") // Enable LOAD DATA LOCAL INFILE
+        .WithReuse(true)
+        .Build();
+
+    public string ConnectionString { get; private set; } = string.Empty;
 
     public async ValueTask InitializeAsync()
     {
-        _container = new MySqlBuilder("mysql:9.7.4")
-            .WithCommand("--local-infile=1") // Enable LOAD DATA LOCAL INFILE
-            .Build();
-
         await _container.StartAsync();
 
         // Add AllowLoadLocalInfile to connection string to enable client-side file loading
-        var baseConnectionString = _container.GetConnectionString();
-        _connectionString = $"{baseConnectionString};AllowLoadLocalInfile=true";
+        ConnectionString = $"{_container.GetConnectionString()};AllowLoadLocalInfile=true";
 
-        // Create test table
-        await using var connection = new MySqlConnection(_connectionString);
+        // IF NOT EXISTS so a reused container (table already created in a prior run) does not fail
+        await using var connection = new MySqlConnection(ConnectionString);
         await connection.OpenAsync();
 
         await using var command = connection.CreateCommand();
         command.CommandText = """
-
-                                          CREATE TABLE TestTable (
-                                              Id INT NOT NULL,
-                                              Name VARCHAR(100) NOT NULL,
-                                              Email VARCHAR(100) NOT NULL
-                                          )
+                              CREATE TABLE IF NOT EXISTS TestTable (
+                                  Id INT NOT NULL,
+                                  Name VARCHAR(100) NOT NULL,
+                                  Email VARCHAR(100) NOT NULL
+                              )
                               """;
         await command.ExecuteNonQueryAsync();
     }
 
-    public ValueTask DisposeAsync() => _container?.DisposeAsync() ?? ValueTask.CompletedTask;
+    // Do not dispose the container: with reuse enabled it is kept alive for the next run.
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+}
 
-    private MySqlConnection CreateConnection() => new(_connectionString!);
+/// <summary>
+///     Integration tests for MySqlBulkExtensions using a shared Testcontainers MySQL container.
+///     Each test truncates TestTable first for isolation.
+/// </summary>
+[Trait("Category", "Integration")]
+public sealed class MySqlBulkExtensionsIntegrationTests(MySqlFixture fixture)
+    : IClassFixture<MySqlFixture>, IAsyncLifetime
+{
+    private readonly string _connectionString = fixture.ConnectionString;
+
+    // Runs per test method: reset shared table so tests are isolated despite sharing one container.
+    public async ValueTask InitializeAsync()
+    {
+        await using var connection = new MySqlConnection(_connectionString);
+        await connection.OpenAsync();
+        await using var command = connection.CreateCommand();
+        command.CommandText = "TRUNCATE TABLE TestTable";
+        await command.ExecuteNonQueryAsync();
+    }
+
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+
+    private MySqlConnection CreateConnection() => new(_connectionString);
 
     [Fact]
     public async Task BulkInsertUsingMySqlBulkLoaderAsync_WithValidData_ShouldInsertRecords()

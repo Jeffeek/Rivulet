@@ -1,4 +1,5 @@
 using System.Diagnostics.Tracing;
+using System.Globalization;
 using Rivulet.Core;
 
 namespace Rivulet.Diagnostics;
@@ -48,7 +49,7 @@ public abstract class RivuletEventListenerBase : EventListener
                 !eventPayload.TryGetValue(RivuletDiagnosticsConstants.EventCounterKeys.Increment, out meanObj))
                 continue;
 
-            var value = Convert.ToDouble(meanObj);
+            var value = Convert.ToDouble(meanObj, CultureInfo.InvariantCulture);
             var displayName = eventPayload.TryGetValue(RivuletDiagnosticsConstants.EventCounterKeys.DisplayName,
                 out var displayNameObj)
                 ? displayNameObj.ToString()

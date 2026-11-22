@@ -71,7 +71,7 @@ public sealed class PipelineExecutionTests
         var results = await pipeline.ExecuteAsync([1, 2, 3], TestContext.Current.CancellationToken);
 
         results.Count.ShouldBe(3);
-        results.OrderBy(static x => x).ShouldBe(["3", "5", "7"]);
+        results.OrderBy(static x => x, StringComparer.OrdinalIgnoreCase).ShouldBe(["3", "5", "7"]);
     }
 
     [Fact]

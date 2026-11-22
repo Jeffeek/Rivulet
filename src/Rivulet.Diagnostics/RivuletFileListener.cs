@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using Rivulet.Diagnostics.Internal;
 
@@ -49,7 +50,7 @@ public sealed class RivuletFileListener : FileEventListenerBase
         {
             CheckRotation();
 
-            var timestamp = DateTime.UtcNow.ToString(RivuletDiagnosticsConstants.DateTimeFormats.File);
+            var timestamp = DateTime.UtcNow.ToString(RivuletDiagnosticsConstants.DateTimeFormats.File, CultureInfo.InvariantCulture);
             var formattedValue = string.IsNullOrEmpty(displayUnits)
                 ? $"{value:F2}"
                 : $"{value:F2} {displayUnits}";
@@ -77,7 +78,7 @@ public sealed class RivuletFileListener : FileEventListenerBase
         Writer?.Dispose();
         Writer = null;
 
-        var timestamp = DateTime.UtcNow.ToString(RivuletDiagnosticsConstants.DateTimeFormats.FileRotation);
+        var timestamp = DateTime.UtcNow.ToString(RivuletDiagnosticsConstants.DateTimeFormats.FileRotation, CultureInfo.InvariantCulture);
         var directory = Path.GetDirectoryName(_filePath) ?? string.Empty;
         var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(_filePath);
         var extension = Path.GetExtension(_filePath);

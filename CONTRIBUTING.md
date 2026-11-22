@@ -56,7 +56,7 @@ We welcome pull requests for:
 
 ### Prerequisites
 
-- **.NET SDK**: 8.0 and 9.0 (for multi-targeting)
+- **.NET SDK**: 10.0 and 11.0 (for multi-targeting)
 - **IDE**: Visual Studio 2022, JetBrains Rider, or VS Code with C# extension
 - **Git**: For version control
 - **Docker Desktop** (optional, required for integration tests):

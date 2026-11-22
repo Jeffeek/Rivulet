@@ -393,9 +393,3 @@ public sealed class RivuletEventListenerBaseTests : IDisposable
         }
     }
 }
-
-// Collection definition to disable parallelization for EventSource tests
-// EventSource and EventListener are process-wide singletons - parallel execution
-// causes cross-test pollution where listeners receive events from other tests
-[CollectionDefinition(TestCollections.EventSource, DisableParallelization = true)]
-public class EventSourceTestCollection;
