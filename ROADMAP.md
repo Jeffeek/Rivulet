@@ -33,7 +33,7 @@
 - **Rivulet.Sql.MySql** - MySQL-specific optimizations for Rivulet.Sql using MySqlBulkLoader (LOAD DATA LOCAL INFILE) for 10-100x faster bulk inserts.
 - **Rivulet.Polly** - Integration between Rivulet parallel processing and [Polly](https://github.com/App-vNext/Polly) resilience policies.
 
-### 🚧 2.0.0 - In Development
+### ✅ 2.0.0 - Released
 
 - **Rivulet.Pipeline** - Multi-stage pipeline composition for Rivulet with fluent API, per-stage concurrency, backpressure management between stages, and streaming support.
 - **Rivulet.Csv** - Parallel CSV parsing and writing with CsvHelper integration, bounded concurrency, and batching support for high-throughput data processing.
@@ -267,6 +267,6 @@ await users.BulkInsertUsingSqlBulkCopyAsync(
 
 ---
 
-**Last Updated**: 2026-03-23
-**Version**: 1.3.0
-**Status**: v1.3.0 Released — v2.0.0 In Development (Pipeline, Csv)
+**Last Updated**: 2026-11-23
+**Version**: 2.1.0
+**Status**: v2.1.0 Released — v3.0.0 In Development
