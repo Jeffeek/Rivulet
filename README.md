@@ -221,10 +221,10 @@ Multi-stage pipeline composition for Rivulet with fluent API, per-stage concurre
 Parallel CSV parsing and writing with CsvHelper integration, bounded concurrency, and batching support for high-throughput data processing. [**Docs**](src/Rivulet.Csv/README.md)
 
 **Key Features:**
-- CsvHelper integration for robust CSV parsing
+- CsvHelper v34 source-generated mappings with `[CsvRecord]`
 - Multi-type operations (2-5 generic type parameters)
 - Memory-efficient streaming with IAsyncEnumerable
-- Per-file CSV configuration (delimiters, culture, class maps)
+- Per-file CSV reader and writer options
 - Progress tracking and lifecycle callbacks
 - Error handling modes (FailFast, CollectAndContinue, BestEffort)
 - Circuit breaker and retry support
