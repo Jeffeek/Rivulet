@@ -18,9 +18,11 @@ public sealed class ParallelWorkerServiceTests
         using var cts = new CancellationTokenSource();
         await service.StartAsync(cts.Token);
 
-        // Increased from 50ms → 200ms for Windows CI/CD reliability
-        // BackgroundService needs time to start ExecuteAsync, process items, and collect results
-        await Task.Delay(200, cts.Token);
+        // Poll until all items are processed instead of sleeping a fixed time, which races under CI load.
+        await DeadlineExtensions.ApplyDeadlineAsync(
+            DateTime.UtcNow.AddSeconds(5),
+            () => Task.Delay(25, cts.Token),
+            () => service.ProcessedItems.Count < 5);
         await cts.CancelAsync();
         await service.StopAsync(TestContext.Current.CancellationToken);
 
@@ -39,10 +41,11 @@ public sealed class ParallelWorkerServiceTests
         using var cts = new CancellationTokenSource();
         await service.StartAsync(cts.Token);
 
-        // Increased from 50ms → 200ms for Windows CI/CD reliability (9.44% failure rate at 50ms)
-        // BackgroundService needs time to start ExecuteAsync, process all items through ProcessAsync,
-        // and call OnResultAsync for each result before Results collection can be verified
-        await Task.Delay(200, cts.Token);
+        // Poll until all results arrive instead of sleeping a fixed time, which races under CI load.
+        await DeadlineExtensions.ApplyDeadlineAsync(
+            DateTime.UtcNow.AddSeconds(5),
+            () => Task.Delay(25, cts.Token),
+            () => service.Results.Count < 3);
         await cts.CancelAsync();
 
         await service.StopAsync(TestContext.Current.CancellationToken);
@@ -134,7 +137,11 @@ public sealed class ParallelWorkerServiceTests
         using var cts = new CancellationTokenSource();
         await service.StartAsync(cts.Token);
 
-        await Task.Delay(1000, cts.Token);
+        // Poll until all items are processed instead of a fixed sleep that races under CI load.
+        await DeadlineExtensions.ApplyDeadlineAsync(
+            DateTime.UtcNow.AddSeconds(5),
+            () => Task.Delay(25, cts.Token),
+            () => service.ProcessedItems.Count < 3);
         await cts.CancelAsync();
 
         await service.StopAsync(TestContext.Current.CancellationToken);
@@ -172,8 +179,11 @@ public sealed class ParallelWorkerServiceTests
         using var cts = new CancellationTokenSource();
         await service.StartAsync(cts.Token);
 
-        // Increased from 50ms → 200ms for Windows CI/CD reliability
-        await Task.Delay(200, cts.Token);
+        // Poll until every item has been processed instead of a fixed sleep that races under CI load.
+        await DeadlineExtensions.ApplyDeadlineAsync(
+            DateTime.UtcNow.AddSeconds(5),
+            () => Task.Delay(25, cts.Token),
+            () => service.ProcessCallCount < 7);
         await cts.CancelAsync();
 
         await service.StopAsync(TestContext.Current.CancellationToken);
@@ -191,8 +201,11 @@ public sealed class ParallelWorkerServiceTests
 
         using var cts = new CancellationTokenSource();
         await service.StartAsync(cts.Token);
-        // Increased from 50ms → 5s for CI/CD reliability
-        await Task.Delay(TimeSpan.FromSeconds(5), cts.Token);
+        // Poll until all items are processed instead of a fixed sleep that races under CI load.
+        await DeadlineExtensions.ApplyDeadlineAsync(
+            DateTime.UtcNow.AddSeconds(5),
+            () => Task.Delay(25, cts.Token),
+            () => service.ProcessedItems.Count < 3);
         await cts.CancelAsync();
         await service.StopAsync(TestContext.Current.CancellationToken);
 
